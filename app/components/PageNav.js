@@ -4,7 +4,7 @@ export default function PageNav({ currentPage, isNight }) {
   const textColor = isNight ? 'text-white' : 'text-black';
   
   const pages = [
-    { name: 'Weather', href: '/', label: '🌤️' },
+    { name: 'Fourcast', href: '/', label: '🌤️' },
     { name: 'AI', href: '/ai', label: '🤖' },
     { name: 'Discovery', href: '/discovery', label: '🔍' }
   ];

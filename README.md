@@ -1,4 +1,4 @@
-# 🌤️ Weather Edge Finder: AI-Powered Prediction Market Intelligence
+# 🌤️ Fourcast: AI-Powered Prediction Market Intelligence
 
 An AI agent that analyzes weather forecasts alongside prediction markets (Polymarket) to surface potential mispricings in sports, political, and event outcome markets where weather conditions create information asymmetries.
 
@@ -25,7 +25,7 @@ Weather impacts outcomes (sports performance, voter turnout, corporate earnings)
 
 ## 🔗 Integration with Existing Platform
 
-Built as a new module within the existing Weather Prediction Markets app:
+Built as a new module within the existing Fourcast app:
 
 - **Leverages existing**: WeatherAPI integration, Polymarket client, Next.js infrastructure
 - **Adds new**: Event scraper, AI analysis engine, edge-finder UI dashboard
@@ -101,7 +101,7 @@ Provide 2-3 paragraph analysis with specific reasoning.
 ```bash
 # Clone repository
 git clone <repository-url>
-cd weather
+cd fourcast
 
 # Install dependencies
 npm install --legacy-peer-deps
