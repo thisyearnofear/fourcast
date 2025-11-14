@@ -14,9 +14,6 @@ const nextConfig = {
     scrollRestoration: true,
   },
 
-  // Empty turbopack config to silence the warning
-  turbopack: {},
-
   // Headers for better caching and security
   async headers() {
     return [
