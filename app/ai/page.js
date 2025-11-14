@@ -144,17 +144,17 @@ export default function AIPage() {
   return (
     <div className={`min-h-screen ${bgColor} transition-colors duration-300`}>
       {/* Header */}
-      <header className={`sticky top-0 z-40 border-b ${cardBgColor} backdrop-blur-sm`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+      <header className={`sticky top-0 z-40 border-b ${cardBgColor} backdrop-blur-md`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
           <div>
-            <h1 className={`text-2xl font-light ${textColor} tracking-wide`}>
+            <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
               Weather Edge Analysis
             </h1>
-            <p className={`text-sm ${textColor} opacity-60 mt-1`}>
+            <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
               {currentLocation}
             </p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <PageNav currentPage="AI" isNight={isNight} />
             <ConnectKitButton mode="dark" />
           </div>
@@ -162,7 +162,7 @@ export default function AIPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
         {error && (
           <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mb-6">
             <p className={`${textColor} text-sm`}>{error}</p>

@@ -187,10 +187,10 @@ const order = await client.createAndPostOrder({
 
 ## 📖 Documentation
 
-- [Getting Started](./docs/GETTING_STARTED.md)
-- [APIs](./docs/APIS.md)
-- [Market Integration](./docs/MARKET_INTEGRATION.md)
-- [Development Guide](./docs/DEVELOPMENT_GUIDE.md)
+- [Getting Started & Development Guide](./docs/GUIDE.md)
+- [API Reference](./docs/API.md)
+- [Product Roadmap & Vision](./docs/ROADMAP.md)
+- [Integration & Development Details](./docs/INTEGRATION.md)
 
 ## 🤝 Contributing
 

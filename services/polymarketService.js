@@ -60,8 +60,9 @@ class PolymarketService {
   }
 
   /**
-   * Search markets by keyword (e.g., location name, team name, event type)
-   * Returns relevant markets for a given location
+   * Search markets by location using optimized /events endpoint
+   * IMPROVED: Uses /events endpoint for better structure and performance
+   * Returns weather-sensitive markets filtered by volume threshold
    */
   async searchMarketsByLocation(location) {
     // Check cache first
@@ -71,73 +72,60 @@ class PolymarketService {
     }
 
     try {
-      // Search for outdoor/weather-sensitive events in the location
-      const searchTerms = [
-        location, // Direct location search
-        `${location} weather`,
-        `${location} sports`,
-      ];
+      // Use /events endpoint for better market structure
+      const response = await axios.get(`${this.baseURL}/events`, {
+        params: {
+          limit: 100,
+          closed: false, // Active only
+          offset: 0
+        }
+      });
 
-      let allMarkets = [];
+      let relevantMarkets = [];
 
-      for (const term of searchTerms) {
-        try {
-          const response = await axios.get(`${this.baseURL}/markets`, {
-            params: {
-              search: term,
-              limit: 50,
-              active: true
+      if (response.data?.events && Array.isArray(response.data.events)) {
+        // Find events matching the location
+        for (const event of response.data.events) {
+          const eventTitle = event.title || '';
+          const eventLoc = this.extractLocation(eventTitle);
+
+          // Match location (case-insensitive)
+          if (eventLoc && eventLoc.toLowerCase() === location.toLowerCase()) {
+            // Add all markets from this event
+            if (event.markets && Array.isArray(event.markets)) {
+              relevantMarkets.push(...event.markets);
             }
-          });
-
-          if (response.data && Array.isArray(response.data)) {
-            allMarkets = [...allMarkets, ...response.data];
           }
-        } catch (err) {
-          // Continue if individual search fails
-          console.debug(`Market search for "${term}" failed:`, err.message);
         }
       }
 
-      // Remove duplicates by tokenID
-      const uniqueMarkets = Array.from(
-        new Map(allMarkets.map(m => [m.tokenID || m.id, m])).values()
-      );
-
-      // Filter for weather-sensitive events (outdoor sports, marathons, outdoor events)
-      const weatherSensitiveMarkets = uniqueMarkets.filter(market => {
-        const title = market.title || market.question || '';
-        const tags = market.tags || [];
-        const weatherSensitiveKeywords = [
-          'weather', 'temperature', 'rain', 'snow', 'wind',
-          'outdoor', 'nfl', 'nba', 'golf', 'tennis', 'marathon',
-          'cricket', 'baseball', 'football', 'soccer'
-        ];
-
-        return weatherSensitiveKeywords.some(
-          keyword => title.toLowerCase().includes(keyword) ||
-                     tags.some(tag => tag.toLowerCase().includes(keyword))
-        );
+      // Filter by minimum volume ($50k) - ROADMAP requirement
+      const highVolume = relevantMarkets.filter(m => {
+        const vol = parseFloat(m.volume24h || m.volume || 0);
+        return vol >= 50000;
       });
 
       const result = {
-        markets: weatherSensitiveMarkets.slice(0, 10), // Top 10 relevant markets
+        markets: highVolume.slice(0, 20), // Top 20 relevant markets
         location,
         timestamp: new Date().toISOString(),
-        totalFound: weatherSensitiveMarkets.length
+        totalFound: highVolume.length,
+        cached: false,
+        source: 'events_endpoint' // Track which method was used
       };
 
-      // Cache the results
+      // Cache the results (6 hours for distant events, handled by caller)
       this.setCachedMarkets(location, result);
 
       return result;
     } catch (error) {
-      console.error('Error searching markets for location:', error.message);
+      console.error('Error searching markets by location:', error.message);
       return {
         markets: [],
         location,
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        cached: false
       };
     }
   }
@@ -540,19 +528,49 @@ class PolymarketService {
 
   /**
    * Assess how relevant weather is to a given market
+   * IMPROVED: Now uses actual weather conditions from weatherData parameter
+   * Returns both relevance score and weather context for analysis
    */
   assessWeatherRelevance(market, weatherData) {
     const title = (market.title || market.question || '').toLowerCase();
+    const description = (market.description || '').toLowerCase();
 
+    // Extract actual weather conditions if available
+    const currentTemp = weatherData?.current?.temp_f;
+    const currentCondition = (weatherData?.current?.condition?.text || '').toLowerCase();
+    const precipChance = weatherData?.current?.precip_chance || weatherData?.current?.precip_prob || 0;
+    const windSpeed = weatherData?.current?.wind_mph;
+    const humidity = weatherData?.current?.humidity;
+
+    // Score based on both market keywords AND actual weather conditions
     const weatherImpactFactors = {
-      outdoor: title.includes('outdoor') || title.includes('marathon') ? 2 : 0,
-      wind: title.includes('wind') || title.includes('sail') ? 2 : 0,
-      precipitation: title.includes('rain') || title.includes('snow') ? 2 : 0,
-      temperature: title.includes('temperature') || title.includes('cold') ? 1.5 : 0,
+      outdoor: (title.includes('outdoor') || title.includes('marathon')) ? 2 : 0,
+      wind: (
+        title.includes('wind') || 
+        title.includes('sail') || 
+        (windSpeed && windSpeed > 15)
+      ) ? 2 : 0,
+      precipitation: (
+        title.includes('rain') || 
+        title.includes('snow') || 
+        (precipChance && precipChance > 30) ||
+        currentCondition.includes('rain') ||
+        currentCondition.includes('snow')
+      ) ? 2 : 0,
+      temperature: (
+        title.includes('temperature') || 
+        title.includes('cold') || 
+        title.includes('heat') ||
+        (currentTemp && (currentTemp < 45 || currentTemp > 85))
+      ) ? 1.5 : 0,
       sports: ['nfl', 'nba', 'golf', 'tennis', 'baseball', 'soccer', 'cricket'].some(
         sport => title.includes(sport)
       ) ? 1 : 0,
-      weather_word: title.includes('weather') ? 3 : 0
+      weather_word: title.includes('weather') ? 3 : 0,
+      // New: Factor for when weather conditions match market keywords
+      condition_match: (
+        (precipChance && precipChance > 30) && (title.includes('rain') || title.includes('snow')) ? 1 : 0
+      )
     };
 
     const score = Object.values(weatherImpactFactors).reduce((a, b) => a + b, 0);
@@ -560,7 +578,16 @@ class PolymarketService {
     return {
       score: Math.min(score, 10),
       factors: weatherImpactFactors,
-      isWeatherSensitive: score > 0
+      isWeatherSensitive: score > 0,
+      // Include weather context for AI analysis (new in roadmap Phase 2)
+      weatherContext: {
+        temp: currentTemp,
+        condition: currentCondition,
+        precipChance: precipChance,
+        windSpeed: windSpeed,
+        humidity: humidity,
+        hasData: !!(weatherData?.current)
+      }
     };
   }
 

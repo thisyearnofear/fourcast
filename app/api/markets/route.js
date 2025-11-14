@@ -6,54 +6,97 @@ export async function POST(request) {
     const { location, weatherData } = body;
 
     // Validate required fields
-    if (!location || !weatherData) {
+    if (!location) {
       return Response.json({
         success: false,
-        error: 'Missing required fields: location, weatherData'
+        error: 'Missing required field: location'
       }, { status: 400 });
     }
 
-    // Fetch weather-sensitive market opportunities
-    const result = await polymarketService.getWeatherAdjustedOpportunities(
-      weatherData,
-      location
-    );
+    // IMPROVED: Use optimized market discovery with /events endpoint
+    // Falls back to getAllMarkets only if location doesn't match any events
+    const result = await polymarketService.searchMarketsByLocation(location);
 
-    // Check if we got any opportunities
-    if (!result.opportunities || result.opportunities.length === 0) {
-      // Fallback: return a success response but fetch all active markets
-      console.log(`No weather-sensitive markets for ${location}, fetching all active markets...`);
+    if (!result.markets || result.markets.length === 0) {
+      // Fallback: fetch all active markets as last resort
+      console.log(`No markets found for location "${location}", fetching all active markets...`);
       const allMarkets = await polymarketService.getAllMarkets();
+      
       const transformed = (allMarkets || []).slice(0, 10).map(m => ({
         marketID: m.tokenID || m.id,
         title: m.title || m.question,
         description: m.description,
+        location: polymarketService.extractLocation(m.title || m.question),
         currentOdds: {
-          yes: m.bid || m.yesPrice || 0.5,
-          no: m.ask || m.noPrice || 0.5
+          yes: parseFloat(m.outcomePrices?.[0] || m.bid || m.yesPrice || 0.5),
+          no: parseFloat(m.outcomePrices?.[1] || m.ask || m.noPrice || 0.5)
         },
-        volume24h: m.volume24h || 0,
-        liquidityBin: m.liquidity || 0,
-        tags: m.tags || []
+        volume24h: parseFloat(m.volume24h || m.volume || 0),
+        liquidity: parseFloat(m.liquidity || 0),
+        tags: m.tags || [],
+        weatherRelevance: 0 // No weather data, relevance is 0
       }));
-      
+
       return Response.json({
         success: true,
-        opportunities: transformed,
+        markets: transformed,
         location,
-        message: `Showing top markets for ${location}`,
-        weatherContext: result.weatherContext,
+        message: `No location match found. Showing top active markets.`,
         totalFound: transformed.length,
+        cached: false,
         timestamp: new Date().toISOString()
       });
     }
 
+    // Transform markets to API response format
+    // IMPROVED: Use real weatherData for relevance scoring
+    const transformedMarkets = result.markets.map(market => {
+      const title = market.title || market.question || '';
+      const location = polymarketService.extractLocation(title);
+      const metadata = polymarketService.extractMarketMetadata(title);
+      
+      // Use actual weather data for relevance scoring (not mock)
+      const weatherRelevance = polymarketService.assessWeatherRelevance(
+        market,
+        weatherData || { current: {} } // Empty fallback if no weather data
+      );
+
+      return {
+        marketID: market.tokenID || market.id,
+        title,
+        description: market.description,
+        location,
+        currentOdds: {
+          yes: parseFloat(market.outcomePrices?.[0] || market.bid || market.yesPrice || 0.5),
+          no: parseFloat(market.outcomePrices?.[1] || market.ask || market.noPrice || 0.5)
+        },
+        volume24h: parseFloat(market.volume24h || market.volume || 0),
+        liquidity: parseFloat(market.liquidity || 0),
+        endDate: market.endDate || market.expiresAt,
+        tags: market.tags || [],
+        weatherRelevance: weatherRelevance.score,
+        weatherContext: weatherRelevance.weatherContext,
+        teams: metadata.teams,
+        eventType: metadata.event_type
+      };
+    });
+
+    // Sort by volume (roadmap requirement)
+    transformedMarkets.sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0));
+
+    // IMPROVEMENT: Pre-cache market details for top 5 markets
+    // Warm up the cache so analysis requests don't need to fetch details again
+    const top5Ids = transformedMarkets.slice(0, 5).map(m => m.marketID);
+    Promise.allSettled(
+      top5Ids.map(id => polymarketService.getMarketDetails(id))
+    ).catch(err => console.debug('Pre-caching market details:', err.message));
+
     return Response.json({
       success: true,
-      opportunities: result.opportunities,
+      markets: transformedMarkets,
       location: result.location,
-      weatherContext: result.weatherContext,
-      totalFound: result.opportunities.length,
+      totalFound: result.totalFound,
+      cached: result.cached,
       timestamp: new Date().toISOString()
     });
 

@@ -161,15 +161,15 @@ const DiscoveryPage = () => {
       {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-black/5" />
       
-      <div className="relative z-10 p-4 sm:p-6 max-w-6xl mx-auto">
+      <div className="relative z-10 p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-          <div className="mb-4 sm:mb-0">
-            <h1 className={`text-2xl sm:text-3xl font-thin tracking-wide ${textColor}`}>
-              Weather Market Discovery
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-12">
+          <div className="mb-6 sm:mb-0">
+            <h1 className={`text-4xl sm:text-4xl font-thin tracking-wide ${textColor}`}>
+              Discover Markets
             </h1>
-            <p className={`text-sm ${textColor} opacity-60 mt-1`}>
-              Find prediction markets with weather-driven edge opportunities
+            <p className={`text-sm ${textColor} opacity-60 mt-3 font-light max-w-md`}>
+              Explore prediction markets with weather-sensitive edge opportunities
             </p>
           </div>
           
@@ -188,8 +188,8 @@ const DiscoveryPage = () => {
         </header>
 
         {/* Search and Filters */}
-        <div className={`backdrop-blur-md border rounded-2xl p-4 mb-6 ${
-          isNight ? 'bg-white/10 border-white/20' : 'bg-white/20 border-white/30'
+        <div className={`backdrop-blur-md border rounded-3xl p-6 mb-8 transition-all duration-300 ${
+          isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'
         }`}>
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
             {/* Search Input */}
@@ -199,11 +199,11 @@ const DiscoveryPage = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by location (e.g. Chicago, Miami)..."
-                className={`w-full px-4 py-2 rounded-lg text-sm ${
-                  isNight 
-                    ? 'bg-white/10 border border-white/20 text-white placeholder-white/60' 
-                    : 'bg-white/30 border border-white/40 text-black placeholder-black/60'
-                } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all`}
+                 className={`w-full px-4 py-2.5 rounded-xl text-sm font-light ${
+                    isNight 
+                      ? 'bg-white/10 border border-white/20 text-white placeholder-white/50' 
+                      : 'bg-black/10 border border-black/20 text-black placeholder-black/50'
+                  } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all`}
                 disabled={isLoading}
               />
             </div>
@@ -212,10 +212,10 @@ const DiscoveryPage = () => {
             <select
               value={filters.category}
               onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-              className={`px-4 py-2 rounded-lg text-sm ${
+              className={`px-4 py-2.5 rounded-xl text-sm font-light ${
                 isNight 
                   ? 'bg-white/10 border border-white/20 text-white' 
-                  : 'bg-white/30 border border-white/40 text-black'
+                  : 'bg-black/10 border border-black/20 text-black'
               } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all`}
               disabled={isLoading}
             >
@@ -228,10 +228,10 @@ const DiscoveryPage = () => {
             <select
               value={filters.minVolume}
               onChange={(e) => setFilters(prev => ({ ...prev, minVolume: e.target.value }))}
-              className={`px-4 py-2 rounded-lg text-sm ${
+              className={`px-4 py-2.5 rounded-xl text-sm font-light ${
                 isNight 
                   ? 'bg-white/10 border border-white/20 text-white' 
-                  : 'bg-white/30 border border-white/40 text-black'
+                  : 'bg-black/10 border border-black/20 text-black'
               } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all`}
               disabled={isLoading}
             >
@@ -244,10 +244,10 @@ const DiscoveryPage = () => {
             <button
               type="submit"
               disabled={!searchQuery.trim() || isLoading}
-              className={`px-6 py-2 rounded-lg text-sm font-light transition-all disabled:opacity-40 ${
+              className={`px-8 py-2.5 rounded-xl text-sm font-light transition-all disabled:opacity-40 border ${
                 isNight
-                  ? 'bg-blue-500/30 hover:bg-blue-500/50 text-blue-300'
-                  : 'bg-blue-400/30 hover:bg-blue-400/50 text-blue-700'
+                  ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30'
+                  : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border-blue-500/30'
               }`}
             >
               Search
@@ -296,42 +296,42 @@ const DiscoveryPage = () => {
 
         {/* Markets Grid */}
         {!isLoading && !error && markets.length > 0 && (
-          <div className="grid gap-4 sm:gap-6">
+          <div className="space-y-4">
             {markets.map((market, index) => (
               <div
                 key={market.id || index}
-                className={`backdrop-blur-md border rounded-2xl p-4 sm:p-6 transition-all duration-300 hover:scale-[1.02] ${
+                className={`backdrop-blur-md border rounded-3xl p-5 sm:p-6 transition-all duration-300 hover:scale-[1.01] ${
                   isNight 
-                    ? 'bg-white/10 border-white/20 hover:bg-white/15' 
-                    : 'bg-white/20 border-white/30 hover:bg-white/25'
+                    ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+                    : 'bg-black/5 border-black/10 hover:bg-black/10'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   {/* Market Info */}
-                  <div className="flex-1 space-y-2">
-                    <h3 className={`text-lg font-light ${textColor} leading-relaxed`}>
+                  <div className="flex-1 space-y-3">
+                    <h3 className={`text-lg font-light ${textColor} leading-relaxed tracking-wide`}>
                       {market.title || market.question}
                     </h3>
                     
-                    <div className="flex flex-wrap items-center gap-3 text-xs">
-                      {market.tags && market.tags.length > 0 && (
-                        market.tags.slice(0, 2).map((tag, idx) => (
-                          <span key={idx} className={`px-2 py-1 rounded-full ${
-                            isNight ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-400/20 text-purple-700'
-                          }`}>
-                            {tag}
-                          </span>
-                        ))
-                      )}
-                      
-                      {market.volume24h && (
-                        <span className={`px-2 py-1 rounded-full ${
-                          isNight ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-400/20 text-orange-700'
-                        }`}>
-                          ⚡ ${(market.volume24h / 1000).toFixed(0)}K vol
-                        </span>
-                      )}
-                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                       {market.tags && market.tags.length > 0 && (
+                         market.tags.slice(0, 2).map((tag, idx) => (
+                           <span key={idx} className={`px-3 py-1 rounded-full font-light border ${
+                             isNight ? 'bg-purple-500/10 text-purple-200 border-purple-500/20' : 'bg-purple-400/10 text-purple-800 border-purple-400/20'
+                           }`}>
+                             {tag}
+                           </span>
+                         ))
+                       )}
+                       
+                       {market.volume24h && (
+                         <span className={`px-3 py-1 rounded-full font-light border ${
+                           isNight ? 'bg-orange-500/10 text-orange-200 border-orange-500/20' : 'bg-orange-400/10 text-orange-800 border-orange-400/20'
+                         }`}>
+                           ⚡ ${(market.volume24h / 1000).toFixed(0)}K
+                         </span>
+                       )}
+                     </div>
 
                     {market.description && (
                       <div className={`${textColor} opacity-60 text-sm`}>
@@ -370,10 +370,10 @@ const DiscoveryPage = () => {
                     <button
                       onClick={() => analyzeMarket(market)}
                       disabled={isAnalyzing}
-                      className={`px-6 py-3 rounded-xl font-light text-sm transition-all duration-300 disabled:opacity-40 hover:scale-105 ${
+                      className={`px-6 py-3 rounded-2xl font-light text-sm transition-all duration-300 disabled:opacity-40 hover:scale-105 border ${
                         isNight
-                          ? 'bg-gradient-to-r from-blue-500/40 to-purple-500/40 hover:from-blue-500/60 hover:to-purple-500/60 text-white border border-white/20'
-                          : 'bg-gradient-to-r from-blue-400/40 to-purple-400/40 hover:from-blue-400/60 hover:to-purple-400/60 text-black border border-black/20'
+                          ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-200 border-blue-400/30'
+                          : 'bg-gradient-to-r from-blue-400/20 to-purple-400/20 hover:from-blue-400/30 hover:to-purple-400/30 text-blue-800 border-blue-500/30'
                       }`}
                     >
                       {isAnalyzing && selectedMarket?.id === market.id ? (

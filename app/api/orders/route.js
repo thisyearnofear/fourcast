@@ -235,20 +235,61 @@ export async function POST(request) {
     } catch (orderError) {
       console.error('Order submission failed:', orderError);
 
-      // Parse Polymarket-specific errors
-      let errorMessage = 'Order submission failed';
-      if (orderError.message?.includes('insufficient')) {
-        errorMessage = 'Insufficient balance or allowance';
-      } else if (orderError.message?.includes('signature')) {
-        errorMessage = 'Signature verification failed. Ensure wallet is properly connected.';
-      } else if (orderError.message?.includes('nonce')) {
-        errorMessage = 'Transaction nonce error. Please try again.';
+      // IMPROVED: Parse Polymarket-specific errors with recovery guidance
+      const errorMap = {
+        insufficient: {
+          message: 'Insufficient balance or allowance',
+          action: 'Deposit USDC to your wallet or approve token spending',
+          recoverable: true
+        },
+        signature: {
+          message: 'Signature verification failed',
+          action: 'Ensure wallet is properly connected and POLYMARKET_PRIVATE_KEY is set in environment',
+          recoverable: true
+        },
+        nonce: {
+          message: 'Transaction nonce error',
+          action: 'Wait 30 seconds and try again',
+          recoverable: true
+        },
+        'market not found': {
+          message: 'Market no longer exists or is inactive',
+          action: 'Select a different market and try again',
+          recoverable: true
+        },
+        'invalid price': {
+          message: 'Price outside valid range',
+          action: 'Price must be between 0 and 1 (0% to 100%)',
+          recoverable: false
+        },
+        'invalid size': {
+          message: 'Order size invalid',
+          action: 'Size must be greater than 0',
+          recoverable: false
+        }
+      };
+
+      let errorInfo = {
+        message: 'Order submission failed',
+        action: 'Check that all order details are correct and try again',
+        recoverable: true
+      };
+
+      // Check error message against known patterns
+      const errorMsg = (orderError.message || '').toLowerCase();
+      for (const [key, info] of Object.entries(errorMap)) {
+        if (errorMsg.includes(key)) {
+          errorInfo = info;
+          break;
+        }
       }
 
       return Response.json(
         {
           success: false,
-          error: errorMessage,
+          error: errorInfo.message,
+          action: errorInfo.action,
+          recoverable: errorInfo.recoverable,
           detail: orderError.message
         },
         { status: 400 }
