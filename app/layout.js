@@ -11,7 +11,7 @@ const queryClient = new QueryClient();
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body suppressHydrationWarning>
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={config}>
             <ConnectKitProvider

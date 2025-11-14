@@ -37,9 +37,9 @@ export default function AnalysisDisplay({
   if (!analysis) return null;
 
   const textColor = isNight ? 'text-white' : 'text-black';
-  const bgColor = isNight ? 'bg-white/10 border-white/20' : 'bg-black/10 border-black/20';
-  const buttonBgColor = isNight ? 'bg-green-500/30 hover:bg-green-500/50' : 'bg-green-400/30 hover:bg-green-400/50';
-  const buttonTextColor = isNight ? 'text-green-300' : 'text-green-700';
+  const bgColor = isNight ? 'bg-slate-800/80 border-white/30' : 'bg-slate-100/90 border-black/30';
+  const buttonBgColor = isNight ? 'bg-green-600/40 hover:bg-green-600/60' : 'bg-green-200/60 hover:bg-green-300/70';
+  const buttonTextColor = isNight ? 'text-green-100' : 'text-green-900';
 
   const assessment = analysis.assessment || {};
 

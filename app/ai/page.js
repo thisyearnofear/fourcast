@@ -9,6 +9,7 @@ import MarketSelector from './components/MarketSelector';
 import AnalysisDisplay from './components/AnalysisDisplay';
 import OrderForm from './components/OrderForm';
 import PageNav from '@/app/components/PageNav';
+import Scene3D from '@/components/Scene3D';
 
 export default function AIPage() {
   const { address, isConnected } = useAccount();
@@ -35,6 +36,17 @@ export default function AIPage() {
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [error, setError] = useState(null);
   const [orderResult, setOrderResult] = useState(null);
+  const [isNight, setIsNight] = useState(() => {
+    const hour = new Date().getHours();
+    return hour >= 19 || hour <= 6;
+  });
+  const [timeOfDay, setTimeOfDay] = useState(() => {
+    const hour = new Date().getHours();
+    if (hour >= 19 || hour <= 6) return 'night';
+    if (hour >= 6 && hour < 8) return 'dawn';
+    if (hour >= 17 && hour < 19) return 'dusk';
+    return 'day';
+  });
 
   // Load weather on mount
   useEffect(() => {
@@ -171,16 +183,35 @@ export default function AIPage() {
     setTimeout(() => setOrderResult(null), 5000);
   };
 
-  const isNight = useMemo(() => {
-    if (!weatherData?.location?.localtime) return false;
+  const nightStatus = useMemo(() => {
+    if (!weatherData?.location?.localtime) return true;
     const localTime = weatherData.location.localtime;
     const currentHour = new Date(localTime).getHours();
     return currentHour >= 19 || currentHour <= 6;
   }, [weatherData?.location?.localtime]);
 
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const bgColor = isNight ? 'bg-black' : 'bg-white';
-  const cardBgColor = isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10';
+  // Set timeOfDay based on hour
+  useEffect(() => {
+    if (weatherData?.location?.localtime) {
+      const localTime = weatherData.location.localtime;
+      const currentHour = new Date(localTime).getHours();
+      
+      if (currentHour >= 19 || currentHour <= 6) {
+        setTimeOfDay('night');
+      } else if (currentHour >= 6 && currentHour < 8) {
+        setTimeOfDay('dawn');
+      } else if (currentHour >= 17 && currentHour < 19) {
+        setTimeOfDay('dusk');
+      } else {
+        setTimeOfDay('day');
+      }
+      setIsNight(currentHour >= 19 || currentHour <= 6);
+    }
+  }, [weatherData?.location?.localtime]);
+
+  const textColor = nightStatus ? 'text-white' : 'text-black';
+  const bgColor = 'bg-black';
+  const cardBgColor = nightStatus ? 'bg-slate-900/60 border-white/20' : 'bg-white/60 border-black/20';
 
   if (isLoadingWeather) {
     return (
@@ -194,40 +225,50 @@ export default function AIPage() {
   }
 
   return (
-    <div className={`min-h-screen ${bgColor} transition-colors duration-300`}>
-      {/* Header */}
-      <header className={`sticky top-0 z-40 border-b ${cardBgColor} backdrop-blur-md`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
-          <div>
-            <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
-              Weather Edge Analysis
-            </h1>
-            <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-              {currentLocation}
-            </p>
+    <div className="min-h-screen relative">
+      {/* 3D Scene Background */}
+      <div className="fixed inset-0 z-0">
+        <Scene3D 
+          weatherData={weatherData}
+          isLoading={isLoadingWeather}
+        />
+      </div>
+      
+      {/* Scrollable Content Container */}
+      <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
+        {/* Header */}
+        <header className={`sticky top-0 z-50 border-b ${cardBgColor} backdrop-blur-md`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
+            <div>
+              <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
+                Weather Edge Analysis
+              </h1>
+              <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
+                {currentLocation}
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <PageNav currentPage="AI" isNight={nightStatus} />
+              <ConnectKitButton mode={nightStatus ? "dark" : "light"} />
+            </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <PageNav currentPage="AI" isNight={isNight} />
-            <ConnectKitButton mode="dark" />
-          </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
         {/* Filter Controls */}
-        <div className={`${cardBgColor} border rounded-lg p-4 mb-6`}>
+        <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 mb-6`}>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <div className="flex-1">
               <label className={`${textColor} text-xs opacity-60 block mb-2`}>Event Type</label>
               <select
                 value={marketFilters.eventType}
                 onChange={(e) => setMarketFilters(prev => ({ ...prev, eventType: e.target.value }))}
-                className={`w-full px-3 py-2 text-sm rounded border ${
-                  isNight 
-                    ? 'bg-white/10 border-white/20 text-white' 
-                    : 'bg-black/10 border-black/20 text-black'
-                }`}
+                className={`w-full px-4 py-2.5 text-sm rounded-xl border transition-all ${
+                 nightStatus
+                   ? 'bg-white/10 border-white/20 text-white focus:ring-2 focus:ring-blue-400' 
+                   : 'bg-black/10 border-black/20 text-black focus:ring-2 focus:ring-blue-400'
+                } focus:outline-none`}
               >
                 <option value="all">All Types</option>
                 <option value="NFL">NFL</option>
@@ -241,11 +282,11 @@ export default function AIPage() {
               <select
                 value={marketFilters.confidence}
                 onChange={(e) => setMarketFilters(prev => ({ ...prev, confidence: e.target.value }))}
-                className={`w-full px-3 py-2 text-sm rounded border ${
-                  isNight 
-                    ? 'bg-white/10 border-white/20 text-white' 
-                    : 'bg-black/10 border-black/20 text-black'
-                }`}
+                className={`w-full px-4 py-2.5 text-sm rounded-xl border transition-all ${
+                  nightStatus
+                     ? 'bg-white/10 border-white/20 text-white focus:ring-2 focus:ring-blue-400' 
+                     : 'bg-black/10 border-black/20 text-black focus:ring-2 focus:ring-blue-400'
+                 } focus:outline-none`}
               >
                 <option value="all">All Confidence</option>
                 <option value="HIGH">High Only</option>
@@ -257,11 +298,19 @@ export default function AIPage() {
         </div>
 
         {error && (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mb-6">
+          <div className={`backdrop-blur-xl border rounded-3xl p-4 mb-6 ${
+            nightStatus
+              ? 'bg-red-500/20 border-red-500/30'
+              : 'bg-red-400/20 border-red-400/30'
+          }`}>
             <p className={`${textColor} text-sm`}>{error}</p>
             <button
               onClick={loadWeather}
-              className="mt-3 px-3 py-1 text-xs bg-red-500/30 hover:bg-red-500/50 rounded transition-colors"
+              className={`mt-3 px-3 py-1 text-xs rounded transition-colors ${
+                nightStatus
+                  ? 'bg-red-500/30 hover:bg-red-500/50'
+                  : 'bg-red-400/30 hover:bg-red-400/50'
+              }`}
             >
               Retry
             </button>
@@ -270,7 +319,7 @@ export default function AIPage() {
 
         <div className="space-y-6">
           {/* Markets - Full Width */}
-          <div className={`${cardBgColor} border rounded-lg p-6`}>
+          <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 max-h-[350px] overflow-y-auto`}>
             {isLoadingMarkets ? (
               <div className="flex justify-center py-12">
                 <div className={`w-8 h-8 border-2 border-current/30 border-t-current rounded-full animate-spin ${textColor}`}></div>
@@ -282,7 +331,7 @@ export default function AIPage() {
                 selectedMarket={selectedMarket}
                 onSelectMarket={handleSelectMarket}
                 onAnalyze={handleAnalyzeMarket}
-                isNight={isNight}
+                isNight={nightStatus}
                 isLoading={isLoadingMarkets}
               />
             )}
@@ -292,41 +341,51 @@ export default function AIPage() {
           <div className="space-y-6">
             {/* Analysis Display */}
             {isLoadingAnalysis ? (
-              <div className={`${cardBgColor} border rounded-lg p-8 flex justify-center`}>
+              <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-8 flex justify-center`}>
                 <div className={`w-6 h-6 border-2 border-current/30 border-t-current rounded-full animate-spin ${textColor}`}></div>
               </div>
             ) : analysis ? (
-              <div className={`${cardBgColor} border rounded-lg p-6`}>
+              <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 max-h-96 overflow-y-auto`}>
                 <AnalysisDisplay
                   analysis={analysis}
                   selectedMarket={selectedMarket}
-                  isNight={isNight}
+                  isNight={nightStatus}
                   onTrade={() => setShowOrderForm(!showOrderForm)}
                 />
               </div>
             ) : selectedMarket ? (
-              <div className={`${cardBgColor} border rounded-lg p-8 text-center`}>
-                <p className={`${textColor} opacity-60 text-sm mb-2`}>
+              <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-8 text-center`}>
+                <p className={`${textColor} opacity-60 text-sm mb-4`}>
                   Ready to analyze this market?
                 </p>
+                <button
+                  onClick={() => analyzeMarket(selectedMarket)}
+                  className={`w-full py-3 rounded-2xl font-medium text-sm transition-all duration-300 border-2 mb-3 ${
+                    nightStatus
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-blue-300 text-white shadow-lg shadow-blue-500/50'
+                      : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-blue-400 text-white shadow-lg shadow-blue-500/30'
+                  } hover:scale-105`}
+                >
+                  Analyze This Market
+                </button>
                 <p className={`${textColor} opacity-40 text-xs`}>
-                  Click "Analyze This Market" to get AI insights
+                  Get AI insights for this market
                 </p>
               </div>
             ) : (
-              <div className={`${cardBgColor} border rounded-lg p-8 text-center`}>
+              <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-8 text-center`}>
                 <p className={`${textColor} opacity-60 text-sm mb-2`}>
                   No market selected
                 </p>
                 <p className={`${textColor} opacity-40 text-xs`}>
-                  Choose a market from the left to begin
+                  Choose a market from the list to begin
                 </p>
               </div>
             )}
 
             {/* Order Form */}
             {showOrderForm && selectedMarket && (
-              <div className={`${cardBgColor} border rounded-lg p-6`}>
+              <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 max-h-96 overflow-y-auto`}>
                 <h3 className={`text-lg font-light ${textColor} mb-4`}>
                   Place Order - {selectedMarket.title}
                 </h3>
@@ -335,14 +394,18 @@ export default function AIPage() {
                   walletAddress={address}
                   isConnected={isConnected}
                   onSuccess={handleOrderSuccess}
-                  isNight={isNight}
+                  isNight={nightStatus}
                 />
               </div>
             )}
 
             {/* Order Success */}
             {orderResult?.success && (
-              <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-4">
+              <div className={`backdrop-blur-xl border rounded-3xl p-4 ${
+                nightStatus 
+                  ? 'bg-green-500/20 border-green-500/30' 
+                  : 'bg-green-400/20 border-green-400/30'
+              }`}>
                 <p className={`text-sm ${textColor}`}>
                   Order submitted successfully! ID: {orderResult.orderID}
                 </p>
@@ -351,6 +414,7 @@ export default function AIPage() {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }

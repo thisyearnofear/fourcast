@@ -1,4 +1,4 @@
-# Getting Started & Development Guide
+# Getting Started Guide
 
 ## Quick Start: Polymarket Integration
 
@@ -20,7 +20,7 @@ npm run dev
 ```
 
 4. **Open browser:**
-Navigate to `http://localhost:3001`
+Navigate to `http://localhost:3000`
 
 5. **Test the feature:**
    - Allow location access or enter a city
@@ -54,66 +54,53 @@ nvm use 18.18
 # Verify: node -v → v18.18.0+, npm -v → 9.0+
 ```
 
-## Local Development Setup
+## Polymarket Integration Setup
 
-### 1. Clone & Install
+### 1. Environment Configuration
+
+Copy and configure the template:
+
 ```bash
-git clone <repository-url>
-cd weather-prediction-markets
-npm install --legacy-peer-deps
+cp .env.polymarket.example .env.local
 ```
 
-### 2. Environment Configuration
+Required variables:
+
+```env
+# Private key for signing orders
+POLYMARKET_PRIVATE_KEY=your_private_key_here
+
+# Optional: Builder API for production gasless transactions
+POLY_BUILDER_API_KEY=
+POLY_BUILDER_SECRET=
+POLY_BUILDER_PASSPHRASE=
+```
+
+**Getting Private Key:**
+
+- **Magic Link (Email Login)**: https://reveal.magic.link/polymarket
+- **Web3 Wallet (MetaMask)**: Settings → Account Details → Export Private Key
+- **Important**: Never commit `.env.local` to version control. It's in `.gitignore`.
+
+### 2. Install Dependencies
+
 ```bash
-cp .env.local.example .env.local
-# Edit with your API keys
+npm install
 ```
 
-### 3. AI Integration Setup
+Required packages (already in package.json):
+- `@polymarket/clob-client` - CLOB order submission
+- `@ethersproject/wallet` - Wallet management for server-side signing
+- `ethers` - Blockchain utilities
+- `wagmi` - Frontend wallet connection
 
-#### Get Venice AI Key
-1. Visit [Venice AI](https://venice.ai/)
-2. Sign up and get API key
-3. Add to `.env.local`:
-```bash
-VENICE_API_KEY=your_venice_api_key_here
-```
+### 3. Verify Wallet Configuration
 
-#### Model Selection
-- **Primary**: `qwen3-235b` (deep reasoning)
-- **Alternative**: `mistral-31-24b` (vision support)
+The integration uses your existing wallet setup via ConnectKit (top-right of app):
 
-#### Basic Usage
-```typescript
-import OpenAI from 'openai';
-const client = new OpenAI({
-    apiKey: process.env.VENICE_API_KEY,
-    baseURL: 'https://api.venice.ai/api/v1'
-});
-```
-
-### 4. Web3 Wallet Setup
-
-#### MetaMask Configuration
-1. Add Arbitrum One network to MetaMask:
-   - RPC URL: `https://arb1.arbitrum.io/rpc`
-   - Chain ID: `42161`
-   - Block Explorer: `https://arbiscan.io`
-
-2. Get USDC for trading (bridge from Ethereum mainnet)
-
-#### WalletConnect Project ID
-1. Create project at [WalletConnect Cloud](https://cloud.walletconnect.com/)
-2. Add to environment
-3. Configure domains: `localhost:3000, weather.markets`
-
-### 5. Start Development Server
-```bash
-npm run dev
-# With Turbopack (faster): npx next dev --turbo
-```
-
-Visit `http://localhost:3000` for the weather app with ConnectKit wallet integration!
+- Connected wallet address is passed to `/api/wallet` for balance checks
+- USDC balance must be > order cost for orders to submit
+- No manual approval needed (handled by `/api/orders` validation)
 
 ## Environment Variables
 
@@ -136,6 +123,54 @@ NEXT_PUBLIC_ARBITRUM_CHAIN_ID=42161
 POLYMARKET_PRIVATE_KEY=0x_your_private_key
 POLYMARKET_FUNDER_ADDRESS=0x_your_funder_address
 ```
+
+## Local Development Setup
+
+### AI Integration Setup
+
+#### Get Venice AI Key
+1. Visit [Venice AI](https://venice.ai/)
+2. Sign up and get API key
+3. Add to `.env.local`:
+```bash
+VENICE_API_KEY=your_venice_api_key_here
+```
+
+#### Model Selection
+- **Primary**: `qwen3-235b` (deep reasoning)
+- **Alternative**: `mistral-31-24b` (vision support)
+
+#### Basic Usage
+```typescript
+import OpenAI from 'openai';
+const client = new OpenAI({
+    apiKey: process.env.VENICE_API_KEY,
+    baseURL: 'https://api.venice.ai/api/v1'
+});
+```
+
+### Web3 Wallet Setup
+
+#### MetaMask Configuration
+1. Add Arbitrum One network to MetaMask:
+   - RPC URL: `https://arb1.arbitrum.io/rpc`
+   - Chain ID: `42161`
+   - Block Explorer: `https://arbiscan.io`
+
+2. Get USDC for trading (bridge from Ethereum mainnet)
+
+#### WalletConnect Project ID
+1. Create project at [WalletConnect Cloud](https://cloud.walletconnect.com/)
+2. Add to environment
+3. Configure domains: `localhost:3000, weather.markets`
+
+### Start Development Server
+```bash
+npm run dev
+# With Turbopack (faster): npx next dev --turbo
+```
+
+Visit `http://localhost:3000` for the weather app with ConnectKit wallet integration!
 
 ## Project Architecture
 
@@ -376,7 +411,7 @@ Content-Type: application/json
       "title": "Will Chicago Cubs win today?",
       "volume24h": 125000,
       "currentOdds": {"yes": 0.55, "no": 0.45},
-      "weatherRelevance": {"score": 8, "isWeatherSensitive": true}
+      "weatherRelevance": {"score": 7, "isWeatherSensitive": true}
     }
   ]
 }
@@ -524,5 +559,3 @@ With the app running:
 2. Connect wallet and switch to Arbitrum
 3. Explore Polymarket integration features
 4. Deploy to Vercel for production
-
-Ready? `npm run dev` and click the 💡 button!

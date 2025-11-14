@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import PageNav from '@/app/components/PageNav';
+import Scene3D from '@/components/Scene3D';
 
 const DiscoveryPage = () => {
   // State management
@@ -19,13 +20,61 @@ const DiscoveryPage = () => {
   const [analysis, setAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [expandedMarketId, setExpandedMarketId] = useState(null);
 
-  // Theme detection (matches your existing pattern)
-  const [isNight, setIsNight] = useState(true);
-  
-  useEffect(() => {
+  // Weather data for backdrop
+  const [weatherData, setWeatherData] = useState(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+
+  // Theme detection based on weather data
+  const [isNight, setIsNight] = useState(() => {
     const hour = new Date().getHours();
-    setIsNight(hour >= 19 || hour <= 6);
+    return hour >= 19 || hour <= 6;
+  });
+  const [timeOfDay, setTimeOfDay] = useState(() => {
+    const hour = new Date().getHours();
+    if (hour >= 19 || hour <= 6) return 'night';
+    if (hour >= 6 && hour < 8) return 'dawn';
+    if (hour >= 17 && hour < 19) return 'dusk';
+    return 'day';
+  });
+
+  // Load weather data on mount
+  useEffect(() => {
+    const loadWeather = async () => {
+      try {
+        const { weatherService } = await import('@/services/weatherService');
+        const location = await weatherService.getCurrentLocation();
+        const data = await weatherService.getCurrentWeather(location);
+        setWeatherData(data);
+        
+        // Set theme based on loaded weather
+        if (data?.location?.localtime) {
+          const localTime = data.location.localtime;
+          const currentHour = new Date(localTime).getHours();
+          setIsNight(currentHour >= 19 || currentHour <= 6);
+          
+          if (currentHour >= 19 || currentHour <= 6) {
+            setTimeOfDay('night');
+          } else if (currentHour >= 6 && currentHour < 8) {
+            setTimeOfDay('dawn');
+          } else if (currentHour >= 17 && currentHour < 19) {
+            setTimeOfDay('dusk');
+          } else {
+            setTimeOfDay('day');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load weather:', err);
+        // Fallback to time-based detection
+        const hour = new Date().getHours();
+        setIsNight(hour >= 19 || hour <= 6);
+      } finally {
+        setIsLoadingWeather(false);
+      }
+    };
+    
+    loadWeather();
   }, []);
 
   // Fetch markets on mount and filter changes
@@ -105,8 +154,8 @@ const DiscoveryPage = () => {
 
   const analyzeMarket = async (market) => {
     setSelectedMarket(market);
+    setExpandedMarketId(market.id);
     setIsAnalyzing(true);
-    setShowAnalysisModal(true);
     setAnalysis(null);
 
     try {
@@ -160,11 +209,18 @@ const DiscoveryPage = () => {
   };
 
   return (
-    <div className={`min-h-screen ${bgClass} transition-all duration-500`}>
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-black/5" />
+    <div className="min-h-screen relative">
+      {/* 3D Scene Background */}
+      <div className="fixed inset-0 z-0">
+        <Scene3D 
+          weatherData={weatherData}
+          isLoading={isLoadingWeather}
+        />
+      </div>
       
-      <div className="relative z-10 p-4 sm:p-6 max-w-7xl mx-auto">
+      {/* Scrollable Content Container */}
+      <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full">
         {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-12">
           <div className="mb-6 sm:mb-0">
@@ -191,8 +247,8 @@ const DiscoveryPage = () => {
         </header>
 
         {/* Search and Filters */}
-        <div className={`backdrop-blur-md border rounded-3xl p-6 mb-8 transition-all duration-300 ${
-          isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'
+        <div className={`backdrop-blur-xl border rounded-3xl p-6 mb-8 transition-all duration-300 ${
+          isNight ? 'bg-slate-900/60 border-white/20' : 'bg-white/60 border-white/40'
         }`}>
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
             {/* Search Input */}
@@ -300,13 +356,25 @@ const DiscoveryPage = () => {
         {/* Markets Grid */}
         {!isLoading && !error && markets.length > 0 && (
           <div className="space-y-4">
-            {markets.map((market, index) => (
+            {markets.map((market, index) => {
+              const isExpanded = expandedMarketId === market.id;
+              const isHidden = expandedMarketId && !isExpanded;
+              
+              return (
               <div
                 key={market.id || index}
-                className={`backdrop-blur-md border rounded-3xl p-5 sm:p-6 transition-all duration-300 hover:scale-[1.01] ${
-                  isNight 
-                    ? 'bg-white/5 border-white/10 hover:bg-white/10' 
-                    : 'bg-black/5 border-black/10 hover:bg-black/10'
+                className={`backdrop-blur-xl border rounded-3xl transition-all duration-500 ${
+                  isExpanded
+                    ? 'fixed inset-4 p-8 z-40 overflow-y-auto'
+                    : 'p-5 sm:p-6'
+                } ${
+                  isHidden
+                    ? 'opacity-0 pointer-events-none scale-95'
+                    : `opacity-100 hover:scale-[1.01] ${
+                      isNight 
+                        ? 'bg-slate-900/70 border-white/20 hover:bg-slate-900/80' 
+                        : 'bg-white/70 border-white/40 hover:bg-white/75'
+                    }`
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -318,14 +386,14 @@ const DiscoveryPage = () => {
                     
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                        {market.tags && market.tags.length > 0 && (
-                         market.tags.slice(0, 2).map((tag, idx) => (
-                           <span key={idx} className={`px-3 py-1 rounded-full font-light border ${
-                             isNight ? 'bg-purple-500/10 text-purple-200 border-purple-500/20' : 'bg-purple-400/10 text-purple-800 border-purple-400/20'
-                           }`}>
-                             {tag}
-                           </span>
-                         ))
-                       )}
+                          market.tags.slice(0, 2).map((tag, idx) => (
+                            <span key={idx} className={`px-3 py-1 rounded-full font-light border ${
+                              isNight ? 'bg-purple-500/10 text-purple-200 border-purple-500/20' : 'bg-purple-400/10 text-purple-800 border-purple-400/20'
+                            }`}>
+                              {typeof tag === 'string' ? tag : tag.label || tag}
+                            </span>
+                          ))
+                        )}
                        
                        {market.volume24h && (
                          <span className={`px-3 py-1 rounded-full font-light border ${
@@ -456,34 +524,173 @@ const DiscoveryPage = () => {
                     )}
                   </div>
 
-                  {/* Analyze Button */}
+                  {/* Analyze Button or Back Button */}
                   <div className="flex-shrink-0">
-                    <button
-                      onClick={() => analyzeMarket(market)}
-                      disabled={isAnalyzing}
-                      className={`px-6 py-3 rounded-2xl font-light text-sm transition-all duration-300 disabled:opacity-40 hover:scale-105 border ${
-                        isNight
-                          ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-200 border-blue-400/30'
-                          : 'bg-gradient-to-r from-blue-400/20 to-purple-400/20 hover:from-blue-400/30 hover:to-purple-400/30 text-blue-800 border-blue-500/30'
-                      }`}
-                    >
-                      {isAnalyzing && selectedMarket?.id === market.id ? (
-                        <div className="flex items-center space-x-2">
-                          <div className={`w-3 h-3 border ${
-                            isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'
-                          } rounded-full animate-spin`}></div>
-                          <span>Analyzing...</span>
+                    {isExpanded ? (
+                      <button
+                        onClick={() => setExpandedMarketId(null)}
+                        className={`px-6 py-3 rounded-2xl font-light text-sm transition-all duration-300 border ${
+                          isNight
+                            ? 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+                            : 'bg-black/10 hover:bg-black/20 text-black border-black/20'
+                        }`}
+                      >
+                        ← Back
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => analyzeMarket(market)}
+                        disabled={isAnalyzing}
+                        className={`px-6 py-3 rounded-2xl font-light text-sm transition-all duration-300 disabled:opacity-40 hover:scale-105 border ${
+                          isNight
+                            ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-200 border-blue-400/30'
+                            : 'bg-gradient-to-r from-blue-400/20 to-purple-400/20 hover:from-blue-400/30 hover:to-purple-400/30 text-blue-800 border-blue-500/30'
+                        }`}
+                      >
+                        {isAnalyzing && selectedMarket?.id === market.id ? (
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-3 h-3 border ${
+                              isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'
+                            } rounded-full animate-spin`}></div>
+                            <span>Analyzing...</span>
+                          </div>
+                        ) : (
+                          'Analyze Edge'
+                        )}
+                      </button>
+                    )}
+                    </div>
+                    </div>
+
+                    {/* Expanded Analysis View */}
+                    {isExpanded && (
+                    <div className="mt-8 pt-8 border-t border-white/10">
+                    <div className="mb-8">
+                      <h2 className={`text-2xl font-light ${textColor} mb-2`}>Weather Edge Analysis</h2>
+                      <p className={`${textColor} opacity-60 text-sm`}>AI-powered market analysis</p>
+                    </div>
+
+                    {isAnalyzing ? (
+                      <div className="flex flex-col items-center justify-center py-16">
+                        <div className={`w-12 h-12 border-2 ${
+                          isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'
+                        } rounded-full animate-spin mb-4`}></div>
+                        <span className={`${textColor} opacity-70`}>Running AI analysis on weather impact...</span>
+                      </div>
+                    ) : analysis ? (
+                      <div className="space-y-6">
+                        {/* Assessment Summary */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="text-center">
+                            <div className="text-2xl mb-2">{getConfidenceIcon(analysis.assessment?.confidence)}</div>
+                            <div className={`text-sm ${textColor} opacity-70 mb-1`}>Confidence</div>
+                            <div className={`text-sm font-light ${getConfidenceColor(analysis.assessment?.confidence)}`}>
+                              {analysis.assessment?.confidence || 'UNKNOWN'}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl mb-2">
+                              {analysis.assessment?.weather_impact === 'HIGH' ? '⚠️' : 
+                               analysis.assessment?.weather_impact === 'MEDIUM' ? '⚡' : '✅'}
+                            </div>
+                            <div className={`text-sm ${textColor} opacity-70 mb-1`}>Weather Impact</div>
+                            <div className={`text-sm font-light ${textColor}`}>
+                              {analysis.assessment?.weather_impact || 'UNKNOWN'}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl mb-2">
+                              {analysis.assessment?.odds_efficiency === 'INEFFICIENT' ? '🎯' : '⚖️'}
+                            </div>
+                            <div className={`text-sm ${textColor} opacity-70 mb-1`}>Market Efficiency</div>
+                            <div className={`text-sm font-light ${
+                              analysis.assessment?.odds_efficiency === 'INEFFICIENT' ? 'text-orange-400' : 'text-green-400'
+                            }`}>
+                              {analysis.assessment?.odds_efficiency || 'UNKNOWN'}
+                            </div>
+                          </div>
                         </div>
-                      ) : (
-                        'Analyze Edge'
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+
+                        {/* Analysis Reasoning */}
+                        <div className={`backdrop-blur-sm border rounded-xl p-4 ${
+                          isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'
+                        }`}>
+                          <h4 className={`text-sm font-light ${textColor} opacity-90 mb-3`}>AI Analysis</h4>
+                          <p className={`text-sm ${textColor} opacity-80 leading-relaxed`}>
+                            {analysis.reasoning || 'Analysis details not available'}
+                          </p>
+                        </div>
+
+                        {/* Key Factors */}
+                        {analysis.key_factors && analysis.key_factors.length > 0 && (
+                          <div>
+                            <h4 className={`text-sm font-light ${textColor} opacity-90 mb-3`}>Key Factors</h4>
+                            <ul className="space-y-2">
+                              {analysis.key_factors.map((factor, idx) => (
+                                <li key={idx} className={`text-sm ${textColor} opacity-70 flex items-start`}>
+                                  <span className="mr-3 mt-2 w-1.5 h-1.5 bg-current rounded-full flex-shrink-0"></span>
+                                  {factor}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Recommendation */}
+                        {analysis.recommended_action && (
+                          <div className={`backdrop-blur-sm border rounded-xl p-4 ${
+                            isNight ? 'bg-blue-500/10 border-blue-500/20' : 'bg-blue-400/10 border-blue-400/20'
+                          }`}>
+                            <h4 className={`text-sm font-light ${textColor} opacity-90 mb-2`}>Recommendation</h4>
+                            <p className={`text-sm ${textColor} opacity-80`}>
+                              {analysis.recommended_action}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Trade Button */}
+                        <div className="flex justify-center pt-4">
+                          <button
+                            onClick={() => {
+                              console.log('Trade button clicked for market:', market.id);
+                              alert('Trading functionality coming soon!');
+                            }}
+                            className={`px-8 py-3 rounded-xl font-light transition-all duration-300 hover:scale-105 ${
+                              isNight
+                                ? 'bg-gradient-to-r from-green-500/40 to-blue-500/40 hover:from-green-500/60 hover:to-blue-500/60 text-white border border-white/20'
+                                : 'bg-gradient-to-r from-green-400/40 to-blue-400/40 hover:from-green-400/60 hover:to-blue-400/60 text-black border border-black/20'
+                            }`}
+                          >
+                            Trade This Edge →
+                          </button>
+                        </div>
+
+                        {/* Cache Info */}
+                        {analysis.cached && (
+                          <div className={`text-xs ${textColor} opacity-50 text-center`}>
+                            Results cached from {analysis.source} • Analysis time saved
+                          </div>
+                        )}
+
+                        {/* Disclaimer */}
+                        <div className={`text-xs ${textColor} opacity-40 text-center pt-4 border-t ${
+                          isNight ? 'border-white/10' : 'border-black/10'
+                        }`}>
+                          AI analysis for informational purposes only. Always do your own research.
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`text-center py-12 ${textColor} opacity-60`}>
+                        Analysis failed. Please try again.
+                      </div>
+                    )}
+                    </div>
+                    )}
+                    </div>
+                    );
+                    })}
+                    </div>
+                    )}
 
         {/* No Results */}
         {!isLoading && !error && markets.length === 0 && (
@@ -512,9 +719,10 @@ const DiscoveryPage = () => {
             </div>
           </div>
         )}
-      </div>
+        </div>
+        </div>
 
-      {/* Analysis Modal */}
+        {/* Analysis Modal */}
       {showAnalysisModal && selectedMarket && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"

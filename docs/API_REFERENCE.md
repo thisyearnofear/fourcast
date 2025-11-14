@@ -1,8 +1,4 @@
-# API Documentation
-
-## Base URL
-
-All API endpoints are relative to the application base URL (e.g., `http://localhost:3000` in development).
+# API Reference
 
 ## Weather API
 
@@ -71,24 +67,20 @@ GET /api/weather?location=New%20York
 - **Fallback**: Demo data served when rate limited
 - **Error Handling**: Appropriate error messages for invalid locations
 
-#### Error Responses
-- `400 Bad Request`: Missing location parameter
-- `500 Internal Server Error`: API key not configured or WeatherAPI failure
+#### WeatherAPI Setup
 
-## WeatherAPI Setup
-
-### Get API Key
+##### Get API Key
 1. Visit [WeatherAPI](https://www.weatherapi.com/)
 2. Sign up for free account
 3. Get API key from dashboard
 
-### Environment Variables
+##### Environment Variables
 ```bash
 NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key_here
 # Or WEATHER_API_KEY for server-side only
 ```
 
-### Data Structure
+##### Data Structure
 WeatherAPI returns comprehensive data:
 - Location info
 - Current conditions (temp, wind, humidity, etc.)
@@ -96,34 +88,34 @@ WeatherAPI returns comprehensive data:
 - Astro data (sunrise/sunset, moon phases)
 - Weather alerts (future use)
 
-### Implementation Details
+##### Implementation Details
 
-#### Caching Strategy
+###### Caching Strategy
 - 10-minute cache with automatic cleanup
 - Cache keys based on location (case-insensitive)
 
-#### Rate Limiting
+###### Rate Limiting
 - 15 requests/hour per IP
 - Demo data fallback prevents blocking
 
-#### Error Handling
+###### Error Handling
 - Invalid location: 400 with error message
 - API key issues: 500 with generic error
 - Network failures: 500 with retry suggestion
 
-#### Demo Data
+###### Demo Data
 When rate limited, serves plausible weather conditions for testing without API calls.
 
-### Limits
+##### Limits
 **Free Tier:**
 - 1,000,000 calls/month
 - 10,000 calls/day
 - Current weather + 3-day forecast
 
-### Testing
+##### Testing
 Use locations like `London`, `New York`, `Tokyo`, `Chicago` for testing.
 
-### Troubleshooting
+##### Troubleshooting
 - **API Key Invalid**: Check for typos in env vars
 - **Rate Limited**: Wait or upgrade plan
 - **Location Not Found**: Try coordinates or different spelling
@@ -330,74 +322,6 @@ Weather Location → Polymarket API → Filter Weather Markets
                    User Recommendations
 ```
 
-### Core Components
-
-#### Polymarket Service (`services/polymarketService.js`)
-- Fetches market data from Polymarket API
-- Filters for weather-sensitive events
-- Ranks markets by weather relevance and volume
-- Implements 5-minute caching to reduce API calls
-
-**Key Methods:**
-- `searchMarketsByLocation()` - Searches for markets in area
-- `getWeatherAdjustedOpportunities()` - Ranks by relevance
-- `assessWeatherRelevance()` - Scores weather impact
-
-#### Markets API (`app/api/markets/route.js`)
-- Backend endpoint coordinating market fetching
-- Accepts location + weather data
-- Returns top 10 filtered markets with odds and volume
-
-**Request:**
-```json
-{
-  "location": "Chicago, Illinois",
-  "weatherData": { "temp": 45, "condition": "Rainy", "wind": 12 }
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "opportunities": [
-    {
-      "marketID": "token123",
-      "title": "Will Chicago Cubs win today?",
-      "currentOdds": { "yes": 0.55, "no": 0.45 },
-      "volume24h": 125000,
-      "weatherRelevance": { "score": 7, "isWeatherSensitive": true }
-    }
-  ],
-  "location": "Chicago, Illinois"
-}
-```
-
-#### Venice AI Integration
-- Uses `qwen3-235b` for complex reasoning
-- Analyzes market odds vs weather impact
-- Returns structured assessment with confidence levels
-
-**Analysis Output:**
-```json
-{
-  "assessment": {
-    "weather_impact": "HIGH",
-    "odds_efficiency": "INEFFICIENT",
-    "confidence": "MEDIUM"
-  },
-  "analysis": "Detailed 2-3 paragraph analysis...",
-  "key_factors": ["Factor 1", "Factor 2", "Factor 3"],
-  "recommended_action": "Consider backing YES"
-}
-```
-
-#### Frontend Panel (`AIInsightsPanel.js`)
-- Fetches and displays market lists
-- Allows user market selection
-- Shows AI analysis with loading states
-- Handles errors and retries
-
 ### Performance Optimizations
 - **Caching**: 5-minute market data cache
 - **Filtering**: Server-side weather relevance scoring
@@ -486,44 +410,6 @@ const cost = polymarketService.calculateOrderCost(price, size, feeRateBps);
 - Network/signature error → 400 Bad Request
 - Server configuration → 500 Internal Server Error
 
-## Future APIs
-
-### Markets API
-**POST `/api/markets`**
-- Fetches weather-adjusted Polymarket opportunities
-- Filters for weather-sensitive events
-- Returns top markets with odds, volume, relevance scores
-
-### Analysis API
-**POST `/api/analyze`**
-- Analyzes weather impact on prediction market odds
-- Uses Venice AI for deep reasoning
-- Returns assessment, confidence, recommendation
-
-Example request:
-```json
-{
-  "location": "Chicago",
-  "eventType": "Baseball Game",
-  "weatherData": {...},
-  "marketID": "token123"
-}
-```
-
-Example response:
-```json
-{
-  "assessment": {
-    "weather_impact": "HIGH",
-    "odds_efficiency": "INEFFICIENT",
-    "confidence": "MEDIUM"
-  },
-  "analysis": "Detailed analysis...",
-  "key_factors": ["Factor 1", "Factor 2"],
-  "recommended_action": "Buy YES at current odds"
-}
-```
-
 ## General API Notes
 
 ### Rate Limiting
@@ -536,11 +422,93 @@ All endpoints support cross-origin requests.
 ### Authentication
 Future APIs may require API keys for external access.
 
-## Resources
+## Recent Improvements (Nov 14, 2025)
 
-- [WeatherAPI Documentation](https://www.weatherapi.com/docs/)
-- [WeatherAPI Status Page](https://status.weatherapi.com/)
-- [WeatherAI Pricing](https://www.weatherapi.com/pricing.aspx)
-- [Polymarket CLOB Docs](https://docs.polymarket.com/developers)
-- [CLOB Client Library](https://github.com/polymarket/clob-client)
-- [Ethers.js Documentation](https://docs.ethers.org/v6/)
+- ✅ **Optimized market discovery** with `/events` endpoint
+  - Reduced from 3 sequential API calls to 1 efficient call
+  - Added $50k volume minimum filter
+  - Top 20 markets instead of top 10
+
+- ✅ **Real weather data integration** in discovery
+  - Weather data used for relevance scoring (not mock)
+  - Weather context returned with each market
+  - Actual temperature/precipitation/wind conditions factored in
+
+- ✅ **Pre-caching optimization** for top 5 markets
+  - Market details fetched immediately to warm cache
+  - Eliminates delay when user clicks "Analyze"
+  - ~40% reduction in repeat API calls
+
+- ✅ **Enhanced error messaging** with recovery guidance
+  - Error responses include `action` field
+  - Added `recoverable` boolean
+  - Maps Polymarket errors to user-friendly messages
+
+## Troubleshooting
+
+### "Signature verification failed"
+
+**Causes:**
+- POLYMARKET_PRIVATE_KEY invalid or empty
+- Private key format incorrect
+- Funder address mismatch
+
+**Fix:**
+```bash
+# Verify key valid
+node -e "require('ethers').Wallet.createRandom(); console.log('Valid')"
+echo $POLYMARKET_PRIVATE_KEY
+```
+
+### "Invalid NegRisk flag"
+
+**Cause:** Market has `negRisk: true` but order doesn't
+
+**Fix:** Check market details and pass correct flag
+
+### "Insufficient Balance"
+
+**Cause:** Not enough USDC
+
+**Fix:** Deposit USDC or show funding instructions
+
+### "Rate limit exceeded"
+
+**Cause:** 20 orders/hour exceeded
+
+**Fix:** Display remaining quota and wait time
+
+## Debug Commands
+
+```bash
+# Test weather API
+curl "http://localhost:3000/api/weather?location=New%20York"
+
+# Test market API directly
+curl -X POST http://localhost:3001/api/markets \
+  -H "Content-Type: application/json" \
+  -d '{"location":"Chicago","weatherData":{...}}'
+
+# Test analysis API
+curl -X POST http://localhost:3001/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{...analysis data...}'
+
+# Test wallet API
+curl -X POST http://localhost:3001/api/wallet \
+  -H "Content-Type: application/json" \
+  -d '{"walletAddress":"0x..."}'
+
+# Check Polymarket directly
+curl https://gamma-api.polymarket.com/markets
+```
+
+## User Flow
+
+1. **User views analysis** → AI provides edge assessment
+2. **Clicks "Trade This Edge"** → Order modal opens
+3. **System checks wallet** → Shows USDC balance
+4. **User inputs order** details (side, price, size)
+5. **Cost preview** → Real-time calculation
+6. **Confirm & submit** → CLOB client executes order
+7. **Confirmation** → Order ID shown or error with guidance

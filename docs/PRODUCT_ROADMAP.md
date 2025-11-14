@@ -1,4 +1,4 @@
-# Product Roadmap & Vision
+# Product Roadmap
 
 ## Executive Summary
 
@@ -75,7 +75,7 @@
 
 ---
 
-## 🚀 Implementation Progress (Nov 14, 2025)
+## Implementation Progress (Nov 14, 2025)
 
 ### Week 1 Fixes - COMPLETED
 - ✅ **Optimized market discovery** with `/events` endpoint
@@ -369,7 +369,7 @@ No persistent database needed for MVP. Use Redis for:
 ### Week 4+ (Dec) - Scaling
 - [ ] Background market scanning
 - [ ] Dashboard with rankings
-- [ ] Portfolio analytics
+- [ ] Analytics page
 - [ ] Mobile optimization
 
 ---
@@ -378,29 +378,29 @@ No persistent database needed for MVP. Use Redis for:
 
 ### 1. **Add Week 0: Hypothesis Validation**
 
-**Old approach:** Jump to Week 1 database setup  
+**Old approach:** Jump to Week 1 database setup
 **New approach:** Spend 2-3 days validating core assumptions
 
 **Why:** Risk-first thinking. Validate before committing 4 weeks.
 
 ### 2. **Simplify Infrastructure: Redis Only (No Supabase)**
 
-**Old approach:** Complex PostgreSQL schema  
+**Old approach:** Complex PostgreSQL schema
 **New approach:** Simple Redis caching (3 keys)
 
 **Impact:** Week 1 goes from 5 days to 2-3 days.
 
 ### 3. **Strip Down UI to Absolute Minimum**
 
-**Old approach:** Rich discovery UI with filters  
+**Old approach:** Rich discovery UI with filters
 **New approach:** Single page: list sorted by volume, one-click [Analyze]
 
-**Removed:** Category/date/liquidity filters  
+**Removed:** Category/date/liquidity filters
 **Kept:** Market list + [Analyze] button
 
 ### 4. **Redefine Success Metrics: Kill the Product Fast**
 
-**Old approach:** Many metrics  
+**Old approach:** Many metrics
 **New approach:** 4 binary metrics that prove PMF
 
 **Fail metrics:**
@@ -412,14 +412,14 @@ No persistent database needed for MVP. Use Redis for:
 ### 5. **Explicit "DO NOT BUILD" List**
 
 **Don't build:**
-- Complex filtering UI
-- Portfolio page (polymarket tracking)
-- Background jobs (on-demand only)
-- Beautiful charts
-- Mobile app
-- Analytics export
+- ❌ Automated background scanning
+- ❌ Complex discovery filters
+- ❌ Analytics page
+- ❌ Beautiful charts
+- ❌ Mobile app
+- ❌ Social features
 
-**Why?** Solve scaling problems after PMF validated.
+**Why?** Scaling problems, not MVP problems. Build after PMF validated.
 
 ---
 
@@ -429,7 +429,7 @@ No persistent database needed for MVP. Use Redis for:
 |------|--------|-------|--------|
 | **Infrastructure** | Supabase setup + migrations | Redis only | 2 days saved |
 | **Discovery UI** | 4 filter types | 1 sort option | 1 day saved |
-| **Portfolio** | Full analytics page | Optional Week 4 | 1 day saved |
+| **Analytics** | Full analytics page | Optional Week 4 | 1 day saved |
 | **Success metrics** | 7 metrics | 4 critical metrics | Clearer focus |
 | **Pre-build validation** | Buried in text | Week 0, explicit | Risks front-loaded |
 | **Total timeline** | ~4 weeks + setup | ~3 weeks + 2 days validation | Fast fail |
@@ -459,9 +459,9 @@ No persistent database needed for MVP. Use Redis for:
 ## Risk Assessment
 
 ### High Risk (Product-Blocking)
-1. **Location extraction <70%** → Mitigation: Week 0 validation ✅
+1. **Location extraction fails** → Mitigation: Week 0 validation ✅
 2. **Venice AI doesn't find edges** → Mitigation: Week 0 validation ✅
-3. **Friction too high (load >2 min)** → Mitigation: Minimal UI, caching
+3. **Friction is too high (load >2 min)** → Mitigation: Minimal UI, caching
 4. **Market supply low** → Mitigation: Week 0 validation ✅
 
 **Current:** All mitigations in place, risks are LOW
@@ -470,7 +470,7 @@ No persistent database needed for MVP. Use Redis for:
 
 ## The Right Mindset
 
-**Old:** "Build everything and see what sticks"  
+**Old:** "Build everything and see what sticks"
 **New:** "What's the minimum code to prove the core hypothesis, and how fast can we learn if it's wrong?"
 
 If you hit Week 3 and HIGH confidence edges win <55%, you've wasted 3 weeks. But if you validate in Week 0 and find location extraction fails, you've saved yourself.
@@ -507,18 +507,18 @@ If you hit Week 3 and HIGH confidence edges win <55%, you've wasted 3 weeks. But
 **DO NOT START WEEK 1 UNTIL THESE PASS:**
 
 ### Question 1: Can we extract location from market titles?
-**Test:** 30 random Polymarket markets  
-**Pass:** >70% accuracy  
+**Test:** 30 random Polymarket markets
+**Pass:** >70% accuracy
 **Fail:** Add more cities or pivot
 
 ### Question 2: Does Venice AI consistently analyze markets?
-**Test:** Same market twice  
-**Pass:** Variance <15%  
+**Test:** Same market twice
+**Pass:** Variance <15%
 **Fail:** Adjust prompt
 
 ### Question 3: Is there market supply?
-**Test:** Browse Polymarket  
-**Pass:** >10 weather-sensitive markets daily  
+**Test:** Browse Polymarket
+**Pass:** >10 weather-sensitive markets daily
 **Fail:** Pivot or wait
 
 ---
@@ -528,28 +528,29 @@ If you hit Week 3 and HIGH confidence edges win <55%, you've wasted 3 weeks. But
 ### Not Building Yet (Roadmap: "Do this after MVP validation")
 - ❌ Automated background scanning
 - ❌ Complex discovery filters
-- ❌ Portfolio page analytics
+- ❌ Analytics page
 - ❌ Beautiful charts
 - ❌ Mobile app
 
-**Why?** Scaling problems, not MVP problems. Build after users ask.
+**Why?** Scaling problems, not MVP problems. Build after PMF validated.
 
 ---
 
 ## PMF Risk Map
 
 ### High Risk (Kills the Product)
-**1. Location extraction fails**  
-**2. Venice AI doesn't find mispricings**  
+**1. Location extraction fails**
+**2. Venice AI doesn't find mispricings**
 **3. Friction is too high**
 
 ### Medium Risk
-**4. Not enough analyzable markets**  
+**4. Not enough analyzable markets**
 **5. Users don't want to trade on edges**
 
 ### Low Risk
-- Portfolio complexity
+- Analytics complexity
 - Advanced features
+- Social features
 
 ---
 

@@ -15,13 +15,13 @@ export default function MarketSelector({
   }
 
   const textColor = isNight ? 'text-white' : 'text-black';
-  const bgColor = isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10';
-  const hoverBgColor = isNight ? 'hover:bg-white/10' : 'hover:bg-black/10';
-  const activeBgColor = isNight ? 'bg-blue-500/20 border-blue-400/30' : 'bg-blue-400/20 border-blue-500/30';
+  const bgColor = isNight ? 'bg-slate-800/80 border-white/30' : 'bg-slate-100/90 border-black/30';
+  const hoverBgColor = isNight ? 'hover:bg-slate-700/80' : 'hover:bg-slate-200/80';
+  const activeBgColor = isNight ? 'bg-blue-700/50 border-blue-400/60' : 'bg-blue-200/70 border-blue-500/60';
   const buttonBgColor = isNight 
-    ? 'bg-gradient-to-r from-blue-500/30 to-purple-500/30 hover:from-blue-500/40 hover:to-purple-500/40' 
-    : 'bg-gradient-to-r from-blue-400/30 to-purple-400/30 hover:from-blue-400/40 hover:to-purple-400/40';
-  const buttonTextColor = isNight ? 'text-blue-200' : 'text-blue-800';
+    ? 'bg-gradient-to-r from-blue-600/40 to-purple-600/40 hover:from-blue-600/60 hover:to-purple-600/60' 
+    : 'bg-gradient-to-r from-blue-300/60 to-purple-300/60 hover:from-blue-400/70 hover:to-purple-400/70';
+  const buttonTextColor = isNight ? 'text-blue-100' : 'text-blue-900';
 
   return (
     <div className="space-y-6">
@@ -35,18 +35,18 @@ export default function MarketSelector({
       </div>
 
       <div className="space-y-3 max-h-[480px] overflow-y-auto pr-2">
-        {markets.map((market, index) => (
-          <button
-            key={market.marketID || index}
-            onClick={() => onSelectMarket(market)}
-            className={`w-full p-4 rounded-2xl border backdrop-blur-sm transition-all text-center duration-200 ${
-              selectedMarket?.marketID === market.marketID
-                ? activeBgColor
-                : `${bgColor} ${hoverBgColor}`
-            }`}
-          >
-            {/* Title */}
-            <div className={`${textColor} font-light line-clamp-2 text-sm mb-3 tracking-wide`}>
+         {markets.map((market, index) => (
+           <button
+             key={market.marketID || index}
+             onClick={() => onSelectMarket(market)}
+             className={`w-full p-4 rounded-2xl border backdrop-blur-sm transition-all text-center duration-200 ${
+               selectedMarket?.marketID === market.marketID
+                 ? activeBgColor
+                 : `${bgColor} ${hoverBgColor}`
+             }`}
+           >
+             {/* Title */}
+             <div className={`${textColor} font-light line-clamp-2 text-sm mb-3 tracking-wide`}>
               {market.title || 'Unnamed Market'}
             </div>
 
@@ -57,7 +57,7 @@ export default function MarketSelector({
                   const tagLabel = typeof tag === 'string' ? tag : (tag.label || '');
                   return (
                     <span key={idx} className={`text-xs px-2.5 py-1 rounded-full font-light ${
-                      isNight ? 'bg-purple-500/20 text-purple-200 border border-purple-500/20' : 'bg-purple-400/20 text-purple-800 border border-purple-400/20'
+                      isNight ? 'bg-purple-600/40 text-purple-100 border border-purple-400/50' : 'bg-purple-200/60 text-purple-900 border border-purple-400/60'
                     }`}>
                       {tagLabel}
                     </span>
@@ -89,8 +89,8 @@ export default function MarketSelector({
                 ) : null}
               </div>
               
-              {/* Row 2: Edge Score & Confidence */}
-              {market.edgeScore !== undefined && market.confidence && (
+              {/* Row 2: Edge Score & Liquidity */}
+              {market.edgeScore !== undefined && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="text-center">
                     <span className="opacity-50 text-xs block">Edge Score</span>
@@ -103,14 +103,41 @@ export default function MarketSelector({
                     </div>
                   </div>
                   <div className="text-center">
-                    <span className="opacity-50 text-xs block">Confidence</span>
-                    <div className={`font-light ${
-                      market.confidence === 'HIGH' ? 'text-green-400' :
-                      market.confidence === 'MEDIUM' ? 'text-yellow-400' :
-                      'text-red-400'
-                    }`}>
-                      {market.confidence}
-                    </div>
+                    <span className="opacity-50 text-xs block">Liquidity</span>
+                    <div className="font-light">${((market.liquidity || market.orderBookMetrics?.totalDepth || 0) / 1000).toFixed(0)}K</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Primary Weather Driver - Centered at bottom */}
+              {market.edgeFactors ? (
+                <div className="text-center pt-1">
+                  <span className="opacity-50 text-xs block mb-1">Weather Driver</span>
+                  <div className={`text-xs font-light px-2.5 py-1 rounded-full inline-block ${
+                    isNight ? 'bg-blue-600/30 text-blue-200' : 'bg-blue-200/50 text-blue-900'
+                  }`}>
+                    {(() => {
+                      const factors = market.edgeFactors;
+                      const driverMap = [
+                        { name: 'Direct Weather', value: factors.weatherDirect },
+                        { name: 'Outdoor Event', value: factors.weatherSensitiveEvent },
+                        { name: 'Current Conditions', value: factors.contextualWeatherImpact },
+                        { name: 'Inefficiency', value: factors.asymmetrySignal }
+                      ];
+                      const primary = driverMap.reduce((prev, current) => 
+                        current.value > prev.value ? current : prev
+                      );
+                      return primary.name;
+                    })()}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center pt-1">
+                  <span className="opacity-50 text-xs block mb-1">Category</span>
+                  <div className={`text-xs font-light px-2.5 py-1 rounded-full inline-block ${
+                    isNight ? 'bg-slate-600/30 text-slate-200' : 'bg-slate-200/50 text-slate-900'
+                  }`}>
+                    {market.eventType || 'Other'}
                   </div>
                 </div>
               )}
@@ -119,16 +146,7 @@ export default function MarketSelector({
         ))}
       </div>
 
-      {selectedMarket && (
-        <button
-          onClick={() => onAnalyze(selectedMarket)}
-          className={`w-full py-3 rounded-2xl font-light text-sm transition-all duration-300 border ${buttonBgColor} ${buttonTextColor} ${
-            isNight ? 'border-blue-400/30 hover:scale-105' : 'border-blue-500/30 hover:scale-105'
-          }`}
-        >
-          Analyze This Market
-        </button>
-      )}
+
     </div>
   );
 }
