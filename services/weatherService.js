@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-//true false for prod or dev
+// Updated for Next.js - always use API route
 const USE_API_ROUTE = true;
 const API_BASE = '/api';
 const WEATHER_API_BASE = 'https://api.weatherapi.com/v1';
-const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
+const API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
 
 // Demo data for when Vercel service is unavailable
 const getDemoWeatherData = (requestedLocation) => ({
