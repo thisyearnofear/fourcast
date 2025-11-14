@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Scene3D from '@/components/Scene3D';
 import LocationSelector from '@/components/LocationSelector';
+import AITriggerButton from '@/components/AITriggerButton';
+import AIInsightsPanel from '@/components/AIInsightsPanel';
 import { ConnectKitButton } from 'connectkit';
 import { weatherService } from '@/services/weatherService';
 
@@ -15,6 +17,8 @@ export default function HomePage() {
   const [exitPortalFunction, setExitPortalFunction] = useState(null);
   const [portalWeatherData, setPortalWeatherData] = useState(null);
   const [errorSearchQuery, setErrorSearchQuery] = useState('');
+  const [showAIInsights, setShowAIInsights] = useState(false);
+  const [isAIAnalyzing, setIsAIAnalyzing] = useState(false);
 
   useEffect(() => {
     console.log('Page loaded, calling loadCurrentLocationWeather');
@@ -82,11 +86,27 @@ export default function HomePage() {
     }
   };
 
-  // Use portal weather data when in portal mode, otherwise use main weather data
-  const displayWeatherData = isPortalMode && portalWeatherData ? portalWeatherData : weatherData;
+  // Memoized callbacks to prevent unnecessary re-renders
+  const handleAITrigger = useCallback(() => {
+    setShowAIInsights(prev => !prev);
+  }, []);
 
-  const isNight = isNightTime();
-  const textColor = (isPortalMode || !isNight) ? 'text-black' : 'text-white';
+  const handleAIPanelClose = useCallback(() => {
+    setShowAIInsights(false);
+  }, []);
+
+  // Use portal weather data when in portal mode, otherwise use main weather data
+  const displayWeatherData = useMemo(() =>
+    (isPortalMode && portalWeatherData ? portalWeatherData : weatherData),
+    [isPortalMode, portalWeatherData, weatherData]
+  );
+
+  // Memoized calculated values
+  const isNight = useMemo(() => isNightTime(), [weatherData?.location?.localtime]);
+  const textColor = useMemo(() =>
+    (isPortalMode || !isNight) ? 'text-black' : 'text-white',
+    [isPortalMode, isNight]
+  );
 
   return (
     <div className="w-screen h-screen min-h-dvh relative overflow-hidden">
@@ -211,6 +231,28 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </>
+      )}
+
+      {/* AI Components - Render when weather data is available */}
+      {weatherData && !isLoading && (
+        <>
+          {/* AI Button - Bottom Left (next to temperature) */}
+          <AITriggerButton
+            onTrigger={handleAITrigger}
+            isActive={showAIInsights}
+            isLoading={isAIAnalyzing}
+            isNight={isNight}
+            position="bottom-left"
+          />
+          {/* AI Analysis Panel - Bottom Right */}
+          <AIInsightsPanel
+            weatherData={displayWeatherData}
+            isVisible={showAIInsights}
+            onClose={handleAIPanelClose}
+            isNight={isNight}
+            position="bottom-right"
+          />
         </>
       )}
 

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@polymarket/clob-client": "^4.22.8",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-three/drei": "^10.6.1",
     "@react-three/fiber": "^9.3.0",
@@ -16,13 +17,15 @@
     "@tanstack/react-query": "^5.90.8",
     "axios": "^1.11.0",
     "connectkit": "^1.8.2",
+    "ethers": "^6.15.0",
     "leva": "^0.10.0",
     "maath": "^0.10.8",
-    "next": "15.1.0",
+    "next": "^16.0.3",
+    "openai": "^6.9.0",
     "pino-pretty": "^13.1.2",
     "postprocessing": "^6.37.7",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "react-dom": "^18.3.1",
     "three": "^0.179.1",
     "wagmi": "^2.12.19"
   },
@@ -31,16 +34,16 @@
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "@types/node": "^20",
+    "@types/node": "^18.19.130",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/three": "^0.168.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^8",
-    "eslint-config-next": "15.1.0",
+    "eslint-config-next": "^16.0.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5",
+    "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   }
 }

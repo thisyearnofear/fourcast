@@ -1,14 +1,68 @@
-# 🌤️ Weather Prediction Markets
+# 🌤️ Weather Edge Finder: AI-Powered Prediction Market Intelligence
 
-Interactive 3D weather visualization platform with prediction markets on Arbitrum & Polymarket.
+An AI agent that analyzes weather forecasts alongside prediction markets (Polymarket) to surface potential mispricings in sports, political, and event outcome markets where weather conditions create information asymmetries.
 
-## 🚀 Features
+## 🎯 Core Value Proposition
 
-- **3D Weather Visualization**: React Three Fiber with real-time weather data
-- **Prediction Markets**: Weather outcome markets on Polymarket (Arbitrum)
-- **Multi-chain Support**: Arbitrum L2 with optimistic rollups
-- **Real-time Data**: WeatherAPI integration with caching
-- **Weather Effects**: Dynamic 3D rain, snow, clouds, and storm simulations
+Weather impacts outcomes (sports performance, voter turnout, corporate earnings), but retail prediction market participants often under-weight these factors. This app uses AI to flag opportunities where current odds may not reflect weather-adjusted probabilities.
+
+## 🚀 MVP Scope (No Model Training Required)
+
+### What It Does
+
+- Fetches upcoming events from Polymarket (sports games, marathons, outdoor events)
+- Retrieves weather forecasts for event locations via WeatherAPI
+- Queries Venice AI to analyze: "Given these weather conditions, do the current market odds reflect the weather impact?"
+- Displays ranked opportunities with AI-generated explanations and confidence scores
+
+### Key Features
+
+- **Weather Context Engine**: Matches events to location forecasts (temp, precipitation, wind, humidity)
+- **AI Analysis**: LLM evaluates team/participant climate adaptation, playing styles, historical performance in similar conditions
+- **Edge Detection**: Compares AI-assessed probability vs. current Polymarket odds
+- **Transparent Reasoning**: Shows full AI explanation for each flagged opportunity
+- **Real-time Updates**: Monitors forecast changes and odds shifts
+
+## 🔗 Integration with Existing Platform
+
+Built as a new module within the existing Weather Prediction Markets app:
+
+- **Leverages existing**: WeatherAPI integration, Polymarket client, Next.js infrastructure
+- **Adds new**: Event scraper, AI analysis engine, edge-finder UI dashboard
+- **Extends markets from**: Weather-specific predictions → Weather-influenced event outcomes
+
+## 🛠️ Technical Approach
+
+Event Detection → Weather Fetch → AI Analysis → Edge Scoring → User Dashboard
+
+### APIs Used
+- WeatherAPI (already integrated)
+- Polymarket API (already integrated)
+- Venice AI API (new)
+- Sports/Event APIs (ESPN, The Odds API)
+
+### AI Prompt Pattern
+
+Using Venice AI (qwen3-235b model for deep reasoning):
+
+Analyze this event for weather-related edge:
+- Event: [NFL game, marathon, etc.]
+- Participants: [teams/athletes with home climates]
+- Weather: [forecast details]
+- Current Odds: [Polymarket probability]
+
+Assess:
+1. Does weather significantly favor one outcome?
+2. Are odds efficiently priced or is there asymmetry?
+3. Confidence: LOW/MEDIUM/HIGH
+
+Provide 2-3 paragraph analysis with specific reasoning.
+
+## 📊 Success Metrics
+
+- **Accuracy**: Do flagged edges materialize more than random?
+- **User engagement**: Do users find analyses valuable?
+- **Market validation**: Can we identify odds movements after weather forecasts update?
 
 ## 📁 Project Structure
 
@@ -19,8 +73,8 @@ Interactive 3D weather visualization platform with prediction markets on Arbitru
 │   ├── layout.js        # Root layout
 │   └── page.js          # Homepage
 ├── components/          # React components
-├── services/           # Weather services
-├── onchain/            # Blockchains
+├── services/           # Weather & AI services
+├── onchain/            # Blockchain integration
 ├── markets/            # Prediction market logic
 ├── docs/               # Documentation
 └── public/             # Static assets
@@ -31,7 +85,8 @@ Interactive 3D weather visualization platform with prediction markets on Arbitru
 - **Frontend**: Next.js 15, React 19, React Three Fiber, Tailwind CSS
 - **3D Graphics**: Three.js, React Three Drei, Postprocessing Effects
 - **Web3**: Ethers, Arbitrum SDK, Polymarket Clob Client
-- **Backend**: Next.js API Routes, WeatherAPI
+- **AI**: Venice AI API integration
+- **Backend**: Next.js API Routes, WeatherAPI, Sports APIs
 - **Hosting**: Vercel (frontend), Arbitrum (smart contracts)
 
 ## 🚀 Quick Start
@@ -62,6 +117,7 @@ cp .env.local.example .env.local
 NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key
 NEXT_PUBLIC_POLYMARKET_HOST=https://clob.polymarket.com
 NEXT_PUBLIC_ARBITRUM_CHAIN_ID=42161
+VENICE_API_KEY=your_venice_api_key     # For AI analysis
 ```
 
 ### Development
@@ -110,36 +166,31 @@ const order = await client.createAndPostOrder({
 });
 ```
 
-### Weather Market Creation
+## 📈 2-Week MVP Deliverables
 
-Markets are created based on:
-- Temperature ranges (e.g., "Will NYC exceed 80°F tomorrow?")
-- Precipitation forecasts ("Will it rain in London this weekend?")
-- Weather conditions ("Will there be snow in Denver?")
-
-## 🔗 Smart Contracts
-
-Deployed on **Arbitrum One**:
-- Prediction market contracts
-- Weather oracle integration
-- USDC payment contracts
-
-## 📖 Documentation
-
-- [API Documentation](./docs/API.md)
-- [Web3 Setup Guide](./docs/WEB3_SETUP.md)
-- [Weather Integration](./docs/WEATHER_API.md)
-- [Deployment Guide](./docs/DEPLOYMENT.md)
-- [Market Creation](./docs/MARKETS.md)
+- Event ingestion for NFL games
+- Weather-to-event matching system
+- AI analysis pipeline with Venice AI API
+- Dashboard showing top 5 opportunities weekly
+- Track record page comparing predictions vs. outcomes
 
 ## 🎯 Roadmap
 
-- [ ] Migrate to Arbitrum One
-- [ ] Polymarket integration
-- [ ] Weather oracle smart contracts
-- [ ] Prediction market UI
+- [ ] Event ingestion system (NFL, sports, political events)
+- [ ] AI analysis engine with Claude/GPT
+- [ ] Edge detection and scoring algorithm
+- [ ] Real-time dashboard with ranked opportunities
+- [ ] Weather forecast monitoring and alerts
+- [ ] Historical performance tracking
+- [ ] Mobile-responsive interface
 - [ ] Cross-chain operations
-- [ ] Mobile-responsive betting interface
+
+## 📖 Documentation
+
+- [Getting Started](./docs/GETTING_STARTED.md)
+- [APIs](./docs/APIS.md)
+- [Market Integration](./docs/MARKET_INTEGRATION.md)
+- [Development Guide](./docs/DEVELOPMENT_GUIDE.md)
 
 ## 🤝 Contributing
 
@@ -155,4 +206,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚠️ Disclaimer
 
-This platform is for educational and entertainment purposes. Weather prediction is inherently uncertain. Always trade responsibly and never risk more than you can afford to lose.
+This platform is for educational and entertainment purposes. Weather prediction is inherently uncertain. Always trade responsibly and never risk more than you can afford to lose. This is a research intelligence tool, not an auto-betting system.
