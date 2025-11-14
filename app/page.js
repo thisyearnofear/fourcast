@@ -17,6 +17,7 @@ export default function HomePage() {
   const [errorSearchQuery, setErrorSearchQuery] = useState('');
 
   useEffect(() => {
+    console.log('Page loaded, calling loadCurrentLocationWeather');
     loadCurrentLocationWeather();
   }, []);
 
@@ -31,7 +32,15 @@ export default function HomePage() {
       setCurrentLocationName(`${data.location.name}, ${data.location.region}`);
     } catch (error) {
       console.error('Error loading weather:', error);
-      setError('Unable to load weather data. Please try entering a city manually.');
+      // Fallback to default location if geolocation fails
+      try {
+        const data = await weatherService.getCurrentWeather('Nairobi');
+        setWeatherData(data);
+        setCurrentLocationName(`${data.location.name}, ${data.location.region}`);
+      } catch (fallbackError) {
+        console.error('Fallback error:', fallbackError);
+        setError('Unable to load weather data. Please try entering a city manually.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -43,6 +52,7 @@ export default function HomePage() {
 
     try {
       const data = await weatherService.getCurrentWeather(location);
+      console.log('Setting weather data:', data);
       setWeatherData(data);
       setCurrentLocationName(`${data.location.name}, ${data.location.region}`);
     } catch (error) {
@@ -125,7 +135,7 @@ export default function HomePage() {
             </>
           ) : (
             /* Normal Mode Header */
-            <div className={`absolute top-6 left-6 right-6 z-20 flex items-start justify-between ${textColor}`}>
+            <div className={`absolute top-6 left-6 right-6 z-20 flex items-start justify-between ${textColor} bg-black/20 backdrop-blur-sm rounded-2xl p-4`}>
               <div>
                 <div className="text-lg font-light tracking-wide opacity-95">
                   {displayWeatherData.location.name}
@@ -161,7 +171,7 @@ export default function HomePage() {
 
 
           {/* Main Temperature Card - Bottom Left */}
-          <div className={`absolute bottom-20 md:bottom-6 left-6 z-20 ${textColor}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className={`absolute bottom-20 md:bottom-6 left-6 z-20 ${textColor} bg-black/20 backdrop-blur-sm rounded-2xl p-4`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
             <div className="flex items-end space-x-4">
               <div className="flex items-baseline">
                 <span className="text-6xl font-thin leading-none">
@@ -181,7 +191,7 @@ export default function HomePage() {
           </div>
 
           {/* Compact Stats Bar - Bottom Right */}
-          <div className={`absolute bottom-20 md:bottom-6 right-6 z-20 ${textColor}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className={`absolute bottom-20 md:bottom-6 right-6 z-20 ${textColor} bg-black/20 backdrop-blur-sm rounded-2xl p-4`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
             <div className="flex flex-col space-y-3 text-right text-sm">
               <div className="flex items-center justify-end space-x-2">
                 <span className="opacity-60">HUMIDITY</span>

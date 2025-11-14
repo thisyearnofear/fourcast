@@ -45,7 +45,7 @@ const LocationSelector = ({ onLocationChange, currentLocation, isLoading, isNigh
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search..."
-            className={`bg-transparent px-3 py-1 ${isNight ? 'text-white placeholder-white/40' : 'text-black placeholder-black/40'} text-sm md:text-base font-light focus:outline-none w-32 md:w-48 tracking-wide`}
+            className={`bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 ${isNight ? 'text-white placeholder-white/40' : 'text-black placeholder-black/40'} text-sm md:text-base font-light focus:outline-none w-32 md:w-48 tracking-wide`}
             disabled={isLoading || isSearching}
           />
           <button 
