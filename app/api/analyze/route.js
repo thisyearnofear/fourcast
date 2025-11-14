@@ -56,19 +56,30 @@ export async function POST(request) {
       }, { status: 429 });
     }
 
-    // Perform AI analysis
+    // ENHANCED: Perform AI analysis with Redis caching and roadmap alignment
     const analysis = await aiService.analyzeWeatherImpact({
       eventType,
       location,
       weatherData,
       currentOdds,
-      participants
+      participants,
+      marketId: marketID, // ← Roadmap-aligned cache key: analysis:{marketID}
+      eventDate: body.eventDate // ← Dynamic TTL based on event timing
     });
 
     return Response.json({
       success: true,
-      analysis,
-      marketID,
+      marketId: marketID,
+      assessment: {
+        weather_impact: analysis.assessment?.weather_impact || 'UNKNOWN',
+        odds_efficiency: analysis.assessment?.odds_efficiency || 'UNKNOWN', 
+        confidence: analysis.assessment?.confidence || 'LOW'
+      },
+      reasoning: analysis.analysis || 'Analysis not available',
+      key_factors: analysis.key_factors || [],
+      recommended_action: analysis.recommended_action || 'Monitor manually',
+      cached: analysis.cached || false, // ← Shows if result came from Redis
+      source: analysis.source || 'unknown', // ← redis/memory/venice_ai
       timestamp: new Date().toISOString()
     });
 
@@ -84,17 +95,23 @@ export async function POST(request) {
 }
 
 export async function GET() {
-  // Return AI service status
+  // ENHANCED: Return AI service status with Redis info
   const status = aiService.getStatus();
 
   return Response.json({
     service: 'Weather Edge AI Analysis',
     status: status.available ? 'available' : 'unavailable',
-    cache: {
-      size: status.cacheSize,
-      duration: `${status.cacheDuration / (60 * 1000)} minutes`
+    model: status.model || 'qwen3-235b',
+    cache: status.cache || {
+      memory: { size: status.cacheSize, duration: `${status.cacheDuration / (60 * 1000)} minutes` },
+      redis: { connected: false, ttl: '6 hours' }
     },
-    rateLimit: `${ANALYSIS_RATE_LIMIT} analyses per hour`
+    rateLimit: `${ANALYSIS_RATE_LIMIT} analyses per hour`,
+    features: [
+      'Redis caching with dynamic TTL',
+      'Market-specific cache keys (analysis:{marketID})',
+      'Graceful fallback to in-memory cache'
+    ]
   });
 }
 

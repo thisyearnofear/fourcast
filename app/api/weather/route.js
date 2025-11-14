@@ -187,80 +187,113 @@ function getDemoWeatherData(requestedLocation) {
   };
 }
 
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const location = searchParams.get('location');
-
-  if (!location) {
-    return Response.json({ error: 'Location parameter is required' }, { status: 400 });
+async function getWeatherData(location, ip) {
+  if (isRateLimited(ip)) {
+    console.log(`Rate limit exceeded for IP: ${ip}, serving demo data`);
+    return getDemoWeatherData(location);
   }
 
-  // Rate limiting with fallback data
-  const clientIP = getClientIP(request);
-  if (isRateLimited(clientIP)) {
-    console.log(`Rate limit exceeded for IP: ${clientIP}, serving demo data`);
-
-    return Response.json(getDemoWeatherData(location));
-  }
-
-  // Check cache first
   const cacheKey = `weather:${location.toLowerCase()}`;
   const cachedData = cache.get(cacheKey);
 
   if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
     console.log(`Cache hit for location: ${location}`);
-    return Response.json({
+    return {
       ...cachedData.data,
       cached: true,
-      cacheAge: Math.round((Date.now() - cachedData.timestamp) / 1000)
-    });
+      cacheAge: Math.round((Date.now() - cachedData.timestamp) / 1000),
+    };
   }
 
-  // Make API call to WeatherAPI
-  const API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY || process.env.WEATHER_API_KEY;
+  const API_KEY =
+    process.env.NEXT_PUBLIC_WEATHER_API_KEY || process.env.WEATHER_API_KEY;
 
   if (!API_KEY) {
-    console.error('Weather API key not found');
-    return Response.json({ error: 'Server configuration error' }, { status: 500 });
+    throw new Error("Server configuration error");
+  }
+
+  const weatherResponse = await fetch(
+    `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${encodeURIComponent(
+      location
+    )}&days=3&aqi=no&alerts=no&tz=${
+      Intl.DateTimeFormat().resolvedOptions().timeZone
+    }`
+  );
+
+  if (!weatherResponse.ok) {
+    const errorData = await weatherResponse.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || "Weather API error");
+  }
+
+  const weatherData = await weatherResponse.json();
+
+  cache.set(cacheKey, {
+    data: weatherData,
+    timestamp: Date.now(),
+  });
+
+  if (cache.size > 100) {
+    const oldestKey = cache.keys().next().value;
+    cache.delete(oldestKey);
+  }
+
+  return {
+    ...weatherData,
+    cached: false,
+  };
+}
+
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const location = searchParams.get("location");
+
+  if (!location) {
+    return Response.json({ error: "Location parameter is required" }, { status: 400 });
   }
 
   try {
-    const weatherResponse = await fetch(
-      `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${encodeURIComponent(location)}&days=3&aqi=no&alerts=no&tz=${Intl.DateTimeFormat().resolvedOptions().timeZone}`
-    );
-
-    if (!weatherResponse.ok) {
-      const errorData = await weatherResponse.json().catch(() => ({}));
-      return Response.json({
-        error: errorData.error?.message || 'Weather API error',
-        code: errorData.error?.code
-      }, { status: weatherResponse.status });
-    }
-
-    const weatherData = await weatherResponse.json();
-
-    // Cache the response
-    cache.set(cacheKey, {
-      data: weatherData,
-      timestamp: Date.now()
-    });
-
-    console.log(`API call made for location: ${location}, cached for ${CACHE_DURATION / 1000 / 60} minutes`);
-
-    // Clean up old cache entries (simple cleanup)
-    if (cache.size > 100) {
-      const oldestKey = cache.keys().next().value;
-      cache.delete(oldestKey);
-    }
-
-    return Response.json({
-      ...weatherData,
-      cached: false
-    });
-
+    const clientIP = getClientIP(request);
+    const weatherData = await getWeatherData(location, clientIP);
+    return Response.json(weatherData);
   } catch (error) {
-    console.error('Weather API error:', error);
-    return Response.json({ error: 'Failed to fetch weather data' }, { status: 500 });
+    console.error("Weather API error:", error);
+    return Response.json(
+      { error: "Failed to fetch weather data" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req) {
+  const {
+    untrustedData: { inputText },
+  } = await req.json();
+  const location = inputText || "Nairobi";
+
+  try {
+    const clientIP = getClientIP(req);
+    const weatherData = await getWeatherData(location, clientIP);
+
+    const temp = Math.round(weatherData.current.temp_f);
+    const condition = weatherData.current.condition.text;
+
+    const imageUrl = `${process.env.NEXT_PUBLIC_HOST}/api/og?temp=${temp}&condition=${condition}&location=${weatherData.location.name}`;
+
+    return new Response(
+      `
+      <meta name="fc:frame" content="vNext" />
+      <meta name="fc:frame:image" content="${imageUrl}" />
+      <meta name="og:image" content="${imageUrl}" />
+      <meta name="fc:frame:input:text" content="Enter a city" />
+      <meta name="fc:frame:button:1" content="Get Weather" />
+      `,
+      {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      }
+    );
+  } catch (error) {
+    return new Response("Error", { status: 500 });
   }
 }
 
@@ -268,9 +301,9 @@ export async function OPTIONS() {
   return new Response(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
     },
   });
 }

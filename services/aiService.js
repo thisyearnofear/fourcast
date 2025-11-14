@@ -1,213 +1,75 @@
-// AI Service for Venice API integration
-import OpenAI from 'openai';
+/**
+ * AI Service - Handles market data fetching and weather analysis
+ * Single source of truth for AI-related API calls
+ */
 
-class AIService {
-  constructor() {
-    this.client = null;
-    this.cache = new Map();
-    this.CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
-    this.initClient();
-  }
-
-  initClient() {
-    const apiKey = process.env.VENICE_API_KEY || process.env.NEXT_PUBLIC_VENICE_API_KEY;
-
-    if (!apiKey) {
-      console.warn('Venice API key not found. AI features will be disabled.');
-      return;
-    }
-
-    this.client = new OpenAI({
-      apiKey: apiKey,
-      baseURL: 'https://api.venice.ai/api/v1'
-    });
-  }
-
-  // Generate cache key for weather analysis
-  generateCacheKey(eventType, location, weatherData, currentOdds) {
-    const weatherHash = JSON.stringify({
-      temp: weatherData.current?.temp_f,
-      condition: weatherData.current?.condition?.text,
-      wind: weatherData.current?.wind_mph,
-      precip: weatherData.current?.precip_mm,
-      humidity: weatherData.current?.humidity
-    });
-
-    return `ai_${eventType}_${location}_${weatherHash}_${currentOdds}`;
-  }
-
-  // Check if cached analysis is still valid
-  getCachedAnalysis(cacheKey) {
-    const cached = this.cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      return cached.data;
-    }
-    return null;
-  }
-
-  // Cache analysis result
-  setCachedAnalysis(cacheKey, analysis) {
-    this.cache.set(cacheKey, {
-      data: analysis,
-      timestamp: Date.now()
-    });
-
-    // Clean up old cache entries
-    if (this.cache.size > 50) {
-      const oldestKey = this.cache.keys().next().value;
-      this.cache.delete(oldestKey);
-    }
-  }
-
-  // Analyze weather impact on events
-  async analyzeWeatherImpact(eventData) {
-    if (!this.client) {
-      return {
-        error: 'AI service not available',
-        fallback: true
-      };
-    }
-
-    const { eventType, location, weatherData, currentOdds, participants } = eventData;
-
-    // Check cache first
-    const cacheKey = this.generateCacheKey(eventType, location, weatherData, currentOdds);
-    const cachedResult = this.getCachedAnalysis(cacheKey);
-    if (cachedResult) {
-      return {
-        ...cachedResult,
-        cached: true
-      };
-    }
-
+export const aiService = {
+  /**
+   * Fetch weather-sensitive markets for a given location
+   */
+  async fetchMarkets(location, weatherData) {
     try {
-      const prompt = this.buildAnalysisPrompt(eventData);
-
-      const response = await this.client.chat.completions.create({
-        model: 'qwen3-235b',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert analyst specializing in weather impacts on sports and events. Provide detailed, evidence-based analysis in JSON format.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 1000,
-        response_format: { type: "json_object" }
+      const response = await fetch('/api/markets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location, weatherData })
       });
 
-      const analysis = JSON.parse(response.choices[0].message.content);
-
-      // Validate response structure
-      const validatedAnalysis = this.validateAnalysisResponse(analysis);
-
-      // Cache the result
-      this.setCachedAnalysis(cacheKey, validatedAnalysis);
-
-      return {
-        ...validatedAnalysis,
-        cached: false
-      };
-
-    } catch (error) {
-      console.error('AI Analysis Error:', error);
-
-      // Return fallback analysis
-      return {
-        error: 'Analysis temporarily unavailable',
-        fallback: true,
-        assessment: {
-          weather_impact: 'UNKNOWN',
-          odds_efficiency: 'UNKNOWN',
-          confidence: 'LOW'
-        },
-        analysis: 'Weather analysis is currently unavailable. Please try again later.',
-        key_factors: ['Service temporarily unavailable'],
-        recommended_action: 'Monitor weather updates manually'
-      };
+      const data = await response.json();
+      if (data.success && data.opportunities) {
+        // Transform opportunities to match MarketSelector format
+        const markets = data.opportunities.map(opp => ({
+          marketID: opp.marketID,
+          title: opp.title,
+          description: opp.description,
+          volume24h: opp.volume24h || 0,
+          currentOdds: {
+            yes: opp.currentOdds?.yes || 0.5,
+            no: opp.currentOdds?.no || 0.5
+          },
+          liquidity: opp.liquidityBin || 0,
+          tags: opp.tags || [],
+          resolution: opp.resolution
+        }));
+        return { success: true, markets };
+      }
+      return { success: false, error: data.error || 'No markets available' };
+    } catch (err) {
+      console.error('Market fetch failed:', err);
+      return { success: false, error: 'Failed to fetch market data' };
     }
-  }
-
-  // Build analysis prompt
-  buildAnalysisPrompt(eventData) {
-    const { eventType, location, weatherData, currentOdds, participants } = eventData;
-
-    return `Analyze this event for weather-related edge:
-
-Event: ${eventType}
-Location: ${location}
-Participants: ${participants || 'Various competitors'}
-Weather: ${weatherData.current?.temp_f}°F, ${weatherData.current?.wind_mph} mph winds, ${weatherData.current?.precip_mm}mm precipitation, ${weatherData.current?.humidity}% humidity, ${weatherData.current?.condition?.text}
-Current Odds: ${currentOdds}
-
-Respond with JSON in this exact format:
-{
-  "assessment": {
-    "weather_impact": "HIGH|MEDIUM|LOW|UNKNOWN",
-    "odds_efficiency": "EFFICIENT|INEFFICIENT|UNKNOWN",
-    "confidence": "HIGH|MEDIUM|LOW"
   },
-  "analysis": "2-3 paragraph detailed analysis with specific reasoning",
-  "key_factors": ["factor1", "factor2", "factor3"],
-  "recommended_action": "Specific recommendation based on analysis"
-}`;
+
+  /**
+   * Analyze a market based on weather data
+   */
+  async analyzeMarket(market, weatherData) {
+    try {
+      const eventData = {
+        eventType: market.title || 'Prediction Market',
+        location: weatherData?.location?.name || 'Unknown Location',
+        currentOdds: `Yes: ${(market.currentOdds?.yes * 100 || 0).toFixed(1)}% / No: ${(market.currentOdds?.no * 100 || 0).toFixed(1)}%`,
+        participants: market.description || 'Market participants'
+      };
+
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...eventData,
+          weatherData,
+          marketID: market.marketID
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        return { success: true, analysis: data.analysis };
+      }
+      return { success: false, error: data.error || 'Analysis failed' };
+    } catch (err) {
+      console.error('Analysis request failed:', err);
+      return { success: false, error: 'Failed to connect to analysis service' };
+    }
   }
-
-  // Validate analysis response structure
-  validateAnalysisResponse(analysis) {
-    const defaultAnalysis = {
-      assessment: {
-        weather_impact: 'UNKNOWN',
-        odds_efficiency: 'UNKNOWN',
-        confidence: 'LOW'
-      },
-      analysis: 'Analysis could not be completed properly.',
-      key_factors: ['Analysis validation failed'],
-      recommended_action: 'Exercise caution with weather-sensitive events'
-    };
-
-    if (!analysis || typeof analysis !== 'object') {
-      return defaultAnalysis;
-    }
-
-    // Ensure required fields exist
-    if (!analysis.assessment) analysis.assessment = defaultAnalysis.assessment;
-    if (!analysis.analysis) analysis.analysis = defaultAnalysis.analysis;
-    if (!Array.isArray(analysis.key_factors)) analysis.key_factors = defaultAnalysis.key_factors;
-    if (!analysis.recommended_action) analysis.recommended_action = defaultAnalysis.recommended_action;
-
-    // Validate assessment values
-    const validImpacts = ['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
-    const validEfficiency = ['EFFICIENT', 'INEFFICIENT', 'UNKNOWN'];
-    const validConfidence = ['HIGH', 'MEDIUM', 'LOW'];
-
-    if (!validImpacts.includes(analysis.assessment.weather_impact)) {
-      analysis.assessment.weather_impact = 'UNKNOWN';
-    }
-    if (!validEfficiency.includes(analysis.assessment.odds_efficiency)) {
-      analysis.assessment.odds_efficiency = 'UNKNOWN';
-    }
-    if (!validConfidence.includes(analysis.assessment.confidence)) {
-      analysis.assessment.confidence = 'LOW';
-    }
-
-    return analysis;
-  }
-
-  // Get AI service status
-  getStatus() {
-    return {
-      available: !!this.client,
-      cacheSize: this.cache.size,
-      cacheDuration: this.CACHE_DURATION
-    };
-  }
-}
-
-// Export singleton instance
-export const aiService = new AIService();
-export default aiService;
+};
