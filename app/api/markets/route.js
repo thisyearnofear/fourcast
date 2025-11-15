@@ -41,86 +41,13 @@ export async function POST(request) {
     }
 
     if (!result.markets || result.markets.length === 0) {
-      // Fallback: return high-volume markets that still match user filters
-      console.log('No weather-sensitive markets found, trying fallback with user filters...');
-      let fallback;
-      try {
-        fallback = await polymarketService.buildMarketCatalog(10000);
-      } catch (fallbackErr) {
-        console.error('Fallback catalog error:', fallbackErr);
-        fallback = { markets: [] };
-      }
-      
-      // Apply same filters as above to fallback markets
-      let fallbackFiltered = (fallback.markets || []);
-      
-      // Filter by event type if specified
-      if (filters.eventType && filters.eventType !== 'all') {
-        fallbackFiltered = fallbackFiltered.filter(m => m.eventType === filters.eventType);
-      }
-      
-      // Filter by confidence if specified
-      if (filters.confidence && filters.confidence !== 'all') {
-        // Fallback markets are all 'LOW', so only show if user wants LOW
-        fallbackFiltered = fallbackFiltered.filter(m => 
-          filters.confidence === 'LOW' || filters.confidence === 'all'
-        );
-      }
-      
-      const fallbackMarkets = fallbackFiltered
-         .slice(0, limit)
-         .map(m => {
-           // Ensure odds are always valid (use oddsAnalysis as primary, fallback to currentOdds, finally default to 0.5)
-           const bestBid = m.oddsAnalysis?.bestBid ?? m.orderBookMetrics?.bestBid ?? m.currentOdds?.no ?? 0.5;
-           const bestAsk = m.oddsAnalysis?.bestAsk ?? m.orderBookMetrics?.bestAsk ?? m.currentOdds?.yes ?? 0.5;
-           
-           const validOdds = {
-             yes: bestAsk,
-             no: bestBid
-           };
-           
-           const validOddsAnalysis = m.oddsAnalysis || {
-             bestBid,
-             bestAsk,
-             spread: m.orderBookMetrics?.spread || 0,
-             spreadPercent: m.orderBookMetrics?.spreadPercent || 0
-           };
-           
-           return {
-             marketID: m.marketID,
-             title: m.title,
-             description: m.description,
-             location: m.location,
-             currentOdds: validOdds,
-             volume24h: m.volume24h,
-             liquidity: m.liquidity,
-             tags: m.tags,
-             eventType: m.eventType,
-             edgeScore: 0,
-             confidence: 'LOW',
-             teams: m.teams,
-             
-             // Include enriched data from buildMarketCatalog fallback
-             bid: m.bid || validOdds.no,
-             ask: m.ask || validOdds.yes,
-             orderBookMetrics: m.orderBookMetrics,
-             volumeMetrics: m.volumeMetrics,
-             marketEfficiency: m.marketEfficiency,
-             enrichmentSource: m.enrichmentSource,
-             enriched: m.enriched,
-             oddsAnalysis: validOddsAnalysis,
-             resolutionDate: m.resolutionDate,
-             isWeatherSensitive: false
-           };
-         });
-
+      // No weather-sensitive edges found - show helpful message instead of fallback markets
       return Response.json({
         success: true,
-        markets: fallbackMarkets,
-        message: fallbackMarkets.length === 0 
-          ? 'No markets match your filters. Try adjusting them.'
-          : 'Showing high-volume markets (no weather edges detected)',
-        totalFound: fallbackMarkets.length,
+        markets: [],
+        message: 'No weather edges detected right now. Weather conditions must change significantly or new events must be added for new opportunities. Check back when weather forecasts update.',
+        noEdgesReason: 'Current market conditions and forecasts don\'t show strong weather-driven mispricings',
+        totalFound: 0,
         cached: false,
         timestamp: new Date().toISOString()
       });

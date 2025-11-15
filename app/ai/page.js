@@ -25,8 +25,10 @@ export default function AIPage() {
   const [isLoadingMarkets, setIsLoadingMarkets] = useState(false);
   const [marketFilters, setMarketFilters] = useState({
     eventType: 'all',
-    confidence: 'all'
+    confidence: 'MEDIUM', // Default to HIGH+MEDIUM
+    bestEdgesOnly: true // Toggle for best edges
   });
+  const [showMethodology, setShowMethodology] = useState(false);
 
   // Analysis state
   const [analysis, setAnalysis] = useState(null);
@@ -183,6 +185,11 @@ export default function AIPage() {
     setTimeout(() => setOrderResult(null), 5000);
   };
 
+  const handleQuickTrade = (market) => {
+    setSelectedMarket(market);
+    setShowOrderForm(true);
+  };
+
   const nightStatus = useMemo(() => {
     if (!weatherData?.location?.localtime) return true;
     const localTime = weatherData.location.localtime;
@@ -256,10 +263,30 @@ export default function AIPage() {
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
-        {/* Filter Controls */}
+        {/* Filter Controls - Simplified */}
         <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 mb-6`}>
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <div className="flex-1">
+          <div className="space-y-4">
+            {/* Best Edges Only Toggle */}
+            <div className="flex items-center justify-between">
+              <label className={`${textColor} text-sm font-light`}>Best Edges Only</label>
+              <button
+                onClick={() => setMarketFilters(prev => ({ ...prev, bestEdgesOnly: !prev.bestEdgesOnly }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  marketFilters.bestEdgesOnly
+                    ? (nightStatus ? 'bg-blue-600' : 'bg-blue-500')
+                    : (nightStatus ? 'bg-slate-600' : 'bg-slate-400')
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    marketFilters.bestEdgesOnly ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Event Type Filter */}
+            <div>
               <label className={`${textColor} text-xs opacity-60 block mb-2`}>Event Type</label>
               <select
                 value={marketFilters.eventType}
@@ -268,7 +295,7 @@ export default function AIPage() {
                  nightStatus
                    ? 'bg-white/10 border-white/20 text-white focus:ring-2 focus:ring-blue-400' 
                    : 'bg-black/10 border-black/20 text-black focus:ring-2 focus:ring-blue-400'
-                } focus:outline-none`}
+                 } focus:outline-none`}
               >
                 <option value="all">All Types</option>
                 <option value="NFL">NFL</option>
@@ -277,8 +304,10 @@ export default function AIPage() {
                 <option value="Politics">Politics</option>
               </select>
             </div>
-            <div className="flex-1">
-              <label className={`${textColor} text-xs opacity-60 block mb-2`}>Confidence</label>
+
+            {/* Confidence Filter */}
+            <div>
+              <label className={`${textColor} text-xs opacity-60 block mb-2`}>Confidence Level</label>
               <select
                 value={marketFilters.confidence}
                 onChange={(e) => setMarketFilters(prev => ({ ...prev, confidence: e.target.value }))}
@@ -288,14 +317,45 @@ export default function AIPage() {
                      : 'bg-black/10 border-black/20 text-black focus:ring-2 focus:ring-blue-400'
                  } focus:outline-none`}
               >
-                <option value="all">All Confidence</option>
-                <option value="HIGH">High Only</option>
+                <option value="HIGH">High Confidence</option>
                 <option value="MEDIUM">Medium+</option>
                 <option value="LOW">Low+</option>
               </select>
             </div>
+
+            {/* Methodology Link */}
+            <button
+              onClick={() => setShowMethodology(!showMethodology)}
+              className={`w-full py-2 text-xs font-light rounded-lg transition-all opacity-70 hover:opacity-100 ${textColor}`}
+            >
+              {showMethodology ? '▼ Hide Methodology' : '▶ How We Score Edges'}
+            </button>
           </div>
         </div>
+
+        {/* Methodology - Expandable */}
+        {showMethodology && (
+          <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 mb-6`}>
+            <h3 className={`${textColor} text-sm font-light mb-4`}>Edge Scoring Methodology</h3>
+            <div className={`space-y-3 text-xs ${textColor} opacity-80 leading-relaxed`}>
+              <div>
+                <p className="font-light opacity-90 mb-1">Weather Impact Analysis</p>
+                <p className="opacity-70">AI analyzes how weather conditions (precipitation, wind, temperature, humidity) affect event outcomes based on historical patterns and participant adaptation.</p>
+              </div>
+              <div>
+                <p className="font-light opacity-90 mb-1">Odds Efficiency Detection</p>
+                <p className="opacity-70">Compares AI-assessed probability vs. current market odds to identify mispricings where weather factors aren't fully reflected.</p>
+              </div>
+              <div>
+                <p className="font-light opacity-90 mb-1">Confidence Scoring</p>
+                <p className="opacity-70">HIGH = Strong weather influence + clear odds misprice. MEDIUM = Moderate impact or uncertainty. LOW = Limited data or marginal edge.</p>
+              </div>
+              <div className="border-t border-current/20 pt-3 mt-3">
+                <p className="opacity-60">Data sources: WeatherAPI, Polymarket CLOB, Historical performance data. Updated every 5 minutes.</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className={`backdrop-blur-xl border rounded-3xl p-4 mb-6 ${
@@ -318,24 +378,43 @@ export default function AIPage() {
         )}
 
         <div className="space-y-6">
-          {/* Markets - Full Width */}
-          <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 max-h-[350px] overflow-y-auto`}>
-            {isLoadingMarkets ? (
-              <div className="flex justify-center py-12">
-                <div className={`w-8 h-8 border-2 border-current/30 border-t-current rounded-full animate-spin ${textColor}`}></div>
-                <p className={`${textColor} opacity-70 mt-3 text-sm`}>Finding markets...</p>
-              </div>
-            ) : (
-              <MarketSelector
-                markets={markets}
-                selectedMarket={selectedMarket}
-                onSelectMarket={handleSelectMarket}
-                onAnalyze={handleAnalyzeMarket}
-                isNight={nightStatus}
-                isLoading={isLoadingMarkets}
-              />
-            )}
-          </div>
+           {/* Markets - Full Width */}
+           <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 max-h-[350px] overflow-y-auto`}>
+             {isLoadingMarkets ? (
+               <div className="flex justify-center py-12">
+                 <div className={`w-8 h-8 border-2 border-current/30 border-t-current rounded-full animate-spin ${textColor}`}></div>
+                 <p className={`${textColor} opacity-70 mt-3 text-sm`}>Finding markets...</p>
+               </div>
+             ) : markets && markets.length > 0 ? (
+               <MarketSelector
+                 markets={markets}
+                 selectedMarket={selectedMarket}
+                 onSelectMarket={handleSelectMarket}
+                 onAnalyze={handleAnalyzeMarket}
+                 onQuickTrade={handleQuickTrade}
+                 isNight={nightStatus}
+                 isLoading={isLoadingMarkets}
+               />
+             ) : (
+               <div className="text-center py-16">
+                 <div className="text-5xl mb-4">🌤️</div>
+                 <h3 className={`text-lg font-light ${textColor} mb-2`}>No Weather Edges Today</h3>
+                 <p className={`text-sm ${textColor} opacity-70 leading-relaxed max-w-md mx-auto`}>
+                   Weather conditions must change significantly for new mispricings to emerge. Check back when weather forecasts update or new events are added to the market.
+                 </p>
+                 <button
+                   onClick={loadWeather}
+                   className={`mt-6 px-4 py-2 text-xs font-light rounded-lg border transition-all ${
+                     nightStatus
+                       ? 'bg-blue-600/40 hover:bg-blue-600/60 border-blue-400/40 text-blue-100'
+                       : 'bg-blue-200/60 hover:bg-blue-300/70 border-blue-400/50 text-blue-900'
+                   }`}
+                 >
+                   Refresh Weather Data
+                 </button>
+               </div>
+             )}
+           </div>
 
           {/* Analysis & Trading - Full Width Below */}
           <div className="space-y-6">
