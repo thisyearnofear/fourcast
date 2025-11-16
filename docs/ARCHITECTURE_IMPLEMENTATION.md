@@ -713,8 +713,8 @@ async function analyzeWithAI(market, weatherData, edgeScore) {
     "precipChance": 5,
     "windSpeed": 8,
     "humidity": 40,
-    "hasData": true
-  }
+ "hasData": true
+}
 }
 
 // MEDIUM confidence sports edge
@@ -758,3 +758,10 @@ async function analyzeWithAI(market, weatherData, edgeScore) {
 ### Chain Addresses
 - Arbitrum: `PREDICTION_CONTRACT_ADDRESS_ARBITRUM=0x64BAeF0d2F0eFAb7b42C19568A06aB9E76cd2310`, `PREDICTION_FEE_BPS_ARBITRUM=500`.
 - BNB: `PREDICTION_CONTRACT_ADDRESS_BNB=0x94b359E1c724604b0068F82005BcD3170A48A03E`, `PREDICTION_FEE_BPS_BNB=500`.
+## Analysis UX Guidelines
+
+- Information hierarchy: show a compact summary row first (confidence, weather impact, market efficiency), then progressive disclosure for reasoning and factors
+- Citations: in deep mode, display concise domain + short title + two-line excerpt; avoid overwhelming the user with long lists
+- Badges: show “Web search enabled” and cache status to set user expectations; include elapsed time for deep analysis
+- Night mode: maintain pill backgrounds and subtle borders for all cards; avoid low-contrast text; prefer opacity-based emphasis over dense blocks
+- Interactions: use smooth expand/collapse transitions and clear affordances (e.g., “Show details”, “Hide details”) to keep the experience intuitive

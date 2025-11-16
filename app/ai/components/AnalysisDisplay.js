@@ -45,6 +45,7 @@ export default function AnalysisDisplay({
   const accentBg = isNight ? 'bg-blue-600/20 border-blue-400/40' : 'bg-blue-200/40 border-blue-400/60';
   
   const assessment = analysis.assessment || {};
+  const hasCitations = Array.isArray(analysis.citations) && analysis.citations.length > 0;
 
   // Extract one-line summary (first sentence of analysis)
   const oneSentenceSummary = analysis.analysis
@@ -69,11 +70,23 @@ export default function AnalysisDisplay({
         Quick Trade This Edge
       </button>
 
-      {/* One-Sentence Summary - Most Visible */}
+      {/* One-Sentence Summary & Badges */}
       <div className={`${accentBg} border rounded-lg p-4`}>
         <p className={`text-sm ${textColor} leading-relaxed font-light`}>
           {oneSentenceSummary}
         </p>
+        <div className="mt-2 flex items-center gap-2">
+          {analysis.web_search && (
+            <span className={`text-[10px] px-2 py-1 rounded ${isNight ? 'bg-white/10 border border-white/20 text-white' : 'bg-black/10 border border-black/20 text-black'}`}>
+              Web search enabled
+            </span>
+          )}
+          {analysis.cached && (
+            <span className={`text-[10px] px-2 py-1 rounded ${isNight ? 'bg-white/10 border border-white/20 text-white' : 'bg-black/10 border border-black/20 text-black'}`}>
+              Cached result
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Key Metrics Grid */}
@@ -176,7 +189,26 @@ export default function AnalysisDisplay({
               {analysis.analysis}
             </p>
           </div>
-          
+
+          {/* Citations (Deep Mode) */}
+          {hasCitations && (
+            <div>
+              <h4 className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wide`}>Citations</h4>
+              <ul className="space-y-2">
+                {analysis.citations.slice(0, 4).map((c, idx) => (
+                  <li key={idx} className={`text-xs ${textColor} opacity-80`}>
+                    <a href={c.url} target="_blank" rel="noreferrer" className="underline">
+                      {c.title || c.url}
+                    </a>
+                    {c.snippet && (
+                      <div className={`opacity-70`}>{c.snippet}</div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Data Source & Transparency */}
           <div className={`border-t border-current/20 pt-3 mt-3`}>
             <div className={`text-xs ${textColor} opacity-50 space-y-1`}>

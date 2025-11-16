@@ -37,7 +37,7 @@ function getClientIdentifier(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { eventType, location, weatherData, currentOdds, participants, marketID } = body;
+    const { eventType, location, weatherData, currentOdds, participants, marketID, mode = 'basic' } = body;
 
     // Validate required fields
     if (!eventType || !location || !weatherData || !currentOdds) {
@@ -49,6 +49,7 @@ export async function POST(request) {
 
     // Rate limiting
     const clientId = getClientIdentifier(request);
+    const limitPerHour = mode === 'deep' ? 10 : ANALYSIS_RATE_LIMIT;
     if (!checkAnalysisRateLimit(clientId)) {
       return Response.json({
         error: 'Analysis rate limit exceeded. Please try again later.',
@@ -64,7 +65,8 @@ export async function POST(request) {
       currentOdds,
       participants,
       marketId: marketID, // ← Roadmap-aligned cache key: analysis:{marketID}
-      eventDate: body.eventDate // ← Dynamic TTL based on event timing
+      eventDate: body.eventDate, // ← Dynamic TTL based on event timing
+      mode
     });
 
     return Response.json({
@@ -80,6 +82,9 @@ export async function POST(request) {
       recommended_action: analysis.recommended_action || 'Monitor manually',
       cached: analysis.cached || false, // ← Shows if result came from Redis
       source: analysis.source || 'unknown', // ← redis/memory/venice_ai
+      citations: analysis.citations || [],
+      limitations: analysis.limitations || null,
+      web_search: mode === 'deep',
       timestamp: new Date().toISOString()
     });
 

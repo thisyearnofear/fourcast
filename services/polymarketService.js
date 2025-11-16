@@ -1021,6 +1021,40 @@ class PolymarketService {
     };
   }
 
+  normalizeTags(tags) {
+    const arr = Array.isArray(tags) ? tags : [];
+    return arr.map(t => {
+      if (typeof t === 'string') return t.toLowerCase();
+      if (t && typeof t === 'object' && t.label) return String(t.label).toLowerCase();
+      return '';
+    }).filter(Boolean);
+  }
+
+  filterByWeatherTheme(markets, theme) {
+    const th = (theme || 'all').toLowerCase();
+    if (th === 'all') return markets;
+    const sportKeywords = ['nfl','nba','mlb','soccer','tennis','golf','cricket','rugby','marathon','race'];
+    const outdoorKeywords = ['marathon','race','festival','concert','outdoor'];
+    const aviationKeywords = ['flight','airport','delay','storm','airline'];
+    const energyKeywords = ['grid','power','electricity','oil','gas','energy','utility'];
+    const agricultureKeywords = ['harvest','crop','yield','agriculture','wheat','corn','soy'];
+    const weatherKeywords = ['weather','rain','snow','wind','temperature','heat','cold','humidity','storm'];
+    const matchAny = (text, words) => words.some(w => text.includes(w));
+    return (markets || []).filter(m => {
+      const title = (m.title || m.question || '').toLowerCase();
+      const desc = (m.description || '').toLowerCase();
+      const tags = this.normalizeTags(m.tags);
+      const text = `${title} ${desc} ${tags.join(' ')}`;
+      if (th === 'sports') return matchAny(text, sportKeywords) || (m.eventType && String(m.eventType).toLowerCase() !== 'politics');
+      if (th === 'outdoor') return matchAny(text, outdoorKeywords) || matchAny(text, sportKeywords);
+      if (th === 'aviation') return matchAny(text, aviationKeywords);
+      if (th === 'energy') return matchAny(text, energyKeywords);
+      if (th === 'agriculture') return matchAny(text, agricultureKeywords);
+      if (th === 'weather_explicit') return matchAny(text, weatherKeywords);
+      return true;
+    });
+  }
+
   /**
    * Phase 1: Enrich market with order book and depth analytics
    * Fetches order book data and calculates rich metrics for edge detection

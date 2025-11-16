@@ -14,8 +14,9 @@ const redis = {
 
 const getRedisClient = async () => redis;
 
-const callVeniceAI = async (params) => {
+const callVeniceAI = async (params, options = {}) => {
   const { eventType, location, weatherData, currentOdds, participants } = params;
+  const { webSearch = false, showThinking = false } = options;
 
   // Configure Venice AI client
   const client = new OpenAI({
@@ -43,7 +44,8 @@ Respond with this exact JSON structure containing your analysis:
   "confidence": "HIGH",
   "analysis": "The weather conditions show minimal impact on this corporate market cap prediction.",
   "key_factors": ["Weather has no direct influence on corporate performance"],
-  "recommended_action": "No trading action needed - weather irrelevant"
+  "recommended_action": "No trading action needed - weather irrelevant",
+  ${webSearch ? '"citations": [{"title":"...","url":"https://...","snippet":"..."}], "limitations": "..."' : ''}
 }`
     }
   ];
@@ -55,7 +57,12 @@ Respond with this exact JSON structure containing your analysis:
       messages,
       temperature: 0.3,
       max_tokens: 1000,
-      response_format: { type: 'json_object' }
+      response_format: { type: 'json_object' },
+      // Venice-specific parameters
+      venice_parameters: {
+        enable_web_search: webSearch ? 'auto' : undefined,
+        strip_thinking_response: showThinking ? false : true
+      }
     });
 
     const content = response.choices[0].message.content;
@@ -72,7 +79,9 @@ Respond with this exact JSON structure containing your analysis:
       },
       analysis: parsed.analysis || 'Analysis completed via Venice AI',
       key_factors: Array.isArray(parsed.key_factors) ? parsed.key_factors : [parsed.key_factors || 'Weather factors analyzed'],
-      recommended_action: parsed.recommended_action || 'Monitor the market closely'
+      recommended_action: parsed.recommended_action || 'Monitor the market closely',
+      citations: Array.isArray(parsed.citations) ? parsed.citations : [],
+      limitations: parsed.limitations || null
     };
 
   } catch (error) {
@@ -86,8 +95,8 @@ export const aiService = {
    * Analyze weather impact on prediction market odds
    * ENHANCED: Redis caching with roadmap-aligned keys
    */
-   async analyzeWeatherImpact(params) {
-    const { eventType, location, weatherData, currentOdds, participants, marketId, eventDate } = params;
+  async analyzeWeatherImpact(params) {
+    const { eventType, location, weatherData, currentOdds, participants, marketId, eventDate, mode = 'basic' } = params;
 
     try {
       // Log the API key availability (debug)
@@ -120,10 +129,14 @@ export const aiService = {
         };
       }
 
-      const analysis = await callVeniceAI({ eventType, location, weatherData, currentOdds, participants });
+      const analysis = await callVeniceAI({ eventType, location, weatherData, currentOdds, participants }, {
+        webSearch: mode === 'deep',
+        showThinking: false
+      });
 
       // Cache result with roadmap-aligned TTL (6 hours for distant events, 1 hour for near events)
-      const ttl = eventDate && new Date(eventDate) - new Date() < 24 * 60 * 60 * 1000 ? 3600 : 21600; // 1h or 6h
+      const baseTtl = eventDate && new Date(eventDate) - new Date() < 24 * 60 * 60 * 1000 ? 3600 : 21600; // 1h or 6h
+      const ttl = mode === 'deep' ? Math.max(baseTtl, 21600) : baseTtl; // Deep cached at least 6h
       await redis.setex(cacheKey, ttl, JSON.stringify(analysis));
 
       return {
@@ -195,7 +208,7 @@ export const aiService = {
       const eventData = {
         eventType: market.title || 'Prediction Market',
         location: weatherData?.location?.name || 'Unknown Location',
-        currentOdds: `Yes: ${(market.currentOdds?.yes * 100 || 0).toFixed(1)}% / No: ${(market.currentOdds?.no * 100 || 0).toFixed(1)}%`,
+        currentOdds: { yes: market.currentOdds?.yes || 0.5, no: market.currentOdds?.no || 0.5 },
         participants: market.description || 'Market participants'
       };
 
@@ -205,14 +218,13 @@ export const aiService = {
         body: JSON.stringify({
           ...eventData,
           weatherData,
-          marketID: market.marketID
+          marketID: market.marketID,
+          mode: market.mode || 'basic'
         })
       });
 
       const data = await response.json();
-      if (data.success) {
-        return { success: true, analysis: data.analysis };
-      }
+      if (data.success) return { success: true, ...data };
       return { success: false, error: data.error || 'Analysis failed' };
     } catch (err) {
       console.error('Analysis request failed:', err);

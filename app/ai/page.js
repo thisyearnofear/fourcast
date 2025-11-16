@@ -34,6 +34,7 @@ export default function AIPage() {
   // Analysis state
   const [analysis, setAnalysis] = useState(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState('basic');
 
   // UI state
   const [showOrderForm, setShowOrderForm] = useState(false);
@@ -138,7 +139,7 @@ export default function AIPage() {
     setError(null);
     setAnalysis(null);
 
-    const result = await aiService.analyzeMarket(marketToAnalyze, weatherData);
+    const result = await aiService.analyzeMarket({ ...marketToAnalyze, mode: analysisMode }, weatherData);
     console.log('🎯 Full analysis result:', result);
 
     if (result.success) {
@@ -150,6 +151,9 @@ export default function AIPage() {
         recommended_action: result.recommended_action || 'Monitor manually',
         cached: result.cached || false,
         source: result.source || 'unknown',
+        citations: result.citations || [],
+        limitations: result.limitations || null,
+        web_search: result.web_search || false,
         timestamp: result.timestamp
       };
 
@@ -257,6 +261,17 @@ export default function AIPage() {
             </div>
             <div className="flex items-center space-x-3">
               <PageNav currentPage="AI" isNight={nightStatus} />
+              <div className="hidden sm:flex items-center ml-2">
+                <label className={`${textColor} text-xs opacity-70 mr-2`}>Analysis Mode</label>
+                <select
+                  value={analysisMode}
+                  onChange={(e) => setAnalysisMode(e.target.value)}
+                  className={`px-3 py-1.5 text-xs rounded-lg border ${nightStatus ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'}`}
+                >
+                  <option value="basic">Basic (Free)</option>
+                  <option value="deep">Deep (Research)</option>
+                </select>
+              </div>
               <ConnectKitButton mode={nightStatus ? "dark" : "light"} />
             </div>
           </div>

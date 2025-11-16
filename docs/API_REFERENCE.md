@@ -223,6 +223,10 @@ Response (success):
 }
 ```
 
+Theme Filtering
+- `theme` (optional): one of `all`, `sports`, `outdoor`, `aviation`, `energy`, `agriculture`, `weather_explicit`
+- The server applies theme filters after edge scoring using Gamma tags/categories and keyword heuristics for implicit weather sensitivity.
+
 **Key Improvements (Nov 14):**
 - Uses optimized `/events` endpoint (1 API call instead of 3)
 - Filters by $50k+ volume minimum (eliminates thin markets)
@@ -233,34 +237,23 @@ Response (success):
 
 ### POST /api/analyze
 
-**Run Venice AI edge analysis for a market (with Redis caching)**
+Purpose: return a structured assessment of a market with Basic or Deep mode
 
-Request:
-```javascript
-{
-  "marketId": "market_123",
-  "eventType": "Chicago Marathon",
-  "location": "Chicago",
-  "weatherData": { ... },
-  "currentOdds": { "yes": 0.35, "no": 0.65 }
-}
-```
+Request fields
+- `mode`: `basic` or `deep`
+- `eventType`: market type (e.g., NFL, Weather)
+- `location`: city or region (string)
+- `weatherData`: current conditions payload used throughout the app
+- `currentOdds`: `{ yes: number, no: number }` in 0–1 range
+- `participants`: optional participants metadata (e.g., teams)
+- `marketID`: identifier used in Polymarket catalog
+- `eventDate`: optional ISO date for the event
 
-Response:
-```javascript
-{
-  "marketId": "market_123",
-  "assessment": {
-    "weather_impact": "HIGH",
-    "odds_efficiency": "INEFFICIENT",
-    "confidence": "HIGH"
-  },
-  "reasoning": "Weather forecast shows 70% precip...",
-  "key_factors": ["..."],
-  "recommended_action": "...",
-  "cached": false  // true if from Redis cache
-}
-```
+Responses
+- Success (Basic): `assessment`, `reasoning`, `key_factors`, `recommended_action`, `cached`, `source`, `timestamp`
+- Success (Deep): adds `citations[]` (title, url, snippet) and `limitations`
+- Error (400): missing required fields listed with an actionable hint
+- Error (429): rate-limit exceeded; includes `retryAfter` seconds
 
 ### POST /api/wallet
 

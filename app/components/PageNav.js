@@ -2,6 +2,7 @@
 
 export default function PageNav({ currentPage, isNight }) {
   const textColor = isNight ? 'text-white' : 'text-black';
+  const bgClass = isNight ? 'bg-white/10 border-white/20' : 'bg-black/10 border-black/20';
   
   const pages = [
     { name: 'Fourcast', href: '/', label: '🌤️' },
@@ -17,7 +18,7 @@ export default function PageNav({ currentPage, isNight }) {
         <a
           key={page.name}
           href={page.href}
-          className={`flex items-center space-x-2 px-3 py-2 ${textColor} opacity-80 hover:opacity-100 transition-opacity text-sm font-light`}
+          className={`flex items-center space-x-2 px-3 py-2 ${textColor} rounded-lg border ${bgClass} text-sm font-medium hover:scale-[1.03] transition-transform`}
         >
           <span>{page.label}</span>
           <span>{page.name}</span>

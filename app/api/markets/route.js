@@ -13,7 +13,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const { location, weatherData, eventType, confidence, limitCount } = body;
+    const { location, weatherData, eventType, confidence, limitCount, theme } = body;
 
     // REFACTORED: New architecture - location is optional for personalization
     // Primary discovery is now edge-ranked by weather sensitivity
@@ -40,7 +40,12 @@ export async function POST(request) {
       };
     }
 
-    if (!result.markets || result.markets.length === 0) {
+    let marketsList = result.markets || [];
+    if (theme && polymarketService.filterByWeatherTheme) {
+      marketsList = polymarketService.filterByWeatherTheme(marketsList, theme);
+    }
+
+    if (!marketsList || marketsList.length === 0) {
       // No weather-sensitive edges found - show helpful message instead of fallback markets
       return Response.json({
         success: true,
@@ -53,8 +58,7 @@ export async function POST(request) {
       });
     }
 
-    // Transform to API response format - include all enriched data
-     const transformedMarkets = result.markets.map(m => {
+    const transformedMarkets = marketsList.map(m => {
        // Ensure odds are always valid (use oddsAnalysis as primary, fallback to currentOdds, finally default to 0.5)
        const bestBid = m.oddsAnalysis?.bestBid ?? m.orderBookMetrics?.bestBid ?? m.currentOdds?.no ?? 0.5;
        const bestAsk = m.oddsAnalysis?.bestAsk ?? m.orderBookMetrics?.bestAsk ?? m.currentOdds?.yes ?? 0.5;

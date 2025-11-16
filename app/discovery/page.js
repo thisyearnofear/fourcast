@@ -97,16 +97,25 @@ const DiscoveryPage = () => {
     
     try {
       // REFACTORED: Use new edge-ranked discovery via API
-      const response = await fetch('/api/markets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: filters.search || null, // Optional location filter
-          eventType: 'all',
-          confidence: 'all',
-          limitCount: 50 // More results for discovery page
-        })
-      });
+          const response = await fetch('/api/markets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: filters.search || null, // Optional location filter
+              eventType: 'all',
+              confidence: 'all',
+              limitCount: 50, // More results for discovery page
+              theme: (
+                filters.category === 'Sports' ? 'sports' :
+                filters.category === 'Outdoor' ? 'outdoor' :
+                filters.category === 'Aviation' ? 'aviation' :
+                filters.category === 'Energy' ? 'energy' :
+                filters.category === 'Agriculture' ? 'agriculture' :
+                filters.category === 'Weather' ? 'weather_explicit' :
+                'all'
+              )
+            })
+          });
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -123,11 +132,27 @@ const DiscoveryPage = () => {
           filtered = filtered.filter(m => (m.volume24h || 0) >= minVol);
         }
         
-        // Apply category filter
+        // Apply category filter (robust tag normalization and heuristics)
         if (filters.category !== 'all') {
+          const cat = (filters.category || '').toLowerCase();
+          const sportKeywords = ['nfl','nba','mlb','golf','tennis','soccer','rugby','cricket','marathon','race'];
+          const weatherKeywords = ['weather','rain','snow','wind','temperature','heat','cold','humidity','storm'];
           filtered = filtered.filter(m => {
-            const tags = m.tags || [];
-            return tags.some(tag => tag.toLowerCase() === filters.category.toLowerCase());
+            const title = (m.title || m.question || '').toLowerCase();
+            const desc = (m.description || '').toLowerCase();
+            const tags = (m.tags || []).map(t => {
+              if (typeof t === 'string') return t.toLowerCase();
+              if (t && typeof t === 'object' && t.label) return String(t.label).toLowerCase();
+              return '';
+            });
+            const allText = `${title} ${desc} ${tags.join(' ')}`;
+            if (cat === 'sports') {
+              return sportKeywords.some(k => allText.includes(k)) || (m.eventType && String(m.eventType).toLowerCase() === 'nfl' || String(m.eventType).toLowerCase() === 'nba');
+            }
+            if (cat === 'weather') {
+              return weatherKeywords.some(k => allText.includes(k));
+            }
+            return false;
           });
         }
         
@@ -163,15 +188,17 @@ const DiscoveryPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          marketTitle: market.title || market.question,
-          description: market.description,
-          tags: market.tags || [],
-          currentBid: market.bid || 0,
-          currentAsk: market.ask || 0,
-          volume24h: market.volume24h || 0,
-          liquidity: market.liquidity || 0,
-          marketID: market.id || market.tokenID,
-          resolutionDate: market.expiresAt || market.resolutionDate
+          eventType: market.eventType || 'Weather',
+          location: market.location || (weatherData?.location?.name || ''),
+          weatherData,
+          currentOdds: market.currentOdds || (
+            (market.bid !== undefined && market.ask !== undefined)
+              ? { yes: Number(market.ask), no: Number(market.bid) }
+              : null
+          ),
+          participants: market.teams || [],
+          marketID: market.marketID || market.id || market.tokenID,
+          eventDate: market.resolutionDate || market.expiresAt || null
         })
       });
 

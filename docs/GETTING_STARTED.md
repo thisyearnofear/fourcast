@@ -224,6 +224,26 @@ Visit `http://localhost:3000` for the weather app with ConnectKit wallet integra
 - **React 19** - Latest React with concurrent features
 - **React Three Fiber** - Declarative 3D graphics
 - **Tailwind CSS** - Utility-first styling
+
+## Analysis Modes
+
+Basic Analysis (free in beta)
+- Purpose: fast summary of weather impact and odds efficiency
+- Output: assessment (weather_impact, odds_efficiency, confidence), key_factors, recommended_action
+- Performance: 2–6s typical; low token usage
+- Model: cost-efficient model or `qwen3-235b` when deep context is needed
+
+Deep Analysis (paid tier)
+- Purpose: long-context reasoning plus web search with citations
+- Output: everything in Basic plus citations (title, url, snippet), evidence notes and limitations
+- Performance: 6–15s typical; cached by market and day
+- Model: `qwen3-235b` with web search enabled
+
+UI Guidelines
+- Keep the analysis card compact: summary row first (confidence, impact, efficiency), expandable details below
+- Show badges for “Web search enabled” and cache status; display citations with domain, short title, and a two-line excerpt
+- Use progressive disclosure: collapse long reasoning by default; reveal on demand with a smooth transition
+- Maintain night-mode readability: translucent pill backgrounds and subtle borders for all cards; avoid low-contrast text
 - **ConnectKit** - Wallet connection UI
 - **Wagmi** - Ethereum hooks
 - **Arbitrum** - L2 blockchain
