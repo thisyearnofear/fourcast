@@ -124,6 +124,32 @@ POLYMARKET_PRIVATE_KEY=0x_your_private_key
 POLYMARKET_FUNDER_ADDRESS=0x_your_funder_address
 ```
 
+### Multi-Chain Setup (Arbitrum + BNB)
+
+Add per-chain prediction receipt addresses, fees, and RPCs to `.env.local`:
+
+```env
+# Arbitrum
+PREDICTION_CONTRACT_ADDRESS_ARBITRUM=0x64BAeF0d2F0eFAb7b42C19568A06aB9E76cd2310
+PREDICTION_FEE_BPS_ARBITRUM=500
+ARB_RPC_URL=https://arb1.arbitrum.io/rpc
+
+# BNB
+PREDICTION_CONTRACT_ADDRESS_BNB=0x94b359E1c724604b0068F82005BcD3170A48A03E
+PREDICTION_FEE_BPS_BNB=500
+NEXT_PUBLIC_BNB_RPC_URL=https://bsc-dataseed.binance.org
+
+# Optional server signers (for server-submitted transactions)
+ARB_PRIVATE_KEY=
+BNB_PRIVATE_KEY=
+```
+
+### Quickstart: Multi-Chain
+
+- Connect your wallet on Arbitrum or BNB in the app header.
+- The app passes your active `chainId` to the predictions API and computes fee-only `msg.value` from chain-specific `feeBps`.
+- No Polygon deployment is required for MVP; Polymarket discovery remains Polygon-native for data context while predictions anchor on Arbitrum/BNB.
+
 ## Local Development Setup
 
 ### AI Integration Setup

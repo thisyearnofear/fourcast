@@ -512,3 +512,51 @@ curl https://gamma-api.polymarket.com/markets
 5. **Cost preview** → Real-time calculation
 6. **Confirm & submit** → CLOB client executes order
 7. **Confirmation** → Order ID shown or error with guidance
+## Predictions API (Multi-Chain)
+
+### POST /api/predictions
+
+Submit a prediction receipt on-chain. Returns a transaction request for client signature or a server-submitted transaction when a signer is configured.
+
+Request body:
+```javascript
+{
+  marketID: "string",        // Market identifier used in UI context
+  price: 0.55,                // 0-1 odds (e.g., 55% → 0.55)
+  side: "BUY" | "SELL",      // Semantic label
+  size: 0.20,                 // Stake units; used to compute fee
+  walletAddress: "0x...",    // Connected wallet
+  chainId: 42161,             // Arbitrum (42161), BNB (56)
+  metadataUri: "ipfs://..."   // Optional extra context
+}
+```
+
+Response (client signature required):
+```javascript
+{
+  success: true,
+  mode: "client_signature_required",
+  txRequest: {
+    to: "0x...",
+    data: "0x...",      // ABI-encoded placePrediction(...)
+    value: "0x..."      // fee-only msg.value (stakeWei * feeBps / 10000)
+  }
+}
+```
+
+Response (server submitted):
+```javascript
+{
+  success: true,
+  txHash: "0x...",
+  order: { marketID, side, price, size },
+  timestamp: "ISO-8601"
+}
+```
+
+Rate Limiting: 50 requests/hour per client (429 when exceeded)
+
+Chain Mapping:
+- Arbitrum (42161): `PREDICTION_CONTRACT_ADDRESS_ARBITRUM`, `PREDICTION_FEE_BPS_ARBITRUM`, `ARB_RPC_URL`
+- BNB (56): `PREDICTION_CONTRACT_ADDRESS_BNB`, `PREDICTION_FEE_BPS_BNB`, `NEXT_PUBLIC_BNB_RPC_URL`
+- Optional Polygon (137): ERC20 variant via `PredictionReceiptERC20.sol`

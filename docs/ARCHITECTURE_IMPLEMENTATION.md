@@ -743,3 +743,18 @@ async function analyzeWithAI(market, weatherData, edgeScore) {
     "hasData": true
   }
 }
+## Multi-Chain Predictions Flow
+
+- Frontend retrieves the active `chainId` from the wallet and passes it to the predictions API when placing a prediction (`app/ai/page.js:15`, `app/ai/components/OrderForm.js:47`).
+- Backend `/api/predictions` maps `chainId → { address, feeBps, rpcUrl, signerKey }` from environment and builds a fee-only `txRequest` for `placePrediction(marketId, side, stakeWei, oddsBps, uri)` (`app/api/predictions/route.js:31–79,103–129`).
+- If a server signer is configured for the chain, the route submits and returns `txHash`; otherwise it returns `txRequest` for the client to sign.
+- Contracts:
+  - Native coin fee (BNB/Arbitrum): `contracts/PredictionReceipt.sol` — emits `PredictionPlaced` with indexed `user`, `marketId`, and `id`.
+  - ERC20 fee (Polygon optional): `contracts/PredictionReceiptERC20.sol` — fee via `transferFrom` to `treasury`.
+
+### Fee Semantics
+- Fee-only `msg.value = stakeWei * feeBps / 10000` ensures no custody of stake; stake/odds are recorded in the receipt and emitted as event data.
+
+### Chain Addresses
+- Arbitrum: `PREDICTION_CONTRACT_ADDRESS_ARBITRUM=0x64BAeF0d2F0eFAb7b42C19568A06aB9E76cd2310`, `PREDICTION_FEE_BPS_ARBITRUM=500`.
+- BNB: `PREDICTION_CONTRACT_ADDRESS_BNB=0x94b359E1c724604b0068F82005BcD3170A48A03E`, `PREDICTION_FEE_BPS_BNB=500`.
