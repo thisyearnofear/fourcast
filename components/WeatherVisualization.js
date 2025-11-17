@@ -8,7 +8,7 @@ import Snow from './weather3d/Snow';
 import Storm from './weather3d/Storm';
 import { Text } from '@react-three/drei';
 
-const WeatherVisualization = ({ weatherData, isLoading, portalMode = false }) => {
+const WeatherVisualization = ({ weatherData, isLoading, portalMode = false, rainCount, snowCount }) => {
 
   // Check if it's nighttime based on local time
   const isNightTime = () => {
@@ -21,6 +21,10 @@ const WeatherVisualization = ({ weatherData, isLoading, portalMode = false }) =>
   const isNight = isNightTime();
   const currentCondition = weatherData?.current?.condition?.text;
   const weatherType = currentCondition ? getWeatherConditionType(currentCondition) : null;
+  
+  // Use provided counts or fallback to defaults
+  const effectiveRainCount = rainCount !== undefined ? rainCount : (portalMode ? 100 : 800);
+  const effectiveSnowCount = snowCount !== undefined ? snowCount : (portalMode ? 50 : 400);
 
 
   if (isLoading || !weatherData) {
@@ -56,14 +60,14 @@ const WeatherVisualization = ({ weatherData, isLoading, portalMode = false }) =>
       return (
         <>
           <Clouds intensity={0.8} speed={0.15} portalMode={portalMode} />
-          <Rain count={portalMode ? 100 : 800} />
+          <Rain count={effectiveRainCount} />
         </>
       );
     } else if (weatherType === 'snowy') {
       return (
         <>
           <Clouds intensity={0.6} speed={0.05} portalMode={portalMode} />
-          <Snow count={portalMode ? 50 : 400} />
+          <Snow count={effectiveSnowCount} />
         </>
       );
     } else if (weatherType === 'stormy') {

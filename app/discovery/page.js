@@ -21,6 +21,7 @@ const DiscoveryPage = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [expandedMarketId, setExpandedMarketId] = useState(null);
+  const [analysisMode, setAnalysisMode] = useState('basic');
 
   // Weather data for backdrop
   const [weatherData, setWeatherData] = useState(null);
@@ -177,9 +178,9 @@ const DiscoveryPage = () => {
     }
   }, [searchQuery]);
 
-  const analyzeMarket = async (market) => {
+  const analyzeMarket = async (market, mode = analysisMode) => {
     setSelectedMarket(market);
-    setExpandedMarketId(market.id);
+    setExpandedMarketId(market.marketID || market.id || market.tokenID);
     setIsAnalyzing(true);
     setAnalysis(null);
 
@@ -198,7 +199,8 @@ const DiscoveryPage = () => {
           ),
           participants: market.teams || [],
           marketID: market.marketID || market.id || market.tokenID,
-          eventDate: market.resolutionDate || market.expiresAt || null
+          eventDate: market.resolutionDate || market.expiresAt || null,
+          mode
         })
       });
 
@@ -237,11 +239,12 @@ const DiscoveryPage = () => {
 
   return (
     <div className="min-h-screen relative">
-      {/* 3D Scene Background */}
+      {/* 3D Scene Background - Ambient Quality for Performance */}
       <div className="fixed inset-0 z-0">
         <Scene3D 
           weatherData={weatherData}
           isLoading={isLoadingWeather}
+          quality="ambient"
         />
       </div>
       
@@ -384,12 +387,12 @@ const DiscoveryPage = () => {
         {!isLoading && !error && markets.length > 0 && (
           <div className="space-y-4">
             {markets.map((market, index) => {
-              const isExpanded = expandedMarketId === market.id;
+              const isExpanded = expandedMarketId === (market.marketID || market.id || market.tokenID);
               const isHidden = expandedMarketId && !isExpanded;
               
               return (
               <div
-                key={market.id || index}
+                key={market.marketID || market.id || index}
                 className={`backdrop-blur-xl border rounded-3xl transition-all duration-500 ${
                   isExpanded
                     ? 'fixed inset-4 p-8 z-40 overflow-y-auto'
@@ -576,7 +579,7 @@ const DiscoveryPage = () => {
                       </button>
                     ) : (
                       <button
-                        onClick={() => analyzeMarket(market)}
+                        onClick={() => analyzeMarket(market, 'basic')}
                         disabled={isAnalyzing}
                         className={`px-6 py-3 rounded-2xl font-light text-sm transition-all duration-300 disabled:opacity-40 hover:scale-105 border ${
                           isNight
@@ -584,7 +587,7 @@ const DiscoveryPage = () => {
                             : 'bg-gradient-to-r from-blue-400/20 to-purple-400/20 hover:from-blue-400/30 hover:to-purple-400/30 text-blue-800 border-blue-500/30'
                         }`}
                       >
-                        {isAnalyzing && selectedMarket?.id === market.id ? (
+                        {isAnalyzing && (selectedMarket?.marketID || selectedMarket?.id) === (market.marketID || market.id) ? (
                           <div className="flex items-center space-x-2">
                             <div className={`w-3 h-3 border ${
                               isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'
@@ -592,7 +595,29 @@ const DiscoveryPage = () => {
                             <span>Analyzing...</span>
                           </div>
                         ) : (
-                          'Analyze Edge'
+                          'Analyze (Standard)'
+                        )}
+                      </button>
+                      )}
+                      { !isExpanded && (
+                      <button
+                        onClick={() => analyzeMarket(market, 'deep')}
+                        disabled={isAnalyzing}
+                        className={`ml-3 px-6 py-3 rounded-2xl font-light text-sm transition-all duration-300 disabled:opacity-40 hover:scale-105 border ${
+                          isNight
+                            ? 'bg-gradient-to-r from-green-500/20 to-teal-500/20 hover:from-green-500/30 hover:to-teal-500/30 text-green-200 border-green-400/30'
+                            : 'bg-gradient-to-r from-green-400/20 to-teal-400/20 hover:from-green-400/30 hover:to-teal-400/30 text-green-800 border-green-500/30'
+                        }`}
+                      >
+                        {isAnalyzing && (selectedMarket?.marketID || selectedMarket?.id) === (market.marketID || market.id) ? (
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-3 h-3 border ${
+                              isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'
+                            } rounded-full animate-spin`}></div>
+                            <span>Analyzing...</span>
+                          </div>
+                        ) : (
+                          'Analyze (Enhanced)'
                         )}
                       </button>
                     )}
@@ -616,6 +641,9 @@ const DiscoveryPage = () => {
                       </div>
                     ) : analysis ? (
                       <div className="space-y-6">
+                        {analysis.web_search && (
+                          <div className={`text-xs ${textColor} opacity-70`}>Enhanced analysis with web research enabled</div>
+                        )}
                         {/* Assessment Summary */}
                         <div className="grid grid-cols-3 gap-4">
                           <div className="text-center">
@@ -702,10 +730,15 @@ const DiscoveryPage = () => {
                           </button>
                         </div>
 
-                        {/* Cache Info */}
+                        {/* Cache / Mode Info */}
                         {analysis.cached && (
                           <div className={`text-xs ${textColor} opacity-50 text-center`}>
                             Results cached from {analysis.source} • Analysis time saved
+                          </div>
+                        )}
+                        {analysis.web_search && (
+                          <div className={`text-xs ${textColor} opacity-50 text-center`}>
+                            Deep research mode • Web search and citations available
                           </div>
                         )}
 

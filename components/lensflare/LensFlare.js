@@ -132,7 +132,8 @@ function UltimateLensFlare({
   ghostScale = 0.3,
   starBurst = true,
   enabled = true,
-  opacity = 1.0
+  opacity = 1.0,
+  enableOcclusion = true
 }) {
   const lensRef = useRef()
 
@@ -151,30 +152,36 @@ function UltimateLensFlare({
 
       flarePosition.set(projectedPosition.x, projectedPosition.y, projectedPosition.z)
 
-      raycaster.setFromCamera(projectedPosition, camera)
-      const intersects = raycaster.intersectObjects(scene.children, true)
+      // Only perform expensive raycasting if occlusion is enabled
+      if (enableOcclusion) {
+        raycaster.setFromCamera(projectedPosition, camera)
+        const intersects = raycaster.intersectObjects(scene.children, true)
 
-      if (intersects.length > 0) {
-        const firstIntersect = intersects[0]
-        
-        if (firstIntersect.object.userData && firstIntersect.object.userData.lensflare === 'no-occlusion') {
-          easing.damp(lensRef.current.uniforms.get('opacity'), 'value', 1.0, 0.07, delta)
-        } else {
-          const material = firstIntersect.object.material
+        if (intersects.length > 0) {
+          const firstIntersect = intersects[0]
           
-          if (material) {
-            if (material.transparent && material.opacity < 0.8) {
-              easing.damp(lensRef.current.uniforms.get('opacity'), 'value', material.opacity * 0.5, 0.07, delta)
-            } else if (material.transmission && material.transmission > 0.2) {
-              easing.damp(lensRef.current.uniforms.get('opacity'), 'value', 0.3, 0.07, delta)
+          if (firstIntersect.object.userData && firstIntersect.object.userData.lensflare === 'no-occlusion') {
+            easing.damp(lensRef.current.uniforms.get('opacity'), 'value', 1.0, 0.07, delta)
+          } else {
+            const material = firstIntersect.object.material
+            
+            if (material) {
+              if (material.transparent && material.opacity < 0.8) {
+                easing.damp(lensRef.current.uniforms.get('opacity'), 'value', material.opacity * 0.5, 0.07, delta)
+              } else if (material.transmission && material.transmission > 0.2) {
+                easing.damp(lensRef.current.uniforms.get('opacity'), 'value', 0.3, 0.07, delta)
+              } else {
+                easing.damp(lensRef.current.uniforms.get('opacity'), 'value', 0.0, 0.07, delta)
+              }
             } else {
               easing.damp(lensRef.current.uniforms.get('opacity'), 'value', 0.0, 0.07, delta)
             }
-          } else {
-            easing.damp(lensRef.current.uniforms.get('opacity'), 'value', 0.0, 0.07, delta)
           }
+        } else {
+          easing.damp(lensRef.current.uniforms.get('opacity'), 'value', 1.0, 0.07, delta)
         }
       } else {
+        // No occlusion - always show flare at full opacity
         easing.damp(lensRef.current.uniforms.get('opacity'), 'value', 1.0, 0.07, delta)
       }
 

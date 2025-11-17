@@ -30,7 +30,7 @@ const useLensFlareVisibility = (weatherData, isNight) => {
 };
 
 // Post-processing effects with Ultimate Lens Flare - only render when needed
-const PostProcessingEffects = ({ showLensFlare, isPortalMode = false }) => {
+const PostProcessingEffects = ({ showLensFlare, isPortalMode = false, enableOcclusion = true, multisampling = 8, bloomIntensity = 0.3 }) => {
   // Define main scene lens flare values
   const mainSceneDefaults = {
     positionX: 0,
@@ -80,7 +80,7 @@ const PostProcessingEffects = ({ showLensFlare, isPortalMode = false }) => {
   
   // Define bloom values for different modes
   const mainSceneBloom = {
-    bloomIntensity: 0.3,
+    bloomIntensity: bloomIntensity,
     bloomThreshold: 0.9,
   };
 
@@ -94,7 +94,7 @@ const PostProcessingEffects = ({ showLensFlare, isPortalMode = false }) => {
   if (!showLensFlare) return null;
   
   return (
-    <EffectComposer>
+    <EffectComposer multisampling={multisampling}>
       <UltimateLensFlare
         position={[lensFlareSettings.positionX, lensFlareSettings.positionY, lensFlareSettings.positionZ]}
         opacity={lensFlareSettings.opacity}
@@ -113,6 +113,7 @@ const PostProcessingEffects = ({ showLensFlare, isPortalMode = false }) => {
         starBurst={lensFlareSettings.starBurst}
         haloScale={lensFlareSettings.haloScale}
         dirtTextureFile="/lensDirtTexture.jpg"
+        enableOcclusion={enableOcclusion}
       />
       <Bloom 
         intensity={bloomSettings.bloomIntensity} 
@@ -122,9 +123,41 @@ const PostProcessingEffects = ({ showLensFlare, isPortalMode = false }) => {
   );
 };
 
-const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFunction, onPortalWeatherDataChange }) => {
+const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFunction, onPortalWeatherDataChange, quality = 'full' }) => {
   const [portalMode, setPortalMode] = React.useState(false);
   const [portalWeatherData, setPortalWeatherData] = React.useState(null);
+  
+  // Quality settings
+  const isAmbientMode = quality === 'ambient';
+  const performanceSettings = React.useMemo(() => {
+    if (isAmbientMode) {
+      return {
+        dpr: [1, 1.25],
+        antialias: false,
+        powerPreference: 'low-power',
+        starsCount: 800,
+        rainCount: 250,
+        snowCount: 120,
+        enablePortals: false,
+        enableLensFlareOcclusion: false,
+        multisampling: 0,
+        bloomIntensity: 0.15
+      };
+    }
+    // Full quality for main page
+    return {
+      dpr: [1, 1.5],
+      antialias: true,
+      powerPreference: 'default',
+      starsCount: 5000,
+      rainCount: 800,
+      snowCount: 400,
+      enablePortals: true,
+      enableLensFlareOcclusion: true,
+      multisampling: 8,
+      bloomIntensity: 0.3
+    };
+  }, [isAmbientMode]);
   
 
   const exitPortal = () => {
@@ -278,7 +311,12 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
     <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
       <Canvas
         camera={{ position: [0, 1, 10], fov: 60 }}
-        gl={{ alpha: false, antialias: true }}
+        dpr={performanceSettings.dpr}
+        gl={{ 
+          alpha: false, 
+          antialias: performanceSettings.antialias,
+          powerPreference: performanceSettings.powerPreference
+        }}
         style={{ width: '100%', height: '100%' }}
       >
         <Suspense fallback={null}>
@@ -354,25 +392,35 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
             <>
               {/* Main Scene */}
               {/* Stars only visible at night in main scene */}
-              {isNight && <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />}
+              {isNight && <Stars radius={100} depth={50} count={performanceSettings.starsCount} factor={4} saturation={0} fade speed={isAmbientMode ? 0 : 1} />}
               
               <WeatherVisualization 
                 weatherData={weatherData} 
                 isLoading={isLoading}
+                rainCount={performanceSettings.rainCount}
+                snowCount={performanceSettings.snowCount}
               />
               
-              {/* Three Day Forecast 3D Label - responsive for mobile */}
-              <ResponsiveText isNight={isNight} isLoading={isLoading} />
+              {/* Three Day Forecast 3D Label - responsive for mobile - only in full quality */}
+              {!isAmbientMode && <ResponsiveText isNight={isNight} isLoading={isLoading} />}
 
-              {/* 3D Forecast Portals */}
-              <ForecastPortals 
-                weatherData={weatherData} 
-                isLoading={isLoading}
-                onPortalStateChange={handlePortalStateChange}
-              />
+              {/* 3D Forecast Portals - only in full quality */}
+              {performanceSettings.enablePortals && (
+                <ForecastPortals 
+                  weatherData={weatherData} 
+                  isLoading={isLoading}
+                  onPortalStateChange={handlePortalStateChange}
+                />
+              )}
               
               {/* Post-processing effects including Ultimate Lens Flare */}
-              <PostProcessingEffects showLensFlare={showLensFlare} isPortalMode={false} />
+              <PostProcessingEffects 
+                showLensFlare={showLensFlare} 
+                isPortalMode={false} 
+                enableOcclusion={performanceSettings.enableLensFlareOcclusion}
+                multisampling={performanceSettings.multisampling}
+                bloomIntensity={performanceSettings.bloomIntensity}
+              />
             </>
           ) : (
             <>

@@ -89,6 +89,14 @@ export default function AnalysisDisplay({
         </div>
       </div>
 
+      {/* Full Reasoning (Visible by default) */}
+      <div className={`${bgColor} border rounded-lg p-4`}>
+        <h4 className={`text-sm font-light ${textColor} opacity-90 mb-2`}>AI Analysis</h4>
+        <p className={`text-sm ${textColor} opacity-80 leading-relaxed`}>
+          {analysis.analysis}
+        </p>
+      </div>
+
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-3 gap-2.5">
         {/* Weather Impact */}

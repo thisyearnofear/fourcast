@@ -133,14 +133,14 @@ export default function AIPage() {
     }
   };
 
-  const analyzeMarket = async (market = null) => {
+  const analyzeMarket = async (market = null, modeOverride = null) => {
     const marketToAnalyze = market || selectedMarket;
     if (!marketToAnalyze || !weatherData) return;
     setIsLoadingAnalysis(true);
     setError(null);
     setAnalysis(null);
 
-    const result = await aiService.analyzeMarket({ ...marketToAnalyze, mode: analysisMode }, weatherData);
+    const result = await aiService.analyzeMarket({ ...marketToAnalyze, mode: modeOverride || analysisMode }, weatherData);
     console.log('🎯 Full analysis result:', result);
 
     if (result.success) {
@@ -173,6 +173,89 @@ export default function AIPage() {
     }
     setIsLoadingAnalysis(false);
   };
+
+  const analyzeMarketStream = async (market = null) => {
+    const marketToAnalyze = market || selectedMarket;
+    if (!marketToAnalyze || !weatherData) return;
+    setIsLoadingAnalysis(true);
+    setError(null);
+    setAnalysis(null);
+
+    try {
+      const res = await fetch('/api/analyze/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventType: marketToAnalyze.title || 'Prediction Market',
+          location: weatherData?.location?.name || 'Unknown Location',
+          currentOdds: { yes: marketToAnalyze.currentOdds?.yes || 0.5, no: marketToAnalyze.currentOdds?.no || 0.5 },
+          participants: marketToAnalyze.description || 'Market participants',
+          weatherData,
+          marketID: marketToAnalyze.marketID,
+          eventDate: marketToAnalyze.resolutionDate || null,
+          mode: 'deep'
+        })
+      })
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let base = null
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop()
+        for (const line of lines) {
+          if (!line.trim()) continue
+          try {
+            const msg = JSON.parse(line)
+            if (msg.type === 'meta') {
+              base = {
+                assessment: msg.assessment,
+                analysis: '',
+                key_factors: [],
+                recommended_action: '',
+                cached: msg.cached,
+                source: msg.source,
+                citations: [],
+                limitations: null,
+                web_search: msg.web_search,
+                timestamp: msg.timestamp
+              }
+              setAnalysis(base)
+            } else if (msg.type === 'chunk') {
+              if (!base) continue
+              base = { ...base, analysis: (base.analysis || '') + (base.analysis ? ' ' : '') + msg.text }
+              setAnalysis(base)
+            } else if (msg.type === 'complete') {
+              const final = {
+                assessment: msg.assessment,
+                analysis: msg.analysis,
+                key_factors: msg.key_factors,
+                recommended_action: msg.recommended_action,
+                cached: msg.cached,
+                source: msg.source,
+                citations: msg.citations,
+                limitations: msg.limitations,
+                web_search: msg.web_search,
+                timestamp: msg.timestamp
+              }
+              setAnalysis(final)
+              setIsLoadingAnalysis(false)
+            }
+          } catch (e) {
+          }
+        }
+      }
+      if (isLoadingAnalysis) setIsLoadingAnalysis(false)
+    } catch (err) {
+      setError('Analysis failed')
+      setIsLoadingAnalysis(false)
+    }
+  }
 
   const handleSelectMarket = (market) => {
     setSelectedMarket(market);
@@ -239,11 +322,12 @@ export default function AIPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* 3D Scene Background */}
+      {/* 3D Scene Background - Ambient Quality for Performance */}
       <div className="fixed inset-0 z-0">
         <Scene3D 
           weatherData={weatherData}
           isLoading={isLoadingWeather}
+          quality="ambient"
         />
       </div>
       
@@ -454,18 +538,32 @@ export default function AIPage() {
                 <p className={`${textColor} opacity-60 text-sm mb-4`}>
                   Ready to analyze this market?
                 </p>
-                <button
-                  onClick={() => analyzeMarket(selectedMarket)}
-                  className={`w-full py-3 rounded-2xl font-medium text-sm transition-all duration-300 border-2 mb-3 ${
-                    nightStatus
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-blue-300 text-white shadow-lg shadow-blue-500/50'
-                      : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-blue-400 text-white shadow-lg shadow-blue-500/30'
-                  } hover:scale-105`}
-                >
-                  Analyze This Market
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                  <button
+                    onClick={() => analyzeMarket(selectedMarket, 'basic')}
+                    disabled={isLoadingAnalysis}
+                    className={`py-3 rounded-2xl font-medium text-sm transition-all duration-300 border-2 ${
+                      nightStatus
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-blue-300 text-white shadow-lg shadow-blue-500/50'
+                        : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-blue-400 text-white shadow-lg shadow-blue-500/30'
+                    } disabled:opacity-40 hover:scale-105`}
+                  >
+                    Analyze (Standard)
+                  </button>
+                  <button
+                    onClick={() => analyzeMarketStream(selectedMarket)}
+                    disabled={isLoadingAnalysis}
+                    className={`py-3 rounded-2xl font-medium text-sm transition-all duration-300 border-2 ${
+                      nightStatus
+                        ? 'bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 border-green-300 text-white shadow-lg shadow-green-500/50'
+                        : 'bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 border-green-400 text-white shadow-lg shadow-green-500/30'
+                    } disabled:opacity-40 hover:scale-105`}
+                  >
+                    Analyze (Enhanced)
+                  </button>
+                </div>
                 <p className={`${textColor} opacity-40 text-xs`}>
-                  Get AI insights for this market
+                  Standard: fast summary • Enhanced: web research and citations
                 </p>
               </div>
             ) : (

@@ -5,14 +5,19 @@
 
 import OpenAI from 'openai';
 
-// Simple Redis client for caching
-const redis = {
-  async get() { return null; },
-  async setex() { return null; },
-  async exists() { return false; }
+let redisClientPromise = null;
+const getRedisClient = async () => {
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+  if (!redisClientPromise) {
+    const { createClient } = await import('redis');
+    const client = createClient({ url });
+    client.on('error', () => {});
+    await client.connect();
+    redisClientPromise = client;
+  }
+  return redisClientPromise;
 };
-
-const getRedisClient = async () => redis;
 
 const callVeniceAI = async (params, options = {}) => {
   const { eventType, location, weatherData, currentOdds, participants } = params;
@@ -103,18 +108,18 @@ export const aiService = {
       const apiKey = process.env.VENICE_API_KEY;
       console.log('Venice API Key available:', !!apiKey, 'length:', apiKey?.length);
 
-      // Check Redis cache first (roadmap: analysis:{marketID})
       const redis = await getRedisClient();
       const cacheKey = `analysis:${marketId}`;
-      const cachedResult = await redis.get(cacheKey);
-
-      if (cachedResult) {
-        const parsed = JSON.parse(cachedResult);
-        return {
-          ...parsed,
-          cached: true,
-          source: 'redis'
-        };
+      if (redis) {
+        const cachedResult = await redis.get(cacheKey);
+        if (cachedResult) {
+          const parsed = JSON.parse(cachedResult);
+          return {
+            ...parsed,
+            cached: true,
+            source: 'redis'
+          };
+        }
       }
 
       // Call Venice AI API if key is available
@@ -137,7 +142,9 @@ export const aiService = {
       // Cache result with roadmap-aligned TTL (6 hours for distant events, 1 hour for near events)
       const baseTtl = eventDate && new Date(eventDate) - new Date() < 24 * 60 * 60 * 1000 ? 3600 : 21600; // 1h or 6h
       const ttl = mode === 'deep' ? Math.max(baseTtl, 21600) : baseTtl; // Deep cached at least 6h
-      await redis.setex(cacheKey, ttl, JSON.stringify(analysis));
+      if (redis) {
+        await redis.setEx(cacheKey, ttl, JSON.stringify(analysis));
+      }
 
       return {
         ...analysis,
@@ -236,14 +243,15 @@ export const aiService = {
    * Get AI service status (for GET /api/analyze)
    */
   getStatus() {
+    const hasRedis = !!process.env.REDIS_URL;
     return {
       available: true,
       model: 'qwen3-235b',
       cacheSize: 0,
-      cacheDuration: 10 * 60 * 1000, // 10 minutes
+      cacheDuration: 10 * 60 * 1000,
       cache: {
         memory: { size: 0, duration: '10 minutes' },
-        redis: { connected: false, ttl: '6 hours' }
+        redis: { connected: hasRedis, ttl: '6 hours' }
       }
     };
   }
