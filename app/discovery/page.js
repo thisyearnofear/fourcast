@@ -103,20 +103,10 @@ const DiscoveryPage = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               location: filters.search || null, // Optional location filter
-              eventType: filters.category === 'all' ? 'all' :
-                        filters.category === 'Sports' ? 'Sports' :
-                        filters.category === 'Weather' ? 'Weather' : 'all',
+              eventType: filters.category === 'all' ? 'all' : filters.category,
               confidence: 'all',
               limitCount: 50, // More results for discovery page
-              theme: (
-                filters.category === 'Sports' ? 'sports' :
-                filters.category === 'Outdoor' ? 'outdoor' :
-                filters.category === 'Aviation' ? 'aviation' :
-                filters.category === 'Energy' ? 'energy' :
-                filters.category === 'Agriculture' ? 'agriculture' :
-                filters.category === 'Weather' ? 'weather_explicit' :
-                'all'
-              )
+              theme: 'all'
             })
           });
 
@@ -129,34 +119,10 @@ const DiscoveryPage = () => {
       if (result.success) {
         let filtered = result.markets || [];
         
-        // Apply volume filter
+        // Apply volume filter (backend already filtered by category via tag_id)
         if (filters.minVolume) {
           const minVol = parseInt(filters.minVolume);
           filtered = filtered.filter(m => (m.volume24h || 0) >= minVol);
-        }
-        
-        // Apply category filter (robust tag normalization and heuristics)
-        if (filters.category !== 'all') {
-          const cat = (filters.category || '').toLowerCase();
-          const sportKeywords = ['nfl','nba','mlb','golf','tennis','soccer','rugby','cricket','marathon','race'];
-          const weatherKeywords = ['weather','rain','snow','wind','temperature','heat','cold','humidity','storm'];
-          filtered = filtered.filter(m => {
-            const title = (m.title || m.question || '').toLowerCase();
-            const desc = (m.description || '').toLowerCase();
-            const tags = (m.tags || []).map(t => {
-              if (typeof t === 'string') return t.toLowerCase();
-              if (t && typeof t === 'object' && t.label) return String(t.label).toLowerCase();
-              return '';
-            });
-            const allText = `${title} ${desc} ${tags.join(' ')}`;
-            if (cat === 'sports') {
-              return sportKeywords.some(k => allText.includes(k)) || (m.eventType && String(m.eventType).toLowerCase() === 'nfl' || String(m.eventType).toLowerCase() === 'nba');
-            }
-            if (cat === 'weather') {
-              return weatherKeywords.some(k => allText.includes(k));
-            }
-            return false;
-          });
         }
         
         setMarkets(filtered);
@@ -311,8 +277,15 @@ const DiscoveryPage = () => {
               disabled={isLoading}
             >
               <option value="all">All Categories</option>
-              <option value="Sports">Sports</option>
-              <option value="Weather">Weather</option>
+              <option value="Sports">⚽ Sports</option>
+              <option value="Politics">🏛️ Politics</option>
+              <option value="Crypto">₿ Crypto</option>
+              <option value="Finance">💰 Finance</option>
+              <option value="Business">💼 Business</option>
+              <option value="Tech">💻 Tech</option>
+              <option value="Culture">🎭 Culture</option>
+              <option value="Science">🔬 Science</option>
+              <option value="Movies">🎬 Movies</option>
             </select>
 
             {/* Volume Filter */}

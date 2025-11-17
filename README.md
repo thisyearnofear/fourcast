@@ -142,7 +142,7 @@ VENICE_API_KEY=your_venice_api_key     # For AI analysis
 
 ```bash
 # Start development server
-npm run dev
+npm run dev -- --turbopack
 
 # Build for production
 npm run build

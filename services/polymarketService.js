@@ -9,8 +9,10 @@ class PolymarketService {
     this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for market data
     this.marketDetailsCache = new Map();
     this.MARKET_DETAILS_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes for market details
-    this.marketCatalogCache = null;
+    this.marketCatalogCache = {};
     this.MARKET_CATALOG_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes for full catalog
+    this.sportsMetadata = null;
+    this.SPORTS_METADATA_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours for sports metadata
   }
 
   // Generate cache key for markets (location-based, for backward compatibility)
@@ -38,19 +40,78 @@ class PolymarketService {
   }
 
   // Get market catalog from cache
-  getCachedCatalog() {
-    if (this.marketCatalogCache && Date.now() - this.marketCatalogCache.timestamp < this.MARKET_CATALOG_CACHE_DURATION) {
-      return this.marketCatalogCache.data;
+  getCachedCatalog(eventTypeFilter = null) {
+    const cacheKey = eventTypeFilter || 'default';
+    const cached = this.marketCatalogCache?.[cacheKey];
+    if (cached && Date.now() - cached.timestamp < this.MARKET_CATALOG_CACHE_DURATION) {
+      return cached.data;
     }
     return null;
   }
 
   // Cache the full market catalog
-  setCachedCatalog(markets) {
-    this.marketCatalogCache = {
+  setCachedCatalog(markets, eventTypeFilter = null) {
+    const cacheKey = eventTypeFilter || 'default';
+    if (!this.marketCatalogCache) {
+      this.marketCatalogCache = {};
+    }
+    this.marketCatalogCache[cacheKey] = {
       data: markets,
       timestamp: Date.now()
     };
+  }
+
+  /**
+   * Fetch sports metadata including tag IDs for each sport
+   */
+  async getSportsMetadata() {
+    if (this.sportsMetadata && Date.now() - this.sportsMetadata.timestamp < this.SPORTS_METADATA_CACHE_DURATION) {
+      return this.sportsMetadata.data;
+    }
+
+    try {
+      const response = await axios.get(`${this.baseURL}/sports`, { timeout: 10000 });
+      this.sportsMetadata = {
+        data: response.data,
+        timestamp: Date.now()
+      };
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching sports metadata:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Get tag ID for a specific category (Sports, Politics, Crypto, etc.)
+   */
+  async getCategoryTagId(category) {
+    // Map of category names to Polymarket tag IDs
+    const categoryTagMap = {
+      'Sports': '450',        // NFL tag (primary sports)
+      'Politics': '2',        // Politics
+      'Crypto': '21',         // Crypto
+      'Finance': '120',       // Finance
+      'Business': '107',      // Business
+      'Tech': '1401',         // Tech
+      'Culture': '596',       // Culture/Pop Culture
+      'Science': '74',        // Science
+      'Movies': '53',         // Movies
+      'Weather': null         // Weather markets are identified by keywords, not tags
+    };
+    
+    // For sports subcategories, fetch from sports metadata
+    if (['nfl', 'nba', 'mlb', 'nhl'].includes(category.toLowerCase())) {
+      const sports = await this.getSportsMetadata();
+      const extractSportTag = (tags) => {
+        if (!tags) return null;
+        const tagArray = tags.split(',');
+        return tagArray.find(t => t !== '1' && t !== '100639') || tagArray[0];
+      };
+      return extractSportTag(sports.find(s => s.sport === category.toLowerCase())?.tags);
+    }
+    
+    return categoryTagMap[category] || null;
   }
 
   /**
@@ -226,9 +287,9 @@ class PolymarketService {
    * ROADMAP: Foundation for Phase 2 & 3 (weather scoring & edge detection)
    * IMPROVED: Now uses /events endpoint to get full tag metadata
    */
-  async buildMarketCatalog(minVolume = 50000) {
+  async buildMarketCatalog(minVolume = 50000, eventTypeFilter = null) {
     // Check cache first
-    const cached = this.getCachedCatalog();
+    const cached = this.getCachedCatalog(eventTypeFilter);
     if (cached) {
       return { ...cached, cached: true };
     }
@@ -239,8 +300,18 @@ class PolymarketService {
       let allMarkets = [];
       
       try {
+        const params = { limit: 100, offset: 0, closed: false };
+        
+        // If filtering by category, get tag ID and fetch those markets
+        if (eventTypeFilter && eventTypeFilter !== 'all' && eventTypeFilter !== 'Weather') {
+          const tagId = await this.getCategoryTagId(eventTypeFilter);
+          if (tagId) {
+            params.tag_id = tagId;
+          }
+        }
+        
         const response = await axios.get(`${this.baseURL}/events`, {
-          params: { limit: 100, offset: 0, closed: false },
+          params,
           timeout: 10000
         });
 
@@ -331,7 +402,7 @@ class PolymarketService {
       };
 
       // Cache the catalog
-      this.setCachedCatalog(result);
+      this.setCachedCatalog(result, eventTypeFilter);
 
       return result;
     } catch (error) {
@@ -478,7 +549,7 @@ class PolymarketService {
   async getTopWeatherSensitiveMarkets(limit = 10, filters = {}) {
     try {
       // Get full catalog (without order book enrichment to avoid rate limits)
-      const catalogResult = await this.buildMarketCatalog(filters.minVolume || 50000);
+      const catalogResult = await this.buildMarketCatalog(filters.minVolume || 50000, filters.eventType);
       
       if (!catalogResult.markets || catalogResult.markets.length === 0) {
         return {
@@ -503,29 +574,8 @@ class PolymarketService {
       });
 
       // FILTER 1: Only markets with actual weather edge (score > 0)
+      // Note: Category filtering now happens at fetch time via tag_id parameter
       let filtered = scoredMarkets.filter(m => m.edgeScore > 0);
-
-      // FILTER 2: Event type if specified (only show markets that match the type)
-      if (filters.eventType && filters.eventType !== 'all') {
-        filtered = filtered.filter(m => {
-          if (filters.eventType === 'Sports') {
-            // Handle generic "Sports" category by checking if eventType is any sport
-            const sportTypes = ['NFL', 'NBA', 'MLB', 'NHL', 'Golf', 'Tennis', 'Soccer', 'Cricket', 'Rugby', 'Marathon'];
-            const matches = sportTypes.includes(m.eventType);
-            if (!matches) {
-              console.debug(`Filtering out: "${m.title.substring(0, 50)}" (eventType: ${m.eventType} vs filter: Sports)`);
-            }
-            return matches;
-          } else {
-            const matches = m.eventType === filters.eventType;
-            if (!matches) {
-              console.debug(`Filtering out: "${m.title.substring(0, 50)}" (eventType: ${m.eventType} vs filter: ${filters.eventType})`);
-            }
-            return matches;
-          }
-        });
-        console.log(`Filter by eventType '${filters.eventType}': ${filtered.length} of ${scoredMarkets.length} markets remain`);
-      }
 
       // FILTER 3: Confidence level if specified
       if (filters.confidence && filters.confidence !== 'all') {
@@ -913,18 +963,27 @@ class PolymarketService {
       return '';
     }).join(' ');
 
-    // Only use tag-based detection if it's clearly a sports/weather tag that's not generic
-    // Avoid using generic tags that might be misleading
-    if (tagLabels.includes('nfl') && marketTitle.toLowerCase().includes('nfl')) {
-      metadata.event_type = 'NFL';
-    } else if (tagLabels.includes('nba') && marketTitle.toLowerCase().includes('nba')) {
-      metadata.event_type = 'NBA';
-    } else if (tagLabels.includes('mlb') && marketTitle.toLowerCase().includes('mlb')) {
-      metadata.event_type = 'MLB';
-    } else if (tagLabels.includes('nhl') && marketTitle.toLowerCase().includes('nhl')) {
-      metadata.event_type = 'NHL';
-    } else if (tagLabels.includes('weather')) {
-      metadata.event_type = 'Weather';
+    // Map common tag labels to event types
+    const tagToEventType = {
+      'nfl': 'NFL',
+      'nba': 'NBA', 
+      'mlb': 'MLB',
+      'nhl': 'NHL',
+      'golf': 'Golf',
+      'tennis': 'Tennis',
+      'soccer': 'Soccer',
+      'football': 'Soccer',
+      'cricket': 'Cricket',
+      'rugby': 'Rugby',
+      'weather': 'Weather',
+      'sports': 'Sports'
+    };
+    
+    for (const [tag, eventType] of Object.entries(tagToEventType)) {
+      if (tagLabels.includes(tag)) {
+        metadata.event_type = eventType;
+        break;
+      }
     }
 
     // Common sports teams
