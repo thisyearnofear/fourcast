@@ -57,6 +57,7 @@ const nextConfig = {
         ...config.resolve,
         fallback: {
           ...config.resolve?.fallback,
+          '@react-native-async-storage/async-storage': false,
           fs: false,
           net: false,
           tls: false,
@@ -98,4 +99,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

@@ -442,7 +442,11 @@ class PolymarketService {
       asymmetrySignal += 0.5;
     }
 
-    const totalScore = weatherDirect + weatherSensitiveEvent + contextualWeatherImpact + asymmetrySignal;
+    let totalScore = weatherDirect + weatherSensitiveEvent + contextualWeatherImpact;
+    if (totalScore > 0) {
+      // Only apply asymmetry signal if the market is already weather-sensitive
+      totalScore += asymmetrySignal;
+    }
 
     return {
       totalScore: Math.min(totalScore, 10),
@@ -504,11 +508,21 @@ class PolymarketService {
       // FILTER 2: Event type if specified (only show markets that match the type)
       if (filters.eventType && filters.eventType !== 'all') {
         filtered = filtered.filter(m => {
-          const matches = m.eventType === filters.eventType;
-          if (!matches) {
-            console.debug(`Filtering out: "${m.title.substring(0, 50)}" (eventType: ${m.eventType} vs filter: ${filters.eventType})`);
+          if (filters.eventType === 'Sports') {
+            // Handle generic "Sports" category by checking if eventType is any sport
+            const sportTypes = ['NFL', 'NBA', 'MLB', 'NHL', 'Golf', 'Tennis', 'Soccer', 'Cricket', 'Rugby', 'Marathon'];
+            const matches = sportTypes.includes(m.eventType);
+            if (!matches) {
+              console.debug(`Filtering out: "${m.title.substring(0, 50)}" (eventType: ${m.eventType} vs filter: Sports)`);
+            }
+            return matches;
+          } else {
+            const matches = m.eventType === filters.eventType;
+            if (!matches) {
+              console.debug(`Filtering out: "${m.title.substring(0, 50)}" (eventType: ${m.eventType} vs filter: ${filters.eventType})`);
+            }
+            return matches;
           }
-          return matches;
         });
         console.log(`Filter by eventType '${filters.eventType}': ${filtered.length} of ${scoredMarkets.length} markets remain`);
       }
@@ -532,8 +546,93 @@ class PolymarketService {
         return (b.volume24h || 0) - (a.volume24h || 0);
       });
 
-      // NOW enrich only the final display markets with order book data (limit = ~10-12)
-      const finalMarkets = filtered.slice(0, limit);
+      // Add variety to results by diversifying across market types and scores
+      // This helps users see different opportunities over time
+      const VARIETY_THRESHOLD = 0.5; // Markets within this score range can be shuffled
+
+      // First, sort by edge score as before
+      filtered.sort((a, b) => {
+        const scoreDiff = (b.edgeScore || 0) - (a.edgeScore || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        return (b.volume24h || 0) - (a.volume24h || 0);
+      });
+
+      // Add time-based rotation factor to further diversify results
+      // Different hours of the day will tend to show different markets with similar scores
+      const hourFactor = new Date().getHours(); // 0-23
+
+      // Group markets by similar edge scores to apply variety within score ranges
+      const scoreGroups = [];
+      if (filtered.length > 0) {
+        let currentScore = filtered[0].edgeScore || 0;
+        let currentGroup = [filtered[0]];
+
+        for (let i = 1; i < filtered.length; i++) {
+          const market = filtered[i];
+          const score = market.edgeScore || 0;
+
+          if (Math.abs(score - currentScore) <= VARIETY_THRESHOLD) {
+            // Add to current group if scores are similar
+            currentGroup.push(market);
+          } else {
+            // Process the current group
+            scoreGroups.push([...currentGroup]);
+            currentGroup = [market];
+            currentScore = score;
+          }
+        }
+        scoreGroups.push([...currentGroup]); // Add the last group
+      }
+
+      // Function to diversify within a group by spreading out market types and using time-based rotation
+      const diversifyGroup = (group) => {
+        if (group.length <= 3) return group; // No need to diversify small groups
+
+        // Group by event type to ensure variety
+        const typeGroups = {};
+        for (const market of group) {
+          const type = market.eventType || 'Other';
+          if (!typeGroups[type]) {
+            typeGroups[type] = [];
+          }
+          typeGroups[type].push(market);
+        }
+
+        // Apply time-based rotation within each type group to vary which markets appear
+        const rotatedTypeGroups = {};
+        for (const [type, markets] of Object.entries(typeGroups)) {
+          // Use hour factor to determine starting point for this type
+          const offset = hourFactor % Math.max(1, markets.length);
+          rotatedTypeGroups[type] = [...markets.slice(offset), ...markets.slice(0, offset)];
+        }
+
+        // Create diversified result by taking turns from each type group
+        const result = [];
+        const typeKeys = Object.keys(rotatedTypeGroups);
+        let maxGroupSize = Math.max(...Object.values(rotatedTypeGroups).map(g => g.length));
+
+        for (let i = 0; i < maxGroupSize; i++) {
+          for (const type of typeKeys) {
+            if (i < rotatedTypeGroups[type].length) {
+              result.push(rotatedTypeGroups[type][i]);
+            }
+          }
+        }
+
+        return result;
+      };
+
+      // Apply diversification to each score group
+      const diversifiedGroups = scoreGroups.map(group => diversifyGroup(group));
+
+      // Flatten the diversified groups back together
+      let diversifiedMarkets = [];
+      for (const group of diversifiedGroups) {
+        diversifiedMarkets.push(...group);
+      }
+
+      // Take the top N markets after diversification
+      let finalMarkets = diversifiedMarkets.slice(0, limit);
       const enrichedFinal = await Promise.all(
         finalMarkets.map(async (market) => {
           try {
@@ -813,17 +912,19 @@ class PolymarketService {
       if (typeof t === 'object' && t.label) return t.label.toLowerCase();
       return '';
     }).join(' ');
-    
-    if (tagLabels.includes('nfl')) {
-      return { ...metadata, event_type: 'NFL' };
-    } else if (tagLabels.includes('nba')) {
-      return { ...metadata, event_type: 'NBA' };
-    } else if (tagLabels.includes('mlb')) {
-      return { ...metadata, event_type: 'MLB' };
-    } else if (tagLabels.includes('nhl')) {
-      return { ...metadata, event_type: 'NHL' };
+
+    // Only use tag-based detection if it's clearly a sports/weather tag that's not generic
+    // Avoid using generic tags that might be misleading
+    if (tagLabels.includes('nfl') && marketTitle.toLowerCase().includes('nfl')) {
+      metadata.event_type = 'NFL';
+    } else if (tagLabels.includes('nba') && marketTitle.toLowerCase().includes('nba')) {
+      metadata.event_type = 'NBA';
+    } else if (tagLabels.includes('mlb') && marketTitle.toLowerCase().includes('mlb')) {
+      metadata.event_type = 'MLB';
+    } else if (tagLabels.includes('nhl') && marketTitle.toLowerCase().includes('nhl')) {
+      metadata.event_type = 'NHL';
     } else if (tagLabels.includes('weather')) {
-      return { ...metadata, event_type: 'Weather' };
+      metadata.event_type = 'Weather';
     }
 
     // Common sports teams
@@ -937,20 +1038,24 @@ class PolymarketService {
     // Determine event type based on teams or keywords
     if (metadata.teams.length > 0) {
       metadata.event_type = metadata.teams[0].sport;
-    } else if (/nfl|football/i.test(marketTitle)) {
+    } else if (/\bnfl\b|football(?!\s*market|\s*stock|\s*coin|\s*currency)/i.test(marketTitle)) {
       metadata.event_type = 'NFL';
-    } else if (/nba|basketball/i.test(marketTitle)) {
+    } else if (/\bnba\b|basketball(?!\s*coin|\s*market)/i.test(marketTitle)) {
       metadata.event_type = 'NBA';
-    } else if (/mlb|baseball/i.test(marketTitle)) {
+    } else if (/\bmlb\b|baseball(?!\s*coin|\s*market)/i.test(marketTitle)) {
       metadata.event_type = 'MLB';
-    } else if (/nhl|hockey/i.test(marketTitle)) {
+    } else if (/\bnhl\b|hockey(?!\s*coin|\s*market)/i.test(marketTitle)) {
       metadata.event_type = 'NHL';
-    } else if (/marathon|race/i.test(marketTitle)) {
+    } else if (/marathon|race(?!\s*car|\s*horse)/i.test(marketTitle)) {
       metadata.event_type = 'Marathon';
     } else if (/golf|pga/i.test(marketTitle)) {
       metadata.event_type = 'Golf';
-    } else if (/tennis|wimbledon|open/i.test(marketTitle)) {
+    } else if (/(tennis|wimbledon|\bopen\b)/i.test(marketTitle) &&
+               /(tournament|championship|atp|wta|grand slam|us open|french open|wimbledon|australian open)/i.test(marketTitle)) {
       metadata.event_type = 'Tennis';
+    } else if (/(soccer|football)/i.test(marketTitle) &&
+               !(marketTitle.toLowerCase().includes('american football'))) {
+      metadata.event_type = 'Soccer';
     }
 
     return metadata;
@@ -1045,7 +1150,7 @@ class PolymarketService {
       const desc = (m.description || '').toLowerCase();
       const tags = this.normalizeTags(m.tags);
       const text = `${title} ${desc} ${tags.join(' ')}`;
-      if (th === 'sports') return matchAny(text, sportKeywords) || (m.eventType && String(m.eventType).toLowerCase() !== 'politics');
+      if (th === 'sports') return matchAny(text, sportKeywords);
       if (th === 'outdoor') return matchAny(text, outdoorKeywords) || matchAny(text, sportKeywords);
       if (th === 'aviation') return matchAny(text, aviationKeywords);
       if (th === 'energy') return matchAny(text, energyKeywords);

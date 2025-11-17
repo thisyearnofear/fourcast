@@ -103,7 +103,9 @@ const DiscoveryPage = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               location: filters.search || null, // Optional location filter
-              eventType: 'all',
+              eventType: filters.category === 'all' ? 'all' :
+                        filters.category === 'Sports' ? 'Sports' :
+                        filters.category === 'Weather' ? 'Weather' : 'all',
               confidence: 'all',
               limitCount: 50, // More results for discovery page
               theme: (
