@@ -255,6 +255,22 @@ Responses
 - Error (400): missing required fields listed with an actionable hint
 - Error (429): rate-limit exceeded; includes `retryAfter` seconds
 
+### POST /api/analyze/stream
+
+Purpose: Enhanced mode streaming via NDJSON for faster perceived response
+
+Request fields
+- Same as `/api/analyze`, typically `mode: 'deep'`
+
+Response format: `Content-Type: application/x-ndjson`
+- `{"type":"meta", "assessment":{...}, "cached":false, "source":"venice_ai", "web_search":true, "timestamp":"..."}`
+- `{"type":"chunk", "text":"Sentence of reasoning..."}` repeated
+- `{"type":"complete", "assessment":{...}, "analysis":"...", "key_factors":[...], "recommended_action":"...", "citations":[...], "limitations":null, "web_search":true, "timestamp":"..."}`
+
+Notes
+- Rate limiting: 10/hour per client
+- Odds required: UI and `/api/markets` ensure `currentOdds` normalization to prevent 400s
+
 ### POST /api/wallet
 
 **Check wallet balance and USDC allowance**

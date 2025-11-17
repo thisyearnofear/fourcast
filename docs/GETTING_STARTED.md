@@ -2,6 +2,16 @@
 
 ## Quick Start: Polymarket Integration
 
+### Core Principles (Concise)
+- Enhancement First: improve existing flows before adding new ones
+- Aggressive Consolidation: remove dead code; avoid legacy paths
+- Prevent Bloat: audit and merge before feature growth
+- DRY: single source of truth in services and APIs
+- Clean: explicit dependencies and separation of concerns
+- Modular: composable, testable, independent units
+- Performant: adaptive loading, caching, resource efficiency
+- Organized: domain-driven file structure and predictable routes
+
 ### 30-Second Setup
 
 1. **Ensure API keys are set** in `.env.local`:
@@ -16,7 +26,7 @@ npm install
 
 3. **Start dev server:**
 ```bash
-npm run dev
+npm run dev -- --webpack
 ```
 
 4. **Open browser:**
@@ -122,6 +132,16 @@ NEXT_PUBLIC_ARBITRUM_CHAIN_ID=42161
 # Optional: Production trading
 POLYMARKET_PRIVATE_KEY=0x_your_private_key
 POLYMARKET_FUNDER_ADDRESS=0x_your_funder_address
+
+### Caching & Streaming
+```bash
+# Redis for AI analysis caching
+REDIS_URL=redis://localhost:6379
+
+# Venice AI
+VENICE_API_KEY=your_venice_api_key
+```
+Streaming endpoint (Enhanced mode): `POST /api/analyze/stream` returns NDJSON events (`meta`, `chunk`, `complete`).
 ```
 
 ### Multi-Chain Setup (Arbitrum + BNB)
@@ -192,8 +212,8 @@ const client = new OpenAI({
 
 ### Start Development Server
 ```bash
-npm run dev
-# With Turbopack (faster): npx next dev --turbo
+npm run dev -- --webpack
+# Optional (once configured): npx next dev --turbo
 ```
 
 Visit `http://localhost:3000` for the weather app with ConnectKit wallet integration!
@@ -237,7 +257,7 @@ Deep Analysis (paid tier)
 - Purpose: long-context reasoning plus web search with citations
 - Output: everything in Basic plus citations (title, url, snippet), evidence notes and limitations
 - Performance: 6–15s typical; cached by market and day
-- Model: `qwen3-235b` with web search enabled
+- Model: `qwen3-235b` with web search enabled; results stream progressively via NDJSON
 
 UI Guidelines
 - Keep the analysis card compact: summary row first (confidence, impact, efficiency), expandable details below

@@ -1,4 +1,4 @@
-import { aiService } from '@/services/aiService'
+import { analyzeWeatherImpactServer } from '@/services/aiService.server'
 
 const analysisRateLimit = new Map()
 const ANALYSIS_RATE_LIMIT = 10
@@ -47,7 +47,7 @@ export async function POST(request) {
       start(controller) {
         ;(async () => {
           try {
-            const result = await aiService.analyzeWeatherImpact({
+            const result = await analyzeWeatherImpactServer({
               eventType,
               location,
               weatherData,

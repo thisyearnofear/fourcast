@@ -73,6 +73,24 @@ const nextConfig = {
           buffer: false,
           // Handle better-sqlite3 which is a native module that can't be bundled for client
           'better-sqlite3': false,
+          // Exclude redis and server-only modules from client bundle
+          redis: false,
+          '../services/redisService': false,
+          './services/redisService': false,
+          '@/services/redisService': false,
+          'node:assert': false,
+          'node:crypto': false,
+          'node:events': false,
+          'node:diagnostics_channel': false,
+          'node:net': false,
+          'node:tls': false,
+          'node:dns': false,
+          'node:http': false,
+          'node:https': false,
+          'node:stream': false,
+          'node:util': false,
+          'node:zlib': false,
+          'node:buffer': false,
         },
       };
     }

@@ -1,5 +1,15 @@
 # System Architecture and Implementation
 
+## Core Principles (Applied)
+- Enhancement First: reuse and upgrade discovery/analysis flows
+- Aggressive Consolidation: removed legacy location-first paths
+- Prevent Bloat: single discovery engine; shared odds normalization
+- DRY: common services (`polymarketService`, `aiService`)
+- Clean: API routes own validation; services own external access
+- Modular: streaming route isolated; UI consumers decoupled
+- Performant: pre-caching, Redis TTLs, normalized `currentOdds`
+- Organized: domain-driven directories under `app/`, `services/`, `docs/`
+
 ## Data Flow Diagram
 
 ```
@@ -127,6 +137,16 @@ services/polymarketService.js
     ├── extractLocation(title)
     ├── extractMarketMetadata(title)
     └── assessWeatherRelevance() [legacy, deprecated]
+
+### AI Analysis & Streaming
+```
+app/api/analyze/route.js           // Basic/Deep analysis (non-stream)
+app/api/analyze/stream/route.js    // NDJSON streaming for Enhanced
+services/aiService.js              // Venice AI + Redis caching
+```
+- Cache key: `analysis:{marketID}`
+- TTL: near events 1h; distant events 6h; deep min 6h
+- Stream events: `meta` → `chunk*` → `complete`
 ```
 
 ## Request/Response Cycle
@@ -257,7 +277,7 @@ Confidence = MEDIUM
 |-------|----------|-----|------|-------|
 | Market Catalog | 30 min | `null` | ~500-1000 markets | Used by every discovery request |
 | Market Details | 10 min | `marketID` | 1 per market | Deep analysis, pre-cached for top 5 |
-| Location-Based | 5 min | `location` | 20 per city | Deprecated, will remove |
+| Location-Based | 5 min | `location` | 20 per city | Deprecated, removed |
 
 ## Error Handling Flow
 
@@ -390,15 +410,27 @@ assessWeatherRelevance(market, weatherData)
 // Use assessMarketWeatherEdge instead
 ```
 
+## Client/Server Code Separation (Nov 17, 2025)
+
+**IMPORTANT:** AI service code is now split for proper client/server boundaries:
+
+- **`services/aiService.js`** - Client-safe API wrapper (for 'use client' components)
+- **`services/aiService.server.js`** - Server-only AI logic with OpenAI + Redis (for API routes)
+
+### Why This Matters
+
+Next.js client components cannot import Node.js modules like `redis` or `crypto`. The separation ensures:
+- ✅ Build succeeds without webpack errors
+- ✅ Clear separation of concerns
+- ✅ Server-only dependencies stay server-side
+- ✅ Client code remains lightweight
+
 ## For Frontend Developers
 
 ### Basic Market Discovery (AI Page)
 
 ```javascript
-// Old way (deprecated)
-const result = await aiService.fetchMarkets(location, weatherData);
-
-// New way ✓
+// ✓ Client-safe way
 const response = await fetch('/api/markets', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -470,6 +502,30 @@ market.weatherContext   // { temp, condition, precipChance, windSpeed, humidity 
 ```
 
 ## For Backend Developers
+
+### Using Server-Side AI Functions
+
+```javascript
+// In API routes (server-side only)
+import { analyzeWeatherImpactServer, getAIStatus } from '@/services/aiService.server';
+
+export async function POST(request) {
+  const analysis = await analyzeWeatherImpactServer({
+    eventType,
+    location,
+    weatherData,
+    currentOdds,
+    participants,
+    marketId,
+    eventDate,
+    mode: 'deep' // or 'basic'
+  });
+  
+  return Response.json(analysis);
+}
+```
+
+**Never** import `aiService.server.js` in client components - it will cause build errors.
 
 ### Adding New Weather Sensitivity Factors
 

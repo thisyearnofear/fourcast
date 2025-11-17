@@ -1,4 +1,4 @@
-import { aiService } from '@/services/aiService';
+import { analyzeWeatherImpactServer, getAIStatus } from '@/services/aiService.server';
 
 // Rate limiting for AI analysis
 const analysisRateLimit = new Map();
@@ -58,7 +58,7 @@ export async function POST(request) {
     }
 
     // ENHANCED: Perform AI analysis with Redis caching and roadmap alignment
-    const analysis = await aiService.analyzeWeatherImpact({
+    const analysis = await analyzeWeatherImpactServer({
       eventType,
       location,
       weatherData,
@@ -101,7 +101,7 @@ export async function POST(request) {
 
 export async function GET() {
   // ENHANCED: Return AI service status with Redis info
-  const status = aiService.getStatus();
+  const status = getAIStatus();
 
   return Response.json({
     service: 'Weather Edge AI Analysis',
