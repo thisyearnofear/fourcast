@@ -432,6 +432,104 @@ import { WeatherService } from '@/services/weatherService';
 - Predictive caching
 - Cache warming
 
+## Validation Framework
+
+### Core Principles
+- **User-Centric Validation**: Actionable feedback with real-time guidance
+- **Performance-First Design**: Smart caching and debounced validation
+- **Extensible Architecture**: Modular validators and reusable components
+
+### Validation Hierarchy
+```
+┌─────────────────────────────────────┐
+│       Validation Orchestrator       │
+├─────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  │
+│  │  Location   │  │   Weather   │  │
+│  │ Validator   │  │  Validator  │  │
+│  └─────────────┘  └─────────────┘  │
+│  ┌─────────────┐  ┌─────────────┐  │
+│  │   Market    │  │   Trading   │  │
+│  │ Validator   │  │  Validator  │  │
+│  └─────────────┘  └─────────────┘  │
+└─────────────────────────────────────┘
+```
+
+### Performance Optimizations
+- **Smart Caching**: 5-minute cache for location, 3-minute for weather, 30-second for orders
+- **Debounced Validation**: 200ms for orders, 300ms for analysis, 500ms for location
+- **Request Cancellation**: Automatic cleanup of outdated validation requests
+
+## Venue Extraction System
+
+### Purpose
+Extract event venue locations from sports markets to enable `/ai` page event-weather analysis.
+
+### Venue Extraction Methods
+1. **Team-to-City Mapping**: ~65% success rate for major sports teams
+2. **Title Pattern Matching**: ~40% success for "@ City" or "in City" patterns
+3. **Stadium Name Mapping**: Dedicated stadium-to-city mapping for common venues
+4. **Description Parsing**: ~10% success rate for venue info in descriptions
+
+### Current Status
+- **✅ SUCCESS:** 22% - Clear venue extraction (e.g., "Kansas City, MO")
+- **⚠️ PARTIAL:** 53.5% - Extracted but uncertain (e.g., "At Arrowhead", "Tampa, FL")
+- **❌ FAILED:** 24.2% - No venue found (non-location-specific markets)
+
+### Integration with Market Analysis
+```javascript
+// In polymarketService.js - Event Weather Mode
+if (analysisType === 'event-weather') {
+  const eventLocation = VenueExtractor.extractFromMarket(market);
+  const eventWeather = await weatherService.getCurrentWeather(eventLocation);
+  edgeScore = assessMarketWeatherEdge(market, eventWeather);
+  return { eventLocation, eventWeather, edgeScore };
+}
+```
+
+### Stadium Mapping Coverage
+- **NFL Stadiums**: Arrowhead, Lambeau Field, Sofi, Nissan, AT&T, etc.
+- **NBA/NHL Stadiums**: Chase Center, Staples Center, Madison Square Garden, etc.
+- **International**: Anfield, Emirates Stadium, Old Trafford, etc.
+
+## Integration Architecture
+
+### /ai vs /discovery Differentiation
+The `/ai` and `/discovery` pages use different analysis modes:
+
+**/ai Page (Event Weather Analysis):**
+- `analysisType: 'event-weather'`
+- Extracts event venues from markets
+- Fetches weather at **event locations**
+- Scores by weather impact at venue
+- Focuses on sports events only
+
+**/discovery Page (Global Market Discovery):**
+- `analysisType: 'discovery'`
+- No venue extraction needed
+- Scores by market efficiency (volume, liquidity, volatility)
+- Browses all market categories globally
+
+### Data Flow Comparison
+
+**Event Weather Analysis Flow:**
+```
+Markets → Extract Event Venue → Get Venue Weather → Score by Weather + Odds
+(Always shows event-relevant results)
+```
+
+**Global Discovery Flow:**
+```
+All Markets → Score by Volume/Liquidity/Volatility → Rank & Return
+(Always shows high-volume results, location-agnostic)
+```
+
+### Venue Extraction Improvements Needed
+- Expand team-to-city mapping (international leagues)
+- Stadium name normalization
+- Confidence scoring for extracted venues
+- Pre-extraction during catalog build
+
 ---
 
 *Architecture Guide - Last updated: November 2024*

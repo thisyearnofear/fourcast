@@ -6,7 +6,7 @@ export default function PageNav({ currentPage, isNight }) {
   
   const pages = [
     { name: 'Fourcast', href: '/', label: '🌤️' },
-    { name: 'AI', href: '/ai', label: '🤖' },
+    { name: 'Sports', href: '/sports', label: '⚽' },
     { name: 'Discovery', href: '/discovery', label: '🔍' }
   ];
   

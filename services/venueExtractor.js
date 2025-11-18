@@ -4,7 +4,99 @@
  * Extracts event venue/location from Polymarket data.
  * Attempts multiple strategies to find the actual location where an event occurs.
  * Used by /ai page to fetch weather at event locations (not user location).
+ * 
+ * Version 2.0: Improved with stadium mapping and better filtering
  */
+
+// Stadium-to-city mapping (for venue name resolution)
+const STADIUM_CITY_MAP = {
+  'lambeau': 'Green Bay, WI',
+  'lambeau field': 'Green Bay, WI',
+  'arrowhead': 'Kansas City, MO',
+  'arrowhead stadium': 'Kansas City, MO',
+  'sofi': 'Inglewood, CA',
+  'sofi stadium': 'Inglewood, CA',
+  'nissan': 'Nashville, TN',
+  'nissan stadium': 'Nashville, TN',
+  'at&t': 'Arlington, TX',
+  'at&t stadium': 'Arlington, TX',
+  'metlife': 'East Rutherford, NJ',
+  'metlife stadium': 'East Rutherford, NJ',
+  'gillette': 'Foxborough, MA',
+  'gillette stadium': 'Foxborough, MA',
+  'allegiant': 'Las Vegas, NV',
+  'allegiant stadium': 'Las Vegas, NV',
+  'lumen': 'Seattle, WA',
+  'lumen field': 'Seattle, WA',
+  'empower field': 'Denver, CO',
+  'hard rock': 'Miami, FL',
+  'hard rock stadium': 'Miami, FL',
+  'mercedes-benz': 'Atlanta, GA',
+  'mercedes benz': 'Atlanta, GA',
+  'dome': 'New Orleans, LA',
+  'superdome': 'New Orleans, LA',
+  'soldier field': 'Chicago, IL',
+  'millennium': 'Chicago, IL',
+  'lake shore': 'Chicago, IL',
+  'wrigley': 'Chicago, IL',
+  'yankee': 'New York, NY',
+  'yankee stadium': 'New York, NY',
+  'fenway': 'Boston, MA',
+  'fenway park': 'Boston, MA',
+  'dodger': 'Los Angeles, CA',
+  'dodger stadium': 'Los Angeles, CA',
+  'petco': 'San Diego, CA',
+  'oracle': 'San Francisco, CA',
+  'oakland': 'Oakland, CA',
+  'coliseum': 'Oakland, CA',
+  'angel': 'Anaheim, CA',
+  'angel stadium': 'Anaheim, CA',
+  'chase': 'San Francisco, CA',
+  'colorado': 'Denver, CO',
+  'coors': 'Denver, CO',
+  'coors field': 'Denver, CO',
+  'minute maid': 'Houston, TX',
+  'minute maid park': 'Houston, TX',
+  'globe life': 'Arlington, TX',
+  'rangers': 'Arlington, TX',
+  'kauffman': 'Kansas City, MO',
+  'kauffman stadium': 'Kansas City, MO',
+  'comerica': 'Detroit, MI',
+  'comerica park': 'Detroit, MI',
+  'target field': 'Minneapolis, MN',
+  'busch stadium': 'St. Louis, MO',
+  'miller park': 'Milwaukee, WI',
+  'american family': 'Milwaukee, WI',
+  'great american ball park': 'Cincinnati, OH',
+  'progressive field': 'Cleveland, OH',
+  'truist park': 'Atlanta, GA',
+  'braves': 'Atlanta, GA',
+  'nationals park': 'Washington, DC',
+  'mets': 'New York, NY',
+  'citi field': 'New York, NY',
+  'citizens bank': 'Philadelphia, PA',
+  'pirates': 'Pittsburgh, PA',
+  'pnc park': 'Pittsburgh, PA',
+};
+
+// List of junk strings that appear in descriptions but aren't venues
+const JUNK_STRINGS = [
+  'good faith',
+  'the event',
+  'this market',
+  'shall be',
+  'shall resolve',
+  'market on',
+  'market for',
+  'market regarding',
+  'in the event',
+  'in case of',
+  'definition',
+  'resolution criteria',
+  'terms and conditions',
+  'market will',
+  'this is a market',
+];
 
 // Basic team-to-city mapping (common US sports teams)
 const TEAM_CITY_MAP = {
@@ -107,31 +199,51 @@ const TEAM_CITY_MAP = {
   'reds': 'Cincinnati, OH',
   'marlins': 'Miami, FL',
 
-  // Soccer/EPL
+  // Soccer/EPL (English Premier League)
   'manchester united': 'Manchester, England',
   'man united': 'Manchester, England',
   'manchester city': 'Manchester, England',
   'man city': 'Manchester, England',
   'liverpool': 'Liverpool, England',
+  'liverpool fc': 'Liverpool, England',
   'chelsea': 'London, England',
+  'chelsea fc': 'London, England',
   'arsenal': 'London, England',
+  'arsenal fc': 'London, England',
   'tottenham': 'London, England',
+  'tottenham hotspur': 'London, England',
   'spurs': 'London, England',
   'newcastle': 'Newcastle, England',
+  'newcastle united': 'Newcastle, England',
   'brighton': 'Brighton, England',
+  'brighton hove albion': 'Brighton, England',
+  'brighton & hove albion': 'Brighton, England',
   'crystal palace': 'London, England',
   'fulham': 'London, England',
+  'fulham fc': 'London, England',
   'west ham': 'London, England',
+  'west ham united': 'London, England',
   'aston villa': 'Birmingham, England',
+  'villa': 'Birmingham, England',
   'everton': 'Liverpool, England',
+  'everton fc': 'Liverpool, England',
   'leicester': 'Leicester, England',
+  'leicester city': 'Leicester, England',
   'leeds': 'Leeds, England',
+  'leeds united': 'Leeds, England',
   'southampton': 'Southampton, England',
+  'southampton fc': 'Southampton, England',
   'nottingham': 'Nottingham, England',
+  'nottingham forest': 'Nottingham, England',
   'bournemouth': 'Bournemouth, England',
+  'afc bournemouth': 'Bournemouth, England',
   'wolves': 'Wolverhampton, England',
   'wolverhampton': 'Wolverhampton, England',
+  'wolverhampton wanderers': 'Wolverhampton, England',
   'brentford': 'London, England',
+  'brentford fc': 'London, England',
+  'ipswich': 'Ipswich, England',
+  'ipswich town': 'Ipswich, England',
 
   // International Soccer
   'barcelona': 'Barcelona, Spain',
@@ -203,24 +315,76 @@ export class VenueExtractor {
 
     const text = title.toLowerCase();
 
+    // Try stadium extraction first (more specific)
+    const stadiumVenue = this.extractStadium(text);
+    if (stadiumVenue) return stadiumVenue;
+
     // Pattern: "@ CityName" (e.g., "@ Miami", "@ Kansas City")
-    const atMatch = text.match(/@\s+([a-z\s]+?)(?:\s+(?:game|match|vs|\?|win|play))/i);
+    // More conservative: only match explicit locations after @
+    // Must have @ symbol (not "at" word)
+    const atMatch = text.match(/\s@\s+([a-z\s]+?)(?:\s+(?:game|match|vs|\?|win|play|nfl|nba|stadium|field))/i);
     if (atMatch) {
       const city = atMatch[1].trim();
-      return this.normalizeCity(city);
+      // Validate it's not stadium junk like "@Sofi" or "@Home"
+      if (city.length > 3 && !city.match(/^(at|sofi|lambeau|arrowhead|home)/i)) {
+        const normalized = this.normalizeCity(city);
+        if (normalized && !this.isSuspiciousLocation(normalized)) {
+          return normalized;
+        }
+      }
     }
 
     // Pattern: "in CityName" (e.g., "in Miami", "in Kansas City")
-    const inMatch = text.match(/in\s+([a-z\s]+?)(?:\s+(?:game|match|vs|\?|win))/i);
+    // More conservative: avoid matching "in their", "in case", etc.
+    const inMatch = text.match(/in\s+([a-z\s]+?)(?:\s+(?:game|match|vs|\?|win|matchup|against|on|at))/i);
     if (inMatch) {
       const city = inMatch[1].trim();
-      return this.normalizeCity(city);
+      // Skip bad matches like "their", "case", etc.
+      if (city.length > 3 && !this.isJunkString(city)) {
+        const normalized = this.normalizeCity(city);
+        if (normalized && !this.isSuspiciousLocation(normalized)) {
+          return normalized;
+        }
+      }
     }
 
-    // Try to find city names directly in title
+    // Try to find city names directly in title (team-to-city mapping)
+    // Return first match found
     for (const [team, city] of Object.entries(TEAM_CITY_MAP)) {
       if (text.includes(team)) {
         return city;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Extract stadium name from text and map to city
+   */
+  static extractStadium(text) {
+    if (!text || typeof text !== 'string') return null;
+
+    const lower = text.toLowerCase();
+
+    // Look for stadium keywords with "at" prefix (most reliable)
+    // But exclude "at home", "at the", "at your", etc.
+    for (const [stadium, city] of Object.entries(STADIUM_CITY_MAP)) {
+      if ((lower.includes(`at ${stadium}`) || lower.includes(`@${stadium}`)) && 
+          !lower.match(/at\s+(home|the|your|their|a|an)\s/)) {
+        return city;
+      }
+    }
+
+    // Look for stadium name anywhere in text
+    // But only if it's clearly a known stadium, not just a word
+    for (const [stadium, city] of Object.entries(STADIUM_CITY_MAP)) {
+      if (lower.includes(stadium)) {
+        // Make sure it's a real stadium match, not just part of another word
+        const pattern = new RegExp(`\\b${stadium}\\b`, 'i');
+        if (pattern.test(lower)) {
+          return city;
+        }
       }
     }
 
@@ -235,6 +399,17 @@ export class VenueExtractor {
 
     const text = description.toLowerCase();
 
+    // Check for junk strings first
+    for (const junk of JUNK_STRINGS) {
+      if (text.startsWith(junk)) {
+        return null; // Description starts with legal junk, skip it
+      }
+    }
+
+    // Try stadium extraction in description
+    const stadiumVenue = this.extractStadium(text);
+    if (stadiumVenue) return stadiumVenue;
+
     // Look for patterns like "in Miami", "at Kansas City", "New York game"
     const patterns = [
       /(?:in|at)\s+([A-Za-z\s]+?)(?:\s+on\s|\s+at\s|\?|$)/,
@@ -245,6 +420,12 @@ export class VenueExtractor {
       const match = text.match(pattern);
       if (match) {
         const city = match[1].trim();
+        
+        // Skip if it's junk
+        if (this.isJunkString(city)) {
+          continue;
+        }
+
         const normalized = this.normalizeCity(city);
         if (normalized) return normalized;
       }
@@ -258,6 +439,43 @@ export class VenueExtractor {
     }
 
     return null;
+  }
+
+  /**
+   * Check if extracted string is likely junk (not a real venue)
+   */
+  static isJunkString(str) {
+    if (!str || str.length < 3) return true;
+
+    const lower = str.toLowerCase();
+
+    // Check against known junk strings
+    for (const junk of JUNK_STRINGS) {
+      if (lower.includes(junk)) {
+        return true;
+      }
+    }
+
+    // Words that indicate non-venue text
+    const badPatterns = [
+      /^(the|this|that|these|those|good|bad|will|shall|is|are|at|home|their|against)$/,
+      /event/,
+      /market/,
+      /shall/,
+      /outcome/,
+      /legal/,
+      /definition/,
+      /case/,
+      /terms/,
+    ];
+
+    for (const pattern of badPatterns) {
+      if (pattern.test(lower)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -323,6 +541,7 @@ export class VenueExtractor {
     // Filter out obviously bad values
     if (normalized.length < 2) return null;
     if (this.isSuspiciousLocation(normalized)) return null;
+    if (this.isJunkString(normalized)) return null;
 
     // Handle common abbreviations
     const abbrevMap = {
@@ -369,6 +588,9 @@ export class VenueExtractor {
       'virtual',
       'worldwide',
       'global',
+      'at home',
+      'home',
+      'away',
       '',
     ];
 

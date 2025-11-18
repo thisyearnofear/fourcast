@@ -53,6 +53,21 @@ function analyzeExtraction(title, venue) {
   const titleLower = title.toLowerCase();
   const venueLower = venue.toLowerCase();
   
+  // Filter out obvious junk extractions
+  const junkPatterns = ['their', 'the ', 'a ', 'this ', 'that ', 'good '];
+  for (const junk of junkPatterns) {
+    if (venueLower.startsWith(junk)) {
+      return 'FAILED'; // Extracted junk word
+    }
+  }
+  
+  // Check if it looks like a real city/state or city/country format
+  // Matches: "City, ST" (US) or "City, Country" (International)
+  if (!venueLower.match(/[a-z\s]+,\s*[a-z\s]+/i)) {
+    // Doesn't look like "City, State/Country" format
+    return 'PARTIAL';
+  }
+
   // Check if venue keywords appear in title
   const parts = venueLower.split(',');
   for (const part of parts) {
@@ -62,18 +77,32 @@ function analyzeExtraction(title, venue) {
       return 'SUCCESS';
     }
   }
-  
-  // Check for team names that map to the venue
-  const knownTeams = ['chiefs', 'patriots', 'cowboys', 'packers', 'steelers', 
-                      '49ers', 'niners', 'broncos', 'seahawks', 'lakers', 'celtics',
-                      'warriors', 'heat', 'bulls', 'yankees', 'red sox', 'dodgers'];
+
+  // Check for team names that map to the venue (NFL, NBA, EPL, etc)
+  const knownTeams = [
+    // NFL
+    'chiefs', 'patriots', 'cowboys', 'packers', 'steelers', 
+    '49ers', 'niners', 'broncos', 'seahawks', 'lakers', 'celtics',
+    'warriors', 'heat', 'bulls', 'yankees', 'red sox', 'dodgers',
+    'rams', 'lions', 'bears', 'vikings', 'dolphins', 'bills',
+    'titans', 'ravens', 'browns', 'bengals', 'texans',
+    'colts', 'jaguars', 'chargers', 'raiders',
+    'cardinals', 'buccaneers', 'saints', 'falcons', 'panthers',
+    // EPL / Soccer
+    'manchester united', 'man united', 'manchester city', 'man city',
+    'liverpool', 'chelsea', 'arsenal', 'tottenham', 'spurs',
+    'newcastle', 'brighton', 'crystal palace', 'fulham', 'west ham',
+    'aston villa', 'everton', 'leicester', 'leeds', 'southampton',
+    'nottingham', 'bournemouth', 'wolves', 'wolverhampton', 'brentford',
+    'ipswich'
+  ];
   
   for (const team of knownTeams) {
     if (titleLower.includes(team)) {
       return 'SUCCESS'; // Extracted via team mapping
     }
   }
-  
+
   return 'PARTIAL';
 }
 

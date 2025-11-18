@@ -468,11 +468,11 @@ export default function AIPage() {
                 Event Weather Analysis
               </h1>
               <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                Analyzing upcoming sports events for weather-driven edges
+                Analyzing NFL and Premier League events for weather-driven trading edges
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <PageNav currentPage="AI" isNight={nightStatus} />
+              <PageNav currentPage="Sports" isNight={nightStatus} />
               <div className="hidden sm:flex items-center ml-2">
                 <label className={`${textColor} text-xs opacity-70 mr-2`}>Analysis Mode</label>
                 <select
@@ -586,30 +586,38 @@ export default function AIPage() {
                    : 'bg-black/10 border-black/20 text-black focus:ring-2 focus:ring-blue-400'
                  } focus:outline-none`}
               >
-                <option value="all">All Types</option>
-                <option value="Sports">Sports (All)</option>
-                <option value="NFL">NFL</option>
-                <option value="NBA">NBA</option>
-                <option value="MLB">MLB</option>
-                <option value="NHL">NHL</option>
-                <option value="Soccer">Soccer</option>
-                <option value="Tennis">Tennis</option>
-                <option value="Cricket">Cricket</option>
-                <option value="F1">Formula 1</option>
-                <option value="Golf">Golf</option>
-                <option value="Weather">Weather</option>
-                <option value="Politics">Politics</option>
+                <optgroup label="Fully Supported (with venue extraction)">
+                  <option value="all">All Supported Sports</option>
+                  <option value="NFL">🏈 NFL (US Football)</option>
+                  <option value="Soccer">⚽ Soccer (Premier League + International)</option>
+                </optgroup>
+                <optgroup label="Coming Soon">
+                  <option value="NBA" disabled>NBA (Basketball) — Soon</option>
+                  <option value="MLB" disabled>MLB (Baseball) — Soon</option>
+                  <option value="NHL" disabled>NHL (Ice Hockey) — Soon</option>
+                  <option value="Tennis" disabled>Tennis — Soon</option>
+                  <option value="Cricket" disabled>Cricket — Soon</option>
+                  <option value="F1" disabled>Formula 1 — Soon</option>
+                  <option value="Golf" disabled>Golf — Soon</option>
+                </optgroup>
+                <optgroup label="Non-Sports">
+                  <option value="Weather">Weather</option>
+                  <option value="Politics">Politics</option>
+                </optgroup>
               </select>
+              <p className={`text-xs ${textColor} opacity-50 mt-2 italic`}>
+                Event Weather Analysis works best for sports with clear venue locations
+              </p>
             </div>
 
             {/* Search */}
             <div>
-              <label className={`${textColor} text-xs opacity-60 block mb-2`}>Search Markets</label>
+              <label className={`${textColor} text-xs opacity-60 block mb-2`}>Search Events</label>
               <input
                 type="text"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder="e.g., Premier League, Wimbledon, Formula 1"
+                placeholder="e.g., Chiefs, Liverpool, Arrowhead Stadium"
                 className={`w-full px-4 py-2.5 text-sm rounded-xl border transition-all ${
                   nightStatus
                     ? 'bg-white/10 border-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400'
