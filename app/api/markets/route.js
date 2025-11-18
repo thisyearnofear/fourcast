@@ -13,7 +13,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const { location, weatherData, eventType, confidence, limitCount, theme } = body;
+    const { location, weatherData, eventType, confidence, limitCount, theme, excludeFutures, searchText, maxDaysToResolution, minVolume } = body;
 
     // REFACTORED: New architecture - location is optional for personalization
     // Primary discovery is now edge-ranked by weather sensitivity
@@ -22,7 +22,10 @@ export async function POST(request) {
       eventType: eventType || 'all',
       confidence: confidence || 'all',
       location: location || null, // Optional for filtering
-      minVolume: 50000
+      minVolume: typeof minVolume === 'number' ? minVolume : 50000,
+      excludeFutures: excludeFutures !== false,
+      searchText: searchText || null,
+      maxDaysToResolution: typeof maxDaysToResolution === 'number' ? maxDaysToResolution : 14
     };
 
     const limit = limitCount || 8;
@@ -153,6 +156,9 @@ export async function GET(request) {
     const eventType = searchParams.get('eventType') || 'all';
     const confidence = searchParams.get('confidence') || 'all';
     const limit = parseInt(searchParams.get('limit') || '20');
+    const excludeFutures = (searchParams.get('excludeFutures') || 'true') !== 'false';
+    const searchText = searchParams.get('q') || null;
+    const maxDaysToResolution = parseInt(searchParams.get('maxDays') || '14');
 
     // Use new discovery method
     let result;
@@ -161,7 +167,10 @@ export async function GET(request) {
         minVolume,
         location,
         eventType,
-        confidence
+        confidence,
+        excludeFutures,
+        searchText,
+        maxDaysToResolution
       });
     } catch (serviceErr) {
       console.error('Service error in GET /api/markets:', serviceErr);

@@ -73,6 +73,31 @@ export default function MarketSelector({
                 <div className={`${textColor} font-light text-sm line-clamp-2 tracking-wide`}>
                   {market.title || 'Unnamed Market'}
                 </div>
+                {/* Resolution Badge */}
+                {(() => {
+                  const res = market.resolutionDate || market.endDate || market.expiresAt;
+                  if (!res) return null;
+                  const d = new Date(res);
+                  if (isNaN(d.getTime())) return null;
+                  const days = Math.max(0, Math.round((d - new Date()) / (1000 * 60 * 60 * 24)));
+                  let cls;
+                  if (days <= 3) {
+                    cls = isNight ? 'bg-green-600/30 border-green-400/40 text-green-200' : 'bg-green-200/60 border-green-400/50 text-green-900';
+                  } else if (days <= 7) {
+                    cls = isNight ? 'bg-yellow-600/30 border-yellow-400/40 text-yellow-200' : 'bg-yellow-200/60 border-yellow-400/50 text-yellow-900';
+                  } else if (days <= 14) {
+                    cls = isNight ? 'bg-orange-600/30 border-orange-400/40 text-orange-200' : 'bg-orange-200/60 border-orange-400/50 text-orange-900';
+                  } else {
+                    cls = isNight ? 'bg-slate-700/40 border-white/20 text-white' : 'bg-slate-200/60 border-black/20 text-black';
+                  }
+                  return (
+                    <div className="mt-1">
+                      <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border ${cls}`}>
+                        Resolves in {days}d
+                      </span>
+                    </div>
+                  );
+                })()}
               </button>
               
               {/* Quick Trade Button - Right Side */}
@@ -135,7 +160,7 @@ export default function MarketSelector({
                       market.confidence === 'MEDIUM' ? 'text-yellow-400' :
                       'text-red-400'
                     }`}>
-                      {market.edgeScore.toFixed(1)}%
+                      {market.edgeScore.toFixed(1)}
                     </div>
                   </div>
                   <div className="text-center">

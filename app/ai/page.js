@@ -43,6 +43,10 @@ export default function AIPage() {
     confidence: 'MEDIUM', // Default to HIGH+MEDIUM
     bestEdgesOnly: true // Toggle for best edges
   });
+  const [includeFutures, setIncludeFutures] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [maxDaysToResolution, setMaxDaysToResolution] = useState(14);
+  const [minVolume, setMinVolume] = useState(50000);
   const [showMethodology, setShowMethodology] = useState(false);
 
   // Analysis state
@@ -137,6 +141,25 @@ export default function AIPage() {
     }
   }, [weatherData, marketFilters]);
 
+  // Refetch on search text change
+  useEffect(() => {
+    if (weatherData) {
+      fetchMarkets();
+    }
+  }, [searchText, includeFutures, maxDaysToResolution, minVolume]);
+
+  // Auto-set default horizon based on event type
+  useEffect(() => {
+    const type = marketFilters.eventType;
+    let defaultDays = 14;
+    if (type === 'Tennis' || type === 'Golf' || type === 'Weather') defaultDays = 7;
+    else if (type === 'Soccer') defaultDays = 10;
+    else if (type === 'F1') defaultDays = 14;
+    else if (type === 'NFL' || type === 'NBA' || type === 'MLB' || type === 'NHL') defaultDays = 14;
+    else if (type === 'Politics') defaultDays = 30;
+    setMaxDaysToResolution(defaultDays);
+  }, [marketFilters.eventType]);
+
 
 
   const loadWeather = async () => {
@@ -174,10 +197,15 @@ export default function AIPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           weatherData,
-          location: weatherData?.location?.name || null,
+          location: null,
           eventType: marketFilters.eventType,
           confidence: marketFilters.confidence,
-          limitCount: 12 // Fetch more to show when filters reduce results
+          limitCount: 12, // Fetch more to show when filters reduce results
+          excludeFutures: !includeFutures,
+          searchText,
+          maxDaysToResolution,
+          minVolume,
+          theme: marketFilters.eventType === 'Sports' ? 'sports' : undefined
         })
       });
 
@@ -450,6 +478,37 @@ export default function AIPage() {
         {/* Filter Controls - Simplified */}
         <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 mb-6`}>
           <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className={`px-3 py-1 text-xs rounded-full border ${
+                nightStatus ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'
+              }`}>
+                Short-Horizon: ≤ {maxDaysToResolution}d
+              </span>
+              <span className={`px-3 py-1 text-xs rounded-full border ${
+                nightStatus ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'
+              }`}>
+                Confidence: {marketFilters.confidence === 'MEDIUM' ? 'High + Medium' : marketFilters.confidence}
+              </span>
+              <span className={`px-3 py-1 text-xs rounded-full border ${
+                (minVolume >= 100000)
+                  ? (nightStatus ? 'bg-green-600/30 border-green-400/40 text-green-200' : 'bg-green-200/60 border-green-400/50 text-green-900')
+                  : (minVolume >= 50000)
+                  ? (nightStatus ? 'bg-orange-600/30 border-orange-400/40 text-orange-200' : 'bg-orange-200/60 border-orange-400/50 text-orange-900')
+                  : (nightStatus ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black')
+              }`}>
+                Min Vol: ${(minVolume/1000).toFixed(0)}k+
+              </span>
+              <span className={`px-3 py-1 text-xs rounded-full border ${
+                nightStatus ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'
+              }`}>
+                Futures: {includeFutures ? 'On' : 'Off'}
+              </span>
+              <span className={`px-3 py-1 text-xs rounded-full border ${
+                nightStatus ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'
+              }`}>
+                Event: {marketFilters.eventType}
+              </span>
+            </div>
             {/* Best Edges Only Toggle */}
             <div className="flex items-center justify-between">
               <label className={`${textColor} text-sm font-light`}>Best Edges Only</label>
@@ -469,6 +528,25 @@ export default function AIPage() {
               </button>
             </div>
 
+            {/* Include Futures Toggle */}
+            <div className="flex items-center justify-between">
+              <label className={`${textColor} text-sm font-light`}>Include Futures</label>
+              <button
+                onClick={() => setIncludeFutures(prev => !prev)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  includeFutures
+                    ? (nightStatus ? 'bg-blue-600' : 'bg-blue-500')
+                    : (nightStatus ? 'bg-slate-600' : 'bg-slate-400')
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    includeFutures ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
             {/* Event Type Filter */}
             <div>
               <label className={`${textColor} text-xs opacity-60 block mb-2`}>Event Type</label>
@@ -482,10 +560,52 @@ export default function AIPage() {
                  } focus:outline-none`}
               >
                 <option value="all">All Types</option>
+                <option value="Sports">Sports (All)</option>
                 <option value="NFL">NFL</option>
                 <option value="NBA">NBA</option>
+                <option value="MLB">MLB</option>
+                <option value="NHL">NHL</option>
+                <option value="Soccer">Soccer</option>
+                <option value="Tennis">Tennis</option>
+                <option value="Cricket">Cricket</option>
+                <option value="F1">Formula 1</option>
+                <option value="Golf">Golf</option>
                 <option value="Weather">Weather</option>
                 <option value="Politics">Politics</option>
+              </select>
+            </div>
+
+            {/* Search */}
+            <div>
+              <label className={`${textColor} text-xs opacity-60 block mb-2`}>Search Markets</label>
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="e.g., Premier League, Wimbledon, Formula 1"
+                className={`w-full px-4 py-2.5 text-sm rounded-xl border transition-all ${
+                  nightStatus
+                    ? 'bg-white/10 border-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400'
+                    : 'bg-black/10 border-black/20 text-black placeholder-black/50 focus:ring-2 focus:ring-blue-400'
+                } focus:outline-none`}
+              />
+            </div>
+
+            {/* Min Volume Filter */}
+            <div>
+              <label className={`${textColor} text-xs opacity-60 block mb-2`}>Minimum 24h Volume</label>
+              <select
+                value={String(minVolume)}
+                onChange={(e) => setMinVolume(parseInt(e.target.value))}
+                className={`w-full px-4 py-2.5 text-sm rounded-xl border transition-all ${
+                  nightStatus
+                    ? 'bg-white/10 border-white/20 text-white focus:ring-2 focus:ring-blue-400'
+                    : 'bg-black/10 border-black/20 text-black focus:ring-2 focus:ring-blue-400'
+                } focus:outline-none`}
+              >
+                <option value="10000">$10k+</option>
+                <option value="50000">$50k+</option>
+                <option value="100000">$100k+</option>
               </select>
             </div>
 
@@ -502,9 +622,50 @@ export default function AIPage() {
                  } focus:outline-none`}
               >
                 <option value="HIGH">High Confidence</option>
-                <option value="MEDIUM">Medium+</option>
+                <option value="MEDIUM">High + Medium</option>
                 <option value="LOW">Low+</option>
               </select>
+            </div>
+
+            {/* Max Days to Resolution */}
+            <div>
+              <label className={`${textColor} text-xs opacity-60 block mb-2`}>Max Days to Resolution</label>
+              <input
+                type="range"
+                min={3}
+                max={60}
+                step={1}
+                value={maxDaysToResolution}
+                onChange={(e) => setMaxDaysToResolution(parseInt(e.target.value))}
+                className="w-full"
+              />
+              <div className={`${textColor} text-xs opacity-70 mt-1`}>{maxDaysToResolution} days</div>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={() => setMaxDaysToResolution(7)}
+                  className={`px-3 py-1 text-xs rounded-full border ${
+                    nightStatus ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'
+                  }`}
+                >
+                  7d
+                </button>
+                <button
+                  onClick={() => setMaxDaysToResolution(14)}
+                  className={`px-3 py-1 text-xs rounded-full border ${
+                    nightStatus ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'
+                  }`}
+                >
+                  14d
+                </button>
+                <button
+                  onClick={() => setMaxDaysToResolution(30)}
+                  className={`px-3 py-1 text-xs rounded-full border ${
+                    nightStatus ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'
+                  }`}
+                >
+                  30d
+                </button>
+              </div>
             </div>
 
             {/* Methodology Link */}

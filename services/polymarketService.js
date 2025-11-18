@@ -1,5 +1,6 @@
 // Polymarket Service for fetching live market data and placing orders
 import axios from 'axios';
+import { MarketTypeDetector } from './marketTypeDetector.js';
 import { MarketDataValidator, WeatherDataValidator } from './validators/index.js';
 
 class PolymarketService {
@@ -102,16 +103,19 @@ class PolymarketService {
     };
     
     // For sports subcategories, fetch from sports metadata
-    if (['nfl', 'nba', 'mlb', 'nhl'].includes(category.toLowerCase())) {
+    if (['nfl', 'nba', 'mlb', 'nhl', 'soccer', 'tennis', 'cricket', 'rugby', 'golf', 'f1', 'formula 1'].includes(category.toLowerCase())) {
       const sports = await this.getSportsMetadata();
       const extractSportTag = (tags) => {
         if (!tags) return null;
         const tagArray = tags.split(',');
         return tagArray.find(t => t !== '1' && t !== '100639') || tagArray[0];
       };
-      return extractSportTag(sports.find(s => s.sport === category.toLowerCase())?.tags);
+      const key = category.toLowerCase() === 'formula 1' ? 'f1' : category.toLowerCase();
+      return extractSportTag(sports.find(s => s.sport === key)?.tags);
     }
     
+    // Do not hard-map 'Sports' to a single tag; handle via theme filter instead
+    if (String(category).toLowerCase() === 'sports') return null;
     return categoryTagMap[category] || null;
   }
 
@@ -597,9 +601,22 @@ class PolymarketService {
       // Note: Category filtering now happens at fetch time via tag_id parameter
       let filtered = scoredMarkets.filter(m => m.edgeScore > 0);
 
-      // FILTER 3: Confidence level if specified
+      // FILTER 2: Optionally exclude futures bets where weather analysis is weak
+      const excludeFutures = filters.excludeFutures !== false;
+      if (excludeFutures) {
+        filtered = filtered.filter(m => !MarketTypeDetector.isFuturesBet(m));
+      }
+
+      // FILTER 3: Confidence level tiers
       if (filters.confidence && filters.confidence !== 'all') {
-        filtered = filtered.filter(m => m.confidence === filters.confidence);
+        const level = String(filters.confidence).toUpperCase();
+        filtered = filtered.filter(m => {
+          const c = String(m.confidence).toUpperCase();
+          if (level === 'HIGH') return c === 'HIGH';
+          if (level === 'MEDIUM') return c === 'MEDIUM' || c === 'HIGH';
+          if (level === 'LOW') return true;
+          return true;
+        });
       }
 
       // FILTER 4: Location if user provided (optional, for personalization)
@@ -609,10 +626,38 @@ class PolymarketService {
         );
       }
 
-      // Sort by edge score (descending), then by volume (for tiebreaker)
+      // FILTER 5: Max days to resolution (short horizon focus)
+      if (filters.maxDaysToResolution && Number.isFinite(filters.maxDaysToResolution)) {
+        const maxDays = Number(filters.maxDaysToResolution);
+        filtered = filtered.filter(m => {
+          const res = m.resolutionDate;
+          if (!res) return true; // keep if unknown
+          const d = new Date(res);
+          if (isNaN(d.getTime())) return true;
+          const days = (d - new Date()) / (1000 * 60 * 60 * 24);
+          return days <= maxDays;
+        });
+      }
+
+      // FILTER 5: Free-text search across title/description/tags
+      if (filters.searchText && String(filters.searchText).trim().length > 0) {
+        const q = String(filters.searchText).toLowerCase().trim();
+        filtered = filtered.filter(m => {
+          const title = (m.title || '').toLowerCase();
+          const desc = (m.description || '').toLowerCase();
+          const tags = (m.tags || []).map(t => typeof t === 'string' ? t.toLowerCase() : (t?.label || '').toLowerCase()).join(' ');
+          return title.includes(q) || desc.includes(q) || tags.includes(q);
+        });
+      }
+
+      // Sort by edge score (descending), then by shortest horizon, then by volume
       filtered.sort((a, b) => {
         const scoreDiff = (b.edgeScore || 0) - (a.edgeScore || 0);
         if (scoreDiff !== 0) return scoreDiff;
+        const ad = a.resolutionDate ? (new Date(a.resolutionDate) - new Date()) : Infinity;
+        const bd = b.resolutionDate ? (new Date(b.resolutionDate) - new Date()) : Infinity;
+        const dayDiff = ad - bd; // smaller first
+        if (!isNaN(dayDiff) && dayDiff !== 0) return dayDiff;
         return (b.volume24h || 0) - (a.volume24h || 0);
       });
 
@@ -1110,6 +1155,8 @@ class PolymarketService {
       'football': 'Soccer',
       'cricket': 'Cricket',
       'rugby': 'Rugby',
+      'f1': 'F1',
+      'formula 1': 'F1',
       'weather': 'Weather',
       'sports': 'Sports'
     };

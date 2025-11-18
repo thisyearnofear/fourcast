@@ -106,7 +106,8 @@ const DiscoveryPage = () => {
               eventType: filters.category === 'all' ? 'all' : filters.category,
               confidence: 'all',
               limitCount: 50, // More results for discovery page
-              theme: 'all'
+              theme: 'all',
+              minVolume: parseInt(filters.minVolume)
             })
           });
 
@@ -118,13 +119,6 @@ const DiscoveryPage = () => {
       
       if (result.success) {
         let filtered = result.markets || [];
-        
-        // Apply volume filter (backend already filtered by category via tag_id)
-        if (filters.minVolume) {
-          const minVol = parseInt(filters.minVolume);
-          filtered = filtered.filter(m => (m.volume24h || 0) >= minVol);
-        }
-        
         setMarkets(filtered);
       } else {
         setError(result.error || 'Failed to load markets');
@@ -346,6 +340,29 @@ const DiscoveryPage = () => {
           <div className={`${textColor} opacity-70 text-sm mb-4`}>
             Found {markets.length} weather-sensitive markets
             {filters.search && ` for "${filters.search}"`}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className={`px-3 py-1 text-xs rounded-full border ${
+                isNight ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'
+              }`}>
+                Category: {filters.category}
+              </span>
+              {filters.minVolume && (
+                <span className={`px-3 py-1 text-xs rounded-full border ${
+                  (parseInt(filters.minVolume) >= 100000)
+                    ? (isNight ? 'bg-green-600/30 border-green-400/40 text-green-200' : 'bg-green-200/60 border-green-400/50 text-green-900')
+                    : (parseInt(filters.minVolume) >= 50000)
+                    ? (isNight ? 'bg-orange-600/30 border-orange-400/40 text-orange-200' : 'bg-orange-200/60 border-orange-400/50 text-orange-900')
+                    : (isNight ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black')
+                }`}>
+                  Min Vol: ${(parseInt(filters.minVolume)/1000).toFixed(0)}k+
+                </span>
+              )}
+              <span className={`px-3 py-1 text-xs rounded-full border ${
+                isNight ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'
+              }`}>
+                Confidence: All
+              </span>
+            </div>
           </div>
         )}
 
@@ -410,6 +427,31 @@ const DiscoveryPage = () => {
                     <h3 className={`text-lg font-light ${textColor} leading-relaxed tracking-wide`}>
                       {market.title || market.question}
                     </h3>
+                    {/* Resolution Badge */}
+                    {(() => {
+                      const res = market.resolutionDate || market.expiresAt || market.endDate;
+                      if (!res) return null;
+                      const d = new Date(res);
+                      if (isNaN(d.getTime())) return null;
+                      const days = Math.max(0, Math.round((d - new Date()) / (1000 * 60 * 60 * 24)));
+                      let cls;
+                      if (days <= 3) {
+                        cls = isNight ? 'bg-green-600/30 border-green-400/40 text-green-200' : 'bg-green-200/60 border-green-400/50 text-green-900';
+                      } else if (days <= 7) {
+                        cls = isNight ? 'bg-yellow-600/30 border-yellow-400/40 text-yellow-200' : 'bg-yellow-200/60 border-yellow-400/50 text-yellow-900';
+                      } else if (days <= 14) {
+                        cls = isNight ? 'bg-orange-600/30 border-orange-400/40 text-orange-200' : 'bg-orange-200/60 border-orange-400/50 text-orange-900';
+                      } else {
+                        cls = isNight ? 'bg-slate-700/40 border-white/20 text-white' : 'bg-slate-200/60 border-black/20 text-black';
+                      }
+                      return (
+                        <div>
+                          <span className={`inline-block text-[11px] px-3 py-1 rounded-full border ${cls}`}>
+                            Resolves in {days} days
+                          </span>
+                        </div>
+                      );
+                    })()}
                     
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                        {market.tags && market.tags.length > 0 && (
