@@ -97,19 +97,22 @@ const DiscoveryPage = () => {
     setError(null);
     
     try {
-      // REFACTORED: Use new edge-ranked discovery via API
-          const response = await fetch('/api/markets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              location: filters.search || null, // Optional location filter
-              eventType: filters.category === 'all' ? 'all' : filters.category,
-              confidence: 'all',
-              limitCount: 50, // More results for discovery page
-              theme: 'all',
-              minVolume: parseInt(filters.minVolume)
-            })
-          });
+      // REFACTORED: Use discovery mode (location-agnostic market browsing)
+           const response = await fetch('/api/markets', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({
+               location: null, // Discovery mode: not location-based
+               eventType: filters.category === 'all' ? 'all' : filters.category,
+               confidence: 'all',
+               limitCount: 50, // More results for discovery page
+               searchText: filters.search || null, // Free-form search
+               theme: 'all',
+               minVolume: parseInt(filters.minVolume),
+               analysisType: 'discovery', // NEW: Use market efficiency scoring, not weather
+               weatherData: null // No user weather needed for discovery
+             })
+           });
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -236,15 +239,15 @@ const DiscoveryPage = () => {
       <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full">
         {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-12">
-          <div className="mb-6 sm:mb-0">
-            <h1 className={`text-4xl sm:text-4xl font-thin tracking-wide ${textColor}`}>
-              Weather-Sensitive Edges
-            </h1>
-            <p className={`text-sm ${textColor} opacity-60 mt-3 font-light max-w-md`}>
-              Top-ranked prediction markets with exploitable weather-related inefficiencies
-            </p>
-          </div>
+         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-12">
+           <div className="mb-6 sm:mb-0">
+             <h1 className={`text-4xl sm:text-4xl font-thin tracking-wide ${textColor}`}>
+               Market Discovery
+             </h1>
+             <p className={`text-sm ${textColor} opacity-60 mt-3 font-light max-w-md`}>
+               Browse high-volume prediction markets across all categories. Deep-dive with AI analysis.
+             </p>
+           </div>
           
           <div className="flex items-center space-x-4">
             <PageNav currentPage="Discovery" isNight={isNight} />
@@ -267,11 +270,11 @@ const DiscoveryPage = () => {
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
             {/* Search Input */}
             <div className="flex-1">
-    <input
-      type="text"
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      placeholder="Search by location (e.g. Chicago, Miami, New York)..."
+            <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search markets by name, team, or keyword..."
        className={`w-full px-4 py-2.5 rounded-xl text-sm font-light ${
           isNight
             ? 'bg-white/10 border border-white/20 text-white placeholder-white/50'

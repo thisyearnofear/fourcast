@@ -29,9 +29,8 @@ export default function AIPage() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
 
-  // Weather state
+  // Weather state (for /ai: not used for location, only for UI theming if needed)
   const [weatherData, setWeatherData] = useState(null);
-  const [currentLocation, setCurrentLocation] = useState('');
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
 
   // Market state
@@ -67,9 +66,10 @@ export default function AIPage() {
   const [useEnhancedComponents, setUseEnhancedComponents] = useState(true);
 
   // Performance-optimized validations
+  // For /ai: Validate against event location (extracted from market), not user location
   const locationValidation = useLocationValidation(
     selectedMarket?.eventType || selectedMarket?.title || 'General',
-    currentLocation,
+    selectedMarket?.eventLocation || null, // Use extracted event venue
     { additionalContext: { title: selectedMarket?.title } }
   );
 
@@ -106,9 +106,9 @@ export default function AIPage() {
   }), []);
 
   const marketValidation = usePerformantValidation(
-    { market: selectedMarket, location: currentLocation, weatherData },
+    { market: selectedMarket, location: selectedMarket?.eventLocation || null, weatherData: selectedMarket?.eventWeather || weatherData },
     marketValidators,
-    { dependencies: [selectedMarket?.id, currentLocation] }
+    { dependencies: [selectedMarket?.id, selectedMarket?.eventLocation] }
   );
 
   // Trading readiness validation
@@ -165,20 +165,23 @@ export default function AIPage() {
   const loadWeather = async () => {
     setIsLoadingWeather(true);
     try {
+      // For /ai page: Weather is only for UI theming, not location filtering
+      // Event venues are extracted from market data during scoring
+      // So we can skip weather loading entirely or load generic data for theming
+      // For now, fetch from current location just for time-of-day theming
       const location = await weatherService.getCurrentLocation();
       const data = await weatherService.getCurrentWeather(location);
       setWeatherData(data);
-      setCurrentLocation(`${data.location.name}, ${data.location.region}`);
       setError(null);
     } catch (err) {
-      // Fallback to default location
+      // Fallback to default location for theming
       try {
         const data = await weatherService.getCurrentWeather('Nairobi');
         setWeatherData(data);
-        setCurrentLocation(`${data.location.name}, ${data.location.region}`);
         setError(null);
       } catch (fallbackErr) {
-        setError('Unable to load weather data');
+        console.warn('Unable to load weather for theming:', fallbackErr.message);
+        setError(null); // Don't block UI on weather load failure
       }
     } finally {
       setIsLoadingWeather(false);
@@ -186,17 +189,16 @@ export default function AIPage() {
   };
 
   const fetchMarkets = async () => {
-    if (!weatherData) return;
     setIsLoadingMarkets(true);
     setError(null);
 
     try {
-      // Call edge-ranked discovery with user filters
+      // Call event-weather discovery: fetch weather at event venues, not user location
       const response = await fetch('/api/markets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          weatherData,
+          weatherData: null, // Don't pass user weather to /ai (event weather is fetched server-side)
           location: null,
           eventType: marketFilters.eventType,
           confidence: marketFilters.confidence,
@@ -205,6 +207,7 @@ export default function AIPage() {
           searchText,
           maxDaysToResolution,
           minVolume,
+          analysisType: 'event-weather', // NEW: Tell server to fetch event venue weather
           theme: marketFilters.eventType === 'Sports' ? 'sports' : undefined
         })
       });
@@ -216,11 +219,35 @@ export default function AIPage() {
       const result = await response.json();
       
       if (result.success) {
-        setMarkets(result.markets);
-        if (result.markets.length > 0) {
+        if (Array.isArray(result.markets) && result.markets.length > 0) {
+          setMarkets(result.markets);
           setSelectedMarket(result.markets[0]);
         } else {
-          setError('No weather-sensitive markets found. Try adjusting filters.');
+          const fallbackRes = await fetch('/api/markets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              weatherData: null,
+              location: null,
+              eventType: 'all',
+              confidence: 'all',
+              limitCount: 24,
+              excludeFutures: false,
+              searchText: null,
+              maxDaysToResolution: 60,
+              minVolume: Math.min(Number(minVolume || 50000), 10000),
+              theme: 'all'
+            })
+          });
+          const fb = await fallbackRes.json();
+          if (fb.success && Array.isArray(fb.markets) && fb.markets.length > 0) {
+            setMarkets(fb.markets);
+            setSelectedMarket(fb.markets[0]);
+            setError(null);
+          } else {
+            setMarkets([]);
+            setError('No weather-sensitive markets found. Try adjusting filters.');
+          }
         }
       } else {
         setError(result.error || 'Failed to fetch markets');
@@ -438,10 +465,10 @@ export default function AIPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
             <div>
               <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
-                Weather Edge Analysis
+                Event Weather Analysis
               </h1>
               <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                {currentLocation}
+                Analyzing upcoming sports events for weather-driven edges
               </p>
             </div>
             <div className="flex items-center space-x-3">

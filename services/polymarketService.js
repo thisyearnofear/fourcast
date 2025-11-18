@@ -2,6 +2,8 @@
 import axios from 'axios';
 import { MarketTypeDetector } from './marketTypeDetector.js';
 import { MarketDataValidator, WeatherDataValidator } from './validators/index.js';
+import { VenueExtractor } from './venueExtractor.js';
+import { weatherService } from './weatherService.js';
 
 class PolymarketService {
   constructor() {
@@ -475,8 +477,12 @@ class PolymarketService {
 
     // Factor 2: Weather-Sensitive Events (outdoor events, sports)
     let weatherSensitiveEvent = 0;
-    const sportEvents = ['nfl', 'nba', 'mlb', 'golf', 'tennis', 'cricket', 'soccer', 'rugby'];
-    const isSportEvent = sportEvents.some(sport => title.includes(sport) || tags.includes(sport));
+    const sportEvents = ['nfl', 'nba', 'mlb', 'golf', 'tennis', 'cricket', 'soccer', 'rugby', 'f1', 'formula 1'];
+    const type = String(market.eventType || market.event_type || '').toLowerCase();
+    const teams = Array.isArray(market.teams) ? market.teams : [];
+    const isSportByType = ['nfl','nba','mlb','nhl','soccer','golf','tennis','f1','formula 1','cricket','rugby','marathon'].includes(type);
+    const isSportByTeams = teams.length > 0;
+    const isSportEvent = isSportByType || isSportByTeams || sportEvents.some(sport => title.includes(sport) || tags.includes(sport));
     const isOutdoorEvent = title.includes('marathon') || title.includes('race') || isSportEvent;
     
     if (isOutdoorEvent) {
@@ -565,13 +571,74 @@ class PolymarketService {
   }
 
   /**
+   * Assessment for discovery mode: Score markets by efficiency, not weather
+   * Used by /discovery page to rank markets regardless of location
+   */
+  assessMarketEfficiency(market) {
+    let totalScore = 0;
+    const factors = {};
+
+    // Factor 1: Volume (higher volume = more liquid, more tradeable)
+    const volume = market.volume24h || 0;
+    let volumeScore = 0;
+    if (volume > 500000) volumeScore = 3;
+    else if (volume > 100000) volumeScore = 2;
+    else if (volume > 50000) volumeScore = 1;
+    factors.volumeScore = volumeScore;
+    totalScore += volumeScore;
+
+    // Factor 2: Liquidity (depth of order book)
+    const liquidity = market.liquidity || 0;
+    let liquidityScore = 0;
+    if (liquidity > 100000) liquidityScore = 2;
+    else if (liquidity > 50000) liquidityScore = 1;
+    factors.liquidityScore = liquidityScore;
+    totalScore += liquidityScore;
+
+    // Factor 3: Volatility/Trend (markets with movement are more interesting)
+    const volumeTrend = market.volumeMetrics?.volumeTrend || 0;
+    let volatilityScore = 0;
+    if (Math.abs(volumeTrend) > 50) volatilityScore = 2;
+    else if (Math.abs(volumeTrend) > 25) volatilityScore = 1;
+    factors.volatilityScore = volatilityScore;
+    totalScore += volatilityScore;
+
+    // Factor 4: Spread (tight spreads = more efficient market)
+    const spreadPercent = market.oddsAnalysis?.spreadPercent || market.orderBookMetrics?.spreadPercent || 5;
+    let spreadScore = 0;
+    if (spreadPercent < 1) spreadScore = 2;
+    else if (spreadPercent < 2) spreadScore = 1;
+    // Wide spreads don't add score but don't penalize either (still liquid)
+    factors.spreadScore = spreadScore;
+    totalScore += spreadScore;
+
+    // Confidence: Based on market depth and liquidity
+    let confidence = 'LOW';
+    if (liquidity > 50000 && volume > 100000) confidence = 'HIGH';
+    else if (liquidity > 20000 || volume > 50000) confidence = 'MEDIUM';
+
+    return {
+      totalScore: Math.min(totalScore, 10), // Cap at 10 for consistency
+      factors,
+      isWeatherSensitive: false, // Discovery mode doesn't require weather edge
+      confidence
+    };
+  }
+
+  /**
    * Phase 3: Get top weather-sensitive markets
    * Replaces location-based discovery with edge-ranked results
    * Returns markets sorted by weather edge potential, not geolocation
    * ROADMAP: Primary method for market discovery in new architecture
+   * 
+   * NEW: Supports two analysis modes:
+   * - 'event-weather': For /ai page - fetches weather at event venues
+   * - 'discovery': For /discovery page - location-agnostic market browsing
    */
   async getTopWeatherSensitiveMarkets(limit = 10, filters = {}) {
     try {
+      const analysisType = filters.analysisType || 'discovery';
+      
       // Get full catalog (without order book enrichment to avoid rate limits)
       const catalogResult = await this.buildMarketCatalog(filters.minVolume || 50000, filters.eventType);
       
@@ -579,23 +646,79 @@ class PolymarketService {
         return {
           markets: [],
           totalFound: 0,
-          message: 'No weather-sensitive markets found',
+          message: 'No markets found',
           timestamp: new Date().toISOString()
         };
       }
 
-      // Score each market for weather edge potential
-      const scoredMarkets = catalogResult.markets.map(market => {
-        const edgeAssessment = this.assessMarketWeatherEdge(market, filters.weatherData);
-        return {
-          ...market,
-          edgeScore: edgeAssessment.totalScore,
-          edgeFactors: edgeAssessment.factors,
-          confidence: edgeAssessment.confidence,
-          weatherContext: edgeAssessment.weatherContext,
-          isWeatherSensitive: edgeAssessment.isWeatherSensitive
-        };
-      });
+      // Score each market based on analysis type
+      let scoredMarkets;
+      
+      if (analysisType === 'event-weather') {
+        // /ai page: Fetch weather at event venues and score by weather impact
+        scoredMarkets = await Promise.all(
+          catalogResult.markets.map(async (market) => {
+            try {
+              // Extract event venue from market data
+              const venue = VenueExtractor.extractFromMarket(market);
+              let eventWeather = null;
+              
+              if (venue && VenueExtractor.isValidVenue(venue)) {
+                try {
+                  // Fetch weather at the event location (not user location)
+                  eventWeather = await weatherService.getCurrentWeather(venue);
+                  console.debug(`Fetched event weather for ${venue}: ${eventWeather?.current?.condition?.text || 'unknown'}`);
+                } catch (weatherErr) {
+                  console.warn(`Failed to fetch weather for venue ${venue}:`, weatherErr.message);
+                  // Continue without event weather
+                }
+              }
+              
+              const edgeAssessment = this.assessMarketWeatherEdge(market, eventWeather);
+              return {
+                ...market,
+                eventLocation: venue,
+                eventWeather: eventWeather,
+                edgeScore: edgeAssessment.totalScore,
+                edgeFactors: edgeAssessment.factors,
+                confidence: edgeAssessment.confidence,
+                weatherContext: edgeAssessment.weatherContext,
+                isWeatherSensitive: edgeAssessment.isWeatherSensitive
+              };
+            } catch (err) {
+              console.warn(`Error processing market ${market.title} for event-weather analysis:`, err.message);
+              // Fallback: score without event weather
+              const edgeAssessment = this.assessMarketWeatherEdge(market, null);
+              return {
+                ...market,
+                eventLocation: null,
+                eventWeather: null,
+                edgeScore: edgeAssessment.totalScore,
+                edgeFactors: edgeAssessment.factors,
+                confidence: edgeAssessment.confidence,
+                weatherContext: edgeAssessment.weatherContext,
+                isWeatherSensitive: edgeAssessment.isWeatherSensitive
+              };
+            }
+          })
+        );
+      } else {
+        // /discovery page: Score by market efficiency (not weather)
+        scoredMarkets = catalogResult.markets.map(market => {
+          // For discovery, use market efficiency scoring instead of weather
+          const efficiency = this.assessMarketEfficiency(market);
+          return {
+            ...market,
+            eventLocation: null,
+            eventWeather: null,
+            edgeScore: efficiency.totalScore,
+            edgeFactors: efficiency.factors,
+            confidence: efficiency.confidence,
+            weatherContext: null,
+            isWeatherSensitive: efficiency.isWeatherSensitive
+          };
+        });
+      }
 
       // FILTER 1: Only markets with actual weather edge (score > 0)
       // Note: Category filtering now happens at fetch time via tag_id parameter

@@ -13,10 +13,11 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const { location, weatherData, eventType, confidence, limitCount, theme, excludeFutures, searchText, maxDaysToResolution, minVolume } = body;
+    const { location, weatherData, eventType, confidence, limitCount, theme, excludeFutures, searchText, maxDaysToResolution, minVolume, analysisType } = body;
 
-    // REFACTORED: New architecture - location is optional for personalization
-    // Primary discovery is now edge-ranked by weather sensitivity
+    // REFACTORED: New architecture - supports two analysis modes:
+    // 1. 'event-weather' (/ai page): Fetches weather at event venues
+    // 2. 'discovery' (/discovery page): Location-agnostic market browsing
     const filters = {
       weatherData,
       eventType: eventType || 'all',
@@ -25,7 +26,8 @@ export async function POST(request) {
       minVolume: typeof minVolume === 'number' ? minVolume : 50000,
       excludeFutures: excludeFutures !== false,
       searchText: searchText || null,
-      maxDaysToResolution: typeof maxDaysToResolution === 'number' ? maxDaysToResolution : 14
+      maxDaysToResolution: typeof maxDaysToResolution === 'number' ? maxDaysToResolution : 14,
+      analysisType: analysisType || 'discovery' // NEW: Determines scoring method
     };
 
     const limit = limitCount || 8;
