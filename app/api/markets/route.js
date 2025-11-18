@@ -51,14 +51,28 @@ export async function POST(request) {
     }
 
     if (!marketsList || marketsList.length === 0) {
+      // DEBUG: Log what happened
+      console.log('🔍 No markets returned. Debugging info:', {
+        resultMarkets: result.markets?.length || 0,
+        resultTotalFound: result.totalFound,
+        resultError: result.error,
+        filters: { eventType, confidence, minVolume, maxDaysToResolution },
+        analysisType
+      });
+
       // No weather-sensitive edges found - show helpful message instead of fallback markets
       return Response.json({
         success: true,
         markets: [],
         message: 'No weather edges detected right now. Weather conditions must change significantly or new events must be added for new opportunities. Check back when weather forecasts update.',
         noEdgesReason: 'Current market conditions and forecasts don\'t show strong weather-driven mispricings',
-        totalFound: 0,
+        totalFound: result.totalFound || 0,
         cached: false,
+        debugInfo: {
+          resultLength: result.markets?.length || 0,
+          resultTotal: result.totalFound,
+          filters: { eventType, confidence, analysisType }
+        },
         timestamp: new Date().toISOString()
       });
     }

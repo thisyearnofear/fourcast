@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Updated for Next.js - always use API route
-const USE_API_ROUTE = true;
+// Updated for Next.js - use API route in browser, direct API in Node.js
+const IS_BROWSER = typeof window !== 'undefined';
+const USE_API_ROUTE = IS_BROWSER; // Only use API route in browser context
 const API_BASE = '/api';
 const WEATHER_API_BASE = 'https://api.weatherapi.com/v1';
 const API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY;

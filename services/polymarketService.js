@@ -326,39 +326,50 @@ class PolymarketService {
       let allMarkets = [];
       
       try {
-        const params = { limit: 100, offset: 0, closed: false };
-        
-        // If filtering by category, get tag ID and fetch those markets
-        if (eventTypeFilter && eventTypeFilter !== 'all' && eventTypeFilter !== 'Weather') {
-          const tagId = await this.getCategoryTagId(eventTypeFilter);
-          if (tagId) {
-            params.tag_id = tagId;
-          }
-        }
-        
-        const response = await axios.get(`${this.baseURL}/events`, {
-          params,
-          timeout: 10000
-        });
+         const params = { limit: 100, offset: 0, closed: false };
+         
+         // If filtering by category, get tag ID and fetch those markets
+         if (eventTypeFilter && eventTypeFilter !== 'all' && eventTypeFilter !== 'Weather') {
+           const tagId = await this.getCategoryTagId(eventTypeFilter);
+           console.debug(`📌 Category filter: ${eventTypeFilter} -> tag_id: ${tagId}`);
+           if (tagId) {
+             params.tag_id = tagId;
+           }
+         }
+         
+         console.debug(`🔗 Fetching from ${this.baseURL}/events with params:`, params);
+         const response = await axios.get(`${this.baseURL}/events`, {
+           params,
+           timeout: 10000
+         });
 
-        if (response.data && Array.isArray(response.data)) {
-          // Extract markets from events (each event can have multiple markets)
-          const events = response.data;
-          for (const event of events) {
-            if (event.markets && Array.isArray(event.markets)) {
-              allMarkets = allMarkets.concat(
-                event.markets.map(m => ({
-                  ...m,
-                  eventTags: event.tags || [] // Include event tags for metadata extraction
-                }))
-              );
-            }
-          }
-        }
-      } catch (fetchError) {
-        console.warn(`Error fetching events:`, fetchError.message);
-        // Continue with empty allMarkets - will be caught in caller
-      }
+         console.debug(`📥 Response received:`, {
+           isArray: Array.isArray(response.data),
+           length: Array.isArray(response.data) ? response.data.length : 'N/A',
+           hasEvents: Array.isArray(response.data) ? response.data.some(e => e.markets) : false
+         });
+
+         if (response.data && Array.isArray(response.data)) {
+           // Extract markets from events (each event can have multiple markets)
+           const events = response.data;
+           let marketCount = 0;
+           for (const event of events) {
+             if (event.markets && Array.isArray(event.markets)) {
+               const eventsMarkets = event.markets.map(m => ({
+                 ...m,
+                 eventTags: event.tags || [] // Include event tags for metadata extraction
+               }));
+               allMarkets = allMarkets.concat(eventsMarkets);
+               marketCount += eventsMarkets.length;
+             }
+           }
+           console.debug(`✨ Extracted ${marketCount} markets from ${events.length} events`);
+         }
+       } catch (fetchError) {
+         console.error(`❌ Error fetching events:`, fetchError.message);
+         console.error(`   Status: ${fetchError.response?.status}, Data: ${JSON.stringify(fetchError.response?.data)}`);
+         // Continue with empty allMarkets - will be caught in caller
+       }
 
       // Index and enrich with metadata (WITHOUT order book - defer that for final results)
       const baseCatalog = allMarkets
@@ -373,17 +384,35 @@ class PolymarketService {
         // Use eventTags (from parent event) for more reliable detection
         const tags = market.eventTags || market.tags || [];
         const metadata = this.extractMarketMetadata(title, tags);
+        
+        // DEBUG: Log markets without eventType for troubleshooting
+        if (!metadata.event_type) {
+          console.debug(`📍 No event_type detected for: "${title.substring(0, 50)}..." | Tags: ${JSON.stringify(tags)}`);
+        }
 
         // Use available data only - no order book API calls yet
         const enrichedData = this.enrichMarketWithAvailableData(market);
 
+        // Fallback: If no eventType but title/description has sports keywords, infer it
+        let eventType = metadata.event_type;
+        if (!eventType) {
+          const titleLower = title.toLowerCase();
+          const descLower = (market.description || '').toLowerCase();
+          const text = `${titleLower} ${descLower}`;
+          if (text.includes('nfl') || text.includes('football')) eventType = 'NFL';
+          else if (text.includes('soccer') || text.includes('football') || text.includes('premier league')) eventType = 'Soccer';
+          else if (text.includes('nba') || text.includes('basketball')) eventType = 'NBA';
+          else if (text.includes('mlb') || text.includes('baseball')) eventType = 'MLB';
+          else if (text.includes('hockey') || text.includes('nhl')) eventType = 'NHL';
+        }
+        
         return {
           marketID: market.tokenID || market.id,
           title,
           description: market.description,
           location: metadata.location,
           teams: metadata.teams,
-          eventType: metadata.event_type,
+          eventType: eventType,
           currentOdds: {
             yes: parseFloat(market.outcomePrices?.[0] || enrichedData.orderBook?.bestAsk || 0.5),
             no: parseFloat(market.outcomePrices?.[1] || enrichedData.orderBook?.bestBid || 0.5)
@@ -642,11 +671,19 @@ class PolymarketService {
       // Get full catalog (without order book enrichment to avoid rate limits)
       const catalogResult = await this.buildMarketCatalog(filters.minVolume || 50000, filters.eventType);
       
+      console.debug(`📦 Market catalog built:`, {
+        total: catalogResult.markets?.length,
+        minVolume: filters.minVolume,
+        eventType: filters.eventType,
+        cached: catalogResult.cached
+      });
+      
       if (!catalogResult.markets || catalogResult.markets.length === 0) {
+        console.warn(`⚠️ Empty catalog result. Error: ${catalogResult.error}`);
         return {
           markets: [],
           totalFound: 0,
-          message: 'No markets found',
+          message: 'No markets found in catalog',
           timestamp: new Date().toISOString()
         };
       }
@@ -656,8 +693,9 @@ class PolymarketService {
       
       if (analysisType === 'event-weather') {
         // /ai page: Fetch weather at event venues and score by weather impact
+        console.debug(`⚡ Scoring ${catalogResult.markets.length} markets for event-weather analysis`);
         scoredMarkets = await Promise.all(
-          catalogResult.markets.map(async (market) => {
+          catalogResult.markets.map(async (market, idx) => {
             try {
               // Extract event venue from market data
               const venue = VenueExtractor.extractFromMarket(market);
@@ -667,14 +705,18 @@ class PolymarketService {
                 try {
                   // Fetch weather at the event location (not user location)
                   eventWeather = await weatherService.getCurrentWeather(venue);
-                  console.debug(`Fetched event weather for ${venue}: ${eventWeather?.current?.condition?.text || 'unknown'}`);
+                  console.debug(`  [${idx}] ✓ ${market.title?.substring(0, 40)} @ ${venue}`);
                 } catch (weatherErr) {
-                  console.warn(`Failed to fetch weather for venue ${venue}:`, weatherErr.message);
+                  console.debug(`  [${idx}] ⚠ ${market.title?.substring(0, 40)} @ ${venue} - weather fetch failed`);
                   // Continue without event weather
                 }
+              } else {
+                console.debug(`  [${idx}] ✗ ${market.title?.substring(0, 40)} - no venue found`);
               }
               
               const edgeAssessment = this.assessMarketWeatherEdge(market, eventWeather);
+              console.debug(`    → Score: ${edgeAssessment.totalScore.toFixed(1)} | Type: ${market.eventType} | Confidence: ${edgeAssessment.confidence}`);
+              
               return {
                 ...market,
                 eventLocation: venue,
@@ -720,17 +762,42 @@ class PolymarketService {
         });
       }
 
-      // FILTER 1: Only markets with actual weather edge (score > 0)
+      // FILTER 1: Only markets with actual weather edge (score > 0) OR sports markets (for /sports page)
       // Note: Category filtering now happens at fetch time via tag_id parameter
-      let filtered = scoredMarkets.filter(m => m.edgeScore > 0);
+      const preFilterCount = scoredMarkets.length;
+      const scoreDistribution = scoredMarkets.reduce((acc, m) => {
+        const bucket = m.edgeScore === 0 ? '0' : (m.edgeScore < 1 ? '0-1' : (m.edgeScore < 3 ? '1-3' : '3+'));
+        acc[bucket] = (acc[bucket] || 0) + 1;
+        return acc;
+      }, {});
+      console.debug(`📊 Edge score distribution (pre-filter): Total=${preFilterCount}`, scoreDistribution);
+      
+      let filtered = scoredMarkets.filter(m => {
+        // For event-weather analysis (/sports page), include sports markets even with 0 score
+        // They should still be ranked by volume and confidence
+        if (analysisType === 'event-weather') {
+          const eventType = String(m.eventType || '').toUpperCase();
+          const isSupported = ['NFL', 'SOCCER', 'NBA', 'MLB', 'HOCKEY', 'TENNIS', 'GOLF', 'CRICKET', 'F1'].some(sport => eventType.includes(sport));
+          return m.edgeScore > 0 || isSupported;
+        }
+        // For discovery, strict edge score requirement
+        return m.edgeScore > 0;
+      });
+      console.debug(`🔍 After edge score filter (> 0 or sports for /ai): ${filtered.length}/${preFilterCount} markets remain`);
 
       // FILTER 2: Optionally exclude futures bets where weather analysis is weak
-      const excludeFutures = filters.excludeFutures !== false;
+      // NOTE: For /sports page (event-weather analysis), we keep futures since weather is relevant for upcoming events
+      const excludeFutures = filters.excludeFutures !== false && analysisType !== 'event-weather';
+      const beforeFuturesCount = filtered.length;
       if (excludeFutures) {
         filtered = filtered.filter(m => !MarketTypeDetector.isFuturesBet(m));
+        console.debug(`  Futures filter: ${beforeFuturesCount} → ${filtered.length}`);
+      } else if (analysisType === 'event-weather') {
+        console.debug(`  Futures filter: SKIPPED for /sports page (keeping all sports events)`);
       }
 
       // FILTER 3: Confidence level tiers
+      const beforeConfidenceCount = filtered.length;
       if (filters.confidence && filters.confidence !== 'all') {
         const level = String(filters.confidence).toUpperCase();
         filtered = filtered.filter(m => {
@@ -740,17 +807,22 @@ class PolymarketService {
           if (level === 'LOW') return true;
           return true;
         });
+        console.debug(`  Confidence filter (${filters.confidence}): ${beforeConfidenceCount} → ${filtered.length}`);
       }
 
       // FILTER 4: Location if user provided (optional, for personalization)
+      const beforeLocationCount = filtered.length;
       if (filters.location) {
         filtered = filtered.filter(m => 
           m.location && m.location.toLowerCase() === filters.location.toLowerCase()
         );
+        console.debug(`  Location filter: ${beforeLocationCount} → ${filtered.length}`);
       }
 
       // FILTER 5: Max days to resolution (short horizon focus)
-      if (filters.maxDaysToResolution && Number.isFinite(filters.maxDaysToResolution)) {
+      // NOTE: For /sports page (event-weather), we skip this since sports events are always in the future
+      const beforeDaysCount = filtered.length;
+      if (filters.maxDaysToResolution && Number.isFinite(filters.maxDaysToResolution) && analysisType !== 'event-weather') {
         const maxDays = Number(filters.maxDaysToResolution);
         filtered = filtered.filter(m => {
           const res = m.resolutionDate;
@@ -760,6 +832,11 @@ class PolymarketService {
           const days = (d - new Date()) / (1000 * 60 * 60 * 24);
           return days <= maxDays;
         });
+        if (beforeDaysCount !== filtered.length) {
+          console.debug(`  MaxDays filter (${filters.maxDaysToResolution}d): ${beforeDaysCount} → ${filtered.length}`);
+        }
+      } else if (analysisType === 'event-weather') {
+        console.debug(`  MaxDays filter: SKIPPED for /sports page (sports are always future events)`);
       }
 
       // FILTER 5: Free-text search across title/description/tags

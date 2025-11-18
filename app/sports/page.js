@@ -149,14 +149,15 @@ export default function AIPage() {
   }, [searchText, includeFutures, maxDaysToResolution, minVolume]);
 
   // Auto-set default horizon based on event type
+  // CRITICAL: Weather forecast accuracy drops beyond 3 days - only include events within weather-reliable timeframe
   useEffect(() => {
     const type = marketFilters.eventType;
-    let defaultDays = 14;
-    if (type === 'Tennis' || type === 'Golf' || type === 'Weather') defaultDays = 7;
-    else if (type === 'Soccer') defaultDays = 10;
-    else if (type === 'F1') defaultDays = 14;
-    else if (type === 'NFL' || type === 'NBA' || type === 'MLB' || type === 'NHL') defaultDays = 14;
-    else if (type === 'Politics') defaultDays = 30;
+    let defaultDays = 3; // Default: short-horizon for weather edge relevance
+    // Extend slightly for slower-paced sports with multiple rounds/days
+    if (type === 'Cricket') defaultDays = 5; // Multi-day matches
+    else if (type === 'Tennis') defaultDays = 4; // Multi-day tournaments
+    else if (type === 'Golf') defaultDays = 4; // Multi-day tournaments
+    // Keep all others at 3 days - NFL/Soccer games are single events, no need to extend
     setMaxDaysToResolution(defaultDays);
   }, [marketFilters.eventType]);
 
