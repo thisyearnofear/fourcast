@@ -6,6 +6,7 @@ import { ConnectKitButton } from "connectkit";
 import AptosConnectButton from "@/app/components/AptosConnectButton";
 import { useAptosSignalPublisher } from "@/hooks/useAptosSignalPublisher";
 import { weatherService } from "@/services/weatherService";
+import { arbitrageService } from "@/services/arbitrageService";
 import PageNav from "@/app/components/PageNav";
 import Scene3D from "@/components/Scene3D";
 
@@ -51,8 +52,11 @@ export default function MarketsPage() {
     minVolume: "50000",
     confidence: "all",
     includeFutures: false,
+    platform: "all", // 'all', 'polymarket', 'kalshi'
   });
   const [discoveryDateRange, setDiscoveryDateRange] = useState("this-week");
+  const [showArbitrage, setShowArbitrage] = useState(false); // Arbitrage detection toggle
+
 
   // UI state
   const [error, setError] = useState(null);
@@ -134,34 +138,34 @@ export default function MarketsPage() {
 
       const requestBody = isSportsMode
         ? {
-            weatherData: null,
-            location: null,
-            eventType: sportsFilters.eventType,
-            confidence: sportsFilters.confidence,
-            limitCount: 50,
-            maxDaysToResolution: maxDaysToResolution,
-            minVolume: sportsMinVolume,
-            analysisType: "event-weather",
-            theme: sportsFilters.eventType === "Sports" ? "sports" : undefined,
-            dateRange: selectedDateRange,
-            excludeFutures: !sportsFilters.includeFutures,
-          }
+          weatherData: null,
+          location: null,
+          eventType: sportsFilters.eventType,
+          confidence: sportsFilters.confidence,
+          limitCount: 50,
+          maxDaysToResolution: maxDaysToResolution,
+          minVolume: sportsMinVolume,
+          analysisType: "event-weather",
+          theme: sportsFilters.eventType === "Sports" ? "sports" : undefined,
+          dateRange: selectedDateRange,
+          excludeFutures: !sportsFilters.includeFutures,
+        }
         : {
-            location: null,
-            eventType:
-              discoveryFilters.category === "all"
-                ? "all"
-                : discoveryFilters.category,
-            confidence: discoveryFilters.confidence,
-            limitCount: 50,
-            maxDaysToResolution: maxDaysToResolution,
-            theme: "all",
-            minVolume: parseInt(discoveryFilters.minVolume),
-            analysisType: "discovery",
-            weatherData: null,
-            dateRange: discoveryDateRange,
-            excludeFutures: !discoveryFilters.includeFutures,
-          };
+          location: null,
+          eventType:
+            discoveryFilters.category === "all"
+              ? "all"
+              : discoveryFilters.category,
+          confidence: discoveryFilters.confidence,
+          limitCount: 50,
+          maxDaysToResolution: maxDaysToResolution,
+          theme: "all",
+          minVolume: parseInt(discoveryFilters.minVolume),
+          analysisType: "discovery",
+          weatherData: null,
+          dateRange: discoveryDateRange,
+          excludeFutures: !discoveryFilters.includeFutures,
+        };
 
       console.log("[Markets Page] Fetching markets with request:", requestBody);
 
@@ -318,8 +322,7 @@ export default function MarketsPage() {
           );
         } else {
           alert(
-            `Signal saved locally (ID: ${result.id})\nAptos publish failed: ${
-              publishError || "Unknown error"
+            `Signal saved locally (ID: ${result.id})\nAptos publish failed: ${publishError || "Unknown error"
             }`
           );
         }
@@ -392,11 +395,10 @@ export default function MarketsPage() {
                 <select
                   value={analysisMode}
                   onChange={(e) => setAnalysisMode(e.target.value)}
-                  className={`px-3 py-1.5 text-xs rounded-lg border ${
-                    isNight
-                      ? "bg-white/10 border-white/20 text-white"
-                      : "bg-black/10 border-black/20 text-black"
-                  }`}
+                  className={`px-3 py-1.5 text-xs rounded-lg border ${isNight
+                    ? "bg-white/10 border-white/20 text-white"
+                    : "bg-black/10 border-black/20 text-black"
+                    }`}
                 >
                   <option value="basic">Basic (Free)</option>
                   <option value="deep">Deep (Research)</option>
@@ -430,25 +432,23 @@ export default function MarketsPage() {
             >
               <button
                 onClick={() => setActiveTab("sports")}
-                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${
-                  activeTab === "sports"
-                    ? isNight
-                      ? "bg-blue-500/30 text-white border border-blue-400/40"
-                      : "bg-blue-400/30 text-black border border-blue-500/40"
-                    : `${textColor} opacity-60 hover:opacity-100`
-                }`}
+                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === "sports"
+                  ? isNight
+                    ? "bg-blue-500/30 text-white border border-blue-400/40"
+                    : "bg-blue-400/30 text-black border border-blue-500/40"
+                  : `${textColor} opacity-60 hover:opacity-100`
+                  }`}
               >
                 ⚽ Sports (Event Weather)
               </button>
               <button
                 onClick={() => setActiveTab("discovery")}
-                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${
-                  activeTab === "discovery"
-                    ? isNight
-                      ? "bg-purple-500/30 text-white border border-purple-400/40"
-                      : "bg-purple-400/30 text-black border border-purple-500/40"
-                    : `${textColor} opacity-60 hover:opacity-100`
-                }`}
+                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === "discovery"
+                  ? isNight
+                    ? "bg-purple-500/30 text-white border border-purple-400/40"
+                    : "bg-purple-400/30 text-black border border-purple-500/40"
+                  : `${textColor} opacity-60 hover:opacity-100`
+                  }`}
               >
                 🔍 All Markets (Discovery)
               </button>
@@ -561,11 +561,10 @@ function SportsTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, eventType: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="Soccer">⚽ Soccer</option>
             <option value="NFL">🏈 NFL</option>
@@ -584,15 +583,14 @@ function SportsTabContent({
               <button
                 key={key}
                 onClick={() => setDateRange(key)}
-                className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${
-                  dateRange === key
-                    ? isNight
-                      ? "bg-blue-500/30 text-white border-blue-400/40"
-                      : "bg-blue-400/30 text-black border-blue-500/40"
-                    : isNight
+                className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${dateRange === key
+                  ? isNight
+                    ? "bg-blue-500/30 text-white border-blue-400/40"
+                    : "bg-blue-400/30 text-black border-blue-500/40"
+                  : isNight
                     ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
                     : "bg-black/10 hover:bg-black/20 text-black/70 border-black/20"
-                }`}
+                  }`}
               >
                 {label}
               </button>
@@ -608,11 +606,10 @@ function SportsTabContent({
           <select
             value={String(minVolume)}
             onChange={(e) => setMinVolume(parseInt(e.target.value))}
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="10000">$10k+</option>
             <option value="50000">$50k+</option>
@@ -629,11 +626,10 @@ function SportsTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, confidence: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="all">All</option>
             <option value="HIGH">High</option>
@@ -653,20 +649,18 @@ function SportsTabContent({
                 includeFutures: !prev.includeFutures,
               }))
             }
-            className={`inline-flex items-center w-12 h-6 rounded-full border transition-all ${
-              filters.includeFutures
-                ? isNight
-                  ? "bg-green-500/40 border-green-400/40"
-                  : "bg-green-400/30 border-green-500/40"
-                : isNight
+            className={`inline-flex items-center w-12 h-6 rounded-full border transition-all ${filters.includeFutures
+              ? isNight
+                ? "bg-green-500/40 border-green-400/40"
+                : "bg-green-400/30 border-green-500/40"
+              : isNight
                 ? "bg-white/10 border-white/20"
                 : "bg-black/10 border-black/20"
-            }`}
+              }`}
           >
             <span
-              className={`inline-block w-5 h-5 rounded-full bg-white/80 transform transition-transform ${
-                filters.includeFutures ? "translate-x-6" : "translate-x-1"
-              }`}
+              className={`inline-block w-5 h-5 rounded-full bg-white/80 transform transition-transform ${filters.includeFutures ? "translate-x-6" : "translate-x-1"
+                }`}
             />
           </button>
         </div>
@@ -686,11 +680,10 @@ function SportsTabContent({
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div
-            className={`w-6 h-6 border-2 ${
-              isNight
-                ? "border-white/30 border-t-white"
-                : "border-black/30 border-t-black"
-            } rounded-full animate-spin`}
+            className={`w-6 h-6 border-2 ${isNight
+              ? "border-white/30 border-t-white"
+              : "border-black/30 border-t-black"
+              } rounded-full animate-spin`}
           ></div>
           <span className={`ml-3 ${textColor} opacity-70`}>
             Loading markets...
@@ -714,21 +707,19 @@ function SportsTabContent({
                   includeFutures: true,
                 }));
               }}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${
-                isNight
-                  ? "bg-white/20 hover:bg-white/30 text-white"
-                  : "bg-black/20 hover:bg-black/30 text-black"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
+                ? "bg-white/20 hover:bg-white/30 text-white"
+                : "bg-black/20 hover:bg-black/30 text-black"
+                }`}
             >
               Broaden Filters
             </button>
             <button
               onClick={fetchMarkets}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${
-                isNight
-                  ? "bg-white/20 hover:bg-white/30 text-white"
-                  : "bg-black/20 hover:bg-black/30 text-black"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
+                ? "bg-white/20 hover:bg-white/30 text-white"
+                : "bg-black/20 hover:bg-black/30 text-black"
+                }`}
             >
               Try Again
             </button>
@@ -808,16 +799,39 @@ function DiscoveryTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, category: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="all">All Categories</option>
             <option value="Sports">⚽ Sports</option>
             <option value="Politics">🏛️ Politics</option>
+            <option value="Economics">📊 Economics</option>
+            <option value="Weather">🌤️ Weather</option>
+            <option value="Entertainment">🎬 Entertainment</option>
             <option value="Crypto">₿ Crypto</option>
+          </select>
+        </div>
+
+        {/* Platform */}
+        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+          <label className={`${textColor} text-xs opacity-60 min-w-max`}>
+            Platform
+          </label>
+          <select
+            value={filters.platform}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, platform: e.target.value }))
+            }
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
+          >
+            <option value="all">All Platforms</option>
+            <option value="polymarket">Polymarket</option>
+            <option value="kalshi">Kalshi</option>
           </select>
         </div>
 
@@ -831,15 +845,14 @@ function DiscoveryTabContent({
               <button
                 key={key}
                 onClick={() => setDateRange(key)}
-                className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${
-                  dateRange === key
-                    ? isNight
-                      ? "bg-blue-500/30 text-white border-blue-400/40"
-                      : "bg-blue-400/30 text-black border-blue-500/40"
-                    : isNight
+                className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${dateRange === key
+                  ? isNight
+                    ? "bg-blue-500/30 text-white border-blue-400/40"
+                    : "bg-blue-400/30 text-black border-blue-500/40"
+                  : isNight
                     ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
                     : "bg-black/10 hover:bg-black/20 text-black/70 border-black/20"
-                }`}
+                  }`}
               >
                 {label}
               </button>
@@ -857,11 +870,10 @@ function DiscoveryTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, minVolume: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="10000">$10k+</option>
             <option value="50000">$50k+</option>
@@ -878,11 +890,10 @@ function DiscoveryTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, confidence: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="all">All</option>
             <option value="HIGH">High</option>
@@ -902,34 +913,106 @@ function DiscoveryTabContent({
                 includeFutures: !prev.includeFutures,
               }))
             }
-            className={`inline-flex items-center w-12 h-6 rounded-full border transition-all ${
-              filters.includeFutures
-                ? isNight
-                  ? "bg-green-500/40 border-green-400/40"
-                  : "bg-green-400/30 border-green-500/40"
-                : isNight
+            className={`inline-flex items-center w-12 h-6 rounded-full border transition-all ${filters.includeFutures
+              ? isNight
+                ? "bg-green-500/40 border-green-400/40"
+                : "bg-green-400/30 border-green-500/40"
+              : isNight
                 ? "bg-white/10 border-white/20"
                 : "bg-black/10 border-black/20"
-            }`}
+              }`}
           >
             <span
-              className={`inline-block w-5 h-5 rounded-full bg-white/80 transform transition-transform ${
-                filters.includeFutures ? "translate-x-6" : "translate-x-1"
-              }`}
+              className={`inline-block w-5 h-5 rounded-full bg-white/80 transform transition-transform ${filters.includeFutures ? "translate-x-6" : "translate-x-1"
+                }`}
             />
           </button>
         </div>
       </div>
 
+      {/* Arbitrage Opportunities Banner */}
+      {!isLoading && markets && markets.length > 0 && (() => {
+        const opportunities = arbitrageService.detectOpportunities(markets);
+
+        if (opportunities.count > 0) {
+          return (
+            <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-4`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⚡</span>
+                  <div>
+                    <h3 className={`text-sm font-medium ${textColor}`}>
+                      {opportunities.count} Arbitrage Opportunit{opportunities.count === 1 ? 'y' : 'ies'} Detected
+                    </h3>
+                    <p className={`text-xs ${textColor} opacity-60`}>
+                      Price discrepancies between Polymarket and Kalshi
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowArbitrage(!showArbitrage)}
+                  className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${showArbitrage
+                      ? isNight
+                        ? "bg-blue-500/30 text-white border-blue-400/40"
+                        : "bg-blue-400/30 text-black border-blue-500/40"
+                      : isNight
+                        ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
+                        : "bg-black/10 hover:bg-black/20 text-black/70 border-black/20"
+                    }`}
+                >
+                  {showArbitrage ? 'Hide' : 'Show'} Details
+                </button>
+              </div>
+
+              {showArbitrage && (
+                <div className="space-y-2 mt-3 pt-3 border-t border-white/10">
+                  {opportunities.opportunities.slice(0, 5).map((opp, idx) => (
+                    <div key={idx} className={`p-3 rounded-lg border ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'
+                      }`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <p className={`text-xs ${textColor} font-medium mb-1`}>
+                            {opp.polymarket.title.substring(0, 60)}...
+                          </p>
+                          <div className="flex gap-2 text-xs">
+                            <span className={`px-2 py-0.5 rounded ${isNight ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-100 text-blue-700'
+                              }`}>
+                              Polymarket: {opp.arbitrage.market1Odds}%
+                            </span>
+                            <span className={`px-2 py-0.5 rounded ${isNight ? 'bg-emerald-900/40 text-emerald-300' : 'bg-emerald-100 text-emerald-700'
+                              }`}>
+                              Kalshi: {opp.arbitrage.market2Odds}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-lg font-bold ${isNight ? 'text-yellow-300' : 'text-yellow-600'
+                            }`}>
+                            {opp.arbitrage.priceDiff}%
+                          </div>
+                          <div className={`text-xs ${textColor} opacity-60`}>
+                            spread
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       {/* Markets List */}
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div
-            className={`w-6 h-6 border-2 ${
-              isNight
-                ? "border-white/30 border-t-white"
-                : "border-black/30 border-t-black"
-            } rounded-full animate-spin`}
+            className={`w-6 h-6 border-2 ${isNight
+              ? "border-white/30 border-t-white"
+              : "border-black/30 border-t-black"
+              } rounded-full animate-spin`}
           ></div>
           <span className={`ml-3 ${textColor} opacity-70`}>
             Loading markets...
@@ -954,21 +1037,19 @@ function DiscoveryTabContent({
                   includeFutures: true,
                 }));
               }}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${
-                isNight
-                  ? "bg-white/20 hover:bg-white/30 text-white"
-                  : "bg-black/20 hover:bg-black/30 text-black"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
+                ? "bg-white/20 hover:bg-white/30 text-white"
+                : "bg-black/20 hover:bg-black/30 text-black"
+                }`}
             >
               Broaden Filters
             </button>
             <button
               onClick={fetchMarkets}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${
-                isNight
-                  ? "bg-white/20 hover:bg-white/30 text-white"
-                  : "bg-black/20 hover:bg-black/30 text-black"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
+                ? "bg-white/20 hover:bg-white/30 text-white"
+                : "bg-black/20 hover:bg-black/30 text-black"
+                }`}
             >
               Try Again
             </button>
@@ -976,30 +1057,43 @@ function DiscoveryTabContent({
         </div>
       )}
 
-      {!isLoading && !error && markets && markets.length > 0 && (
-        <div className="space-y-4">
-          {markets.map((market, index) => (
-            <MarketCard
-              key={market.marketID || market.id || index}
-              market={market}
-              onAnalyze={onAnalyze}
-              isNight={isNight}
-              textColor={textColor}
-              cardBgColor={cardBgColor}
-              isExpanded={
-                expandedMarketId ===
-                (market.marketID || market.id || market.tokenID)
-              }
-              expandedMarketId={expandedMarketId}
-              setExpandedMarketId={setExpandedMarketId}
-              analysis={analysis}
-              isAnalyzing={isAnalyzing}
-              selectedMarket={selectedMarket}
-              onPublishSignal={onPublishSignal}
-            />
-          ))}
-        </div>
-      )}
+      {!isLoading && !error && markets && markets.length > 0 && (() => {
+        // Apply client-side platform filter
+        const filteredMarkets = filters.platform === 'all'
+          ? markets
+          : markets.filter(m => (m.platform || 'polymarket') === filters.platform);
+
+        return filteredMarkets.length > 0 ? (
+          <div className="space-y-4">
+            {filteredMarkets.map((market, index) => (
+              <MarketCard
+                key={market.marketID || market.id || index}
+                market={market}
+                onAnalyze={onAnalyze}
+                isNight={isNight}
+                textColor={textColor}
+                cardBgColor={cardBgColor}
+                isExpanded={
+                  expandedMarketId ===
+                  (market.marketID || market.id || market.tokenID)
+                }
+                expandedMarketId={expandedMarketId}
+                setExpandedMarketId={setExpandedMarketId}
+                analysis={analysis}
+                isAnalyzing={isAnalyzing}
+                selectedMarket={selectedMarket}
+                onPublishSignal={onPublishSignal}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 text-center`}>
+            <p className={`${textColor} opacity-90`}>
+              No {filters.platform === 'kalshi' ? 'Kalshi' : 'Polymarket'} markets found. Try selecting "All Platforms" or adjusting other filters.
+            </p>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -1024,51 +1118,59 @@ function MarketCard({
     (selectedMarket?.marketID || selectedMarket?.id) ===
     (market.marketID || market.id);
 
+  const platform = market.platform || 'polymarket';
+  const isKalshi = platform === 'kalshi';
+
   return (
     <div
-      className={`backdrop-blur-xl border rounded-3xl transition-all duration-500 ${
-        isExpanded ? "fixed inset-4 p-8 z-40 overflow-y-auto" : "p-5 sm:p-6"
-      } ${
-        isHidden
+      className={`backdrop-blur-xl border rounded-3xl transition-all duration-500 ${isExpanded ? "fixed inset-4 p-8 z-40 overflow-y-auto" : "p-5 sm:p-6"
+        } ${isHidden
           ? "opacity-0 pointer-events-none scale-95"
           : `opacity-100 hover:scale-[1.01] ${cardBgColor}`
-      }`}
+        }`}
     >
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex-1 space-y-3">
-          <h3
-            className={`text-lg font-light ${textColor} leading-relaxed tracking-wide`}
-          >
-            {market.title || market.question}
-          </h3>
+          <div className="flex items-start justify-between">
+            <h3
+              className={`text-lg font-light ${textColor} leading-relaxed tracking-wide mr-4`}
+            >
+              {market.title || market.question}
+            </h3>
+            {/* Platform Badge */}
+            <span className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider border ${isKalshi
+              ? (isNight ? 'bg-emerald-900/40 text-emerald-300 border-emerald-700/50' : 'bg-emerald-100 text-emerald-700 border-emerald-200')
+              : (isNight ? 'bg-blue-900/40 text-blue-300 border-blue-700/50' : 'bg-blue-100 text-blue-700 border-blue-200')
+              }`}>
+              {isKalshi ? 'Kalshi' : 'Polymarket'}
+            </span>
+          </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            {market.volume24h && (
+            {market.volume24h !== undefined && (
               <span
-                className={`px-3 py-1 rounded-full font-light border ${
-                  isNight
-                    ? "bg-orange-500/10 text-orange-200 border-orange-500/20"
-                    : "bg-orange-400/10 text-orange-800 border-orange-400/20"
-                }`}
+                className={`px-3 py-1 rounded-full font-light border ${isNight
+                  ? "bg-orange-500/10 text-orange-200 border-orange-500/20"
+                  : "bg-orange-400/10 text-orange-800 border-orange-400/20"
+                  }`}
               >
-                ⚡ ${(market.volume24h / 1000).toFixed(0)}K
+                ⚡ {isKalshi ? `${market.volume24h} Vol` : `$${(market.volume24h / 1000).toFixed(0)}K`}
               </span>
             )}
             {market.confidence && (
               <span
-                className={`px-3 py-1 rounded-full font-light border ${
-                  market.confidence === "HIGH"
-                    ? isNight
-                      ? "bg-green-500/20 text-green-300 border-green-500/30"
-                      : "bg-green-400/20 text-green-800 border-green-400/30"
-                    : market.confidence === "MEDIUM"
+                className={`px-3 py-1 rounded-full font-light border ${market.confidence === "HIGH"
+                  ? isNight
+                    ? "bg-green-500/20 text-green-300 border-green-500/30"
+                    : "bg-green-400/20 text-green-800 border-green-400/30"
+                  : market.confidence === "MEDIUM"
                     ? isNight
                       ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
                       : "bg-yellow-400/20 text-yellow-800 border-yellow-400/30"
                     : isNight
-                    ? "bg-red-500/20 text-red-300 border-red-500/30"
-                    : "bg-red-400/20 text-red-800 border-red-400/30"
-                }`}
+                      ? "bg-red-500/20 text-red-300 border-red-500/30"
+                      : "bg-red-400/20 text-red-800 border-red-400/30"
+                  }`}
               >
                 {market.confidence}
               </span>
@@ -1080,11 +1182,10 @@ function MarketCard({
           {isExpanded ? (
             <button
               onClick={() => setExpandedMarketId(null)}
-              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all border ${
-                isNight
-                  ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
-                  : "bg-black/10 hover:bg-black/20 text-black border-black/20"
-              }`}
+              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all border ${isNight
+                ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
+                : "bg-black/10 hover:bg-black/20 text-black border-black/20"
+                }`}
             >
               ← Back
             </button>
@@ -1092,11 +1193,10 @@ function MarketCard({
             <button
               onClick={() => onAnalyze(market, "basic")}
               disabled={isAnalyzing}
-              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${
-                isNight
-                  ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-200 border-blue-400/30"
-                  : "bg-gradient-to-r from-blue-400/20 to-purple-400/20 hover:from-blue-400/30 hover:to-purple-400/30 text-blue-800 border-blue-500/30"
-              }`}
+              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${isNight
+                ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-200 border-blue-400/30"
+                : "bg-gradient-to-r from-blue-400/20 to-purple-400/20 hover:from-blue-400/30 hover:to-purple-400/30 text-blue-800 border-blue-500/30"
+                }`}
             >
               {isAnalyzing && isCurrentMarket ? "Analyzing..." : "Analyze"}
             </button>
@@ -1136,16 +1236,33 @@ function MarketCard({
               </div>
             )}
 
-            <button
-              onClick={onPublishSignal}
-              className={`w-full px-6 py-3 rounded-2xl font-light text-sm transition-all border ${
-                isNight
+            {/* Action Buttons: Trade + Publish */}
+            <div className="flex gap-3">
+              <a
+                href={isKalshi
+                  ? market.kalshiUrl || `https://kalshi.com/markets/${market.marketID.toLowerCase()}`
+                  : `https://polymarket.com/event/${market.marketID}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border text-center ${isNight
+                  ? "bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30"
+                  : "bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border-blue-500/30"
+                  }`}
+              >
+                📈 Trade on {isKalshi ? 'Kalshi' : 'Polymarket'} →
+              </a>
+
+              <button
+                onClick={onPublishSignal}
+                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border ${isNight
                   ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
                   : "bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30"
-              }`}
-            >
-              📡 Publish Signal
-            </button>
+                  }`}
+              >
+                📡 Publish Signal
+              </button>
+            </div>
           </div>
         </div>
       )}
