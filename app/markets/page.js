@@ -14,9 +14,11 @@ export default function MarketsPage() {
   const { address, isConnected } = useAccount();
   const {
     publishToAptos,
+    getMySignalCount,
     isPublishing,
     publishError,
     connected: aptosConnected,
+    walletAddress,
   } = useAptosSignalPublisher();
 
   // Tab state: 'sports' or 'discovery'
@@ -65,6 +67,7 @@ export default function MarketsPage() {
     const hour = new Date().getHours();
     return hour >= 19 || hour <= 6;
   });
+  const [mySignalCount, setMySignalCount] = useState(null);
 
   // Load weather on mount
   useEffect(() => {
@@ -84,6 +87,14 @@ export default function MarketsPage() {
     discoveryFilters,
     discoveryDateRange,
   ]);
+
+  useEffect(() => {
+    if (aptosConnected) {
+      getMySignalCount().then(setMySignalCount).catch(() => {});
+    } else {
+      setMySignalCount(null);
+    }
+  }, [aptosConnected, getMySignalCount]);
 
   const loadWeather = async () => {
     setIsLoadingWeather(true);
@@ -316,6 +327,10 @@ export default function MarketsPage() {
               tx_hash: txHash,
             }),
           });
+          try {
+            const c = await getMySignalCount();
+            setMySignalCount(c);
+          } catch {}
 
           alert(
             `Signal published!\nSQLite ID: ${result.id}\nAptos TX: ${txHash}`
@@ -421,6 +436,16 @@ export default function MarketsPage() {
                     Signals
                   </span>
                 </div>
+                {aptosConnected && (
+                  <span
+                    className={`px-2 py-1 rounded-lg text-[10px] border ${isNight
+                      ? "bg-white/10 border-white/20 text-white/80"
+                      : "bg-black/10 border-black/20 text-black/70"
+                      }`}
+                  >
+                    My signals: {mySignalCount ?? "—"}
+                  </span>
+                )}
               </div>
             </div>
           </div>

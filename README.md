@@ -11,25 +11,30 @@ Weather impacts billions in outcomes (sports performance, voter turnout, event l
 Our platform leverages a sophisticated three-chain architecture, each optimized for specific functions:
 
 ### **Polygon (Polymarket) = Trading & Liquidity**
+
 - Live prediction market orders and settlements
 - Established institutional-grade liquidity infrastructure
 - Professional trading tools, order books, and market depth
 - Real-time odds data and market movements
 
 ### **BNB Chain = Analytics & Performance Tracking**
+
 - Low-cost prediction receipts (<$0.10 per transaction)
 - Fast finality (3-second blocks) for instant confirmation
 - Immutable performance tracking and analytics storage
 - Cross-chain prediction history and validation
 
 ### **Aptos = Reputation & Signal Registry**
+
 - On-chain signal publishing and reputation tracking
 - Cryptographic proof of AI analysis and predictions
 - Decentralized analyst scoring and leaderboards
 - Move-based smart contracts for signal integrity
 
 ### **Why This Design?**
+
 Rather than building on a single chain, we optimize for each use case:
+
 - **Trade where liquidity exists** (Polygon/Polymarket)
 - **Track performance affordably** (BNB Chain)
 - **Build reputation transparently** (Aptos)
@@ -69,6 +74,7 @@ Built as a new module within the existing Fourcast app:
 Event Detection → Weather Fetch → AI Analysis → Edge Scoring → User Dashboard
 
 ### APIs Used
+
 - WeatherAPI (already integrated)
 - Polymarket API (already integrated)
 - Venice AI API (new)
@@ -79,12 +85,14 @@ Event Detection → Weather Fetch → AI Analysis → Edge Scoring → User Dash
 Using Venice AI (qwen3-235b model for deep reasoning):
 
 Analyze this event for weather-related edge:
+
 - Event: [NFL game, marathon, etc.]
 - Participants: [teams/athletes with home climates]
 - Weather: [forecast details]
 - Current Odds: [Polymarket probability]
 
 Assess:
+
 1. Does weather significantly favor one outcome?
 2. Are odds efficiently priced or is there asymmetry?
 3. Confidence: LOW/MEDIUM/HIGH
@@ -116,29 +124,34 @@ Provide 2-3 paragraph analysis with specific reasoning.
 ## 🛠️ Tech Stack
 
 ### **Multichain Infrastructure**
+
 - **Polygon**: Polymarket integration, trading execution
 - **BNB Chain**: Analytics contracts, performance tracking
 - **Aptos**: Signal registry, reputation system (Move smart contracts)
 
 ### **Smart Contracts & Web3**
+
 - **Solidity 0.8.20**: BNB Chain analytics contracts with OpenZeppelin
 - **Move**: Aptos signal registry and reputation tracking
 - **Web3 Integration**: Wagmi, ConnectKit, Aptos Wallet Standard
 - **Wallets**: MetaMask (trading), Petra (signals), multi-wallet UX
 
 ### **Frontend & UX**
+
 - **Framework**: Next.js 15, React 19, React Three Fiber
 - **Styling**: Tailwind CSS, responsive design
 - **3D Graphics**: Three.js, React Three Drei, postprocessing effects
 - **State Management**: React hooks, Web3 context providers
 
 ### **AI & Data**
+
 - **AI Engine**: Venice AI (qwen3-235b for deep reasoning)
 - **Market Data**: Polymarket Gamma API, real-time odds
 - **Weather Data**: WeatherAPI integration, forecast analysis
 - **Backend**: Next.js API Routes, Redis caching, SQLite analytics
 
 ### **Infrastructure & Deployment**
+
 - **Hosting**: Vercel (frontend), multichain contract deployment
 - **Database**: SQLite for local analytics, on-chain for immutable records
 - **APIs**: RESTful endpoints, streaming AI analysis, WebSocket connections
@@ -146,6 +159,7 @@ Provide 2-3 paragraph analysis with specific reasoning.
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18.18+ or 20+
 - npm or yarn
 - MetaMask wallet (for trading on Polygon)
@@ -182,7 +196,7 @@ NEXT_PUBLIC_APTOS_NETWORK=devnet
 
 # Contract Addresses (update after deployment)
 NEXT_PUBLIC_BNB_ANALYTICS_CONTRACT=0x...
-NEXT_PUBLIC_APTOS_SIGNAL_REGISTRY_MODULE=0x...::signal_registry
+NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0x...
 ```
 
 ### Development
@@ -201,6 +215,7 @@ npm start
 ## 🌐 Multichain Web3 Integration
 
 ### Trading Layer (Polygon/Polymarket)
+
 ```bash
 npm install @polymarket/clob-client ethers
 ```
@@ -219,7 +234,7 @@ const client = new ClobClient(
 // Execute prediction market order
 const order = await client.createAndPostOrder({
   tokenID: weatherMarketTokenId,
-  price: 0.50, // AI-analyzed probability
+  price: 0.5, // AI-analyzed probability
   side: Side.BUY,
   size: 1,
   feeRateBps: 0,
@@ -227,6 +242,7 @@ const order = await client.createAndPostOrder({
 ```
 
 ### Analytics Layer (BNB Chain)
+
 ```solidity
 // Prediction receipt contract
 contract WeatherAnalytics {
@@ -237,7 +253,7 @@ contract WeatherAnalytics {
         uint256 confidence;
         address analyst;
     }
-    
+
     function recordPrediction(
         string memory marketId,
         string memory weatherData,
@@ -247,6 +263,7 @@ contract WeatherAnalytics {
 ```
 
 ### Reputation Layer (Aptos)
+
 ```typescript
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
@@ -275,24 +292,28 @@ const transaction = await aptos.signAndSubmitTransaction({
 ## 🚀 Key Features & Capabilities
 
 ### **Real-Time Intelligence**
+
 - Automated event detection and weather correlation
 - AI-powered market inefficiency identification
 - Live odds monitoring and forecast updates
 - Cross-chain data aggregation and analysis
 
 ### **Multichain Operations**
+
 - Seamless trading on Polygon via Polymarket integration
 - Cost-efficient analytics tracking on BNB Chain
 - Transparent reputation building on Aptos blockchain
 - Unified dashboard across all chains
 
 ### **Professional Tools**
+
 - Dual-wallet UX (MetaMask + Petra) for different functions
 - Real-time market analysis with confidence scoring
 - Historical performance tracking and validation
 - Comprehensive API for algorithmic integration
 
 ### **Advanced Analytics**
+
 - Weather impact modeling for various event types
 - Market efficiency scoring and edge detection
 - Analyst reputation and leaderboard systems
