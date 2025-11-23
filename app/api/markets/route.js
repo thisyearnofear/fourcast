@@ -38,11 +38,42 @@ export async function POST(request) {
 
     // 1. Fetch Polymarket Data
     let polymarketResults = { markets: [], totalFound: 0 };
-    try {
-      console.log('[Markets API] Calling polymarketService...');
-      polymarketResults = await polymarketService.getTopWeatherSensitiveMarkets(limit, filters);
-    } catch (serviceErr) {
-      console.error('[Markets API] Polymarket service error:', serviceErr.message);
+    const weatherSensitiveCategories = ['Sports', 'Soccer', 'NFL', 'NBA', 'Weather', 'all'];
+    const shouldFetchPolymarket = analysisType === 'event-weather' || weatherSensitiveCategories.includes(eventType);
+
+    if (shouldFetchPolymarket) {
+      try {
+        console.log('[Markets API] Fetching Polymarket markets for:', eventType);
+
+        // For weather-sensitive categories, use the full weather scoring pipeline
+        if (analysisType === 'event-weather' || eventType === 'Weather') {
+          polymarketResults = await polymarketService.getTopWeatherSensitiveMarkets(limit, filters);
+        } else {
+          // For general discovery (Sports, Politics, etc.), use catalog directly without weather scoring
+          const catalogResult = await polymarketService.buildMarketCatalog(
+            filters.minVolume || 50000,
+            eventType,
+            'discovery'
+          );
+
+          if (catalogResult.markets && catalogResult.markets.length > 0) {
+            // Sort by volume and take top results
+            const sortedMarkets = catalogResult.markets
+              .sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))
+              .slice(0, limit * 2); // Get more to allow for filtering
+
+            polymarketResults = {
+              markets: sortedMarkets,
+              totalFound: catalogResult.markets.length,
+              cached: catalogResult.cached || false
+            };
+          }
+        }
+      } catch (serviceErr) {
+        console.error('[Markets API] Polymarket service error:', serviceErr.message);
+      }
+    } else {
+      console.log(`[Markets API] Skipping Polymarket for category: ${eventType} (Kalshi-only)`);
     }
 
     // 2. Fetch Kalshi Data (Category-aware)
