@@ -7,12 +7,14 @@ Successfully integrated **Kalshi** weather markets alongside **Polymarket** to c
 ### Core Components
 
 1. **`services/kalshiService.js`**
+
    - Fetches weather markets from Kalshi's public API
    - Supports 4 weather series: NYC, Chicago, Miami, Austin
    - Normalizes Kalshi data to match our internal `Market` model
    - Handles platform-specific data (prices in cents, volume in contracts)
 
 2. **`app/api/markets/route.js`** (Enhanced)
+
    - Aggregates data from both Polymarket and Kalshi
    - Merges results and sorts by volume
    - Applies filters to both platforms
@@ -27,15 +29,18 @@ Successfully integrated **Kalshi** weather markets alongside **Polymarket** to c
 ## 🎨 UX Design Decisions
 
 ### Visual Differentiation
+
 - **Polymarket**: Blue badge (`bg-blue-900/40`)
 - **Kalshi**: Green/Emerald badge (`bg-emerald-900/40`)
 - Badges are compact, uppercase, positioned next to market title
 
 ### Volume Formatting
+
 - **Polymarket**: `$123K` (dollar volume)
 - **Kalshi**: `456 Vol` (contract volume, since max $1/contract)
 
 ### Platform Filter
+
 - Added to **Discovery tab only** (not Sports, since Kalshi doesn't have sports)
 - Positioned after "Category" filter for logical flow
 - Client-side filtering for instant response
@@ -43,6 +48,7 @@ Successfully integrated **Kalshi** weather markets alongside **Polymarket** to c
 ## 🔧 Technical Details
 
 ### Data Flow
+
 ```
 User Request → /api/markets
   ↓
@@ -55,6 +61,7 @@ Frontend applies platform filter → Display
 ```
 
 ### Kalshi API Integration
+
 - **Base URL**: `https://api.elections.kalshi.com/trade-api/v2`
 - **Authentication**: None required (public endpoints)
 - **Series Tracked**:
@@ -64,6 +71,7 @@ Frontend applies platform filter → Display
   - `KXHIGHAUS` - Austin High Temp
 
 ### Data Normalization
+
 ```javascript
 {
   marketID: ticker,           // e.g., "KXHIGHNY-25NOV23-T54"
@@ -83,6 +91,7 @@ Frontend applies platform filter → Display
 ## 🧪 Testing
 
 ### Manual Test
+
 1. Start dev server: `npm run dev`
 2. Navigate to `/markets`
 3. Click **"All Markets (Discovery)"** tab
@@ -95,15 +104,17 @@ Frontend applies platform filter → Display
    - Clicking "Analyze" works
 
 ### API Test
+
 Run: `node scripts/test-kalshi.js`
+
 - Verifies Kalshi API connectivity
 - Checks data structure
 - Confirms all 4 series are accessible
 
-
 ## 🎯 Current Coverage (Phase 2 - Expanded)
 
 ### Kalshi Categories Available
+
 - **Climate and Weather**: 24 markets (NYC, Chicago, Miami, Austin temps)
 - **Politics**: 40+ markets (Elections, Trump policies, Supreme Court)
 - **Economics**: 15+ markets (GDP, unemployment, trade deficit)
@@ -112,6 +123,7 @@ Run: `node scripts/test-kalshi.js`
 - **Sports**: 10+ markets (NBA/NHL expansion, team ownership)
 
 ### Total Markets Accessible
+
 - **Polymarket**: ~500+ (sports, politics, crypto)
 - **Kalshi**: ~140+ (across all categories)
 - **Combined**: 600+ markets in unified interface
@@ -119,17 +131,20 @@ Run: `node scripts/test-kalshi.js`
 ## 🚀 Phase 2 Enhancements
 
 ### Multi-Category Support
+
 - Enhanced `kalshiService.js` to fetch markets by category
 - API automatically maps user's category selection to Kalshi categories
 - Supports: Politics, Economics, Entertainment, Science, Sports, Weather
 
 ### Trading Deep Links
+
 - Every market now includes direct link to trading platform
 - **Polymarket**: `https://polymarket.com/event/{marketID}`
 - **Kalshi**: `https://kalshi.com/markets/{ticker}`
 - Side-by-side "Trade" and "Publish Signal" buttons in analysis view
 
 ### Enhanced Discovery
+
 - Added Economics, Entertainment, Weather to category dropdown
 - Category-aware fetching (fetches up to 30 markets per category)
 - Client-side platform filtering (All/Polymarket/Kalshi)
@@ -137,12 +152,15 @@ Run: `node scripts/test-kalshi.js`
 ## 🔧 Advanced Features (Phase 3)
 
 ### Cross-Platform Arbitrage Detection
+
 Coming soon: Automatically detect price discrepancies between platforms for similar markets.
 
 ### Unified Analytics Dashboard
+
 Coming soon: Platform comparison stats, liquidity analysis, spread tracking.
 
 ### Smart Routing
+
 Coming soon: Suggest optimal platform based on odds, liquidity, and fees.
 
 ## 📝 Files Modified
@@ -170,6 +188,6 @@ README.md                          [UPDATED]
 
 ---
 
-**Status**: ✅ **Phase 2 Complete - Multi-Platform Terminal Ready**
+**Status**: ✅ Implemented — Discovery aggregation live in `/api/markets` and Markets UI
 
-The Kalshi integration now supports 140+ markets across 6+ categories with seamless trading links and unified discovery. Users can explore weather, politics, economics, entertainment, and more from a single interface.
+Kalshi markets are normalized and merged with Polymarket in the unified feed, with platform badges, filters, and deep links. Next: cross-platform arbitrage detection and smart routing.

@@ -300,11 +300,10 @@ const transaction = await aptos.signAndSubmitTransaction({
 
 ## 📖 Documentation
 
-Comprehensive documentation in 4 focused guides:
+Comprehensive documentation in 3 focused guides:
 
 - **[Setup Guide](./docs/SETUP.md)** - Installation, configuration, and development workflow
 - **[Architecture Guide](./docs/ARCHITECTURE.md)** - System design, patterns, and scalability
-- **[Validation Framework](./docs/VALIDATION.md)** - Comprehensive validation system and integration
 - **[API Reference & Roadmap](./docs/API.md)** - Complete API documentation and product roadmap
 
 ## 🤝 Contributing

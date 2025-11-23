@@ -73,6 +73,8 @@ GET /api/weather
 }
 ```
 
+Note: ID fields may be `marketID`, `id`, or `tokenID`. The UI resolves card state using `marketID || id || tokenID`.
+
 ### Market Data
 
 #### Get Weather-Sensitive Markets

@@ -59,6 +59,10 @@ The date-first approach:
 - ✅ Better UX for prediction markets (users care about upcoming events)
 - ✅ Natural progression (today → tomorrow → later)
 
+## Recent Fix
+- Fixed hidden market cards caused by missing `expandedMarketId` in `MarketCard`.
+- Parent tabs now pass `expandedMarketId`; visibility resolves via `marketID || id || tokenID`.
+
 ## Known Issues
 
 1. **Weather API Auth (403)**: Weather fetching fails in Node.js tests, but doesn't block market display. Falls back to demo data.
