@@ -48,10 +48,17 @@ export class APIInputValidator {
     } = input;
     
     // VALIDATION 1: Required fields
-    if (!marketId) {
+    if (marketId === undefined || marketId === null) {
       errors.push('marketId is required');
-    } else if (typeof marketId !== 'string' || marketId.length < 5) {
-      errors.push('marketId appears invalid (too short)');
+    } else if (typeof marketId === 'string') {
+      const trimmed = marketId.trim();
+      if (trimmed.length < 2) {
+        errors.push('marketId appears invalid');
+      }
+    } else if (typeof marketId === 'number') {
+      if (!Number.isFinite(marketId) || marketId <= 0) {
+        errors.push('marketId must be a positive number');
+      }
     }
     
     // VALIDATION 2: Location validation

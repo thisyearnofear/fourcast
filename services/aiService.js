@@ -49,8 +49,7 @@ export const aiService = {
    */
   async analyzeMarket(market, weatherData) {
     try {
-      // Determine the appropriate location for weather analysis
-      let analysisLocation = market.location || weatherData?.location?.name || 'Unknown Location';
+      let analysisLocation = market.location || market.eventLocation || 'Unknown Location';
 
       // For sports events, validate that the location makes sense for the sport
       if (market.eventType && market.eventType === 'NFL' && analysisLocation) {
@@ -84,7 +83,7 @@ export const aiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...eventData,
-          weatherData,
+          weatherData: null,
           marketID: market.marketID,
           mode: market.mode || 'basic',
           eventDate: market.resolutionDate || null

@@ -58,15 +58,9 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // Weather data quality validation
-    const weatherValidation = WeatherDataValidator.validateWeatherData('current', weatherData);
-    if (!weatherValidation.valid) {
-      return Response.json({
-        success: false,
-        error: 'Weather data quality check failed',
-        errors: weatherValidation.errors,
-        warnings: weatherValidation.warnings
-      }, { status: 400 });
+    let weatherValidation = { valid: true, errors: [], warnings: [], dataQuality: 'UNKNOWN' };
+    if (weatherData) {
+      weatherValidation = WeatherDataValidator.validateWeatherData('current', weatherData);
     }
 
     // Market type validation for weather compatibility
@@ -107,7 +101,7 @@ export async function POST(request) {
     });
 
     // Format weather conditions for display
-    const weatherConditions = {
+    const weatherConditions = analysis.weather_conditions || {
       temperature: `${weatherData?.current?.temp_f || weatherData?.forecast?.forecastday?.[0]?.day?.avgtemp_f || 'N/A'}°F`,
       condition: weatherData?.current?.condition?.text || weatherData?.forecast?.forecastday?.[0]?.day?.condition?.text || 'Unknown',
       precipitation: `${weatherData?.current?.precip_chance || weatherData?.forecast?.forecastday?.[0]?.day?.daily_chance_of_rain || '0'}%`,

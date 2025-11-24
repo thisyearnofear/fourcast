@@ -24,10 +24,10 @@ function getClientIdentifier(request) {
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { eventType, location, weatherData, currentOdds, participants, marketID, eventDate, mode = 'deep' } = body
+    const { eventType, location, weatherData, currentOdds, participants, marketID, eventDate, mode = 'deep', title } = body
 
-    if (!eventType || !location || !weatherData || !currentOdds) {
-      return new Response(JSON.stringify({ success: false, error: 'Missing required fields: eventType, location, weatherData, currentOdds' }) + '\n', {
+    if (!marketID || !title) {
+      return new Response(JSON.stringify({ success: false, error: 'Missing required fields: marketID, title' }) + '\n', {
         status: 400,
         headers: { 'Content-Type': 'application/x-ndjson' }
       })
@@ -55,6 +55,7 @@ export async function POST(request) {
               participants,
               marketId: marketID,
               eventDate,
+              title,
               mode
             })
 
