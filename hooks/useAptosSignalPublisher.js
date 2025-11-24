@@ -42,6 +42,7 @@ export function useAptosSignalPublisher() {
 
             // User wallet signs and submits transaction
             const response = await signAndSubmitTransaction({
+                sender: account.address,
                 data: payload,
             });
 
