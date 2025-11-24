@@ -10,7 +10,7 @@
  * - Graceful fallback to SQLite if Aptos fails
  */
 
-import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+import { Aptos, AptosConfig, Network, StringUtil } from "@aptos-labs/ts-sdk";
 
 const APTOS_NETWORK = process.env.NEXT_PUBLIC_APTOS_NETWORK || Network.DEVNET;
 const MODULE_ADDRESS =
@@ -87,15 +87,15 @@ export class AptosSignalPublisher {
       function: `${MODULE_ADDRESS}::signal_registry::publish_signal`,
       typeArguments: [],
       functionArguments: [
-        event_id,
-        title,
-        place,
+        StringUtil.fromString(event_id),
+        StringUtil.fromString(title),
+        StringUtil.fromString(place),
         et,
-        market_snapshot_hash,
-        weatherStr,
-        digest,
-        confidence,
-        odds_efficiency,
+        StringUtil.fromString(market_snapshot_hash),
+        StringUtil.fromString(weatherStr),
+        StringUtil.fromString(digest),
+        StringUtil.fromString(confidence),
+        StringUtil.fromString(odds_efficiency),
       ],
     };
   }
