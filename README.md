@@ -6,88 +6,31 @@ A multichain AI intelligence layer that analyzes weather forecasts to identify m
 
 Fourcast is an AI layer that joins real-time weather with prediction market data to surface mispricings. It aggregates markets, analyzes weather impact, and lets users publish signals on-chain.
 
-## 🔗 Integrations
-
-- **Polymarket (Polygon)**: Market discovery and trading links
-- **Kalshi**: Integrated into the Markets feed with platform badges, filters, and deep links
-- **Aptos (Devnet)**: On-chain signal publishing via dual wallet UX (MetaMask + Petra)
-
-See [Architecture Guide](./docs/ARCHITECTURE.md) for technical details.
-
 ## 🚀 Features
 
-- Date-first Markets UI (Today, Tomorrow, This Week, Later)
-- Aggregated discovery across Polymarket and Kalshi with platform badges and filters
-- Weather-aware AI analysis and confidence scoring
-- Dual wallet UX: MetaMask (trading) and Petra (signals)
-- On-chain signal publishing to Aptos with tx hash feedback
-- Optional arbitrage banner showing cross-platform price discrepancies
-
-## �️ Stack
-
-- **Frontend**: Next.js, React, Tailwind, React Three Fiber
-- **Data & AI**: WeatherAPI, Venice AI, Redis cache, SQLite
-- **Web3**: Wagmi/ConnectKit, Aptos Wallet Standard, Move module on devnet
-
-## 📁 Project Structure
-
-```
-├── app/                  # Next.js App Router
-│   ├── api/             # API routes
-│   ├── global.css       # Global styles
-│   ├── layout.js        # Root layout
-│   └── page.js          # Homepage
-├── components/          # React components
-├── services/           # Weather & AI services
-├── onchain/            # Blockchain integration
-├── markets/            # Prediction market logic
-├── docs/               # Documentation
-└── public/             # Static assets
-```
+- **Multi-Platform Integration**: Aggregated discovery across Polymarket and Kalshi with platform badges and filters
+- **Date-First Markets UI**: Today, Tomorrow, This Week, Later tabs for upcoming events
+- **Weather-Aware AI Analysis**: Venice AI integration with confidence scoring
+- **Dual Wallet UX**: MetaMask for trading, Petra for signals publishing
+- **On-Chain Signals**: Publish to Aptos with tx hash feedback
+- **Venue Extraction**: Automatic location detection for sports events
+- **Cross-Platform Arbitrage**: Price discrepancy detection between platforms
 
 ## 🛠️ Tech Stack
 
-### **Multichain Infrastructure**
-
-- **Polygon**: Polymarket integration, trading execution
-- **BNB Chain**: Analytics contracts, performance tracking
-- **Aptos**: Signal registry, reputation system (Move smart contracts)
-
-### **Smart Contracts & Web3**
-
-- **Solidity 0.8.20**: BNB Chain analytics contracts with OpenZeppelin
-- **Move**: Aptos signal registry and reputation tracking
-- **Web3 Integration**: Wagmi, ConnectKit, Aptos Wallet Standard
-- **Wallets**: MetaMask (trading), Petra (signals), multi-wallet UX
-
-### **Frontend & UX**
-
-- **Framework**: Next.js 15, React 19, React Three Fiber
-- **Styling**: Tailwind CSS, responsive design
-- **3D Graphics**: Three.js, React Three Drei, postprocessing effects
-- **State Management**: React hooks, Web3 context providers
-
-### **AI & Data**
-
-- **AI Engine**: Venice AI (qwen3-235b for deep reasoning)
-- **Market Data**: Polymarket Gamma API, real-time odds
-- **Weather Data**: WeatherAPI integration, forecast analysis
-- **Backend**: Next.js API Routes, Redis caching, SQLite analytics
-
-### **Infrastructure & Deployment**
-
-- **Hosting**: Vercel (frontend), multichain contract deployment
-- **Database**: SQLite for local analytics, on-chain for immutable records
-- **APIs**: RESTful endpoints, streaming AI analysis, WebSocket connections
+- **Frontend**: Next.js 15, React 19, Tailwind CSS, React Three Fiber
+- **Data & AI**: WeatherAPI, Venice AI (llama-3.3-70b), Redis cache, SQLite
+- **Web3**: Wagmi/ConnectKit, Aptos Wallet Standard, Move module on devnet
+- **Backend**: Next.js API Routes, Venice AI analysis, Polymarket/Kalshi APIs
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18.18+ or 20+
+- Node.js 18+ or 20+
 - npm or yarn
-- MetaMask wallet (for trading on Polygon)
-- Petra wallet (for signals on Aptos)
+- MetaMask wallet (trading on Polygon)
+- Petra wallet (signals on Aptos)
 - API keys: WeatherAPI, Venice AI
 
 ### Installation
@@ -108,41 +51,41 @@ cp .env.local.example .env.local
 
 ```bash
 # .env.local
-# Weather & AI Services
 NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key
 VENICE_API_KEY=your_venice_api_key
-
-# Multichain Configuration
-NEXT_PUBLIC_POLYMARKET_HOST=https://clob.polymarket.com
-NEXT_PUBLIC_BNB_CHAIN_ID=56
 NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.devnet.aptoslabs.com/v1
-NEXT_PUBLIC_APTOS_NETWORK=devnet
-
-# Contract Addresses (update after deployment)
-NEXT_PUBLIC_BNB_ANALYTICS_CONTRACT=0x...
-NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0x...
+NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
 ```
 
 ### Development
 
 ```bash
 # Start development server
-npm run dev -- --turbopack
+npm run dev
 
 # Build for production
 npm run build
-
-# Start production server
-npm start
 ```
 
-## 📖 Documentation
+## 📚 Documentation
 
-Comprehensive documentation in 3 focused guides:
+- [Setup Guide](./docs/SETUP_GUIDE.md) - Installation, configuration and Aptos integration
+- [Core Architecture](./docs/CORE_ARCHITECTURE.md) - System design and patterns
+- [Integration Guide](./docs/INTEGRATION_GUIDE.md) - Multi-platform integration details
+- [API Endpoints](./docs/API_ENDPOINTS.md) - Complete API documentation
+- [Product Roadmap](./docs/PRODUCT_ROADMAP.md) - Feature roadmap and planning
+- [Technical Implementation](./docs/TECHNICAL_IMPLEMENTATION.md) - Key fixes and implementation details
+- [Validation Guide](./docs/VALIDATION_GUIDE.md) - Validation framework and testing
 
-- **[Setup Guide](./docs/SETUP.md)** - Installation, configuration, and development workflow
-- **[Architecture Guide](./docs/ARCHITECTURE.md)** - System design, patterns, and scalability
-- **[API Reference & Roadmap](./docs/API.md)** - Complete API documentation and product roadmap
+## 🌐 Endpoints
+
+### Core APIs
+- `GET /api/weather` - Current weather data
+- `GET /api/markets` - Aggregated Polymarket/Kalshi markets
+- `POST /api/analyze` - AI market analysis with weather impact
+- `POST /api/signals` - Publish signals to SQLite/Aptos
+- `GET /api/signals` - List latest signals
+- `GET /api/leaderboard` - Reputation system leaderboard
 
 ## 🤝 Contributing
 
@@ -154,8 +97,8 @@ Comprehensive documentation in 3 focused guides:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## ⚠️ Disclaimer
 
-This platform is for educational and entertainment purposes. Weather prediction is inherently uncertain. Always trade responsibly and never risk more than you can afford to lose. This is a research intelligence tool, not an auto-betting system.
+Educational and entertainment purposes only. Weather prediction is inherently uncertain. Always trade responsibly and never risk more than you can afford to lose. This is a research intelligence tool, not an auto-betting system.
