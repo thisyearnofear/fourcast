@@ -20,15 +20,6 @@ export default function AptosConnectButton({ isNight = false }) {
     const bgColor = isNight ? 'bg-white/10 hover:bg-white/20' : 'bg-black/10 hover:bg-black/20';
     const borderColor = isNight ? 'border-white/20' : 'border-black/20';
 
-    useEffect(() => {
-        console.log('Wallet State Changed:', {
-            connected,
-            account,
-            addressType: typeof account?.address,
-            addressValue: account?.address
-        });
-    }, [connected, account, wallets]);
-
     if (connected) {
         const address = account?.address?.toString();
 

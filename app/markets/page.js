@@ -90,7 +90,7 @@ export default function MarketsPage() {
 
   useEffect(() => {
     if (aptosConnected) {
-      getMySignalCount().then(setMySignalCount).catch(() => {});
+      getMySignalCount().then(setMySignalCount).catch(() => { });
     } else {
       setMySignalCount(null);
     }
@@ -330,7 +330,7 @@ export default function MarketsPage() {
           try {
             const c = await getMySignalCount();
             setMySignalCount(c);
-          } catch {}
+          } catch { }
 
           alert(
             `Signal published!\nSQLite ID: ${result.id}\nAptos TX: ${txHash}`
@@ -977,12 +977,12 @@ function DiscoveryTabContent({
                 <button
                   onClick={() => setShowArbitrage(!showArbitrage)}
                   className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${showArbitrage
-                      ? isNight
-                        ? "bg-blue-500/30 text-white border-blue-400/40"
-                        : "bg-blue-400/30 text-black border-blue-500/40"
-                      : isNight
-                        ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
-                        : "bg-black/10 hover:bg-black/20 text-black/70 border-black/20"
+                    ? isNight
+                      ? "bg-blue-500/30 text-white border-blue-400/40"
+                      : "bg-blue-400/30 text-black border-blue-500/40"
+                    : isNight
+                      ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
+                      : "bg-black/10 hover:bg-black/20 text-black/70 border-black/20"
                     }`}
                 >
                   {showArbitrage ? 'Hide' : 'Show'} Details
@@ -1229,14 +1229,71 @@ function MarketCard({
         </div>
       </div>
 
+      {/* Dynamic Loading State in Expanded View */}
+      {isExpanded && isAnalyzing && (
+        <LoadingAnalysisState isNight={isNight} textColor={textColor} />
+      )}
+
       {/* Expanded Analysis View */}
       {isExpanded && analysis && (
         <div className="mt-8 pt-8 border-t border-white/10">
           <h2 className={`text-2xl font-light ${textColor} mb-6`}>Analysis</h2>
+
           <div className="space-y-4">
+            {/* Market Context & Odds */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4`}>
+                <h4 className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}>
+                  Market Odds
+                </h4>
+                <div className="flex justify-between items-center">
+                  <div className="flex flex-col">
+                    <span className={`text-sm ${textColor} opacity-60`}>YES</span>
+                    <span className={`text-xl font-medium ${isNight ? 'text-green-400' : 'text-green-600'}`}>
+                      {market.ask ? `${(market.ask * 100).toFixed(1)}%` : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col text-right">
+                    <span className={`text-sm ${textColor} opacity-60`}>NO</span>
+                    <span className={`text-xl font-medium ${isNight ? 'text-red-400' : 'text-red-600'}`}>
+                      {market.bid ? `${(market.bid * 100).toFixed(1)}%` : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4`}>
+                <h4 className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}>
+                  Weather @ {analysis.weather_conditions?.location || 'Venue'}
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="opacity-60">🌡️</span>
+                    <span className={textColor}>{analysis.weather_conditions?.temperature || 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="opacity-60">☁️</span>
+                    <span className={textColor}>{analysis.weather_conditions?.condition || 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="opacity-60">💨</span>
+                    <span className={textColor}>{analysis.weather_conditions?.wind || 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="opacity-60">💧</span>
+                    <span className={textColor}>{analysis.weather_conditions?.precipitation || '0%'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Analysis Text */}
             <div
               className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-5`}
             >
+              <h4 className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}>
+                AI Reasoning
+              </h4>
               <p
                 className={`text-base ${textColor} opacity-90 leading-relaxed font-light`}
               >
@@ -1246,12 +1303,13 @@ function MarketCard({
               </p>
             </div>
 
+            {/* Recommendation */}
             {analysis.recommended_action && (
               <div
                 className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-5`}
               >
                 <h4
-                  className={`text-sm font-light ${textColor} opacity-90 mb-2`}
+                  className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}
                 >
                   Recommendation
                 </h4>
@@ -1262,7 +1320,7 @@ function MarketCard({
             )}
 
             {/* Action Buttons: Trade + Publish */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 pt-2">
               <a
                 href={isKalshi
                   ? market.kalshiUrl || `https://kalshi.com/markets/${market.marketID.toLowerCase()}`
@@ -1291,6 +1349,50 @@ function MarketCard({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Dynamic Loading State Component
+function LoadingAnalysisState({ isNight, textColor }) {
+  const [step, setStep] = useState(0);
+
+  const steps = [
+    { text: "Inferring correct venue...", sub: "Using AI to find confirmed stadium location" },
+    { text: "Fetching live weather...", sub: "Retrieving real-time forecast data" },
+    { text: "Analyzing odds efficiency...", sub: "Comparing weather impact vs market lines" },
+    { text: "Generating prediction...", sub: "Synthesizing final recommendation" }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStep((prev) => (prev + 1) % steps.length);
+    }, 2000); // Change step every 2 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center justify-center py-12">
+      <div className={`w-8 h-8 border-2 ${isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'} rounded-full animate-spin mb-4`}></div>
+      <p className={`${textColor} opacity-70 font-light animate-pulse transition-all duration-500`}>
+        {steps[step].text}
+      </p>
+      <p className={`text-xs ${textColor} opacity-50 mt-2 font-light transition-all duration-500`}>
+        {steps[step].sub}
+      </p>
+
+      {/* Progress Dots */}
+      <div className="flex gap-1 mt-4">
+        {steps.map((_, i) => (
+          <div
+            key={i}
+            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === step
+              ? (isNight ? 'bg-white' : 'bg-black')
+              : (isNight ? 'bg-white/20' : 'bg-black/20')
+              }`}
+          />
+        ))}
+      </div>
     </div>
   );
 }

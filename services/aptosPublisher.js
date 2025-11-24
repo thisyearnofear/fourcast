@@ -13,7 +13,7 @@
 import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 
 const APTOS_NETWORK = process.env.NEXT_PUBLIC_APTOS_NETWORK || Network.DEVNET;
-const MODULE_ADDRESS = process.env.NEXT_PUBLIC_APTOS_MODULE_ADDRESS || '0x1'; // Will be set after deployment
+const MODULE_ADDRESS = process.env.NEXT_PUBLIC_APTOS_MODULE_ADDRESS || '0xa03f13d8fb211a9f7dfbe8f24b7872ce4b4205f8d1bee1a36cdeabaae3df5df1'; // Updated to deployed address
 
 export class AptosSignalPublisher {
     constructor() {

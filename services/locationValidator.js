@@ -12,7 +12,7 @@
 import { MarketTypeDetector } from './marketTypeDetector.js';
 
 export class LocationValidator {
-  
+
   /**
    * Main validation entry point - validates location appropriateness for any market type
    * @param {string} eventType - The market event type (e.g., "NFL", "Weather", "Politics")
@@ -22,10 +22,10 @@ export class LocationValidator {
    */
   static validateLocation(eventType, location, additionalContext = {}) {
     const locationText = location?.name || location || 'Unknown';
-    
+
     // Detect market category using existing MarketTypeDetector logic
     const category = this.detectMarketCategory(eventType, additionalContext);
-    
+
     // Route to appropriate validator
     switch (category) {
       case 'sports':
@@ -49,62 +49,62 @@ export class LocationValidator {
    */
   static detectMarketCategory(eventType, context = {}) {
     if (!eventType) return 'general';
-    
+
     const eventLower = eventType.toLowerCase();
-    const tags = (context.tags || []).map(t => 
+    const tags = (context.tags || []).map(t =>
       typeof t === 'string' ? t.toLowerCase() : (t.label || '').toLowerCase()
     ).join(' ');
     const combinedText = `${eventLower} ${tags}`.toLowerCase();
 
     // Sports detection (from existing aiService.server.js logic) - check first for specificity
     if (combinedText.includes('nfl') || combinedText.includes('nba') ||
-        combinedText.includes('mlb') || combinedText.includes('nhl') ||
-        combinedText.includes('football') || combinedText.includes('basketball') ||
-        combinedText.includes('baseball') || combinedText.includes('hockey') ||
-        combinedText.includes('golf') || combinedText.includes('tennis') ||
-        combinedText.includes('soccer') || combinedText.includes('cricket') ||
-        combinedText.includes('championship') || combinedText.includes('playoffs') ||
-        combinedText.includes('world series') || combinedText.includes('finals')) {
+      combinedText.includes('mlb') || combinedText.includes('nhl') ||
+      combinedText.includes('football') || combinedText.includes('basketball') ||
+      combinedText.includes('baseball') || combinedText.includes('hockey') ||
+      combinedText.includes('golf') || combinedText.includes('tennis') ||
+      combinedText.includes('soccer') || combinedText.includes('cricket') ||
+      combinedText.includes('championship') || combinedText.includes('playoffs') ||
+      combinedText.includes('world series') || combinedText.includes('finals')) {
       return 'sports';
     }
 
     // Economics detection - check before general 'market' term
     if (combinedText.includes('nasdaq') || combinedText.includes('nyse') ||
-        combinedText.includes('dow jones') || combinedText.includes('s&p') ||
-        combinedText.includes('federal reserve') || combinedText.includes('fed') ||
-        combinedText.includes('economy') || combinedText.includes('gdp') ||
-        combinedText.includes('inflation') || combinedText.includes('employment') ||
-        combinedText.includes('stock') || combinedText.includes('trading') ||
-        combinedText.includes('futures') || combinedText.includes('economic') ||
-        combinedText.includes('wall street')) {
+      combinedText.includes('dow jones') || combinedText.includes('s&p') ||
+      combinedText.includes('federal reserve') || combinedText.includes('fed') ||
+      combinedText.includes('economy') || combinedText.includes('gdp') ||
+      combinedText.includes('inflation') || combinedText.includes('employment') ||
+      combinedText.includes('stock') || combinedText.includes('trading') ||
+      combinedText.includes('futures') || combinedText.includes('economic') ||
+      combinedText.includes('wall street')) {
       return 'economics';
     }
 
     // Weather detection
     if (combinedText.includes('weather') || combinedText.includes('temperature') ||
-        combinedText.includes('rain') || combinedText.includes('snow') ||
-        combinedText.includes('hurricane') || combinedText.includes('storm') ||
-        combinedText.includes('climate') || combinedText.includes('drought') ||
-        combinedText.includes('forecast') || combinedText.includes('precipitation')) {
+      combinedText.includes('rain') || combinedText.includes('snow') ||
+      combinedText.includes('hurricane') || combinedText.includes('storm') ||
+      combinedText.includes('climate') || combinedText.includes('drought') ||
+      combinedText.includes('forecast') || combinedText.includes('precipitation')) {
       return 'weather';
     }
 
     // Politics detection
     if (combinedText.includes('election') || combinedText.includes('vote') ||
-        combinedText.includes('president') || combinedText.includes('congress') ||
-        combinedText.includes('senate') || combinedText.includes('governor') ||
-        combinedText.includes('mayor') || combinedText.includes('politics') ||
-        combinedText.includes('campaign') || combinedText.includes('ballot') ||
-        combinedText.includes('congressional')) {
+      combinedText.includes('president') || combinedText.includes('congress') ||
+      combinedText.includes('senate') || combinedText.includes('governor') ||
+      combinedText.includes('mayor') || combinedText.includes('politics') ||
+      combinedText.includes('campaign') || combinedText.includes('ballot') ||
+      combinedText.includes('congressional')) {
       return 'politics';
     }
 
     // Entertainment detection
     if (combinedText.includes('movie') || combinedText.includes('film') ||
-        combinedText.includes('concert') || combinedText.includes('festival') ||
-        combinedText.includes('awards') || combinedText.includes('celebrity') ||
-        combinedText.includes('entertainment') || combinedText.includes('show') ||
-        combinedText.includes('premiere') || combinedText.includes('box office')) {
+      combinedText.includes('concert') || combinedText.includes('festival') ||
+      combinedText.includes('awards') || combinedText.includes('celebrity') ||
+      combinedText.includes('entertainment') || combinedText.includes('show') ||
+      combinedText.includes('premiere') || combinedText.includes('box office')) {
       return 'entertainment';
     }
 
@@ -117,23 +117,23 @@ export class LocationValidator {
    */
   static validateSportsLocation(eventType, locationText) {
     const eventLower = eventType.toLowerCase();
-    
+
     // US/Canada sports leagues - strict validation
-    const isUSCanadaSport = eventLower.includes('nfl') || eventLower.includes('nba') || 
-                           eventLower.includes('mlb') || eventLower.includes('nhl') ||
-                           (eventLower.includes('football') && !eventLower.includes('soccer')) ||
-                           (eventLower.includes('basketball') && !eventLower.includes('international')) ||
-                           (eventLower.includes('baseball') && !eventLower.includes('international')) ||
-                           (eventLower.includes('hockey') && !eventLower.includes('international'));
-    
+    const isUSCanadaSport = eventLower.includes('nfl') || eventLower.includes('nba') ||
+      eventLower.includes('mlb') || eventLower.includes('nhl') ||
+      (eventLower.includes('football') && !eventLower.includes('soccer')) ||
+      (eventLower.includes('basketball') && !eventLower.includes('international')) ||
+      (eventLower.includes('baseball') && !eventLower.includes('international')) ||
+      (eventLower.includes('hockey') && !eventLower.includes('international'));
+
     if (isUSCanadaSport) {
       return this.validateUSCanadaSports(eventType, locationText);
     }
 
     // International sports - more flexible
     const isInternationalSport = eventLower.includes('soccer') || eventLower.includes('cricket') ||
-                                eventLower.includes('tennis') || eventLower.includes('golf');
-    
+      eventLower.includes('tennis') || eventLower.includes('golf');
+
     if (isInternationalSport) {
       return this.validateInternationalSports(eventType, locationText);
     }
@@ -148,7 +148,7 @@ export class LocationValidator {
    */
   static validateUSCanadaSports(eventType, locationText) {
     const lowerLocation = locationText.toLowerCase();
-    
+
     // US/Canada identifiers (consolidated from existing logic)
     // Use word boundaries and longer patterns to avoid false matches
     const usCanadaPatterns = [
@@ -156,7 +156,7 @@ export class LocationValidator {
       /\busa\b/, /\bunited states\b/, /\bamerica\b/, /\bamerican\b/,
       /\bcanada\b/, /\bcanadian\b/,
       // US state names (full names to avoid substring matches)
-      /\bflorida\b/, /\btexas\b/, /\bnew york\b/, /\bcalifornia\b/, 
+      /\bflorida\b/, /\btexas\b/, /\bnew york\b/, /\bcalifornia\b/,
       /\bpennsylvania\b/, /\bohio\b/, /\bmaryland\b/, /\bnew jersey\b/,
       /\bmassachusetts\b/, /\bminnesota\b/, /\billinois\b/, /\bgeorgia\b/,
       /\bmichigan\b/, /\bwisconsin\b/, /\bnorth carolina\b/, /\btennessee\b/,
@@ -175,10 +175,10 @@ export class LocationValidator {
 
     // Major sports cities (consolidated from existing logic)
     const majorSportsCities = [
-      'new york', 'baltimore', 'dallas', 'philadelphia', 'miami', 'chicago', 
-      'denver', 'kansas city', 'las vegas', 'los angeles', 'seattle', 'green bay', 
-      'pittsburgh', 'cincinnati', 'cleveland', 'buffalo', 'tampa', 'jacksonville', 
-      'nashville', 'indianapolis', 'arizona', 'carolina', 'atlanta', 'minnesota', 
+      'new york', 'baltimore', 'dallas', 'philadelphia', 'miami', 'chicago',
+      'denver', 'kansas city', 'las vegas', 'los angeles', 'seattle', 'green bay',
+      'pittsburgh', 'cincinnati', 'cleveland', 'buffalo', 'tampa', 'jacksonville',
+      'nashville', 'indianapolis', 'arizona', 'carolina', 'atlanta', 'minnesota',
       'detroit', 'washington', 'san francisco', 'oakland', 'columbus', 'kent'
       // Note: removed 'london' - international games need special handling
     ];
@@ -193,20 +193,22 @@ export class LocationValidator {
     if (!hasValidIdentifier && !hasValidCity && !hasInternationalException) {
       const eventLower = eventType.toLowerCase();
       const leagueType = eventLower.includes('nfl') ? 'NFL' :
-                        eventLower.includes('nba') ? 'NBA' :
-                        eventLower.includes('mlb') ? 'MLB' :
-                        eventLower.includes('nhl') ? 'NHL' : 
-                        eventLower.includes('football') ? 'NFL' :
-                        eventLower.includes('basketball') ? 'NBA' :
-                        eventLower.includes('baseball') ? 'MLB' :
-                        eventLower.includes('hockey') ? 'NHL' : 'sports league';
-      
+        eventLower.includes('nba') ? 'NBA' :
+          eventLower.includes('mlb') ? 'MLB' :
+            eventLower.includes('nhl') ? 'NHL' :
+              eventLower.includes('football') ? 'NFL' :
+                eventLower.includes('basketball') ? 'NBA' :
+                  eventLower.includes('baseball') ? 'MLB' :
+                    eventLower.includes('hockey') ? 'NHL' : 'sports league';
+
+      // Return valid but with a warning instead of blocking
       return {
-        valid: false,
+        valid: true, // Allow analysis to proceed
         category: 'sports',
-        issue: `Location invalid for ${leagueType} game. ${leagueType} games only occur in USA/Canada.`,
-        suggestion: `Please provide the correct location for the ${eventType} game to get accurate weather analysis.`,
-        actionText: `Request correct location - The current location (${locationText}) is not appropriate for this ${eventType} game. Please enter the city where this game is taking place.`
+        warning: `Location warning: ${locationText} is not a standard ${leagueType} city. Analysis will proceed but may be inaccurate if the location is incorrect.`,
+        issue: `Location warning for ${leagueType} game.`,
+        suggestion: `Verify that ${locationText} is the correct venue for this game.`,
+        actionText: `Proceed with caution - Verify location manually.`
       };
     }
 
@@ -260,16 +262,16 @@ export class LocationValidator {
 
     // US Federal elections should have US locations
     if ((eventLower.includes('president') && eventLower.includes('us')) ||
-        eventLower.includes('congress') || eventLower.includes('senate') ||
-        eventLower.includes('house of representatives')) {
-      
+      eventLower.includes('congress') || eventLower.includes('senate') ||
+      eventLower.includes('house of representatives')) {
+
       const usIdentifiers = [
         'us', 'usa', 'united states', 'america', 'american',
         // US states
         'alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado',
         'connecticut', 'delaware', 'florida', 'georgia', 'hawaii', 'idaho',
         'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'louisiana',
-        'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota', 
+        'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota',
         'mississippi', 'missouri', 'montana', 'nebraska', 'nevada',
         'new hampshire', 'new jersey', 'new mexico', 'new york',
         'north carolina', 'north dakota', 'ohio', 'oklahoma', 'oregon',
@@ -303,9 +305,9 @@ export class LocationValidator {
 
     // US market events should have US context
     if (eventLower.includes('nasdaq') || eventLower.includes('nyse') ||
-        eventLower.includes('dow jones') || eventLower.includes('s&p') ||
-        eventLower.includes('fed') || eventLower.includes('federal reserve')) {
-      
+      eventLower.includes('dow jones') || eventLower.includes('s&p') ||
+      eventLower.includes('fed') || eventLower.includes('federal reserve')) {
+
       const usEconomicIdentifiers = [
         'us', 'usa', 'united states', 'america', 'new york', 'wall street',
         'manhattan', 'chicago', 'nasdaq', 'nyse'
@@ -370,11 +372,11 @@ export class LocationValidator {
     const usCanadaIdentifiers = [
       'us', 'usa', 'united states', 'america', 'american',
       'ca', 'canada', 'canadian',
-      'new york', 'los angeles', 'chicago', 'dallas', 'philadelphia', 
+      'new york', 'los angeles', 'chicago', 'dallas', 'philadelphia',
       'miami', 'denver', 'seattle', 'boston', 'atlanta', 'detroit',
       'toronto', 'vancouver', 'montreal', 'calgary'
     ];
-    
+
     return usCanadaIdentifiers.some(id => locationLower.includes(id));
   }
 

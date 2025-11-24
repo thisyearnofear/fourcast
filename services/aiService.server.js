@@ -17,24 +17,24 @@ const callVeniceAI = async (params, options = {}) => {
     baseURL: 'https://api.venice.ai/api/v1'
   });
 
-    // Format odds properly
-    const oddsText = typeof currentOdds === 'object' 
-      ? `YES: ${currentOdds.yes || 'N/A'}, NO: ${currentOdds.no || 'N/A'}`
-      : currentOdds;
-    
-    // Format participants if available
-    const participantText = participants
-      ? ` (${Array.isArray(participants) ? participants.join(' vs ') : participants})`
-      : '';
+  // Format odds properly
+  const oddsText = typeof currentOdds === 'object'
+    ? `YES: ${currentOdds.yes || 'N/A'}, NO: ${currentOdds.no || 'N/A'}`
+    : currentOdds;
 
-    // Validate location using consolidated LocationValidator service
-    const locationValidation = LocationValidator.validateLocation(eventType, location, { title });
-    if (!locationValidation.valid) {
-      const locationText = location?.name || location || 'Unknown';
-      return LocationValidator.generateValidationErrorResponse(locationValidation, eventType, locationText);
-    }
+  // Format participants if available
+  const participantText = participants
+    ? ` (${Array.isArray(participants) ? participants.join(' vs ') : participants})`
+    : '';
 
-    const messages = [
+  // Validate location using consolidated LocationValidator service
+  const locationValidation = LocationValidator.validateLocation(eventType, location, { title });
+  if (!locationValidation.valid) {
+    const locationText = location?.name || location || 'Unknown';
+    return LocationValidator.generateValidationErrorResponse(locationValidation, eventType, locationText);
+  }
+
+  const messages = [
     {
       role: 'system',
       content: `You are an expert sports betting analyst specializing in weather impacts on game outcomes. You provide SPECIFIC, ACTIONABLE analysis with clear reasoning. Focus on:
@@ -46,7 +46,7 @@ const callVeniceAI = async (params, options = {}) => {
 
 Be concise but specific. No generic advice.`
     },
-    
+
     {
       role: 'user',
       content: `Analyze this prediction market for weather-driven betting opportunities:
@@ -77,7 +77,7 @@ EXAMPLE (for a different game):
 
 NOW analyze THIS game and return YOUR analysis in the same JSON format:`
     }
-    ];
+  ];
 
   try {
     console.log('🤖 Calling Venice AI...');
@@ -101,16 +101,16 @@ NOW analyze THIS game and return YOUR analysis in the same JSON format:`
     console.log('🤖 Venice AI parsed response:', parsed);
 
     // Validate that we got actual analysis, not echoed input
-    const hasValidAnalysis = parsed.analysis && 
-                             parsed.analysis !== 'string' && 
-                             !parsed.analysis.includes('Your detailed') &&
-                             typeof parsed.analysis === 'string' &&
-                             parsed.analysis.length > 20;
-    
-    const hasValidFactors = Array.isArray(parsed.key_factors) && 
-                           parsed.key_factors.length > 0 &&
-                           !parsed.key_factors[0]?.includes('Factor');
-    
+    const hasValidAnalysis = parsed.analysis &&
+      parsed.analysis !== 'string' &&
+      !parsed.analysis.includes('Your detailed') &&
+      typeof parsed.analysis === 'string' &&
+      parsed.analysis.length > 20;
+
+    const hasValidFactors = Array.isArray(parsed.key_factors) &&
+      parsed.key_factors.length > 0 &&
+      !parsed.key_factors[0]?.includes('Factor');
+
     if (!hasValidAnalysis || !hasValidFactors) {
       console.warn('⚠️ AI returned invalid/template response, using fallback');
       throw new Error('AI returned template instead of analysis');
@@ -135,12 +135,45 @@ NOW analyze THIS game and return YOUR analysis in the same JSON format:`
   }
 };
 
+import { weatherService } from './weatherService';
+
+// Helper to infer location from event title using AI
+const inferEventLocation = async (title, eventType) => {
+  try {
+    const client = new OpenAI({
+      apiKey: process.env.VENICE_API_KEY,
+      baseURL: 'https://api.venice.ai/api/v1'
+    });
+
+    const response = await client.chat.completions.create({
+      model: 'qwen3-235b',
+      messages: [{
+        role: 'system',
+        content: 'You are a location extractor. Use web search to find the confirmed venue for this specific event. Return ONLY the city and state/country. JSON format: {"location": "City, State"}'
+      }, {
+        role: 'user',
+        content: `Where is this ${eventType} event taking place? "${title}"`
+      }],
+      response_format: { type: 'json_object' },
+      venice_parameters: {
+        enable_web_search: 'auto',
+        include_venice_system_prompt: true
+      }
+    });
+
+    const content = JSON.parse(response.choices[0].message.content);
+    return content.location !== 'UNKNOWN' ? content.location : null;
+  } catch (e) {
+    console.error('Location inference failed:', e);
+    return null;
+  }
+};
+
 export async function analyzeWeatherImpactServer(params) {
-  const { eventType, location, weatherData, currentOdds, participants, marketId, eventDate, title, isFuturesBet, mode = 'basic' } = params;
+  let { eventType, location, weatherData, currentOdds, participants, marketId, eventDate, title, isFuturesBet, mode = 'basic' } = params;
 
   try {
-    // Check for futures bets FIRST - before cache lookup
-    // This ensures we don't return cached bad analyses for futures
+    // Check for futures bets FIRST
     if (isFuturesBet) {
       console.log('🎯 Futures bet detected, skipping weather analysis');
       return {
@@ -161,6 +194,36 @@ export async function analyzeWeatherImpactServer(params) {
         cached: false,
         source: 'futures_bypass'
       };
+    }
+
+    // SMART LOCATION CORRECTION
+    // Validate location before analysis
+    const locationValidation = LocationValidator.validateLocation(eventType, location, { title });
+    let correctedLocation = null;
+    let correctedWeather = null;
+
+    if (locationValidation.warning) {
+      console.log(`⚠️ Location warning: ${locationValidation.warning}. Attempting to infer correct location...`);
+
+      const inferred = await inferEventLocation(title, eventType);
+
+      if (inferred && inferred.toLowerCase() !== (location?.name || location || '').toLowerCase()) {
+        console.log(`📍 Inferred correct location: ${inferred}`);
+        try {
+          // Fetch weather for the CORRECT location
+          const newWeather = await weatherService.getCurrentWeather(inferred);
+
+          // Override params for analysis
+          location = { name: inferred };
+          weatherData = newWeather;
+          correctedLocation = inferred;
+          correctedWeather = true;
+
+          console.log(`✅ Successfully switched analysis to ${inferred}`);
+        } catch (err) {
+          console.warn(`Failed to fetch weather for inferred location ${inferred}:`, err);
+        }
+      }
     }
 
     const apiKey = process.env.VENICE_API_KEY;
@@ -195,18 +258,23 @@ export async function analyzeWeatherImpactServer(params) {
       };
     }
 
-    const analysis = await callVeniceAI({ 
-      eventType, 
-      location, 
-      weatherData, 
-      currentOdds, 
-      participants, 
-      title, 
-      isFuturesBet 
+    const analysis = await callVeniceAI({
+      eventType,
+      location,
+      weatherData,
+      currentOdds,
+      participants,
+      title,
+      isFuturesBet
     }, {
       webSearch: mode === 'deep',
       showThinking: false
     });
+
+    // If we corrected the location, append a note to the analysis
+    if (correctedLocation) {
+      analysis.analysis += `\n\n(Note: Analysis automatically corrected location from "${params.location?.name || params.location}" to "${correctedLocation}" based on event details.)`;
+    }
 
     // Cache result with roadmap-aligned TTL (6 hours for distant events, 1 hour for near events)
     const baseTtl = eventDate && new Date(eventDate) - new Date() < 24 * 60 * 60 * 1000 ? 3600 : 21600; // 1h or 6h
