@@ -524,6 +524,7 @@ export default function MarketsPage() {
               onPublishSignal={handlePublishSignal}
               analysisMode={analysisMode}
               fetchMarkets={fetchMarkets}
+              aptosConnected={aptosConnected}
             />
           )}
 
@@ -548,6 +549,7 @@ export default function MarketsPage() {
               selectedMarket={selectedMarket}
               onPublishSignal={handlePublishSignal}
               fetchMarkets={fetchMarkets}
+              aptosConnected={aptosConnected}
             />
           )}
         </main>
@@ -579,6 +581,7 @@ function SportsTabContent({
   onPublishSignal,
   analysisMode,
   fetchMarkets,
+  aptosConnected,
 }) {
   const dateRangeLabels = {
     today: "Today",
@@ -827,6 +830,7 @@ function DiscoveryTabContent({
   selectedMarket,
   onPublishSignal,
   fetchMarkets,
+  aptosConnected,
 }) {
   const dateRangeLabels = {
     today: "Today",
