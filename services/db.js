@@ -84,11 +84,14 @@ const initSql = `
     author_address TEXT,
     tx_hash TEXT,
     timestamp INTEGER NOT NULL,
+    outcome TEXT DEFAULT 'PENDING',
+    resolved_at INTEGER,
     created_at INTEGER DEFAULT (strftime('%s', 'now'))
   );
 
   CREATE INDEX IF NOT EXISTS idx_signals_event_id ON signals(event_id);
   CREATE INDEX IF NOT EXISTS idx_signals_timestamp ON signals(timestamp DESC);
+  CREATE INDEX IF NOT EXISTS idx_signals_author_outcome ON signals(author_address, outcome);
 `;
 
 // Initialize tables

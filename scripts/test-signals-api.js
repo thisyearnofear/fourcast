@@ -18,7 +18,8 @@ async function test() {
     const getRes = await fetch(`${baseUrl}/api/signals?limit=5`);
     
     if (!getRes.ok) {
-      throw new Error(`GET /api/signals returned ${getRes.status}`);
+      const errorText = await getRes.text();
+      throw new Error(`GET /api/signals returned ${getRes.status}\n${errorText}`);
     }
 
     const getData = await getRes.json();

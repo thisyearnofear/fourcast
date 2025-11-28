@@ -250,6 +250,7 @@ POST /api/validate/market-compatibility
 - 🚧 Enhanced mobile experience
 - 🚧 Multi-language support
 - 🚧 Cross-platform arbitrage detection
+- 🚧 **Signals resolution tracking** (see Signals Roadmap below)
 
 ### Phase 3: Professional Tools (Planned 📋)
 
@@ -324,6 +325,48 @@ GET /api/predictions/health
   "timestamp": "2024-11-18T06:17:51.772Z"
 }
 ```
+
+## Signals Resolution & Credibility Roadmap
+
+### Phase 1: Resolution Tracking (IN PROGRESS 🚧)
+
+**Priority: HIGH** - Foundation for signal credibility
+
+- 🚧 Integrate Polymarket resolution API to fetch market outcomes
+- 🚧 Integrate Kalshi resolution API for sports/event outcomes
+- 🚧 Add `outcome` and `resolved_at` fields to signals table
+- 🚧 Mark signals as won/lost/pending based on market resolutions
+- 🚧 Update `/api/signals` endpoint to include resolution status
+- 🚧 Refactor leaderboard to calculate real win rates from outcomes
+
+### Phase 2: Personal Signals & Status (PLANNED 📋)
+
+**Priority: HIGH** - User engagement
+
+- 📋 Create "My Signals" tab in signals page
+- 📋 Show user's personal win rate and signal count
+- 📋 Add status badges: ✓ Won | ✗ Lost | ⏳ Pending
+- 📋 Quick status view with resolution dates
+- 📋 Filter: "Show only my signals"
+
+### Phase 3: Signal Scoring & Search (PLANNED 📋)
+
+**Priority: MEDIUM**
+
+- 📋 Full-text search across `ai_digest` and `market_title`
+- 📋 Sortable feed: newest, highest confidence, highest accuracy
+- 📋 "Odds improvement" scoring: did signal beat market consensus?
+- 📋 Signal quality metrics displayed on cards
+
+### Phase 4: Alerts & Social (FUTURE 🔮)
+
+**Priority: LOW** - Advanced features
+
+- 🔮 Follow analyst alerts when they publish new signals
+- 🔮 Comparison view: side-by-side analysis on same event
+- 🔮 Export signals: CSV/JSON download of track record
+
+---
 
 ## Support & Community
 
