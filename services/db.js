@@ -434,3 +434,6 @@ export async function getLeaderboard(limit = 50) {
     return { success: false, error: error.message, leaderboard: [] };
   }
 }
+
+// Export db instance and helpers
+export { db, execute, query };
