@@ -10,7 +10,10 @@
     "lint": "eslint -c .eslintrc.json . --ext .js,.jsx,.ts,.tsx",
     "lint:next": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "test:turso": "node scripts/test-turso-connection.js",
+    "test:db": "node scripts/test-db-operations.js",
+    "test:api": "node scripts/test-signals-api.js"
   },
   "dependencies": {
     "@aptos-labs/ts-sdk": "^5.1.5",
@@ -30,6 +33,7 @@
     "axios": "^1.11.0",
     "better-sqlite3": "^11.7.0",
     "connectkit": "^1.8.2",
+    "dotenv": "^17.2.3",
     "ethers": "^6.15.0",
     "got": "^14.6.5",
     "leva": "^0.10.0",
