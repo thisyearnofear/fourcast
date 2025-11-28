@@ -120,21 +120,22 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
 
                             {isExpanded && (
                                 <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
-                                    {signal.weather_json && (
-                                        <div className={`p-3 rounded-lg ${isNight ? 'bg-white/5' : 'bg-black/5'}`}>
-                                            <p className={`text-xs ${textColor} font-medium mb-2`}>Weather Data</p>
-                                            <p className={`text-xs ${textColor} opacity-60`}>
-                                                {typeof signal.weather_json === 'string' ? signal.weather_json : JSON.stringify(signal.weather_json, null, 2)}
-                                            </p>
+                                    {signal.tx_hash && (
+                                        <div className={`text-xs ${textColor} opacity-60`}>
+                                            <span className="font-medium">On-chain:</span>{' '}
+                                            <a 
+                                                href={`https://explorer.aptoslabs.com/txn/${signal.tx_hash}?network=testnet`} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="hover:opacity-100 underline"
+                                            >
+                                                {signal.tx_hash.substring(0, 12)}...
+                                            </a>
                                         </div>
                                     )}
-                                    {signal.tx_hash && (
-                                        <div className={`p-3 rounded-lg ${isNight ? 'bg-white/5' : 'bg-black/5'}`}>
-                                            <p className={`text-xs ${textColor} opacity-60`}>
-                                                <span className="font-medium">On-chain TX:</span> <a href={`https://explorer.aptoslabs.com/txn/${signal.tx_hash}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-100">
-                                                    {signal.tx_hash.substring(0, 12)}...
-                                                </a>
-                                            </p>
+                                    {signal.market_snapshot_hash && (
+                                        <div className={`text-xs ${textColor} opacity-40`}>
+                                            Snapshot: {signal.market_snapshot_hash.substring(0, 16)}...
                                         </div>
                                     )}
                                 </div>

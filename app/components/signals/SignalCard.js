@@ -27,22 +27,9 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                 </p>
             )}
 
-            {isExpanded && signal.weather_json && (
-                <div className={`mt-3 p-3 rounded-lg ${isNight ? 'bg-white/5' : 'bg-black/5'} text-xs space-y-2`}>
-                    <p className={`${textColor} font-medium mb-2`}>Weather Data</p>
-                    {typeof signal.weather_json === 'string' ? (
-                        <p className={`${textColor} opacity-60`}>{signal.weather_json}</p>
-                    ) : (
-                        <p className={`${textColor} opacity-60`}>{JSON.stringify(signal.weather_json, null, 2)}</p>
-                    )}
-                </div>
-            )}
-
             {isExpanded && signal.market_snapshot_hash && (
-                <div className={`mt-3 p-3 rounded-lg ${isNight ? 'bg-white/5' : 'bg-black/5'}`}>
-                    <p className={`text-xs ${textColor} opacity-60`}>
-                        <span className="font-medium">Market Snapshot:</span> {signal.market_snapshot_hash}
-                    </p>
+                <div className={`mt-3 text-xs ${textColor} opacity-40`}>
+                    Snapshot: {signal.market_snapshot_hash.substring(0, 16)}...
                 </div>
             )}
 

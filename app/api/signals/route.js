@@ -6,7 +6,6 @@ export async function POST(request) {
     const body = await request.json()
     const market = body.market
     const analysis = body.analysis
-    const weather = body.weather || null
     const authorAddress = body.authorAddress || null
 
     if (!market || !analysis) {
@@ -44,7 +43,7 @@ export async function POST(request) {
       venue,
       event_time: eventTime,
       market_snapshot_hash: snapshotHash,
-      weather_json: weather,
+      weather_json: null, // AI digest contains venue weather analysis
       ai_digest: aiDigest,
       confidence,
       odds_efficiency: oddsEfficiency,
@@ -58,8 +57,7 @@ export async function POST(request) {
     }
 
     const aiDigestHash = aiDigest ? createHash('sha256').update(String(aiDigest)).digest('hex') : null
-    const weatherHash = weather ? createHash('sha256').update(JSON.stringify(weather)).digest('hex') : null
-    return Response.json({ success: true, id, snapshotHash, aiDigestHash, weatherHash })
+    return Response.json({ success: true, id, snapshotHash, aiDigestHash })
   } catch (error) {
     return Response.json({ success: false, error: error.message }, { status: 500 })
   }
