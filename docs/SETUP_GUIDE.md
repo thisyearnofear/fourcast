@@ -41,8 +41,8 @@ REDIS_URL=redis://localhost:6379
 # Multichain Configuration
 NEXT_PUBLIC_POLYMARKET_HOST=https://clob.polymarket.com
 NEXT_PUBLIC_BNB_CHAIN_ID=56
-NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.devnet.aptoslabs.com/v1
-NEXT_PUBLIC_APTOS_NETWORK=devnet
+NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.testnet.aptoslabs.com/v1
+NEXT_PUBLIC_APTOS_NETWORK=testnet
 NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
 ```
 
@@ -70,31 +70,31 @@ npm run build
 
 2. **Create Aptos Account**
    ```bash
-   aptos init --network devnet
+   aptos init --network testnet
    ```
 
 3. **Fund Your Account**
-   ```bash
-   aptos account fund-with-faucet --account YOUR_ADDRESS --amount 100000000
-   ```
+   Visit https://aptos.dev/network/faucet and request testnet APT
 
-### Deploy Move Module
+### Deploy Move Module (v2)
 
-1. **Compile the module**
+The v2 module uses hash-based storage for efficiency and is deployed on testnet for stability.
+
+1. **Quick Deploy**
    ```bash
    cd move
-   aptos move compile --named-addresses fourcast_addr=default
+   ./deploy.sh
    ```
-   Note: You may see warnings about invalid documentation comments - these are safe to ignore.
 
-2. **Publish to devnet**
+2. **Manual Deploy**
    ```bash
-   echo "yes" | aptos move publish --named-addresses fourcast_addr=default
+   cd move
+   aptos move compile --named-addresses fourcast_addr=testnet
+   aptos move publish --profile testnet --named-addresses fourcast_addr=testnet --assume-yes
    ```
-   The `echo "yes" |` pipes an automatic confirmation to avoid the interactive prompt.
 
 3. **Save your module address**
-   The output will contain your module address in the `sender` field:
+   The deployment will output your module address. Copy it for the next step.
    ```json
    {
      "sender": "0xYOUR_MODULE_ADDRESS",
@@ -107,7 +107,8 @@ npm run build
 
 Add to `.env.local`:
 ```env
-NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.devnet.aptoslabs.com/v1
+NEXT_PUBLIC_APTOS_NETWORK=testnet
+NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.testnet.aptoslabs.com/v1
 NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
 ```
 
@@ -115,8 +116,8 @@ NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
 
 1. Install extension: https://petra.app
 2. Create or import wallet
-3. Switch to **Devnet** network in settings
-4. Fund with faucet if needed: `aptos account fund-with-faucet --account YOUR_ADDRESS --amount 100000000`
+3. Switch to **Testnet** network in settings
+4. Fund with faucet if needed: https://aptos.dev/network/faucet
 
 ### Test Deployment
 
@@ -124,7 +125,7 @@ NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
 2. Navigate to `/markets`
 3. Connect Aptos wallet (Petra extension)
 4. Publish a signal
-5. Verify transaction on [Aptos Explorer](https://explorer.aptoslabs.com?network=devnet)
+5. Verify transaction on [Aptos Explorer](https://explorer.aptoslabs.com?network=testnet)
 
 ## Validation Framework
 

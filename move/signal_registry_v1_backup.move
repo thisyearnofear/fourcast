@@ -5,25 +5,14 @@ module fourcast_addr::signal_registry {
     use aptos_framework::timestamp;
     use aptos_std::table::{Self, Table};
 
-    /// Error codes
-    const E_SIGNAL_ALREADY_EXISTS: u64 = 1;
-    const E_REGISTRY_NOT_INITIALIZED: u64 = 2;
-    const E_STRING_TOO_LONG: u64 = 3;
-
-    /// String length limits (bytes)
-    const MAX_TITLE_LENGTH: u64 = 256;
-    const MAX_VENUE_LENGTH: u64 = 128;
-    const MAX_HASH_LENGTH: u64 = 64;
-    const MAX_DIGEST_LENGTH: u64 = 512;
-    const MAX_CONFIDENCE_LENGTH: u64 = 32;
-
+    /// Signal object representing a weather × odds × AI analysis
     struct Signal has store, drop, copy {
         event_id: String,
         market_title: String,
         venue: String,
         event_time: u64,
         market_snapshot_hash: String,
-        weather_hash: String,
+        weather_json: String,
         ai_digest: String,
         confidence: String,
         odds_efficiency: String,
@@ -31,31 +20,33 @@ module fourcast_addr::signal_registry {
         timestamp: u64,
     }
 
+    /// Registry to store all signals
     struct SignalRegistry has key {
-        signals: Table<u64, Signal>,
+        signals: Table<String, Signal>,
         signal_count: u64,
     }
 
+    /// Event emitted when a signal is published (for indexing)
     #[event]
     struct SignalPublished has drop, store {
-        signal_id: u64,
+        signal_id: String,
         event_id: String,
         author: address,
         timestamp: u64,
         confidence: String,
-        market_snapshot_hash: String,
+        odds_efficiency: String,
     }
 
+    /// Initialize the registry (call once per account)
     public entry fun initialize(account: &signer) {
-        let addr = signer::address_of(account);
-        assert!(!exists<SignalRegistry>(addr), E_SIGNAL_ALREADY_EXISTS);
-        
-        move_to(account, SignalRegistry {
+        let registry = SignalRegistry {
             signals: table::new(),
             signal_count: 0,
-        });
+        };
+        move_to(account, registry);
     }
 
+    /// Publish a new signal (user wallet signs this transaction)
     public entry fun publish_signal(
         account: &signer,
         event_id: String,
@@ -63,7 +54,7 @@ module fourcast_addr::signal_registry {
         venue: String,
         event_time: u64,
         market_snapshot_hash: String,
-        weather_hash: String,
+        weather_json: String,
         ai_digest: String,
         confidence: String,
         odds_efficiency: String,
@@ -71,20 +62,14 @@ module fourcast_addr::signal_registry {
         let author = signer::address_of(account);
         let now = timestamp::now_seconds();
 
-        if (!exists<SignalRegistry>(author)) {
-            initialize(account);
-        };
-
-        let registry = borrow_global_mut<SignalRegistry>(author);
-        let signal_id = registry.signal_count;
-
+        // Create signal
         let signal = Signal {
             event_id,
             market_title,
             venue,
             event_time,
             market_snapshot_hash,
-            weather_hash,
+            weather_json,
             ai_digest,
             confidence,
             odds_efficiency,
@@ -92,45 +77,35 @@ module fourcast_addr::signal_registry {
             timestamp: now,
         };
 
-        table::add(&mut registry.signals, signal_id, signal);
-        registry.signal_count = signal_id + 1;
+        // Initialize registry if it doesn't exist
+        if (!exists<SignalRegistry>(author)) {
+            initialize(account);
+        };
 
+        // Store signal in registry
+        let registry = borrow_global_mut<SignalRegistry>(author);
+        let signal_id = market_snapshot_hash;
+        table::add(&mut registry.signals, signal_id, signal);
+        registry.signal_count = registry.signal_count + 1;
+
+        // Emit event for indexing
         event::emit(SignalPublished {
             signal_id,
-            event_id: signal.event_id,
+            event_id,
             author,
             timestamp: now,
-            confidence: signal.confidence,
-            market_snapshot_hash: signal.market_snapshot_hash,
+            confidence,
+            odds_efficiency,
         });
     }
 
+    /// Get signal count for an account (view function)
     #[view]
     public fun get_signal_count(account_addr: address): u64 acquires SignalRegistry {
         if (!exists<SignalRegistry>(account_addr)) {
             return 0
         };
-        borrow_global<SignalRegistry>(account_addr).signal_count
-    }
-
-    #[view]
-    public fun get_signal(account_addr: address, signal_id: u64): (
-        String, String, String, u64, String, String, String, String, String, address, u64
-    ) acquires SignalRegistry {
         let registry = borrow_global<SignalRegistry>(account_addr);
-        let signal = table::borrow(&registry.signals, signal_id);
-        (
-            signal.event_id,
-            signal.market_title,
-            signal.venue,
-            signal.event_time,
-            signal.market_snapshot_hash,
-            signal.weather_hash,
-            signal.ai_digest,
-            signal.confidence,
-            signal.odds_efficiency,
-            signal.author_address,
-            signal.timestamp
-        )
+        registry.signal_count
     }
 }

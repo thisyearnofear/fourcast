@@ -34,12 +34,10 @@ export class AptosSignalPublisher {
       venue = "",
       event_time = 0,
       market_snapshot_hash,
-      weather_json = {},
+      weather_hash = "",
       ai_digest = "",
       confidence = "UNKNOWN",
       odds_efficiency = "UNKNOWN",
-      weather_hash = null,
-      ai_digest_hash = null,
     } = signalData;
 
     const truncate = (s, n) => {
@@ -48,54 +46,24 @@ export class AptosSignalPublisher {
       return str.length > n ? str.slice(0, n) : str;
     };
 
-    const compactWeather = (w) => {
-      if (!w || typeof w !== "object") return {};
-      const loc = w.location || {};
-      const cur = w.current || {};
-      const cond = cur.condition || {};
-      return {
-        location: {
-          name: truncate(loc.name, 64),
-          region: truncate(loc.region, 64),
-          country: truncate(loc.country, 64),
-        },
-        current: {
-          temp_c: cur.temp_c,
-          temp_f: cur.temp_f,
-          humidity: cur.humidity,
-          wind_kph: cur.wind_kph,
-          wind_mph: cur.wind_mph,
-          condition: truncate(cond.text, 64),
-        },
-      };
-    };
-
     const et =
       typeof event_time === "number"
         ? Math.floor(event_time)
         : parseInt(String(event_time || 0), 10);
-    const title = truncate(market_title, 128);
-    const place = truncate(venue, 128);
-    const weatherStr = weather_hash
-      ? `hash:${weather_hash}`
-      : JSON.stringify(compactWeather(weather_json));
-    const digest = ai_digest_hash
-      ? `hash:${ai_digest_hash}`
-      : truncate(ai_digest, 1024);
 
     return {
       function: `${MODULE_ADDRESS}::signal_registry::publish_signal`,
       typeArguments: [],
       functionArguments: [
-        event_id,
-        title,
-        place,
+        truncate(event_id, 128),
+        truncate(market_title, 256),
+        truncate(venue, 128),
         et,
-        market_snapshot_hash,
-        weatherStr,
-        digest,
-        confidence,
-        odds_efficiency,
+        truncate(market_snapshot_hash, 64),
+        truncate(weather_hash, 64),
+        truncate(ai_digest, 512),
+        truncate(confidence, 32),
+        truncate(odds_efficiency, 32),
       ],
     };
   }

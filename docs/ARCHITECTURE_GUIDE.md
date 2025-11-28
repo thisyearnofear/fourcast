@@ -349,7 +349,7 @@ const retryWithBackoff = async (fn, maxRetries = 3) => {
 3. If Aptos fails → Signal still exists, can retry 🔄
 4. Update SQLite with tx_hash → Link local + blockchain 🎯
 
-### Move Module Design
+### Move Module Design (v2)
 
 **Signal Storage Model:**
 ```move
@@ -359,8 +359,8 @@ struct Signal has store, drop, copy {
     venue: String,
     event_time: u64,
     market_snapshot_hash: String,
-    weather_json: String,
-    ai_digest: String,
+    weather_hash: String,        // Hash instead of full JSON (80% size reduction)
+    ai_digest: String,            // Truncated to 512 bytes
     confidence: String,
     odds_efficiency: String,
     author_address: address,
@@ -368,10 +368,17 @@ struct Signal has store, drop, copy {
 }
 
 struct SignalRegistry has key {
-    signals: Table<String, Signal>,
+    signals: Table<u64, Signal>,  // Sequential IDs instead of hash keys
     signal_count: u64,
 }
 ```
+
+**Key Improvements:**
+- Hash-based storage for weather data (64 bytes vs 1KB+)
+- Sequential signal IDs prevent collisions
+- String length validation with constants
+- View functions for querying
+- Deployed on testnet for stability
 
 ### Dual Wallet UX
 

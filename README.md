@@ -20,7 +20,7 @@ Fourcast is an AI layer that joins real-time weather with prediction market data
 
 - **Frontend**: Next.js 15, React 19, Tailwind CSS, React Three Fiber
 - **Data & AI**: WeatherAPI, Venice AI (llama-3.3-70b), Redis cache, SQLite
-- **Web3**: Wagmi/ConnectKit, Aptos Wallet Standard, Move module on devnet
+- **Web3**: Wagmi/ConnectKit, Aptos Wallet Standard, Move module v2 on testnet
 - **Backend**: Next.js API Routes, Venice AI analysis, Polymarket/Kalshi APIs
 
 ## 🚀 Quick Start
@@ -53,7 +53,8 @@ cp .env.local.example .env.local
 # .env.local
 NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key
 VENICE_API_KEY=your_venice_api_key
-NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.devnet.aptoslabs.com/v1
+NEXT_PUBLIC_APTOS_NETWORK=testnet
+NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.testnet.aptoslabs.com/v1
 NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
 ```
 

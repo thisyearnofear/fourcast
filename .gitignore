@@ -53,4 +53,4 @@ move/build/
 .vscode/
 .idea/
 *.swp
-*.swo
+*.swo.aptos-testnet/
