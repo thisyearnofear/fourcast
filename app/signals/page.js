@@ -8,6 +8,7 @@ import PageNav from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
 import Scene3D from '@/components/Scene3D';
 import { weatherService } from '@/services/weatherService';
+import { calculateSignalQuality, getQualityColor, getQualityBgColor, getQualityLabel, calculateOddsImprovement } from '@/utils/signalScoring';
 
 export default function SignalsPage() {
     const { connected: aptosConnected, walletAddress } = useAptosSignalPublisher();
@@ -20,13 +21,15 @@ export default function SignalsPage() {
     const [error, setError] = useState(null);
     const [expandedSignalId, setExpandedSignalId] = useState(null); // Track expanded signals
 
-    // Filters
+    // Filters & Search
     const [filters, setFilters] = useState({
         eventId: '',
         confidence: 'all',
         oddsEfficiency: 'all',
-        author: '' // Filter by author address
+        author: '', // Filter by author address
+        searchText: '' // Full-text search
     });
+    const [sortBy, setSortBy] = useState('newest'); // 'newest', 'confidence', 'accuracy'
 
     // Weather for theming
     const [weatherData, setWeatherData] = useState(null);
@@ -97,24 +100,56 @@ export default function SignalsPage() {
         }
     };
 
-    // Filter signals
+    // Filter signals with full-text search
     const filteredSignals = useMemo(() => {
-        return signals.filter(signal => {
+        let filtered = signals.filter(signal => {
+            // Event ID filter
             if (filters.eventId && !signal.event_id?.toLowerCase().includes(filters.eventId.toLowerCase())) {
                 return false;
             }
+            // Confidence filter
             if (filters.confidence !== 'all' && signal.confidence !== filters.confidence) {
                 return false;
             }
+            // Odds Efficiency filter
             if (filters.oddsEfficiency !== 'all' && signal.odds_efficiency !== filters.oddsEfficiency) {
                 return false;
             }
+            // Author filter
             if (filters.author && !signal.author_address?.toLowerCase().includes(filters.author.toLowerCase())) {
                 return false;
             }
+            // Full-text search across market title and AI digest
+            if (filters.searchText) {
+                const searchLower = filters.searchText.toLowerCase();
+                const titleMatch = signal.market_title?.toLowerCase().includes(searchLower);
+                const digestMatch = signal.ai_digest?.toLowerCase().includes(searchLower);
+                if (!titleMatch && !digestMatch) {
+                    return false;
+                }
+            }
             return true;
         });
-    }, [signals, filters]);
+
+        // Sort signals
+        const sorted = [...filtered].sort((a, b) => {
+            switch (sortBy) {
+                case 'confidence':
+                    // HIGH > MEDIUM > LOW
+                    const confidenceOrder = { HIGH: 3, MEDIUM: 2, LOW: 1, UNKNOWN: 0 };
+                    return (confidenceOrder[b.confidence] || 0) - (confidenceOrder[a.confidence] || 0);
+                case 'accuracy':
+                    // Won > Pending > Lost
+                    const accuracyOrder = { YES: 2, CORRECT: 2, PENDING: 1, NO: 0, INCORRECT: 0 };
+                    return (accuracyOrder[b.outcome] || 1) - (accuracyOrder[a.outcome] || 1);
+                case 'newest':
+                default:
+                    return b.timestamp - a.timestamp;
+            }
+        });
+
+        return sorted;
+    }, [signals, filters, sortBy]);
 
     // Group signals by event_id for timeline view
     const signalsByEvent = useMemo(() => {
@@ -276,8 +311,48 @@ export default function SignalsPage() {
                          />
                      ) : (
                         <>
-                            {/* Filters */}
+                            {/* Search Bar */}
+                            <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 mb-6`}>
+                                <input
+                                    type="text"
+                                    value={filters.searchText}
+                                    onChange={(e) => setFilters(prev => ({ ...prev, searchText: e.target.value }))}
+                                    placeholder="🔍 Search signals by market or analysis..."
+                                    className={`w-full px-4 py-3 text-sm rounded-lg border ${isNight ? 'bg-white/10 border-white/20 text-white placeholder-white/40' : 'bg-black/10 border-black/20 text-black placeholder-black/40'}`}
+                                />
+                            </div>
+
+                            {/* Filters & Sort */}
                              <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 mb-8`}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className={`${textColor} text-xs opacity-60 uppercase tracking-wider`}>Filters & Sort</label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setSortBy('newest')}
+                                            className={`px-3 py-1.5 text-xs rounded-lg transition-all ${sortBy === 'newest'
+                                                ? (isNight ? 'bg-blue-500/30 text-white border border-blue-400/40' : 'bg-blue-400/30 text-black border border-blue-500/40')
+                                                : `${textColor} opacity-60 hover:opacity-100`}`}
+                                        >
+                                            Newest
+                                        </button>
+                                        <button
+                                            onClick={() => setSortBy('confidence')}
+                                            className={`px-3 py-1.5 text-xs rounded-lg transition-all ${sortBy === 'confidence'
+                                                ? (isNight ? 'bg-blue-500/30 text-white border border-blue-400/40' : 'bg-blue-400/30 text-black border border-blue-500/40')
+                                                : `${textColor} opacity-60 hover:opacity-100`}`}
+                                        >
+                                            Confidence
+                                        </button>
+                                        <button
+                                            onClick={() => setSortBy('accuracy')}
+                                            className={`px-3 py-1.5 text-xs rounded-lg transition-all ${sortBy === 'accuracy'
+                                                ? (isNight ? 'bg-blue-500/30 text-white border border-blue-400/40' : 'bg-blue-400/30 text-black border border-blue-500/40')
+                                                : `${textColor} opacity-60 hover:opacity-100`}`}
+                                        >
+                                            Accuracy
+                                        </button>
+                                    </div>
+                                </div>
                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                      <div>
                                          <label className={`${textColor} text-xs opacity-60 block mb-1`}>Event ID</label>
@@ -401,14 +476,23 @@ export default function SignalsPage() {
                                                         const isExpanded = expandedSignalId === signal.id;
                                                         return (
                                                             <div
-                                                                key={signal.id || index}
-                                                                className={`border-l-2 pl-4 pb-4 cursor-pointer transition-all ${isNight ? 'border-blue-500/30 hover:border-blue-500/60' : 'border-blue-400/30 hover:border-blue-400/60'}`}
-                                                                onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)}
-                                                            >
-                                                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                                    <span className={getConfidenceBadge(signal.confidence)}>
-                                                                        {signal.confidence || 'UNKNOWN'}
-                                                                    </span>
+                                                                 key={signal.id || index}
+                                                                 className={`border-l-2 pl-4 pb-4 cursor-pointer transition-all ${isNight ? 'border-blue-500/30 hover:border-blue-500/60' : 'border-blue-400/30 hover:border-blue-400/60'}`}
+                                                                 onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)}
+                                                             >
+                                                                 <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                                     <span className={getConfidenceBadge(signal.confidence)}>
+                                                                         {signal.confidence || 'UNKNOWN'}
+                                                                     </span>
+                                                                     {/* Quality Score Badge */}
+                                                                     {(() => {
+                                                                         const quality = calculateSignalQuality(signal);
+                                                                         return (
+                                                                             <span className={`px-3 py-1 rounded-full text-xs font-light border ${getQualityBgColor(quality, isNight)} ${getQualityColor(quality, isNight)} border-current/30`}>
+                                                                                 {getQualityLabel(quality)} ({Math.round(quality)})
+                                                                             </span>
+                                                                         );
+                                                                     })()}
                                                                     {signal.odds_efficiency && (
                                                                         <span className={`px-3 py-1 rounded-full text-xs font-light border ${signal.odds_efficiency === 'INEFFICIENT'
                                                                             ? (isNight ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' : 'bg-orange-400/20 text-orange-800 border-orange-400/30')
