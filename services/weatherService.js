@@ -1,10 +1,12 @@
 import axios from 'axios';
+import { convertOpenMeteoToWeatherAPI } from './dataConverter.js';
 
 // Updated for Next.js - use API route in browser, direct API in Node.js
 const IS_BROWSER = typeof window !== 'undefined';
 const USE_API_ROUTE = IS_BROWSER; // Only use API route in browser context
 const API_BASE = '/api';
 const WEATHER_API_BASE = 'https://api.weatherapi.com/v1';
+const OPEN_METEO_API_BASE = 'https://api.open-meteo.com/v1';
 
 // Get API key dynamically to support runtime env loading
 const getApiKey = () => process.env.NEXT_PUBLIC_WEATHER_API_KEY;
@@ -150,6 +152,8 @@ const getDemoWeatherData = (requestedLocation) => ({
   cached: false
 });
 
+
+
 export const weatherService = {
   getCurrentWeather: async (location) => {
     try {
@@ -157,6 +161,35 @@ export const weatherService = {
       if (isTestEnv) {
         return getDemoWeatherData(location);
       }
+      
+      // Try Open-Meteo first (free, no API key required)
+      try {
+        console.log('Trying Open-Meteo API for location:', location);
+        // Geocode location to get coordinates using Open-Meteo Geocoding API
+        const geocodeResponse = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`);
+        if (geocodeResponse.data.results && geocodeResponse.data.results.length > 0) {
+          const { latitude, longitude, name } = geocodeResponse.data.results[0];
+          
+          // Get weather data
+          const weatherResponse = await axios.get(`${OPEN_METEO_API_BASE}/forecast`, {
+            params: {
+              latitude,
+              longitude,
+              hourly: 'temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation',
+              daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max',
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              forecast_days: 7
+            }
+          });
+          
+          const convertedData = convertOpenMeteoToWeatherAPI(weatherResponse.data, name);
+          console.log(`Successfully fetched weather data from Open-Meteo for: ${location}`);
+          return convertedData;
+        }
+      } catch (openMeteoError) {
+        console.log('Open-Meteo API failed, falling back to WeatherAPI:', openMeteoError.message);
+      }
+      
       let response;
       
       if (USE_API_ROUTE) {

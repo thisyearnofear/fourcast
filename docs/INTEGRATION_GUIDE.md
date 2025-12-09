@@ -340,6 +340,119 @@ Date range maps to `maxDaysToResolution`:
 - "this-week" → 7 days
 - "later" → 60 days
 
+## Farcaster / Neynar Integration
+
+### Setup
+
+1. **Get API Keys**
+   - Register at https://dev.neynar.com
+   - Create a new application
+   - Generate API key
+
+2. **Create Bot Signer**
+   - Go to Neynar Dashboard → "Agents and Bots" → "Use Existing Account"
+   - Click Sign in With Neynar
+   - Connect your Farcaster account (or create fourcast bot account)
+   - Approve signer via onchain transaction (~$2 OP ETH on Optimism)
+   - Copy the generated `SIGNER_UUID`
+
+3. **Set Environment Variables**
+   ```bash
+   NEYNAR_API_KEY=your_neynar_api_key
+   FARCASTER_SIGNER_UUID=your_signer_uuid
+   NEYNAR_WEBHOOK_SECRET=your_webhook_secret (optional, for signature verification)
+   ```
+
+4. **Configure Webhook in Neynar Dashboard**
+   - Target URL: `https://yourapp.com/api/farcaster/webhook`
+   - Events: `cast.created`
+   - This enables real-time mention detection
+
+### Architecture
+
+**Service Layer** (`services/farcasterService.js`):
+- Single source of truth for Neynar API interactions
+- Encapsulates: publishing casts, fetching users, formatting messages
+- Reusable across bot and web endpoints
+
+**Webhook Handler** (`app/api/farcaster/webhook/route.js`):
+- Receives mention events from Neynar
+- Parses natural language (e.g., "@fourcast weather in NYC")
+- Fetches data from core services (weather, markets)
+- Publishes formatted response casts
+
+**Data Reuse**:
+- Weather data flows through `weatherService` (same as web)
+- Market signals formatted via `formatSignalCast()` helper
+- Authentication via stored `FARCASTER_SIGNER_UUID`
+
+### Capabilities
+
+Users mention `@fourcast` with natural language queries:
+
+```
+@fourcast weather in New York
+→ Returns current conditions + 3-day forecast as cast
+
+@fourcast weather for London
+→ Same formatted response for different location
+
+@fourcast NYC
+→ Detects location automatically
+```
+
+### Future Enhancements
+
+**Tier 1 (Easy)**
+- Direct market queries: "@fourcast markets for weather"
+- Market analysis: "@fourcast analyze POLY weather"
+- Leaderboard checks: "@fourcast top forecasters"
+
+**Tier 2 (Moderate)**
+- Profile linking: Store user Farcaster FID + wallet in profile
+- Direct messages: Send analysis to user via Warpcast DM
+- Cast embeds: Include market links in weather casts
+
+**Tier 3 (Advanced)**
+- Automated signals: Publish market signals as casts
+- Onchain interactions: Execute trades from Farcaster mentions
+- Reputation sync: Pull Farcaster user score for credibility ranking
+
+## Weather Data Integration
+
+### Open-Meteo Primary Source
+
+Fourcast uses **Open-Meteo** as the primary weather data source with **WeatherAPI** as fallback:
+
+**Open-Meteo Advantages:**
+- ✅ Free with no API key required
+- ✅ Unlimited requests (no rate limiting)
+- ✅ Extended forecast (up to 16 days vs 3 days)
+- ✅ Comprehensive data (temperature, humidity, wind, precipitation, UV index, weather codes)
+
+**Architecture:**
+```
+Primary:   Open-Meteo → Geocoding API → Weather API
+Fallback:  WeatherAPI (if Open-Meteo fails)
+Cache:     10-minute TTL, LRU eviction at 100 entries
+Limit:     15 requests/hour per IP
+Fallback:  Demo data when all sources fail
+```
+
+**Implementation Files:**
+- `services/dataConverter.js` - Centralized data conversion (shared utility)
+- `services/weatherService.js` - Client/SSR weather fetching
+- `app/api/weather/route.js` - Server-side endpoint with caching & rate limiting
+
+**Data Conversion:**
+Raw Open-Meteo data (WMO weather codes, raw metrics) → WeatherAPI-compatible format (human-readable conditions, all temperature/wind/precipitation units)
+
+**Endpoints:**
+- Geocoding: `https://geocoding-api.open-meteo.com/v1/search`
+- Weather: `https://api.open-meteo.com/v1/forecast`
+
+To test conversion: `npm run test:converter`
+
 ---
 
-_Integration Guide - Last updated: November 2024_
+_Integration Guide - Last updated: December 2024_

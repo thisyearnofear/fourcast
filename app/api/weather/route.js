@@ -1,3 +1,5 @@
+import { convertOpenMeteoToWeatherAPI } from '../../../services/dataConverter.js';
+
 // Simple in-memory cache that works locally and with Next.js
 const cache = new Map();
 const rateLimitMap = new Map();
@@ -187,6 +189,8 @@ function getDemoWeatherData(requestedLocation) {
   };
 }
 
+
+
 async function getWeatherData(location, ip) {
   if (isRateLimited(ip)) {
     console.log(`Rate limit exceeded for IP: ${ip}, serving demo data`);
@@ -203,6 +207,46 @@ async function getWeatherData(location, ip) {
       cached: true,
       cacheAge: Math.round((Date.now() - cachedData.timestamp) / 1000),
     };
+  }
+
+  // Try Open-Meteo first (free, no API key required)
+  try {
+    console.log('Trying Open-Meteo API for location:', location);
+    // Geocode location to get coordinates using Open-Meteo Geocoding API
+    const geocodeResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`);
+    if (geocodeResponse.ok) {
+      const geocodeData = await geocodeResponse.json();
+      if (geocodeData.results && geocodeData.results.length > 0) {
+        const { latitude, longitude, name } = geocodeData.results[0];
+        
+        // Get weather data
+        const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max&timezone=${Intl.DateTimeFormat().resolvedOptions().timeZone}&forecast_days=7`);
+        
+        if (weatherResponse.ok) {
+          const weatherData = await weatherResponse.json();
+          const convertedData = convertOpenMeteoToWeatherAPI(weatherData, name);
+          
+          // Cache the converted data
+          cache.set(cacheKey, {
+            data: convertedData,
+            timestamp: Date.now(),
+          });
+          
+          if (cache.size > 100) {
+            const oldestKey = cache.keys().next().value;
+            cache.delete(oldestKey);
+          }
+          
+          console.log(`Successfully fetched weather data from Open-Meteo for: ${location}`);
+          return {
+            ...convertedData,
+            cached: false,
+          };
+        }
+      }
+    }
+  } catch (openMeteoError) {
+    console.log('Open-Meteo API failed, falling back to WeatherAPI:', openMeteoError.message);
   }
 
   const API_KEY =

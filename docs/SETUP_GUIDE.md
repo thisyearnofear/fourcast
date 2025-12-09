@@ -44,7 +44,28 @@ NEXT_PUBLIC_BNB_CHAIN_ID=56
 NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.testnet.aptoslabs.com/v1
 NEXT_PUBLIC_APTOS_NETWORK=testnet
 NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
+
+# Farcaster / Neynar Integration
+NEYNAR_API_KEY=your_neynar_api_key
+FARCASTER_SIGNER_UUID=your_signer_uuid_from_neynar
+NEYNAR_WEBHOOK_SECRET=your_webhook_secret_from_neynar  # optional
 ```
+
+### Farcaster Setup
+
+To enable Farcaster bot integration:
+
+1. **Register at Neynar**: https://dev.neynar.com
+2. **Create bot signer**:
+   - Neynar Dashboard → Agents & Bots → Use Existing Account
+   - Connect to @fourcast (or your bot Farcaster account)
+   - Approve signer onchain via Optimism KeyGateway (~$2 OP ETH)
+   - Copy the signer UUID
+3. **Set environment variables** (above)
+4. **Configure webhook** (production only):
+   - Neynar Dashboard → Webhooks
+   - Target URL: `https://yourdomain.com/api/farcaster/webhook`
+   - Events: `cast.created`
 
 ### Development
 

@@ -15,6 +15,7 @@ Fourcast is an AI layer that joins real-time weather with prediction market data
 - **On-Chain Signals**: Publish to Aptos with tx hash feedback
 - **Venue Extraction**: Automatic location detection for sports events
 - **Cross-Platform Arbitrage**: Price discrepancy detection between platforms
+- **Farcaster Distribution**: Social media integration via Neynar—query weather forecasts directly in Farcaster
 
 ## 🛠️ Tech Stack
 
@@ -56,6 +57,11 @@ VENICE_API_KEY=your_venice_api_key
 NEXT_PUBLIC_APTOS_NETWORK=testnet
 NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.testnet.aptoslabs.com/v1
 NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
+
+# Farcaster / Neynar Integration
+NEYNAR_API_KEY=your_neynar_api_key
+FARCASTER_SIGNER_UUID=your_signer_uuid_from_neynar
+NEYNAR_WEBHOOK_SECRET=your_webhook_secret_from_neynar
 ```
 
 ### Development
@@ -70,9 +76,9 @@ npm run build
 
 ## 📚 Documentation
 
-- [Setup Guide](./docs/SETUP_GUIDE.md) - Installation, configuration and Aptos integration
+- [Setup Guide](./docs/SETUP_GUIDE.md) - Installation, configuration, Aptos and Farcaster integration
 - [Architecture Guide](./docs/ARCHITECTURE_GUIDE.md) - System design and patterns
-- [Integration Guide](./docs/INTEGRATION_GUIDE.md) - Multi-platform integration and Venice AI analysis
+- [Integration Guide](./docs/INTEGRATION_GUIDE.md) - Multi-platform integration, Venice AI analysis, and Farcaster details
 - [API Reference](./docs/API_REFERENCE.md) - Complete API documentation and product roadmap
 
 ## 🌐 Endpoints
@@ -84,6 +90,10 @@ npm run build
 - `POST /api/signals` - Publish signals to SQLite/Aptos
 - `GET /api/signals` - List latest signals
 - `GET /api/leaderboard` - Reputation system leaderboard
+
+### Farcaster Integration
+- `POST /api/farcaster/webhook` - Receives mentions from Farcaster via Neynar
+- `GET /api/farcaster/webhook` - Health check endpoint
 
 ## 🤝 Contributing
 
