@@ -14,8 +14,8 @@ import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
 import MySignalsTab from '@/app/components/signals/MySignalsTab';
 
 export default function SignalsPage() {
-    const { connected: aptosConnected, walletAddress } = useAptosSignalPublisher();
-    
+    const { connected: aptosConnected, walletAddress, tipSignal } = useAptosSignalPublisher();
+
     const [signals, setSignals] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [activeTab, setActiveTab] = useState('feed'); // 'feed', 'my-signals', or 'leaderboard'
@@ -232,63 +232,63 @@ export default function SignalsPage() {
                     </div>
 
                     {/* Tab Switcher */}
-                     <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-4">
-                         <div className={`inline-flex rounded-2xl p-1 border ${cardBgColor} backdrop-blur-xl flex-wrap gap-1`}>
-                             <button
-                                 onClick={() => setActiveTab('feed')}
-                                 className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'feed'
-                                     ? (isNight ? 'bg-blue-500/30 text-white border border-blue-400/40' : 'bg-blue-400/30 text-black border border-blue-500/40')
-                                     : `${textColor} opacity-60 hover:opacity-100`
-                                     }`}
-                             >
-                                 📡 Signal Feed
-                             </button>
-                             {aptosConnected && (
-                                 <button
-                                     onClick={() => setActiveTab('my-signals')}
-                                     className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'my-signals'
-                                         ? (isNight ? 'bg-green-500/30 text-white border border-green-400/40' : 'bg-green-400/30 text-black border border-green-500/40')
-                                         : `${textColor} opacity-60 hover:opacity-100`
-                                         }`}
-                                 >
-                                     ⭐ My Signals
-                                 </button>
-                             )}
-                             <button
-                                 onClick={() => setActiveTab('leaderboard')}
-                                 className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'leaderboard'
-                                     ? (isNight ? 'bg-purple-500/30 text-white border border-purple-400/40' : 'bg-purple-400/30 text-black border border-purple-500/40')
-                                     : `${textColor} opacity-60 hover:opacity-100`
-                                     }`}
-                             >
-                                 🏆 Top Analysts
-                             </button>
-                         </div>
-                     </div>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-4">
+                        <div className={`inline-flex rounded-2xl p-1 border ${cardBgColor} backdrop-blur-xl flex-wrap gap-1`}>
+                            <button
+                                onClick={() => setActiveTab('feed')}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'feed'
+                                    ? (isNight ? 'bg-blue-500/30 text-white border border-blue-400/40' : 'bg-blue-400/30 text-black border border-blue-500/40')
+                                    : `${textColor} opacity-60 hover:opacity-100`
+                                    }`}
+                            >
+                                📡 Signal Feed
+                            </button>
+                            {aptosConnected && (
+                                <button
+                                    onClick={() => setActiveTab('my-signals')}
+                                    className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'my-signals'
+                                        ? (isNight ? 'bg-green-500/30 text-white border border-green-400/40' : 'bg-green-400/30 text-black border border-green-500/40')
+                                        : `${textColor} opacity-60 hover:opacity-100`
+                                        }`}
+                                >
+                                    ⭐ My Signals
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setActiveTab('leaderboard')}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'leaderboard'
+                                    ? (isNight ? 'bg-purple-500/30 text-white border border-purple-400/40' : 'bg-purple-400/30 text-black border border-purple-500/40')
+                                    : `${textColor} opacity-60 hover:opacity-100`
+                                    }`}
+                            >
+                                🏆 Top Analysts
+                            </button>
+                        </div>
+                    </div>
                 </header>
 
                 {/* Main Content */}
-                 <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
-                     {activeTab === 'leaderboard' ? (
-                         <LeaderboardTab
-                             leaderboard={leaderboard}
-                             isNight={isNight}
-                             textColor={textColor}
-                             cardBgColor={cardBgColor}
-                             onProfileClick={handleProfileClick}
-                         />
-                     ) : activeTab === 'my-signals' ? (
-                         <MySignalsTab
-                             signals={signals.filter(s => s.author_address === walletAddress)}
-                             isLoading={isLoading}
-                             isNight={isNight}
-                             textColor={textColor}
-                             cardBgColor={cardBgColor}
-                             expandedSignalId={expandedSignalId}
-                             setExpandedSignalId={setExpandedSignalId}
-                             formatTimestamp={formatTimestamp}
-                         />
-                     ) : (
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
+                    {activeTab === 'leaderboard' ? (
+                        <LeaderboardTab
+                            leaderboard={leaderboard}
+                            isNight={isNight}
+                            textColor={textColor}
+                            cardBgColor={cardBgColor}
+                            onProfileClick={handleProfileClick}
+                        />
+                    ) : activeTab === 'my-signals' ? (
+                        <MySignalsTab
+                            signals={signals.filter(s => s.author_address === walletAddress)}
+                            isLoading={isLoading}
+                            isNight={isNight}
+                            textColor={textColor}
+                            cardBgColor={cardBgColor}
+                            expandedSignalId={expandedSignalId}
+                            setExpandedSignalId={setExpandedSignalId}
+                            formatTimestamp={formatTimestamp}
+                        />
+                    ) : (
                         <>
                             <SignalFilters
                                 filters={filters}
@@ -376,6 +376,18 @@ export default function SignalsPage() {
                                                         isNight={isNight}
                                                         textColor={textColor}
                                                         onProfileClick={handleProfileClick}
+                                                        onTip={async (amount) => {
+                                                            try {
+                                                                if (!aptosConnected) {
+                                                                    alert("Please connect your wallet to tip!");
+                                                                    return;
+                                                                }
+                                                                const tx = await tipSignal(signal.author_address, signal.signal_id || index, amount || 10000000);
+                                                                alert(`Tip sent! Tx: ${tx}`);
+                                                            } catch (e) {
+                                                                alert(e.message);
+                                                            }
+                                                        }}
                                                     />
                                                 ))}
                                             </div>

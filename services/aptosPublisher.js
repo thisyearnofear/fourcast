@@ -15,11 +15,20 @@ import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 const APTOS_NETWORK = process.env.NEXT_PUBLIC_APTOS_NETWORK || Network.DEVNET;
 const MODULE_ADDRESS =
   process.env.NEXT_PUBLIC_APTOS_MODULE_ADDRESS ||
-  "0xa03f13d8fb211a9f7dfbe8f24b7872ce4b4205f8d1bee1a36cdeabaae3df5df1"; // Updated to deployed address
+  "0xa03f13d8fb211a9f7dfbe8f24b7872ce4b4205f8d1bee1a36cdeabaae3df5df1"; // Aptos Testnet
+
+// Movement has a separate module that supports payments/tipping
+const MOVEMENT_MODULE_ADDRESS =
+  process.env.NEXT_PUBLIC_MOVEMENT_MODULE_ADDRESS ||
+  MODULE_ADDRESS;
 
 export class AptosSignalPublisher {
   constructor() {
-    const config = new AptosConfig({ network: APTOS_NETWORK });
+    const rpcUrl = process.env.NEXT_PUBLIC_APTOS_CUSTOM_RPC_URL || process.env.NEXT_PUBLIC_APTOS_NODE_URL;
+    const config = new AptosConfig({
+      network: APTOS_NETWORK,
+      fullnode: rpcUrl
+    });
     this.aptos = new Aptos(config);
   }
 
@@ -51,8 +60,13 @@ export class AptosSignalPublisher {
         ? Math.floor(event_time)
         : parseInt(String(event_time || 0), 10);
 
+    // Dynamic switching for Movement Marketplace
+    const useMarketplace = process.env.NEXT_PUBLIC_USE_MARKETPLACE_CONTRACT === 'true';
+    const targetModule = useMarketplace ? MOVEMENT_MODULE_ADDRESS : MODULE_ADDRESS;
+    const targetContract = useMarketplace ? "signal_marketplace" : "signal_registry";
+
     return {
-      function: `${MODULE_ADDRESS}::signal_registry::publish_signal`,
+      function: `${targetModule}::${targetContract}::publish_signal`,
       typeArguments: [],
       functionArguments: [
         truncate(event_id, 128),
@@ -65,6 +79,23 @@ export class AptosSignalPublisher {
         truncate(confidence, 32),
         truncate(odds_efficiency, 32),
       ],
+    };
+  }
+
+  /**
+   * Prepare transaction payload for tipping an analyst
+   * This calls the 'signal_marketplace' contract on Movement
+   */
+  prepareTipAnalystPayload(authorAddress, signalId, amount = 10000000) {
+    // Default to 0.1 MOVE (assuming 8 decimals, check unit)
+    return {
+      function: `${MOVEMENT_MODULE_ADDRESS}::signal_marketplace::tip_analyst`,
+      typeArguments: [],
+      functionArguments: [
+        authorAddress,
+        String(signalId), // Ensure u64 is passed as string if needed, or number
+        String(amount)
+      ]
     };
   }
 

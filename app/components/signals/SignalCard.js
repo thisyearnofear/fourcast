@@ -1,6 +1,6 @@
 import { ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
 
-export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick }) {
+export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip }) {
     return (
         <div
             className={`border-l-2 pl-4 pb-4 cursor-pointer transition-all ${isNight ? 'border-blue-500/30 hover:border-blue-500/60' : 'border-blue-400/30 hover:border-blue-400/60'}`}
@@ -34,15 +34,34 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
             )}
 
             {signal.author_address && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onProfileClick(signal.author_address);
-                    }}
-                    className={`text-xs ${textColor} opacity-50 mt-2 hover:opacity-100 hover:underline text-left`}
-                >
-                    By: {signal.author_address.substring(0, 6)}...{signal.author_address.substring(signal.author_address.length - 4)}
-                </button>
+                <div className="flex items-center justify-between mt-2">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onProfileClick(signal.author_address);
+                        }}
+                        className={`text-xs ${textColor} opacity-50 hover:opacity-100 hover:underline text-left`}
+                    >
+                        By: {signal.author_address.substring(0, 6)}...{signal.author_address.substring(signal.author_address.length - 4)}
+                    </button>
+
+                    {onTip && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const amount = prompt("Enter tip amount (in Octas/units):", "10000000");
+                                if (amount) onTip(amount);
+                            }}
+                            className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${isNight
+                                ? 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30'
+                                : 'bg-green-600/10 hover:bg-green-600/20 text-green-700 border border-green-600/20'
+                                }`}
+                        >
+                            <span>💸</span>
+                            <span>Tip Analyst</span>
+                        </button>
+                    )}
+                </div>
             )}
         </div>
     );

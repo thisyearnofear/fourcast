@@ -64,6 +64,41 @@ export function useAptosSignalPublisher() {
     }, [connected, account, signAndSubmitTransaction]);
 
     /**
+     * Tip an analyst (Movement Only)
+     */
+    const tipSignal = useCallback(async (authorAddress, signalId, amount) => {
+        if (!connected || !account) {
+            throw new Error("Please connect your wallet to tip");
+        }
+
+        // Prevent tipping yourself
+        if (account.address === authorAddress) {
+            throw new Error("You cannot tip your own signal");
+        }
+
+        try {
+            const payload = aptosPublisher.prepareTipAnalystPayload(authorAddress, signalId, amount);
+
+            const response = await signAndSubmitTransaction({
+                sender: account.address,
+                data: payload,
+            });
+
+            // Wait for transaction confirmation
+            const result = await aptosPublisher.waitForTransaction(response.hash);
+
+            if (result.success) {
+                return response.hash;
+            } else {
+                throw new Error(result.vm_status || 'Tip transaction failed');
+            }
+        } catch (error) {
+            console.error("Tip failed:", error);
+            throw error;
+        }
+    }, [connected, account, signAndSubmitTransaction]);
+
+    /**
      * Get user's signal count
      */
     const getMySignalCount = useCallback(async () => {
@@ -73,6 +108,7 @@ export function useAptosSignalPublisher() {
 
     return {
         publishToAptos,
+        tipSignal,
         getMySignalCount,
         isPublishing,
         publishError,
