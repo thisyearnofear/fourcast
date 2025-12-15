@@ -78,7 +78,7 @@ export async function POST(request) {
 
     // 2. Fetch Kalshi Data (Category-aware)
     let kalshiMarkets = [];
-    const shouldFetchKalshi = analysisType === 'discovery' || eventType === 'all' || eventType === 'Weather' || eventType === 'Politics' || eventType === 'Economics';
+    const shouldFetchKalshi = analysisType === 'discovery' || ['all','Weather','Politics','Economics','Sports','Soccer','NFL','NBA'].includes(eventType);
 
     if (shouldFetchKalshi) {
       try {
@@ -98,7 +98,7 @@ export async function POST(request) {
           if (searchText && !m.title.toLowerCase().includes(searchText.toLowerCase())) return false;
           // Kalshi volume is in contracts (approx $1), so we scale minVolume down
           // If minVolume is > 10000, we require > 100 contracts on Kalshi
-          if (minVolume && minVolume > 10000 && m.volume24h < 100) return false;
+          if (minVolume && minVolume > 10000 && m.volume24h < 50) return false;
           return true;
         });
         console.log(`[Markets API] Found ${kalshiMarkets.length} Kalshi markets for category ${kalshiCategory}`);

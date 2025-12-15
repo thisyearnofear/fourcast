@@ -1,4 +1,4 @@
-const BASE_URL = 'https://api.elections.kalshi.com/trade-api/v2';
+const BASE_URL = process.env.KALSHI_BASE_URL || 'https://trading-api.kalshi.com/v2';
 
 export const kalshiService = {
     /**
@@ -57,13 +57,6 @@ export const kalshiService = {
     },
 
     /**
-     * Search/Discovery for Weather Markets (legacy - kept for backward compatibility)
-     */
-    async getWeatherMarkets() {
-        return this.getMarketsByCategory('Climate and Weather');
-    },
-
-    /**
      * Get markets by category
      */
     async getMarketsByCategory(category = 'all', limit = 50) {
@@ -107,7 +100,7 @@ export const kalshiService = {
     /**
      * Normalize Kalshi markets to our internal format
      */
-    normalizeMarkets(markets) {
+    normalizeMarkets(markets = []) {
         return markets.map(m => {
             const yesPrice = m.yes_ask || m.yes_bid || 50;
             const noPrice = 100 - yesPrice;
