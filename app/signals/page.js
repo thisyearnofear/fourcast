@@ -12,6 +12,7 @@ import SignalFilters from '@/app/components/signals/SignalFilters';
 import SignalCard from '@/app/components/signals/SignalCard';
 import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
 import MySignalsTab from '@/app/components/signals/MySignalsTab';
+import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 
 export default function SignalsPage() {
     const { connected: aptosConnected, walletAddress, tipSignal } = useAptosSignalPublisher();
@@ -19,7 +20,7 @@ export default function SignalsPage() {
     const [signals, setSignals] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [userStatsCache, setUserStatsCache] = useState({}); // Cache user stats
-    const [activeTab, setActiveTab] = useState('feed'); // 'feed', 'my-signals', or 'leaderboard'
+    const [activeTab, setActiveTab] = useState('feed'); // 'feed', 'defi', 'my-signals', or 'leaderboard'
     const [selectedProfile, setSelectedProfile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -261,6 +262,15 @@ export default function SignalsPage() {
                             >
                                 📡 Signal Feed
                             </button>
+                            <button
+                                onClick={() => setActiveTab('defi')}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'defi'
+                                    ? (isNight ? 'bg-orange-500/30 text-white border border-orange-400/40' : 'bg-orange-400/30 text-black border border-orange-500/40')
+                                    : `${textColor} opacity-60 hover:opacity-100`
+                                    }`}
+                            >
+                                💱 DeFi Arbs
+                            </button>
                             {aptosConnected && (
                                 <button
                                     onClick={() => setActiveTab('my-signals')}
@@ -287,7 +297,13 @@ export default function SignalsPage() {
 
                 {/* Main Content */}
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
-                    {activeTab === 'leaderboard' ? (
+                    {activeTab === 'defi' ? (
+                        <DeFiArbitrageTab
+                            isNight={isNight}
+                            textColor={textColor}
+                            cardBgColor={cardBgColor}
+                        />
+                    ) : activeTab === 'leaderboard' ? (
                         <LeaderboardTab
                             leaderboard={leaderboard}
                             isNight={isNight}

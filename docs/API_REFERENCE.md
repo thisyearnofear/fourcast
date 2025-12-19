@@ -227,7 +227,193 @@ POST /api/validate/market-compatibility
 - **Analysis API**: 10 requests per minute per IP
 - **Trading API**: 5 requests per minute per wallet
 
-## Product Roadmap
+## Movement Hackathon Strategy (Dec 2024 - Jan 2025)
+
+### Target: Multi-Category Victory Through Signal Marketplace Composability
+
+Fourcast is competing across **Best DeFi App**, **Best Consumer App**, **Best DevEx Tool**, and **People's Choice** by proving the Signal Marketplace is a reusable, forkable infrastructure for any edge case.
+
+#### Phase 1: DeFi Primitive Layer (🎯 Best DeFi App - $5K) ✅ COMPLETE
+
+**Status:** SHIPPED Dec 19, 2024
+
+**DeFi Arbitrage Endpoint:**
+```
+GET /api/defi/arbitrage?minSpread=5&limit=20&minVolume=50000
+```
+
+Returns cross-platform arbitrage opportunities with:
+- Platform-specific pricing (Polymarket vs Kalshi odds comparison)
+- Spread calculations (% and basis points)
+- Capital efficiency (profit per $1k deployed)
+- Liquidity scores (0-100 based on 24h volume)
+- Flash loan suitability indicators (spreads >10%)
+- Direct execution links to both platforms
+
+**Frontend:** "💱 DeFi Arbs" tab in `/signals` page with:
+- Filterable opportunities (adjustable spread threshold 1-30%)
+- Quick preview cards (buy/sell platform, odds, spread %)
+- Expandable details (capital requirements, liquidity analysis, AI digest)
+- Direct links to view/execute on Polymarket & Kalshi
+
+**Implementation:**
+- `app/api/defi/arbitrage/route.js` - Endpoint (180 LOC)
+- `app/components/signals/DeFiArbitrageTab.js` - UI (340 LOC)
+- `app/signals/page.js` - Tab integration
+- Reuses `arbitrageService.js`, `polymarketService.js`, `kalshiService.js`
+
+**Why It Wins:**
+- Novel: Arbitrage signals as composable DeFi primitives (not just betting)
+- Revenue model: Clear path (LP fees per signal → analyst reputation → leaderboard)
+- Real mainnet potential: Opportunities are quantifiable and executable
+- Enhancement-first: No rebuilds, leveraged existing services
+
+---
+
+#### Phase 2: Consumer Experience (🎯 Best Consumer App - $5K) ✅ COMPLETE
+
+**Status:** SHIPPED Dec 19, 2024
+
+**Consolidation:**
+- Merged `userStatsService.js` + `resolutionService.js` → unified `reputationService.js`
+- Deleted `shareableContentService.js` (moved lightweight sharing logic to `utils/shareSignal.js`)
+- Updated all imports across API routes and components
+- Eliminated code duplication, single source of truth for reputation
+
+**Enhanced Leaderboard UI:**
+- Analyst tier badges (Sage 👑, Elite 🌟, Forecaster 🎯, Predictor 📊, Novice 🌱)
+- Earnings display in APT (calculated from tips received)
+- Win rate %, total signals, rank
+- Mobile-responsive grid (1-col → 4-col)
+
+**Backend (reputationService.js):**
+- `getUserStats()` - Win rate, streaks, tiers, earnings
+- `getUserRanking()` - Leaderboard rankings
+- `resolveSignal()` - Market outcome integration (Polymarket/Kalshi)
+- Backward compatible export functions
+
+**Core User Flow:**
+- Users browse signals feed → Click analyst profile → See tier & earnings → Tip (existing Aptos integration)
+- Analysts publish signals → Receive tips → Climb tier system → Earn reputation
+- Leaderboard shows top analysts with transparent earnings
+
+**Code Changes:**
+- `services/reputationService.js` - Unified reputation system (350 LOC)
+- `utils/shareSignal.js` - Lightweight sharing (40 LOC)
+- `app/components/signals/LeaderboardTab.js` - Enhanced UI with tiers & earnings
+
+**Why It Wins:**
+- Real economic model: tipping as reward mechanism (Movement gas costs enable micro-tips)
+- Transparent reputation: community can verify analyst track records
+- Simple but powerful: tier system motivates quality signals
+- Working demo ready with existing Aptos integration
+
+---
+
+#### Phase 3: DevEx Tool + Ecosystem Composability (🎯 Best DevEx Tool - $5K)
+
+**Timeframe:** Week 3-4 + Video Proof
+
+**The Core Idea:** Prove that Fourcast's signal infrastructure is **forkable for any edge case**.
+
+**Strategy:** Create a forking framework + video demonstrating adaptation to different signal types.
+
+**Reusable Components Exposed:**
+1. **Signal Registry Module** (`signal_marketplace.move`)
+   - Deployed as standalone package
+   - Type-safe Move contract for any signal type
+   - On-chain reputation tracking (works for any domain)
+
+2. **TypeScript Signal SDK** (new)
+   - Standardized shape for signal publishing
+   - Weather → generic edge data
+   - Move module interaction abstraction
+   - CLI tool to initialize new signal domain
+
+3. **Backend Signal Analyzer Pattern** (`aiService.js`)
+   - Generic analysis loop: fetch edge data → AI → publish signal
+   - Works with any data source (not just weather)
+   - Consolidate logic for easy templating
+
+**Video Proof of Concept (5-7 min):**
+Demonstrate forking Fourcast for **3 edge case domains** in parallel:
+
+1. **Mobility & Geospatial Signals**
+   - Data: Google Popular Times API / foot traffic analytics
+   - Use case: Predict event turnout, retail demand
+   - Shows: Same Move module, different data source
+
+2. **Media & Narrative Edge Signals**
+   - Data: Farcaster sentiment shifts (existing integration!)
+   - Use case: Predict narrative-driven market moves
+   - Shows: Existing Neynar integration adapted for signals
+
+3. **On-Chain Activity Edge Signals**
+   - Data: Movement network transaction patterns
+   - Use case: Predict governance/DeFi protocol outcomes
+   - Shows: Signal primitives for crypto-native markets
+
+**Video Flow:**
+- 30 sec: Explain Fourcast's modular architecture
+- 1 min each: Fork, customize, and deploy each signal type
+- 30 sec: All three variants running in parallel
+- 1 min: Show how any team can replicate this
+
+**Deliverable:**
+- SDK TypeScript package (documented, tested)
+- 3 deployable signal domains running on Movement testnet
+- Video on GitHub + posted in Movement Discord
+- Simple getting-started guide for developers
+
+**Why It Wins:**
+- **Solves real DevEx gap**: No reusable signal framework exists
+- **Composable**: Other builders extend, not rebuild
+- **Scalable**: Proves Fourcast can power entire ecosystem of signal types
+- **Monetization path**: SDKs, domain-specific subscriptions
+
+---
+
+#### Phase 4: People's Choice (🎯 People's Choice - $5K)
+
+**Timeframe:** Ongoing
+
+Strategy: Win genuine community love through each of the above.
+
+- DeFi devs vote for arbitrage signals API
+- Community votes on best analyst signals
+- Developers endorse DevEx tooling in Discord/GitHub
+
+**Key:** Don't build special "People's Choice" feature. Build something so good communities naturally want to use and vote for it.
+
+---
+
+### Consolidation Strategy (Core Principles)
+
+**ENHANCEMENT FIRST:**
+- Reuse existing signal marketplace, not new payment systems
+- Extend `arbitrageService.js` → new DeFi layer
+- Adapt existing Neynar integration → media sentiment signals
+- No x402 integration (not a true fit for this use case)
+
+**AGGRESSIVE CONSOLIDATION:**
+- Delete: `shareableContentService.js` (merge into signal publishing)
+- Merge: `userStatsService.js` + `resolutionService.js` → unified reputation tracker
+- Reuse: `aiService.js` for any signal type (keep pattern generic)
+
+**PREVENT BLOAT:**
+- One signal marketplace for all domains
+- One Move module deployed 3 ways
+- One video proof of adaptability
+- No separate apps, no separate contracts
+
+**DRY:**
+- Signal shape is DDD (domain-driven design): use everywhere
+- Move module = single source of truth for on-chain state
+- Analyzer pattern = single template for all edge detection
+
+---
+
+## Product Roadmap (Post-Hackathon)
 
 ### Phase 1: Core Platform (Completed ✅)
 
@@ -240,46 +426,36 @@ POST /api/validate/market-compatibility
 - ✅ Polymarket aggregation
 - ✅ Venue extraction for sports events
 
-### Phase 2: Enhanced Analytics & Platform Integration (In Progress 🚧)
+### Phase 2: Signal Marketplace + DeFi Layer (IN PROGRESS 🚧 - Hackathon Focus)
 
-**Q1 2025:**
-- 🚧 Kalshi integration with platform badges and filters
-- 🚧 Advanced risk assessment tools
-- 🚧 Historical performance tracking
-- 🚧 Portfolio management features
-- 🚧 Enhanced mobile experience
-- 🚧 Multi-language support
-- 🚧 Cross-platform arbitrage detection
-- 🚧 **Signals resolution tracking** (see Signals Roadmap below)
+**Jan 2025 - Hackathon:**
+- 🚧 DeFi arbitrage signals API
+- 🚧 Consumer reputation & voting features
+- 🚧 DevEx SDK for signal domain forks
+- 🚧 Multi-domain signal infrastructure proof
+- 🚧 Movement network testnet deployment
 
-### Phase 3: Professional Tools (Planned 📋)
+**Post-Hackathon Q1 2025:**
+- 📋 Signal resolution tracking (Polymarket/Kalshi outcomes)
+- 📋 Advanced analytics for analyst track records
+- 📋 Multi-chain signal publication (Aptos, Movement, beyond)
+- 📋 Subscription-based signal access tiers
 
-**Q2 2025:**
-- 📋 Professional trading interface
-- 📋 Advanced order types (limit, stop-loss, conditional)
-- 📋 API rate limit increases for professional users
-- 📋 White-label solutions
-- 📋 Institutional features
-- 📋 In-app trading execution
+### Phase 3: Ecosystem Expansion (Future 🔮)
 
-### Phase 4: Ecosystem Expansion (Future 🔮)
+**Q2-Q3 2025:**
+- 🔮 White-label signal domain deployments
+- 🔮 Cross-chain DeFi signal aggregation
+- 🔮 Institutional signal subscriptions
+- 🔮 Signal derivative products (prediction markets on signals)
 
-**Q3-Q4 2025:**
-- 🔮 Cross-chain support (Ethereum, Solana, Polygon)
-- 🔮 Derivative markets (options, futures)
-- 🔮 Social trading features
-- 🔮 Prediction market creation tools
-- 🔮 Integration with DeFi protocols
-- 🔮 Universal trading across multiple chains
-
-### Phase 5: AI & Automation (Future 🤖)
+### Phase 4: AI & Automation (Future 🤖)
 
 **2026:**
-- 🤖 Advanced AI models for market prediction
-- 🤖 Automated trading strategies
-- 🤖 Natural language market analysis
-- 🤖 Personalized recommendations
-- 🤖 Sentiment analysis integration
+- 🤖 Autonomous signal generation (agents)
+- 🤖 Multi-signal consensus models
+- 🤖 Predictive analytics for signal performance
+- 🤖 Natural language signal explanations
 
 ## API Versioning
 

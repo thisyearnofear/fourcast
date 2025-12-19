@@ -332,59 +332,119 @@ const retryWithBackoff = async (fn, maxRetries = 3) => {
 
 ## On-Chain Signal Architecture
 
-### Aptos Integration Pattern
+### Movement L1 Integration (Hackathon Focus)
 
 **Decision Rationale:**
 - ✅ **Security**: No private keys in backend
 - ✅ **Accountability**: Signals tied to user addresses (reputation building)
 - ✅ **Simplicity**: Wallet handles all cryptographic operations
-- ✅ **Cost Distribution**: Users pay gas fees (~$0.0001 per signal)
+- ✅ **Cost Distribution**: Users pay minimal gas (native Move coin)
 - ✅ **Decentralization**: True ownership of published signals
+- ✅ **Composability**: Same Move module works for any signal domain
 
 ### Progressive Enhancement Pattern
 
 **Flow:**
 1. Signal saves to SQLite → Immediate success ✅
-2. Aptos publish (async) → On-chain proof 🔗
-3. If Aptos fails → Signal still exists, can retry 🔄
+2. Movement publish (async) → On-chain proof 🔗
+3. If Movement fails → Signal still exists, can retry 🔄
 4. Update SQLite with tx_hash → Link local + blockchain 🎯
 
-### Move Module Design (v2)
+### Move Module Design (v2) - Domain Agnostic
 
 **Signal Storage Model:**
 ```move
 struct Signal has store, drop, copy {
-    event_id: String,
-    market_title: String,
-    venue: String,
-    event_time: u64,
-    market_snapshot_hash: String,
-    weather_hash: String,        // Hash instead of full JSON (80% size reduction)
-    ai_digest: String,            // Truncated to 512 bytes
-    confidence: String,
-    odds_efficiency: String,
-    author_address: address,
-    timestamp: u64,
+    event_id: String,              // Domain-specific identifier
+    market_title: String,          // Generic: any market/event title
+    venue: String,                 // Domain-agnostic: location/context
+    event_time: u64,               // Unix timestamp
+    market_snapshot_hash: String,  // Hash of market state
+    weather_hash: String,          // Can be any "context hash"
+    ai_digest: String,             // Truncated analysis (512 bytes)
+    confidence: String,            // HIGH/MEDIUM/LOW
+    odds_efficiency: String,       // EFFICIENT/INEFFICIENT
+    author_address: address,       // Analyst/publisher address
+    timestamp: u64,                // Publication time
+    total_tips: u64,               // Reputation earned
 }
 
 struct SignalRegistry has key {
-    signals: Table<u64, Signal>,  // Sequential IDs instead of hash keys
+    signals: Table<u64, Signal>,   // Sequential IDs
     signal_count: u64,
+    total_platform_volume: u64,    // Total tipping volume
 }
 ```
 
-**Key Improvements:**
-- Hash-based storage for weather data (64 bytes vs 1KB+)
-- Sequential signal IDs prevent collisions
-- String length validation with constants
-- View functions for querying
-- Deployed on testnet for stability
+**Why This Shape Works for Any Domain:**
+- `market_snapshot_hash` → Weather state, on-chain state, sentiment state
+- `ai_digest` → Analysis from any source
+- `venue` → Event location, ecosystem, or context
+- `event_time` → Resolution time for any market
+- `confidence` → Analyst certainty (universal metric)
+- `odds_efficiency` → Price discrepancy detection (generalizes)
+
+### Signal SDK Pattern (TypeScript)
+
+**Core Abstraction:**
+```typescript
+interface SignalPublisher {
+  // Domain-specific data → generic Signal shape
+  analyzeEdge(config: EdgeConfig): Promise<Signal>
+  
+  // Publish to Movement network
+  publishOnChain(signal: Signal): Promise<TransactionHash>
+  
+  // Track reputation
+  getAnalystStats(address: Address): Promise<AnalystStats>
+}
+
+// Weather domain (existing)
+const weatherSignals = new SignalPublisher({
+  dataSource: "weatherapi.com",
+  analysisModel: "llama-3.3-70b",
+  network: "movement-testnet"
+})
+
+// Mobility domain (fork example)
+const mobilitySignals = new SignalPublisher({
+  dataSource: "google-popular-times",
+  analysisModel: "llama-3.3-70b",
+  network: "movement-testnet"
+})
+
+// Media sentiment domain (fork example)
+const sentimentSignals = new SignalPublisher({
+  dataSource: "neynar-farcaster",
+  analysisModel: "llama-3.3-70b",
+  network: "movement-testnet"
+})
+```
+
+**Benefits:**
+- No code duplication across domains
+- Same on-chain contract, different data sources
+- New domain = 50 lines of config, not 500 lines of code
+- CLI tool: `npx @fourcast/sdk init <domain>`
 
 ### Dual Wallet UX
 
 - **Trading Wallet**: MetaMask/ConnectKit (for trading operations)
-- **Signals Wallet**: Petra/Aptos (for publishing signals)
+- **Signals Wallet**: Petra/Aptos/Movement (for publishing signals)
 - Clear visual distinction between the two wallets
+
+### Hackathon Deployment Strategy
+
+**Movement Testnet:**
+1. **Deploy base Signal Registry Module** (reusable)
+2. **Weather Domain** - Existing; proves stability
+3. **Mobility Domain** - New; proves adaptability
+4. **Media Domain** - New; proves ecosystem integration
+5. **On-Chain Domain** - New; proves crypto-native use case
+
+**All use the same Move contract.** Only the backend analyzer differs.
+
+**Proof:** Video showing all 4 signal types publishing to same contract.
 
 ---
 

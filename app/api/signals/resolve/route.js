@@ -1,5 +1,5 @@
 // API endpoint to resolve signals against market outcomes
-import { resolutionService } from '@/services/resolutionService.js';
+import { reputationService } from '@/services/reputationService.js';
 import { db } from '@/services/db.js';
 
 export async function POST(req) {
@@ -28,10 +28,10 @@ export async function POST(req) {
         );
       }
 
-      results = [await resolutionService.resolveSignal(signal)];
+      results = [await reputationService.resolveSignal(signal)];
     } else {
       // Resolve all pending signals for event
-      results = await resolutionService.resolveEventSignals(eventID);
+      results = await reputationService.resolveEventSignals(eventID);
     }
 
     return Response.json({

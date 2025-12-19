@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
-import { generateXUrl, generateFarcasterUrl } from '@/services/shareableContentService';
+import { generateXUrl, generateFarcasterUrl } from '@/utils/shareSignal';
 
 export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip, userStats, onExpand }) {
     const [shareOpen, setShareOpen] = useState(false);

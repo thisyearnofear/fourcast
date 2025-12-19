@@ -7,7 +7,7 @@
  * - On-chain reputation system
  */
 
-import { getUserStats, getUserRanking, getUserPredictionHistory } from '@/services/userStatsService.js';
+import { getUserStats, getUserRanking, getUserPredictionHistory } from '@/services/reputationService.js';
 
 export async function GET(request) {
   try {
