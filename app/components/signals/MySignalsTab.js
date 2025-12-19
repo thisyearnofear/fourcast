@@ -1,6 +1,8 @@
 import { ConfidenceBadge, EfficiencyBadge } from './SignalBadges';
+import { PersonalStatsDashboard } from '@/components/PersonalStatsDashboard';
+import { MarketInsightsTimeline } from '@/components/MarketInsightsTimeline';
 
-export default function MySignalsTab({ signals, isLoading, isNight, textColor, cardBgColor, expandedSignalId, setExpandedSignalId, formatTimestamp }) {
+export default function MySignalsTab({ signals, isLoading, isNight, textColor, cardBgColor, expandedSignalId, setExpandedSignalId, formatTimestamp, userAddress }) {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
@@ -29,43 +31,65 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
 
     return (
         <div className="space-y-6">
-            {/* Personal Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
-                    <div className={`text-3xl font-light ${textColor} mb-1`}>{signals.length}</div>
-                    <div className={`text-xs ${textColor} opacity-60`}>Total Published</div>
-                </div>
-                <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
-                    <div className={`text-3xl font-light ${isNight ? 'text-green-400' : 'text-green-600'} mb-1`}>{won}</div>
-                    <div className={`text-xs ${textColor} opacity-60`}>Won</div>
-                </div>
-                <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
-                    <div className={`text-3xl font-light ${isNight ? 'text-red-400' : 'text-red-600'} mb-1`}>{lost}</div>
-                    <div className={`text-xs ${textColor} opacity-60`}>Lost</div>
-                </div>
-                <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
-                    <div className={`text-3xl font-light ${textColor} mb-1`}>{pending}</div>
-                    <div className={`text-xs ${textColor} opacity-60`}>Pending</div>
-                </div>
-            </div>
-
-            {/* Win Rate */}
-            {winRate !== 'N/A' && (
-                <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6`}>
-                    <div className="flex items-end gap-4">
-                        <div>
-                            <div className={`text-xs ${textColor} opacity-60 mb-2 uppercase tracking-wider`}>Win Rate</div>
-                            <div className={`text-4xl font-light ${isNight ? 'text-green-400' : 'text-green-600'}`}>
-                                {winRate}%
-                            </div>
+            {/* Comprehensive Stats Dashboard */}
+            {userAddress ? (
+                <PersonalStatsDashboard 
+                    userAddress={userAddress} 
+                    isNight={isNight}
+                    compact={false}
+                />
+            ) : (
+                <>
+                    {/* Fallback: Basic stats grid if userAddress not provided */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                            <div className={`text-3xl font-light ${textColor} mb-1`}>{signals.length}</div>
+                            <div className={`text-xs ${textColor} opacity-60`}>Total Published</div>
                         </div>
-                        <div className={`flex-1 h-2 rounded-full ${isNight ? 'bg-white/10' : 'bg-black/10'}`}>
-                            <div
-                                className={`h-full rounded-full ${isNight ? 'bg-green-500' : 'bg-green-600'}`}
-                                style={{ width: `${parseFloat(winRate)}%` }}
-                            ></div>
+                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                            <div className={`text-3xl font-light ${isNight ? 'text-green-400' : 'text-green-600'} mb-1`}>{won}</div>
+                            <div className={`text-xs ${textColor} opacity-60`}>Won</div>
+                        </div>
+                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                            <div className={`text-3xl font-light ${isNight ? 'text-red-400' : 'text-red-600'} mb-1`}>{lost}</div>
+                            <div className={`text-xs ${textColor} opacity-60`}>Lost</div>
+                        </div>
+                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                            <div className={`text-3xl font-light ${textColor} mb-1`}>{pending}</div>
+                            <div className={`text-xs ${textColor} opacity-60`}>Pending</div>
                         </div>
                     </div>
+
+                    {/* Win Rate */}
+                    {winRate !== 'N/A' && (
+                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6`}>
+                            <div className="flex items-end gap-4">
+                                <div>
+                                    <div className={`text-xs ${textColor} opacity-60 mb-2 uppercase tracking-wider`}>Win Rate</div>
+                                    <div className={`text-4xl font-light ${isNight ? 'text-green-400' : 'text-green-600'}`}>
+                                        {winRate}%
+                                    </div>
+                                </div>
+                                <div className={`flex-1 h-2 rounded-full ${isNight ? 'bg-white/10' : 'bg-black/10'}`}>
+                                    <div
+                                        className={`h-full rounded-full ${isNight ? 'bg-green-500' : 'bg-green-600'}`}
+                                        style={{ width: `${parseFloat(winRate)}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {/* Market Insights Timeline */}
+            {userAddress && (
+                <div className="space-y-4">
+                    <h3 className={`text-lg font-light ${textColor}`}>Prediction History</h3>
+                    <MarketInsightsTimeline 
+                        userAddress={userAddress}
+                        isNight={isNight}
+                    />
                 </div>
             )}
 

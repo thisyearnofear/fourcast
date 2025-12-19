@@ -76,9 +76,9 @@ npm run build
 
 ## 📚 Documentation
 
-- [Setup Guide](./docs/SETUP_GUIDE.md) - Installation, configuration, Aptos and Farcaster integration
+- [Setup Guide](./docs/SETUP_GUIDE.md) - Installation, configuration, environment variables
 - [Architecture Guide](./docs/ARCHITECTURE_GUIDE.md) - System design and patterns
-- [Integration Guide](./docs/INTEGRATION_GUIDE.md) - Multi-platform integration, Venice AI analysis, and Farcaster details
+- [Integration Guide](./docs/INTEGRATION_GUIDE.md) - Venice AI, Farcaster, and Polymarket Builder Program
 - [API Reference](./docs/API_REFERENCE.md) - Complete API documentation and product roadmap
 
 ## 🌐 Endpoints

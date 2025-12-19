@@ -1,6 +1,5 @@
 import { polymarketService } from '@/services/polymarketService';
-import { ClobClient, OrderType, Side } from '@polymarket/clob-client';
-import { Wallet } from '@ethersproject/wallet';
+import { builderService } from '@/services/builderService';
 import { APIInputValidator, TradingValidator, MarketDataValidator } from '@/services/validators/index.js';
 
 // Order submission rate limiting
@@ -56,44 +55,29 @@ function validateWalletData(walletData) {
 }
 
 /**
- * Initialize CLOB Client server-side
- * Credentials MUST come from environment, not frontend
+ * Add builder attribution headers to order
+ * User signs client-side, server just adds metadata
  */
-function initializeClobClient() {
-  const privateKey = process.env.POLYMARKET_PRIVATE_KEY;
+function getBuilderAttributionHeaders() {
+  // Builder attribution headers - public metadata only
+  // No signing needed - just identifies which builder the order came from
   const builderKey = process.env.POLY_BUILDER_API_KEY;
-
-  if (!privateKey && !builderKey) {
-    console.warn(
-      'No Polymarket credentials found. Orders will fail. Set POLYMARKET_PRIVATE_KEY or POLY_BUILDER_API_KEY in .env'
-    );
-    return null;
+  
+  if (!builderKey) {
+    return {}; // Builder attribution optional
   }
 
-  try {
-    // Create signer from private key
-    const wallet = new Wallet(privateKey);
-
-    // Initialize CLOB client (credentials from env)
-    const clobClient = new ClobClient(
-      'https://clob.polymarket.com',
-      137, // Polygon
-      wallet,
-      undefined,
-      0, // EOA signature type
-      wallet.address
-    );
-
-    return clobClient;
-  } catch (error) {
-    console.error('Failed to initialize CLOB client:', error.message);
-    return null;
-  }
+  return {
+    'X-Builder-Key': builderKey,
+    // Timestamp for request validation
+    'X-Builder-Timestamp': Math.floor(Date.now() / 1000).toString()
+  };
 }
 
 /**
  * POST /api/orders
- * Submit a prediction market order to Polymarket
+ * Submit a user-signed prediction market order to Polymarket
+ * User signs order client-side, server adds builder attribution and forwards
  */
 export async function POST(request) {
   try {
@@ -103,26 +87,15 @@ export async function POST(request) {
       price,
       side,
       size,
-      feeRateBps = 0,
-      walletData
+      walletAddress,
+      signedOrder  // Already signed by user in browser
     } = body;
 
-    // ENHANCED: Comprehensive input validation using APIInputValidator
-    const inputValidation = APIInputValidator.validateAPIInput('orders', {
-      marketID,
-      price,
-      side,
-      size,
-      walletAddress: walletData?.address,
-      chainId: 137 // Polygon
-    });
-
-    if (!inputValidation.valid) {
+    // Input validation
+    if (!marketID || price === undefined || !side || !size || !walletAddress || !signedOrder) {
       return Response.json({
         success: false,
-        error: 'Input validation failed',
-        errors: inputValidation.errors,
-        warnings: inputValidation.warnings
+        error: 'Missing required fields: marketID, price, side, size, walletAddress, signedOrder'
       }, { status: 400 });
     }
 
@@ -136,19 +109,6 @@ export async function POST(request) {
           retryAfter: Math.ceil(ORDER_WINDOW / 1000)
         },
         { status: 429 }
-      );
-    }
-
-    // Validate wallet data
-    try {
-      validateWalletData(walletData);
-    } catch (err) {
-      return Response.json(
-        {
-          success: false,
-          error: err.message
-        },
-        { status: 401 }
       );
     }
 
@@ -172,175 +132,62 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // ENHANCED: Comprehensive order validation using TradingValidator
-    const orderData = {
-      price: parseFloat(price),
-      size: parseFloat(size),
-      side,
-      marketID,
-      walletAddress: walletData?.address,
-      chainId: 137
-    };
+    // Get builder attribution headers (metadata only, no signing)
+    const builderHeaders = getBuilderAttributionHeaders();
+    const isBuilderAttributed = Object.keys(builderHeaders).length > 0;
 
-    const walletStatus = {
-      balance: { formatted: walletData?.usdcBalance || '0' },
-      approved: true // Assume approved if wallet data provided
-    };
-
-    const tradingValidation = TradingValidator.validateTradingOperation('order', orderData, {
-      walletStatus,
-      marketData,
-      userPreferences: { maxPositionSize: 10000 } // Default preferences
-    });
-
-    if (!tradingValidation.valid) {
-      return Response.json({
-        success: false,
-        error: 'Order validation failed',
-        errors: tradingValidation.errors,
-        warnings: tradingValidation.warnings,
-        details: {
-          riskLevel: tradingValidation.riskLevel,
-          orderCost: tradingValidation.orderCost
-        }
-      }, { status: 400 });
-    }
-
-    // Estimate price impact for user awareness
-    const priceImpactValidation = TradingValidator.validateTradingOperation('price-impact', orderData, {
-      marketData
-    });
-
-    // Collect all warnings for user awareness
-    const allWarnings = [
-      ...inputValidation.warnings,
-      ...marketValidation.warnings,
-      ...tradingValidation.warnings,
-      ...priceImpactValidation.warnings
-    ];
-
-    // Initialize CLOB client (server-side only)
-    const clobClient = initializeClobClient();
-    if (!clobClient) {
-      return Response.json(
-        {
-          success: false,
-          error: 'Server configuration error. Polymarket credentials not set.'
-        },
-        { status: 500 }
-      );
-    }
-
-    // Build order object
-    const orderObject = polymarketService.buildOrderObject(
-      validation.marketData,
-      parseFloat(price),
-      side,
-      parseFloat(size),
-      parseInt(feeRateBps)
-    );
-
-    // Submit to Polymarket
-    // NOTE: In production with Builder API, use createAndPostOrder instead
-    // For MVP with EOA, we create the order and post it separately
     try {
-      const response = await clobClient.createAndPostOrder(
-        {
-          tokenID: orderObject.tokenID,
-          price: orderObject.price,
-          side: side.toUpperCase() === 'BUY' ? 'BUY' : 'SELL',
-          size: orderObject.size,
-          feeRateBps: orderObject.feeRateBps
+      // Forward already-signed order to Polymarket with builder headers
+      const response = await fetch('https://clob.polymarket.com/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...builderHeaders  // Add builder attribution metadata
         },
-        orderObject.metadata, // { tickSize, negRisk }
-        OrderType.GTC // Good Till Cancelled
-      );
+        body: JSON.stringify(signedOrder)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Polymarket API: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      // Log order for analytics (background task)
+      if (isBuilderAttributed) {
+        builderService.getDailyVolume().catch(err =>
+          console.debug('Failed to update volume cache:', err.message)
+        );
+      }
 
       return Response.json({
         success: true,
-        orderID: response.orderID || response.id,
+        orderID: result.orderID || result.id,
         order: {
           marketID,
           side,
-          size,
-          price,
-          cost: tradingValidation.orderCost.total,
+          size: parseFloat(size),
+          price: parseFloat(price),
           status: 'submitted'
         },
-        // ENHANCED: Include validation results
-        validation: {
-          riskLevel: tradingValidation.riskLevel,
-          orderCost: tradingValidation.orderCost,
-          estimatedPriceImpact: priceImpactValidation.estimatedPriceImpact,
-          marketDataQuality: marketValidation.dataQuality,
-          warnings: allWarnings
+        // Builder Program info
+        builder: {
+          attributed: isBuilderAttributed,
+          leaderboardEligible: isBuilderAttributed,
+          message: isBuilderAttributed 
+            ? 'Order attributed to builder account - volume will be tracked on leaderboard'
+            : 'Order submitted without builder attribution'
         },
-        marketData: {
-          title: marketData.title,
-          liquidity: marketData.liquidity,
-          volume24h: marketData.volume24h,
-          tickSize: marketData.tradingMetadata?.tickSize
-        },
+        polymarketResponse: result,
         timestamp: new Date().toISOString()
       }, { status: 201 });
     } catch (orderError) {
       console.error('Order submission failed:', orderError);
 
-      // IMPROVED: Parse Polymarket-specific errors with recovery guidance
-      const errorMap = {
-        insufficient: {
-          message: 'Insufficient balance or allowance',
-          action: 'Deposit USDC to your wallet or approve token spending',
-          recoverable: true
-        },
-        signature: {
-          message: 'Signature verification failed',
-          action: 'Ensure wallet is properly connected and POLYMARKET_PRIVATE_KEY is set in environment',
-          recoverable: true
-        },
-        nonce: {
-          message: 'Transaction nonce error',
-          action: 'Wait 30 seconds and try again',
-          recoverable: true
-        },
-        'market not found': {
-          message: 'Market no longer exists or is inactive',
-          action: 'Select a different market and try again',
-          recoverable: true
-        },
-        'invalid price': {
-          message: 'Price outside valid range',
-          action: 'Price must be between 0 and 1 (0% to 100%)',
-          recoverable: false
-        },
-        'invalid size': {
-          message: 'Order size invalid',
-          action: 'Size must be greater than 0',
-          recoverable: false
-        }
-      };
-
-      let errorInfo = {
-        message: 'Order submission failed',
-        action: 'Check that all order details are correct and try again',
-        recoverable: true
-      };
-
-      // Check error message against known patterns
-      const errorMsg = (orderError.message || '').toLowerCase();
-      for (const [key, info] of Object.entries(errorMap)) {
-        if (errorMsg.includes(key)) {
-          errorInfo = info;
-          break;
-        }
-      }
-
       return Response.json(
         {
           success: false,
-          error: errorInfo.message,
-          action: errorInfo.action,
-          recoverable: errorInfo.recoverable,
+          error: 'Failed to submit order to Polymarket',
           detail: orderError.message
         },
         { status: 400 }

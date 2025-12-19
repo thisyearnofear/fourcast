@@ -455,4 +455,99 @@ To test conversion: `npm run test:converter`
 
 ---
 
+## Polymarket Builder Program
+
+### Setup
+
+1. **Get credentials** from [builders.polymarket.com](https://builders.polymarket.com)
+2. **Add to .env.local:**
+   ```
+   POLY_BUILDER_API_KEY=your_builder_key
+   POLY_BUILDER_SECRET=your_builder_secret
+   POLY_BUILDER_PASSPHRASE=your_builder_passphrase
+   ```
+3. **Validate:** `node scripts/setup-builder.js`
+
+### How It Works
+
+1. User connects MetaMask wallet in browser
+2. User signs order client-side (no private key exposure)
+3. Frontend sends signed order to `/api/orders`
+4. Server adds builder attribution headers
+5. Server forwards to Polymarket
+6. Order counted on leaderboard in real-time
+7. BuilderStats updates with volume metrics
+
+### Components
+
+```jsx
+import { BuilderStats, BuilderBadge, BuilderDashboard } from '@/components';
+
+// Dashboard widget
+<BuilderStats isNight={true} />
+
+// Order attribution indicator
+<BuilderBadge variant="detailed" isNight={false} />
+
+// Full analytics
+<BuilderDashboard isNight={true} />
+```
+
+### Hook
+
+```jsx
+import { useBuilder } from '@/hooks';
+
+const { stats, loading, refresh, isConfigured } = useBuilder();
+// stats = { configured, dailyVolume, leaderboard, ... }
+```
+
+### API
+
+**POST /api/orders** - Submit client-signed order
+```javascript
+fetch('/api/orders', {
+  method: 'POST',
+  body: JSON.stringify({
+    marketID: '0x123...',
+    price: 0.55,
+    side: 'BUY',
+    size: 100,
+    walletAddress: '0x...',
+    signedOrder: { /* order signed by user in browser */ }
+  })
+})
+// Response includes builder.attributed status
+// Orders automatically count on leaderboard
+```
+
+**GET /api/builder** - Get builder stats with actions:
+- `?action=stats` - All builder stats
+- `?action=volume&date=2024-12-19` - Daily volume
+- `?action=leaderboard&timeframe=7d` - Rank/position
+- `?action=config` - Check configuration
+- `?action=performance` - Performance metrics
+
+### Services
+
+```javascript
+import { builderService } from '@/services';
+
+builderService.isConfigured()           // Check if set up
+builderService.getBuilderHeaders(id)    // Get auth headers
+builderService.getDailyVolume()         // Get volume metrics
+builderService.getLeaderboardPosition() // Get rank
+builderService.getBuilderStats()        // Get all stats
+builderService.getRelayerConfig()       // Get gasless config
+```
+
+### Rewards
+
+Once on leaderboard:
+- 💰 Fee share from routed orders
+- 🎁 Performance-based grants
+- ⭐ Featured builder status
+
+---
+
 _Integration Guide - Last updated: December 2024_

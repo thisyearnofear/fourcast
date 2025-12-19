@@ -18,6 +18,7 @@ export default function SignalsPage() {
 
     const [signals, setSignals] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
+    const [userStatsCache, setUserStatsCache] = useState({}); // Cache user stats
     const [activeTab, setActiveTab] = useState('feed'); // 'feed', 'my-signals', or 'leaderboard'
     const [selectedProfile, setSelectedProfile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +64,23 @@ export default function SignalsPage() {
         } catch (err) {
             console.error('Failed to fetch leaderboard:', err);
         }
+    };
+
+    const getUserStats = async (userAddress) => {
+        if (!userAddress) return null;
+        if (userStatsCache[userAddress]) return userStatsCache[userAddress];
+        
+        try {
+            const response = await fetch(`/api/stats?address=${userAddress}`);
+            const result = await response.json();
+            if (result.success) {
+                setUserStatsCache(prev => ({ ...prev, [userAddress]: result.stats }));
+                return result.stats;
+            }
+        } catch (err) {
+            console.error('Failed to fetch user stats:', err);
+        }
+        return null;
     };
 
     const loadWeather = async () => {
@@ -287,6 +305,7 @@ export default function SignalsPage() {
                             expandedSignalId={expandedSignalId}
                             setExpandedSignalId={setExpandedSignalId}
                             formatTimestamp={formatTimestamp}
+                            userAddress={walletAddress}
                         />
                     ) : (
                         <>
@@ -376,6 +395,7 @@ export default function SignalsPage() {
                                                         isNight={isNight}
                                                         textColor={textColor}
                                                         onProfileClick={handleProfileClick}
+                                                        userStats={userStatsCache[signal.author_address] || null}
                                                         onTip={async (amount) => {
                                                             try {
                                                                 if (!aptosConnected) {
@@ -386,6 +406,11 @@ export default function SignalsPage() {
                                                                 alert(`Tip sent! Tx: ${tx}`);
                                                             } catch (e) {
                                                                 alert(e.message);
+                                                            }
+                                                        }}
+                                                        onExpand={() => {
+                                                            if (!userStatsCache[signal.author_address]) {
+                                                                getUserStats(signal.author_address);
                                                             }
                                                         }}
                                                     />

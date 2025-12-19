@@ -1,10 +1,21 @@
+import { useState } from 'react';
 import { ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
+import { generateXUrl, generateFarcasterUrl } from '@/services/shareableContentService';
 
-export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip }) {
+export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip, userStats, onExpand }) {
+    const [shareOpen, setShareOpen] = useState(false);
+
+    const handleToggle = () => {
+        onToggle();
+        if (!isExpanded && onExpand) {
+            onExpand();
+        }
+    };
+
     return (
         <div
             className={`border-l-2 pl-4 pb-4 cursor-pointer transition-all ${isNight ? 'border-blue-500/30 hover:border-blue-500/60' : 'border-blue-400/30 hover:border-blue-400/60'}`}
-            onClick={onToggle}
+            onClick={handleToggle}
         >
             <div className="flex flex-wrap items-center gap-2 mb-2">
                 <ConfidenceBadge confidence={signal.confidence} isNight={isNight} />
@@ -34,7 +45,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
             )}
 
             {signal.author_address && (
-                <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -45,22 +56,69 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                         By: {signal.author_address.substring(0, 6)}...{signal.author_address.substring(signal.author_address.length - 4)}
                     </button>
 
-                    {onTip && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const amount = prompt("Enter tip amount (in Octas/units):", "10000000");
-                                if (amount) onTip(amount);
-                            }}
-                            className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${isNight
-                                ? 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30'
-                                : 'bg-green-600/10 hover:bg-green-600/20 text-green-700 border border-green-600/20'
-                                }`}
-                        >
-                            <span>💸</span>
-                            <span>Tip Analyst</span>
-                        </button>
+                    {isExpanded && (
+                        <div className="flex items-center gap-2 ml-auto">
+                            {/* Share Button */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShareOpen(!shareOpen);
+                                }}
+                                className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${isNight
+                                    ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30'
+                                    : 'bg-blue-600/10 hover:bg-blue-600/20 text-blue-700 border border-blue-600/20'
+                                    }`}
+                            >
+                                <span>🔗</span>
+                                <span>Share</span>
+                            </button>
+
+                            {onTip && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const amount = prompt("Enter tip amount (in Octas/units):", "10000000");
+                                        if (amount) onTip(amount);
+                                    }}
+                                    className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${isNight
+                                        ? 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30'
+                                        : 'bg-green-600/10 hover:bg-green-600/20 text-green-700 border border-green-600/20'
+                                        }`}
+                                >
+                                    <span>💸</span>
+                                    <span>Tip</span>
+                                </button>
+                            )}
+                        </div>
                     )}
+                </div>
+            )}
+
+            {/* Share Menu */}
+            {isExpanded && shareOpen && (
+                <div className={`mt-4 flex gap-2 p-3 rounded-lg ${isNight ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/10'}`}>
+                    <a
+                        href={generateXUrl(signal, userStats)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex-1 text-xs px-3 py-2 rounded transition-all text-center ${isNight
+                            ? 'bg-black/40 hover:bg-black/60 text-white border border-white/20'
+                            : 'bg-gray-200 hover:bg-gray-300 text-black'
+                            }`}
+                    >
+                        𝕏 Share
+                    </a>
+                    <a
+                        href={generateFarcasterUrl(signal, userStats)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex-1 text-xs px-3 py-2 rounded transition-all text-center ${isNight
+                            ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/30'
+                            : 'bg-purple-100 hover:bg-purple-200 text-purple-900'
+                            }`}
+                    >
+                        ⛵ Warpcast
+                    </a>
                 </div>
             )}
         </div>

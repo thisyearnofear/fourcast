@@ -10,6 +10,7 @@ import { arbitrageService } from "@/services/arbitrageService";
 import PageNav from "@/app/components/PageNav";
 import Scene3D from "@/components/Scene3D";
 import { useToast, ToastContainer } from "@/components/Toast";
+import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 
 export default function MarketsPage() {
   const { address, isConnected } = useAccount();
@@ -69,6 +70,10 @@ export default function MarketsPage() {
     return hour >= 19 || hour <= 6;
   });
   const [mySignalCount, setMySignalCount] = useState(null);
+  
+  // Order signing state
+  const [showOrderPanel, setShowOrderPanel] = useState(false);
+  const [selectedMarketForOrder, setSelectedMarketForOrder] = useState(null);
 
   // Load weather on mount
   useEffect(() => {
@@ -1542,23 +1547,19 @@ function MarketCard({
 
             {/* Action Buttons: Trade + Publish */}
             <div className="flex gap-3 pt-2">
-              <a
-                href={
-                  isKalshi
-                    ? market.kalshiUrl ||
-                      `https://kalshi.com/markets/${market.marketID.toLowerCase()}`
-                    : `https://polymarket.com/event/${market.marketID}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => {
+                  setSelectedMarketForOrder(market);
+                  setShowOrderPanel(true);
+                }}
                 className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border text-center ${
                   isNight
                     ? "bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30"
                     : "bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border-blue-500/30"
                 }`}
               >
-                📈 Trade on {isKalshi ? "Kalshi" : "Polymarket"} →
-              </a>
+                📈 Trade Here
+              </button>
 
               <button
                 onClick={onPublishSignal}
@@ -1576,13 +1577,33 @@ function MarketCard({
                   ? "📡 Publish Signal"
                   : "🔗 Connect & Publish Signal"}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+              </div>
+              </div>
+              </div>
+              )}
+
+              {/* Order Signing Panel - Overlay */}
+              {showOrderPanel && selectedMarketForOrder && (
+              <OrderSigningPanel
+              market={selectedMarketForOrder}
+              isNight={isNight}
+              onClose={() => {
+              setShowOrderPanel(false);
+              setSelectedMarketForOrder(null);
+              }}
+              onSuccess={(result) => {
+              addToast({
+              type: 'success',
+              title: 'Order Submitted',
+              message: `Your ${result.side} order for ${result.size} shares at $${result.price} has been submitted`,
+              duration: 5000,
+              });
+              }}
+              />
+              )}
+              </div>
+              );
+              }
 
 // Dynamic Loading State Component
 function LoadingAnalysisState({ isNight, textColor }) {

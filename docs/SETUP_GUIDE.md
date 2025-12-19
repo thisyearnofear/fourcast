@@ -38,8 +38,14 @@ VENICE_API_KEY=your_venice_api_key
 # Redis (for caching - optional)
 REDIS_URL=redis://localhost:6379
 
-# Multichain Configuration
+# Polymarket & Builder Program
 NEXT_PUBLIC_POLYMARKET_HOST=https://clob.polymarket.com
+# NOTE: Users sign orders in browser - no server private key needed
+POLY_BUILDER_API_KEY=your_builder_key           # optional: enables leaderboard
+POLY_BUILDER_SECRET=your_builder_secret         # optional
+POLY_BUILDER_PASSPHRASE=your_builder_passphrase # optional
+
+# Multichain Configuration
 NEXT_PUBLIC_BNB_CHAIN_ID=56
 NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.testnet.aptoslabs.com/v1
 NEXT_PUBLIC_APTOS_NETWORK=testnet
