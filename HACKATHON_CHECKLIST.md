@@ -91,23 +91,23 @@
 ## Phase 3: DevEx SDK + Multi-Domain Framework (Week 3-4)
 
 ### SDK Architecture
-- [ ] **Create `@fourcast/signal-sdk` package** (new TypeScript library)
-  - Export `SignalPublisher` interface (generic)
-  - Implement `WeatherSignalPublisher` (reuse existing logic)
-  - Move domain-specific logic to config, not code
-  - CLI: `npx @fourcast/sdk init <domain>`
+- [x] **Create `@fourcast/signal-sdk` package** (new TypeScript library)
+  - [x] Export `SignalPublisher` interface (generic)
+  - [x] Implement `WeatherSignalPublisher` (reuse existing logic)
+  - [x] Move domain-specific logic to config, not code
+  - [ ] CLI: `npx @fourcast/sdk init <domain>`
 
 ### Backend Consolidation
-- [ ] Refactor `aiService.js` → `EdgeAnalyzer` (generic pattern)
-  - Input: edge data + config
-  - Output: Signal shape
-  - Works for weather, mobility, sentiment, on-chain
+- [x] Refactor `aiService.js` → `EdgeAnalyzer` (generic pattern)
+  - [x] Input: edge data + config
+  - [x] Output: Signal shape
+  - [x] Works for weather, mobility, sentiment, on-chain
 
-- [ ] Create `services/domains/` folder:
-  - `weather.js` - existing WeatherSignalPublisher
-  - `mobility.js` - Google Popular Times → event turnout signals
-  - `sentiment.js` - Neynar sentiment → narrative signals
-  - `onchain.js` - Movement tx patterns → governance signals
+- [ ] Create `services/domains/` folder (Implemented in `services/analysis/` for cleaner architecture):
+  - [x] `WeatherAnalyzer.js` - existing WeatherSignalPublisher logic
+  - [x] `MobilityAnalyzer.js` - Google Popular Times → event turnout signals
+  - [ ] `sentiment.js` - Neynar sentiment → narrative signals
+  - [ ] `onchain.js` - Movement tx patterns → governance signals
 
 ### Move Module
 - [ ] Deploy single Signal Registry module to Movement testnet

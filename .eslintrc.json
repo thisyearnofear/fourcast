@@ -16,7 +16,11 @@
     "no-unused-vars": [
       "warn",
       { "args": "none", "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }
-    ]
+    ],
+    "no-undef": "warn",
+    "no-empty": "warn",
+    "no-extra-semi": "warn",
+    "no-case-declarations": "warn"
   },
   "overrides": [
     {

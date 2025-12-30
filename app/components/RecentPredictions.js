@@ -1,57 +1,87 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ethers } from 'ethers';
+import SignalCard from './SignalCard';
 
+/**
+ * Unified Signal Feed
+ * Replaces the old "RecentPredictions" with a multi-domain feed
+ */
 export default function RecentPredictions({ chainId = 56, isNight = false }) {
-  const [events, setEvents] = useState([]);
+  const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState('ALL'); // ALL, WEATHER, MOBILITY
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      setError(null);
       try {
-        const res = await fetch(`/api/predictions/health?chainId=${chainId}&lookback=3000&chunk=500&max=5`);
+        // Fetch from our consolidated signals API
+        const res = await fetch('/api/signals?limit=10');
         const json = await res.json();
         if (json.success) {
-          setEvents(json.recentEvents || []);
-        } else {
-          setError(json.error || 'Failed to load');
+          setSignals(json.signals || []);
         }
       } catch (err) {
-        setError('Network error');
+        console.error('Failed to load signals:', err);
       }
       setLoading(false);
     };
     load();
-  }, [chainId]);
+  }, []);
+
+  const filteredSignals = signals.filter(s => {
+    if (filter === 'ALL') return true;
+    const isWeather = s.weather_json || s.market_title.toLowerCase().includes('rain');
+    if (filter === 'WEATHER') return isWeather;
+    if (filter === 'MOBILITY') return !isWeather;
+    return true;
+  });
 
   const textColor = isNight ? 'text-white' : 'text-black';
-  const cardBgColor = isNight ? 'bg-slate-900/60 border-white/20' : 'bg-white/60 border-black/20';
+  const tabClass = (active) => `
+    text-xs px-3 py-1 rounded-full transition-all 
+    ${active 
+      ? (isNight ? 'bg-white text-black font-medium' : 'bg-black text-white font-medium') 
+      : 'opacity-60 hover:opacity-100'}
+  `;
 
   return (
-    <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6`}>
-      <h3 className={`text-sm font-light ${textColor} mb-3`}>Recent Predictions</h3>
-      {loading && (
-        <div className={`text-xs ${textColor} opacity-70`}>Loading...</div>
-      )}
-      {error && (
-        <div className={`text-xs ${textColor} opacity-70`}>{error}</div>
-      )}
-      {!loading && !error && events.length === 0 && (
-        <div className={`text-xs ${textColor} opacity-60`}>No recent events</div>
-      )}
-      <div className="space-y-3">
-        {events.map((e) => (
-          <div key={`${e.txHash}-${e.id}`} className={`text-xs ${textColor} opacity-80 flex justify-between items-center`}>
-            <div className="space-y-0.5">
-              <div>Market {e.marketId} · {e.side}</div>
-              <div className="opacity-60">Stake {ethers.formatEther(BigInt(e.stakeWei))} BNB · {String(e.user).slice(0,6)}…{String(e.user).slice(-4)}</div>
-            </div>
-            <a href={`https://bscscan.com/tx/${e.txHash}`} target="_blank" rel="noreferrer" className="opacity-70 underline">View</a>
+    <div className="space-y-4">
+      {/* Header & Filters */}
+      <div className="flex justify-between items-center px-1">
+        <h3 className={`text-sm font-light ${textColor}`}>Live Signals</h3>
+        <div className="flex space-x-1">
+          <button onClick={() => setFilter('ALL')} className={tabClass(filter === 'ALL')}>All</button>
+          <button onClick={() => setFilter('WEATHER')} className={tabClass(filter === 'WEATHER')}>🌤️</button>
+          <button onClick={() => setFilter('MOBILITY')} className={tabClass(filter === 'MOBILITY')}>🚗</button>
+        </div>
+      </div>
+
+      {/* Feed */}
+      <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar">
+        {loading && (
+          <div className={`text-center py-8 opacity-50 text-sm ${textColor}`}>
+            Initializing Edge Nodes...
           </div>
+        )}
+        
+        {!loading && filteredSignals.length === 0 && (
+          <div className={`text-center py-8 opacity-50 text-sm ${textColor}`}>
+            No active signals found.
+          </div>
+        )}
+
+        {filteredSignals.map((signal) => (
+          <SignalCard 
+            key={signal.id} 
+            signal={{
+              ...signal,
+              // Helper to detect domain on client side if API doesn't send it explicitly yet
+              domain: signal.weather_json ? 'weather' : 'mobility' 
+            }} 
+            isNight={isNight} 
+          />
         ))}
       </div>
     </div>

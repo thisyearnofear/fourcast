@@ -85,6 +85,7 @@ const initSql = `
     tx_hash TEXT,
     timestamp INTEGER NOT NULL,
     outcome TEXT DEFAULT 'PENDING',
+    total_tips TEXT DEFAULT '0',
     resolved_at INTEGER,
     created_at INTEGER DEFAULT (strftime('%s', 'now'))
   );

@@ -1,36 +1,23 @@
-'use client';
-
 import './global.css/index.css';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { WagmiProvider } from 'wagmi';
-import { ConnectKitProvider } from 'connectkit';
-import { AptosProvider } from './providers/AptosProvider';
-import { config } from '../onchain/config';
 
-const queryClient = new QueryClient();
+// Force all pages to be dynamic to avoid SSR/static generation issues with wallet libraries
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export const revalidate = 0;
+
+export const metadata = {
+  title: "Fourcast",
+  description: "A decentralized weather application.",
+  openGraph: {
+    images: [`${process.env.NEXT_PUBLIC_HOST}/logo.png`],
+  },
+};
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body suppressHydrationWarning>
-        <QueryClientProvider client={queryClient}>
-          <WagmiProvider config={config}>
-            <ConnectKitProvider
-              mode="dark"
-              customTheme={{
-                "--ck-accent-color": "#2563eb",
-                "--ck-accent-text": "#ffffff",
-                "--ck-primary-button-background": "#1f2937",
-                "--ck-primary-button-hover-background": "#374151",
-                "--ck-secondary-button-background": "#6b7280",
-              }}
-            >
-              <AptosProvider>
-                {children}
-              </AptosProvider>
-            </ConnectKitProvider>
-          </WagmiProvider>
-        </QueryClientProvider>
+        {children}
       </body>
     </html>
   );

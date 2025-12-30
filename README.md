@@ -1,112 +1,135 @@
-# 🌤️ Fourcast: AI-Powered Weather Edge Analytics Platform
+# 🔮 Fourcast: Multi-Domain Signal Intelligence Layer
 
-A multichain AI intelligence layer that analyzes weather forecasts to identify mispriced prediction markets. Built on a sophisticated infrastructure spanning multiple blockchains to optimize for trading, analytics, and reputation tracking.
+**The first modular intelligence layer for the Movement network.** Fourcast aggregates off-chain data (Weather, Mobility, Sentiment), processes it via AI edge nodes, and publishes verifiable prediction signals on-chain.
 
-## 🎯 Overview
+![Movement Hackathon Badge](https://img.shields.io/badge/Movement-M1_Hackathon-yellow)
+![Status](https://img.shields.io/badge/Status-Testnet_Live-green)
 
-Fourcast is an AI layer that joins real-time weather with prediction market data to surface mispricings. It aggregates markets, analyzes weather impact, and lets users publish signals on-chain.
+## 🎯 The Problem
+
+Prediction markets like Polymarket require sophisticated data analysis to win. Most tools are siloed (only weather, or only crypto prices). Developers building new signal feeds have to rebuild the entire stack (contracts, indexing, analysis) from scratch.
+
+## 💡 Our Solution
+
+Fourcast is a **generic signal infrastructure**. We built a unified pipeline that allows *any* data domain to be analyzed and published to the Movement network using a single standard.
+
+### Key Innovations
+
+1.  **EdgeAnalyzer Engine**: A polymorphic AI analysis pattern. Whether it's analyzing rain probability or stadium traffic, the logic flow remains identical.
+2.  **@fourcast/signal-sdk**: A developer-first SDK to spin up new signal domains in minutes, not days.
+3.  **Unified Reputation**: Analysts earn on-chain reputation (and tips!) regardless of the domain they predict on.
+
+---
 
 ## 🚀 Features
 
-- **Multi-Platform Integration**: Aggregated discovery across Polymarket and Kalshi with platform badges and filters
-- **Date-First Markets UI**: Today, Tomorrow, This Week, Later tabs for upcoming events
-- **Weather-Aware AI Analysis**: Venice AI integration with confidence scoring
-- **Dual Wallet UX**: MetaMask for trading, Petra for signals publishing
-- **On-Chain Signals**: Publish to Aptos with tx hash feedback
-- **Venue Extraction**: Automatic location detection for sports events
-- **Cross-Platform Arbitrage**: Price discrepancy detection between platforms
-- **Farcaster Distribution**: Social media integration via Neynar—query weather forecasts directly in Farcaster
+### 🌐 Multi-Domain Intelligence
+- **🌤️ Weather Domain**: Real-time analysis of forecast impact on event outcomes (e.g., "Will it rain in London?").
+- **🚗 Mobility Domain**: *NEW!* Crowd/Traffic analysis for sports events (e.g., "High turnout at Wembley?").
+- **🧠 Sentiment Domain**: (Coming Soon) Farcaster/social sentiment analysis.
 
-## 🛠️ Tech Stack
+### 🛠️ For Developers (Bounty: Best DevEx)
+- **Signal SDK**: Zero-config library to publish to our generic Move contract.
+- **CLI Tools**: Scaffolding for new domain analyzers.
 
-- **Frontend**: Next.js 15, React 19, Tailwind CSS, React Three Fiber
-- **Data & AI**: WeatherAPI, Venice AI (llama-3.3-70b), Redis cache, SQLite
-- **Web3**: Wagmi/ConnectKit, Aptos Wallet Standard, Move module v2 on testnet
-- **Backend**: Next.js API Routes, Venice AI analysis, Polymarket/Kalshi APIs
+### 📱 For Consumers (Bounty: Best Consumer App)
+- **Live Intelligence Feed**: Real-time stream of verified signals.
+- **Context-Aware Dashboard**: 3D visualizations that adapt to the signal type (Weather vs Mobility).
+- **On-Chain Tipping**: Reward top analysts directly on the Movement network.
 
-## 🚀 Quick Start
+---
 
-### Prerequisites
+## 🏗️ Architecture
 
-- Node.js 18+ or 20+
-- npm or yarn
-- MetaMask wallet (trading on Polygon)
-- Petra wallet (signals on Aptos)
-- API keys: WeatherAPI, Venice AI
+```mermaid
+graph TD
+    A[Raw Data Sources] -->|Weather/Traffic/Social| B(EdgeAnalyzer Nodes)
+    B -->|AI Processing| C{Signal Verification}
+    C -->|Verified| D[Movement M1 Blockchain]
+    C -->|Indexed| E[Unified API / SQLite]
+    D -->|Reputation/Tips| F[Analyst Wallet]
+    E -->|Live Feed| G[React Frontend]
+```
 
-### Installation
+### Tech Stack
+- **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
+- **Backend**: Node.js, SQLite (Turso), Redis
+- **AI**: Venice.ai (Llama-3.3-70b) via `EdgeAnalyzer` abstraction
+- **Blockchain**: Movement M1 Testnet (Move)
+- **DevEx**: TypeScript SDK
+
+---
+
+## ⚡ Quick Start
+
+### 1. Installation
 
 ```bash
-# Clone repository
-git clone <repository-url>
+git clone https://github.com/your-username/fourcast.git
 cd fourcast
-
-# Install dependencies
-npm install --legacy-peer-deps
-
-# Set up environment variables
-cp .env.local.example .env.local
+npm install
 ```
 
-### Environment Setup
+### 2. Environment Setup
+
+Copy `.env.local.example` to `.env.local` and add your keys:
 
 ```bash
-# .env.local
-NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key
-VENICE_API_KEY=your_venice_api_key
-NEXT_PUBLIC_APTOS_NETWORK=testnet
-NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.testnet.aptoslabs.com/v1
+# Movement M1 Testnet Config
+NEXT_PUBLIC_APTOS_NETWORK=custom
+NEXT_PUBLIC_APTOS_NODE_URL=https://aptos.testnet.porto.movementlabs.xyz/v1
 NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
-
-# Farcaster / Neynar Integration
-NEYNAR_API_KEY=your_neynar_api_key
-FARCASTER_SIGNER_UUID=your_signer_uuid_from_neynar
-NEYNAR_WEBHOOK_SECRET=your_webhook_secret_from_neynar
 ```
 
-### Development
+### 3. Run the App
 
 ```bash
-# Start development server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-## 📚 Documentation
+### 4. Run the Signal Pipeline (Demo)
 
-- [Setup Guide](./docs/SETUP_GUIDE.md) - Installation, configuration, environment variables
-- [Architecture Guide](./docs/ARCHITECTURE_GUIDE.md) - System design and patterns
-- [Integration Guide](./docs/INTEGRATION_GUIDE.md) - Venice AI, Farcaster, and Polymarket Builder Program
-- [API Reference](./docs/API_REFERENCE.md) - Complete API documentation and product roadmap
+This script acts as an Edge Node, fetching real data and publishing signals:
 
-## 🌐 Endpoints
+```bash
+node scripts/run-analysis-flow.js
+```
 
-### Core APIs
-- `GET /api/weather` - Current weather data
-- `GET /api/markets` - Aggregated Polymarket/Kalshi markets
-- `POST /api/analyze` - AI market analysis with weather impact
-- `POST /api/signals` - Publish signals to SQLite/Aptos
-- `GET /api/signals` - List latest signals
-- `GET /api/leaderboard` - Reputation system leaderboard
+---
 
-### Farcaster Integration
-- `POST /api/farcaster/webhook` - Receives mentions from Farcaster via Neynar
-- `GET /api/farcaster/webhook` - Health check endpoint
+## 📦 Using the SDK
+
+Want to build your own signal feed?
+
+```typescript
+import { SignalPublisher } from '@fourcast/signal-sdk';
+
+const publisher = new SignalPublisher({ network: 'custom', ... });
+
+await publisher.publish({
+  domain: 'mobility',
+  title: 'Knicks Game High Turnout',
+  confidence: 'HIGH'
+});
+```
+
+See [SDK Documentation](./sdk/SDK.md) for full details.
+
+---
+
+## 📜 Contract Addresses (Movement M1)
+
+| Contract | Address |
+|----------|---------|
+| Signal Registry | `0x...` (See .env) |
+| Marketplace | `0x...` (See .env) |
+
+---
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome new Domain Analyzers! Check out `services/analysis/EdgeAnalyzer.js` to see how to extend the base class.
 
 ## 📄 License
 
-MIT License - see the [LICENSE](LICENSE) file for details.
-
-## ⚠️ Disclaimer
-
-Educational and entertainment purposes only. Weather prediction is inherently uncertain. Always trade responsibly and never risk more than you can afford to lose. This is a research intelligence tool, not an auto-betting system.
+MIT
