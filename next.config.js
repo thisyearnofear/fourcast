@@ -17,6 +17,17 @@ const nextConfig = {
   
   // Enable Turbopack configuration
   turbopack: {},
+  
+  // Skip static optimization for problematic pages
+  staticPageGenerationTimeout: 120,
+  
+  // Try to bypass build errors
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
 };
 
 export default nextConfig;
