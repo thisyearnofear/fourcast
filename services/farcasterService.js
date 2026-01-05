@@ -188,6 +188,25 @@ export const getCastByHash = async (castHash) => {
   }
 };
 
+/**
+ * Search for casts matching a query string
+ * @param {string} query - Search query
+ * @param {number} limit - Max results
+ * @returns {Promise<Array>} List of casts
+ */
+export const searchCasts = async (query, limit = 10) => {
+  try {
+    const client = getFarcasterClient();
+    // Neynar v2 API supports search
+    const response = await client.searchCasts(query, limit);
+    return response.result?.casts || [];
+  } catch (error) {
+    // Fallback or mock for dev if API fails or is rate limited
+    console.warn(`[Farcaster] Search failed for "${query}":`, error.message);
+    return [];
+  }
+};
+
 export const farcasterService = {
   publishCast,
   getUserByUsername,
@@ -197,6 +216,7 @@ export const farcasterService = {
   formatSignalCast,
   validateSigner,
   getCastByHash,
+  searchCasts,
 };
 
 export default farcasterService;

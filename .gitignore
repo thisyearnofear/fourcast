@@ -49,6 +49,11 @@ fourcast.db-wal
 .aptos/
 move/build/
 
+# Movement CLI
+.movement/
+movement-key.txt
+movement-key.txt.pub
+
 # IDE and tool artifacts
 .vscode/
 .idea/

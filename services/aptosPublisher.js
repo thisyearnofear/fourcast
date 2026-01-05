@@ -139,6 +139,29 @@ export class AptosSignalPublisher {
       };
     }
   }
+
+  /**
+   * Fetch real-time network statistics
+   */
+  async getNetworkStats() {
+    try {
+      const info = await this.aptos.getLedgerInfo();
+      const gasPrice = await this.aptos.getGasPriceEstimation();
+      
+      return {
+        gasPrice: gasPrice.gas_estimate || 100,
+        tps: 0, // Aptos TS SDK doesn't give live TPS in a single call easily without blocks
+        blockHeight: parseInt(info.ledger_version),
+        chainID: info.chain_id,
+        epoch: info.epoch,
+        timestamp: parseInt(info.ledger_timestamp) / 1000,
+        congestion: (gasPrice.gas_estimate > 200) ? "HIGH" : "LOW"
+      };
+    } catch (error) {
+      console.warn("Failed to fetch real Aptos stats, using fallback:", error.message);
+      return null;
+    }
+  }
 }
 
 export const aptosPublisher = new AptosSignalPublisher();

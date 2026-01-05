@@ -150,4 +150,35 @@ module fourcast_addr::signal_marketplace {
         let signal = table::borrow(&registry.signals, signal_id);
         signal.total_tips
     }
+
+    #[view]
+    public fun get_signal(account_addr: address, signal_id: u64): (
+        String, String, String, u64, String, String, String, String, String, address, u64, u64
+    ) acquires MarketplaceRegistry {
+        let registry = borrow_global<MarketplaceRegistry>(account_addr);
+        let signal = table::borrow(&registry.signals, signal_id);
+        (
+            signal.event_id,
+            signal.market_title,
+            signal.venue,
+            signal.event_time,
+            signal.market_snapshot_hash,
+            signal.weather_hash,
+            signal.ai_digest,
+            signal.confidence,
+            signal.odds_efficiency,
+            signal.author_address,
+            signal.timestamp,
+            signal.total_tips
+        )
+    }
+
+    #[view]
+    public fun get_platform_stats(account_addr: address): (u64, u64) acquires MarketplaceRegistry {
+        if (!exists<MarketplaceRegistry>(account_addr)) {
+            return (0, 0)
+        };
+        let registry = borrow_global<MarketplaceRegistry>(account_addr);
+        (registry.signal_count, registry.total_platform_volume)
+    }
 }
