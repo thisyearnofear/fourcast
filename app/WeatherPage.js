@@ -5,6 +5,8 @@ import Scene3D from '@/components/Scene3D';
 import LocationSelector from '@/components/LocationSelector';
 import { ConnectKitButton } from 'connectkit';
 import { weatherService } from '@/services/weatherService';
+import { WinCelebration } from '@/components/WinCelebration';
+import { BuilderDashboard } from '@/components/BuilderDashboard';
 
 export default function WeatherPage() {
   const [weatherData, setWeatherData] = useState(null);
@@ -15,12 +17,18 @@ export default function WeatherPage() {
   const [exitPortalFunction, setExitPortalFunction] = useState(null);
   const [portalWeatherData, setPortalWeatherData] = useState(null);
   const [errorSearchQuery, setErrorSearchQuery] = useState('');
+  
+  // New States for UX improvements
+  const [isBuilderMode, setIsBuilderMode] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [winningSignal, setWinningSignal] = useState(null);
 
   useEffect(() => {
     console.log('Page loaded, calling loadCurrentLocationWeather');
     loadCurrentLocationWeather();
   }, []);
 
+  // ... (existing loadCurrentLocationWeather) ...
   const loadCurrentLocationWeather = async () => {
     setIsLoading(true);
     setError(null);
@@ -82,7 +90,17 @@ export default function WeatherPage() {
     }
   };
 
-
+  // Callback to trigger celebration from child components (e.g. OrderSigningPanel)
+  // To be passed down via Context or Props if we were rendering OrderSigningPanel here.
+  // For now, we simulate it for the demo or when a trade confirms.
+  const handleTradeSuccess = (orderData) => {
+    setWinningSignal({
+      marketTitle: orderData.marketTitle || "Your Prediction Market",
+      side: orderData.side || "YES",
+      confidence: "high"
+    });
+    setShowCelebration(true);
+  };
 
   // Use portal weather data when in portal mode, otherwise use main weather data
   const displayWeatherData = useMemo(() =>
@@ -110,11 +128,19 @@ export default function WeatherPage() {
         />
       </div>
 
+      {/* Celebration Overlay */}
+      <WinCelebration 
+        isOpen={showCelebration}
+        signal={winningSignal}
+        onClose={() => setShowCelebration(false)}
+      />
+
       {/* UI Container */}
-      <div className="relative z-10 flex flex-col flex-grow p-4 sm:p-6">
+      <div className="relative z-10 flex flex-col flex-grow p-4 sm:p-6 pointer-events-none">
+        
         {/* Header */}
         {weatherData && !isLoading && (
-          <header className="flex justify-between items-start">
+          <header className="flex justify-between items-start pointer-events-auto">
             {isPortalMode ? (
               <>
                 {/* Portal Mode Header */}
@@ -139,6 +165,7 @@ export default function WeatherPage() {
                     <span className="text-xs sm:text-sm font-light">Back</span>
                   </button>
                 </div>
+                {/* ... existing portal mode title ... */}
                 <div className={`text-right ${textColor}`}>
                   <div className="text-base sm:text-lg font-light tracking-wide opacity-95">
                     {displayWeatherData.location.name}
@@ -156,19 +183,38 @@ export default function WeatherPage() {
             ) : (
               /* Normal Mode Header */
               <>
-                <div className={`flex-1 ${textColor}`}>
-                  <div className="text-base sm:text-lg font-light tracking-wide opacity-95">
-                    {displayWeatherData.location.name}
-                    {displayWeatherData.rateLimited && (
-                      <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">
-                        DEMO
-                      </span>
-                    )}
+                <div className={`flex-1 ${textColor} flex items-center gap-4`}>
+                  <div>
+                    <div className="text-base sm:text-lg font-light tracking-wide opacity-95">
+                      {displayWeatherData.location.name}
+                      {displayWeatherData.rateLimited && (
+                        <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">
+                          DEMO
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs sm:text-sm opacity-60 tracking-wide">
+                      {displayWeatherData.location.region}
+                    </div>
                   </div>
-                  <div className="text-xs sm:text-sm opacity-60 tracking-wide">
-                    {displayWeatherData.location.region}
+
+                  {/* Mode Toggle Switch */}
+                  <div className="hidden sm:flex bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
+                    <button
+                      onClick={() => setIsBuilderMode(false)}
+                      className={`px-3 py-1 rounded-full text-xs transition-all ${!isBuilderMode ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'}`}
+                    >
+                      Trader
+                    </button>
+                    <button
+                      onClick={() => setIsBuilderMode(true)}
+                      className={`px-3 py-1 rounded-full text-xs transition-all ${isBuilderMode ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'}`}
+                    >
+                      Builder
+                    </button>
                   </div>
                 </div>
+
                 <div className="flex items-center space-x-2 sm:space-x-4">
                   <LocationSelector
                     onLocationChange={handleLocationChange}
@@ -192,12 +238,40 @@ export default function WeatherPage() {
           </header>
         )}
 
+        {/* Builder Dashboard Overlay */}
+        {isBuilderMode && !isPortalMode && !isLoading && (
+          <div className="absolute top-24 right-6 w-80 z-30 pointer-events-auto animate-in fade-in slide-in-from-right-10 duration-500">
+             <BuilderDashboard isNight={isNight} onClose={() => setIsBuilderMode(false)} />
+          </div>
+        )}
+
+        {/* Portal Coach Mark */}
+        {!isPortalMode && !isLoading && !isBuilderMode && weatherData && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0 opacity-0 animate-pulse-slow delay-1000 duration-1000 fill-mode-forwards pointer-events-none">
+            <div className={`flex flex-col items-center ${isNight ? 'text-white/50' : 'text-black/30'}`}>
+              <span className="text-xs font-light tracking-widest uppercase mb-2">Tap a portal to travel</span>
+              <svg className="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+            <style jsx>{`
+              @keyframes pulse-slow {
+                0%, 100% { opacity: 0; }
+                50% { opacity: 0.8; }
+              }
+              .animate-pulse-slow {
+                animation: pulse-slow 4s ease-in-out infinite;
+              }
+            `}</style>
+          </div>
+        )}
+
         {/* Spacer to push content to the bottom */}
         <div className="flex-grow" />
 
-        {/* Centered Floating Navigation */}
-        {weatherData && !isLoading && (
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+        {/* Centered Floating Navigation - Trader Mode Only */}
+        {weatherData && !isLoading && !isBuilderMode && (
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto">
             <div className={`backdrop-blur-md border rounded-full px-6 py-3 transition-all duration-300 ${isNight
                 ? 'bg-white/10 border-white/20 hover:bg-white/15'
                 : 'bg-white/20 border-white/30 hover:bg-white/25'
