@@ -34,7 +34,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
                 {leaderboard.map((user, index) => {
                     const tier = getTierInfo(user.win_rate || 0);
                     const earnings = user.total_earnings || 0;
-                    
+
                     return (
                         <div
                             key={user.user_address}
@@ -58,7 +58,9 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
                                         </span>
                                     </div>
                                     <div className={`text-xs ${textColor} opacity-60`}>
-                                        {user.user_address.substring(0, 6)}...{user.user_address.substring(user.user_address.length - 4)}
+                                        {typeof user.user_address === 'string'
+                                            ? `${user.user_address.substring(0, 6)}...${user.user_address.substring(user.user_address.length - 4)}`
+                                            : 'Unknown'}
                                     </div>
                                 </div>
 

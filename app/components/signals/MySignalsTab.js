@@ -33,8 +33,8 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
         <div className="space-y-6">
             {/* Comprehensive Stats Dashboard */}
             {userAddress ? (
-                <PersonalStatsDashboard 
-                    userAddress={userAddress} 
+                <PersonalStatsDashboard
+                    userAddress={userAddress}
                     isNight={isNight}
                     compact={false}
                 />
@@ -86,7 +86,7 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
             {userAddress && (
                 <div className="space-y-4">
                     <h3 className={`text-lg font-light ${textColor}`}>Prediction History</h3>
-                    <MarketInsightsTimeline 
+                    <MarketInsightsTimeline
                         userAddress={userAddress}
                         isNight={isNight}
                     />
@@ -100,8 +100,8 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                     const statusColor = signal.outcome === 'YES' || signal.outcome === 'CORRECT'
                         ? (isNight ? 'text-green-400' : 'text-green-600')
                         : signal.outcome === 'NO' || signal.outcome === 'INCORRECT'
-                        ? (isNight ? 'text-red-400' : 'text-red-600')
-                        : (isNight ? 'text-yellow-400' : 'text-yellow-600');
+                            ? (isNight ? 'text-red-400' : 'text-red-600')
+                            : (isNight ? 'text-yellow-400' : 'text-yellow-600');
 
                     return (
                         <div
@@ -147,19 +147,19 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                                     {signal.tx_hash && (
                                         <div className={`text-xs ${textColor} opacity-60`}>
                                             <span className="font-medium">On-chain:</span>{' '}
-                                            <a 
-                                                href={`https://explorer.aptoslabs.com/txn/${signal.tx_hash}?network=testnet`} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
+                                            <a
+                                                href={`https://explorer.aptoslabs.com/txn/${signal.tx_hash}?network=testnet`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 className="hover:opacity-100 underline"
                                             >
-                                                {signal.tx_hash.substring(0, 12)}...
+                                                {typeof signal.tx_hash === 'string' ? signal.tx_hash.substring(0, 12) : 'View Tx'}...
                                             </a>
                                         </div>
                                     )}
                                     {signal.market_snapshot_hash && (
                                         <div className={`text-xs ${textColor} opacity-40`}>
-                                            Snapshot: {signal.market_snapshot_hash.substring(0, 16)}...
+                                            Snapshot: {typeof signal.market_snapshot_hash === 'string' ? signal.market_snapshot_hash.substring(0, 16) : ''}...
                                         </div>
                                     )}
                                 </div>
