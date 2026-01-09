@@ -143,7 +143,7 @@ class ReputationService {
         accuracyPercent: Math.round(winRate * 100) / 100,
         bestMarket,
         worstMarket,
-        recentPredictions: signals.slice(0, 5),
+        recentPredictions: (signals || []).slice(0, 5),
         streak: currentStreak && streakType === 'WIN' ? currentStreak : 0,
         longestWinStreak,
         calibrationScore: this.calculateCalibration(signals),

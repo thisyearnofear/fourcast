@@ -41,7 +41,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
 
             {isExpanded && signal.market_snapshot_hash && (
                 <div className={`mt-3 text-xs ${textColor} opacity-40`}>
-                    Snapshot: {signal.market_snapshot_hash.substring(0, 16)}...
+                    Snapshot: {typeof signal.market_snapshot_hash === 'string' && signal.market_snapshot_hash ? signal.market_snapshot_hash.substring(0, 16) : 'N/A'}...
                 </div>
             )}
 
@@ -54,7 +54,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                         }}
                         className={`text-xs ${textColor} opacity-50 hover:opacity-100 hover:underline text-left`}
                     >
-                        By: {signal.author_address.substring(0, 6)}...{signal.author_address.substring(signal.author_address.length - 4)}
+                        By: {typeof signal.author_address === 'string' && signal.author_address ? `${signal.author_address.substring(0, 6)}...${signal.author_address.substring(signal.author_address.length - 4)}` : 'Unknown'}
                     </button>
 
                     <div className="flex items-center gap-2 ml-auto">

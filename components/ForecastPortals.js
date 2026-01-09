@@ -162,7 +162,12 @@ const ForecastPortals = ({ weatherData, isLoading, onPortalStateChange }) => {
     return null;
   }
 
-  const forecastDays = weatherData.forecast.forecastday.slice(0, 3);
+  const forecastDays = weatherData.forecast.forecastday?.slice(0, 3) || [];
+
+  // Don't render if no forecast days available
+  if (forecastDays.length === 0) {
+    return null;
+  }
 
   const handleEnterPortal = (index) => {
     if (isFullscreen) return; // Prevent entering when already fullscreen

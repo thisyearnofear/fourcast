@@ -376,7 +376,7 @@ export default function MarketsPage() {
         } catch { }
 
         addToast(
-          `Signal published on-chain · TX: ${txHash.slice(0, 10)}...`,
+          `Signal published on-chain · TX: ${txHash ? txHash.slice(0, 10) : 'Unknown'}...`,
           "success",
           5000,
           "/signals",
@@ -1280,7 +1280,7 @@ function DiscoveryTabContent({
 
                 {showArbitrage && (
                   <div className="space-y-2 mt-3 pt-3 border-t border-white/10">
-                    {opportunities.opportunities.slice(0, 5).map((opp, idx) => (
+                    {(opportunities?.opportunities || []).slice(0, 5).map((opp, idx) => (
                       <div
                         key={idx}
                         className={`p-3 rounded-lg border ${isNight
