@@ -551,6 +551,7 @@ export default function MarketsPage() {
               analysisMode={analysisMode}
               fetchMarkets={fetchMarkets}
               chains={chains}
+              canPublish={canPublish}
               setShowOrderPanel={setShowOrderPanel}
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
@@ -579,6 +580,7 @@ export default function MarketsPage() {
               onPublishSignal={handlePublishSignal}
               fetchMarkets={fetchMarkets}
               chains={chains}
+              canPublish={canPublish}
               setShowOrderPanel={setShowOrderPanel}
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
@@ -642,6 +644,7 @@ function SportsTabContent({
   analysisMode,
   fetchMarkets,
   chains,
+  canPublish,
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
@@ -1077,6 +1080,7 @@ function DiscoveryTabContent({
   onPublishSignal,
   fetchMarkets,
   chains,
+  canPublish,
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
