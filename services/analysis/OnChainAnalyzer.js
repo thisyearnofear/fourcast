@@ -1,5 +1,5 @@
 import { EdgeAnalyzer } from './EdgeAnalyzer.js';
-import { aptosPublisher } from '../aptosPublisher.js';
+import { movePublisher } from '../movePublisher.js';
 
 /**
  * On-Chain Network Analyzer
@@ -8,7 +8,7 @@ import { aptosPublisher } from '../aptosPublisher.js';
  */
 export class OnChainAnalyzer extends EdgeAnalyzer {
   constructor() {
-    super({ 
+    super({
       name: 'OnChainAnalyzer',
       version: '1.0.0',
       model: 'llama-3.3-70b'
@@ -20,11 +20,11 @@ export class OnChainAnalyzer extends EdgeAnalyzer {
    */
   async enrichContext(context) {
     // 1. Fetch Chain Stats (Real data via Aptos SDK)
-    const chainStats = await aptosPublisher.getNetworkStats();
-    
+    const chainStats = await movePublisher.getNetworkStats();
+
     // Fallback if network is down
     const finalStats = chainStats || await this.fetchSimulatedStats();
-    
+
     return {
       ...context,
       chainStats: finalStats,
@@ -37,7 +37,7 @@ export class OnChainAnalyzer extends EdgeAnalyzer {
    */
   constructPrompt(context) {
     const { title, chainStats, currentOdds } = context;
-    
+
     return `
       Analyze this prediction market based on current blockchain network conditions:
       Market: "${title}"

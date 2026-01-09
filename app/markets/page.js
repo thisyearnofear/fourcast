@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import WalletConnect from "@/app/components/WalletConnect";
-import { useAptosSignalPublisher } from "@/hooks/useAptosSignalPublisher";
+import { useSignalPublisher } from "@/hooks/useSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
 import { weatherService } from "@/services/weatherService";
 import { arbitrageService } from "@/services/arbitrageService";
@@ -19,11 +19,11 @@ export default function MarketsPage() {
   // Unified chain connection state - single source of truth
   const chainConnections = useChainConnections();
   console.log('[Markets Page] chainConnections:', chainConnections);
-  
+
   // Provide default values to prevent undefined errors during initial render
   const { chains, canPerform, canPublish = false } = chainConnections || {};
   console.log('[Markets Page] chains:', chains, 'canPerform:', canPerform, 'canPublish:', canPublish);
-  
+
   // Safety check: ensure all required values exist
   if (!chains) {
     console.error('[Markets Page] ChainConnections initialization failed:', {
@@ -43,7 +43,7 @@ export default function MarketsPage() {
     publishError,
     connected: aptosConnected,
     walletAddress,
-  } = useAptosSignalPublisher();
+  } = useSignalPublisher();
   const { toasts, addToast, removeToast } = useToast();
 
   // Tab state: 'sports' or 'discovery'
@@ -519,13 +519,13 @@ export default function MarketsPage() {
             {(chains.aptos.connected || chains.movement.connected) && (
               <ActiveChainIndicator variant="badge" isNight={isNight} />
             )}
-            
+
             {/* EVM Network Selector (Trading chains) */}
             {chains.evm.connected && (
               <ChainSelector compact={true} isNight={isNight} />
             )}
           </div>
-          
+
           {/* Sports Tab Content */}
           {activeTab === "sports" && (
             <SportsTabContent
@@ -842,28 +842,28 @@ function SportsTabContent({
         <div className="space-y-4">
           {markets.map((market, index) => (
             <MarketCard
-               key={market.marketID || market.id || index}
-               market={market}
-               onAnalyze={onAnalyze}
-               isNight={isNight}
-               textColor={textColor}
-               cardBgColor={cardBgColor}
-               isExpanded={
-                 expandedMarketId ===
-                 (market.marketID || market.id || market.tokenID)
-               }
-               expandedMarketId={expandedMarketId}
-               setExpandedMarketId={setExpandedMarketId}
-               analysis={analysis}
-               isAnalyzing={isAnalyzing}
-               selectedMarket={selectedMarket}
-               onPublishSignal={onPublishSignal}
-               chains={chains}
-               canPublish={canPublish}
-               setShowOrderPanel={setShowOrderPanel}
-               setSelectedMarketForOrder={setSelectedMarketForOrder}
-               setSelectedKalshiMarket={setSelectedKalshiMarket}
-              />
+              key={market.marketID || market.id || index}
+              market={market}
+              onAnalyze={onAnalyze}
+              isNight={isNight}
+              textColor={textColor}
+              cardBgColor={cardBgColor}
+              isExpanded={
+                expandedMarketId ===
+                (market.marketID || market.id || market.tokenID)
+              }
+              expandedMarketId={expandedMarketId}
+              setExpandedMarketId={setExpandedMarketId}
+              analysis={analysis}
+              isAnalyzing={isAnalyzing}
+              selectedMarket={selectedMarket}
+              onPublishSignal={onPublishSignal}
+              chains={chains}
+              canPublish={canPublish}
+              setShowOrderPanel={setShowOrderPanel}
+              setSelectedMarketForOrder={setSelectedMarketForOrder}
+              setSelectedKalshiMarket={setSelectedKalshiMarket}
+            />
           ))}
         </div>
       )}
@@ -890,10 +890,10 @@ function ChainRecommendationBadge({ recommendation, isNight }) {
       color: isNight ? "bg-amber-500/20 text-amber-300 border-amber-500/30" : "bg-amber-400/20 text-amber-800 border-amber-400/30"
     }
   };
-  
+
   const rec = config[recommendation];
   if (!rec) return null;
-  
+
   return (
     <span className={`px-3 py-1 rounded-full font-light border ${rec.color}`}>
       {rec.icon} {rec.text}
@@ -934,16 +934,15 @@ function ChainActionWidget({
   // Helper to render chain action with smart wallet validation and network switching
   const renderChainAction = (chainDef, chainState, isPrimary, buttonText, actionFn, contextMsg, needsNetworkSwitch = false, onSwitchNetwork = null) => {
     const isDisabled = !chainState.connected || needsNetworkSwitch;
-    const buttonLabel = !chainState.connected 
+    const buttonLabel = !chainState.connected
       ? `Connect ${chainDef.name}`
       : needsNetworkSwitch
-      ? `Switch to ${chainState.currentNetwork?.display || 'correct network'}`
-      : buttonText;
+        ? `Switch to ${chainState.currentNetwork?.display || 'correct network'}`
+        : buttonText;
 
     return (
-      <div className={`flex items-start gap-3 pb-3 border-b border-white/10 last:pb-0 last:border-0 ${
-        isPrimary ? (isNight ? "bg-gradient-to-r from-purple-500/5 to-transparent" : "bg-gradient-to-r from-purple-400/5 to-transparent") : ""
-      } rounded px-3 py-2`}>
+      <div className={`flex items-start gap-3 pb-3 border-b border-white/10 last:pb-0 last:border-0 ${isPrimary ? (isNight ? "bg-gradient-to-r from-purple-500/5 to-transparent" : "bg-gradient-to-r from-purple-400/5 to-transparent") : ""
+        } rounded px-3 py-2`}>
         <span className="text-xl flex-shrink-0">{chainDef.icon}</span>
         <div className="flex-1">
           <h5 className={`text-sm font-medium ${textColor} mb-1`}>
@@ -967,21 +966,20 @@ function ChainActionWidget({
               }
             }}
             disabled={isDisabled}
-            className={`px-4 py-2 rounded-lg text-xs font-light transition-all ${
-              !isDisabled
+            className={`px-4 py-2 rounded-lg text-xs font-light transition-all ${!isDisabled
                 ? isNight
-                  ? `${chainDef.id === 'movement' 
-                      ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30' 
-                      : chainDef.color === 'purple'
+                  ? `${chainDef.id === 'movement'
+                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
+                    : chainDef.color === 'purple'
                       ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30'
                       : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30'}`
-                  : `${chainDef.id === 'movement' 
-                      ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-800 border border-amber-400/30' 
-                      : chainDef.color === 'purple'
+                  : `${chainDef.id === 'movement'
+                    ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-800 border border-amber-400/30'
+                    : chainDef.color === 'purple'
                       ? 'bg-purple-400/20 hover:bg-purple-400/30 text-purple-800 border border-purple-400/30'
                       : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border border-blue-400/30'}`
                 : "opacity-50 cursor-not-allowed"
-            }`}
+              }`}
           >
             {buttonLabel}
           </button>
@@ -1406,28 +1404,28 @@ function DiscoveryTabContent({
             <div className="space-y-4">
               {filteredMarkets.map((market, index) => (
                 <MarketCard
-                   key={market.marketID || market.id || index}
-                   market={market}
-                   onAnalyze={onAnalyze}
-                   isNight={isNight}
-                   textColor={textColor}
-                   cardBgColor={cardBgColor}
-                   isExpanded={
-                     expandedMarketId ===
-                     (market.marketID || market.id || market.tokenID)
-                   }
-                   expandedMarketId={expandedMarketId}
-                   setExpandedMarketId={setExpandedMarketId}
-                   analysis={analysis}
-                   isAnalyzing={isAnalyzing}
-                   selectedMarket={selectedMarket}
-                   onPublishSignal={onPublishSignal}
-                   chains={chains}
-                   canPublish={canPublish}
-                   setShowOrderPanel={setShowOrderPanel}
-                   setSelectedMarketForOrder={setSelectedMarketForOrder}
-                   setSelectedKalshiMarket={setSelectedKalshiMarket}
-                 />
+                  key={market.marketID || market.id || index}
+                  market={market}
+                  onAnalyze={onAnalyze}
+                  isNight={isNight}
+                  textColor={textColor}
+                  cardBgColor={cardBgColor}
+                  isExpanded={
+                    expandedMarketId ===
+                    (market.marketID || market.id || market.tokenID)
+                  }
+                  expandedMarketId={expandedMarketId}
+                  setExpandedMarketId={setExpandedMarketId}
+                  analysis={analysis}
+                  isAnalyzing={isAnalyzing}
+                  selectedMarket={selectedMarket}
+                  onPublishSignal={onPublishSignal}
+                  chains={chains}
+                  canPublish={canPublish}
+                  setShowOrderPanel={setShowOrderPanel}
+                  setSelectedMarketForOrder={setSelectedMarketForOrder}
+                  setSelectedKalshiMarket={setSelectedKalshiMarket}
+                />
               ))}
             </div>
           ) : (
@@ -1539,7 +1537,7 @@ function MarketCard({
             )}
             {/* Chain Recommendation Badge - Early visibility */}
             {isCurrentMarket && analysis?.chain_recommendation && (
-              <ChainRecommendationBadge 
+              <ChainRecommendationBadge
                 recommendation={analysis.chain_recommendation}
                 isNight={isNight}
               />

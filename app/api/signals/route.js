@@ -4,11 +4,14 @@ import { createHash } from 'crypto'
 export async function POST(request) {
   try {
     const body = await request.json()
+    // console.log('[API/Signals] payload received') // Commented out to reduce noise, enable if needed
+
     const market = body.market
     const analysis = body.analysis
     const authorAddress = body.authorAddress || null
 
     if (!market || !analysis) {
+      console.error('[API/Signals] Missing market or analysis in payload')
       return Response.json({ success: false, error: 'missing market or analysis' }, { status: 400 })
     }
 
@@ -53,12 +56,14 @@ export async function POST(request) {
     })
 
     if (!res.success) {
+      console.error('[API/Signals] DB Save Error:', res.error)
       return Response.json({ success: false, error: res.error }, { status: 500 })
     }
 
     const aiDigestHash = aiDigest ? createHash('sha256').update(String(aiDigest)).digest('hex') : null
     return Response.json({ success: true, id, snapshotHash, aiDigestHash })
   } catch (error) {
+    console.error('[API/Signals] Handler Exception:', error)
     return Response.json({ success: false, error: error.message }, { status: 500 })
   }
 }

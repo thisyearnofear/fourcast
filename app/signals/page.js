@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import WalletConnect from '@/app/components/WalletConnect';
-import { useAptosSignalPublisher } from '@/hooks/useAptosSignalPublisher';
+import { useSignalPublisher } from '@/hooks/useSignalPublisher';
 import { useChainConnections } from '@/hooks/useChainConnections';
 import PageNav from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
@@ -16,7 +16,7 @@ import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ActiveChainIndicator, ChainSelector } from '@/components';
 
 export default function SignalsPage() {
-    const { connected: aptosConnected, walletAddress, tipSignal } = useAptosSignalPublisher();
+    const { connected: aptosConnected, walletAddress, tipSignal } = useSignalPublisher();
     const { chains } = useChainConnections();
 
     const [signals, setSignals] = useState([]);
@@ -72,7 +72,7 @@ export default function SignalsPage() {
     const getUserStats = async (userAddress) => {
         if (!userAddress) return null;
         if (userStatsCache[userAddress]) return userStatsCache[userAddress];
-        
+
         try {
             const response = await fetch(`/api/stats?address=${userAddress}`);
             const result = await response.json();
@@ -299,14 +299,14 @@ export default function SignalsPage() {
                             {aptosConnected && (
                                 <ActiveChainIndicator variant="full" isNight={isNight} />
                             )}
-                            
+
                             {/* EVM Network Selector (Trading chains) */}
                             {chains?.evm?.connected && (
                                 <ChainSelector compact={true} isNight={isNight} />
                             )}
                         </div>
                     )}
-                    
+
                     {activeTab === 'defi' ? (
                         <DeFiArbitrageTab
                             isNight={isNight}
