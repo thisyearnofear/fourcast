@@ -28,7 +28,7 @@ The Movement CLI profile has been configured at `.movement/config.yaml` with:
 - **Network:** Custom (Bardock Testnet)
 - **RPC URL:** https://testnet.movementnetwork.xyz/v1
 - **Faucet URL:** https://faucet.testnet.movementnetwork.xyz
-- **Account Address:** 0x903398a2f23ea7fa2f66995499b077bad5f9fb6695dc2da0602157cb8a5640ed
+- **Account Address:** 0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c
 
 ## 3. Fund Your Account
 
@@ -50,7 +50,7 @@ chmod +x deploy-movement.sh
 Or deploy manually:
 
 ```bash
-./bin/movement move publish --profile movement --named-addresses fourcast_addr=0x903398a2f23ea7fa2f66995499b077bad5f9fb6695dc2da0602157cb8a5640ed --assume-yes
+./bin/movement move publish --profile movement --named-addresses fourcast_addr=0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c --assume-yes
 ```
 
 ## 5. Environment Variables
@@ -61,14 +61,14 @@ Update your `.env.local` to point the frontend to Movement:
 NEXT_PUBLIC_APTOS_NETWORK=custom
 NEXT_PUBLIC_APTOS_NODE_URL=https://testnet.movementnetwork.xyz/v1
 NEXT_PUBLIC_APTOS_CUSTOM_RPC_URL=https://testnet.movementnetwork.xyz/v1
-NEXT_PUBLIC_MOVEMENT_MODULE_ADDRESS=0x903398a2f23ea7fa2f66995499b077bad5f9fb6695dc2da0602157cb8a5640ed
+NEXT_PUBLIC_MOVEMENT_MODULE_ADDRESS=0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c
 NEXT_PUBLIC_USE_MARKETPLACE_CONTRACT=true
 ```
 
 ## 6. Verify Deployment
 
 Check your deployed contract on the explorer:
-https://explorer.movementnetwork.xyz/account/0x903398a2f23ea7fa2f66995499b077bad5f9fb6695dc2da0602157cb8a5640ed?network=bardock+testnet
+https://explorer.movementnetwork.xyz/account/0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c?network=bardock+testnet
 
 ## Alternative RPC Endpoints
 

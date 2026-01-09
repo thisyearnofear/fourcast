@@ -77,8 +77,8 @@ Copy `.env.local.example` to `.env.local` and add your keys:
 ```bash
 # Movement M1 Testnet Config
 NEXT_PUBLIC_APTOS_NETWORK=custom
-NEXT_PUBLIC_APTOS_NODE_URL=https://aptos.testnet.porto.movementlabs.xyz/v1
-NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0xYOUR_MODULE_ADDRESS
+NEXT_PUBLIC_APTOS_NODE_URL=https://testnet.movementnetwork.xyz/v1
+NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c
 ```
 
 ### 3. Run the App
@@ -121,8 +121,8 @@ See [SDK Documentation](./sdk/SDK.md) for full details.
 
 | Contract | Address |
 |----------|---------|
-| Signal Registry | `0x...` (See .env) |
-| Marketplace | `0x...` (See .env) |
+| Signal Registry | `0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c` |
+| Marketplace | `0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c` |
 
 ---
 

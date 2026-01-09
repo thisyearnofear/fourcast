@@ -65,11 +65,34 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
       return;
     }
 
+    // Resolve Token ID for the selected outcome
+    // Assuming clobTokenIds is [YES_ID, NO_ID] or [NO_ID, YES_ID]
+    // Polymarket convention: outcomePrices[0] = YES, outcomePrices[1] = NO
+    // So clobTokenIds[0] = YES Token, clobTokenIds[1] = NO Token (usually)
+    // We'll rely on index 0 = Yes, index 1 = No as per polymarketService mapping
+    const clobTokenIds = market.rawMarket?.clobTokenIds || market.clobTokenIds;
+    
+    if (!clobTokenIds || clobTokenIds.length < 2) {
+      // Fallback: Try to use marketID if it looks like a token ID (unlikely to work for binary)
+      console.warn("Missing clobTokenIds, order might fail");
+    }
+    
+    // Select token ID based on side (YES/NO)
+    const tokenID = side === 'YES' 
+      ? clobTokenIds?.[0] 
+      : clobTokenIds?.[1];
+
+    if (!tokenID) {
+      alert('Error: Could not determine Token ID for this market. Trading unavailable.');
+      return;
+    }
+
     setStep('signing');
 
     const result = await submitOrderFlow(
       {
         marketID: market.marketID,
+        tokenID: tokenID, // Explicit Token ID
         side: side,
         price: parseFloat(price),
         size: parseFloat(size),

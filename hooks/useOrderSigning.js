@@ -2,16 +2,39 @@
 
 import { useState, useCallback } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
+import { parseUnits } from 'viem';
+
+const POLYGON_CHAIN_ID = 137;
+const EXCHANGE_CONTRACT = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E";
+
+const DOMAIN = {
+  name: "Polymarket CTF Exchange",
+  version: "1",
+  chainId: POLYGON_CHAIN_ID,
+  verifyingContract: EXCHANGE_CONTRACT,
+};
+
+const TYPES = {
+  Order: [
+    { name: "salt", type: "uint256" },
+    { name: "maker", type: "address" },
+    { name: "signer", type: "address" },
+    { name: "taker", type: "address" },
+    { name: "tokenId", type: "uint256" },
+    { name: "makerAmount", type: "uint256" },
+    { name: "takerAmount", type: "uint256" },
+    { name: "expiration", type: "uint256" },
+    { name: "nonce", type: "uint256" },
+    { name: "feeRateBps", type: "uint256" },
+    { name: "side", type: "uint8" },
+    { name: "signatureType", type: "uint8" },
+  ],
+};
 
 /**
  * Custom hook for signing and submitting prediction market orders
  * 
- * Security Model:
- * 1. User signs order client-side in MetaMask/browser
- * 2. Server validates and adds builder attribution metadata
- * 3. Server forwards to Polymarket CLOB
- * 
- * No private keys leave the browser, server never signs anything
+ * Uses standard EIP-712 signing compatible with Polymarket's CTF Exchange
  */
 export function useOrderSigning() {
   const { address, isConnected } = useAccount();
@@ -22,72 +45,68 @@ export function useOrderSigning() {
   const [success, setSuccess] = useState(null);
 
   /**
-   * Build an order object from market and trade parameters
-   * Format matches Polymarket CLOB API requirements
+   * Sign the order using the wallet client (EIP-712)
    */
-  const buildOrder = useCallback(({
-    marketID,
-    price,
-    side,
-    size,
-    timestamp = Math.floor(Date.now() / 1000)
-  }) => {
-    if (!address) {
-      throw new Error('Wallet not connected');
-    }
+  const signOrder = useCallback(async ({ tokenID, price, size, side }) => {
+    if (!walletClient) throw new Error('Wallet client not available');
+    if (!address) throw new Error('Wallet not connected');
+    if (!tokenID) throw new Error('Token ID is required');
 
-    if (!marketID || price === undefined || !side || !size) {
-      throw new Error('Missing required order fields');
-    }
+    // Assume we are BUYING the outcome token (Long YES or Long NO)
+    // side input is 'YES' or 'NO' (used for UI), but for the Order Struct:
+    // If we are paying Collateral (USDC) to buy Tokens -> Side = 0 (BUY)
+    const orderSide = 0; // BUY
 
-    // Validate side is YES or NO
-    if (!['YES', 'NO'].includes(side.toUpperCase())) {
-      throw new Error('Side must be YES or NO');
-    }
+    // Calculate amounts (6 decimals for USDC and CTF Tokens)
+    // Maker Amount (USDC to pay) = size * price
+    const makerAmountVal = parseFloat(size) * parseFloat(price);
+    const makerAmount = parseUnits(makerAmountVal.toFixed(6), 6);
+    
+    // Taker Amount (Tokens to receive) = size
+    const takerAmount = parseUnits(parseFloat(size).toFixed(6), 6);
 
-    const orderData = {
-      marketID: marketID.toString(),
-      maker: address.toLowerCase(),
-      side: side.toUpperCase(),
-      size: size.toString(),
-      price: price.toString(),
-      feeRateBps: 0,
-      nonce: Math.floor(Math.random() * 1000000000),
-      timestamp: timestamp,
+    const salt = Math.floor(Math.random() * 1000000000);
+    // Use timestamp as nonce for uniqueness
+    const nonce = Date.now(); 
+
+    const order = {
+      salt: BigInt(salt),
+      maker: address,
+      signer: address,
+      taker: "0x0000000000000000000000000000000000000000", // Open order
+      tokenId: BigInt(tokenID),
+      makerAmount,
+      takerAmount,
+      expiration: BigInt(0), // GTC
+      nonce: BigInt(nonce),
+      feeRateBps: BigInt(0),
+      side: orderSide,
+      signatureType: 0 // EOA
     };
 
-    return orderData;
-  }, [address]);
-
-  /**
-   * Sign the order using the wallet client
-   * Returns signed order data ready for submission
-   */
-  const signOrder = useCallback(async (orderData) => {
-    if (!walletClient) {
-      throw new Error('Wallet client not available');
-    }
-
-    if (!address) {
-      throw new Error('Wallet not connected');
-    }
-
     try {
-      // Create the message hash from order data
-      const messageHash = hashOrderData(orderData);
-
-      // Sign the hash using wallet
-      const signature = await walletClient.signMessage({
-        account: address,
-        message: {
-          raw: messageHash,
-        },
+      const signature = await walletClient.signTypedData({
+        domain: DOMAIN,
+        types: TYPES,
+        primaryType: 'Order',
+        message: order
       });
 
       return {
-        ...orderData,
+        order,
         signature,
-        signer: address,
+        // Helper to convert BigInts to strings for JSON payload
+        // Uses snake_case keys as expected by Polymarket CLOB API
+        payload: {
+          token_id: tokenID.toString(),
+          price: price.toString(),
+          side: "BUY", // CLOB API expects string "BUY" or "SELL"
+          size: size.toString(),
+          fee_rate_bps: 0,
+          nonce: nonce,
+          expiration: 0,
+          signature: signature
+        }
       };
     } catch (err) {
       throw new Error(`Signing failed: ${err.message}`);
@@ -96,34 +115,24 @@ export function useOrderSigning() {
 
   /**
    * Submit signed order to backend
-   * Backend adds builder attribution and forwards to Polymarket
    */
-  const submitOrder = useCallback(async (signedOrder, userBalance) => {
-    if (!address) {
-      throw new Error('Wallet not connected');
-    }
+  const submitOrder = useCallback(async (signedData, originalMarketID) => {
+    if (!address) throw new Error('Wallet not connected');
 
-    // Client-side validation before submission
-    const totalCost = parseFloat(signedOrder.size) * parseFloat(signedOrder.price);
-    if (userBalance < totalCost) {
-      throw new Error(
-        `Insufficient balance. Need ${totalCost.toFixed(2)} USDC, have ${userBalance.toFixed(2)}`
-      );
-    }
+    // Client-side validation
+    // const { order } = signedData;
 
     try {
       const response = await fetch('/api/orders', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          marketID: signedOrder.marketID,
-          price: signedOrder.price,
-          side: signedOrder.side,
-          size: signedOrder.size,
+          marketID: originalMarketID, // Use original Market ID (Condition ID) for backend validation
+          price: signedData.payload.price,
+          side: signedData.payload.side,
+          size: signedData.payload.size,
           walletAddress: address,
-          signedOrder, // Already signed by user
+          signedOrder: signedData.payload // This matches CLOB API requirements
         }),
       });
 
@@ -140,7 +149,7 @@ export function useOrderSigning() {
   }, [address]);
 
   /**
-   * Complete flow: build → sign → submit
+   * Complete flow: sign → submit
    */
   const submitOrderFlow = useCallback(
     async (orderParams, userBalance) => {
@@ -154,14 +163,12 @@ export function useOrderSigning() {
       setSuccess(null);
 
       try {
-        // Step 1: Build order data
-        const orderData = buildOrder(orderParams);
+        // Step 1: Sign order (user approves in MetaMask)
+        const signedData = await signOrder(orderParams);
 
-        // Step 2: Sign order (user approves in MetaMask)
-        const signedOrder = await signOrder(orderData);
-
-        // Step 3: Submit to backend
-        const result = await submitOrder(signedOrder, userBalance);
+        // Step 2: Submit to backend
+        // Pass original marketID (Condition ID) for validation, separate from Token ID
+        const result = await submitOrder(signedData, orderParams.marketID);
 
         setSuccess({
           orderID: result.orderID,
@@ -180,12 +187,11 @@ export function useOrderSigning() {
         setIsSubmitting(false);
       }
     },
-    [isConnected, address, buildOrder, signOrder, submitOrder]
+    [isConnected, address, signOrder, submitOrder]
   );
 
   return {
     submitOrderFlow,
-    buildOrder,
     signOrder,
     submitOrder,
     isSubmitting,
@@ -194,33 +200,4 @@ export function useOrderSigning() {
     isConnected,
     address,
   };
-}
-
-/**
- * Hash order data for signing
- * Matches Polymarket CLOB order hash format
- */
-function hashOrderData(orderData) {
-  // Simple hash: convert object to deterministic string and hash
-  const orderString = JSON.stringify({
-    marketID: orderData.marketID,
-    maker: orderData.maker,
-    side: orderData.side,
-    size: orderData.size,
-    price: orderData.price,
-    feeRateBps: orderData.feeRateBps,
-    nonce: orderData.nonce,
-    timestamp: orderData.timestamp,
-  });
-
-  // Create a simple deterministic hash
-  // In production, would use keccak256 or proper EIP-712
-  let hash = 0;
-  for (let i = 0; i < orderString.length; i++) {
-    const char = orderString.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-
-  return new TextEncoder().encode(orderString).slice(0, 32);
 }

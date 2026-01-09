@@ -17,8 +17,8 @@ import { SignalPublisher } from '@fourcast/signal-sdk';
 
 // 1. Initialize Publisher
 const publisher = new SignalPublisher({
-  network: 'testnet', // or 'custom'
-  moduleAddress: '0xYOUR_MODULE_ADDRESS'
+  network: 'custom', 
+  moduleAddress: '0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c'
 });
 
 // 2. Prepare Signal Data
