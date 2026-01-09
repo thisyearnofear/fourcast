@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import WalletConnect from "@/app/components/WalletConnect";
 import { useAptosSignalPublisher } from "@/hooks/useAptosSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
@@ -283,7 +283,7 @@ export default function MarketsPage() {
     }
   };
 
-  const handlePublishSignal = async () => {
+  const handlePublishSignal = useCallback(async () => {
     if (!selectedMarket || !analysis) return;
 
     // Check if can publish to any chain (Aptos or Movement)
@@ -374,7 +374,7 @@ export default function MarketsPage() {
       console.error("Failed to publish signal:", err);
       addToast("Failed to publish signal", "error", 5000);
     }
-  };
+  }, [selectedMarket, analysis, canPublish, chains, weatherData, addToast, publishToAptos]);
 
   const textColor = isNight ? "text-white" : "text-black";
   const bgColor = "bg-black";
