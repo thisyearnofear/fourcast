@@ -16,7 +16,14 @@ import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/ch
 
 export default function MarketsPage() {
   // Unified chain connection state - single source of truth
-  const { chains, canPerform, canPublish } = useChainConnections();
+  const chainConnections = useChainConnections();
+  const { chains, canPerform, canPublish } = chainConnections || {};
+  
+  // Safety check: ensure all required values exist
+  if (!chains || canPublish === undefined) {
+    console.error('ChainConnections hook failed to initialize properly', chainConnections);
+    return <div>Error loading wallet connections. Please refresh the page.</div>;
+  }
 
   const {
     publishToAptos,
