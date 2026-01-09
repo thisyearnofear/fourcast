@@ -428,9 +428,10 @@ export default function SignalsPage() {
                                                                     alert("Please connect your wallet to tip!");
                                                                     return;
                                                                 }
-                                                                const tx = await tipSignal(signal.author_address, signal.signal_id || index, amount || 10000000);
+                                                                const tx = await tipSignal(signal.author_address, signal.signal_id || index, amount);
                                                                 alert(`Tip sent! Tx: ${tx}`);
                                                             } catch (e) {
+                                                                console.error(e);
                                                                 alert(e.message);
                                                             }
                                                         }}

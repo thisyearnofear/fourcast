@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { ChainNetworkBadge, ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
 import { generateXUrl, generateFarcasterUrl } from '@/utils/shareSignal';
+import TippingModal from './TippingModal';
 
 export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip, userStats, onExpand }) {
     const [shareOpen, setShareOpen] = useState(false);
+    const [tipModalOpen, setTipModalOpen] = useState(false);
 
     const handleToggle = () => {
         onToggle();
@@ -63,8 +65,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    const amount = prompt("Enter tip amount (in Octas/units):", "10000000");
-                                    if (amount) onTip(amount);
+                                    setTipModalOpen(true);
                                 }}
                                 className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${isNight
                                     ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
@@ -123,6 +124,14 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                     </a>
                 </div>
             )}
+
+            <TippingModal
+                isOpen={tipModalOpen}
+                onClose={() => setTipModalOpen(false)}
+                onTip={onTip}
+                recipientAddress={signal.author_address}
+                isNight={isNight}
+            />
         </div>
     );
 }
