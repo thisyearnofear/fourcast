@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useOrderSigning } from '@/hooks/useOrderSigning';
 import { ConnectKitButton } from 'connectkit';
-import { useBalance, useAccount } from 'wagmi';
+import { useBalance, useAccount, useSwitchChain } from 'wagmi';
 
-// Polygon USDC Address
-const USDC_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
+// Polygon Configuration
+const POLYGON_CHAIN_ID = 137;
+const POLYGON_CHAIN_NAME = 'Polygon';
+// Native USDC on Polygon (current standard)
+const USDC_ADDRESS = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
 
 /**
  * OrderSigningPanel - Inline order signing UI
@@ -37,11 +40,18 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
     address,
   } = useOrderSigning();
 
+  // Get current chain and switch chain functionality
+  const { chain } = useAccount();
+  const { switchChain } = useSwitchChain();
+
+  // Check if on correct chain
+  const isCorrectChain = chain?.id === POLYGON_CHAIN_ID;
+
   // Fetch real user balance (USDC on Polygon)
   const { data: balanceData } = useBalance({
     address: address,
     token: USDC_ADDRESS,
-    chainId: 137, // Polygon Mainnet
+    chainId: POLYGON_CHAIN_ID, // Polygon Mainnet
     watch: true, // Refresh on blocks
   });
 
@@ -150,6 +160,59 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
         {/* Input Step */}
         {step === 'input' && (
           <div className="space-y-4">
+            {/* Chain & Balance Status Card */}
+            {isConnected && (
+              <div className={`${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'} border rounded-xl p-4`}>
+                <div className="space-y-2">
+                  {isCorrectChain ? (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs ${textColor} opacity-70`}>Network</span>
+                        <span className={`text-xs font-medium ${textColor} flex items-center gap-1`}>
+                          ✓ {POLYGON_CHAIN_NAME}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                        <span className={`text-xs ${textColor} opacity-70`}>Available Balance</span>
+                        <span className={`text-sm font-light ${textColor}`}>
+                          ${userBalance.toFixed(2)} {balanceSymbol}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs ${textColor} opacity-70`}>Network</span>
+                        <span className={`text-xs ${isNight ? 'text-amber-400' : 'text-amber-600'}`}>
+                          {chain?.name || 'Unknown'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => switchChain?.({ chainId: POLYGON_CHAIN_ID })}
+                        className={`w-full py-2 rounded-lg font-light text-xs transition-all border mt-2 ${
+                          isNight
+                            ? 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-300'
+                            : 'bg-amber-400/20 hover:bg-amber-400/30 border-amber-500/30 text-amber-800'
+                        }`}
+                      >
+                        Switch to {POLYGON_CHAIN_NAME}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Connection Required */}
+            {!isConnected && (
+              <div className={`${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'} border rounded-xl p-4 text-center`}>
+                <p className={`text-xs ${textColor} opacity-70 mb-3`}>
+                  Connect wallet to trade
+                </p>
+                <ConnectKitButton />
+              </div>
+            )}
+
             {/* Side Selection */}
             <div>
               <label className={`text-xs ${textColor} opacity-70 mb-2 block`}>Prediction</label>
@@ -207,36 +270,20 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
 
             {/* Cost Estimate */}
             {estimatedCost > 0 && (
-              <div className={`${isNight ? 'bg-white/5' : 'bg-black/5'} rounded-lg p-3`}>
+              <div className={`${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'} border rounded-lg p-3`}>
                 <div className="flex justify-between items-center">
                   <span className={`text-sm ${textColor} opacity-70`}>Estimated Cost</span>
                   <span className={`text-lg font-light ${textColor}`}>
-                    ${estimatedCost.toFixed(2)} {balanceSymbol}
+                    ${estimatedCost.toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className={`text-xs ${textColor} opacity-50`}>Available Balance</span>
-                  <span className={`text-sm ${textColor} ${
-                    userBalance < estimatedCost ? 'text-red-400' : ''
-                  }`}>
-                    ${userBalance.toFixed(2)}
-                  </span>
-                </div>
+                {isConnected && isCorrectChain && userBalance < estimatedCost && (
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
+                    <span className="text-red-400">⚠️</span>
+                    <span className={`text-xs text-red-400`}>Insufficient balance</span>
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* Wallet Connection */}
-            {!isConnected ? (
-              <div>
-                <p className={`text-xs ${textColor} opacity-70 mb-3`}>
-                  Connect MetaMask to sign and submit your order
-                </p>
-                <ConnectKitButton />
-              </div>
-            ) : (
-              <p className={`text-xs ${textColor} opacity-50`}>
-                Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
-              </p>
             )}
 
             {/* Error Display */}
@@ -260,9 +307,9 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
               </button>
               <button
                 onClick={() => setStep('review')}
-                disabled={!isConnected || !size || !price || estimatedCost > userBalance}
+                disabled={!isConnected || !isCorrectChain || !size || !price || estimatedCost > userBalance}
                 className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${
-                  isConnected && size && price && estimatedCost <= userBalance
+                  isConnected && isCorrectChain && size && price && estimatedCost <= userBalance
                     ? isNight
                       ? 'bg-blue-500/30 hover:bg-blue-500/40 border-blue-400/30 text-blue-200'
                       : 'bg-blue-400/30 hover:bg-blue-400/40 border-blue-500/30 text-blue-900'
@@ -270,6 +317,17 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
                     ? 'bg-gray-500/20 border-gray-400/20 text-gray-400'
                     : 'bg-gray-400/20 border-gray-500/20 text-gray-600'
                 }`}
+                title={
+                  !isConnected
+                    ? 'Connect wallet to trade'
+                    : !isCorrectChain
+                    ? `Switch to ${POLYGON_CHAIN_NAME}`
+                    : !size || !price
+                    ? 'Enter size and price'
+                    : estimatedCost > userBalance
+                    ? `Need $${(estimatedCost - userBalance).toFixed(2)} more`
+                    : 'Review and sign order'
+                }
               >
                 Review
               </button>
