@@ -52,7 +52,8 @@
     "redis": "^5.9.0",
     "three": "^0.179.1",
     "viem": "^2.41.2",
-    "wagmi": "^2.19.4"
+    "wagmi": "^2.19.4",
+    "zustand": "5.0.9"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",

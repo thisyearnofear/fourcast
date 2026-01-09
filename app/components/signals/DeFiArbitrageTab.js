@@ -1,54 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import KalshiOrderPanel from '@/components/KalshiOrderPanel';
+import { useArbitrageOpportunities } from '@/hooks/useArbitrageOpportunities';
 
 export default function DeFiArbitrageTab({
   isNight,
   textColor,
   cardBgColor
 }) {
-  const [opportunities, setOpportunities] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({
-    minSpread: 5,
-    limit: 20
-  });
+  const {
+    opportunities,
+    isLoading,
+    error,
+    filters,
+    setMinSpread,
+    refresh
+  } = useArbitrageOpportunities();
+
   const [expandedOppId, setExpandedOppId] = useState(null);
-
-  useEffect(() => {
-    fetchArbitrage();
-  }, [filters]);
-
-  const fetchArbitrage = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({
-        minSpread: filters.minSpread,
-        limit: filters.limit
-      });
-
-      const response = await fetch(`/api/defi/arbitrage?${params.toString()}`);
-      const data = await response.json();
-
-      if (data.success) {
-        setOpportunities(data.data.opportunities || []);
-      } else {
-        setError(data.error?.message || 'Failed to fetch arbitrage opportunities');
-      }
-    } catch (err) {
-      console.error('Failed to fetch arbitrage:', err);
-      setError('Unable to connect to arbitrage service');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleMinSpreadChange = (spread) => {
-    setFilters(prev => ({ ...prev, minSpread: spread }));
-  };
+  const [selectedKalshiMarket, setSelectedKalshiMarket] = useState(null);
 
   return (
     <div className="w-full">
@@ -65,7 +36,7 @@ export default function DeFiArbitrageTab({
                 min="1"
                 max="30"
                 value={filters.minSpread}
-                onChange={(e) => handleMinSpreadChange(parseFloat(e.target.value))}
+                onChange={(e) => setMinSpread(parseFloat(e.target.value))}
                 className="flex-1"
               />
               <span className={`text-lg font-light ${textColor} min-w-12`}>
@@ -77,13 +48,12 @@ export default function DeFiArbitrageTab({
             </p>
           </div>
           <button
-            onClick={fetchArbitrage}
+            onClick={refresh}
             disabled={isLoading}
-            className={`px-6 py-2 rounded-lg text-sm font-light transition-all ${
-              isLoading
+            className={`px-6 py-2 rounded-lg text-sm font-light transition-all ${isLoading
                 ? `${textColor} opacity-50 cursor-not-allowed`
                 : `${isNight ? 'bg-blue-500/30 hover:bg-blue-500/50 text-white' : 'bg-blue-400/30 hover:bg-blue-400/50 text-black'}`
-            }`}
+              }`}
           >
             {isLoading ? 'Refreshing...' : 'Refresh'}
           </button>
@@ -103,7 +73,7 @@ export default function DeFiArbitrageTab({
         <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 text-center`}>
           <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
           <button
-            onClick={fetchArbitrage}
+            onClick={refresh}
             className={`px-4 py-2 rounded-lg text-sm font-light ${isNight ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-black/20 hover:bg-black/30 text-black'}`}
           >
             Try Again
@@ -150,11 +120,10 @@ export default function DeFiArbitrageTab({
                       </p>
                     )}
                   </div>
-                  <span className={`text-xl font-light px-3 py-1 rounded-lg ${
-                    opp.arbitrage.spread_percent > 15
+                  <span className={`text-xl font-light px-3 py-1 rounded-lg ${opp.arbitrage.spread_percent > 15
                       ? isNight ? 'bg-green-500/20 text-green-300' : 'bg-green-400/20 text-green-700'
                       : isNight ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-400/20 text-blue-700'
-                  }`}>
+                    }`}>
                     {opp.arbitrage.spread_percent.toFixed(1)}%
                   </span>
                 </div>
@@ -265,32 +234,46 @@ export default function DeFiArbitrageTab({
                       href={`https://polymarket.com/market/${opp.polymarket.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all ${
-                        isNight
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all ${isNight
                           ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300'
                           : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-700'
-                      }`}
+                        }`}
                     >
                       View on Polymarket ↗
                     </a>
-                    <a
-                      href={`https://kalshi.com/markets/${opp.kalshi.id.toLowerCase()}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all ${
-                        isNight
+                    <button
+                      onClick={() => setSelectedKalshiMarket({
+                        marketID: opp.kalshi.id,
+                        title: opp.market_title,
+                        currentOdds: {
+                          yes: opp.kalshi.odds_yes,
+                          no: 1 - opp.kalshi.odds_yes
+                        },
+                        odds_yes: opp.kalshi.odds_yes,
+                        odds_no: 1 - opp.kalshi.odds_yes
+                      })}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all ${isNight
                           ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300'
                           : 'bg-emerald-400/20 hover:bg-emerald-400/30 text-emerald-700'
-                      }`}
+                        }`}
                     >
-                      View on Kalshi ↗
-                    </a>
+                      Trade on Kalshi 📊
+                    </button>
                   </div>
                 </div>
               )}
             </div>
           ))}
         </div>
+      )}
+
+      {/* Kalshi Order Panel */}
+      {selectedKalshiMarket && (
+        <KalshiOrderPanel
+          market={selectedKalshiMarket}
+          isNight={isNight}
+          onClose={() => setSelectedKalshiMarket(null)}
+        />
       )}
     </div>
   );

@@ -11,6 +11,7 @@ import PageNav from "@/app/components/PageNav";
 import Scene3D from "@/components/Scene3D";
 import { useToast, ToastContainer } from "@/components/Toast";
 import { OrderSigningPanel } from "@/components/OrderSigningPanel";
+import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 
 export default function MarketsPage() {
   const { address, isConnected } = useAccount();
@@ -70,10 +71,11 @@ export default function MarketsPage() {
     return hour >= 19 || hour <= 6;
   });
   const [mySignalCount, setMySignalCount] = useState(null);
-  
+
   // Order signing state
   const [showOrderPanel, setShowOrderPanel] = useState(false);
   const [selectedMarketForOrder, setSelectedMarketForOrder] = useState(null);
+  const [selectedKalshiMarket, setSelectedKalshiMarket] = useState(null);
 
   // Load weather on mount
   useEffect(() => {
@@ -96,7 +98,7 @@ export default function MarketsPage() {
     if (aptosConnected) {
       getMySignalCount()
         .then(setMySignalCount)
-        .catch(() => {});
+        .catch(() => { });
     } else {
       setMySignalCount(null);
     }
@@ -155,34 +157,34 @@ export default function MarketsPage() {
 
       const requestBody = isSportsMode
         ? {
-            weatherData: null,
-            location: null,
-            eventType: sportsFilters.eventType,
-            confidence: sportsFilters.confidence,
-            limitCount: 50,
-            maxDaysToResolution: maxDaysToResolution,
-            minVolume: sportsMinVolume,
-            analysisType: "event-weather",
-            theme: sportsFilters.eventType === "Sports" ? "sports" : undefined,
-            dateRange: selectedDateRange,
-            excludeFutures: !sportsFilters.includeFutures,
-          }
+          weatherData: null,
+          location: null,
+          eventType: sportsFilters.eventType,
+          confidence: sportsFilters.confidence,
+          limitCount: 50,
+          maxDaysToResolution: maxDaysToResolution,
+          minVolume: sportsMinVolume,
+          analysisType: "event-weather",
+          theme: sportsFilters.eventType === "Sports" ? "sports" : undefined,
+          dateRange: selectedDateRange,
+          excludeFutures: !sportsFilters.includeFutures,
+        }
         : {
-            location: null,
-            eventType:
-              discoveryFilters.category === "all"
-                ? "all"
-                : discoveryFilters.category,
-            confidence: discoveryFilters.confidence,
-            limitCount: 50,
-            maxDaysToResolution: maxDaysToResolution,
-            theme: "all",
-            minVolume: parseInt(discoveryFilters.minVolume),
-            analysisType: "discovery",
-            weatherData: null,
-            dateRange: discoveryDateRange,
-            excludeFutures: !discoveryFilters.includeFutures,
-          };
+          location: null,
+          eventType:
+            discoveryFilters.category === "all"
+              ? "all"
+              : discoveryFilters.category,
+          confidence: discoveryFilters.confidence,
+          limitCount: 50,
+          maxDaysToResolution: maxDaysToResolution,
+          theme: "all",
+          minVolume: parseInt(discoveryFilters.minVolume),
+          analysisType: "discovery",
+          weatherData: null,
+          dateRange: discoveryDateRange,
+          excludeFutures: !discoveryFilters.includeFutures,
+        };
 
       console.log("[Markets Page] Fetching markets with request:", requestBody);
 
@@ -345,7 +347,7 @@ export default function MarketsPage() {
         try {
           const c = await getMySignalCount();
           setMySignalCount(c);
-        } catch {}
+        } catch { }
 
         addToast(
           `Signal published on-chain · TX: ${txHash.slice(0, 10)}...`,
@@ -428,11 +430,10 @@ export default function MarketsPage() {
                 <select
                   value={analysisMode}
                   onChange={(e) => setAnalysisMode(e.target.value)}
-                  className={`px-3 py-1.5 text-xs rounded-lg border ${
-                    isNight
-                      ? "bg-white/10 border-white/20 text-white"
-                      : "bg-black/10 border-black/20 text-black"
-                  }`}
+                  className={`px-3 py-1.5 text-xs rounded-lg border ${isNight
+                    ? "bg-white/10 border-white/20 text-white"
+                    : "bg-black/10 border-black/20 text-black"
+                    }`}
                 >
                   <option value="basic">Basic (Free)</option>
                   <option value="deep">Deep (Research)</option>
@@ -457,11 +458,10 @@ export default function MarketsPage() {
                 </div>
                 {aptosConnected && (
                   <span
-                    className={`px-2 py-1 rounded-lg text-[10px] border ${
-                      isNight
-                        ? "bg-white/10 border-white/20 text-white/80"
-                        : "bg-black/10 border-black/20 text-black/70"
-                    }`}
+                    className={`px-2 py-1 rounded-lg text-[10px] border ${isNight
+                      ? "bg-white/10 border-white/20 text-white/80"
+                      : "bg-black/10 border-black/20 text-black/70"
+                      }`}
                   >
                     My signals: {mySignalCount ?? "—"}
                   </span>
@@ -477,25 +477,23 @@ export default function MarketsPage() {
             >
               <button
                 onClick={() => setActiveTab("sports")}
-                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${
-                  activeTab === "sports"
-                    ? isNight
-                      ? "bg-blue-500/30 text-white border border-blue-400/40"
-                      : "bg-blue-400/30 text-black border border-blue-500/40"
-                    : `${textColor} opacity-60 hover:opacity-100`
-                }`}
+                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === "sports"
+                  ? isNight
+                    ? "bg-blue-500/30 text-white border border-blue-400/40"
+                    : "bg-blue-400/30 text-black border border-blue-500/40"
+                  : `${textColor} opacity-60 hover:opacity-100`
+                  }`}
               >
                 ⚽ Sports (Event Weather)
               </button>
               <button
                 onClick={() => setActiveTab("discovery")}
-                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${
-                  activeTab === "discovery"
-                    ? isNight
-                      ? "bg-purple-500/30 text-white border border-purple-400/40"
-                      : "bg-purple-400/30 text-black border border-purple-500/40"
-                    : `${textColor} opacity-60 hover:opacity-100`
-                }`}
+                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === "discovery"
+                  ? isNight
+                    ? "bg-purple-500/30 text-white border border-purple-400/40"
+                    : "bg-purple-400/30 text-black border border-purple-500/40"
+                  : `${textColor} opacity-60 hover:opacity-100`
+                  }`}
               >
                 🔍 All Markets (Discovery)
               </button>
@@ -530,6 +528,9 @@ export default function MarketsPage() {
               analysisMode={analysisMode}
               fetchMarkets={fetchMarkets}
               aptosConnected={aptosConnected}
+              setShowOrderPanel={setShowOrderPanel}
+              setSelectedMarketForOrder={setSelectedMarketForOrder}
+              setSelectedKalshiMarket={setSelectedKalshiMarket}
             />
           )}
 
@@ -555,11 +556,42 @@ export default function MarketsPage() {
               onPublishSignal={handlePublishSignal}
               fetchMarkets={fetchMarkets}
               aptosConnected={aptosConnected}
+              setShowOrderPanel={setShowOrderPanel}
+              setSelectedMarketForOrder={setSelectedMarketForOrder}
+              setSelectedKalshiMarket={setSelectedKalshiMarket}
             />
           )}
         </main>
       </div>
-    </div>
+
+      {/* Modal Layers */}
+      {
+        showOrderPanel && selectedMarketForOrder && (
+          <OrderSigningPanel
+            market={selectedMarketForOrder}
+            isNight={isNight}
+            onClose={() => {
+              setShowOrderPanel(false);
+              setSelectedMarketForOrder(null);
+            }}
+            onSuccess={(tx) => {
+              addToast("Order submitted successfully!", "success");
+              setShowOrderPanel(false);
+            }}
+          />
+        )
+      }
+
+      {
+        selectedKalshiMarket && (
+          <KalshiOrderPanel
+            market={selectedKalshiMarket}
+            isNight={isNight}
+            onClose={() => setSelectedKalshiMarket(null)}
+          />
+        )
+      }
+    </div >
   );
 }
 
@@ -587,6 +619,9 @@ function SportsTabContent({
   analysisMode,
   fetchMarkets,
   aptosConnected,
+  setShowOrderPanel,
+  setSelectedMarketForOrder,
+  setSelectedKalshiMarket,
 }) {
   const dateRangeLabels = {
     today: "Today",
@@ -611,11 +646,10 @@ function SportsTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, eventType: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="Soccer">⚽ Soccer</option>
             <option value="NFL">🏈 NFL</option>
@@ -634,15 +668,14 @@ function SportsTabContent({
               <button
                 key={key}
                 onClick={() => setDateRange(key)}
-                className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${
-                  dateRange === key
-                    ? isNight
-                      ? "bg-blue-500/30 text-white border-blue-400/40"
-                      : "bg-blue-400/30 text-black border-blue-500/40"
-                    : isNight
+                className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${dateRange === key
+                  ? isNight
+                    ? "bg-blue-500/30 text-white border-blue-400/40"
+                    : "bg-blue-400/30 text-black border-blue-500/40"
+                  : isNight
                     ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
                     : "bg-black/10 hover:bg-black/20 text-black/70 border-black/20"
-                }`}
+                  }`}
               >
                 {label}
               </button>
@@ -658,11 +691,10 @@ function SportsTabContent({
           <select
             value={String(minVolume)}
             onChange={(e) => setMinVolume(parseInt(e.target.value))}
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="10000">$10k+</option>
             <option value="50000">$50k+</option>
@@ -679,11 +711,10 @@ function SportsTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, confidence: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="all">All</option>
             <option value="HIGH">High</option>
@@ -703,20 +734,18 @@ function SportsTabContent({
                 includeFutures: !prev.includeFutures,
               }))
             }
-            className={`inline-flex items-center w-12 h-6 rounded-full border transition-all ${
-              filters.includeFutures
-                ? isNight
-                  ? "bg-green-500/40 border-green-400/40"
-                  : "bg-green-400/30 border-green-500/40"
-                : isNight
+            className={`inline-flex items-center w-12 h-6 rounded-full border transition-all ${filters.includeFutures
+              ? isNight
+                ? "bg-green-500/40 border-green-400/40"
+                : "bg-green-400/30 border-green-500/40"
+              : isNight
                 ? "bg-white/10 border-white/20"
                 : "bg-black/10 border-black/20"
-            }`}
+              }`}
           >
             <span
-              className={`inline-block w-5 h-5 rounded-full bg-white/80 transform transition-transform ${
-                filters.includeFutures ? "translate-x-6" : "translate-x-1"
-              }`}
+              className={`inline-block w-5 h-5 rounded-full bg-white/80 transform transition-transform ${filters.includeFutures ? "translate-x-6" : "translate-x-1"
+                }`}
             />
           </button>
         </div>
@@ -736,11 +765,10 @@ function SportsTabContent({
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div
-            className={`w-6 h-6 border-2 ${
-              isNight
-                ? "border-white/30 border-t-white"
-                : "border-black/30 border-t-black"
-            } rounded-full animate-spin`}
+            className={`w-6 h-6 border-2 ${isNight
+              ? "border-white/30 border-t-white"
+              : "border-black/30 border-t-black"
+              } rounded-full animate-spin`}
           ></div>
           <span className={`ml-3 ${textColor} opacity-70`}>
             Loading markets...
@@ -764,21 +792,19 @@ function SportsTabContent({
                   includeFutures: true,
                 }));
               }}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${
-                isNight
-                  ? "bg-white/20 hover:bg-white/30 text-white"
-                  : "bg-black/20 hover:bg-black/30 text-black"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
+                ? "bg-white/20 hover:bg-white/30 text-white"
+                : "bg-black/20 hover:bg-black/30 text-black"
+                }`}
             >
               Broaden Filters
             </button>
             <button
               onClick={fetchMarkets}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${
-                isNight
-                  ? "bg-white/20 hover:bg-white/30 text-white"
-                  : "bg-black/20 hover:bg-black/30 text-black"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
+                ? "bg-white/20 hover:bg-white/30 text-white"
+                : "bg-black/20 hover:bg-black/30 text-black"
+                }`}
             >
               Try Again
             </button>
@@ -807,6 +833,9 @@ function SportsTabContent({
               selectedMarket={selectedMarket}
               onPublishSignal={onPublishSignal}
               aptosConnected={aptosConnected}
+              setShowOrderPanel={setShowOrderPanel}
+              setSelectedMarketForOrder={setSelectedMarketForOrder}
+              setSelectedKalshiMarket={setSelectedKalshiMarket}
             />
           ))}
         </div>
@@ -836,6 +865,9 @@ function DiscoveryTabContent({
   onPublishSignal,
   fetchMarkets,
   aptosConnected,
+  setShowOrderPanel,
+  setSelectedMarketForOrder,
+  setSelectedKalshiMarket,
 }) {
   const dateRangeLabels = {
     today: "Today",
@@ -860,11 +892,10 @@ function DiscoveryTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, category: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="all">All Categories</option>
             <option value="Sports">⚽ Sports</option>
@@ -886,11 +917,10 @@ function DiscoveryTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, platform: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="all">All Platforms</option>
             <option value="polymarket">Polymarket</option>
@@ -908,15 +938,14 @@ function DiscoveryTabContent({
               <button
                 key={key}
                 onClick={() => setDateRange(key)}
-                className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${
-                  dateRange === key
-                    ? isNight
-                      ? "bg-blue-500/30 text-white border-blue-400/40"
-                      : "bg-blue-400/30 text-black border-blue-500/40"
-                    : isNight
+                className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${dateRange === key
+                  ? isNight
+                    ? "bg-blue-500/30 text-white border-blue-400/40"
+                    : "bg-blue-400/30 text-black border-blue-500/40"
+                  : isNight
                     ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
                     : "bg-black/10 hover:bg-black/20 text-black/70 border-black/20"
-                }`}
+                  }`}
               >
                 {label}
               </button>
@@ -934,11 +963,10 @@ function DiscoveryTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, minVolume: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="10000">$10k+</option>
             <option value="50000">$50k+</option>
@@ -955,11 +983,10 @@ function DiscoveryTabContent({
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, confidence: e.target.value }))
             }
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
-              isNight
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-black/10 border-black/20 text-black"
-            }`}
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border ${isNight
+              ? "bg-white/10 border-white/20 text-white"
+              : "bg-black/10 border-black/20 text-black"
+              }`}
           >
             <option value="all">All</option>
             <option value="HIGH">High</option>
@@ -979,20 +1006,18 @@ function DiscoveryTabContent({
                 includeFutures: !prev.includeFutures,
               }))
             }
-            className={`inline-flex items-center w-12 h-6 rounded-full border transition-all ${
-              filters.includeFutures
-                ? isNight
-                  ? "bg-green-500/40 border-green-400/40"
-                  : "bg-green-400/30 border-green-500/40"
-                : isNight
+            className={`inline-flex items-center w-12 h-6 rounded-full border transition-all ${filters.includeFutures
+              ? isNight
+                ? "bg-green-500/40 border-green-400/40"
+                : "bg-green-400/30 border-green-500/40"
+              : isNight
                 ? "bg-white/10 border-white/20"
                 : "bg-black/10 border-black/20"
-            }`}
+              }`}
           >
             <span
-              className={`inline-block w-5 h-5 rounded-full bg-white/80 transform transition-transform ${
-                filters.includeFutures ? "translate-x-6" : "translate-x-1"
-              }`}
+              className={`inline-block w-5 h-5 rounded-full bg-white/80 transform transition-transform ${filters.includeFutures ? "translate-x-6" : "translate-x-1"
+                }`}
             />
           </button>
         </div>
@@ -1025,15 +1050,14 @@ function DiscoveryTabContent({
                   </div>
                   <button
                     onClick={() => setShowArbitrage(!showArbitrage)}
-                    className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
-                      showArbitrage
-                        ? isNight
-                          ? "bg-blue-500/30 text-white border-blue-400/40"
-                          : "bg-blue-400/30 text-black border-blue-500/40"
-                        : isNight
+                    className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${showArbitrage
+                      ? isNight
+                        ? "bg-blue-500/30 text-white border-blue-400/40"
+                        : "bg-blue-400/30 text-black border-blue-500/40"
+                      : isNight
                         ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
                         : "bg-black/10 hover:bg-black/20 text-black/70 border-black/20"
-                    }`}
+                      }`}
                   >
                     {showArbitrage ? "Hide" : "Show"} Details
                   </button>
@@ -1044,11 +1068,10 @@ function DiscoveryTabContent({
                     {opportunities.opportunities.slice(0, 5).map((opp, idx) => (
                       <div
                         key={idx}
-                        className={`p-3 rounded-lg border ${
-                          isNight
-                            ? "bg-white/5 border-white/10"
-                            : "bg-black/5 border-black/10"
-                        }`}
+                        className={`p-3 rounded-lg border ${isNight
+                          ? "bg-white/5 border-white/10"
+                          : "bg-black/5 border-black/10"
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1">
@@ -1059,20 +1082,18 @@ function DiscoveryTabContent({
                             </p>
                             <div className="flex gap-2 text-xs">
                               <span
-                                className={`px-2 py-0.5 rounded ${
-                                  isNight
-                                    ? "bg-blue-900/40 text-blue-300"
-                                    : "bg-blue-100 text-blue-700"
-                                }`}
+                                className={`px-2 py-0.5 rounded ${isNight
+                                  ? "bg-blue-900/40 text-blue-300"
+                                  : "bg-blue-100 text-blue-700"
+                                  }`}
                               >
                                 Polymarket: {opp.arbitrage.market1Odds}%
                               </span>
                               <span
-                                className={`px-2 py-0.5 rounded ${
-                                  isNight
-                                    ? "bg-emerald-900/40 text-emerald-300"
-                                    : "bg-emerald-100 text-emerald-700"
-                                }`}
+                                className={`px-2 py-0.5 rounded ${isNight
+                                  ? "bg-emerald-900/40 text-emerald-300"
+                                  : "bg-emerald-100 text-emerald-700"
+                                  }`}
                               >
                                 Kalshi: {opp.arbitrage.market2Odds}%
                               </span>
@@ -1080,9 +1101,8 @@ function DiscoveryTabContent({
                           </div>
                           <div className="text-right">
                             <div
-                              className={`text-lg font-bold ${
-                                isNight ? "text-yellow-300" : "text-yellow-600"
-                              }`}
+                              className={`text-lg font-bold ${isNight ? "text-yellow-300" : "text-yellow-600"
+                                }`}
                             >
                               {opp.arbitrage.priceDiff}%
                             </div>
@@ -1105,11 +1125,10 @@ function DiscoveryTabContent({
       {isLoading && (
         <div className="flex items-center justify-center py-12">
           <div
-            className={`w-6 h-6 border-2 ${
-              isNight
-                ? "border-white/30 border-t-white"
-                : "border-black/30 border-t-black"
-            } rounded-full animate-spin`}
+            className={`w-6 h-6 border-2 ${isNight
+              ? "border-white/30 border-t-white"
+              : "border-black/30 border-t-black"
+              } rounded-full animate-spin`}
           ></div>
           <span className={`ml-3 ${textColor} opacity-70`}>
             Loading markets...
@@ -1134,21 +1153,19 @@ function DiscoveryTabContent({
                   includeFutures: true,
                 }));
               }}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${
-                isNight
-                  ? "bg-white/20 hover:bg-white/30 text-white"
-                  : "bg-black/20 hover:bg-black/30 text-black"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
+                ? "bg-white/20 hover:bg-white/30 text-white"
+                : "bg-black/20 hover:bg-black/30 text-black"
+                }`}
             >
               Broaden Filters
             </button>
             <button
               onClick={fetchMarkets}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${
-                isNight
-                  ? "bg-white/20 hover:bg-white/30 text-white"
-                  : "bg-black/20 hover:bg-black/30 text-black"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
+                ? "bg-white/20 hover:bg-white/30 text-white"
+                : "bg-black/20 hover:bg-black/30 text-black"
+                }`}
             >
               Try Again
             </button>
@@ -1166,8 +1183,8 @@ function DiscoveryTabContent({
             filters.platform === "all"
               ? markets
               : markets.filter(
-                  (m) => (m.platform || "polymarket") === filters.platform
-                );
+                (m) => (m.platform || "polymarket") === filters.platform
+              );
 
           return filteredMarkets.length > 0 ? (
             <div className="space-y-4">
@@ -1190,6 +1207,9 @@ function DiscoveryTabContent({
                   selectedMarket={selectedMarket}
                   onPublishSignal={onPublishSignal}
                   aptosConnected={aptosConnected}
+                  setShowOrderPanel={setShowOrderPanel}
+                  setSelectedMarketForOrder={setSelectedMarketForOrder}
+                  setSelectedKalshiMarket={setSelectedKalshiMarket}
                 />
               ))}
             </div>
@@ -1224,6 +1244,9 @@ function MarketCard({
   selectedMarket,
   onPublishSignal,
   aptosConnected,
+  setShowOrderPanel,
+  setSelectedMarketForOrder,
+  setSelectedKalshiMarket,
 }) {
   const isHidden = expandedMarketId && !isExpanded;
   const isCurrentMarket =
@@ -1235,13 +1258,11 @@ function MarketCard({
 
   return (
     <div
-      className={`backdrop-blur-xl border rounded-3xl transition-all duration-500 ${
-        isExpanded ? "fixed inset-4 p-8 z-40 overflow-y-auto" : "p-5 sm:p-6"
-      } ${
-        isHidden
+      className={`backdrop-blur-xl border rounded-3xl transition-all duration-500 ${isExpanded ? "fixed inset-4 p-8 z-40 overflow-y-auto" : "p-5 sm:p-6"
+        } ${isHidden
           ? "opacity-0 pointer-events-none scale-95"
           : `opacity-100 hover:scale-[1.01] ${cardBgColor}`
-      }`}
+        }`}
     >
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex-1 space-y-3">
@@ -1253,15 +1274,14 @@ function MarketCard({
             </h3>
             {/* Platform Badge */}
             <span
-              className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider border ${
-                isKalshi
-                  ? isNight
-                    ? "bg-emerald-900/40 text-emerald-300 border-emerald-700/50"
-                    : "bg-emerald-100 text-emerald-700 border-emerald-200"
-                  : isNight
+              className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider border ${isKalshi
+                ? isNight
+                  ? "bg-emerald-900/40 text-emerald-300 border-emerald-700/50"
+                  : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                : isNight
                   ? "bg-blue-900/40 text-blue-300 border-blue-700/50"
                   : "bg-blue-100 text-blue-700 border-blue-200"
-              }`}
+                }`}
             >
               {isKalshi ? "Kalshi" : "Polymarket"}
             </span>
@@ -1270,11 +1290,10 @@ function MarketCard({
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {market.volume24h !== undefined && (
               <span
-                className={`px-3 py-1 rounded-full font-light border ${
-                  isNight
-                    ? "bg-orange-500/10 text-orange-200 border-orange-500/20"
-                    : "bg-orange-400/10 text-orange-800 border-orange-400/20"
-                }`}
+                className={`px-3 py-1 rounded-full font-light border ${isNight
+                  ? "bg-orange-500/10 text-orange-200 border-orange-500/20"
+                  : "bg-orange-400/10 text-orange-800 border-orange-400/20"
+                  }`}
               >
                 ⚡{" "}
                 {isKalshi
@@ -1284,19 +1303,18 @@ function MarketCard({
             )}
             {market.confidence && (
               <span
-                className={`px-3 py-1 rounded-full font-light border ${
-                  market.confidence === "HIGH"
-                    ? isNight
-                      ? "bg-green-500/20 text-green-300 border-green-500/30"
-                      : "bg-green-400/20 text-green-800 border-green-400/30"
-                    : market.confidence === "MEDIUM"
+                className={`px-3 py-1 rounded-full font-light border ${market.confidence === "HIGH"
+                  ? isNight
+                    ? "bg-green-500/20 text-green-300 border-green-500/30"
+                    : "bg-green-400/20 text-green-800 border-green-400/30"
+                  : market.confidence === "MEDIUM"
                     ? isNight
                       ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
                       : "bg-yellow-400/20 text-yellow-800 border-yellow-400/30"
                     : isNight
-                    ? "bg-red-500/20 text-red-300 border-red-500/30"
-                    : "bg-red-400/20 text-red-800 border-red-400/30"
-                }`}
+                      ? "bg-red-500/20 text-red-300 border-red-500/30"
+                      : "bg-red-400/20 text-red-800 border-red-400/30"
+                  }`}
               >
                 {market.confidence}
               </span>
@@ -1308,11 +1326,10 @@ function MarketCard({
           {isExpanded ? (
             <button
               onClick={() => setExpandedMarketId(null)}
-              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all border ${
-                isNight
-                  ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
-                  : "bg-black/10 hover:bg-black/20 text-black border-black/20"
-              }`}
+              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all border ${isNight
+                ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
+                : "bg-black/10 hover:bg-black/20 text-black border-black/20"
+                }`}
             >
               ← Back
             </button>
@@ -1320,11 +1337,10 @@ function MarketCard({
             <button
               onClick={() => onAnalyze(market, "basic")}
               disabled={isAnalyzing}
-              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${
-                isNight
-                  ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-200 border-blue-400/30"
-                  : "bg-gradient-to-r from-blue-400/20 to-purple-400/20 hover:from-blue-400/30 hover:to-purple-400/30 text-blue-800 border-blue-500/30"
-              }`}
+              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${isNight
+                ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-200 border-blue-400/30"
+                : "bg-gradient-to-r from-blue-400/20 to-purple-400/20 hover:from-blue-400/30 hover:to-purple-400/30 text-blue-800 border-blue-500/30"
+                }`}
             >
               {isAnalyzing && isCurrentMarket ? "Analyzing..." : "Analyze"}
             </button>
@@ -1359,9 +1375,8 @@ function MarketCard({
                       YES
                     </span>
                     <span
-                      className={`text-xl font-medium ${
-                        isNight ? "text-green-400" : "text-green-600"
-                      }`}
+                      className={`text-xl font-medium ${isNight ? "text-green-400" : "text-green-600"
+                        }`}
                     >
                       {market.ask ? `${(market.ask * 100).toFixed(1)}%` : "N/A"}
                     </span>
@@ -1371,9 +1386,8 @@ function MarketCard({
                       NO
                     </span>
                     <span
-                      className={`text-xl font-medium ${
-                        isNight ? "text-red-400" : "text-red-600"
-                      }`}
+                      className={`text-xl font-medium ${isNight ? "text-red-400" : "text-red-600"
+                        }`}
                     >
                       {market.bid ? `${(market.bid * 100).toFixed(1)}%` : "N/A"}
                     </span>
@@ -1454,15 +1468,13 @@ function MarketCard({
 
             {/* Disclaimer */}
             <div
-              className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4 ${
-                isNight ? "border-white/10" : "border-black/10"
-              }`}
+              className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4 ${isNight ? "border-white/10" : "border-black/10"
+                }`}
             >
               <div className="flex items-start gap-3">
                 <div
-                  className={`mt-0.5 w-1 h-1 rounded-full ${
-                    isNight ? "bg-white/40" : "bg-black/40"
-                  }`}
+                  className={`mt-0.5 w-1 h-1 rounded-full ${isNight ? "bg-white/40" : "bg-black/40"
+                    }`}
                 ></div>
                 <div>
                   <p
@@ -1528,9 +1540,8 @@ function MarketCard({
             {/* Wallet Connection Prompt (if not connected) */}
             {!aptosConnected && (
               <div
-                className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4 flex items-center gap-3 ${
-                  isNight ? "border-orange-400/30" : "border-orange-600/30"
-                }`}
+                className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4 flex items-center gap-3 ${isNight ? "border-orange-400/30" : "border-orange-600/30"
+                  }`}
               >
                 <span className="text-2xl">👆</span>
                 <div className="flex-1">
@@ -1549,61 +1560,50 @@ function MarketCard({
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => {
-                  setSelectedMarketForOrder(market);
-                  setShowOrderPanel(true);
+                  if (isKalshi) {
+                    setSelectedKalshiMarket(market);
+                  } else {
+                    setSelectedMarketForOrder(market);
+                    setShowOrderPanel(true);
+                  }
                 }}
-                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border text-center ${
-                  isNight
+                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border text-center ${isKalshi
+                  ? isNight
+                    ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border-emerald-400/30"
+                    : "bg-emerald-400/20 hover:bg-emerald-400/30 text-emerald-800 border-emerald-500/30"
+                  : isNight
                     ? "bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30"
                     : "bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border-blue-500/30"
-                }`}
+                  }`}
               >
-                📈 Trade Here
+                {isKalshi ? "Trade on Kalshi ↗" : "📈 Trade Here"}
               </button>
 
               <button
                 onClick={onPublishSignal}
-                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border relative ${
-                  aptosConnected
-                    ? isNight
-                      ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
-                      : "bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30"
-                    : isNight
+                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border relative ${aptosConnected
+                  ? isNight
+                    ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
+                    : "bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30"
+                  : isNight
                     ? "bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 border-orange-400/30"
                     : "bg-orange-400/20 hover:bg-orange-400/30 text-orange-800 border-orange-500/30"
-                }`}
+                  }`}
               >
                 {aptosConnected
                   ? "📡 Publish Signal"
                   : "🔗 Connect & Publish Signal"}
               </button>
-              </div>
-              </div>
-              </div>
-              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Order Signing Panel - Overlay */}
-              {showOrderPanel && selectedMarketForOrder && (
-              <OrderSigningPanel
-              market={selectedMarketForOrder}
-              isNight={isNight}
-              onClose={() => {
-              setShowOrderPanel(false);
-              setSelectedMarketForOrder(null);
-              }}
-              onSuccess={(result) => {
-              addToast({
-              type: 'success',
-              title: 'Order Submitted',
-              message: `Your ${result.side} order for ${result.size} shares at $${result.price} has been submitted`,
-              duration: 5000,
-              });
-              }}
-              />
-              )}
-              </div>
-              );
-              }
+      {/* Order Signing Panel - Overlay */}
+
+    </div>
+  );
+}
 
 // Dynamic Loading State Component
 function LoadingAnalysisState({ isNight, textColor }) {
@@ -1656,18 +1656,16 @@ function LoadingAnalysisState({ isNight, textColor }) {
       {/* Animated Icon */}
       <div className="relative mb-6">
         <div
-          className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl transition-all duration-500 ${
-            isNight
-              ? "bg-white/10 backdrop-blur-sm"
-              : "bg-black/5 backdrop-blur-sm"
-          }`}
+          className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl transition-all duration-500 ${isNight
+            ? "bg-white/10 backdrop-blur-sm"
+            : "bg-black/5 backdrop-blur-sm"
+            }`}
         >
           <span className="animate-bounce">{steps[step].icon}</span>
         </div>
         <div
-          className={`absolute inset-0 rounded-full border-2 ${
-            isNight ? "border-white/20" : "border-black/20"
-          }`}
+          className={`absolute inset-0 rounded-full border-2 ${isNight ? "border-white/20" : "border-black/20"
+            }`}
           style={{
             clipPath: `polygon(0 0, ${progress}% 0, ${progress}% 100%, 0 100%)`,
             borderColor: isNight ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)",
@@ -1689,14 +1687,12 @@ function LoadingAnalysisState({ isNight, textColor }) {
 
       {/* Progress Bar */}
       <div
-        className={`w-64 h-1 rounded-full mt-6 ${
-          isNight ? "bg-white/10" : "bg-black/10"
-        }`}
+        className={`w-64 h-1 rounded-full mt-6 ${isNight ? "bg-white/10" : "bg-black/10"
+          }`}
       >
         <div
-          className={`h-full rounded-full transition-all duration-100 ${
-            isNight ? "bg-white/60" : "bg-black/60"
-          }`}
+          className={`h-full rounded-full transition-all duration-100 ${isNight ? "bg-white/60" : "bg-black/60"
+            }`}
           style={{ width: `${progress}%` }}
         ></div>
       </div>
@@ -1706,20 +1702,18 @@ function LoadingAnalysisState({ isNight, textColor }) {
         {steps.map((s, i) => (
           <div
             key={i}
-            className={`flex flex-col items-center gap-1 transition-all duration-300 ${
-              i === step ? "scale-110" : "scale-100 opacity-40"
-            }`}
+            className={`flex flex-col items-center gap-1 transition-all duration-300 ${i === step ? "scale-110" : "scale-100 opacity-40"
+              }`}
           >
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                i <= step
-                  ? isNight
-                    ? "bg-white/20 text-white"
-                    : "bg-black/20 text-black"
-                  : isNight
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${i <= step
+                ? isNight
+                  ? "bg-white/20 text-white"
+                  : "bg-black/20 text-black"
+                : isNight
                   ? "bg-white/5 text-white/40"
                   : "bg-black/5 text-black/40"
-              }`}
+                }`}
             >
               {s.icon}
             </div>

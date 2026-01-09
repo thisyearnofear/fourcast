@@ -78,32 +78,30 @@ export async function POST(request) {
 
     // 2. Fetch Kalshi Data (Category-aware)
     let kalshiMarkets = [];
-    const shouldFetchKalshi = analysisType === 'discovery' || ['all','Weather','Politics','Economics','Sports','Soccer','NFL','NBA'].includes(eventType);
+    // Only fetch Kalshi if in discovery mode OR if the category is supported
+    const supportedKalshiCategories = ['all', 'Weather', 'Politics', 'Economics', 'Crypto', 'Sports', 'Soccer', 'NFL', 'NBA'];
+    const shouldFetchKalshi = (analysisType === 'discovery' || supportedKalshiCategories.includes(eventType)) && filters.platform !== 'polymarket';
 
     if (shouldFetchKalshi) {
+      console.log('[Markets API] Calling kalshiService for category:', eventType);
+      
       try {
-        console.log('[Markets API] Calling kalshiService for category:', eventType);
-
-        // Map our eventType to Kalshi categories
-        let kalshiCategory = 'all';
-        if (eventType === 'Weather') kalshiCategory = 'Climate and Weather';
-        else if (eventType === 'Politics') kalshiCategory = 'Politics';
-        else if (eventType === 'Economics') kalshiCategory = 'Economics';
-        else if (eventType === 'Crypto') kalshiCategory = 'Financials';
-
-        const kMarkets = await kalshiService.getMarketsByCategory(kalshiCategory, 30);
-
+        const kMarkets = await kalshiService.getMarketsByCategory(eventType, 30);
+        
         // Apply basic filtering to Kalshi markets
         kalshiMarkets = kMarkets.filter(m => {
-          if (searchText && !m.title.toLowerCase().includes(searchText.toLowerCase())) return false;
-          // Kalshi volume is in contracts (approx $1), so we scale minVolume down
-          // If minVolume is > 10000, we require > 100 contracts on Kalshi
-          if (minVolume && minVolume > 10000 && m.volume24h < 50) return false;
-          return true;
+          const vol = parseFloat(m.volume24h || 0);
+          // Kalshi volume is in contracts (approx $1 each), so we scale minVolume down
+          // If minVolume is > 10000 ($), we require > 100 contracts on Kalshi
+          // This prevents empty/dead markets from cluttering the view
+          const minContracts = Math.max(10, minVolume / 100); 
+          return vol >= minContracts;
         });
-        console.log(`[Markets API] Found ${kalshiMarkets.length} Kalshi markets for category ${kalshiCategory}`);
+
+        console.log(`[Markets API] Found ${kalshiMarkets.length} Kalshi markets for category ${eventType}`);
       } catch (err) {
         console.error('[Markets API] Kalshi service error:', err.message);
+        // Continue without Kalshi markets on error
       }
     }
 
