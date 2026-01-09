@@ -14,10 +14,12 @@ import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
 import MySignalsTab from '@/app/components/signals/MySignalsTab';
 import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ActiveChainIndicator, ChainSelector } from '@/components';
+import { useToast, ToastContainer } from '@/components/Toast';
 
 export default function SignalsPage() {
     const { connected: aptosConnected, walletAddress, tipSignal } = useSignalPublisher();
     const { chains } = useChainConnections();
+    const { toasts, addToast, removeToast } = useToast();
 
     const [signals, setSignals] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
@@ -224,6 +226,8 @@ export default function SignalsPage() {
                 />
             </div>
 
+            <ToastContainer toasts={toasts} removeToast={removeToast} isNight={isNight} />
+
             {/* Scrollable Content */}
             <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
                 {/* Header */}
@@ -425,14 +429,14 @@ export default function SignalsPage() {
                                                         onTip={async (amount) => {
                                                             try {
                                                                 if (!aptosConnected) {
-                                                                    alert("Please connect your wallet to tip!");
+                                                                    addToast("Please connect your wallet to tip!", "warning");
                                                                     return;
                                                                 }
                                                                 const tx = await tipSignal(signal.author_address, signal.signal_id || index, amount);
-                                                                alert(`Tip sent! Tx: ${tx}`);
+                                                                addToast("Tip sent successfully!", "success");
                                                             } catch (e) {
                                                                 console.error(e);
-                                                                alert(e.message);
+                                                                addToast(e.message || "Failed to send tip", "error");
                                                             }
                                                         }}
                                                         onExpand={() => {

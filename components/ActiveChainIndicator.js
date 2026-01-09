@@ -21,27 +21,27 @@ import { CHAINS } from '@/constants/appConstants';
 export function ActiveChainIndicator({ variant = 'badge', isNight = false, className = '' }) {
   const [mounted, setMounted] = useState(false);
   const { chains } = useChainConnections();
-  
+
   // Wait for client-side hydration
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   // Safety check for SSR
   if (!mounted || !chains) return null;
 
   // Determine active signal chain (Movement or Aptos)
-  const activeChain = chains?.movement?.connected 
-    ? CHAINS.MOVEMENT 
-    : chains?.aptos?.connected 
-    ? CHAINS.APTOS 
-    : null;
+  const activeChain = chains?.movement?.connected
+    ? CHAINS.MOVEMENT
+    : chains?.aptos?.connected
+      ? CHAINS.APTOS
+      : null;
 
-  const activeAddress = chains?.movement?.connected 
-    ? chains.movement.address 
-    : chains?.aptos?.connected 
-    ? chains.aptos.address 
-    : null;
+  const activeAddress = chains?.movement?.connected
+    ? chains.movement.address
+    : chains?.aptos?.connected
+      ? chains.aptos.address
+      : null;
 
   if (!activeChain) return null;
 
@@ -49,7 +49,7 @@ export function ActiveChainIndicator({ variant = 'badge', isNight = false, class
   const textColor = isNight ? 'text-white' : 'text-black';
   const mutedColor = isNight ? 'text-white/60' : 'text-black/60';
   const borderColor = isNight ? 'border-white/20' : 'border-black/20';
-  
+
   const chainColorMap = {
     purple: isNight ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-purple-400/20 text-purple-800 border-purple-400/30',
     amber: isNight ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-amber-400/20 text-amber-800 border-amber-400/30',
@@ -87,7 +87,7 @@ export function ActiveChainIndicator({ variant = 'badge', isNight = false, class
               Active: {activeChain.name}
             </h4>
             <p className={`text-xs ${mutedColor}`}>
-              {activeAddress?.slice(0, 6)}...{activeAddress?.slice(-4)}
+              {typeof activeAddress === 'string' ? `${activeAddress.slice(0, 6)}...${activeAddress.slice(-4)}` : ''}
             </p>
           </div>
         </div>
@@ -121,7 +121,7 @@ export function ChainComparisonCard({ onSelectChain, isNight = false }) {
   const textColor = isNight ? 'text-white' : 'text-black';
   const mutedColor = isNight ? 'text-white/60' : 'text-black/60';
   const borderColor = isNight ? 'border-white/10' : 'border-black/10';
-  
+
   const chains = [
     { chain: CHAINS.APTOS, recommended: false },
     { chain: CHAINS.MOVEMENT, recommended: false }
@@ -132,14 +132,14 @@ export function ChainComparisonCard({ onSelectChain, isNight = false }) {
       <p className={`text-sm ${mutedColor} mb-3`}>
         Choose your network for signal publishing:
       </p>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {chains.map(({ chain }) => {
           const chainColorMap = {
             purple: isNight ? 'hover:border-purple-500/30' : 'hover:border-purple-400/30',
             amber: isNight ? 'hover:border-amber-500/30' : 'hover:border-amber-400/30',
           };
-          
+
           return (
             <button
               key={chain.id}
@@ -150,9 +150,9 @@ export function ChainComparisonCard({ onSelectChain, isNight = false }) {
                 <span className="text-2xl">{chain.icon}</span>
                 <h3 className={`text-sm font-medium ${textColor}`}>{chain.name}</h3>
               </div>
-              
+
               <p className={`text-xs ${mutedColor} mb-3`}>{chain.purpose}</p>
-              
+
               {/* Capabilities */}
               <div className="space-y-1">
                 {chain.capabilities.map((cap, idx) => (
@@ -172,7 +172,7 @@ export function ChainComparisonCard({ onSelectChain, isNight = false }) {
           );
         })}
       </div>
-      
+
       <p className={`text-xs ${mutedColor} mt-3 text-center`}>
         Both networks use the same wallets (Petra, Martian, etc.)
       </p>

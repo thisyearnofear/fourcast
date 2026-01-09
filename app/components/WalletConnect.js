@@ -19,14 +19,14 @@ import { useChainConnections } from '@/hooks/useChainConnections';
  */
 export default function WalletConnect({ isNight = false }) {
   const [showDropdown, setShowDropdown] = useState(false);
-  
+
   // Get unified chain state
   const { chains } = useChainConnections();
-  
+
   // EVM (Trading)
   const { address: evmAddress, isConnected: evmConnected } = useAccount();
   const { disconnect: disconnectEvm } = useDisconnect();
-  
+
   // Aptos/Movement (Signals) - raw wallet adapter for connection actions
   const { connected: aptosWalletConnected, account: aptosAccount, wallets, connect, disconnect } = useWallet();
 
@@ -40,10 +40,16 @@ export default function WalletConnect({ isNight = false }) {
   const isAnyConnected = chains?.evm?.connected || chains?.aptos?.connected || chains?.movement?.connected;
 
   // Format address display
+  // Format address display
   const formatAddress = (address) => {
     if (!address) return '';
-    const str = address.toString();
-    return `${str.slice(0, 6)}...${str.slice(-4)}`;
+    try {
+      const str = String(address);
+      if (str === '[object Object]') return '';
+      return `${str.slice(0, 6)}...${str.slice(-4)}`;
+    } catch (e) {
+      return '';
+    }
   };
 
   const evmDisplay = evmAddress ? formatAddress(evmAddress) : null;
@@ -70,9 +76,9 @@ export default function WalletConnect({ isNight = false }) {
   // Helper to render chain section with capabilities
   const renderChainSection = (chain, chainState) => {
     if (!chainState?.connected) return null;
-    
+
     const address = formatAddress(chainState.address);
-    
+
     return (
       <div key={chain.id} className="mb-4 pb-4 border-b border-white/10 last:mb-0 last:pb-0 last:border-0">
         <div className={`text-xs font-medium ${textColor} mb-2 flex items-center gap-2`}>
@@ -170,7 +176,7 @@ export default function WalletConnect({ isNight = false }) {
               <div className={`text-xs font-medium ${textColor} mb-3`}>
                 Connect for Signal Publishing
               </div>
-              
+
               {/* Side-by-side chain info */}
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <div className={`p-2 rounded-lg border ${isNight ? 'border-purple-500/20 bg-purple-500/5' : 'border-purple-400/20 bg-purple-400/5'}`}>
@@ -184,7 +190,7 @@ export default function WalletConnect({ isNight = false }) {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className={`p-2 rounded-lg border ${isNight ? 'border-amber-500/20 bg-amber-500/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
                   <div className="flex items-center gap-1 mb-1">
                     <span className="text-sm">{CHAINS.MOVEMENT.icon}</span>
@@ -197,7 +203,7 @@ export default function WalletConnect({ isNight = false }) {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-1.5">
                 {wallets.map((wallet) => (
                   <button

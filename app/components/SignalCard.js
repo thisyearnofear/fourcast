@@ -7,15 +7,15 @@ import React from 'react';
 export default function SignalCard({ signal, isNight = false }) {
   const isWeather = signal.domain === 'weather' || signal.weather_json;
   const isMobility = signal.domain === 'mobility' || (!isWeather && signal.market_title.includes('Turnout'));
-  
+
   const domainIcon = isWeather ? '🌤️' : (isMobility ? '🚗' : '🔮');
   const domainName = isWeather ? 'Weather' : (isMobility ? 'Mobility' : 'General');
-  
+
   // Dynamic Styles
-  const bgStyle = isNight 
-    ? 'bg-slate-900/60 border-white/20 text-white' 
+  const bgStyle = isNight
+    ? 'bg-slate-900/60 border-white/20 text-white'
     : 'bg-white/60 border-black/20 text-black';
-  
+
   const badgeStyle = isWeather
     ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
     : 'bg-orange-500/20 text-orange-400 border-orange-500/30';
@@ -49,7 +49,7 @@ export default function SignalCard({ signal, isNight = false }) {
 
       {/* Market Title */}
       <h3 className="text-lg font-light leading-snug mb-2">{signal.market_title}</h3>
-      
+
       {/* Venue/Location */}
       <div className="flex items-center space-x-1 text-xs opacity-60 mb-4">
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,11 +66,11 @@ export default function SignalCard({ signal, isNight = false }) {
         <span className="opacity-70">Analysis: </span>
         <span className="font-medium opacity-90">{signal.ai_digest}</span>
       </div>
-      
+
       {/* Action Footer */}
       <div className="mt-4 flex justify-between items-center">
         <div className="text-xs opacity-50 font-mono">
-          ID: {signal.event_id?.slice(0, 8)}...
+          ID: {typeof signal.event_id === 'string' ? signal.event_id.slice(0, 8) : String(signal.event_id || '').slice(0, 8)}...
         </div>
         <button className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${isNight ? 'hover:bg-white/10' : 'hover:bg-black/5'}`}>
           View On-Chain ↗
