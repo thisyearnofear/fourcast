@@ -17,13 +17,22 @@ import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/ch
 export default function MarketsPage() {
   // Unified chain connection state - single source of truth
   const chainConnections = useChainConnections();
+  console.log('[Markets Page] chainConnections:', chainConnections);
+  
   const { chains, canPerform, canPublish } = chainConnections || {};
+  console.log('[Markets Page] chains:', chains, 'canPerform:', canPerform, 'canPublish:', canPublish);
   
   // Safety check: ensure all required values exist
-  if (!chains || canPublish === undefined) {
-    console.error('ChainConnections hook failed to initialize properly', chainConnections);
+  if (!chains || typeof canPublish === 'undefined') {
+    console.error('[Markets Page] ChainConnections initialization failed:', {
+      chains: !!chains,
+      canPerform: !!canPerform,
+      canPublish: typeof canPublish,
+      chainConnections
+    });
     return <div>Error loading wallet connections. Please refresh the page.</div>;
   }
+  console.log('[Markets Page] ChainConnections initialized successfully');
 
   const {
     publishToAptos,
