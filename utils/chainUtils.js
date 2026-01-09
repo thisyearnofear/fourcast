@@ -1,56 +1,84 @@
 /**
  * Chain Utilities - Wallet validation and chain guidance
  * Provides context-aware messaging and state checking
+ * 
+ * Works with unified chain state from useChainConnections
  */
 
 import { CHAINS } from '@/constants/appConstants';
 
 /**
  * Determine if user can take a specific action on a chain
+ * Updated to work with unified chains object
+ * 
+ * @param {Object} chainState - chains.evm | chains.aptos | chains.movement
+ * @param {string} action - 'trade' | 'publish' | 'publish_and_monetize'
+ * @param {boolean} isCorrectChain - For EVM: is on correct chain ID
  */
-export function canPerformAction(chain, isConnected, isCorrectChain = true) {
-  return isConnected && (chain.id === 'evm' ? isCorrectChain : true);
+export function canPerformAction(chainState, action, isCorrectChain = true) {
+  if (!chainState?.connected) return false;
+  
+  // EVM requires correct chain (Polygon)
+  if (chainState.id === 'evm') {
+    return isCorrectChain && action === 'trade';
+  }
+  
+  // Aptos can publish signals
+  if (chainState.id === 'aptos') {
+    return action === 'publish';
+  }
+  
+  // Movement can publish and monetize
+  if (chainState.id === 'movement') {
+    return action === 'publish' || action === 'publish_and_monetize';
+  }
+  
+  return false;
 }
 
 /**
- * Get action guidance based on wallet state
- * Returns { canAct, message, actionText }
+ * Get action guidance based on chain connection state
+ * Returns structured guidance object for UI rendering
+ * 
+ * @param {Object} chainDef - From CHAINS constants (id, name, display, etc)
+ * @param {Object} chainState - From useChainConnections (connected, address, etc)
+ * @returns { canAct, message, actionText, state }
  */
-export function getChainActionGuidance(chain, isConnected) {
-  if (!isConnected) {
+export function getChainActionGuidance(chainDef, chainState) {
+  if (!chainState?.connected) {
     return {
       canAct: false,
-      message: `Connect your ${chain.name} wallet to ${chain.purpose.toLowerCase()}`,
-      actionText: `Connect ${chain.name}`,
+      message: `Connect your ${chainDef.name} wallet to ${chainDef.purpose.toLowerCase()}`,
+      actionText: `Connect ${chainDef.name}`,
       state: 'disconnected'
     };
   }
 
   // Movement is premium - highlight monetization
-  if (chain.id === 'movement') {
+  if (chainDef.id === 'movement') {
     return {
       canAct: true,
-      message: `Ready to publish signals and earn tips on ${chain.name}. Build your track record while monetizing your insights.`,
+      message: `Ready to publish signals and earn tips on ${chainDef.name}. Build your track record while monetizing your insights.`,
       actionText: `Publish & Monetize`,
       state: 'connected-premium'
     };
   }
 
   // Aptos is standard signals
-  if (chain.id === 'aptos') {
+  if (chainDef.id === 'aptos') {
     return {
       canAct: true,
-      message: `Ready to publish signals on ${chain.name}. Create an immutable track record of your predictions.`,
+      message: `Ready to publish signals on ${chainDef.name}. Create an immutable track record of your predictions.`,
       actionText: `Publish Signal`,
       state: 'connected'
     };
   }
 
   // EVM for trading
-  if (chain.id === 'evm') {
+  if (chainDef.id === 'evm') {
     return {
       canAct: true,
-      message: `Ready to trade on ${chain.name}. Place orders based on market analysis.`,
+      message: `Ready to trade on ${chainDef.name}. Place orders based on market analysis.`,
       actionText: `Place Order`,
       state: 'connected'
     };
@@ -58,7 +86,7 @@ export function getChainActionGuidance(chain, isConnected) {
 
   return {
     canAct: false,
-    message: `Connect your wallet to interact with ${chain.name}`,
+    message: `Connect your wallet to interact with ${chainDef.name}`,
     actionText: `Connect Wallet`,
     state: 'error'
   };

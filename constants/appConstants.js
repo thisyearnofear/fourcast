@@ -68,3 +68,73 @@ export const CHAINS = {
     disabled: []
   }
 };
+
+// Supported EVM Networks for Trading
+export const EVM_NETWORKS = {
+  POLYGON: {
+    id: 'polygon',
+    chainId: 137,
+    name: 'Polygon',
+    display: 'Polygon (USDC)',
+    icon: '🟣',
+    rpcUrl: 'https://polygon-rpc.com',
+    explorerUrl: 'https://polygonscan.com',
+    isDefault: true
+  },
+  ETHEREUM: {
+    id: 'ethereum',
+    chainId: 1,
+    name: 'Ethereum',
+    display: 'Ethereum',
+    icon: '⟠',
+    rpcUrl: 'https://eth.public-rpc.com',
+    explorerUrl: 'https://etherscan.io',
+    isDefault: false
+  },
+  ARBITRUM: {
+    id: 'arbitrum',
+    chainId: 42161,
+    name: 'Arbitrum',
+    display: 'Arbitrum',
+    icon: '🔵',
+    rpcUrl: 'https://arb1.arbitrum.io/rpc',
+    explorerUrl: 'https://arbiscan.io',
+    isDefault: false
+  }
+};
+
+// Aptos Networks
+export const APTOS_NETWORKS = {
+  MAINNET: {
+    id: 'aptos-mainnet',
+    name: 'Aptos Mainnet',
+    display: 'Aptos Mainnet',
+    rpcUrl: 'https://fullnode.mainnet.aptoslabs.com/v1',
+    isDefault: true
+  },
+  TESTNET: {
+    id: 'aptos-testnet',
+    name: 'Aptos Testnet',
+    display: 'Aptos Testnet',
+    rpcUrl: 'https://fullnode.testnet.aptoslabs.com/v1',
+    isDefault: false
+  }
+};
+
+// Movement Networks
+export const MOVEMENT_NETWORKS = {
+  MAINNET: {
+    id: 'movement-mainnet',
+    name: 'Movement Mainnet',
+    display: 'Movement Mainnet',
+    rpcUrl: 'https://mainnet.movement.network/v1',
+    isDefault: true
+  },
+  TESTNET: {
+    id: 'movement-testnet',
+    name: 'Movement Testnet',
+    display: 'Movement Testnet',
+    rpcUrl: 'https://testnet.movement.network/v1',
+    isDefault: false
+  }
+};

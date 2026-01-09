@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useAccount } from "wagmi";
 import WalletConnect from "@/app/components/WalletConnect";
 import { useAptosSignalPublisher } from "@/hooks/useAptosSignalPublisher";
+import { useChainConnections } from "@/hooks/useChainConnections";
 import { weatherService } from "@/services/weatherService";
 import { arbitrageService } from "@/services/arbitrageService";
 import PageNav from "@/app/components/PageNav";
@@ -15,7 +15,9 @@ import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
 
 export default function MarketsPage() {
-  const { address, isConnected } = useAccount();
+  // Unified chain connection state - single source of truth
+  const { chains, canPerform, canPublish } = useChainConnections();
+
   const {
     publishToAptos,
     getMySignalCount,
@@ -284,12 +286,11 @@ export default function MarketsPage() {
   const handlePublishSignal = async () => {
     if (!selectedMarket || !analysis) return;
 
-    // Check if Aptos wallet is connected first
-    if (!aptosConnected) {
-      // Scroll to top where the connect button is
+    // Check if can publish to any chain (Aptos or Movement)
+    if (!canPublish) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       addToast(
-        "Connect your Aptos wallet to publish your signal on-chain",
+        "Connect your Aptos or Movement wallet to publish your signal on-chain",
         "warning",
         5000
       );
@@ -298,6 +299,10 @@ export default function MarketsPage() {
 
     try {
       // 1. Save to SQLite first (fast feedback)
+      // Use Movement address if available, otherwise Aptos
+      const publishChain = chains.movement.connected ? 'movement' : 'aptos';
+      const authorAddress = chains[publishChain].address;
+
       const response = await fetch("/api/signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -305,7 +310,8 @@ export default function MarketsPage() {
           market: selectedMarket,
           analysis,
           weather: weatherData,
-          authorAddress: address,
+          authorAddress,
+          publishChain,
         }),
       });
 
@@ -513,7 +519,7 @@ export default function MarketsPage() {
               onPublishSignal={handlePublishSignal}
               analysisMode={analysisMode}
               fetchMarkets={fetchMarkets}
-              aptosConnected={aptosConnected}
+              chains={chains}
               setShowOrderPanel={setShowOrderPanel}
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
@@ -541,7 +547,7 @@ export default function MarketsPage() {
               selectedMarket={selectedMarket}
               onPublishSignal={handlePublishSignal}
               fetchMarkets={fetchMarkets}
-              aptosConnected={aptosConnected}
+              chains={chains}
               setShowOrderPanel={setShowOrderPanel}
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
@@ -604,7 +610,7 @@ function SportsTabContent({
   onPublishSignal,
   analysisMode,
   fetchMarkets,
-  aptosConnected,
+  chains,
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
@@ -818,12 +824,11 @@ function SportsTabContent({
                isAnalyzing={isAnalyzing}
                selectedMarket={selectedMarket}
                onPublishSignal={onPublishSignal}
-               aptosConnected={aptosConnected}
-               isConnected={isConnected}
+               chains={chains}
                setShowOrderPanel={setShowOrderPanel}
                setSelectedMarketForOrder={setSelectedMarketForOrder}
                setSelectedKalshiMarket={setSelectedKalshiMarket}
-             />
+              />
           ))}
         </div>
       )}
@@ -869,11 +874,12 @@ function ChainActionWidget({
   textColor,
   cardBgColor,
   onPublishSignal,
-  aptosConnected,
-  evmConnected,
+  chains,
   setShowOrderPanel,
   setSelectedMarketForOrder,
 }) {
+  const { switchToEvmNetwork } = useChainConnections();
+
   if (!analysis?.chain_recommendation) return null;
 
   const rec = analysis.chain_recommendation;
@@ -890,44 +896,64 @@ function ChainActionWidget({
     analysis.assessment?.odds_efficiency
   );
 
-  // Helper to render chain action with wallet validation and guidance
-  const renderChainAction = (chain, isConnected, isPrimary, buttonText, actionFn, contextMsg) => (
-    <div className={`flex items-start gap-3 pb-3 border-b border-white/10 last:pb-0 last:border-0 ${
-      isPrimary ? (isNight ? "bg-gradient-to-r from-purple-500/5 to-transparent" : "bg-gradient-to-r from-purple-400/5 to-transparent") : ""
-    } rounded px-3 py-2`}>
-      <span className="text-xl flex-shrink-0">{chain.icon}</span>
-      <div className="flex-1">
-        <h5 className={`text-sm font-medium ${textColor} mb-1`}>
-          {chain.display}
-          {isPrimary && <span className={`ml-2 text-xs opacity-60 ${isNight ? "text-amber-300" : "text-amber-700"}`}>← Recommended</span>}
-        </h5>
-        <p className={`text-xs ${textColor} opacity-60 mb-3 leading-relaxed`}>
-          {contextMsg}
-        </p>
-        <button
-          onClick={actionFn}
-          disabled={!isConnected}
-          className={`px-4 py-2 rounded-lg text-xs font-light transition-all ${
-            isConnected
-              ? isNight
-                ? `${chain.id === 'movement' 
-                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30' 
-                    : chain.color === 'purple'
-                    ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30'
-                    : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30'}`
-                : `${chain.id === 'movement' 
-                    ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-800 border border-amber-400/30' 
-                    : chain.color === 'purple'
-                    ? 'bg-purple-400/20 hover:bg-purple-400/30 text-purple-800 border border-purple-400/30'
-                    : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border border-blue-400/30'}`
-              : "opacity-50 cursor-not-allowed"
-          }`}
-        >
-          {isConnected ? buttonText : `Connect ${chain.name}`}
-        </button>
+  // Helper to render chain action with smart wallet validation and network switching
+  const renderChainAction = (chainDef, chainState, isPrimary, buttonText, actionFn, contextMsg, needsNetworkSwitch = false, onSwitchNetwork = null) => {
+    const isDisabled = !chainState.connected || needsNetworkSwitch;
+    const buttonLabel = !chainState.connected 
+      ? `Connect ${chainDef.name}`
+      : needsNetworkSwitch
+      ? `Switch to ${chainState.currentNetwork?.display || 'correct network'}`
+      : buttonText;
+
+    return (
+      <div className={`flex items-start gap-3 pb-3 border-b border-white/10 last:pb-0 last:border-0 ${
+        isPrimary ? (isNight ? "bg-gradient-to-r from-purple-500/5 to-transparent" : "bg-gradient-to-r from-purple-400/5 to-transparent") : ""
+      } rounded px-3 py-2`}>
+        <span className="text-xl flex-shrink-0">{chainDef.icon}</span>
+        <div className="flex-1">
+          <h5 className={`text-sm font-medium ${textColor} mb-1`}>
+            {chainDef.display}
+            {isPrimary && <span className={`ml-2 text-xs opacity-60 ${isNight ? "text-amber-300" : "text-amber-700"}`}>← Recommended</span>}
+          </h5>
+          <p className={`text-xs ${textColor} opacity-60 mb-3 leading-relaxed`}>
+            {contextMsg}
+          </p>
+          {needsNetworkSwitch && chainState.currentNetwork && (
+            <p className={`text-xs mb-2 ${isNight ? "text-amber-300/70" : "text-amber-700/70"}`}>
+              Currently on: {chainState.currentNetwork.display}
+            </p>
+          )}
+          <button
+            onClick={() => {
+              if (needsNetworkSwitch && onSwitchNetwork) {
+                onSwitchNetwork();
+              } else if (chainState.connected) {
+                actionFn();
+              }
+            }}
+            disabled={isDisabled}
+            className={`px-4 py-2 rounded-lg text-xs font-light transition-all ${
+              !isDisabled
+                ? isNight
+                  ? `${chainDef.id === 'movement' 
+                      ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30' 
+                      : chainDef.color === 'purple'
+                      ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30'
+                      : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30'}`
+                  : `${chainDef.id === 'movement' 
+                      ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-800 border border-amber-400/30' 
+                      : chainDef.color === 'purple'
+                      ? 'bg-purple-400/20 hover:bg-purple-400/30 text-purple-800 border border-purple-400/30'
+                      : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border border-blue-400/30'}`
+                : "opacity-50 cursor-not-allowed"
+            }`}
+          >
+            {buttonLabel}
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-5`}>
@@ -946,13 +972,21 @@ function ChainActionWidget({
         </div>
 
         {shouldPublish && (
-          renderChainAction(
+          // Prefer Movement if available (better monetization), else Aptos
+          chains.movement.connected ? renderChainAction(
+            CHAINS.MOVEMENT,
+            chains.movement,
+            rec === "PUBLISH",
+            publishButtonText,
+            () => onPublishSignal(market, analysis),
+            "Publish on Movement to build your track record and earn tips from the community"
+          ) : renderChainAction(
             CHAINS.APTOS,
-            aptosConnected,
-            rec === "PUBLISH", // Primary if PUBLISH only
+            chains.aptos,
+            rec === "PUBLISH",
             publishButtonText,
             () => {
-              if (aptosConnected) onPublishSignal(market, analysis);
+              if (chains.aptos.connected) onPublishSignal(market, analysis);
             },
             "Create a permanent on-chain record of your analysis to build your track record and establish credibility"
           )
@@ -961,18 +995,20 @@ function ChainActionWidget({
         {shouldTrade && (
           renderChainAction(
             CHAINS.EVM,
-            evmConnected,
-            rec === "TRADE", // Primary if TRADE only
+            chains.evm,
+            rec === "TRADE",
             tradeButtonText,
             () => {
-              if (evmConnected) {
+              if (chains.evm.connected) {
                 setSelectedMarketForOrder(market);
                 setShowOrderPanel(true);
               }
             },
             analysis.assessment?.odds_efficiency === "UNDERPRICED"
               ? "Market odds are underpriced. Place a position to capture value."
-              : "Participate in the market based on your analysis and risk tolerance."
+              : "Participate in the market based on your analysis and risk tolerance.",
+            !chains.evm.isCorrectNetwork, // needsNetworkSwitch
+            !chains.evm.isCorrectNetwork ? () => switchToEvmNetwork('polygon') : null // onSwitchNetwork
           )
         )}
 
@@ -1008,7 +1044,7 @@ function DiscoveryTabContent({
   selectedMarket,
   onPublishSignal,
   fetchMarkets,
-  aptosConnected,
+  chains,
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
@@ -1334,27 +1370,27 @@ function DiscoveryTabContent({
             <div className="space-y-4">
               {filteredMarkets.map((market, index) => (
                 <MarketCard
-                  key={market.marketID || market.id || index}
-                  market={market}
-                  onAnalyze={onAnalyze}
-                  isNight={isNight}
-                  textColor={textColor}
-                  cardBgColor={cardBgColor}
-                  isExpanded={
-                    expandedMarketId ===
-                    (market.marketID || market.id || market.tokenID)
-                  }
-                  expandedMarketId={expandedMarketId}
-                  setExpandedMarketId={setExpandedMarketId}
-                  analysis={analysis}
-                  isAnalyzing={isAnalyzing}
-                  selectedMarket={selectedMarket}
-                  onPublishSignal={onPublishSignal}
-                  aptosConnected={aptosConnected}
-                  setShowOrderPanel={setShowOrderPanel}
-                  setSelectedMarketForOrder={setSelectedMarketForOrder}
-                  setSelectedKalshiMarket={setSelectedKalshiMarket}
-                />
+                   key={market.marketID || market.id || index}
+                   market={market}
+                   onAnalyze={onAnalyze}
+                   isNight={isNight}
+                   textColor={textColor}
+                   cardBgColor={cardBgColor}
+                   isExpanded={
+                     expandedMarketId ===
+                     (market.marketID || market.id || market.tokenID)
+                   }
+                   expandedMarketId={expandedMarketId}
+                   setExpandedMarketId={setExpandedMarketId}
+                   analysis={analysis}
+                   isAnalyzing={isAnalyzing}
+                   selectedMarket={selectedMarket}
+                   onPublishSignal={onPublishSignal}
+                   chains={chains}
+                   setShowOrderPanel={setShowOrderPanel}
+                   setSelectedMarketForOrder={setSelectedMarketForOrder}
+                   setSelectedKalshiMarket={setSelectedKalshiMarket}
+                 />
               ))}
             </div>
           ) : (
@@ -1387,8 +1423,7 @@ function MarketCard({
   isAnalyzing,
   selectedMarket,
   onPublishSignal,
-  aptosConnected,
-  isConnected,
+  chains,
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
@@ -1592,8 +1627,7 @@ function MarketCard({
               textColor={textColor}
               cardBgColor={cardBgColor}
               onPublishSignal={onPublishSignal}
-              aptosConnected={aptosConnected}
-              evmConnected={isConnected}
+              chains={chains}
               setShowOrderPanel={setShowOrderPanel}
               setSelectedMarketForOrder={setSelectedMarketForOrder}
             />
