@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
 /.pnp
@@ -58,7 +56,11 @@ movement-key.txt.pub
 .vscode/
 .idea/
 *.swp
-*.swo.aptos-testnet/
+*.swo
 
-congig.yaml
+# Binaries
+/bin/
+
+# Other
+config.yaml
 .aptos-testnet

@@ -8,7 +8,8 @@ const CHAIN_CONFIGS = {
     feeBpsKey: 'PREDICTION_FEE_BPS_BNB',
     rpcUrlKey: 'NEXT_PUBLIC_BNB_RPC_URL',
     signerKeyKey: 'BNB_PRIVATE_KEY',
-    fallbackRpc: 'https://bsc-dataseed.binance.org'
+    fallbackRpc: 'https://bsc-dataseed.binance.org',
+    usdcAddress: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d' // Binance-Peg USDC
   },
   97: { // BNB Testnet
     name: 'BNB Testnet',
@@ -16,7 +17,8 @@ const CHAIN_CONFIGS = {
     feeBpsKey: 'PREDICTION_FEE_BPS_BNB',
     rpcUrlKey: 'NEXT_PUBLIC_BNB_RPC_URL',
     signerKeyKey: 'BNB_PRIVATE_KEY',
-    fallbackRpc: 'https://bsc-testnet.publicnode.com'
+    fallbackRpc: 'https://bsc-testnet.publicnode.com',
+    usdcAddress: '0x64544969ed7EBf5f083679233325356EbE738930' // Mock USDC
   },
   137: { // Polygon
     name: 'Polygon',
@@ -24,7 +26,8 @@ const CHAIN_CONFIGS = {
     feeBpsKey: 'PREDICTION_FEE_BPS_POLYGON',
     rpcUrlKey: 'POLYGON_RPC_URL',
     signerKeyKey: 'POLYGON_PRIVATE_KEY',
-    fallbackRpc: 'https://polygon-rpc.com'
+    fallbackRpc: 'https://polygon-rpc.com',
+    usdcAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174' // USDC.e
   },
   80001: { // Polygon Mumbai
     name: 'Polygon Mumbai',
@@ -32,7 +35,8 @@ const CHAIN_CONFIGS = {
     feeBpsKey: 'PREDICTION_FEE_BPS_POLYGON',
     rpcUrlKey: 'POLYGON_RPC_URL',
     signerKeyKey: 'POLYGON_PRIVATE_KEY',
-    fallbackRpc: 'https://rpc-mumbai.maticvigil.com'
+    fallbackRpc: 'https://rpc-mumbai.maticvigil.com',
+    usdcAddress: '0x0FA8781a83E46826621b3BC094Ea2A0212e71B23' // Mock USDC
   },
   42161: { // Arbitrum
     name: 'Arbitrum',
@@ -40,7 +44,8 @@ const CHAIN_CONFIGS = {
     feeBpsKey: 'PREDICTION_FEE_BPS_ARBITRUM',
     rpcUrlKey: 'ARB_RPC_URL',
     signerKeyKey: 'ARB_PRIVATE_KEY',
-    fallbackRpc: 'https://arb1.arbitrum.io/rpc'
+    fallbackRpc: 'https://arb1.arbitrum.io/rpc',
+    usdcAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' // Native USDC
   }
 }
 
@@ -59,7 +64,8 @@ export function getChainConfig(chainId) {
     address: process.env[config.addressKey],
     feeBps: parseInt(process.env[config.feeBpsKey] || process.env.PREDICTION_FEE_BPS || '100', 10),
     rpcUrl: process.env[config.rpcUrlKey] || config.fallbackRpc,
-    signerKey: process.env[config.signerKeyKey]
+    signerKey: process.env[config.signerKeyKey],
+    usdcAddress: config.usdcAddress
   }
 }
 

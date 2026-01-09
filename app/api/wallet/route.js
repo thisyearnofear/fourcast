@@ -1,34 +1,54 @@
 import { ethers } from 'ethers';
+import { getChainConfig, getProvider } from '@/services/chainConfig';
+
+// ERC20 ABI for Balance Checking
+const ERC20_ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function decimals() view returns (uint8)"
+];
 
 /**
- * Get ethers provider for BNBChain
- */
-function getProvider(chainId) {
-  const id = Number(chainId || 56);
-  if (id === 42161 || id === 421614) {
-    const rpcUrl = process.env.ARB_RPC_URL || 'https://arb1.arbitrum.io/rpc';
-    return new ethers.JsonRpcProvider(rpcUrl);
-  }
-  if (id === 137 || id === 80001) {
-    const rpcUrl = process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com';
-    return new ethers.JsonRpcProvider(rpcUrl);
-  }
-  const rpcUrl = process.env.NEXT_PUBLIC_BNB_RPC_URL || 'https://bsc-dataseed.binance.org';
-  return new ethers.JsonRpcProvider(rpcUrl);
-}
-
-/**
- * Check native BNB balance for a wallet
+ * Check balance for a wallet (Native + USDC if applicable)
  */
 async function checkBalance(walletAddress, chainId) {
   try {
+    const config = getChainConfig(chainId);
     const provider = getProvider(chainId);
-    const balance = await provider.getBalance(walletAddress);
-    const balanceFormatted = ethers.formatEther(balance);
+    
+    // 1. Check Native Balance (BNB, MATIC, ETH)
+    const nativeBalance = await provider.getBalance(walletAddress);
+    const nativeFormatted = ethers.formatEther(nativeBalance);
+    
+    // 2. Check USDC Balance (if configured)
+    let usdcFormatted = '0';
+    let usdcRaw = '0';
+    
+    if (config.usdcAddress) {
+      try {
+        const usdcContract = new ethers.Contract(config.usdcAddress, ERC20_ABI, provider);
+        const decimals = await usdcContract.decimals();
+        const balance = await usdcContract.balanceOf(walletAddress);
+        usdcRaw = balance.toString();
+        usdcFormatted = ethers.formatUnits(balance, decimals);
+      } catch (err) {
+        console.warn(`Failed to fetch USDC balance for ${walletAddress} on chain ${chainId}:`, err.message);
+      }
+    }
 
     return {
-      raw: balance.toString(),
-      formatted: parseFloat(balanceFormatted).toFixed(6),
+      native: {
+        raw: nativeBalance.toString(),
+        formatted: parseFloat(nativeFormatted).toFixed(6),
+        symbol: chainId === 137 || chainId === 80001 ? 'MATIC' : chainId === 42161 ? 'ETH' : 'BNB'
+      },
+      usdc: {
+        raw: usdcRaw,
+        formatted: parseFloat(usdcFormatted).toFixed(2), // USDC usually 2 decimals for display
+        symbol: 'USDC'
+      },
+      // For backward compatibility, default to Native (unless on Polygon/Arb where USDC is primary for trading)
+      raw: nativeBalance.toString(),
+      formatted: parseFloat(nativeFormatted).toFixed(6),
       decimals: 18
     };
   } catch (error) {
@@ -36,8 +56,6 @@ async function checkBalance(walletAddress, chainId) {
     return null;
   }
 }
-
-// No allowance required for native BNB
 
 /**
  * POST /api/wallet
@@ -50,10 +68,7 @@ export async function POST(request) {
 
     if (!walletAddress) {
       return Response.json(
-        {
-          success: false,
-          error: 'Wallet address is required'
-        },
+        { success: false, error: 'Wallet address is required' },
         { status: 400 }
       );
     }
@@ -61,10 +76,7 @@ export async function POST(request) {
     // Validate wallet address format
     if (!ethers.isAddress(walletAddress)) {
       return Response.json(
-        {
-          success: false,
-          error: 'Invalid wallet address'
-        },
+        { success: false, error: 'Invalid wallet address' },
         { status: 400 }
       );
     }
@@ -74,29 +86,28 @@ export async function POST(request) {
 
     if (!balanceData) {
       return Response.json(
-        {
-          success: false,
-          error: 'Unable to check wallet status. Network error.'
-        },
+        { success: false, error: 'Unable to check wallet status. Network error.' },
         { status: 500 }
       );
     }
 
-    const id = Number(chainId || 56);
-    const symbol = id === 42161 || id === 421614 ? 'ETH' : id === 137 || id === 80001 ? 'MATIC' : 'BNB';
+    // Determine trading ability (Polygon needs USDC, others might use Native)
+    const isPolygon = Number(chainId) === 137 || Number(chainId) === 80001;
+    const canTrade = isPolygon 
+      ? parseFloat(balanceData.usdc.formatted) > 0 
+      : parseFloat(balanceData.native.formatted) > 0;
 
     return Response.json(
       {
         success: true,
         wallet: {
           address: walletAddress,
-          balance: {
-            raw: balanceData.raw,
-            formatted: balanceData.formatted,
-            symbol
-          },
-          canTrade: parseFloat(balanceData.formatted) > 0,
-          needsApproval: false
+          balance: balanceData, // Return full balance object
+          // For backward compat
+          formattedBalance: isPolygon ? balanceData.usdc.formatted : balanceData.native.formatted,
+          currency: isPolygon ? 'USDC' : balanceData.native.symbol,
+          canTrade: canTrade,
+          needsApproval: false // Future: check allowance
         },
         timestamp: new Date().toISOString()
       },
@@ -134,37 +145,28 @@ export async function GET(request) {
           checkBalance: true
         },
         usageExample: 'POST /api/wallet with { walletAddress: "0x..." }',
-        networks: ['BNBChain']
+        networks: ['BNBChain', 'Polygon', 'Arbitrum']
       });
     }
 
-    // Optional: Quick balance check with address param
     if (!ethers.isAddress(address)) {
       return Response.json(
-        {
-          success: false,
-          error: 'Invalid wallet address'
-        },
+        { success: false, error: 'Invalid wallet address' },
         { status: 400 }
       );
     }
 
     const balance = await checkBalance(address, chainId);
-    const symbol = chainId === 42161 || chainId === 421614 ? 'ETH' : chainId === 137 || chainId === 80001 ? 'MATIC' : 'BNB';
     return Response.json({
       success: true,
       wallet: address,
-      balance: balance?.formatted || '0',
-      symbol,
+      balance: balance,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('Wallet GET error:', error);
     return Response.json(
-      {
-        success: false,
-        error: 'Status check failed'
-      },
+      { success: false, error: 'Status check failed' },
       { status: 500 }
     );
   }

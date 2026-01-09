@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useOrderSigning } from '@/hooks/useOrderSigning';
 import { ConnectKitButton } from 'connectkit';
+import { useBalance, useAccount } from 'wagmi';
+
+// Polygon USDC Address
+const USDC_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
 
 /**
  * OrderSigningPanel - Inline order signing UI
@@ -33,8 +37,16 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
     address,
   } = useOrderSigning();
 
-  // Fetch user balance (stub - would fetch from wagmi)
-  const [userBalance] = useState(1000); // Placeholder
+  // Fetch real user balance (USDC on Polygon)
+  const { data: balanceData } = useBalance({
+    address: address,
+    token: USDC_ADDRESS,
+    chainId: 137, // Polygon Mainnet
+    watch: true, // Refresh on blocks
+  });
+
+  const userBalance = balanceData ? parseFloat(balanceData.formatted) : 0;
+  const balanceSymbol = balanceData?.symbol || 'USDC';
 
   // Calculate estimated cost
   useEffect(() => {
@@ -61,7 +73,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
     }
 
     if (estimatedCost > userBalance) {
-      alert(`Insufficient balance. Need ${estimatedCost.toFixed(2)}, have ${userBalance.toFixed(2)}`);
+      alert(`Insufficient balance. Need ${estimatedCost.toFixed(2)} ${balanceSymbol}, have ${userBalance.toFixed(2)} ${balanceSymbol}`);
       return;
     }
 
@@ -199,7 +211,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
                 <div className="flex justify-between items-center">
                   <span className={`text-sm ${textColor} opacity-70`}>Estimated Cost</span>
                   <span className={`text-lg font-light ${textColor}`}>
-                    ${estimatedCost.toFixed(2)} USDC
+                    ${estimatedCost.toFixed(2)} {balanceSymbol}
                   </span>
                 </div>
                 <div className="flex justify-between items-center mt-2">
@@ -273,7 +285,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
               <OrderReviewRow label="Price" value={`$${price}`} textColor={textColor} />
               <OrderReviewRow label="Size" value={`${size} shares`} textColor={textColor} />
               <div className={`border-t ${borderColor} pt-3`}>
-                <OrderReviewRow label="Total Cost" value={`$${estimatedCost.toFixed(2)}`} textColor={textColor} />
+                <OrderReviewRow label="Total Cost" value={`$${estimatedCost.toFixed(2)} ${balanceSymbol}`} textColor={textColor} />
               </div>
             </div>
 
