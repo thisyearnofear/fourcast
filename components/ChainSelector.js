@@ -31,27 +31,19 @@ export function ChainSelector({ compact = false, showLabel = true, onNetworkChan
       });
     }
 
-    // Aptos networks
-    if (chains.aptos.connected && !chains.movement.connected) {
+    // Aptos or Movement signals (most wallets support both)
+    if (chains.aptos.connected || chains.movement.connected) {
+      const isMovement = chains.movement.connected;
+      const isPureAptos = chains.aptos.connected && !chains.movement.connected;
+      
       options.push({
-        category: 'Signals (Aptos)',
-        icon: '📡',
-        networks: chains.aptos.availableNetworks,
-        currentNetwork: chains.aptos.currentNetwork,
-        chainId: 'aptos'
-        // Note: Can't switch Aptos networks from app (wallet handles it)
-      });
-    }
-
-    // Movement networks
-    if (chains.movement.connected) {
-      options.push({
-        category: 'Signals + Tips (Movement)',
-        icon: '💎',
-        networks: chains.movement.availableNetworks,
-        currentNetwork: chains.movement.currentNetwork,
-        chainId: 'movement'
-        // Note: Can't switch Movement networks from app (wallet handles it)
+        // If Movement wallet: show "Aptos | Movement" (both available)
+        // If pure Aptos wallet: show "Aptos" only
+        category: isPureAptos ? 'Signals (Aptos)' : 'Signals (Aptos | Movement)',
+        icon: isMovement ? '💎' : '📡',
+        networks: isMovement ? chains.movement.availableNetworks : chains.aptos.availableNetworks,
+        currentNetwork: isMovement ? chains.movement.currentNetwork : chains.aptos.currentNetwork,
+        chainId: isMovement ? 'movement' : 'aptos'
       });
     }
 

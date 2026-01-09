@@ -98,14 +98,14 @@ export default function MarketsPage() {
   ]);
 
   useEffect(() => {
-    if (aptosConnected) {
+    if (canPublish) {
       getMySignalCount()
         .then(setMySignalCount)
         .catch(() => { });
     } else {
       setMySignalCount(null);
     }
-  }, [aptosConnected, getMySignalCount]);
+  }, [canPublish, getMySignalCount]);
 
   const loadWeather = async () => {
     setIsLoadingWeather(true);
@@ -448,7 +448,7 @@ export default function MarketsPage() {
               </div>
               <div className="flex items-center space-x-2">
                 <WalletConnect isNight={isNight} />
-                {aptosConnected && (
+                {canPublish && (
                   <span
                     className={`px-2 py-1 rounded-lg text-[10px] border ${isNight
                       ? "bg-white/10 border-white/20 text-white/80"
@@ -1738,7 +1738,7 @@ function MarketCard({
             </div>
 
             {/* Wallet Connection Prompt (if not connected) */}
-            {!aptosConnected && (
+            {!canPublish && (
               <div
                 className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4 flex items-center gap-3 ${isNight ? "border-orange-400/30" : "border-orange-600/30"
                   }`}
@@ -1746,7 +1746,7 @@ function MarketCard({
                 <span className="text-2xl">👆</span>
                 <div className="flex-1">
                   <p className={`text-sm ${textColor} font-medium mb-1`}>
-                    Connect your Aptos wallet to publish
+                    Connect your Aptos or Movement wallet to publish
                   </p>
                   <p className={`text-xs ${textColor} opacity-70 font-light`}>
                     Click "Connect Aptos Wallet" in the header above to publish
@@ -1781,7 +1781,7 @@ function MarketCard({
 
               <button
                 onClick={onPublishSignal}
-                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border relative ${aptosConnected
+                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border relative ${canPublish
                   ? isNight
                     ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
                     : "bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30"
@@ -1790,7 +1790,7 @@ function MarketCard({
                     : "bg-orange-400/20 hover:bg-orange-400/30 text-orange-800 border-orange-500/30"
                   }`}
               >
-                {aptosConnected
+                {canPublish
                   ? "📡 Publish Signal"
                   : "🔗 Connect & Publish Signal"}
               </button>
