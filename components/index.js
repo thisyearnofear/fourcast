@@ -6,3 +6,5 @@
 export { BuilderStats } from './BuilderStats';
 export { BuilderBadge } from './BuilderBadge';
 export { BuilderDashboard } from './BuilderDashboard';
+export { ActiveChainIndicator, ChainComparisonCard } from './ActiveChainIndicator';
+export { ChainSelector } from './ChainSelector';

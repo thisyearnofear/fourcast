@@ -33,10 +33,24 @@ export class AptosSignalPublisher {
   }
 
   /**
+   * Detect current network from wallet context
+   * @param {Object} network - Network object from useWallet hook
+   * @returns {boolean} - True if Movement, false if Aptos
+   */
+  isMovementNetwork(network) {
+    if (!network) return false;
+    const chainId = network?.chainId;
+    const url = network?.url || '';
+    return chainId === 250 || url.includes('movement');
+  }
+
+  /**
    * Prepare transaction payload for publishing a signal
    * User's wallet will sign this transaction
+   * @param {Object} signalData - Signal data to publish
+   * @param {Object} network - Current network from useWallet (optional, falls back to env)
    */
-  preparePublishSignalPayload(signalData) {
+  preparePublishSignalPayload(signalData, network = null) {
     const {
       event_id,
       market_title,
@@ -60,10 +74,14 @@ export class AptosSignalPublisher {
         ? Math.floor(event_time)
         : parseInt(String(event_time || 0), 10);
 
-    // Dynamic switching for Movement Marketplace
-    const useMarketplace = process.env.NEXT_PUBLIC_USE_MARKETPLACE_CONTRACT === 'true';
-    const targetModule = useMarketplace ? MOVEMENT_MODULE_ADDRESS : MODULE_ADDRESS;
-    const targetContract = useMarketplace ? "signal_marketplace" : "signal_registry";
+    // Dynamic network detection
+    // Priority: 1) Actual network from wallet, 2) Environment variable fallback
+    const isMovement = network 
+      ? this.isMovementNetwork(network)
+      : process.env.NEXT_PUBLIC_USE_MARKETPLACE_CONTRACT === 'true';
+    
+    const targetModule = isMovement ? MOVEMENT_MODULE_ADDRESS : MODULE_ADDRESS;
+    const targetContract = isMovement ? "signal_marketplace" : "signal_registry";
 
     return {
       function: `${targetModule}::${targetContract}::publish_signal`,
@@ -85,15 +103,27 @@ export class AptosSignalPublisher {
   /**
    * Prepare transaction payload for tipping an analyst
    * This calls the 'signal_marketplace' contract on Movement
+   * @param {string} authorAddress - Address of signal author
+   * @param {string|number} signalId - ID of the signal
+   * @param {number} amount - Tip amount (default 0.1 MOVE)
+   * @param {Object} network - Current network from useWallet (optional)
    */
-  prepareTipAnalystPayload(authorAddress, signalId, amount = 10000000) {
-    // Default to 0.1 MOVE (assuming 8 decimals, check unit)
+  prepareTipAnalystPayload(authorAddress, signalId, amount = 10000000, network = null) {
+    // Verify we're on Movement network (tipping only available there)
+    const isMovement = network 
+      ? this.isMovementNetwork(network)
+      : process.env.NEXT_PUBLIC_USE_MARKETPLACE_CONTRACT === 'true';
+    
+    if (!isMovement) {
+      throw new Error('Tipping is only available on Movement network. Please switch to Movement first.');
+    }
+    
     return {
       function: `${MOVEMENT_MODULE_ADDRESS}::signal_marketplace::tip_analyst`,
       typeArguments: [],
       functionArguments: [
         authorAddress,
-        String(signalId), // Ensure u64 is passed as string if needed, or number
+        String(signalId),
         String(amount)
       ]
     };

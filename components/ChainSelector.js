@@ -14,7 +14,7 @@ import { EVM_NETWORKS, APTOS_NETWORKS, MOVEMENT_NETWORKS } from '@/constants/app
  * Use: Optional - embed where chain selection matters
  */
 export function ChainSelector({ compact = false, showLabel = true, onNetworkChange }) {
-  const { chains, switchToEvmNetwork } = useChainConnections();
+  const { chains, switchToEvmNetwork, switchToAptosNetwork, switchToMovementNetwork } = useChainConnections();
 
   const connectedChainOptions = useMemo(() => {
     const options = [];
@@ -31,24 +31,40 @@ export function ChainSelector({ compact = false, showLabel = true, onNetworkChan
       });
     }
 
-    // Aptos or Movement signals (most wallets support both)
+    // Aptos or Movement signals (users can now switch between them!)
     if (chains.aptos.connected || chains.movement.connected) {
       const isMovement = chains.movement.connected;
-      const isPureAptos = chains.aptos.connected && !chains.movement.connected;
+      
+      // Combined networks: users can switch between Aptos and Movement
+      const signalNetworks = [
+        { id: 'aptos-mainnet', display: '📡 Aptos Mainnet', chainType: 'aptos' },
+        { id: 'movement-testnet', display: '💎 Movement (Bardock)', chainType: 'movement' }
+      ];
+      
+      const currentNetwork = isMovement 
+        ? { id: 'movement-testnet', display: '💎 Movement (Bardock)' }
+        : { id: 'aptos-mainnet', display: '📡 Aptos Mainnet' };
       
       options.push({
-        // If Movement wallet: show "Aptos | Movement" (both available)
-        // If pure Aptos wallet: show "Aptos" only
-        category: isPureAptos ? 'Signals (Aptos)' : 'Signals (Aptos | Movement)',
+        category: 'Signals (Aptos / Movement)',
         icon: isMovement ? '💎' : '📡',
-        networks: isMovement ? chains.movement.availableNetworks : chains.aptos.availableNetworks,
-        currentNetwork: isMovement ? chains.movement.currentNetwork : chains.aptos.currentNetwork,
+        networks: signalNetworks,
+        currentNetwork: currentNetwork,
+        onSwitch: async (networkId) => {
+          // Determine which switch function to call
+          if (networkId.startsWith('movement-')) {
+            return await switchToMovementNetwork(networkId);
+          } else if (networkId.startsWith('aptos-')) {
+            return await switchToAptosNetwork(networkId);
+          }
+          return false;
+        },
         chainId: isMovement ? 'movement' : 'aptos'
       });
     }
 
     return options;
-  }, [chains, switchToEvmNetwork]);
+  }, [chains, switchToEvmNetwork, switchToAptosNetwork, switchToMovementNetwork]);
 
   if (connectedChainOptions.length === 0) {
     return null; // Nothing to show if no chains connected

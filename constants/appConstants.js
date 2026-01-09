@@ -128,13 +128,39 @@ export const MOVEMENT_NETWORKS = {
     name: 'Movement Mainnet',
     display: 'Movement Mainnet',
     rpcUrl: 'https://mainnet.movement.network/v1',
+    chainId: 250, // Movement Bardock testnet (update when mainnet launches)
     isDefault: true
   },
   TESTNET: {
     id: 'movement-testnet',
     name: 'Movement Testnet',
-    display: 'Movement Testnet',
-    rpcUrl: 'https://testnet.movement.network/v1',
+    display: 'Movement Testnet (Bardock)',
+    rpcUrl: 'https://testnet.movementnetwork.xyz/v1',
+    chainId: 250,
     isDefault: false
+  }
+};
+
+// Network Switching Configs (for wallet adapter changeNetwork calls)
+export const NETWORK_SWITCH_CONFIGS = {
+  'aptos-mainnet': {
+    name: 'mainnet',
+    chainId: 1,
+    url: 'https://fullnode.mainnet.aptoslabs.com/v1'
+  },
+  'aptos-testnet': {
+    name: 'testnet', 
+    chainId: 2,
+    url: 'https://fullnode.testnet.aptoslabs.com/v1'
+  },
+  'movement-mainnet': {
+    name: 'custom',
+    chainId: 250,
+    url: 'https://mainnet.movement.network/v1'
+  },
+  'movement-testnet': {
+    name: 'custom',
+    chainId: 250,
+    url: 'https://testnet.movementnetwork.xyz/v1'
   }
 };

@@ -13,24 +13,26 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
+import { ActiveChainIndicator, ChainSelector } from "@/components";
 
 export default function MarketsPage() {
   // Unified chain connection state - single source of truth
   const chainConnections = useChainConnections();
   console.log('[Markets Page] chainConnections:', chainConnections);
   
-  const { chains, canPerform, canPublish } = chainConnections || {};
+  // Provide default values to prevent undefined errors during initial render
+  const { chains, canPerform, canPublish = false } = chainConnections || {};
   console.log('[Markets Page] chains:', chains, 'canPerform:', canPerform, 'canPublish:', canPublish);
   
   // Safety check: ensure all required values exist
-  if (!chains || typeof canPublish === 'undefined') {
+  if (!chains) {
     console.error('[Markets Page] ChainConnections initialization failed:', {
       chains: !!chains,
       canPerform: !!canPerform,
       canPublish: typeof canPublish,
       chainConnections
     });
-    return <div>Error loading wallet connections. Please refresh the page.</div>;
+    return <div>Loading wallet connections...</div>;
   }
   console.log('[Markets Page] ChainConnections initialized successfully');
 
@@ -511,6 +513,19 @@ export default function MarketsPage() {
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
+          {/* Active Chain Indicators */}
+          <div className="mb-6 space-y-3">
+            {/* Signal Chain Indicator (Aptos/Movement) */}
+            {(chains.aptos.connected || chains.movement.connected) && (
+              <ActiveChainIndicator variant="badge" isNight={isNight} />
+            )}
+            
+            {/* EVM Network Selector (Trading chains) */}
+            {chains.evm.connected && (
+              <ChainSelector compact={true} isNight={isNight} />
+            )}
+          </div>
+          
           {/* Sports Tab Content */}
           {activeTab === "sports" && (
             <SportsTabContent

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import WalletConnect from '@/app/components/WalletConnect';
 import { useAptosSignalPublisher } from '@/hooks/useAptosSignalPublisher';
+import { useChainConnections } from '@/hooks/useChainConnections';
 import PageNav from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
 import Scene3D from '@/components/Scene3D';
@@ -12,9 +13,11 @@ import SignalCard from '@/app/components/signals/SignalCard';
 import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
 import MySignalsTab from '@/app/components/signals/MySignalsTab';
 import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
+import { ActiveChainIndicator, ChainSelector } from '@/components';
 
 export default function SignalsPage() {
     const { connected: aptosConnected, walletAddress, tipSignal } = useAptosSignalPublisher();
+    const { chains } = useChainConnections();
 
     const [signals, setSignals] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
@@ -289,6 +292,21 @@ export default function SignalsPage() {
 
                 {/* Main Content */}
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
+                    {/* Active Chain Indicators */}
+                    {(aptosConnected || chains?.evm?.connected) && (
+                        <div className="mb-6 space-y-3">
+                            {/* Signal Chain Indicator (Aptos/Movement) */}
+                            {aptosConnected && (
+                                <ActiveChainIndicator variant="full" isNight={isNight} />
+                            )}
+                            
+                            {/* EVM Network Selector (Trading chains) */}
+                            {chains?.evm?.connected && (
+                                <ChainSelector compact={true} isNight={isNight} />
+                            )}
+                        </div>
+                    )}
+                    
                     {activeTab === 'defi' ? (
                         <DeFiArbitrageTab
                             isNight={isNight}

@@ -19,7 +19,7 @@ import { aptosPublisher } from '@/services/aptosPublisher';
  * - Each signal tied to user's address (reputation)
  */
 export function useAptosSignalPublisher() {
-    const { account, signAndSubmitTransaction, connected } = useWallet();
+    const { account, signAndSubmitTransaction, connected, network } = useWallet();
     const [isPublishing, setIsPublishing] = useState(false);
     const [publishError, setPublishError] = useState(null);
 
@@ -37,8 +37,8 @@ export function useAptosSignalPublisher() {
         setPublishError(null);
 
         try {
-            // Prepare transaction payload
-            const payload = aptosPublisher.preparePublishSignalPayload(signalData);
+            // Prepare transaction payload with current network context
+            const payload = aptosPublisher.preparePublishSignalPayload(signalData, network);
 
             // User wallet signs and submits transaction
             const response = await signAndSubmitTransaction({
@@ -77,7 +77,7 @@ export function useAptosSignalPublisher() {
         }
 
         try {
-            const payload = aptosPublisher.prepareTipAnalystPayload(authorAddress, signalId, amount);
+            const payload = aptosPublisher.prepareTipAnalystPayload(authorAddress, signalId, amount, network);
 
             const response = await signAndSubmitTransaction({
                 sender: account.address,

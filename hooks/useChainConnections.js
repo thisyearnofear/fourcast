@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { CHAINS, EVM_NETWORKS, APTOS_NETWORKS, MOVEMENT_NETWORKS } from '@/constants/appConstants';
+import { CHAINS, EVM_NETWORKS, APTOS_NETWORKS, MOVEMENT_NETWORKS, NETWORK_SWITCH_CONFIGS } from '@/constants/appConstants';
 
 /**
  * Unified Chain Connection State Management
@@ -35,6 +35,7 @@ export function useChainConnections() {
     connected: aptosWalletConnected,
     wallet: connectedWallet,
     network: aptosNetwork,
+    changeNetwork: aptosChangeNetwork,  // ✅ Get network switching function
   } = useWallet();
 
   // Track preferred networks (user's explicit choice)
@@ -44,21 +45,19 @@ export function useChainConnections() {
 
   /**
    * Determine if connected wallet is Movement or standard Aptos
-   * Movement networks: testnet, mainnet (identified by network metadata)
-   * This is conservative - defaults to Aptos unless explicitly Movement
+   * NOW BASED ON ACTUAL CONNECTED NETWORK (not environment variables)
    */
   const isMovementWallet = useMemo(() => {
-    if (!aptosWalletConnected || !connectedWallet) return false;
+    if (!aptosWalletConnected || !aptosNetwork) return false;
     
-    // Check if wallet supports Movement network
-    // Most Aptos wallets support Movement, but we can be explicit here
-    const walletName = connectedWallet?.name?.toLowerCase() || '';
+    // Check ACTUAL connected network from wallet
+    const chainId = aptosNetwork?.chainId;
+    const networkUrl = aptosNetwork?.url || '';
     
-    // Common Movement-compatible wallets (in practice, most are, but can be selective)
-    const movementAwareWallets = ['petra', 'martian', 'movespoon'];
-    
-    return movementAwareWallets.some(w => walletName.includes(w));
-  }, [aptosWalletConnected, connectedWallet]);
+    // Movement Bardock has chainId 250
+    // Also check URL as fallback for custom networks
+    return chainId === 250 || networkUrl.includes('movement');
+  }, [aptosWalletConnected, aptosNetwork]);
 
   /**
    * Get current EVM network details
@@ -130,18 +129,23 @@ export function useChainConnections() {
    * - 'publish_and_monetize': Publish + receive tips (Movement only)
    */
   const canPerform = useCallback((chainId, action) => {
-    const chain = chains[chainId];
-    if (!chain?.connected) return false;
+    try {
+      const chain = chains[chainId];
+      if (!chain?.connected) return false;
 
-    switch (action) {
-      case 'trade':
-        return chainId === 'evm';
-      case 'publish':
-        return chainId === 'aptos' || chainId === 'movement';
-      case 'publish_and_monetize':
-        return chainId === 'movement';
-      default:
-        return false;
+      switch (action) {
+        case 'trade':
+          return chainId === 'evm';
+        case 'publish':
+          return chainId === 'aptos' || chainId === 'movement';
+        case 'publish_and_monetize':
+          return chainId === 'movement';
+        default:
+          return false;
+      }
+    } catch (error) {
+      console.warn('Error in canPerform:', error);
+      return false;
     }
   }, [chains]);
 
@@ -156,9 +160,17 @@ export function useChainConnections() {
   /**
    * Check if ANY signal-publishing chain is connected (Aptos or Movement)
    * Useful for "can you publish at all?" checks
+   * Always returns a boolean, never undefined
    */
   const canPublish = useMemo(
-    () => canPerform('aptos', 'publish') || canPerform('movement', 'publish'),
+    () => {
+      try {
+        return canPerform('aptos', 'publish') || canPerform('movement', 'publish');
+      } catch (error) {
+        console.warn('Error calculating canPublish:', error);
+        return false;
+      }
+    },
     [canPerform]
   );
 
@@ -179,6 +191,58 @@ export function useChainConnections() {
       return false;
     }
   }, [evmSwitchChain]);
+
+  /**
+   * Switch to Aptos network (mainnet or testnet)
+   * Uses wallet adapter's built-in changeNetwork function
+   */
+  const switchToAptosNetwork = useCallback(async (networkId = 'aptos-mainnet') => {
+    if (!aptosWalletConnected || !aptosChangeNetwork) {
+      console.warn('Aptos wallet not connected or changeNetwork not available');
+      return false;
+    }
+
+    try {
+      const config = NETWORK_SWITCH_CONFIGS[networkId];
+      if (!config) {
+        console.error('Unknown network:', networkId);
+        return false;
+      }
+
+      await aptosChangeNetwork(config);
+      setPreferredAptosNetwork(networkId);
+      return true;
+    } catch (error) {
+      console.error('Failed to switch Aptos network:', error);
+      return false;
+    }
+  }, [aptosWalletConnected, aptosChangeNetwork]);
+
+  /**
+   * Switch to Movement network (mainnet or testnet)
+   * Uses wallet adapter's built-in changeNetwork function
+   */
+  const switchToMovementNetwork = useCallback(async (networkId = 'movement-testnet') => {
+    if (!aptosWalletConnected || !aptosChangeNetwork) {
+      console.warn('Aptos wallet not connected or changeNetwork not available');
+      return false;
+    }
+
+    try {
+      const config = NETWORK_SWITCH_CONFIGS[networkId];
+      if (!config) {
+        console.error('Unknown network:', networkId);
+        return false;
+      }
+
+      await aptosChangeNetwork(config);
+      setPreferredMovementNetwork(networkId);
+      return true;
+    } catch (error) {
+      console.error('Failed to switch Movement network:', error);
+      return false;
+    }
+  }, [aptosWalletConnected, aptosChangeNetwork]);
 
   /**
    * Get guidance for chain action (what's needed, what to do)
@@ -223,6 +287,8 @@ export function useChainConnections() {
     
     // Network switching
     switchToEvmNetwork,
+    switchToAptosNetwork,      // ✅ New: Switch to Aptos
+    switchToMovementNetwork,   // ✅ New: Switch to Movement
     getActionGuidance,
 
     // Legacy: Keep for gradual migration (deprecated)
