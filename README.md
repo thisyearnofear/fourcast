@@ -54,9 +54,10 @@ graph TD
 ### Tech Stack
 - **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
 - **Backend**: Node.js, SQLite (Turso), Redis
-- **AI**: Google Gemini 1.5 Flash (via `GoogleGenerativeAI`)
+- **AI**: Venice AI (Llama 3.3 70B) with Edge Search
 - **Blockchain**: Movement Testnet (Bardock)
-- **Indexing**: Envio HyperIndex
+- **Database**: Turso (LibSQL) / Local SQLite
+- **Strategy**: Hybrid On-Chain Publishing + Off-Chain Metadata Registry
 - **Wallet**: Nightly, Razor, Petra (Aptos Standard)
 
 ---
@@ -66,7 +67,7 @@ graph TD
 ### 1. Installation
 
 ```bash
-git clone https://github.com/your-username/fourcast.git
+git clone https://github.com/thisyearnofear/fourcast.git
 cd fourcast
 npm install
 ```
@@ -95,7 +96,7 @@ npm run dev
 3.  **Publish**:
     *   Go to **Markets**.
     *   Click "Analyze" on an event.
-    *   Show the **AI Analysis** loading (Gemini processing).
+    *   Show the **AI Analysis** loading (Venice AI processing with live web search).
     *   Approve the `publish_signal` transaction.
 4.  **Verification**: Click "View On-Chain" to see the transaction on the Movement Explorer.
 5.  **Tipping**:
