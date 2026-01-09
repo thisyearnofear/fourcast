@@ -18,11 +18,11 @@ import { ActiveChainIndicator, ChainSelector } from "@/components";
 export default function MarketsPage() {
   // Unified chain connection state - single source of truth
   const chainConnections = useChainConnections();
-  console.log('[Markets Page] chainConnections:', chainConnections);
+  // console.log('[Markets Page] chainConnections:', chainConnections);
 
   // Provide default values to prevent undefined errors during initial render
   const { chains, canPerform, canPublish = false } = chainConnections || {};
-  console.log('[Markets Page] chains:', chains, 'canPerform:', canPerform, 'canPublish:', canPublish);
+  // console.log('[Markets Page] chains:', chains, 'canPerform:', canPerform, 'canPublish:', canPublish);
 
   // Safety check: ensure all required values exist
   if (!chains) {
@@ -34,7 +34,7 @@ export default function MarketsPage() {
     });
     return <div>Loading wallet connections...</div>;
   }
-  console.log('[Markets Page] ChainConnections initialized successfully');
+  // console.log('[Markets Page] ChainConnections initialized successfully');
 
   const {
     publishToAptos,
@@ -384,7 +384,7 @@ export default function MarketsPage() {
         );
       } else {
         addToast(
-          `Signal saved locally but Aptos publish failed: ${publishError || "Unknown error"}`,
+          `Signal saved locally but on-chain publish failed: ${publishError || "Unknown error"}`,
           "warning",
           5000
         );
@@ -1786,7 +1786,7 @@ function MarketCard({
                     Connect your Aptos or Movement wallet to publish
                   </p>
                   <p className={`text-xs ${textColor} opacity-70 font-light`}>
-                    Click "Connect Aptos Wallet" in the header above to publish
+                    Click "Connect Wallet" in the header above to publish
                     your signal on-chain
                   </p>
                 </div>

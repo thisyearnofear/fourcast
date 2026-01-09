@@ -65,7 +65,8 @@ export const CHAINS = {
     color: 'amber',
     purpose: 'Publish & monetize',
     capabilities: ['Publish signals', 'Build track record', 'Receive tips'],
-    disabled: []
+    disabled: [],
+    moduleAddress: '0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c'
   }
 };
 
@@ -149,7 +150,7 @@ export const NETWORK_SWITCH_CONFIGS = {
     url: 'https://fullnode.mainnet.aptoslabs.com/v1'
   },
   'aptos-testnet': {
-    name: 'testnet', 
+    name: 'testnet',
     chainId: 2,
     url: 'https://fullnode.testnet.aptoslabs.com/v1'
   },

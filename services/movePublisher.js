@@ -45,10 +45,10 @@ export class MoveSignalPublisher {
       fullnode: movementUrl
     }));
 
-    console.log('[MoveSignalPublisher] Multi-chain initialized:', {
+    /* console.log('[MoveSignalPublisher] Multi-chain initialized:', {
       aptos: { url: aptosUrl, module: APTOS_MODULE_ADDRESS },
       movement: { url: movementUrl, module: MOVEMENT_MODULE_ADDRESS }
-    });
+    }); */
   }
 
   /**
@@ -115,7 +115,7 @@ export class MoveSignalPublisher {
       ? "signal_marketplace"
       : "signal_registry";
 
-    console.log(`[MoveSignalPublisher] Preparing payload for ${isMovement ? 'Movement' : 'Aptos'} (${targetContract})`);
+    // console.log(`[MoveSignalPublisher] Preparing payload for ${isMovement ? 'Movement' : 'Aptos'} (${targetContract})`);
 
     return {
       function: `${targetModule}::${targetContract}::publish_signal`,
@@ -186,7 +186,7 @@ export class MoveSignalPublisher {
   async waitForTransaction(txHash, network = null) {
     try {
       const client = this.getClient(network);
-      console.log(`[MoveSignalPublisher] Waiting for TX on ${this.isMovementNetwork(network) ? 'Movement' : 'Aptos'}...`);
+      // console.log(`[MoveSignalPublisher] Waiting for TX on ${this.isMovementNetwork(network) ? 'Movement' : 'Aptos'}...`);
 
       const txn = await client.waitForTransaction({
         transactionHash: txHash,

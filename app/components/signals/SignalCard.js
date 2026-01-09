@@ -57,9 +57,27 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                         By: {signal.author_address.substring(0, 6)}...{signal.author_address.substring(signal.author_address.length - 4)}
                     </button>
 
-                    {isExpanded && (
-                        <div className="flex items-center gap-2 ml-auto">
-                            {/* Share Button */}
+                    <div className="flex items-center gap-2 ml-auto">
+                        {/* Tip Button - Visible for Movement signals */}
+                        {onTip && (signal.chain_origin === 'MOVEMENT' || signal.tipping_enabled) && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const amount = prompt("Enter tip amount (in Octas/units):", "10000000");
+                                    if (amount) onTip(amount);
+                                }}
+                                className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${isNight
+                                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
+                                    : 'bg-amber-600/10 hover:bg-amber-600/20 text-amber-700 border border-amber-600/20'
+                                    }`}
+                            >
+                                <span>💰</span>
+                                <span>Tip</span>
+                            </button>
+                        )}
+
+                        {isExpanded && (
+                            /* Share Button */
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -73,26 +91,8 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                                 <span>🔗</span>
                                 <span>Share</span>
                             </button>
-
-                            {/* Tip Button - Only show for Movement signals */}
-                            {onTip && (signal.chain_origin === 'MOVEMENT' || signal.tipping_enabled) && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const amount = prompt("Enter tip amount (in Octas/units):", "10000000");
-                                        if (amount) onTip(amount);
-                                    }}
-                                    className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${isNight
-                                        ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
-                                        : 'bg-amber-600/10 hover:bg-amber-600/20 text-amber-700 border border-amber-600/20'
-                                        }`}
-                                >
-                                    <span>💰</span>
-                                    <span>Tip Analyst</span>
-                                </button>
-                            )}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             )}
 
