@@ -802,27 +802,28 @@ function SportsTabContent({
         <div className="space-y-4">
           {markets.map((market, index) => (
             <MarketCard
-              key={market.marketID || market.id || index}
-              market={market}
-              onAnalyze={onAnalyze}
-              isNight={isNight}
-              textColor={textColor}
-              cardBgColor={cardBgColor}
-              isExpanded={
-                expandedMarketId ===
-                (market.marketID || market.id || market.tokenID)
-              }
-              expandedMarketId={expandedMarketId}
-              setExpandedMarketId={setExpandedMarketId}
-              analysis={analysis}
-              isAnalyzing={isAnalyzing}
-              selectedMarket={selectedMarket}
-              onPublishSignal={onPublishSignal}
-              aptosConnected={aptosConnected}
-              setShowOrderPanel={setShowOrderPanel}
-              setSelectedMarketForOrder={setSelectedMarketForOrder}
-              setSelectedKalshiMarket={setSelectedKalshiMarket}
-            />
+               key={market.marketID || market.id || index}
+               market={market}
+               onAnalyze={onAnalyze}
+               isNight={isNight}
+               textColor={textColor}
+               cardBgColor={cardBgColor}
+               isExpanded={
+                 expandedMarketId ===
+                 (market.marketID || market.id || market.tokenID)
+               }
+               expandedMarketId={expandedMarketId}
+               setExpandedMarketId={setExpandedMarketId}
+               analysis={analysis}
+               isAnalyzing={isAnalyzing}
+               selectedMarket={selectedMarket}
+               onPublishSignal={onPublishSignal}
+               aptosConnected={aptosConnected}
+               isConnected={isConnected}
+               setShowOrderPanel={setShowOrderPanel}
+               setSelectedMarketForOrder={setSelectedMarketForOrder}
+               setSelectedKalshiMarket={setSelectedKalshiMarket}
+             />
           ))}
         </div>
       )}
@@ -1387,6 +1388,7 @@ function MarketCard({
   selectedMarket,
   onPublishSignal,
   aptosConnected,
+  isConnected,
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
