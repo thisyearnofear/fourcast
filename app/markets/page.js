@@ -331,6 +331,7 @@ export default function MarketsPage() {
           weather: weatherData,
           authorAddress,
           publishChain,
+          chainOrigin: publishChain.toUpperCase(), // 'APTOS' or 'MOVEMENT'
         }),
       });
 

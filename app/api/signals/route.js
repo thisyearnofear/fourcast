@@ -38,6 +38,7 @@ export async function POST(request) {
     const aiDigest = analysis.reasoning || analysis.analysis || null
 
     const venue = market.location || market.venue || null
+    const chainOrigin = body.chainOrigin || 'APTOS'
 
     const res = await saveSignal({
       id,
@@ -52,7 +53,8 @@ export async function POST(request) {
       odds_efficiency: oddsEfficiency,
       author_address: authorAddress,
       tx_hash: null,
-      timestamp: now
+      timestamp: now,
+      chain_origin: chainOrigin
     })
 
     if (!res.success) {

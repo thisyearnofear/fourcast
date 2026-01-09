@@ -86,6 +86,7 @@ const initSql = `
     timestamp INTEGER NOT NULL,
     outcome TEXT DEFAULT 'PENDING',
     total_tips TEXT DEFAULT '0',
+    chain_origin TEXT DEFAULT 'APTOS',
     resolved_at INTEGER,
     created_at INTEGER DEFAULT (strftime('%s', 'now'))
   );
@@ -318,8 +319,8 @@ export async function saveSignal(signal) {
       `INSERT INTO signals (
         id, event_id, market_title, venue, event_time, market_snapshot_hash,
         weather_json, ai_digest, confidence, odds_efficiency, author_address,
-        tx_hash, timestamp
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        tx_hash, timestamp, chain_origin
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         signal.id,
         signal.event_id,
@@ -333,7 +334,8 @@ export async function saveSignal(signal) {
         signal.odds_efficiency,
         (signal.author_address && typeof signal.author_address === 'string') ? signal.author_address.toLowerCase() : null,
         signal.tx_hash,
-        signal.timestamp
+        signal.timestamp,
+        signal.chain_origin || 'APTOS'
       ]
     );
     return { success: true };
