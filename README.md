@@ -54,9 +54,10 @@ graph TD
 ### Tech Stack
 - **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
 - **Backend**: Node.js, SQLite (Turso), Redis
-- **AI**: Venice.ai (Llama-3.3-70b) via `EdgeAnalyzer` abstraction
-- **Blockchain**: Movement M1 Testnet (Move)
-- **DevEx**: TypeScript SDK
+- **AI**: Google Gemini 1.5 Flash (via `GoogleGenerativeAI`)
+- **Blockchain**: Movement Testnet (Bardock)
+- **Indexing**: Envio HyperIndex
+- **Wallet**: Nightly, Razor, Petra (Aptos Standard)
 
 ---
 
@@ -87,13 +88,22 @@ NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d
 npm run dev
 ```
 
-### 4. Run the Signal Pipeline (Demo)
+### 4. 🎥 Demo Flow (For Hackathon Video)
 
-This script acts as an Edge Node, fetching real data and publishing signals:
-
-```bash
-node scripts/run-analysis-flow.js
-```
+1.  **Landing**: Show the 3D weather-responsive background.
+2.  **Connect**: Connect **Nightly Wallet** (Movement Testnet).
+3.  **Publish**:
+    *   Go to **Markets**.
+    *   Click "Analyze" on an event.
+    *   Show the **AI Analysis** loading (Gemini processing).
+    *   Approve the `publish_signal` transaction.
+4.  **Verification**: Click "View On-Chain" to see the transaction on the Movement Explorer.
+5.  **Tipping**:
+    *   Switch to a different wallet (or dev account).
+    *   Go to **Signals Feed**.
+    *   Tip a top signal.
+    *   Show the "Tip sent successfully" toast.
+6.  **Leaderboard**: Show the user rising in the "Top Analysts" tab.
 
 ---
 

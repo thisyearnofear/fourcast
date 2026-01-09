@@ -436,7 +436,12 @@ export default function SignalsPage() {
                                                                 addToast("Tip sent successfully!", "success");
                                                             } catch (e) {
                                                                 console.error(e);
-                                                                addToast(e.message || "Failed to send tip", "error");
+                                                                const msg = e.message || "Failed to send tip";
+                                                                if (msg.includes("cannot tip your own signal") || msg.includes("E_CANNOT_TIP_SELF")) {
+                                                                    addToast("You cannot tip your own signal 🚫", "info");
+                                                                } else {
+                                                                    addToast(msg, "error");
+                                                                }
                                                             }
                                                         }}
                                                         onExpand={() => {

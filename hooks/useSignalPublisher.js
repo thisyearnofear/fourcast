@@ -72,7 +72,8 @@ export function useSignalPublisher() {
         }
 
         // Prevent tipping yourself
-        if (account.address === authorAddress) {
+        if (typeof account.address === 'string' && typeof authorAddress === 'string' &&
+            account.address.toLowerCase() === authorAddress.toLowerCase()) {
             throw new Error("You cannot tip your own signal");
         }
 
