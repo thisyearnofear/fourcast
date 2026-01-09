@@ -319,7 +319,8 @@ export default function MarketsPage() {
       // 1. Save to SQLite first (fast feedback)
       // Use Movement address if available, otherwise Aptos
       const publishChain = chains.movement.connected ? 'movement' : 'aptos';
-      const authorAddress = chains[publishChain].address;
+      const rawAddress = chains[publishChain].address;
+      const authorAddress = typeof rawAddress === 'string' ? rawAddress : String(rawAddress || '');
 
       const response = await fetch("/api/signals", {
         method: "POST",
@@ -967,18 +968,18 @@ function ChainActionWidget({
             }}
             disabled={isDisabled}
             className={`px-4 py-2 rounded-lg text-xs font-light transition-all ${!isDisabled
-                ? isNight
-                  ? `${chainDef.id === 'movement'
-                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
-                    : chainDef.color === 'purple'
-                      ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30'
-                      : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30'}`
-                  : `${chainDef.id === 'movement'
-                    ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-800 border border-amber-400/30'
-                    : chainDef.color === 'purple'
-                      ? 'bg-purple-400/20 hover:bg-purple-400/30 text-purple-800 border border-purple-400/30'
-                      : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border border-blue-400/30'}`
-                : "opacity-50 cursor-not-allowed"
+              ? isNight
+                ? `${chainDef.id === 'movement'
+                  ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
+                  : chainDef.color === 'purple'
+                    ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30'
+                    : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30'}`
+                : `${chainDef.id === 'movement'
+                  ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-800 border border-amber-400/30'
+                  : chainDef.color === 'purple'
+                    ? 'bg-purple-400/20 hover:bg-purple-400/30 text-purple-800 border border-purple-400/30'
+                    : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border border-blue-400/30'}`
+              : "opacity-50 cursor-not-allowed"
               }`}
           >
             {buttonLabel}

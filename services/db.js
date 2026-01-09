@@ -331,7 +331,7 @@ export async function saveSignal(signal) {
         signal.ai_digest,
         signal.confidence,
         signal.odds_efficiency,
-        signal.author_address ? signal.author_address.toLowerCase() : null,
+        (signal.author_address && typeof signal.author_address === 'string') ? signal.author_address.toLowerCase() : null,
         signal.tx_hash,
         signal.timestamp
       ]

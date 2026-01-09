@@ -88,20 +88,25 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
     }
 
     // Resolve Token ID for the selected outcome
-    // Assuming clobTokenIds is [YES_ID, NO_ID] or [NO_ID, YES_ID]
-    // Polymarket convention: outcomePrices[0] = YES, outcomePrices[1] = NO
-    // So clobTokenIds[0] = YES Token, clobTokenIds[1] = NO Token (usually)
-    // We'll rely on index 0 = Yes, index 1 = No as per polymarketService mapping
-    const clobTokenIds = market.rawMarket?.clobTokenIds || market.clobTokenIds;
-    
-    if (!clobTokenIds || clobTokenIds.length < 2) {
-      // Fallback: Try to use marketID if it looks like a token ID (unlikely to work for binary)
-      console.warn("Missing clobTokenIds, order might fail");
+    // clobTokenIds might be a JSON string (from some API endpoints) or an array
+    let clobTokenIds = market.rawMarket?.clobTokenIds || market.clobTokenIds;
+
+    if (typeof clobTokenIds === 'string') {
+      try {
+        clobTokenIds = JSON.parse(clobTokenIds);
+      } catch (e) {
+        console.error('Failed to parse clobTokenIds:', e);
+      }
     }
-    
+
+    if (!clobTokenIds || !Array.isArray(clobTokenIds) || clobTokenIds.length < 2) {
+      // Fallback: Try to use marketID if it looks like a token ID (unlikely to work for binary)
+      console.warn("Invalid clobTokenIds format", clobTokenIds);
+    }
+
     // Select token ID based on side (YES/NO)
-    const tokenID = side === 'YES' 
-      ? clobTokenIds?.[0] 
+    const tokenID = side === 'YES'
+      ? clobTokenIds?.[0]
       : clobTokenIds?.[1];
 
     if (!tokenID) {
@@ -189,11 +194,10 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
                       </div>
                       <button
                         onClick={() => switchChain?.({ chainId: POLYGON_CHAIN_ID })}
-                        className={`w-full py-2 rounded-lg font-light text-xs transition-all border mt-2 ${
-                          isNight
+                        className={`w-full py-2 rounded-lg font-light text-xs transition-all border mt-2 ${isNight
                             ? 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-300'
                             : 'bg-amber-400/20 hover:bg-amber-400/30 border-amber-500/30 text-amber-800'
-                        }`}
+                          }`}
                       >
                         Switch to {POLYGON_CHAIN_NAME}
                       </button>
@@ -221,15 +225,14 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
                   <button
                     key={s}
                     onClick={() => setSide(s)}
-                    className={`flex-1 py-2 rounded-lg font-light text-sm transition-all border ${
-                      side === s
+                    className={`flex-1 py-2 rounded-lg font-light text-sm transition-all border ${side === s
                         ? isNight
                           ? 'bg-blue-500/40 border-blue-400 text-blue-100'
                           : 'bg-blue-400/40 border-blue-500 text-blue-900'
                         : isNight
-                        ? 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                        : 'bg-black/5 border-black/10 text-black/70 hover:bg-black/10'
-                    }`}
+                          ? 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                          : 'bg-black/5 border-black/10 text-black/70 hover:bg-black/10'
+                      }`}
                   >
                     {s}
                   </button>
@@ -297,36 +300,34 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
             <div className="flex gap-3 pt-4">
               <button
                 onClick={onClose}
-                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${
-                  isNight
+                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${isNight
                     ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white/70'
                     : 'bg-black/5 hover:bg-black/10 border-black/10 text-black/70'
-                }`}
+                  }`}
               >
                 Cancel
               </button>
               <button
                 onClick={() => setStep('review')}
                 disabled={!isConnected || !isCorrectChain || !size || !price || estimatedCost > userBalance}
-                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${
-                  isConnected && isCorrectChain && size && price && estimatedCost <= userBalance
+                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${isConnected && isCorrectChain && size && price && estimatedCost <= userBalance
                     ? isNight
                       ? 'bg-blue-500/30 hover:bg-blue-500/40 border-blue-400/30 text-blue-200'
                       : 'bg-blue-400/30 hover:bg-blue-400/40 border-blue-500/30 text-blue-900'
                     : isNight
-                    ? 'bg-gray-500/20 border-gray-400/20 text-gray-400'
-                    : 'bg-gray-400/20 border-gray-500/20 text-gray-600'
-                }`}
+                      ? 'bg-gray-500/20 border-gray-400/20 text-gray-400'
+                      : 'bg-gray-400/20 border-gray-500/20 text-gray-600'
+                  }`}
                 title={
                   !isConnected
                     ? 'Connect wallet to trade'
                     : !isCorrectChain
-                    ? `Switch to ${POLYGON_CHAIN_NAME}`
-                    : !size || !price
-                    ? 'Enter size and price'
-                    : estimatedCost > userBalance
-                    ? `Need $${(estimatedCost - userBalance).toFixed(2)} more`
-                    : 'Review and sign order'
+                      ? `Switch to ${POLYGON_CHAIN_NAME}`
+                      : !size || !price
+                        ? 'Enter size and price'
+                        : estimatedCost > userBalance
+                          ? `Need $${(estimatedCost - userBalance).toFixed(2)} more`
+                          : 'Review and sign order'
                 }
               >
                 Review
@@ -354,21 +355,19 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
             <div className="flex gap-3 pt-4">
               <button
                 onClick={() => setStep('input')}
-                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${
-                  isNight
+                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${isNight
                     ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white/70'
                     : 'bg-black/5 hover:bg-black/10 border-black/10 text-black/70'
-                }`}
+                  }`}
               >
                 Back
               </button>
               <button
                 onClick={handleSubmitOrder}
-                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${
-                  isNight
+                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${isNight
                     ? 'bg-green-500/30 hover:bg-green-500/40 border-green-400/30 text-green-200'
                     : 'bg-green-400/30 hover:bg-green-400/40 border-green-500/30 text-green-900'
-                }`}
+                  }`}
               >
                 Sign & Submit
               </button>
