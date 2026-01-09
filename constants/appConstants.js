@@ -34,3 +34,37 @@ export const EVENT_TYPES = {
   ECONOMICS: 'Economics',
   ALL: 'all'
 };
+
+// Chain Configuration
+export const CHAINS = {
+  EVM: {
+    id: 'evm',
+    name: 'EVM',
+    display: 'Trading (EVM)',
+    icon: '📊',
+    color: 'blue',
+    purpose: 'Trade on markets',
+    capabilities: ['Place market orders', 'Participate in trading'],
+    disabled: ['Publish signals', 'Receive tips']
+  },
+  APTOS: {
+    id: 'aptos',
+    name: 'Aptos',
+    display: 'Signals (Aptos)',
+    icon: '📡',
+    color: 'purple',
+    purpose: 'Publish signals',
+    capabilities: ['Publish signals', 'Build track record'],
+    disabled: ['Receive tips']
+  },
+  MOVEMENT: {
+    id: 'movement',
+    name: 'Movement',
+    display: 'Signals + Tips (Movement)',
+    icon: '💎',
+    color: 'amber',
+    purpose: 'Publish & monetize',
+    capabilities: ['Publish signals', 'Build track record', 'Receive tips'],
+    disabled: []
+  }
+};

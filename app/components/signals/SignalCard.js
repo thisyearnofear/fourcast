@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
+import { ChainNetworkBadge, ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
 import { generateXUrl, generateFarcasterUrl } from '@/utils/shareSignal';
 
 export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip, userStats, onExpand }) {
@@ -18,6 +18,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
             onClick={handleToggle}
         >
             <div className="flex flex-wrap items-center gap-2 mb-2">
+                <ChainNetworkBadge signal={signal} isNight={isNight} />
                 <ConfidenceBadge confidence={signal.confidence} isNight={isNight} />
                 <QualityBadge signal={signal} isNight={isNight} />
                 {signal.odds_efficiency && (
@@ -73,7 +74,8 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                                 <span>Share</span>
                             </button>
 
-                            {onTip && (
+                            {/* Tip Button - Only show for Movement signals */}
+                            {onTip && (signal.chain_origin === 'MOVEMENT' || signal.tipping_enabled) && (
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -81,12 +83,12 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                                         if (amount) onTip(amount);
                                     }}
                                     className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${isNight
-                                        ? 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30'
-                                        : 'bg-green-600/10 hover:bg-green-600/20 text-green-700 border border-green-600/20'
+                                        ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
+                                        : 'bg-amber-600/10 hover:bg-amber-600/20 text-amber-700 border border-amber-600/20'
                                         }`}
                                 >
-                                    <span>💸</span>
-                                    <span>Tip</span>
+                                    <span>💰</span>
+                                    <span>Tip Analyst</span>
                                 </button>
                             )}
                         </div>

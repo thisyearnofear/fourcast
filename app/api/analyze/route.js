@@ -120,6 +120,7 @@ export async function POST(request) {
       reasoning: analysis.analysis || 'Analysis not available',
       key_factors: analysis.key_factors || [],
       recommended_action: analysis.recommended_action || 'Monitor manually',
+      chain_recommendation: analysis.chain_recommendation || 'BOTH',
       weather_conditions: weatherConditions,
       cached: analysis.cached || false,
       source: analysis.source || 'unknown',

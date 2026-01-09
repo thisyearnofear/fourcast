@@ -113,7 +113,8 @@ RESPONSE FORMAT - You MUST respond with ONLY this JSON structure, no other text:
   "confidence": "LOW|MEDIUM|HIGH",
   "analysis": "Event-specific reasoning only, no example content",
   "key_factors": ["specific, measurable factors"],
-  "recommended_action": "Clear recommendation"
+  "recommended_action": "Clear recommendation",
+  "chain_recommendation": "PUBLISH|TRADE|BOTH" (PUBLISH for high confidence signals, TRADE for odds plays, BOTH if suitable for both)
 }
 
 Respond with ONLY the JSON object above. Do not include any text before or after the JSON.
@@ -224,6 +225,7 @@ Respond with ONLY the JSON object above. Do not include any text before or after
         : [parsed.key_factors || "Weather factors analyzed"],
       recommended_action:
         parsed.recommended_action || "Monitor the market closely",
+      chain_recommendation: parsed.chain_recommendation || "BOTH",
       citations: Array.isArray(parsed.citations) ? parsed.citations : [],
       limitations: parsed.limitations || null,
     };
@@ -703,8 +705,38 @@ export async function analyzeWeatherImpactServer(params) {
       } mph`,
     };
 
+    // Derive chain recommendation from confidence, liquidity, and odds efficiency
+    let chainRec = analysis.chain_recommendation;
+    if (!chainRec) {
+      const conf = analysis.assessment?.confidence;
+      const eff = analysis.assessment?.odds_efficiency;
+      const hasLiquidity = params.currentOdds && typeof params.currentOdds === "object";
+      
+      // Decision tree: combine confidence + market characteristics
+      const isConfidentAnalysis = conf === "HIGH" || conf === "MEDIUM";
+      const hasOddsEdge = eff === "UNDERPRICED" || eff === "OVERPRICED";
+      
+      if (isConfidentAnalysis && hasOddsEdge && hasLiquidity) {
+        // Strong conviction + market inefficiency + liquidity = BOTH (hedge + signal)
+        chainRec = "BOTH";
+      } else if (isConfidentAnalysis && !hasOddsEdge) {
+        // High confidence but fair odds = PUBLISH (build record without trading)
+        chainRec = "PUBLISH";
+      } else if (hasOddsEdge && hasLiquidity) {
+        // Market is mispriced regardless of confidence = TRADE
+        chainRec = "TRADE";
+      } else if (conf === "LOW") {
+        // Low conviction = TRADE only (speculative odds play)
+        chainRec = "TRADE";
+      } else {
+        // Default: neither strong conviction nor clear edge
+        chainRec = "BOTH";
+      }
+    }
+
     return {
       ...analysis,
+      chain_recommendation: chainRec,
       weather_conditions: wc,
       cached: false,
       source: "venice_ai",

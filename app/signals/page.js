@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ConnectKitButton } from 'connectkit';
+import WalletConnect from '@/app/components/WalletConnect';
 import { useAptosSignalPublisher } from '@/hooks/useAptosSignalPublisher';
-import AptosConnectButton from '@/app/components/AptosConnectButton';
 import PageNav from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
 import Scene3D from '@/components/Scene3D';
@@ -238,14 +237,7 @@ export default function SignalsPage() {
                         <div className="flex items-center space-x-3">
                             <PageNav currentPage="Signals" isNight={isNight} />
                             <div className="flex items-center space-x-2">
-                                <div className="flex flex-col items-end">
-                                    <ConnectKitButton mode={isNight ? "dark" : "light"} />
-                                    <span className={`text-[10px] ${textColor} opacity-50 mt-0.5`}>Trading</span>
-                                </div>
-                                <div className="flex flex-col items-end">
-                                    <AptosConnectButton isNight={isNight} />
-                                    <span className={`text-[10px] ${textColor} opacity-50 mt-0.5`}>Identity</span>
-                                </div>
+                                <WalletConnect isNight={isNight} />
                             </div>
                         </div>
                     </div>

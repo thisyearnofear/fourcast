@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
-import { ConnectKitButton } from "connectkit";
-import AptosConnectButton from "@/app/components/AptosConnectButton";
+import WalletConnect from "@/app/components/WalletConnect";
 import { useAptosSignalPublisher } from "@/hooks/useAptosSignalPublisher";
 import { weatherService } from "@/services/weatherService";
 import { arbitrageService } from "@/services/arbitrageService";
@@ -12,6 +11,8 @@ import Scene3D from "@/components/Scene3D";
 import { useToast, ToastContainer } from "@/components/Toast";
 import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
+import { CHAINS } from "@/constants/appConstants";
+import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
 
 export default function MarketsPage() {
   const { address, isConnected } = useAccount();
@@ -440,22 +441,7 @@ export default function MarketsPage() {
                 </select>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="flex flex-col items-end">
-                  <ConnectKitButton mode={isNight ? "dark" : "light"} />
-                  <span
-                    className={`text-[10px] ${textColor} opacity-50 mt-0.5`}
-                  >
-                    Trading
-                  </span>
-                </div>
-                <div className="flex flex-col items-end">
-                  <AptosConnectButton isNight={isNight} />
-                  <span
-                    className={`text-[10px] ${textColor} opacity-50 mt-0.5`}
-                  >
-                    Signals
-                  </span>
-                </div>
+                <WalletConnect isNight={isNight} />
                 {aptosConnected && (
                   <span
                     className={`px-2 py-1 rounded-lg text-[10px] border ${isNight
@@ -840,6 +826,163 @@ function SportsTabContent({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Chain Recommendation Badge - Shows recommended action inline
+function ChainRecommendationBadge({ recommendation, isNight }) {
+  const config = {
+    PUBLISH: {
+      icon: "📡",
+      text: "Publish Signal",
+      color: isNight ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-purple-400/20 text-purple-800 border-purple-400/30"
+    },
+    TRADE: {
+      icon: "📊",
+      text: "Place Order",
+      color: isNight ? "bg-blue-500/20 text-blue-300 border-blue-500/30" : "bg-blue-400/20 text-blue-800 border-blue-400/30"
+    },
+    BOTH: {
+      icon: "⚡",
+      text: "Publish & Trade",
+      color: isNight ? "bg-amber-500/20 text-amber-300 border-amber-500/30" : "bg-amber-400/20 text-amber-800 border-amber-400/30"
+    }
+  };
+  
+  const rec = config[recommendation];
+  if (!rec) return null;
+  
+  return (
+    <span className={`px-3 py-1 rounded-full font-light border ${rec.color}`}>
+      {rec.icon} {rec.text}
+    </span>
+  );
+}
+
+// Chain Action Widget - Guide user on next steps with wallet validation
+function ChainActionWidget({
+  analysis,
+  market,
+  isNight,
+  textColor,
+  cardBgColor,
+  onPublishSignal,
+  aptosConnected,
+  evmConnected,
+  setShowOrderPanel,
+  setSelectedMarketForOrder,
+}) {
+  if (!analysis?.chain_recommendation) return null;
+
+  const rec = analysis.chain_recommendation;
+  const shouldPublish = rec === "PUBLISH" || rec === "BOTH";
+  const shouldTrade = rec === "TRADE" || rec === "BOTH";
+
+  const publishButtonText = shouldTrade ? "Also Publish Signal" : "Publish Signal";
+  const tradeButtonText = shouldPublish ? "Also Trade" : "Place Order";
+
+  // Get explanation for why this action is recommended
+  const explanation = getRecommendationExplanation(
+    rec,
+    analysis.assessment?.confidence,
+    analysis.assessment?.odds_efficiency
+  );
+
+  // Helper to render chain action with wallet validation and guidance
+  const renderChainAction = (chain, isConnected, isPrimary, buttonText, actionFn, contextMsg) => (
+    <div className={`flex items-start gap-3 pb-3 border-b border-white/10 last:pb-0 last:border-0 ${
+      isPrimary ? (isNight ? "bg-gradient-to-r from-purple-500/5 to-transparent" : "bg-gradient-to-r from-purple-400/5 to-transparent") : ""
+    } rounded px-3 py-2`}>
+      <span className="text-xl flex-shrink-0">{chain.icon}</span>
+      <div className="flex-1">
+        <h5 className={`text-sm font-medium ${textColor} mb-1`}>
+          {chain.display}
+          {isPrimary && <span className={`ml-2 text-xs opacity-60 ${isNight ? "text-amber-300" : "text-amber-700"}`}>← Recommended</span>}
+        </h5>
+        <p className={`text-xs ${textColor} opacity-60 mb-3 leading-relaxed`}>
+          {contextMsg}
+        </p>
+        <button
+          onClick={actionFn}
+          disabled={!isConnected}
+          className={`px-4 py-2 rounded-lg text-xs font-light transition-all ${
+            isConnected
+              ? isNight
+                ? `${chain.id === 'movement' 
+                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30' 
+                    : chain.color === 'purple'
+                    ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30'
+                    : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30'}`
+                : `${chain.id === 'movement' 
+                    ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-800 border border-amber-400/30' 
+                    : chain.color === 'purple'
+                    ? 'bg-purple-400/20 hover:bg-purple-400/30 text-purple-800 border border-purple-400/30'
+                    : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border border-blue-400/30'}`
+              : "opacity-50 cursor-not-allowed"
+          }`}
+        >
+          {isConnected ? buttonText : `Connect ${chain.name}`}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-5`}>
+      <h4 className={`text-xs font-light ${textColor} opacity-70 mb-4 uppercase tracking-wider`}>
+        Recommended Actions
+      </h4>
+      <div className="space-y-1">
+        {/* Explanation Header */}
+        <div className={`mb-3 p-3 rounded-lg ${isNight ? "bg-white/5 border border-white/10" : "bg-black/5 border border-black/10"}`}>
+          <p className={`text-xs ${textColor} font-medium mb-1`}>
+            {explanation.title}
+          </p>
+          <p className={`text-xs ${textColor} opacity-60`}>
+            {explanation.reason}
+          </p>
+        </div>
+
+        {shouldPublish && (
+          renderChainAction(
+            CHAINS.APTOS,
+            aptosConnected,
+            rec === "PUBLISH", // Primary if PUBLISH only
+            publishButtonText,
+            () => {
+              if (aptosConnected) onPublishSignal(market, analysis);
+            },
+            "Create a permanent on-chain record of your analysis to build your track record and establish credibility"
+          )
+        )}
+
+        {shouldTrade && (
+          renderChainAction(
+            CHAINS.EVM,
+            evmConnected,
+            rec === "TRADE", // Primary if TRADE only
+            tradeButtonText,
+            () => {
+              if (evmConnected) {
+                setSelectedMarketForOrder(market);
+                setShowOrderPanel(true);
+              }
+            },
+            analysis.assessment?.odds_efficiency === "UNDERPRICED"
+              ? "Market odds are underpriced. Place a position to capture value."
+              : "Participate in the market based on your analysis and risk tolerance."
+          )
+        )}
+
+        {rec === "BOTH" && (
+          <div className={`mt-4 p-3 rounded-lg ${isNight ? "bg-green-500/10 border border-green-500/20" : "bg-green-400/10 border border-green-400/20"}`}>
+            <p className={`text-xs ${textColor} leading-relaxed`}>
+              <span className="font-medium">💡 Pro Tip:</span> {explanation.benefit}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1319,6 +1462,13 @@ function MarketCard({
                 {market.confidence}
               </span>
             )}
+            {/* Chain Recommendation Badge - Early visibility */}
+            {isCurrentMarket && analysis?.chain_recommendation && (
+              <ChainRecommendationBadge 
+                recommendation={analysis.chain_recommendation}
+                isNight={isNight}
+              />
+            )}
           </div>
         </div>
 
@@ -1431,6 +1581,20 @@ function MarketCard({
                 </div>
               </div>
             </div>
+
+            {/* Chain Action Widget - Elevated for prominence */}
+            <ChainActionWidget
+              analysis={analysis}
+              market={market}
+              isNight={isNight}
+              textColor={textColor}
+              cardBgColor={cardBgColor}
+              onPublishSignal={onPublishSignal}
+              aptosConnected={aptosConnected}
+              evmConnected={isConnected}
+              setShowOrderPanel={setShowOrderPanel}
+              setSelectedMarketForOrder={setSelectedMarketForOrder}
+            />
 
             {/* Analysis Text */}
             <div

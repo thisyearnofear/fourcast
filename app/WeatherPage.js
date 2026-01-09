@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Scene3D from '@/components/Scene3D';
 import LocationSelector from '@/components/LocationSelector';
-import { ConnectKitButton } from 'connectkit';
+import WalletConnect from '@/app/components/WalletConnect';
 import { weatherService } from '@/services/weatherService';
 import { WinCelebration } from '@/components/WinCelebration';
 import { BuilderDashboard } from '@/components/BuilderDashboard';
@@ -198,21 +198,23 @@ export default function WeatherPage() {
                     </div>
                   </div>
 
-                  {/* Mode Toggle Switch */}
-                  <div className="hidden sm:flex bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
-                    <button
-                      onClick={() => setIsBuilderMode(false)}
-                      className={`px-3 py-1 rounded-full text-xs transition-all ${!isBuilderMode ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'}`}
-                    >
-                      Trader
-                    </button>
-                    <button
-                      onClick={() => setIsBuilderMode(true)}
-                      className={`px-3 py-1 rounded-full text-xs transition-all ${isBuilderMode ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'}`}
-                    >
-                      Builder
-                    </button>
-                  </div>
+                  {/* Mode Toggle Switch - Dev Only */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="hidden sm:flex bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
+                      <button
+                        onClick={() => setIsBuilderMode(false)}
+                        className={`px-3 py-1 rounded-full text-xs transition-all ${!isBuilderMode ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'}`}
+                      >
+                        Trader
+                      </button>
+                      <button
+                        onClick={() => setIsBuilderMode(true)}
+                        className={`px-3 py-1 rounded-full text-xs transition-all ${isBuilderMode ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'}`}
+                      >
+                        Builder
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2 sm:space-x-4">
@@ -222,24 +224,15 @@ export default function WeatherPage() {
                     isLoading={isLoading}
                     isNight={isNight}
                   />
-                  <ConnectKitButton
-                    mode="dark"
-                    customTheme={{
-                      "--ck-accent-color": isNight ? "#3b82f6" : "#1e293b",
-                      "--ck-accent-text": "#ffffff",
-                      "--ck-primary-button-background": isNight
-                        ? "rgba(255,255,255,0.2)"
-                        : "#1f2937",
-                    }}
-                  />
+                  <WalletConnect isNight={isNight} />
                 </div>
               </>
             )}
           </header>
         )}
 
-        {/* Builder Dashboard Overlay */}
-        {isBuilderMode && !isPortalMode && !isLoading && (
+        {/* Builder Dashboard Overlay - Dev Only */}
+        {process.env.NODE_ENV === 'development' && isBuilderMode && !isPortalMode && !isLoading && (
           <div className="absolute top-24 right-6 w-80 z-30 pointer-events-auto animate-in fade-in slide-in-from-right-10 duration-500">
              <BuilderDashboard isNight={isNight} onClose={() => setIsBuilderMode(false)} />
           </div>

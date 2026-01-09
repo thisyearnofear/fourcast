@@ -1,4 +1,26 @@
 import { calculateSignalQuality, getQualityColor, getQualityBgColor, getQualityLabel } from '@/utils/signalScoring';
+import { CHAINS } from '@/constants/appConstants';
+
+export function ChainNetworkBadge({ signal, isNight }) {
+    // Explicit chain origin detection (with fallback to tipping flag)
+    let chain = CHAINS.APTOS;
+    
+    if (signal.chain_origin === 'MOVEMENT' || signal.has_tipping_enabled || signal.tipping_enabled) {
+        chain = CHAINS.MOVEMENT;
+    }
+    
+    const colorMap = {
+        purple: isNight ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-purple-400/20 text-purple-800 border-purple-400/30',
+        amber: isNight ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-amber-400/20 text-amber-800 border-amber-400/30'
+    };
+    
+    return (
+        <span className={`px-3 py-1 rounded-full text-xs font-light border ${colorMap[chain.color]}`}>
+            {chain.icon} {chain.name}
+            {chain.id === 'movement' && <span className="ml-1 text-amber-300">✨</span>}
+        </span>
+    );
+}
 
 export function ConfidenceBadge({ confidence, isNight }) {
     const baseClass = 'px-3 py-1 rounded-full text-xs font-light border';
