@@ -841,6 +841,7 @@ function SportsTabContent({
                selectedMarket={selectedMarket}
                onPublishSignal={onPublishSignal}
                chains={chains}
+               canPublish={canPublish}
                setShowOrderPanel={setShowOrderPanel}
                setSelectedMarketForOrder={setSelectedMarketForOrder}
                setSelectedKalshiMarket={setSelectedKalshiMarket}
@@ -1403,6 +1404,7 @@ function DiscoveryTabContent({
                    selectedMarket={selectedMarket}
                    onPublishSignal={onPublishSignal}
                    chains={chains}
+                   canPublish={canPublish}
                    setShowOrderPanel={setShowOrderPanel}
                    setSelectedMarketForOrder={setSelectedMarketForOrder}
                    setSelectedKalshiMarket={setSelectedKalshiMarket}
@@ -1440,6 +1442,7 @@ function MarketCard({
   selectedMarket,
   onPublishSignal,
   chains,
+  canPublish,
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
