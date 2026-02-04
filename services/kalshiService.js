@@ -6,11 +6,21 @@ export const kalshiService = {
      */
     async getSeriesMarkets(seriesTicker) {
         try {
-            const response = await fetch(`${BASE_URL}/markets?series_ticker=${seriesTicker}&status=open`);
+            const url = `${BASE_URL}/markets?series_ticker=${seriesTicker}&status=open`;
+            console.log(`[Kalshi Service] Fetching series markets from: ${url}`);
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Kalshi API Error ${response.status}: ${errorText}`);
+                return [];
+            }
+            
             const data = await response.json();
             return data.markets || [];
         } catch (error) {
-            console.error(`Failed to fetch Kalshi markets for series ${seriesTicker}:`, error);
+            console.error(`Failed to fetch Kalshi markets for series ${seriesTicker}:`, error.message);
             return [];
         }
     },
@@ -20,11 +30,24 @@ export const kalshiService = {
      */
     async getEventsByCategory(category, limit = 50) {
         try {
-            const response = await fetch(`${BASE_URL}/events?status=open&limit=${limit}${category !== 'all' ? `&category=${category}` : ''}`);
+            const url = `${BASE_URL}/events?status=open&limit=${limit}${category !== 'all' ? `&category=${category}` : ''}`;
+            console.log(`[Kalshi Service] Fetching events from: ${url}`);
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Kalshi API Error ${response.status}: ${errorText}`);
+                if (response.status === 401) {
+                    console.error('Kalshi API authentication failed - check API key or endpoint');
+                }
+                return [];
+            }
+            
             const data = await response.json();
             return data.events || [];
         } catch (error) {
-            console.error(`Failed to fetch Kalshi events for category ${category}:`, error);
+            console.error(`Failed to fetch Kalshi events for category ${category}:`, error.message);
             return [];
         }
     },
@@ -58,16 +81,21 @@ export const kalshiService = {
 
     /**
      * Get markets by category (Internal EventType -> Kalshi Category)
+     * Enhanced to be more inclusive and discover diverse markets
      */
     async getMarketsByCategory(eventType = 'all', limit = 50) {
         try {
-            // Map internal eventType to Kalshi categories
+            console.log(`[Kalshi Service] Fetching markets for category: ${eventType}`);
+            
+            // Map internal eventType to Kalshi categories with expanded coverage
             let kalshiCategory = 'all';
             let specificSeries = null;
+            let shouldFetchAllCategories = false;
 
+            // Enhanced category mapping with better coverage
             if (eventType === 'Weather') {
-                // Weather is handled via specific series tickers
-                specificSeries = ['KXHIGHNY', 'KXHIGHCHI', 'KXHIGHMIA', 'KXHIGHAUS'];
+                // Weather markets - expanded to more cities
+                specificSeries = ['KXHIGHNY', 'KXHIGHCHI', 'KXHIGHMIA', 'KXHIGHAUS', 'KXHIGHSEA', 'KXHIGHDEN'];
             } else if (eventType === 'Politics') {
                 kalshiCategory = 'Politics';
             } else if (eventType === 'Economics') {
@@ -75,45 +103,107 @@ export const kalshiService = {
             } else if (eventType === 'Crypto') {
                 kalshiCategory = 'Financials';
             } else if (eventType === 'Sports' || eventType === 'Soccer' || eventType === 'NFL' || eventType === 'NBA') {
-                // Kalshi generally groups these under "Sports" or specific events
-                // Note: Kalshi sports coverage varies, we map all to 'Sports' category
                 kalshiCategory = 'Sports';
+            } else if (eventType === 'Entertainment') {
+                kalshiCategory = 'Entertainment';
+            } else if (eventType === 'Science') {
+                kalshiCategory = 'Science';
+            } else if (eventType === 'Health') {
+                kalshiCategory = 'Health';
+            } else if (eventType === 'all') {
+                // For 'all' category, fetch from multiple popular categories
+                shouldFetchAllCategories = true;
             }
 
-            // CASE 1: Specific Series (e.g. Weather)
+            // CASE 1: Specific Series (e.g. Weather with expanded cities)
             if (specificSeries) {
+                console.log(`[Kalshi Service] Fetching specific series: ${specificSeries.join(', ')}`);
                 const allMarkets = [];
                 const results = await Promise.allSettled(
                     specificSeries.map(ticker => this.getSeriesMarkets(ticker))
                 );
 
-                results.forEach(result => {
+                results.forEach((result, index) => {
                     if (result.status === 'fulfilled') {
+                        console.log(`[Kalshi Service] Found ${result.value.length} markets for ${specificSeries[index]}`);
                         allMarkets.push(...result.value);
+                    } else {
+                        console.warn(`[Kalshi Service] Failed to fetch ${specificSeries[index]}:`, result.reason?.message);
                     }
                 });
-                return this.normalizeMarkets(allMarkets);
+                
+                const normalized = this.normalizeMarkets(allMarkets);
+                console.log(`[Kalshi Service] Returning ${normalized.length} normalized weather markets`);
+                return normalized;
             }
 
-            // CASE 2: Category Search
+            // CASE 2: Fetch from multiple categories for 'all' eventType
+            if (shouldFetchAllCategories) {
+                console.log('[Kalshi Service] Fetching markets from multiple categories for "all"');
+                const categoriesToFetch = ['Politics', 'Economics', 'Sports', 'Entertainment', 'Science', 'Health'];
+                const allMarkets = [];
+                
+                const results = await Promise.allSettled(
+                    categoriesToFetch.map(category => 
+                        this.getEventsByCategory(category, Math.ceil(limit / categoriesToFetch.length))
+                    )
+                );
+
+                results.forEach((result, index) => {
+                    if (result.status === 'fulfilled' && result.value.length > 0) {
+                        console.log(`[Kalshi Service] Found ${result.value.length} events in ${categoriesToFetch[index]}`);
+                        const eventTickers = result.value.map(e => e.event_ticker).filter(Boolean);
+                        // Get markets for top events in each category
+                        allMarkets.push(...eventTickers.slice(0, 5).map(ticker => 
+                            this.getMarketsForSingleEvent(ticker)
+                        ));
+                    }
+                });
+
+                // Flatten and normalize
+                const flattenedMarkets = (await Promise.all(allMarkets)).flat().filter(Boolean);
+                const normalized = this.normalizeMarkets(flattenedMarkets);
+                console.log(`[Kalshi Service] Returning ${normalized.length} markets from all categories`);
+                return normalized;
+            }
+
+            // CASE 3: Category Search (default behavior)
+            console.log(`[Kalshi Service] Fetching events for category: ${kalshiCategory}`);
             const events = await this.getEventsByCategory(kalshiCategory, limit);
 
             if (!events || events.length === 0) {
+                console.log(`[Kalshi Service] No events found for category: ${kalshiCategory}`);
                 return [];
             }
 
-            // Filter events if needed (e.g. if looking for 'Soccer' specifically within 'Sports')
-            // For now, we return all events in the category to maximize discovery
+            console.log(`[Kalshi Service] Found ${events.length} events in category ${kalshiCategory}`);
 
             // Get markets for these events
             const eventTickers = events.map(e => e.event_ticker).filter(Boolean);
+            
+            // Limit to top events but be more generous than before
+            const markets = await this.getMarketsForEvents(eventTickers.slice(0, 30));
 
-            // Limit to top 20 events to avoid rate limits
-            const markets = await this.getMarketsForEvents(eventTickers.slice(0, 20));
-
-            return this.normalizeMarkets(markets);
+            const normalized = this.normalizeMarkets(markets);
+            console.log(`[Kalshi Service] Returning ${normalized.length} normalized markets for category ${eventType}`);
+            return normalized;
         } catch (error) {
-            console.error(`Failed to fetch Kalshi markets for category ${eventType}:`, error);
+            console.error(`[Kalshi Service] Failed to fetch markets for category ${eventType}:`, error);
+            return [];
+        }
+    },
+
+    /**
+     * Fetch markets for a single event ticker
+     * Helper method for better error handling
+     */
+    async getMarketsForSingleEvent(eventTicker) {
+        try {
+            const response = await fetch(`${BASE_URL}/markets?event_ticker=${eventTicker}&status=open`);
+            const data = await response.json();
+            return data.markets || [];
+        } catch (error) {
+            console.warn(`[Kalshi Service] Failed to fetch markets for event ${eventTicker}:`, error.message);
             return [];
         }
     },

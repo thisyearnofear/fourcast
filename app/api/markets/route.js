@@ -88,14 +88,21 @@ export async function POST(request) {
       try {
         const kMarkets = await kalshiService.getMarketsByCategory(eventType, 30);
         
-        // Apply basic filtering to Kalshi markets
+        // Apply enhanced filtering to Kalshi markets with adaptive thresholds
         kalshiMarkets = kMarkets.filter(m => {
           const vol = parseFloat(m.volume24h || 0);
-          // Kalshi volume is in contracts (approx $1 each), so we scale minVolume down
-          // If minVolume is > 10000 ($), we require > 100 contracts on Kalshi
-          // This prevents empty/dead markets from cluttering the view
-          const minContracts = Math.max(10, minVolume / 100); 
-          return vol >= minContracts;
+          // Enhanced logic: More aggressive discovery for Kalshi
+          // Lower the barrier for discovery while maintaining quality
+          const minContracts = Math.max(3, minVolume / 1000); // Much lower threshold
+          const hasLiquidity = (m.liquidity || 0) > 1000; // Alternative quality signal
+          const isActiveMarket = vol > 0 || hasLiquidity; // At least some activity
+          
+          // For 'all' category, be more inclusive to show variety
+          if (eventType === 'all') {
+            return isActiveMarket;
+          }
+          
+          return vol >= minContracts || hasLiquidity;
         });
 
         console.log(`[Markets API] Found ${kalshiMarkets.length} Kalshi markets for category ${eventType}`);
