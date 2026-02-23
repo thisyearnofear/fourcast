@@ -51,13 +51,14 @@ graph TD
     E -->|Live Feed| G[React Frontend]
 ```
 
+See [Architecture Guide](./docs/ARCHITECTURE.md) for details.
+
 ### Tech Stack
 - **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
 - **Backend**: Node.js, SQLite (Turso), Redis
 - **AI**: Venice AI (Llama 3.3 70B) with Edge Search
 - **Blockchain**: Movement Testnet (Bardock)
 - **Database**: Turso (LibSQL) / Local SQLite
-- **Strategy**: Hybrid On-Chain Publishing + Off-Chain Metadata Registry
 - **Wallet**: Nightly, Razor, Petra (Aptos Standard)
 
 ---
@@ -82,6 +83,8 @@ NEXT_PUBLIC_APTOS_NETWORK=custom
 NEXT_PUBLIC_APTOS_NODE_URL=https://testnet.movementnetwork.xyz/v1
 NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c
 ```
+
+See [Setup Guide](./docs/SETUP.md) for complete configuration.
 
 ### 3. Run the App
 
@@ -118,11 +121,8 @@ fourcast/
 ├── sdk/                    # @fourcast/signal-sdk package
 ├── contracts/              # Smart contracts (Solidity)
 ├── move/                   # Move contracts (Aptos/Movement)
-├── docs/                   # Documentation
-└── scripts/                # Utility scripts
+└── docs/                   # Documentation
 ```
-
-For detailed structure, see [Project Structure Documentation](./docs/PROJECT_STRUCTURE.md).
 
 ---
 
@@ -142,7 +142,7 @@ await publisher.publish({
 });
 ```
 
-See [SDK Documentation](./sdk/SDK.md) for full details.
+See [API Reference](./docs/API_REFERENCE.md) for complete documentation.
 
 ---
 
@@ -152,6 +152,17 @@ See [SDK Documentation](./sdk/SDK.md) for full details.
 |----------|---------|
 | Signal Registry | `0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c` |
 | Marketplace | `0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c` |
+
+See [Deployment Guide](./docs/DEPLOYMENT.md) for deployment instructions.
+
+---
+
+## 📚 Documentation
+
+- **[Setup Guide](./docs/SETUP.md)** - Installation, environment, wallets
+- **[Architecture Guide](./docs/ARCHITECTURE.md)** - EdgeAnalyzer pattern, domains, agent system
+- **[API Reference](./docs/API_REFERENCE.md)** - All endpoints and schemas
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Movement network deployment
 
 ---
 
