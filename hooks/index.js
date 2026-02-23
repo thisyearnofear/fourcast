@@ -5,3 +5,4 @@
 
 export { useBuilder } from './useBuilder';
 export { useOrderSigning } from './useOrderSigning';
+export { useAgentLoop } from './useAgentLoop';

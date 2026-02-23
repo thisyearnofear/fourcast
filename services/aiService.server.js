@@ -9,6 +9,8 @@ import { LocationValidator } from "./locationValidator.js";
 import { polymarketService } from "./polymarketService.js";
 import { kalshiService } from "./kalshiService.js";
 import { VenueExtractor } from "./venueExtractor.js";
+import { arbitrageService } from "./arbitrageService.js";
+import { saveForecast, wasRecentlyAnalyzed } from "./db.js";
 
 const callVeniceAI = async (params, options = {}) => {
   const {
@@ -758,6 +760,357 @@ export async function analyzeWeatherImpactServer(params) {
       source: "fallback",
     };
   }
+}
+
+/**
+ * Autonomous agent loop that discovers, filters, forecasts, and detects edge
+ * across prediction markets. Yields step-by-step updates for SSE streaming.
+ *
+ * @param {Object} config
+ * @param {string[]} [config.categories] - Market categories to scan (e.g. ['Sports', 'Politics'])
+ * @param {number} [config.maxMarkets] - Max markets to forecast (default 5)
+ * @param {number} [config.minVolume] - Minimum 24h volume filter (default 10000)
+ * @param {number} [config.maxDaysOut] - Max days until resolution (default 30)
+ * @param {number} [config.riskTolerance] - 0-1 scale for sizing (default 0.5)
+ * @yields {{ step: string, status: string, data?: any, message?: string }}
+ */
+export async function* runAgentLoop(config = {}) {
+  const {
+    categories = ["all"],
+    maxMarkets = 5,
+    minVolume = 10000,
+    maxDaysOut = 30,
+    riskTolerance = 0.5,
+  } = config;
+
+  const loopTimestamp = Date.now();
+
+  // ── Step 1: Discover markets ──────────────────────────────────────────
+
+  yield { step: "discover", status: "running", message: "Scanning Polymarket..." };
+
+  let polymarkets = [];
+  try {
+    const result = await polymarketService.getTopWeatherSensitiveMarkets(50, {
+      minVolume,
+      analysisType: "discovery",
+    });
+    polymarkets = result?.markets || [];
+  } catch (err) {
+    console.error("Agent loop: Polymarket discovery failed:", err.message);
+  }
+
+  yield { step: "discover", status: "running", message: "Scanning Kalshi..." };
+
+  let kalshiMarkets = [];
+  try {
+    const categoryToFetch = categories.length === 1 ? categories[0] : "all";
+    kalshiMarkets = await kalshiService.getMarketsByCategory(categoryToFetch, 50);
+  } catch (err) {
+    console.error("Agent loop: Kalshi discovery failed:", err.message);
+  }
+
+  const allMarkets = [
+    ...polymarkets.map((m) => ({ ...m, platform: m.platform || "polymarket" })),
+    ...kalshiMarkets.map((m) => ({ ...m, platform: m.platform || "kalshi" })),
+  ];
+
+  yield {
+    step: "discover",
+    status: "complete",
+    data: {
+      polymarket: polymarkets.length,
+      kalshi: kalshiMarkets.length,
+      total: allMarkets.length,
+    },
+  };
+
+  // ── Step 2: Filter candidates ─────────────────────────────────────────
+
+  yield { step: "filter", status: "running", message: "Applying filters..." };
+
+  const now = new Date();
+  let candidates = allMarkets.filter((m) => {
+    // Volume filter
+    const vol = m.volume24h || m.volume || 0;
+    if (vol < minVolume) return false;
+
+    // Time horizon filter
+    if (m.resolutionDate) {
+      const resDate = new Date(m.resolutionDate);
+      const daysOut = (resDate - now) / (1000 * 60 * 60 * 24);
+      if (daysOut < 0 || daysOut > maxDaysOut) return false;
+    }
+
+    // Category filter
+    if (categories.length > 0 && !categories.includes("all")) {
+      const mType = (m.eventType || "").toLowerCase();
+      const mTitle = (m.title || "").toLowerCase();
+      const match = categories.some((c) => {
+        const cl = c.toLowerCase();
+        return mType.includes(cl) || mTitle.includes(cl);
+      });
+      if (!match) return false;
+    }
+
+    // Must have odds
+    if (!m.currentOdds || (m.currentOdds.yes == null && m.currentOdds.no == null)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Sort by volume descending, take top N
+  candidates.sort((a, b) => (b.volume24h || b.volume || 0) - (a.volume24h || a.volume || 0));
+  candidates = candidates.slice(0, maxMarkets);
+
+  // ── Step 2.5: Detect arbitrage opportunities ──────────────────────────
+
+  yield { step: "filter", status: "running", message: "Detecting arbitrage..." };
+
+  const arbitrageOpportunities = arbitrageService.findSimilarMarkets(allMarkets);
+
+  yield {
+    step: "filter",
+    status: "complete",
+    data: {
+      candidates: candidates.map((c) => ({
+        marketID: c.marketID,
+        title: c.title,
+        platform: c.platform,
+        volume: c.volume24h || c.volume || 0,
+        currentOdds: c.currentOdds,
+      })),
+      arbitrageCount: arbitrageOpportunities.length,
+      topArbitrage: arbitrageOpportunities.slice(0, 3),
+    },
+  };
+
+  if (candidates.length === 0) {
+    yield {
+      step: "edge",
+      status: "complete",
+      data: { recommendations: [], message: "No candidates passed filters" },
+    };
+    return;
+  }
+
+  // ── Step 3: Forecast probabilities ────────────────────────────────────
+
+  const client = new OpenAI({
+    apiKey: process.env.VENICE_API_KEY,
+    baseURL: "https://api.venice.ai/api/v1",
+  });
+
+  const forecasts = [];
+
+  for (let i = 0; i < candidates.length; i++) {
+    const market = candidates[i];
+    const yesPrice = market.currentOdds?.yes ?? 0.5;
+    const noPrice = market.currentOdds?.no ?? 0.5;
+
+    // Skip if recently analyzed (within 6 hours)
+    const recentlyAnalyzed = await wasRecentlyAnalyzed(market.marketID, 6);
+    if (recentlyAnalyzed) {
+      yield {
+        step: "forecast",
+        status: "skipped",
+        market: { title: market.title, marketID: market.marketID },
+        message: "Recently analyzed, skipping",
+        index: i,
+        total: candidates.length,
+      };
+      continue;
+    }
+
+    yield {
+      step: "forecast",
+      status: "running",
+      market: { title: market.title, marketID: market.marketID },
+      index: i,
+      total: candidates.length,
+    };
+
+    let aiProbability = null;
+    let reasoning = null;
+    let keyFactors = [];
+    let confidence = "LOW";
+
+    try {
+      const response = await client.chat.completions.create({
+        model: "llama-3.3-70b",
+        messages: [
+          {
+            role: "system",
+            content: `You are a Superforecaster tasked with estimating probabilities for prediction market outcomes.
+
+Use this systematic process:
+1. Break down the question into sub-components
+2. Consider base rates and reference classes
+3. Identify key factors that could shift the probability
+4. Think about what information would change your mind
+5. Synthesize into a final probability estimate
+
+You MUST respond with ONLY valid JSON, no other text.`,
+          },
+          {
+            role: "user",
+            content: `Market: "${market.title}"
+Current market odds: YES ${yesPrice}, NO ${noPrice}
+Description: ${market.description || "N/A"}
+
+Output ONLY valid JSON:
+{ "probability": 0.XX, "reasoning": "...", "key_factors": ["..."], "confidence": "HIGH|MEDIUM|LOW" }`,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 1000,
+        venice_parameters: {
+          enable_web_search: "auto",
+        },
+      });
+
+      let content = response.choices[0].message.content;
+      content = content.trim();
+
+      // Remove thinking tags if present
+      if (content.includes("<think>")) {
+        const thinkEnd = content.lastIndexOf("</think>");
+        if (thinkEnd !== -1) {
+          content = content.substring(thinkEnd + 8).trim();
+        }
+      }
+
+      // Remove markdown code blocks if present
+      if (content.startsWith("```")) {
+        content = content.replace(/```json\n?|\n?```/g, "").trim();
+      }
+
+      // Extract JSON if there's text before/after
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        content = jsonMatch[0];
+      }
+
+      const parsed = JSON.parse(content);
+      aiProbability = Math.max(0, Math.min(1, parseFloat(parsed.probability)));
+      reasoning = parsed.reasoning || null;
+      keyFactors = Array.isArray(parsed.key_factors) ? parsed.key_factors : [];
+      confidence = parsed.confidence || "LOW";
+    } catch (err) {
+      console.error(`Agent loop: Forecast failed for ${market.title}:`, err.message);
+    }
+
+    const forecast = {
+      marketID: market.marketID,
+      title: market.title,
+      platform: market.platform,
+      description: market.description,
+      currentOdds: market.currentOdds,
+      aiProbability,
+      reasoning,
+      keyFactors,
+      confidence,
+    };
+    forecasts.push(forecast);
+
+    // Save forecast to database for track record
+    await saveForecast({
+      id: `forecast-${market.marketID}-${loopTimestamp}`,
+      marketID: market.marketID,
+      title: market.title,
+      platform: market.platform,
+      aiProbability,
+      marketOdds: yesPrice,
+      edge: aiProbability - yesPrice,
+      confidence,
+      reasoning,
+      keyFactors,
+      timestamp: Math.floor(loopTimestamp / 1000),
+    });
+
+    yield {
+      step: "forecast",
+      status: "complete",
+      market: {
+        title: market.title,
+        marketID: market.marketID,
+        aiProbability,
+        currentOdds: market.currentOdds,
+      },
+    };
+  }
+
+  // ── Step 4: Detect edge ───────────────────────────────────────────────
+
+  yield { step: "edge", status: "running", message: "Calculating edges..." };
+
+  const recommendations = forecasts
+    .filter((f) => f.aiProbability != null)
+    .map((f) => {
+      const marketYes = f.currentOdds?.yes ?? 0.5;
+      const edge = f.aiProbability - marketYes;
+      const absEdge = Math.abs(edge);
+      const actionable = absEdge > 0.05;
+      const direction = edge > 0 ? "BUY YES" : "BUY NO";
+
+      // Calibration guardrail: flag suspiciously large edges (>30%)
+      let adjustedConfidence = f.confidence;
+      if (absEdge > 0.3) {
+        adjustedConfidence = "LOW"; // Override to low confidence
+      }
+
+      // Size recommendation: edge magnitude * risk tolerance, capped at 0.25
+      const sizeRaw = absEdge * riskTolerance * 2;
+      const sizePct = Math.min(0.25, Math.round(sizeRaw * 100) / 100);
+
+      return {
+        marketID: f.marketID,
+        title: f.title,
+        platform: f.platform,
+        aiProbability: f.aiProbability,
+        marketOdds: marketYes,
+        edge: Math.round(edge * 1000) / 1000,
+        absEdge: Math.round(absEdge * 1000) / 1000,
+        actionable,
+        direction: actionable ? direction : "NO TRADE",
+        sizePct: actionable ? sizePct : 0,
+        confidence: adjustedConfidence,
+        originalConfidence: f.confidence,
+        calibrationWarning: absEdge > 0.3 ? "Edge >30% - high uncertainty" : null,
+        reasoning: f.reasoning,
+        keyFactors: f.keyFactors,
+      };
+    })
+    .sort((a, b) => b.absEdge - a.absEdge);
+
+  // Cache results in Redis
+  try {
+    const redis = await getRedisClient();
+    if (redis) {
+      const cacheKey = `agent:loop:${loopTimestamp}`;
+      await redis.setEx(
+        cacheKey,
+        6 * 60 * 60, // 6 hour TTL
+        JSON.stringify({
+          timestamp: loopTimestamp,
+          config,
+          recommendations,
+          marketsScanned: allMarkets.length,
+          candidatesFiltered: candidates.length,
+        })
+      );
+    }
+  } catch (err) {
+    console.warn("Agent loop: Redis cache failed:", err.message);
+  }
+
+  yield {
+    step: "edge",
+    status: "complete",
+    data: { recommendations },
+  };
 }
 
 export function getAIStatus() {

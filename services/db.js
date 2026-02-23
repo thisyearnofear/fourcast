@@ -94,6 +94,41 @@ const initSql = `
   CREATE INDEX IF NOT EXISTS idx_signals_event_id ON signals(event_id);
   CREATE INDEX IF NOT EXISTS idx_signals_timestamp ON signals(timestamp DESC);
   CREATE INDEX IF NOT EXISTS idx_signals_author_outcome ON signals(author_address, outcome);
+
+  CREATE TABLE IF NOT EXISTS agent_forecasts (
+    id TEXT PRIMARY KEY,
+    market_id TEXT NOT NULL,
+    market_title TEXT,
+    platform TEXT,
+    ai_probability REAL NOT NULL,
+    market_odds REAL NOT NULL,
+    edge REAL NOT NULL,
+    confidence TEXT,
+    reasoning TEXT,
+    key_factors TEXT,
+    timestamp INTEGER NOT NULL,
+    resolved BOOLEAN DEFAULT 0,
+    actual_outcome REAL,
+    brier_score REAL,
+    resolution_time INTEGER,
+    created_at INTEGER DEFAULT (strftime('%s', 'now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_forecasts_market_id ON agent_forecasts(market_id);
+  CREATE INDEX IF NOT EXISTS idx_forecasts_timestamp ON agent_forecasts(timestamp DESC);
+  CREATE INDEX IF NOT EXISTS idx_forecasts_resolved ON agent_forecasts(resolved);
+
+  CREATE TABLE IF NOT EXISTS agent_runs (
+    id TEXT PRIMARY KEY,
+    config TEXT,
+    markets_scanned INTEGER,
+    candidates_filtered INTEGER,
+    forecasts_made INTEGER,
+    timestamp INTEGER NOT NULL,
+    created_at INTEGER DEFAULT (strftime('%s', 'now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_agent_runs_timestamp ON agent_runs(timestamp DESC);
 `;
 
 // Initialize tables
@@ -435,6 +470,141 @@ export async function getLeaderboard(limit = 50) {
     return { success: true, leaderboard: rows };
   } catch (error) {
     return { success: false, error: error.message, leaderboard: [] };
+  }
+}
+
+/**
+ * Save an agent forecast to the database for track record
+ */
+export async function saveForecast(forecast) {
+  try {
+    await execute(
+      `INSERT INTO agent_forecasts (
+        id, market_id, market_title, platform, ai_probability, market_odds,
+        edge, confidence, reasoning, key_factors, timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        forecast.id,
+        forecast.marketID,
+        forecast.title,
+        forecast.platform,
+        forecast.aiProbability,
+        forecast.marketOdds,
+        forecast.edge,
+        forecast.confidence,
+        forecast.reasoning || null,
+        forecast.keyFactors ? JSON.stringify(forecast.keyFactors) : null,
+        forecast.timestamp || Math.floor(Date.now() / 1000),
+      ]
+    );
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to save forecast:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Update forecast with actual outcome and calculate Brier score
+ */
+export async function resolveForecast(marketId, actualOutcome) {
+  try {
+    const rows = await query(
+      `SELECT * FROM agent_forecasts WHERE market_id = ? AND resolved = 0`,
+      [marketId]
+    );
+
+    for (const forecast of rows) {
+      const brierScore = Math.pow(forecast.ai_probability - actualOutcome, 2);
+      await execute(
+        `UPDATE agent_forecasts 
+         SET resolved = 1, actual_outcome = ?, brier_score = ?, resolution_time = ?
+         WHERE id = ?`,
+        [actualOutcome, brierScore, Math.floor(Date.now() / 1000), forecast.id]
+      );
+    }
+
+    return { success: true, resolved: rows.length };
+  } catch (error) {
+    console.error('Failed to resolve forecast:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get agent track record statistics
+ */
+export async function getAgentTrackRecord() {
+  try {
+    const stats = await query(
+      `SELECT 
+        COUNT(*) as total_forecasts,
+        COUNT(CASE WHEN resolved = 1 THEN 1 END) as resolved_forecasts,
+        AVG(CASE WHEN resolved = 1 THEN brier_score END) as avg_brier_score,
+        AVG(CASE WHEN resolved = 1 AND confidence = 'HIGH' THEN brier_score END) as high_conf_brier,
+        COUNT(CASE WHEN resolved = 1 AND confidence = 'HIGH' THEN 1 END) as high_conf_count
+       FROM agent_forecasts`
+    );
+
+    const recentForecasts = await query(
+      `SELECT * FROM agent_forecasts 
+       WHERE resolved = 1 
+       ORDER BY resolution_time DESC 
+       LIMIT 50`
+    );
+
+    return {
+      success: true,
+      stats: stats[0],
+      recentForecasts,
+    };
+  } catch (error) {
+    console.error('Failed to get track record:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Check if market was recently analyzed (within hours)
+ */
+export async function wasRecentlyAnalyzed(marketId, hoursAgo = 6) {
+  try {
+    const cutoff = Math.floor(Date.now() / 1000) - (hoursAgo * 3600);
+    const rows = await query(
+      `SELECT id FROM agent_forecasts 
+       WHERE market_id = ? AND timestamp > ?
+       LIMIT 1`,
+      [marketId, cutoff]
+    );
+    return rows.length > 0;
+  } catch (error) {
+    console.error('Failed to check recent analysis:', error);
+    return false;
+  }
+}
+
+/**
+ * Save agent run metadata
+ */
+export async function saveAgentRun(runData) {
+  try {
+    await execute(
+      `INSERT INTO agent_runs (
+        id, config, markets_scanned, candidates_filtered, forecasts_made, timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        runData.id,
+        JSON.stringify(runData.config),
+        runData.marketsScanned,
+        runData.candidatesFiltered,
+        runData.forecastsMade,
+        runData.timestamp,
+      ]
+    );
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to save agent run:', error);
+    return { success: false, error: error.message };
   }
 }
 

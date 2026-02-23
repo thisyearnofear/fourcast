@@ -108,6 +108,24 @@ npm run dev
 
 ---
 
+## 📂 Project Structure
+
+```
+fourcast/
+├── app/                    # Next.js app (pages, API routes)
+├── components/             # Shared React components
+├── services/               # Backend services (AI, DB, APIs)
+├── sdk/                    # @fourcast/signal-sdk package
+├── contracts/              # Smart contracts (Solidity)
+├── move/                   # Move contracts (Aptos/Movement)
+├── docs/                   # Documentation
+└── scripts/                # Utility scripts
+```
+
+For detailed structure, see [Project Structure Documentation](./docs/PROJECT_STRUCTURE.md).
+
+---
+
 ## 📦 Using the SDK
 
 Want to build your own signal feed?

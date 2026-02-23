@@ -1,66 +1,138 @@
-# dependencies
+# ============================================
+# Dependencies
+# ============================================
 /node_modules
 /.pnp
 .pnp.js
+/sdk/node_modules
 
-# testing
+# ============================================
+# Testing
+# ============================================
 /coverage
+*.test.js.snap
 
-# next.js
+# ============================================
+# Next.js
+# ============================================
 /.next/
 /out/
+.next
 
-# production
+# ============================================
+# Production
+# ============================================
 /build
+/dist
 
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
+# ============================================
+# Environment Variables
+# ============================================
 .env
+.env*.local
+!.env.local.example
 
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-.qoder
-.trae
-.qodo
-.trae/documents
-
-# Database files
+# ============================================
+# Database Files
+# ============================================
 fourcast.db
 fourcast.db-shm
 fourcast.db-wal
+*.db
+*.db-shm
+*.db-wal
 
-# Aptos CLI
+# ============================================
+# Blockchain CLI Tools
+# ============================================
+# Aptos
 .aptos/
+.aptos-testnet/
 move/build/
 
-# Movement CLI
+# Movement
 .movement/
 movement-key.txt
 movement-key.txt.pub
+*.pub
 
-# IDE and tool artifacts
+# ============================================
+# IDE & Editor Configurations
+# ============================================
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
+# AI Coding Assistants
+.qoder/
+.qodo/
+.trae/
+.zencoder/
+.zenflow/
+.cursor/
+.windsurf/
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================
+# Logs
+# ============================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================
+# TypeScript
+# ============================================
+*.tsbuildinfo
+next-env.d.ts
+
+# ============================================
+# Package Managers
+# ============================================
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# ============================================
+# Vercel
+# ============================================
+.vercel
+
+# ============================================
+# Certificates & Keys
+# ============================================
+*.pem
+*.key
+*.cert
+*.crt
+
+# ============================================
 # Binaries
+# ============================================
 /bin/
 
+# ============================================
+# Temporary Files
+# ============================================
+*.tmp
+*.temp
+.cache/
+
+# ============================================
 # Other
+# ============================================
 config.yaml
-.aptos-testnet

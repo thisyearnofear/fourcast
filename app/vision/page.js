@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { ConnectKitButton } from "connectkit";
 import PageNav from "@/app/components/PageNav";
+import { AgentDashboard } from "@/components/AgentDashboard";
 
 export default function VisionPage() {
   const [isNight, setIsNight] = useState(() => {
@@ -173,6 +174,11 @@ export default function VisionPage() {
                 network for real-world forecasting apps and future prediction
                 markets.
               </p>
+            </section>
+            <section
+              className={`backdrop-blur-md border rounded-2xl p-6 ${cardClass}`}
+            >
+              <AgentDashboard isNight={isNight} />
             </section>
             <section
               className={`backdrop-blur-md border rounded-2xl p-6 ${cardClass}`}
