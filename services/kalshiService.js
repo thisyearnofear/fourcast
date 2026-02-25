@@ -1,4 +1,4 @@
-const BASE_URL = process.env.KALSHI_BASE_URL || 'https://trading-api.kalshi.com/v2';
+const BASE_URL = process.env.KALSHI_BASE_URL || 'https://api.elections.kalshi.com/trade-api/v2';
 
 export const kalshiService = {
     /**
@@ -30,8 +30,9 @@ export const kalshiService = {
      */
     async getEventsByCategory(category, limit = 50) {
         try {
-            const url = `${BASE_URL}/events?status=open&limit=${limit}${category !== 'all' ? `&category=${category}` : ''}`;
-            console.log(`[Kalshi Service] Fetching events from: ${url}`);
+            // Kalshi API does not support category as a query param — fetch all and filter client-side
+            const url = `${BASE_URL}/events?status=open&limit=${Math.min(limit * 3, 200)}&with_nested_markets=true`;
+            console.log(`[Kalshi Service] Fetching events from: ${url} (filtering for category: ${category})`);
             
             const response = await fetch(url);
             
@@ -45,7 +46,23 @@ export const kalshiService = {
             }
             
             const data = await response.json();
-            return data.events || [];
+            let events = data.events || [];
+
+            // Client-side category filtering (API ignores category param)
+            if (category && category !== 'all') {
+                events = events.filter(e => {
+                    const cat = (e.category || '').toLowerCase();
+                    const target = category.toLowerCase();
+                    // Handle category aliases
+                    if (target === 'financials' || target === 'crypto') {
+                        return cat === 'financials' || cat === 'economics';
+                    }
+                    return cat === target;
+                });
+                console.log(`[Kalshi Service] Filtered to ${events.length} events for category: ${category}`);
+            }
+
+            return events.slice(0, limit);
         } catch (error) {
             console.error(`Failed to fetch Kalshi events for category ${category}:`, error.message);
             return [];
@@ -137,37 +154,17 @@ export const kalshiService = {
                 return normalized;
             }
 
-            // CASE 2: Fetch from multiple categories for 'all' eventType
+            // CASE 2: Fetch all categories (single request, filter client-side)
             if (shouldFetchAllCategories) {
-                console.log('[Kalshi Service] Fetching markets from multiple categories for "all"');
-                const categoriesToFetch = ['Politics', 'Economics', 'Sports', 'Entertainment', 'Science', 'Health'];
-                const allMarkets = [];
-                
-                const results = await Promise.allSettled(
-                    categoriesToFetch.map(category => 
-                        this.getEventsByCategory(category, Math.ceil(limit / categoriesToFetch.length))
-                    )
-                );
-
-                results.forEach((result, index) => {
-                    if (result.status === 'fulfilled' && result.value.length > 0) {
-                        console.log(`[Kalshi Service] Found ${result.value.length} events in ${categoriesToFetch[index]}`);
-                        const eventTickers = result.value.map(e => e.event_ticker).filter(Boolean);
-                        // Get markets for top events in each category
-                        allMarkets.push(...eventTickers.slice(0, 5).map(ticker => 
-                            this.getMarketsForSingleEvent(ticker)
-                        ));
-                    }
-                });
-
-                // Flatten and normalize
-                const flattenedMarkets = (await Promise.all(allMarkets)).flat().filter(Boolean);
-                const normalized = this.normalizeMarkets(flattenedMarkets);
+                console.log('[Kalshi Service] Fetching all markets for "all" category');
+                const events = await this.getEventsByCategory('all', limit);
+                const allMarkets = this._extractMarketsFromEvents(events);
+                const normalized = this.normalizeMarkets(allMarkets);
                 console.log(`[Kalshi Service] Returning ${normalized.length} markets from all categories`);
                 return normalized;
             }
 
-            // CASE 3: Category Search (default behavior)
+            // CASE 3: Category Search — events already have nested markets
             console.log(`[Kalshi Service] Fetching events for category: ${kalshiCategory}`);
             const events = await this.getEventsByCategory(kalshiCategory, limit);
 
@@ -178,11 +175,15 @@ export const kalshiService = {
 
             console.log(`[Kalshi Service] Found ${events.length} events in category ${kalshiCategory}`);
 
-            // Get markets for these events
-            const eventTickers = events.map(e => e.event_ticker).filter(Boolean);
-            
-            // Limit to top events but be more generous than before
-            const markets = await this.getMarketsForEvents(eventTickers.slice(0, 30));
+            // Extract nested markets from events (already fetched with with_nested_markets=true)
+            let markets = this._extractMarketsFromEvents(events);
+
+            // Fallback: if no nested markets, fetch individually
+            if (markets.length === 0) {
+                console.log(`[Kalshi Service] No nested markets, fetching individually...`);
+                const eventTickers = events.map(e => e.event_ticker).filter(Boolean);
+                markets = await this.getMarketsForEvents(eventTickers.slice(0, 30));
+            }
 
             const normalized = this.normalizeMarkets(markets);
             console.log(`[Kalshi Service] Returning ${normalized.length} normalized markets for category ${eventType}`);
@@ -191,6 +192,19 @@ export const kalshiService = {
             console.error(`[Kalshi Service] Failed to fetch markets for category ${eventType}:`, error);
             return [];
         }
+    },
+
+    /**
+     * Extract markets from events that were fetched with with_nested_markets=true
+     */
+    _extractMarketsFromEvents(events) {
+        const markets = [];
+        for (const event of events) {
+            if (event.markets && Array.isArray(event.markets)) {
+                markets.push(...event.markets);
+            }
+        }
+        return markets;
     },
 
     /**

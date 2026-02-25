@@ -96,6 +96,7 @@ class PolymarketService {
       'Sports': null,         // CHANGED: Don't filter by tag - fetch all sports (NFL, Soccer, NBA, etc.)
       'Politics': '2',        // Politics
       'Crypto': '21',         // Crypto
+      'Economics': '120',     // Economics -> Finance tag
       'Finance': '120',       // Finance
       'Business': '107',      // Business
       'Tech': '1401',         // Tech

@@ -40,7 +40,10 @@ export async function POST(request) {
     // 1. Fetch Polymarket Data
     let polymarketResults = { markets: [], totalFound: 0 };
     const weatherSensitiveCategories = ['Sports', 'Soccer', 'NFL', 'NBA', 'Weather', 'all'];
-    const shouldFetchPolymarket = analysisType === 'event-weather' || weatherSensitiveCategories.includes(eventType);
+    // Always fetch Polymarket in discovery mode; in event-weather mode, only for weather-sensitive categories
+    const shouldFetchPolymarket = filters.platform !== 'kalshi' && (
+      analysisType === 'discovery' || weatherSensitiveCategories.includes(eventType)
+    );
 
     if (shouldFetchPolymarket) {
       try {
