@@ -8,4 +8,5 @@ export { polymarketService } from './polymarketService';
 export { kalshiService } from './kalshiService';
 export { weatherService } from './weatherService';
 export { aiService } from './aiService.server';
+export { synthService } from './synthService';
 export { tradingService } from './tradingService';

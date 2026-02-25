@@ -1507,35 +1507,57 @@ function MarketCard({
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {market.volume24h !== undefined && (
-              <span
-                className={`px-3 py-1 rounded-full font-light border ${isNight
-                  ? "bg-orange-500/10 text-orange-200 border-orange-500/20"
-                  : "bg-orange-400/10 text-orange-800 border-orange-400/20"
-                  }`}
-              >
-                ⚡{" "}
-                {isKalshi
-                  ? `${market.volume24h} Vol`
-                  : `$${(market.volume24h / 1000).toFixed(0)}K`}
-              </span>
+              <div className="relative group">
+                <span
+                  className={`px-3 py-1 rounded-full font-light border cursor-help ${isNight
+                    ? "bg-orange-500/10 text-orange-200 border-orange-500/20"
+                    : "bg-orange-400/10 text-orange-800 border-orange-400/20"
+                    }`}
+                >
+                  ⚡{" "}
+                  {isKalshi
+                    ? `${market.volume24h} Vol`
+                    : `$${(market.volume24h / 1000).toFixed(0)}K`}
+                </span>
+                {/* Tooltip */}
+                <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${
+                  isNight ? 'bg-gray-900 text-white border border-white/20' : 'bg-white text-gray-900 border border-gray-200 shadow-lg'
+                }`}>
+                  24-hour trading volume
+                  <div className={`absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 ${
+                    isNight ? 'bg-gray-900 border-r border-b border-white/20' : 'bg-white border-r border-b border-gray-200'
+                  }`}></div>
+                </div>
+              </div>
             )}
             {market.confidence && (
-              <span
-                className={`px-3 py-1 rounded-full font-light border ${market.confidence === "HIGH"
-                  ? isNight
-                    ? "bg-green-500/20 text-green-300 border-green-500/30"
-                    : "bg-green-400/20 text-green-800 border-green-400/30"
-                  : market.confidence === "MEDIUM"
+              <div className="relative group">
+                <span
+                  className={`px-3 py-1 rounded-full font-light border cursor-help ${market.confidence === "HIGH"
                     ? isNight
-                      ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
-                      : "bg-yellow-400/20 text-yellow-800 border-yellow-400/30"
-                    : isNight
-                      ? "bg-red-500/20 text-red-300 border-red-500/30"
-                      : "bg-red-400/20 text-red-800 border-red-400/30"
-                  }`}
-              >
-                {market.confidence}
-              </span>
+                      ? "bg-green-500/20 text-green-300 border-green-500/30"
+                      : "bg-green-400/20 text-green-800 border-green-400/30"
+                    : market.confidence === "MEDIUM"
+                      ? isNight
+                        ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
+                        : "bg-yellow-400/20 text-yellow-800 border-yellow-400/30"
+                      : isNight
+                        ? "bg-red-500/20 text-red-300 border-red-500/30"
+                        : "bg-red-400/20 text-red-800 border-red-400/30"
+                    }`}
+                >
+                  {market.confidence}
+                </span>
+                {/* Tooltip */}
+                <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${
+                  isNight ? 'bg-gray-900 text-white border border-white/20' : 'bg-white text-gray-900 border border-gray-200 shadow-lg'
+                }`}>
+                  {market.confidence === 'HIGH' ? 'High confidence prediction' : market.confidence === 'MEDIUM' ? 'Medium confidence prediction' : 'Low confidence prediction'}
+                  <div className={`absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 ${
+                    isNight ? 'bg-gray-900 border-r border-b border-white/20' : 'bg-white border-r border-b border-gray-200'
+                  }`}></div>
+                </div>
+              </div>
             )}
             {/* Chain Recommendation Badge - Early visibility */}
             {isCurrentMarket && analysis?.chain_recommendation && (
@@ -1547,7 +1569,7 @@ function MarketCard({
           </div>
         </div>
 
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex gap-2">
           {isExpanded ? (
             <button
               onClick={() => setExpandedMarketId(null)}
@@ -1559,16 +1581,39 @@ function MarketCard({
               ← Back
             </button>
           ) : (
-            <button
-              onClick={() => onAnalyze(market, "basic")}
-              disabled={isAnalyzing}
-              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${isNight
-                ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-200 border-blue-400/30"
-                : "bg-gradient-to-r from-blue-400/20 to-purple-400/20 hover:from-blue-400/30 hover:to-purple-400/30 text-blue-800 border-blue-500/30"
+            <>
+              <button
+                onClick={() => {
+                  if (isKalshi) {
+                    setSelectedKalshiMarket(market);
+                  } else {
+                    setSelectedMarketForOrder(market);
+                    setShowOrderPanel(true);
+                  }
+                }}
+                className={`px-5 py-3 rounded-2xl font-light text-sm transition-all hover:scale-105 border ${
+                  isKalshi
+                    ? isNight
+                      ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border-emerald-400/30"
+                      : "bg-emerald-400/20 hover:bg-emerald-400/30 text-emerald-800 border-emerald-500/30"
+                    : isNight
+                      ? "bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30"
+                      : "bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border-blue-500/30"
                 }`}
-            >
-              {isAnalyzing && isCurrentMarket ? "Analyzing..." : "Analyze"}
-            </button>
+              >
+                {isKalshi ? "Trade ↗" : "📈 Bet"}
+              </button>
+              <button
+                onClick={() => onAnalyze(market, "basic")}
+                disabled={isAnalyzing}
+                className={`px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${isNight
+                  ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 text-purple-200 border-purple-400/30"
+                  : "bg-gradient-to-r from-purple-400/20 to-pink-400/20 hover:from-purple-400/30 hover:to-pink-400/30 text-purple-800 border-purple-500/30"
+                  }`}
+              >
+                {isAnalyzing && isCurrentMarket ? "Analyzing..." : "🔍 Analyze"}
+              </button>
+            </>
           )}
         </div>
       </div>

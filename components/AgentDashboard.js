@@ -190,7 +190,8 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
   if (step === 'forecast' && forecastSteps?.length) {
     const completed = forecastSteps.filter(s => s.status === 'complete').length;
     const total = forecastSteps.find(s => s.total)?.total || '?';
-    detail = `${completed}/${total} forecasted`;
+    const synthCount = forecastSteps.filter(s => s.market?.source === 'synthdata+llm').length;
+    detail = `${completed}/${total} forecasted${synthCount > 0 ? ` (${synthCount} ML-backed)` : ''}`;
   }
 
   const subtleText = isNight ? 'text-white/40' : 'text-slate-400';
@@ -212,6 +213,7 @@ function RecommendationCard({ rec, isNight }) {
   const isActionable = rec.actionable;
   const edgeColor = rec.edge > 0 ? 'green' : 'red';
   const hasCalibrationWarning = rec.calibrationWarning;
+  const isSynthBacked = rec.source === 'synthdata+llm';
 
   return (
     <div className={`border rounded-xl p-4 ${
@@ -220,9 +222,18 @@ function RecommendationCard({ rec, isNight }) {
         : isNight ? 'border-white/10 bg-white/5' : 'border-white/20 bg-white/10'
     }`}>
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h5 className={`text-sm font-medium leading-tight ${isNight ? 'text-white' : 'text-slate-900'}`}>
-          {rec.title}
-        </h5>
+        <div className="flex items-center gap-1.5">
+          <h5 className={`text-sm font-medium leading-tight ${isNight ? 'text-white' : 'text-slate-900'}`}>
+            {rec.title}
+          </h5>
+          {isSynthBacked && (
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+              isNight ? 'bg-cyan-500/20 text-cyan-300' : 'bg-cyan-100 text-cyan-700'
+            }`} title="Backed by 200+ ML models via SynthData">
+              ML
+            </span>
+          )}
+        </div>
         <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium ${
           isActionable
             ? isNight ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-800'
@@ -242,7 +253,9 @@ function RecommendationCard({ rec, isNight }) {
 
       <div className="grid grid-cols-3 gap-2 text-xs">
         <div>
-          <span className={isNight ? 'text-white/50' : 'text-slate-500'}>AI Prob</span>
+          <span className={isNight ? 'text-white/50' : 'text-slate-500'}>
+            {isSynthBacked ? 'ML Prob' : 'AI Prob'}
+          </span>
           <div className={`font-medium ${isNight ? 'text-white' : 'text-slate-900'}`}>
             {(rec.aiProbability * 100).toFixed(1)}%
           </div>
@@ -264,6 +277,17 @@ function RecommendationCard({ rec, isNight }) {
           </div>
         </div>
       </div>
+
+      {isSynthBacked && rec.synthData?.currentPrice && (
+        <div className={`mt-2 pt-2 border-t text-xs grid grid-cols-2 gap-1 ${
+          isNight ? 'border-white/10 text-white/50' : 'border-white/20 text-slate-500'
+        }`}>
+          <span>{rec.synthData.asset} ${rec.synthData.currentPrice.toLocaleString()}</span>
+          {rec.synthData.percentiles?.p5 && rec.synthData.percentiles?.p95 && (
+            <span>Range: ${rec.synthData.percentiles.p5.toLocaleString()}–${rec.synthData.percentiles.p95.toLocaleString()}</span>
+          )}
+        </div>
+      )}
 
       {isActionable && rec.sizePct > 0 && (
         <div className={`mt-2 pt-2 border-t text-xs ${

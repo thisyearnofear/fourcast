@@ -17,7 +17,7 @@ export async function POST(request) {
 
     console.log('[POST /api/markets] Request body:', JSON.stringify(body, null, 2));
 
-    const { location, weatherData, eventType, confidence, limitCount, theme, excludeFutures, searchText, maxDaysToResolution, minVolume, analysisType } = body;
+    const { location, weatherData, eventType, confidence, limitCount, theme, excludeFutures, searchText, maxDaysToResolution, minVolume, analysisType, platform } = body;
 
     // REFACTORED: New architecture - supports two analysis modes:
     // 1. 'event-weather' (/ai page): Fetches weather at event venues
@@ -31,7 +31,8 @@ export async function POST(request) {
       excludeFutures: excludeFutures !== false,
       searchText: searchText || null,
       maxDaysToResolution: typeof maxDaysToResolution === 'number' ? maxDaysToResolution : 14,
-      analysisType: analysisType || 'discovery'
+      analysisType: analysisType || 'discovery',
+      platform: platform || 'all' // Add platform filter
     };
 
     const limit = limitCount || 8;
@@ -82,6 +83,14 @@ export async function POST(request) {
     const supportedKalshiCategories = ['all', 'Weather', 'Politics', 'Economics', 'Crypto', 'Sports', 'Soccer', 'NFL', 'NBA'];
     const shouldFetchKalshi = (analysisType === 'discovery' || supportedKalshiCategories.includes(eventType)) && filters.platform !== 'polymarket';
 
+    console.log('[Markets API] Kalshi fetch decision:', {
+      shouldFetchKalshi,
+      analysisType,
+      eventType,
+      platform: filters.platform,
+      supportedCategory: supportedKalshiCategories.includes(eventType)
+    });
+
     if (shouldFetchKalshi) {
       console.log('[Markets API] Calling kalshiService for category:', eventType);
       
@@ -97,8 +106,8 @@ export async function POST(request) {
           const hasLiquidity = (m.liquidity || 0) > 1000; // Alternative quality signal
           const isActiveMarket = vol > 0 || hasLiquidity; // At least some activity
           
-          // For 'all' category, be more inclusive to show variety
-          if (eventType === 'all') {
+          // For 'all' category or when Kalshi is specifically selected, be more inclusive
+          if (eventType === 'all' || filters.platform === 'kalshi') {
             return isActiveMarket;
           }
           

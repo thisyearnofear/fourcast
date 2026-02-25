@@ -11,6 +11,7 @@ import { kalshiService } from "./kalshiService.js";
 import { VenueExtractor } from "./venueExtractor.js";
 import { arbitrageService } from "./arbitrageService.js";
 import { saveForecast, wasRecentlyAnalyzed } from "./db.js";
+import { synthService } from "./synthService.js";
 
 const callVeniceAI = async (params, options = {}) => {
   const {
@@ -903,6 +904,7 @@ export async function* runAgentLoop(config = {}) {
     baseURL: "https://api.venice.ai/api/v1",
   });
 
+  const hasSynthData = synthService.isAvailable();
   const forecasts = [];
 
   for (let i = 0; i < candidates.length; i++) {
@@ -936,14 +938,124 @@ export async function* runAgentLoop(config = {}) {
     let reasoning = null;
     let keyFactors = [];
     let confidence = "LOW";
+    let forecastSource = "llm";
+
+    // Try SynthData first for supported price/crypto assets
+    const detectedAsset = synthService.detectAsset(market.title, market.description);
+    let synthForecast = null;
+
+    if (hasSynthData && detectedAsset) {
+      try {
+        yield {
+          step: "forecast",
+          status: "running",
+          market: { title: market.title, marketID: market.marketID },
+          message: `Fetching ${detectedAsset} ensemble forecast from SynthData...`,
+          index: i,
+          total: candidates.length,
+        };
+
+        synthForecast = await synthService.buildForecast(detectedAsset, {
+          includePolymarket: market.platform === "polymarket",
+        });
+      } catch (err) {
+        console.warn(`SynthData forecast failed for ${detectedAsset}:`, err.message);
+      }
+    }
 
     try {
-      const response = await client.chat.completions.create({
-        model: "llama-3.3-70b",
-        messages: [
-          {
-            role: "system",
-            content: `You are a Superforecaster tasked with estimating probabilities for prediction market outcomes.
+      if (synthForecast) {
+        // SynthData-powered forecast: use quantitative data + LLM for reasoning
+        forecastSource = "synthdata+llm";
+        confidence = synthForecast.confidence;
+
+        // Use SynthData's up probability if available, otherwise derive from percentiles
+        if (synthForecast.upProbability != null) {
+          aiProbability = synthForecast.upProbability;
+        }
+
+        // If Polymarket edge data is available, use the Synth fair probability directly
+        if (synthForecast.polymarketEdge) {
+          const edge = Array.isArray(synthForecast.polymarketEdge)
+            ? synthForecast.polymarketEdge[0]
+            : synthForecast.polymarketEdge;
+          if (edge?.synthFairProb != null) {
+            aiProbability = edge.synthFairProb;
+          }
+        }
+
+        // Build quantitative context for LLM reasoning
+        const synthContext = [
+          `Asset: ${detectedAsset}, Current Price: $${synthForecast.currentPrice?.toLocaleString()}`,
+          `24h Percentiles: P5=$${synthForecast.percentiles.p5?.toLocaleString()}, P50=$${synthForecast.percentiles.p50?.toLocaleString()}, P95=$${synthForecast.percentiles.p95?.toLocaleString()}`,
+          synthForecast.volatility.forecast ? `Forecast Volatility: ${(synthForecast.volatility.forecast * 100).toFixed(2)}%` : null,
+          synthForecast.volatility.realized ? `Realized Volatility: ${(synthForecast.volatility.realized * 100).toFixed(2)}%` : null,
+        ].filter(Boolean).join('\n');
+
+        keyFactors = [
+          `Ensemble ML forecast (200+ models) via SynthData`,
+          `P5-P95 range: $${synthForecast.percentiles.p5?.toLocaleString()} – $${synthForecast.percentiles.p95?.toLocaleString()}`,
+          synthForecast.volatility.forecast
+            ? `Forecast vol ${(synthForecast.volatility.forecast * 100).toFixed(1)}% vs realized ${(synthForecast.volatility.realized * 100).toFixed(1)}%`
+            : `Volatility data unavailable`,
+        ];
+
+        // LLM generates reasoning on top of quantitative data
+        const response = await client.chat.completions.create({
+          model: "llama-3.3-70b",
+          messages: [
+            {
+              role: "system",
+              content: `You are a quantitative analyst interpreting ML-generated price forecasts for prediction markets. You have been given probabilistic forecast data from an ensemble of 200+ ML models. Your job is to explain the data clearly and assess whether the market is fairly priced.
+
+You MUST respond with ONLY valid JSON, no other text.`,
+            },
+            {
+              role: "user",
+              content: `Market: "${market.title}"
+Current market odds: YES ${yesPrice}, NO ${noPrice}
+
+QUANTITATIVE FORECAST DATA (from SynthData ensemble):
+${synthContext}
+
+ML-derived probability: ${aiProbability != null ? (aiProbability * 100).toFixed(1) + '%' : 'N/A'}
+Confidence: ${confidence}
+
+Provide a brief reasoning explaining the edge (or lack thereof) between the ML forecast and market odds.
+
+Output ONLY valid JSON:
+{ "reasoning": "...", "key_factors": ["..."] }`,
+            },
+          ],
+          temperature: 0.3,
+          max_tokens: 500,
+          venice_parameters: { enable_web_search: "auto" },
+        });
+
+        let content = response.choices[0].message.content.trim();
+        if (content.includes("<think>")) {
+          const thinkEnd = content.lastIndexOf("</think>");
+          if (thinkEnd !== -1) content = content.substring(thinkEnd + 8).trim();
+        }
+        if (content.startsWith("```")) {
+          content = content.replace(/```json\n?|\n?```/g, "").trim();
+        }
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) content = jsonMatch[0];
+
+        const parsed = JSON.parse(content);
+        reasoning = parsed.reasoning || null;
+        if (Array.isArray(parsed.key_factors) && parsed.key_factors.length > 0) {
+          keyFactors = [...keyFactors, ...parsed.key_factors];
+        }
+      } else {
+        // Fallback: pure LLM forecast (non-price markets or SynthData unavailable)
+        const response = await client.chat.completions.create({
+          model: "llama-3.3-70b",
+          messages: [
+            {
+              role: "system",
+              content: `You are a Superforecaster tasked with estimating probabilities for prediction market outcomes.
 
 Use this systematic process:
 1. Break down the question into sub-components
@@ -953,51 +1065,39 @@ Use this systematic process:
 5. Synthesize into a final probability estimate
 
 You MUST respond with ONLY valid JSON, no other text.`,
-          },
-          {
-            role: "user",
-            content: `Market: "${market.title}"
+            },
+            {
+              role: "user",
+              content: `Market: "${market.title}"
 Current market odds: YES ${yesPrice}, NO ${noPrice}
 Description: ${market.description || "N/A"}
 
 Output ONLY valid JSON:
 { "probability": 0.XX, "reasoning": "...", "key_factors": ["..."], "confidence": "HIGH|MEDIUM|LOW" }`,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 1000,
-        venice_parameters: {
-          enable_web_search: "auto",
-        },
-      });
+            },
+          ],
+          temperature: 0.3,
+          max_tokens: 1000,
+          venice_parameters: { enable_web_search: "auto" },
+        });
 
-      let content = response.choices[0].message.content;
-      content = content.trim();
-
-      // Remove thinking tags if present
-      if (content.includes("<think>")) {
-        const thinkEnd = content.lastIndexOf("</think>");
-        if (thinkEnd !== -1) {
-          content = content.substring(thinkEnd + 8).trim();
+        let content = response.choices[0].message.content.trim();
+        if (content.includes("<think>")) {
+          const thinkEnd = content.lastIndexOf("</think>");
+          if (thinkEnd !== -1) content = content.substring(thinkEnd + 8).trim();
         }
-      }
+        if (content.startsWith("```")) {
+          content = content.replace(/```json\n?|\n?```/g, "").trim();
+        }
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) content = jsonMatch[0];
 
-      // Remove markdown code blocks if present
-      if (content.startsWith("```")) {
-        content = content.replace(/```json\n?|\n?```/g, "").trim();
+        const parsed = JSON.parse(content);
+        aiProbability = Math.max(0, Math.min(1, parseFloat(parsed.probability)));
+        reasoning = parsed.reasoning || null;
+        keyFactors = Array.isArray(parsed.key_factors) ? parsed.key_factors : [];
+        confidence = parsed.confidence || "LOW";
       }
-
-      // Extract JSON if there's text before/after
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        content = jsonMatch[0];
-      }
-
-      const parsed = JSON.parse(content);
-      aiProbability = Math.max(0, Math.min(1, parseFloat(parsed.probability)));
-      reasoning = parsed.reasoning || null;
-      keyFactors = Array.isArray(parsed.key_factors) ? parsed.key_factors : [];
-      confidence = parsed.confidence || "LOW";
     } catch (err) {
       console.error(`Agent loop: Forecast failed for ${market.title}:`, err.message);
     }
@@ -1012,6 +1112,13 @@ Output ONLY valid JSON:
       reasoning,
       keyFactors,
       confidence,
+      source: forecastSource,
+      synthData: synthForecast ? {
+        asset: synthForecast.asset,
+        currentPrice: synthForecast.currentPrice,
+        percentiles: synthForecast.percentiles,
+        polymarketEdge: synthForecast.polymarketEdge,
+      } : null,
     };
     forecasts.push(forecast);
 
@@ -1038,6 +1145,12 @@ Output ONLY valid JSON:
         marketID: market.marketID,
         aiProbability,
         currentOdds: market.currentOdds,
+        source: forecastSource,
+        synthData: synthForecast ? {
+          asset: synthForecast.asset,
+          currentPrice: synthForecast.currentPrice,
+          confidence: synthForecast.confidence,
+        } : null,
       },
     };
   }
@@ -1055,14 +1168,18 @@ Output ONLY valid JSON:
       const actionable = absEdge > 0.05;
       const direction = edge > 0 ? "BUY YES" : "BUY NO";
 
-      // Calibration guardrail: flag suspiciously large edges (>30%)
+      // Calibration guardrail: relax threshold for SynthData-backed forecasts
+      // SynthData uses 200+ ML models so large edges are more credible
+      const edgeThreshold = f.source === "synthdata+llm" ? 0.4 : 0.3;
       let adjustedConfidence = f.confidence;
-      if (absEdge > 0.3) {
-        adjustedConfidence = "LOW"; // Override to low confidence
+      if (absEdge > edgeThreshold) {
+        adjustedConfidence = "LOW";
       }
 
       // Size recommendation: edge magnitude * risk tolerance, capped at 0.25
-      const sizeRaw = absEdge * riskTolerance * 2;
+      // SynthData-backed forecasts get a slight sizing boost
+      const sizeMultiplier = f.source === "synthdata+llm" ? 2.5 : 2;
+      const sizeRaw = absEdge * riskTolerance * sizeMultiplier;
       const sizePct = Math.min(0.25, Math.round(sizeRaw * 100) / 100);
 
       return {
@@ -1078,9 +1195,11 @@ Output ONLY valid JSON:
         sizePct: actionable ? sizePct : 0,
         confidence: adjustedConfidence,
         originalConfidence: f.confidence,
-        calibrationWarning: absEdge > 0.3 ? "Edge >30% - high uncertainty" : null,
+        calibrationWarning: absEdge > edgeThreshold ? `Edge >${(edgeThreshold * 100).toFixed(0)}% - high uncertainty` : null,
         reasoning: f.reasoning,
         keyFactors: f.keyFactors,
+        source: f.source || "llm",
+        synthData: f.synthData,
       };
     })
     .sort((a, b) => b.absEdge - a.absEdge);
@@ -1117,12 +1236,16 @@ export function getAIStatus() {
   const hasRedis = !!process.env.REDIS_URL;
   return {
     available: true,
-    model: "llama-3.3-70b", // Updated to reflect actual model in use
+    model: "llama-3.3-70b",
     cacheSize: 0,
     cacheDuration: 10 * 60 * 1000,
     cache: {
       memory: { size: 0, duration: "10 minutes" },
       redis: { connected: hasRedis, ttl: "6 hours" },
+    },
+    synthData: {
+      available: synthService.isAvailable(),
+      supportedAssets: synthService.SUPPORTED_ASSETS,
     },
   };
 }
