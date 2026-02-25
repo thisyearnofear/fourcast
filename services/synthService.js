@@ -241,6 +241,7 @@ export const synthService = {
       return { success: false, error: err.message };
     }
   },
+  /**
    * Pre-fetches forecasts for high-traffic assets to reduce latency
    * @param {Array<string>} assets - Asset codes to warm (defaults to top 3)
    * @returns {Promise<Object>} Warming results

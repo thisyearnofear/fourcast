@@ -290,22 +290,26 @@ export default function WeatherPage() {
           </div>
         )}
 
-        {/* Portal Coach Mark */}
+        {/* Portal Coach Mark — anchored near the portals at the bottom */}
         {!isPortalMode && !isLoading && !isBuilderMode && weatherData && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0 opacity-0 animate-pulse-slow delay-1000 duration-1000 fill-mode-forwards pointer-events-none">
-            <div className={`flex flex-col items-center ${isNight ? 'text-white/50' : 'text-black/30'}`}>
-              <span className="text-xs font-light tracking-widest uppercase mb-2">Tap a portal to travel</span>
-              <svg className="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          <div className="absolute bottom-28 sm:bottom-32 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none portal-coach-mark">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border ${
+              isNight
+                ? 'bg-white/5 border-white/15 text-white/60'
+                : 'bg-black/5 border-black/10 text-black/40'
+            }`}>
+              <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
               </svg>
+              <span className="text-xs font-medium tracking-wide">Tap a forecast card to explore</span>
             </div>
             <style jsx>{`
-              @keyframes pulse-slow {
-                0%, 100% { opacity: 0; }
-                50% { opacity: 0.8; }
+              .portal-coach-mark {
+                animation: coach-fade 6s ease-in-out infinite;
               }
-              .animate-pulse-slow {
-                animation: pulse-slow 4s ease-in-out infinite;
+              @keyframes coach-fade {
+                0%, 100% { opacity: 0; }
+                15%, 85% { opacity: 1; }
               }
             `}</style>
           </div>
@@ -317,37 +321,43 @@ export default function WeatherPage() {
         {/* Centered Floating Navigation - Trader Mode Only */}
         {weatherData && !isLoading && !isBuilderMode && (
           <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto">
-            <div className={`backdrop-blur-md border rounded-full px-6 py-3 transition-all duration-300 ${isNight
+            <div className={`backdrop-blur-md border rounded-full px-4 sm:px-6 py-2.5 sm:py-3 transition-all duration-300 ${isNight
                 ? 'bg-white/10 border-white/20 hover:bg-white/15'
                 : 'bg-white/20 border-white/30 hover:bg-white/25'
               }`}>
-              <div className="flex items-center space-x-6 sm:space-x-8">
+              <div className="flex items-center space-x-4 sm:space-x-6">
                 <button
                   onClick={() => window.location.href = '/markets'}
-                  className={`flex items-center space-x-2 px-2 sm:px-3 py-2 rounded-lg transition-all hover:scale-110 ${isNight
-                      ? 'text-white hover:bg-white/20'
-                      : 'text-black hover:bg-black/20'
+                  className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full transition-all hover:scale-105 ${isNight
+                      ? 'text-white hover:bg-white/15'
+                      : 'text-black hover:bg-black/10'
                     }`}
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
-                  <span className="text-xs sm:text-sm font-light hidden xs:inline">Markets</span>
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs sm:text-sm font-medium leading-tight">Markets</span>
+                    <span className={`text-[10px] leading-tight ${isNight ? 'text-white/50' : 'text-black/40'}`}>Browse & trade</span>
+                  </div>
                 </button>
 
-                <div className={`w-px h-4 ${isNight ? 'bg-white/20' : 'bg-black/20'}`}></div>
+                <div className={`w-px h-8 ${isNight ? 'bg-white/15' : 'bg-black/15'}`}></div>
 
                 <button
                   onClick={() => window.location.href = '/signals'}
-                  className={`flex items-center space-x-2 px-2 sm:px-3 py-2 rounded-lg transition-all hover:scale-110 ${isNight
-                      ? 'text-white hover:bg-white/20'
-                      : 'text-black hover:bg-black/20'
+                  className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full transition-all hover:scale-105 ${isNight
+                      ? 'text-white hover:bg-white/15'
+                      : 'text-black hover:bg-black/10'
                     }`}
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
-                  <span className="text-xs sm:text-sm font-light hidden xs:inline">Signals</span>
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs sm:text-sm font-medium leading-tight">Signals</span>
+                    <span className={`text-[10px] leading-tight ${isNight ? 'text-white/50' : 'text-black/40'}`}>AI edge alerts</span>
+                  </div>
                 </button>
               </div>
             </div>

@@ -923,18 +923,18 @@ export async function* runAgentLoop(config = {}) {
     }
   }
 
+  // Process Synth-eligible markets first (higher priority, better data)
+  const orderedMarkets = [...synthEligibleMarkets, ...nonSynthMarkets];
+
   yield {
     step: "forecast",
     status: "running",
     message: `Pre-filtered: ${synthEligibleMarkets.length} Synth-eligible, ${nonSynthMarkets.length} LLM-only`,
-    total: allMarkets.length,
+    total: orderedMarkets.length,
   };
 
-  // Process Synth-eligible markets first (higher priority, better data)
-  const allMarkets = [...synthEligibleMarkets, ...nonSynthMarkets];
-
-  for (let i = 0; i < allMarkets.length; i++) {
-    const market = allMarkets[i];
+  for (let i = 0; i < orderedMarkets.length; i++) {
+    const market = orderedMarkets[i];
     const yesPrice = market.currentOdds?.yes ?? 0.5;
     const noPrice = market.currentOdds?.no ?? 0.5;
     const isSynthEligible = synthEligibleMarkets.includes(market);
@@ -948,7 +948,7 @@ export async function* runAgentLoop(config = {}) {
         market: { title: market.title, marketID: market.marketID },
         message: "Recently analyzed, skipping",
         index: i,
-        total: allMarkets.length,
+        total: orderedMarkets.length,
       };
       continue;
     }
@@ -959,7 +959,7 @@ export async function* runAgentLoop(config = {}) {
       market: { title: market.title, marketID: market.marketID },
       message: "Analyzing market...",
       index: i,
-      total: allMarkets.length,
+      total: orderedMarkets.length,
     };
 
     let aiProbability = null;
@@ -982,7 +982,7 @@ export async function* runAgentLoop(config = {}) {
         market: { title: market.title, marketID: market.marketID },
         message: `Detected ${detectedAsset} - preparing ML analysis`,
         index: i,
-        total: allMarkets.length,
+        total: orderedMarkets.length,
       };
     }
 
@@ -996,7 +996,7 @@ export async function* runAgentLoop(config = {}) {
             market: { title: market.title, marketID: market.marketID },
             message: `🎯 Path-dependent: ${detectedAsset} $${pathDependent.priceA.toLocaleString()} vs $${pathDependent.priceB.toLocaleString()}`,
             index: i,
-            total: allMarkets.length,
+            total: orderedMarkets.length,
           };
 
           const pathAnalysis = await analyzePathDependentMarket(
@@ -1013,7 +1013,7 @@ export async function* runAgentLoop(config = {}) {
               market: { title: market.title, marketID: market.marketID },
               message: `Calculated path probabilities using ML percentiles`,
               index: i,
-              total: allMarkets.length,
+              total: orderedMarkets.length,
             };
 
             // Use path-dependent probabilities
@@ -1038,7 +1038,7 @@ export async function* runAgentLoop(config = {}) {
             market: { title: market.title, marketID: market.marketID },
             message: `🤖 Fetching ${detectedAsset} forecast from 200+ ML models...`,
             index: i,
-            total: allMarkets.length,
+            total: orderedMarkets.length,
           };
 
           synthForecast = await synthService.buildForecast(detectedAsset, {
@@ -1052,7 +1052,7 @@ export async function* runAgentLoop(config = {}) {
               market: { title: market.title, marketID: market.marketID },
               message: `Received ML percentiles - comparing vs market odds`,
               index: i,
-              total: allMarkets.length,
+              total: orderedMarkets.length,
             };
           }
         }
@@ -1105,7 +1105,7 @@ export async function* runAgentLoop(config = {}) {
           market: { title: market.title, marketID: market.marketID },
           message: `Layering AI reasoning on ML data...`,
           index: i,
-          total: allMarkets.length,
+          total: orderedMarkets.length,
         };
 
         const response = await client.chat.completions.create({
@@ -1163,7 +1163,7 @@ Output ONLY valid JSON:
           market: { title: market.title, marketID: market.marketID },
           message: `Generating AI forecast with web search...`,
           index: i,
-          total: allMarkets.length,
+          total: orderedMarkets.length,
         };
 
         const response = await client.chat.completions.create({
