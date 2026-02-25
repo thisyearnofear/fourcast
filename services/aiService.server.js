@@ -931,6 +931,7 @@ export async function* runAgentLoop(config = {}) {
       step: "forecast",
       status: "running",
       market: { title: market.title, marketID: market.marketID },
+      message: "Analyzing market...",
       index: i,
       total: candidates.length,
     };
@@ -948,6 +949,17 @@ export async function* runAgentLoop(config = {}) {
     // Check for path-dependent market pattern
     const pathDependent = detectPathDependentMarket(market.title);
 
+    if (detectedAsset) {
+      yield {
+        step: "forecast",
+        status: "running",
+        market: { title: market.title, marketID: market.marketID },
+        message: `Detected ${detectedAsset} - preparing ML analysis`,
+        index: i,
+        total: candidates.length,
+      };
+    }
+
     if (hasSynthData && detectedAsset) {
       try {
         // Path-dependent market detected
@@ -956,7 +968,7 @@ export async function* runAgentLoop(config = {}) {
             step: "forecast",
             status: "running",
             market: { title: market.title, marketID: market.marketID },
-            message: `Analyzing path-dependent market: ${detectedAsset} ${pathDependent.priceA} vs ${pathDependent.priceB}`,
+            message: `🎯 Path-dependent: ${detectedAsset} $${pathDependent.priceA.toLocaleString()} vs $${pathDependent.priceB.toLocaleString()}`,
             index: i,
             total: candidates.length,
           };
@@ -969,6 +981,15 @@ export async function* runAgentLoop(config = {}) {
           );
 
           if (!pathAnalysis.error) {
+            yield {
+              step: "forecast",
+              status: "running",
+              market: { title: market.title, marketID: market.marketID },
+              message: `Calculated path probabilities using ML percentiles`,
+              index: i,
+              total: candidates.length,
+            };
+
             // Use path-dependent probabilities
             aiProbability = pathAnalysis.probabilities.touchAFirst / 100;
             confidence = pathAnalysis.confidence;
@@ -989,7 +1010,7 @@ export async function* runAgentLoop(config = {}) {
             step: "forecast",
             status: "running",
             market: { title: market.title, marketID: market.marketID },
-            message: `Fetching ${detectedAsset} ensemble forecast from SynthData...`,
+            message: `🤖 Fetching ${detectedAsset} forecast from 200+ ML models...`,
             index: i,
             total: candidates.length,
           };
@@ -997,6 +1018,17 @@ export async function* runAgentLoop(config = {}) {
           synthForecast = await synthService.buildForecast(detectedAsset, {
             includePolymarket: market.platform === "polymarket",
           });
+
+          if (synthForecast) {
+            yield {
+              step: "forecast",
+              status: "running",
+              market: { title: market.title, marketID: market.marketID },
+              message: `Received ML percentiles - comparing vs market odds`,
+              index: i,
+              total: candidates.length,
+            };
+          }
         }
       } catch (err) {
         console.warn(`SynthData forecast failed for ${detectedAsset}:`, err.message);
@@ -1041,6 +1073,15 @@ export async function* runAgentLoop(config = {}) {
         ];
 
         // LLM generates reasoning on top of quantitative data
+        yield {
+          step: "forecast",
+          status: "running",
+          market: { title: market.title, marketID: market.marketID },
+          message: `Layering AI reasoning on ML data...`,
+          index: i,
+          total: candidates.length,
+        };
+
         const response = await client.chat.completions.create({
           model: "llama-3.3-70b",
           messages: [
@@ -1090,6 +1131,15 @@ Output ONLY valid JSON:
         }
       } else {
         // Fallback: pure LLM forecast (non-price markets or SynthData unavailable)
+        yield {
+          step: "forecast",
+          status: "running",
+          market: { title: market.title, marketID: market.marketID },
+          message: `Generating AI forecast with web search...`,
+          index: i,
+          total: candidates.length,
+        };
+
         const response = await client.chat.completions.create({
           model: "llama-3.3-70b",
           messages: [

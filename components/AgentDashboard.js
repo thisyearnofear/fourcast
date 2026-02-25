@@ -131,11 +131,32 @@ export function AgentDashboard({ isNight = false }) {
 
       {/* Live Progress */}
       {isRunning && currentStep && (
-        <div className="space-y-2">
-          <StepIndicator step="discover" label="Discover" current={currentStep} isNight={isNight} result={discoverResult} />
-          <StepIndicator step="filter" label="Filter" current={currentStep} isNight={isNight} result={filterResult} />
-          <StepIndicator step="forecast" label="Forecast" current={currentStep} isNight={isNight} forecastSteps={forecastSteps} />
-          <StepIndicator step="edge" label="Edge Detection" current={currentStep} isNight={isNight} />
+        <div className="space-y-3">
+          {/* Progress bar */}
+          <div className={`h-1 rounded-full overflow-hidden ${
+            isNight ? 'bg-white/10' : 'bg-black/10'
+          }`}>
+            <div 
+              className={`h-full transition-all duration-500 ease-out ${
+                isNight ? 'bg-blue-400' : 'bg-blue-600'
+              }`}
+              style={{
+                width: `${
+                  currentStep.step === 'discover' ? '25%' :
+                  currentStep.step === 'filter' ? '50%' :
+                  currentStep.step === 'forecast' ? '75%' :
+                  currentStep.step === 'edge' ? '100%' : '0%'
+                }`
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <StepIndicator step="discover" label="Discover" current={currentStep} isNight={isNight} result={discoverResult} />
+            <StepIndicator step="filter" label="Filter" current={currentStep} isNight={isNight} result={filterResult} />
+            <StepIndicator step="forecast" label="Forecast" current={currentStep} isNight={isNight} forecastSteps={forecastSteps} />
+            <StepIndicator step="edge" label="Edge Detection" current={currentStep} isNight={isNight} />
+          </div>
         </div>
       )}
 
@@ -146,7 +167,16 @@ export function AgentDashboard({ isNight = false }) {
             Recommendations ({recommendations.filter(r => r.actionable).length} actionable)
           </h4>
           {recommendations.map((rec, i) => (
-            <RecommendationCard key={rec.marketID || i} rec={rec} isNight={isNight} />
+            <div
+              key={rec.marketID || i}
+              style={{ 
+                animation: 'fadeInUp 0.4s ease-out forwards',
+                animationDelay: `${i * 100}ms`,
+                opacity: 0
+              }}
+            >
+              <RecommendationCard rec={rec} isNight={isNight} />
+            </div>
           ))}
         </div>
       )}
@@ -183,15 +213,28 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
   else if (isActive) statusIcon = '◉';
 
   let detail = '';
+  let subMessage = '';
+  
   if (result?.data) {
     if (step === 'discover') detail = `${result.data.total} markets found`;
     if (step === 'filter') detail = `${result.data.candidates?.length || 0} candidates`;
   }
+  
   if (step === 'forecast' && forecastSteps?.length) {
     const completed = forecastSteps.filter(s => s.status === 'complete').length;
     const total = forecastSteps.find(s => s.total)?.total || '?';
-    const synthCount = forecastSteps.filter(s => s.market?.source === 'synthdata+llm').length;
+    const synthCount = forecastSteps.filter(s => s.market?.source === 'synthdata+llm' || s.market?.source === 'synthdata+path').length;
     detail = `${completed}/${total} forecasted${synthCount > 0 ? ` (${synthCount} ML-backed)` : ''}`;
+    
+    // Show current forecast message if active
+    if (isActive && current?.message) {
+      subMessage = current.message;
+    }
+  }
+  
+  // Show active step messages
+  if (isActive && current?.message && step !== 'forecast') {
+    subMessage = current.message;
   }
 
   const subtleText = isNight ? 'text-white/40' : 'text-slate-400';
@@ -199,12 +242,27 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
   const completeText = isNight ? 'text-green-300' : 'text-green-600';
 
   return (
-    <div className={`flex items-center gap-2 text-sm ${
-      isComplete ? completeText : isActive ? activeText : subtleText
-    }`}>
-      <span className={isActive ? 'animate-pulse' : ''}>{statusIcon}</span>
-      <span>{label}</span>
-      {detail && <span className={`text-xs ${subtleText}`}>· {detail}</span>}
+    <div className="space-y-1 transition-all duration-300">
+      <div className={`flex items-center gap-2 text-sm transition-colors duration-300 ${
+        isComplete ? completeText : isActive ? activeText : subtleText
+      }`}>
+        <span className={`transition-transform duration-200 ${isActive ? 'animate-pulse scale-110' : ''}`}>
+          {statusIcon}
+        </span>
+        <span className="transition-all duration-200">{label}</span>
+        {detail && <span className={`text-xs ${subtleText} transition-opacity duration-200`}>· {detail}</span>}
+      </div>
+      {subMessage && (
+        <div 
+          className={`ml-6 text-xs ${isNight ? 'text-white/50' : 'text-slate-500'}`}
+          style={{ 
+            animation: 'fadeInUp 0.3s ease-out',
+            opacity: 1
+          }}
+        >
+          {subMessage}
+        </div>
+      )}
     </div>
   );
 }
