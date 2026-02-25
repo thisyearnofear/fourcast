@@ -11,6 +11,55 @@ import { getRedisClient } from './redisService.js';
 const BASE_URL = 'https://api.synthdata.co';
 const CACHE_TTL = 15 * 60; // 15 minutes - predictions refresh frequently
 const POLYMARKET_CACHE_TTL = 5 * 60; // 5 minutes for Polymarket comparisons
+const TTL_VARIANCE = 0.1; // 10% variance to prevent thundering herd
+
+/**
+ * Add random variance to TTL to prevent cache stampede
+ * @param {number} baseTTL - Base TTL in seconds
+ * @returns {number} TTL with variance
+ */
+function getTTLWithVariance(baseTTL) {
+  const variance = baseTTL * TTL_VARIANCE;
+  const randomOffset = (Math.random() * 2 - 1) * variance; // -10% to +10%
+  return Math.floor(baseTTL + randomOffset);
+}
+
+// Cache statistics for monitoring
+const cacheStats = {
+  hits: 0,
+  misses: 0,
+  errors: 0,
+  lastReset: Date.now(),
+};
+
+/**
+ * Get cache statistics
+ * @returns {Object} Cache hit rate and stats
+ */
+function getCacheStats() {
+  const total = cacheStats.hits + cacheStats.misses;
+  const hitRate = total > 0 ? (cacheStats.hits / total * 100).toFixed(1) : 0;
+  const uptime = Math.floor((Date.now() - cacheStats.lastReset) / 1000 / 60); // minutes
+  
+  return {
+    hits: cacheStats.hits,
+    misses: cacheStats.misses,
+    errors: cacheStats.errors,
+    total,
+    hitRate: `${hitRate}%`,
+    uptimeMinutes: uptime,
+  };
+}
+
+/**
+ * Reset cache statistics
+ */
+function resetCacheStats() {
+  cacheStats.hits = 0;
+  cacheStats.misses = 0;
+  cacheStats.errors = 0;
+  cacheStats.lastReset = Date.now();
+}
 
 // Asset symbol mapping: market title keywords → SynthData asset codes
 const ASSET_PATTERNS = [
@@ -26,6 +75,29 @@ const ASSET_PATTERNS = [
 ];
 
 const SUPPORTED_ASSETS = ASSET_PATTERNS.map(p => p.asset);
+
+// Categories where Synth is most relevant
+const SYNTH_RELEVANT_CATEGORIES = [
+  'Crypto',
+  'Business', 
+  'Finance',
+  'Economics',
+  'Technology',
+  'Stocks',
+  'Commodities'
+];
+
+/**
+ * Check if a market category is likely to benefit from Synth analysis
+ * @param {string} category - Market category
+ * @returns {boolean}
+ */
+function isSynthRelevantCategory(category) {
+  if (!category) return false;
+  return SYNTH_RELEVANT_CATEGORIES.some(c => 
+    category.toLowerCase().includes(c.toLowerCase())
+  );
+}
 
 /**
  * Detect SynthData-supported asset from market title/description
@@ -66,12 +138,21 @@ async function cachedFetch(cacheKey, ttl, fetcher) {
     const redis = await getRedisClient();
     if (redis) {
       const cached = await redis.get(cacheKey);
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        cacheStats.hits++;
+        if (cacheStats.hits % 10 === 0) {
+          // Log every 10th hit to avoid spam
+          console.log(`[Synth Cache] Stats:`, getCacheStats());
+        }
+        return JSON.parse(cached);
+      }
     }
   } catch (e) {
+    cacheStats.errors++;
     // Redis unavailable, proceed without cache
   }
 
+  cacheStats.misses++;
   const data = await fetcher();
   if (!data) return null;
 
@@ -79,9 +160,11 @@ async function cachedFetch(cacheKey, ttl, fetcher) {
   try {
     const redis = await getRedisClient();
     if (redis) {
-      await redis.setEx(cacheKey, ttl, JSON.stringify(data));
+      const ttlWithVariance = getTTLWithVariance(ttl);
+      await redis.setEx(cacheKey, ttlWithVariance, JSON.stringify(data));
     }
   } catch (e) {
+    cacheStats.errors++;
     // Cache write failed, non-critical
   }
 
@@ -90,13 +173,110 @@ async function cachedFetch(cacheKey, ttl, fetcher) {
 
 export const synthService = {
   SUPPORTED_ASSETS,
+  SYNTH_RELEVANT_CATEGORIES,
   detectAsset,
+  isSynthRelevantCategory,
+  getCacheStats,
+  resetCacheStats,
 
   /**
-   * Check if SynthData is configured and available
+   * Invalidate cache for a specific asset
+   * Useful when you know data is stale (e.g., major price movement)
+   * @param {string} asset - Asset code to invalidate
+   * @returns {Promise<Object>} Invalidation results
    */
-  isAvailable() {
-    return !!process.env.SYNTH_API_KEY;
+  async invalidateCache(asset) {
+    try {
+      const redis = await getRedisClient();
+      if (!redis) {
+        return { success: false, reason: 'Redis not available' };
+      }
+
+      // Find all keys for this asset
+      const patterns = [
+        `synth:percentiles:${asset}:*`,
+        `synth:volatility:${asset}:*`,
+        `synth:polymarket:*:${asset}:*`,
+        `synth:liquidation:${asset}:*`,
+        `synth:lp-probs:${asset}:*`,
+      ];
+
+      let deletedCount = 0;
+      for (const pattern of patterns) {
+        const keys = await redis.keys(pattern);
+        if (keys.length > 0) {
+          await Promise.all(keys.map(k => redis.del(k)));
+          deletedCount += keys.length;
+        }
+      }
+
+      console.log(`[Synth Cache] Invalidated ${deletedCount} keys for ${asset}`);
+      return { success: true, deletedCount, asset };
+    } catch (err) {
+      console.error(`[Synth Cache] Invalidation failed for ${asset}:`, err);
+      return { success: false, error: err.message };
+    }
+  },
+
+  /**
+   * Invalidate all Synth cache
+   * Nuclear option - use sparingly
+   */
+  async invalidateAllCache() {
+    try {
+      const redis = await getRedisClient();
+      if (!redis) {
+        return { success: false, reason: 'Redis not available' };
+      }
+
+      const keys = await redis.keys('synth:*');
+      if (keys.length > 0) {
+        await Promise.all(keys.map(k => redis.del(k)));
+      }
+
+      console.log(`[Synth Cache] Invalidated all cache (${keys.length} keys)`);
+      return { success: true, deletedCount: keys.length };
+    } catch (err) {
+      console.error('[Synth Cache] Full invalidation failed:', err);
+      return { success: false, error: err.message };
+    }
+  },
+   * Pre-fetches forecasts for high-traffic assets to reduce latency
+   * @param {Array<string>} assets - Asset codes to warm (defaults to top 3)
+   * @returns {Promise<Object>} Warming results
+   */
+  async warmCache(assets = ['BTC', 'ETH', 'SOL']) {
+    if (!this.isAvailable()) {
+      return { success: false, reason: 'SynthData not available' };
+    }
+
+    console.log(`[Synth Cache] Warming cache for ${assets.length} assets...`);
+    const results = { success: 0, failed: 0, assets: {} };
+
+    await Promise.allSettled(
+      assets.map(async (asset) => {
+        try {
+          const forecast = await this.buildForecast(asset, { 
+            horizon: '24h',
+            includePolymarket: true 
+          });
+          
+          if (forecast) {
+            results.success++;
+            results.assets[asset] = 'warmed';
+          } else {
+            results.failed++;
+            results.assets[asset] = 'failed';
+          }
+        } catch (err) {
+          results.failed++;
+          results.assets[asset] = `error: ${err.message}`;
+        }
+      })
+    );
+
+    console.log(`[Synth Cache] Warming complete:`, results);
+    return results;
   },
 
   /**

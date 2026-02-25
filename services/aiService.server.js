@@ -908,10 +908,36 @@ export async function* runAgentLoop(config = {}) {
   const hasSynthData = synthService.isAvailable();
   const forecasts = [];
 
-  for (let i = 0; i < candidates.length; i++) {
-    const market = candidates[i];
+  // Pre-filter: Separate Synth-eligible from non-eligible markets for efficiency
+  const synthEligibleMarkets = [];
+  const nonSynthMarkets = [];
+  
+  for (const market of candidates) {
+    const hasAsset = synthService.detectAsset(market.title, market.description);
+    const hasRelevantCategory = synthService.isSynthRelevantCategory(market.category);
+    
+    if (hasAsset || hasRelevantCategory) {
+      synthEligibleMarkets.push(market);
+    } else {
+      nonSynthMarkets.push(market);
+    }
+  }
+
+  yield {
+    step: "forecast",
+    status: "running",
+    message: `Pre-filtered: ${synthEligibleMarkets.length} Synth-eligible, ${nonSynthMarkets.length} LLM-only`,
+    total: allMarkets.length,
+  };
+
+  // Process Synth-eligible markets first (higher priority, better data)
+  const allMarkets = [...synthEligibleMarkets, ...nonSynthMarkets];
+
+  for (let i = 0; i < allMarkets.length; i++) {
+    const market = allMarkets[i];
     const yesPrice = market.currentOdds?.yes ?? 0.5;
     const noPrice = market.currentOdds?.no ?? 0.5;
+    const isSynthEligible = synthEligibleMarkets.includes(market);
 
     // Skip if recently analyzed (within 6 hours)
     const recentlyAnalyzed = await wasRecentlyAnalyzed(market.marketID, 6);
@@ -922,7 +948,7 @@ export async function* runAgentLoop(config = {}) {
         market: { title: market.title, marketID: market.marketID },
         message: "Recently analyzed, skipping",
         index: i,
-        total: candidates.length,
+        total: allMarkets.length,
       };
       continue;
     }
@@ -933,7 +959,7 @@ export async function* runAgentLoop(config = {}) {
       market: { title: market.title, marketID: market.marketID },
       message: "Analyzing market...",
       index: i,
-      total: candidates.length,
+      total: allMarkets.length,
     };
 
     let aiProbability = null;
@@ -942,12 +968,12 @@ export async function* runAgentLoop(config = {}) {
     let confidence = "LOW";
     let forecastSource = "llm";
 
-    // Try SynthData first for supported price/crypto assets
-    const detectedAsset = synthService.detectAsset(market.title, market.description);
+    // Try SynthData first for supported price/crypto assets (only if pre-filtered as eligible)
+    const detectedAsset = isSynthEligible ? synthService.detectAsset(market.title, market.description) : null;
     let synthForecast = null;
     
-    // Check for path-dependent market pattern
-    const pathDependent = detectPathDependentMarket(market.title);
+    // Check for path-dependent market pattern (only if asset detected)
+    const pathDependent = detectedAsset ? detectPathDependentMarket(market.title) : { detected: false };
 
     if (detectedAsset) {
       yield {
@@ -956,7 +982,7 @@ export async function* runAgentLoop(config = {}) {
         market: { title: market.title, marketID: market.marketID },
         message: `Detected ${detectedAsset} - preparing ML analysis`,
         index: i,
-        total: candidates.length,
+        total: allMarkets.length,
       };
     }
 
@@ -970,7 +996,7 @@ export async function* runAgentLoop(config = {}) {
             market: { title: market.title, marketID: market.marketID },
             message: `🎯 Path-dependent: ${detectedAsset} $${pathDependent.priceA.toLocaleString()} vs $${pathDependent.priceB.toLocaleString()}`,
             index: i,
-            total: candidates.length,
+            total: allMarkets.length,
           };
 
           const pathAnalysis = await analyzePathDependentMarket(
@@ -987,7 +1013,7 @@ export async function* runAgentLoop(config = {}) {
               market: { title: market.title, marketID: market.marketID },
               message: `Calculated path probabilities using ML percentiles`,
               index: i,
-              total: candidates.length,
+              total: allMarkets.length,
             };
 
             // Use path-dependent probabilities
@@ -1012,7 +1038,7 @@ export async function* runAgentLoop(config = {}) {
             market: { title: market.title, marketID: market.marketID },
             message: `🤖 Fetching ${detectedAsset} forecast from 200+ ML models...`,
             index: i,
-            total: candidates.length,
+            total: allMarkets.length,
           };
 
           synthForecast = await synthService.buildForecast(detectedAsset, {
@@ -1026,7 +1052,7 @@ export async function* runAgentLoop(config = {}) {
               market: { title: market.title, marketID: market.marketID },
               message: `Received ML percentiles - comparing vs market odds`,
               index: i,
-              total: candidates.length,
+              total: allMarkets.length,
             };
           }
         }
@@ -1079,7 +1105,7 @@ export async function* runAgentLoop(config = {}) {
           market: { title: market.title, marketID: market.marketID },
           message: `Layering AI reasoning on ML data...`,
           index: i,
-          total: candidates.length,
+          total: allMarkets.length,
         };
 
         const response = await client.chat.completions.create({
@@ -1137,7 +1163,7 @@ Output ONLY valid JSON:
           market: { title: market.title, marketID: market.marketID },
           message: `Generating AI forecast with web search...`,
           index: i,
-          total: candidates.length,
+          total: allMarkets.length,
         };
 
         const response = await client.chat.completions.create({

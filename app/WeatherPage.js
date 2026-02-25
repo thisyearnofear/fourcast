@@ -141,35 +141,38 @@ export default function WeatherPage() {
 
       {/* Hero Overlay - First Visit */}
       {showHero && (
-        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="max-w-xl bg-gradient-to-br from-purple-900/90 to-blue-900/90 rounded-2xl p-8 border border-purple-500/30 shadow-2xl">
-            <div className="flex items-center gap-3 mb-3">
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-lg backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
               <div className="text-3xl">🔮</div>
               <h1 className="text-2xl font-bold text-white">Fourcast</h1>
+              <span className="ml-auto px-2 py-1 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-xs font-medium">
+                Synth Hackathon
+              </span>
             </div>
             
-            <p className="text-lg text-purple-200 mb-5">
-              Quantitative prediction market intelligence powered by <span className="font-bold text-white">SynthData's 200+ ML models</span>
+            <p className="text-base text-white/80 mb-6 leading-relaxed">
+              Quantitative prediction market intelligence powered by <span className="font-semibold text-white">SynthData's 200+ ML models</span>
             </p>
             
-            <div className="space-y-2.5 mb-5 text-sm text-purple-100">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🤖</span>
+            <div className="space-y-3 mb-6">
+              <div className="flex items-start gap-3 text-sm text-white/70">
+                <span className="text-lg flex-shrink-0">🤖</span>
                 <span>Probabilistic forecasts for BTC, ETH, SOL, Gold, Stocks</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📊</span>
+              <div className="flex items-start gap-3 text-sm text-white/70">
+                <span className="text-lg flex-shrink-0">📊</span>
                 <span>Edge detection: ML fair odds vs market prices</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🎯</span>
+              <div className="flex items-start gap-3 text-sm text-white/70">
+                <span className="text-lg flex-shrink-0">🎯</span>
                 <span>Path-dependent analysis (e.g., "BTC $60K before $65K?")</span>
               </div>
             </div>
 
             <button
               onClick={dismissHero}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold rounded-lg transition-all transform hover:scale-105"
+              className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium rounded-xl transition-all transform hover:scale-[1.02]"
             >
               Explore Markets →
             </button>

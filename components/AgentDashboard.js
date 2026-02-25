@@ -13,7 +13,7 @@ const CATEGORY_OPTIONS = [
 
 export function AgentDashboard({ isNight = false }) {
   const { run, stop, isRunning, steps, recommendations, error } = useAgentLoop();
-  const [category, setCategory] = useState('all');
+  const [category, setCategory] = useState('Crypto'); // Default to Crypto for Synth ML coverage
   const [maxMarkets, setMaxMarkets] = useState(5);
   const [riskTolerance, setRiskTolerance] = useState(0.5);
 
@@ -38,22 +38,26 @@ export function AgentDashboard({ isNight = false }) {
   const forecastSteps = steps.filter(s => s.step === 'forecast');
 
   return (
-    <div className={`backdrop-blur-xl border rounded-2xl p-6 ${cardBg} space-y-4`}>
+    <div className={`backdrop-blur-xl border rounded-2xl p-4 sm:p-6 ${cardBg} space-y-4`} role="region" aria-label="Agent Mode Dashboard">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className={`font-medium text-lg ${textColor}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className={`font-medium text-base sm:text-lg ${textColor}`}>
             🤖 Agent Mode
           </h3>
           <p className={`text-xs ${subtleText} mt-1`}>
             Autonomous market scanning &amp; edge detection
           </p>
         </div>
-        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-          isRunning
-            ? 'bg-green-500/20 text-green-300 animate-pulse'
-            : 'bg-white/10 text-white/40'
-        }`}>
+        <div 
+          className={`flex-shrink-0 px-2 py-1 rounded-full text-xs font-medium ${
+            isRunning
+              ? 'bg-green-500/20 text-green-300 animate-pulse'
+              : 'bg-white/10 text-white/40'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
           {isRunning ? 'RUNNING' : 'IDLE'}
         </div>
       </div>
@@ -63,10 +67,12 @@ export function AgentDashboard({ isNight = false }) {
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={`text-xs ${subtleText} block mb-1`}>Category</label>
+              <label htmlFor="agent-category" className={`text-xs ${subtleText} block mb-1`}>Category</label>
               <select
+                id="agent-category"
                 value={category}
                 onChange={e => setCategory(e.target.value)}
+                aria-label="Select market category"
                 className={`w-full rounded-lg px-3 py-2 text-sm border ${inputBg}`}
               >
                 {CATEGORY_OPTIONS.map(opt => (
@@ -75,10 +81,12 @@ export function AgentDashboard({ isNight = false }) {
               </select>
             </div>
             <div>
-              <label className={`text-xs ${subtleText} block mb-1`}>Markets to scan</label>
+              <label htmlFor="agent-max-markets" className={`text-xs ${subtleText} block mb-1`}>Markets to scan</label>
               <select
+                id="agent-max-markets"
                 value={maxMarkets}
                 onChange={e => setMaxMarkets(Number(e.target.value))}
+                aria-label="Select number of markets to scan"
                 className={`w-full rounded-lg px-3 py-2 text-sm border ${inputBg}`}
               >
                 {[3, 5, 8, 10].map(n => (
@@ -88,16 +96,21 @@ export function AgentDashboard({ isNight = false }) {
             </div>
           </div>
           <div>
-            <label className={`text-xs ${subtleText} block mb-1`}>
+            <label htmlFor="agent-risk-tolerance" className={`text-xs ${subtleText} block mb-1`}>
               Risk tolerance: {(riskTolerance * 100).toFixed(0)}%
             </label>
             <input
+              id="agent-risk-tolerance"
               type="range"
               min="0.1"
               max="1"
               step="0.1"
               value={riskTolerance}
               onChange={e => setRiskTolerance(parseFloat(e.target.value))}
+              aria-label={`Risk tolerance: ${(riskTolerance * 100).toFixed(0)} percent`}
+              aria-valuemin={10}
+              aria-valuemax={100}
+              aria-valuenow={riskTolerance * 100}
               className="w-full accent-blue-500"
             />
             <div className={`flex justify-between text-xs ${subtleText}`}>
@@ -108,9 +121,11 @@ export function AgentDashboard({ isNight = false }) {
         </div>
       )}
 
-      {/* Run / Stop button */}
+      {/* Run / Stop button with ARIA labels */}
       <button
         onClick={isRunning ? stop : handleRun}
+        aria-label={isRunning ? 'Stop agent execution' : 'Run agent to scan markets'}
+        aria-busy={isRunning}
         className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all ${
           isRunning
             ? isNight ? 'bg-red-500/20 hover:bg-red-500/30 text-red-200' : 'bg-red-100 hover:bg-red-200 text-red-900'
@@ -131,11 +146,22 @@ export function AgentDashboard({ isNight = false }) {
 
       {/* Live Progress */}
       {isRunning && currentStep && (
-        <div className="space-y-3">
+        <div className="space-y-3" role="status" aria-live="polite" aria-label="Agent progress">
           {/* Progress bar */}
-          <div className={`h-1 rounded-full overflow-hidden ${
-            isNight ? 'bg-white/10' : 'bg-black/10'
-          }`}>
+          <div 
+            className={`h-1 rounded-full overflow-hidden ${
+              isNight ? 'bg-white/10' : 'bg-black/10'
+            }`}
+            role="progressbar"
+            aria-valuenow={
+              currentStep.step === 'discover' ? 25 :
+              currentStep.step === 'filter' ? 50 :
+              currentStep.step === 'forecast' ? 75 :
+              currentStep.step === 'edge' ? 100 : 0
+            }
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
             <div 
               className={`h-full transition-all duration-500 ease-out ${
                 isNight ? 'bg-blue-400' : 'bg-blue-600'
@@ -160,7 +186,17 @@ export function AgentDashboard({ isNight = false }) {
         </div>
       )}
 
-      {/* Recommendations */}
+      {/* Recommendations with Empty State */}
+      {!isRunning && recommendations.length === 0 && steps.length > 0 && (
+        <div className={`text-center py-8 px-4 rounded-xl border ${
+          isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/20'
+        }`}>
+          <div className="text-4xl mb-3 opacity-40">🔍</div>
+          <p className={`text-sm ${textColor} opacity-70 mb-1`}>No actionable opportunities found</p>
+          <p className={`text-xs ${subtleText}`}>Try adjusting your risk tolerance or category filters</p>
+        </div>
+      )}
+      
       {recommendations.length > 0 && (
         <div className="space-y-3">
           <h4 className={`text-sm font-medium ${textColor}`}>

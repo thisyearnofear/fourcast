@@ -47,7 +47,7 @@ export default function MarketsPage() {
   const { toasts, addToast, removeToast } = useToast();
 
   // Tab state: 'sports' or 'discovery'
-  const [activeTab, setActiveTab] = useState("sports");
+  const [activeTab, setActiveTab] = useState("discovery"); // Default to discovery for Synth-optimized markets
 
   // Weather state (for UI theming and discovery mode)
   const [weatherData, setWeatherData] = useState(null);
@@ -75,7 +75,7 @@ export default function MarketsPage() {
 
   // Discovery-specific filters (date-first)
   const [discoveryFilters, setDiscoveryFilters] = useState({
-    category: "all",
+    category: "Crypto", // Default to Crypto for Synth ML coverage
     minVolume: "50000",
     confidence: "all",
     includeFutures: false,
@@ -1594,11 +1594,12 @@ function MarketCard({
           </div>
         </div>
 
-        <div className="flex-shrink-0 flex gap-2">
+        <div className="flex-shrink-0 flex flex-wrap sm:flex-nowrap gap-2">
           {isExpanded ? (
             <button
               onClick={() => setExpandedMarketId(null)}
-              className={`px-6 py-3 rounded-2xl font-light text-sm transition-all border ${isNight
+              aria-label="Close expanded market view"
+              className={`px-4 sm:px-6 py-3 rounded-2xl font-light text-sm transition-all border ${isNight
                 ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
                 : "bg-black/10 hover:bg-black/20 text-black border-black/20"
                 }`}
@@ -1616,7 +1617,8 @@ function MarketCard({
                     setShowOrderPanel(true);
                   }
                 }}
-                className={`px-5 py-3 rounded-2xl font-light text-sm transition-all hover:scale-105 border ${
+                aria-label={`${isKalshi ? 'Trade' : 'Place bet'} on ${market.title || market.question}`}
+                className={`px-4 sm:px-5 py-3 rounded-2xl font-light text-sm transition-all hover:scale-105 border ${
                   isKalshi
                     ? isNight
                       ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border-emerald-400/30"
@@ -1631,7 +1633,9 @@ function MarketCard({
               <button
                 onClick={() => onAnalyze(market, "basic")}
                 disabled={isAnalyzing}
-                className={`px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${isNight
+                aria-label={`Analyze market: ${market.title || market.question}`}
+                aria-busy={isAnalyzing && isCurrentMarket}
+                className={`px-4 sm:px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${isNight
                   ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 text-purple-200 border-purple-400/30"
                   : "bg-gradient-to-r from-purple-400/20 to-pink-400/20 hover:from-purple-400/30 hover:to-pink-400/30 text-purple-800 border-purple-500/30"
                   }`}
@@ -1671,32 +1675,48 @@ function MarketCard({
                   </span>
                 </div>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                  <div>
-                    <div className={`text-xs ${textColor} opacity-60 mb-1`}>Asset</div>
-                    <div className={`font-medium ${textColor}`}>{analysis.synthData.asset}</div>
-                  </div>
-                  <div>
-                    <div className={`text-xs ${textColor} opacity-60 mb-1`}>Current</div>
-                    <div className={`font-medium ${textColor}`}>
+                <div className="space-y-4">
+                  {/* Current Price - Large Visual Hierarchy */}
+                  <div className="text-center pb-3 border-b border-white/10">
+                    <div className={`text-xs ${textColor} opacity-50 mb-1`}>{analysis.synthData.asset}</div>
+                    <div className={`text-4xl font-light ${textColor}`}>
                       ${analysis.synthData.currentPrice?.toLocaleString()}
                     </div>
+                    <div className={`text-xs ${textColor} opacity-40 mt-1`}>Current Price</div>
                   </div>
-                  {analysis.synthData.percentiles?.p5 && (
-                    <>
-                      <div>
-                        <div className={`text-xs ${textColor} opacity-60 mb-1`}>P5 (Bear)</div>
-                        <div className={`font-medium ${isNight ? 'text-red-400' : 'text-red-600'}`}>
-                          ${analysis.synthData.percentiles.p5.toLocaleString()}
+
+                  {/* Percentile Range with Mini Chart */}
+                  {analysis.synthData.percentiles?.p5 && analysis.synthData.percentiles?.p95 && (
+                    <div>
+                      <div className="flex justify-between items-end mb-2">
+                        <div>
+                          <div className={`text-xs ${textColor} opacity-50 mb-1`}>P5 (Bear)</div>
+                          <div className={`text-xl font-light ${isNight ? 'text-red-400' : 'text-red-600'}`}>
+                            ${analysis.synthData.percentiles.p5.toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-xs ${textColor} opacity-50 mb-1`}>P95 (Bull)</div>
+                          <div className={`text-xl font-light ${isNight ? 'text-green-400' : 'text-green-600'}`}>
+                            ${analysis.synthData.percentiles.p95.toLocaleString()}
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <div className={`text-xs ${textColor} opacity-60 mb-1`}>P95 (Bull)</div>
-                        <div className={`font-medium ${isNight ? 'text-green-400' : 'text-green-600'}`}>
-                          ${analysis.synthData.percentiles.p95.toLocaleString()}
-                        </div>
+                      
+                      {/* Percentile Visualization Bar */}
+                      <div className="relative h-2 rounded-full overflow-hidden bg-gradient-to-r from-red-500/20 via-yellow-500/20 to-green-500/20">
+                        <div 
+                          className={`absolute top-0 h-full w-1 ${isNight ? 'bg-white' : 'bg-black'} opacity-60`}
+                          style={{
+                            left: `${((analysis.synthData.currentPrice - analysis.synthData.percentiles.p5) / (analysis.synthData.percentiles.p95 - analysis.synthData.percentiles.p5)) * 100}%`
+                          }}
+                          title="Current price position"
+                        />
                       </div>
-                    </>
+                      <div className={`text-xs ${textColor} opacity-40 text-center mt-1`}>
+                        Price Distribution (P5 → P95)
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -1718,37 +1738,37 @@ function MarketCard({
               </div>
             )}
 
-            {/* Market Context & Odds */}
+            {/* Market Context & Odds - Enhanced Visual Hierarchy */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
                 className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4`}
               >
                 <h4
-                  className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}
+                  className={`text-xs font-light ${textColor} opacity-70 mb-3 uppercase tracking-wider`}
                 >
                   Market Odds
                 </h4>
                 <div className="flex justify-between items-center">
                   <div className="flex flex-col">
-                    <span className={`text-sm ${textColor} opacity-60`}>
+                    <span className={`text-xs ${textColor} opacity-50 mb-1`}>
                       YES
                     </span>
                     <span
-                      className={`text-xl font-medium ${isNight ? "text-green-400" : "text-green-600"
+                      className={`text-3xl font-light ${isNight ? "text-green-400" : "text-green-600"
                         }`}
                     >
-                      {market.ask ? `${(market.ask * 100).toFixed(1)}%` : "N/A"}
+                      {market.ask ? `${(market.ask * 100).toFixed(0)}%` : "N/A"}
                     </span>
                   </div>
                   <div className="flex flex-col text-right">
-                    <span className={`text-sm ${textColor} opacity-60`}>
+                    <span className={`text-xs ${textColor} opacity-50 mb-1`}>
                       NO
                     </span>
                     <span
-                      className={`text-xl font-medium ${isNight ? "text-red-400" : "text-red-600"
+                      className={`text-3xl font-light ${isNight ? "text-red-400" : "text-red-600"
                         }`}
                     >
-                      {market.bid ? `${(market.bid * 100).toFixed(1)}%` : "N/A"}
+                      {market.bid ? `${(market.bid * 100).toFixed(0)}%` : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -1758,7 +1778,7 @@ function MarketCard({
                 className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4`}
               >
                 <h4
-                  className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}
+                  className={`text-xs font-light ${textColor} opacity-70 mb-3 uppercase tracking-wider`}
                 >
                   Weather @ {analysis.weather_conditions?.location || "Venue"}
                 </h4>
@@ -2024,7 +2044,12 @@ function LoadingAnalysisState({ isNight, textColor }) {
   }, []);
 
   return (
-    <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center justify-center py-12">
+    <div 
+      className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center justify-center py-12"
+      role="status"
+      aria-live="polite"
+      aria-label="Analyzing market"
+    >
       {/* Animated Icon */}
       <div className="relative mb-6">
         <div
@@ -2033,7 +2058,7 @@ function LoadingAnalysisState({ isNight, textColor }) {
             : "bg-black/5 backdrop-blur-sm"
             }`}
         >
-          <span className="animate-bounce">{steps[step].icon}</span>
+          <span className="animate-bounce" aria-hidden="true">{steps[step].icon}</span>
         </div>
         <div
           className={`absolute inset-0 rounded-full border-2 ${isNight ? "border-white/20" : "border-black/20"
@@ -2042,6 +2067,7 @@ function LoadingAnalysisState({ isNight, textColor }) {
             clipPath: `polygon(0 0, ${progress}% 0, ${progress}% 100%, 0 100%)`,
             borderColor: isNight ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)",
           }}
+          aria-hidden="true"
         ></div>
       </div>
 
@@ -2061,6 +2087,10 @@ function LoadingAnalysisState({ isNight, textColor }) {
       <div
         className={`w-64 h-1 rounded-full mt-6 ${isNight ? "bg-white/10" : "bg-black/10"
           }`}
+        role="progressbar"
+        aria-valuenow={progress}
+        aria-valuemin={0}
+        aria-valuemax={100}
       >
         <div
           className={`h-full rounded-full transition-all duration-100 ${isNight ? "bg-white/60" : "bg-black/60"
@@ -2070,7 +2100,7 @@ function LoadingAnalysisState({ isNight, textColor }) {
       </div>
 
       {/* Step Indicators */}
-      <div className="flex gap-2 mt-6">
+      <div className="flex gap-2 mt-6" aria-hidden="true">
         {steps.map((s, i) => (
           <div
             key={i}
