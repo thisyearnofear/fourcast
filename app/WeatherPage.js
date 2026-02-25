@@ -329,7 +329,7 @@ export default function WeatherPage() {
                   </svg>
                   <div className="flex flex-col items-start">
                     <span className="text-xs sm:text-sm font-medium leading-tight">Signals</span>
-                    <span className={`text-[10px] leading-tight ${isNight ? 'text-white/50' : 'text-black/40'}`}>AI edge alerts</span>
+                    <span className={`text-[10px] leading-tight ${isNight ? 'text-white/50' : 'text-black/40'}`}>Predictions & track records</span>
                   </div>
                 </button>
               </div>

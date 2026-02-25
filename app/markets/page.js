@@ -308,7 +308,7 @@ export default function MarketsPage() {
     if (!canPublish) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       addToast(
-        "Connect your Aptos or Movement wallet to publish your signal on-chain",
+        "Connect your Aptos or Movement wallet to start your track record",
         "warning",
         5000
       );
@@ -377,22 +377,22 @@ export default function MarketsPage() {
         } catch { }
 
         addToast(
-          `Signal published on-chain · TX: ${txHash ? txHash.slice(0, 10) : 'Unknown'}...`,
+          `Call recorded on-chain · TX: ${txHash ? txHash.slice(0, 10) : 'Unknown'}...`,
           "success",
           5000,
           "/signals",
-          "View Signals"
+          "View Track Record"
         );
       } else {
         addToast(
-          `Signal saved locally but on-chain publish failed: ${publishError || "Unknown error"}`,
+          `Prediction saved locally but on-chain record failed: ${publishError || "Unknown error"}`,
           "warning",
           5000
         );
       }
     } catch (err) {
       console.error("Failed to publish signal:", err);
-      addToast("Failed to publish signal", "error", 5000);
+      addToast("Failed to record prediction", "error", 5000);
     }
   }, [selectedMarket, analysis, canPublish, chains, weatherData, addToast, publishToAptos]);
 
@@ -880,8 +880,8 @@ function SportsTabContent({
 function ChainRecommendationBadge({ recommendation, isNight }) {
   const config = {
     PUBLISH: {
-      icon: "📡",
-      text: "Publish Signal",
+      icon: "🎯",
+      text: "Make Your Call",
       color: isNight ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-purple-400/20 text-purple-800 border-purple-400/30"
     },
     TRADE: {
@@ -891,7 +891,7 @@ function ChainRecommendationBadge({ recommendation, isNight }) {
     },
     BOTH: {
       icon: "⚡",
-      text: "Publish & Trade",
+      text: "Call It & Trade",
       color: isNight ? "bg-amber-500/20 text-amber-300 border-amber-500/30" : "bg-amber-400/20 text-amber-800 border-amber-400/30"
     }
   };
@@ -926,7 +926,7 @@ function ChainActionWidget({
   const shouldPublish = rec === "PUBLISH" || rec === "BOTH";
   const shouldTrade = rec === "TRADE" || rec === "BOTH";
 
-  const publishButtonText = shouldTrade ? "Also Publish Signal" : "Publish Signal";
+  const publishButtonText = shouldTrade ? "Also Make Your Call" : "Make Your Call";
   const tradeButtonText = shouldPublish ? "Also Trade" : "Place Order";
 
   // Get explanation for why this action is recommended
@@ -1017,7 +1017,7 @@ function ChainActionWidget({
             rec === "PUBLISH",
             publishButtonText,
             () => onPublishSignal(market, analysis),
-            "Publish on Movement to build your track record and earn tips from the community"
+            "Paper trade with proof — build a verifiable track record and earn tips from the community"
           ) : renderChainAction(
             CHAINS.APTOS,
             chains.aptos,
@@ -1026,7 +1026,7 @@ function ChainActionWidget({
             () => {
               if (chains.aptos.connected) onPublishSignal(market, analysis);
             },
-            "Create a permanent on-chain record of your analysis to build your track record and establish credibility"
+            "Paper trade with proof — every call is timestamped, immutable, and publicly verifiable"
           )
         )}
 
@@ -1883,47 +1883,47 @@ function MarketCard({
               </div>
             </div>
 
-            {/* What are Signals? */}
+            {/* Prove Your Edge - Paper Trading With Proof */}
             <div
               className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-5`}
             >
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xl">📡</span>
+                <span className="text-xl">🎯</span>
                 <h4 className={`text-sm font-medium ${textColor}`}>
-                  What are Signals?
+                  Prove Your Edge
                 </h4>
               </div>
               <p
                 className={`text-sm ${textColor} opacity-80 font-light leading-relaxed mb-3`}
               >
-                Signals are on-chain records of your predictions. When you
-                publish a signal, you're creating a permanent, timestamped
-                record of your analysis on the blockchain.
+                Not ready to trade yet? Make your call anyway. Every prediction
+                is recorded on-chain — timestamped, immutable, and publicly
+                verifiable. Build a provable track record before risking capital.
               </p>
               <div className="grid grid-cols-1 gap-2">
                 <div className="flex items-start gap-2">
                   <span className={`text-xs ${textColor} opacity-60`}>✓</span>
                   <p className={`text-xs ${textColor} opacity-70 font-light`}>
                     <strong className="font-medium">
-                      Build your track record
+                      Paper trade with proof
                     </strong>{" "}
-                    - Prove your prediction accuracy over time
+                    - No capital needed, full accountability
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className={`text-xs ${textColor} opacity-60`}>✓</span>
                   <p className={`text-xs ${textColor} opacity-70 font-light`}>
                     <strong className="font-medium">
-                      Transparent & verifiable
+                      Can’t fake your record
                     </strong>{" "}
-                    - Anyone can verify your predictions on-chain
+                    - No backdating, no deleting bad calls
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className={`text-xs ${textColor} opacity-60`}>✓</span>
                   <p className={`text-xs ${textColor} opacity-70 font-light`}>
-                    <strong className="font-medium">Own your insights</strong> -
-                    Your signals are stored on Aptos blockchain
+                    <strong className="font-medium">Earn as you grow</strong> -
+                    Top analysts earn tips from the community
                   </p>
                 </div>
               </div>
@@ -1935,14 +1935,14 @@ function MarketCard({
                 className={`${cardBgColor} backdrop-blur-sm border rounded-xl p-4 flex items-center gap-3 ${isNight ? "border-orange-400/30" : "border-orange-600/30"
                   }`}
               >
-                <span className="text-2xl">👆</span>
+                <span className="text-2xl">🎯</span>
                 <div className="flex-1">
                   <p className={`text-sm ${textColor} font-medium mb-1`}>
-                    Connect your Aptos or Movement wallet to publish
+                    Connect wallet to start your track record
                   </p>
                   <p className={`text-xs ${textColor} opacity-70 font-light`}>
-                    Click "Connect Wallet" in the header above to publish
-                    your signal on-chain
+                    Link an Aptos or Movement wallet to make your call
+                    and start building a verifiable prediction history
                   </p>
                 </div>
               </div>
@@ -1983,8 +1983,8 @@ function MarketCard({
                   }`}
               >
                 {canPublish
-                  ? "📡 Publish Signal"
-                  : "🔗 Connect & Publish Signal"}
+                  ? "🎯 Make Your Call"
+                  : "🔗 Connect & Make Your Call"}
               </button>
             </div>
           </div>

@@ -238,7 +238,7 @@ export default function SignalsPage() {
                                 Signals
                             </h1>
                             <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                                Published weather × odds × AI signals registry
+                                Prove your edge — verifiable predictions with on-chain track records
                             </p>
                         </div>
                         <div className="flex items-center space-x-3">
@@ -278,7 +278,7 @@ export default function SignalsPage() {
                                         : `${textColor} opacity-60 hover:opacity-100`
                                         }`}
                                 >
-                                    ⭐ My Signals
+                                🎯 My Track Record
                                 </button>
                             )}
                             <button
@@ -354,7 +354,7 @@ export default function SignalsPage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                                     <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
                                         <div className={`text-2xl font-light ${textColor} mb-1`}>{signals.length}</div>
-                                        <div className={`text-xs ${textColor} opacity-60`}>Total Signals</div>
+                                        <div className={`text-xs ${textColor} opacity-60`}>Total Predictions</div>
                                     </div>
                                     <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
                                         <div className={`text-2xl font-light ${textColor} mb-1`}>{Object.keys(signalsByEvent).length}</div>
@@ -391,10 +391,10 @@ export default function SignalsPage() {
                             {/* Signals List */}
                             {!isLoading && !error && filteredSignals.length === 0 && (
                                 <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-12 text-center`}>
-                                    <div className="text-6xl mb-4">📡</div>
-                                    <h3 className={`text-xl font-light ${textColor} mb-2`}>No Signals Yet</h3>
+                                    <div className="text-6xl mb-4">🎯</div>
+                                    <h3 className={`text-xl font-light ${textColor} mb-2`}>No Predictions Yet</h3>
                                     <p className={`${textColor} opacity-60 text-sm`}>
-                                        Signals will appear here once published from the Markets page
+                                        Head to Markets, analyze an event, and make your first call to start building a track record
                                     </p>
                                 </div>
                             )}
@@ -456,7 +456,7 @@ export default function SignalsPage() {
                                             <div className={`mt-4 pt-4 border-t ${isNight ? 'border-white/10' : 'border-black/10'}`}>
                                                 <div className="flex flex-wrap items-center gap-4 text-xs">
                                                     <span className={`${textColor} opacity-60`}>
-                                                        {eventSignals.length} signal{eventSignals.length !== 1 ? 's' : ''} published
+                                        {eventSignals.length} prediction{eventSignals.length !== 1 ? 's' : ''} published
                                                     </span>
                                                     {eventSignals[0]?.event_time && (
                                                         <span className={`${textColor} opacity-60`}>

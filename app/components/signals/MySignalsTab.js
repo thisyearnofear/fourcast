@@ -15,10 +15,10 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
     if (!signals || signals.length === 0) {
         return (
             <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-12 text-center`}>
-                <div className="text-6xl mb-4">⭐</div>
-                <h3 className={`text-xl font-light ${textColor} mb-2`}>No Signals Yet</h3>
+                <div className="text-6xl mb-4">🎯</div>
+                <h3 className={`text-xl font-light ${textColor} mb-2`}>No Predictions Yet</h3>
                 <p className={`${textColor} opacity-60 text-sm`}>
-                    Head to Markets to analyze events and publish your first signal on-chain
+                    Head to Markets, analyze an event, and make your first call — start building your verifiable track record
                 </p>
             </div>
         );
