@@ -6,8 +6,8 @@
 
 #### AI-Powered Market Analysis
 - **Venice AI Integration** - Llama 3.3 70B with web search
-- **Weather-Aware Predictions** - Real-time weather data for sports/events
 - **ML-Backed Forecasts** - SynthData integration for crypto/equities
+- **Sports & Events Intelligence** - Weather-aware analysis for sports and event markets
 - **Confidence Scoring** - HIGH/MEDIUM/LOW with calibration
 - **Edge Detection** - Identify mispriced markets (>5% edge)
 
@@ -132,18 +132,18 @@
 
 ## Vision Statement
 
-Fourcast is building a **weather-aware prediction intelligence layer** for the decentralized web.
+Fourcast the future. We're building **quantitative prediction intelligence** for the decentralized web.
 
 ### The Problem
-Weather significantly impacts real-world outcomes (sports, events, commodities), but this data is underutilized in prediction markets. Retail traders lack access to sophisticated analysis tools that institutional quants take for granted.
+Retail traders lack access to the sophisticated, multi-source analysis tools that institutional quants take for granted. Prediction markets span crypto, sports, politics, and more — but actionable edge requires combining ML forecasts, real-time data (including weather for sports), and AI reasoning at scale.
 
 ### Our Solution
-Combine real-time environmental data, ML forecasts, and AI reasoning to create verifiable, composable signals that traders and developers can trust.
+Combine ML forecasts, AI reasoning, and real-time data sources to create verifiable, composable signals that traders and developers can trust — across every prediction market vertical.
 
 ### Long-Term Goals
-1. **Become the standard** for weather-aware prediction analysis
+1. **Become the standard** for quantitative prediction market analysis
 2. **Build a developer ecosystem** around composable signal infrastructure
-3. **Create new market types** that leverage weather parametrics
+3. **Expand data integrations** across new verticals and data sources
 4. **Position Movement/Aptos** as the go-to chain for prediction intelligence
 
 ---

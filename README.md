@@ -8,7 +8,7 @@
 ## 🎯 What We Do
 
 Fourcast helps traders find edge in prediction markets through:
-- **AI-powered analysis** - Venice AI (Llama 3.3 70B) with weather data and ML forecasts
+- **AI-powered analysis** - Venice AI (Llama 3.3 70B) with 200+ ML models across crypto, sports, politics & more
 - **Multi-platform trading** - Polymarket & Kalshi integration with live odds
 - **On-chain signals** - Publish verifiable predictions to Movement/Aptos blockchain
 - **DeFi arbitrage** - Detect price discrepancies across platforms
@@ -19,8 +19,8 @@ Fourcast helps traders find edge in prediction markets through:
 
 ### For Traders
 - **Live Market Analysis** - AI-generated predictions with confidence scores (HIGH/MEDIUM/LOW)
-- **Weather-Aware Predictions** - Sports and event markets analyzed with real-time weather data
 - **ML-Backed Forecasts** - SynthData integration for crypto/equity price predictions (BTC, ETH, SOL, SPY, NVDA, etc.)
+- **Sports & Events Intelligence** - Weather-aware analysis for sports and event markets
 - **Cross-Platform Arbitrage** - Find mispriced odds between Polymarket and Kalshi
 - **Direct Trading** - Place orders on Polymarket/Kalshi from the interface
 
@@ -162,7 +162,7 @@ MIT
 
 ## 🔮 Vision
 
-Fourcast is building a weather-aware prediction intelligence layer for the decentralized web. By combining real-time environmental data, ML forecasts, and AI reasoning, we create verifiable, composable signals that traders and developers can trust.
+Fourcast the future. We're building quantitative prediction intelligence for the decentralized web — combining ML forecasts, AI reasoning, and real-time data to create verifiable, composable signals that traders and developers can trust.
 
-**Today**: AI analysis, signal publishing, cross-platform trading  
-**Future**: Premium signals, developer ecosystem, DePIN weather integrations
+**Today**: AI analysis across crypto, sports & politics; signal publishing; cross-platform trading  
+**Future**: Premium signals, developer ecosystem, expanded data integrations
