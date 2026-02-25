@@ -12,6 +12,7 @@ import { VenueExtractor } from "./venueExtractor.js";
 import { arbitrageService } from "./arbitrageService.js";
 import { saveForecast, wasRecentlyAnalyzed } from "./db.js";
 import { synthService } from "./synthService.js";
+import { analyzePathDependentMarket, detectPathDependentMarket } from "./pathDependentService.js";
 
 const callVeniceAI = async (params, options = {}) => {
   const {
@@ -943,21 +944,60 @@ export async function* runAgentLoop(config = {}) {
     // Try SynthData first for supported price/crypto assets
     const detectedAsset = synthService.detectAsset(market.title, market.description);
     let synthForecast = null;
+    
+    // Check for path-dependent market pattern
+    const pathDependent = detectPathDependentMarket(market.title);
 
     if (hasSynthData && detectedAsset) {
       try {
-        yield {
-          step: "forecast",
-          status: "running",
-          market: { title: market.title, marketID: market.marketID },
-          message: `Fetching ${detectedAsset} ensemble forecast from SynthData...`,
-          index: i,
-          total: candidates.length,
-        };
+        // Path-dependent market detected
+        if (pathDependent.detected) {
+          yield {
+            step: "forecast",
+            status: "running",
+            market: { title: market.title, marketID: market.marketID },
+            message: `Analyzing path-dependent market: ${detectedAsset} ${pathDependent.priceA} vs ${pathDependent.priceB}`,
+            index: i,
+            total: candidates.length,
+          };
 
-        synthForecast = await synthService.buildForecast(detectedAsset, {
-          includePolymarket: market.platform === "polymarket",
-        });
+          const pathAnalysis = await analyzePathDependentMarket(
+            detectedAsset,
+            synthForecast?.currentPrice || pathDependent.priceA, // Use current price if available
+            pathDependent.priceA,
+            pathDependent.priceB
+          );
+
+          if (!pathAnalysis.error) {
+            // Use path-dependent probabilities
+            aiProbability = pathAnalysis.probabilities.touchAFirst / 100;
+            confidence = pathAnalysis.confidence;
+            reasoning = pathAnalysis.reasoning;
+            keyFactors = [
+              `Path-dependent analysis: ${pathDependent.priceA} before ${pathDependent.priceB}`,
+              `Probability: ${pathAnalysis.probabilities.touchAFirst}% vs ${pathAnalysis.probabilities.touchBFirst}%`,
+              `Volatility ratio: ${pathAnalysis.volatility.ratio.toFixed(2)}x`,
+            ];
+            forecastSource = "synthdata+path";
+            
+            // Skip normal Synth forecast since we have path analysis
+            synthForecast = pathAnalysis;
+          }
+        } else {
+          // Normal price forecast
+          yield {
+            step: "forecast",
+            status: "running",
+            market: { title: market.title, marketID: market.marketID },
+            message: `Fetching ${detectedAsset} ensemble forecast from SynthData...`,
+            index: i,
+            total: candidates.length,
+          };
+
+          synthForecast = await synthService.buildForecast(detectedAsset, {
+            includePolymarket: market.platform === "polymarket",
+          });
+        }
       } catch (err) {
         console.warn(`SynthData forecast failed for ${detectedAsset}:`, err.message);
       }

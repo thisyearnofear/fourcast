@@ -213,7 +213,8 @@ function RecommendationCard({ rec, isNight }) {
   const isActionable = rec.actionable;
   const edgeColor = rec.edge > 0 ? 'green' : 'red';
   const hasCalibrationWarning = rec.calibrationWarning;
-  const isSynthBacked = rec.source === 'synthdata+llm';
+  const isSynthBacked = rec.source === 'synthdata+llm' || rec.source === 'synthdata+path';
+  const isPathDependent = rec.source === 'synthdata+path';
 
   return (
     <div className={`border rounded-xl p-4 ${
@@ -228,9 +229,11 @@ function RecommendationCard({ rec, isNight }) {
           </h5>
           {isSynthBacked && (
             <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-              isNight ? 'bg-cyan-500/20 text-cyan-300' : 'bg-cyan-100 text-cyan-700'
-            }`} title="Backed by 200+ ML models via SynthData">
-              ML
+              isPathDependent
+                ? isNight ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-700'
+                : isNight ? 'bg-cyan-500/20 text-cyan-300' : 'bg-cyan-100 text-cyan-700'
+            }`} title={isPathDependent ? 'Path-dependent ML analysis' : 'Backed by 200+ ML models via SynthData'}>
+              {isPathDependent ? '🎯 PATH' : '🤖 ML'}
             </span>
           )}
         </div>
@@ -242,6 +245,26 @@ function RecommendationCard({ rec, isNight }) {
           {rec.direction}
         </span>
       </div>
+
+      {/* SynthData details if available */}
+      {isSynthBacked && rec.synthData && (
+        <div className={`text-xs mb-2 px-2 py-1.5 rounded ${
+          isNight ? 'bg-purple-500/10 text-purple-200' : 'bg-purple-50 text-purple-800'
+        }`}>
+          {rec.synthData.asset && (
+            <div className="flex items-center justify-between">
+              <span className="opacity-70">{rec.synthData.asset}</span>
+              <span className="font-medium">${rec.synthData.currentPrice?.toLocaleString()}</span>
+            </div>
+          )}
+          {rec.synthData.percentiles?.p5 && rec.synthData.percentiles?.p95 && (
+            <div className="flex items-center justify-between mt-1 text-[10px]">
+              <span className="opacity-70">Range:</span>
+              <span>${rec.synthData.percentiles.p5.toLocaleString()} - ${rec.synthData.percentiles.p95.toLocaleString()}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {hasCalibrationWarning && (
         <div className={`text-xs px-2 py-1 rounded mb-2 ${

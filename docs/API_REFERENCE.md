@@ -1,81 +1,71 @@
 # API Reference
 
-## Signals API
-
-### Get Recent Signals
-```http
-GET /api/signals?limit=20&domain=all&minConfidence=HIGH
+## Base URL
+```
+http://localhost:3000/api  # Development
+https://yourdomain.com/api # Production
 ```
 
-**Query Parameters:**
-| Param | Type | Description | Default |
-|-------|------|-------------|---------|
-| `limit` | number | Number of signals | 20 |
-| `domain` | string | Filter: weather, mobility, all | all |
-| `minConfidence` | string | Filter: HIGH, MEDIUM | null |
+---
+
+## Analysis Endpoints
+
+### POST /analyze
+Generate AI analysis for a market.
+
+**Request:**
+```json
+{
+  "market": {
+    "id": "market-123",
+    "title": "Will it rain during the Super Bowl?",
+    "platform": "polymarket",
+    "currentOdds": { "yes": 0.65, "no": 0.35 },
+    "endDate": "2025-02-09T23:00:00Z"
+  },
+  "options": {
+    "useWeather": true,
+    "useSynthData": true,
+    "analysisMode": "basic"
+  }
+}
+```
 
 **Response:**
 ```json
 {
   "success": true,
-  "signals": [
-    {
-      "id": "uuid-...",
-      "market_title": "Will it rain in London?",
-      "domain": "weather",
-      "ai_digest": "High probability of precipitation...",
-      "confidence": "HIGH",
-      "timestamp": 1735468800
-    }
-  ]
+  "analysis": {
+    "prediction": "YES",
+    "aiProbability": 0.72,
+    "confidence": "HIGH",
+    "reasoning": "Weather conditions favor...",
+    "keyFactors": ["Heavy rain expected", "Team A struggles in wet conditions"],
+    "weatherData": { ... },
+    "synthData": { ... }
+  }
 }
 ```
 
-### Update Signal Transaction Hash
-```http
-PATCH /api/signals
-Content-Type: application/json
-
-{
-  "signalId": "uuid-...",
-  "txHash": "0x..."
-}
-```
+### POST /analyze/stream
+Stream AI analysis response (SSE).
 
 ---
 
-## Analysis API
+## Markets Endpoints
 
-### Edge Analysis Request
-```http
-POST /api/analyze
-Content-Type: application/json
-
-{
-  "marketID": "market-123",
-  "title": "Will it rain?",
-  "location": "London",
-  "useEdgeAnalyzer": true,
-  "domain": "weather"
-}
-```
-
----
-
-## Markets API
-
-### Get Markets
-```http
-GET /api/markets?category=sports&maxDaysToResolution=7&platform=all&limit=50
-```
+### GET /markets
+Fetch prediction markets from Polymarket/Kalshi.
 
 **Query Parameters:**
 | Param | Type | Description | Default |
 |-------|------|-------------|---------|
-| `category` | string | Market category | sports |
-| `maxDaysToResolution` | number | Days until resolution | 7 |
-| `platform` | string | Filter: polymarket, kalshi, all | all |
-| `limit` | number | Number of markets | 50 |
+| `platform` | string | `polymarket`, `kalshi`, `all` | `all` |
+| `category` | string | Market category | `all` |
+| `eventType` | string | Sport/event type | `all` |
+| `minVolume` | number | Minimum volume (USD) | `0` |
+| `maxDaysToResolution` | number | Days until resolution | `30` |
+| `limit` | number | Number of markets | `50` |
 
 **Response:**
 ```json
@@ -88,27 +78,96 @@ GET /api/markets?category=sports&maxDaysToResolution=7&platform=all&limit=50
       "platform": "polymarket",
       "currentOdds": { "yes": 0.65, "no": 0.35 },
       "volume": 125000,
-      "resolutionDate": "2025-12-30"
+      "resolutionDate": "2025-12-30",
+      "category": "Sports",
+      "eventType": "Soccer"
     }
   ]
 }
 ```
 
+### GET /markets/counts
+Get market counts by category/sport.
+
 ---
 
-## DeFi Arbitrage API
+## Signals Endpoints
 
-### Get Arbitrage Opportunities
-```http
-GET /api/defi/arbitrage?minSpread=5&limit=20&minVolume=50000
-```
+### GET /signals
+Fetch published signals.
 
 **Query Parameters:**
 | Param | Type | Description | Default |
 |-------|------|-------------|---------|
-| `minSpread` | number | Minimum spread % | 5 |
-| `limit` | number | Number of opportunities | 20 |
-| `minVolume` | number | Minimum volume ($) | 50000 |
+| `limit` | number | Number of signals | `20` |
+| `domain` | string | Filter by domain | `all` |
+| `minConfidence` | string | `HIGH`, `MEDIUM`, `LOW` | `null` |
+| `author` | string | Filter by author address | `null` |
+
+**Response:**
+```json
+{
+  "success": true,
+  "signals": [
+    {
+      "id": "uuid-...",
+      "event_id": "market-123",
+      "market_title": "Will it rain in London?",
+      "venue": "London Stadium",
+      "ai_digest": "High probability of precipitation...",
+      "confidence": "HIGH",
+      "odds_efficiency": "EFFICIENT",
+      "author_address": "0x...",
+      "timestamp": 1735468800,
+      "tx_hash": "0x..."
+    }
+  ]
+}
+```
+
+### POST /signals
+Publish a new signal.
+
+**Request:**
+```json
+{
+  "event_id": "market-123",
+  "market_title": "Will it rain?",
+  "venue": "London",
+  "ai_digest": "Analysis summary...",
+  "confidence": "HIGH",
+  "odds_efficiency": "INEFFICIENT",
+  "publishToChain": true
+}
+```
+
+### PATCH /signals
+Update signal transaction hash.
+
+**Request:**
+```json
+{
+  "signalId": "uuid-...",
+  "txHash": "0x..."
+}
+```
+
+### POST /signals/resolve
+Resolve a signal with outcome.
+
+---
+
+## DeFi Arbitrage
+
+### GET /defi/arbitrage
+Find cross-platform arbitrage opportunities.
+
+**Query Parameters:**
+| Param | Type | Description | Default |
+|-------|------|-------------|---------|
+| `minSpread` | number | Minimum spread % | `5` |
+| `limit` | number | Number of opportunities | `20` |
+| `minVolume` | number | Minimum volume (USD) | `50000` |
 
 **Response:**
 ```json
@@ -122,8 +181,7 @@ GET /api/defi/arbitrage?minSpread=5&limit=20&minVolume=50000
       "kalshi": { "yes": 0.70, "no": 0.30 },
       "spread": 10.0,
       "profitPer1k": 100,
-      "liquidityScore": 0.85,
-      "capitalEfficiency": 0.92
+      "liquidityScore": 0.85
     }
   ]
 }
@@ -131,12 +189,10 @@ GET /api/defi/arbitrage?minSpread=5&limit=20&minVolume=50000
 
 ---
 
-## Agent API
+## Agent Endpoints
 
-### Get Track Record
-```http
-GET /api/agent/track-record
-```
+### GET /agent/track-record
+Get agent forecasting performance.
 
 **Response:**
 ```json
@@ -156,11 +212,14 @@ GET /api/agent/track-record
 }
 ```
 
-### Resolve Forecast
-```http
-POST /api/agent/resolve
-Content-Type: application/json
+### GET /agent
+Get agent run history.
 
+### POST /agent/resolve
+Resolve a forecast with actual outcome.
+
+**Request:**
+```json
 {
   "marketId": "12345",
   "actualOutcome": 1
@@ -169,13 +228,86 @@ Content-Type: application/json
 
 ---
 
-## Kalshi Trading API
+## Leaderboard & Stats
 
-### Login
-```http
-POST /api/kalshi/login
-Content-Type: application/json
+### GET /leaderboard
+Get top analysts leaderboard.
 
+**Query Parameters:**
+| Param | Type | Description | Default |
+|-------|------|-------------|---------|
+| `limit` | number | Number of analysts | `20` |
+| `timeframe` | string | `7d`, `30d`, `all` | `all` |
+
+**Response:**
+```json
+{
+  "success": true,
+  "leaderboard": [
+    {
+      "address": "0x...",
+      "rank": 1,
+      "winRate": 0.75,
+      "brierScore": 0.15,
+      "totalSignals": 45,
+      "tipsEarned": "125.5",
+      "tier": "Sage 👑"
+    }
+  ]
+}
+```
+
+### GET /stats
+Get user statistics.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `address` | string | Wallet address (required) |
+
+**Response:**
+```json
+{
+  "success": true,
+  "stats": {
+    "totalSignals": 45,
+    "winRate": 0.75,
+    "brierScore": 0.15,
+    "tipsEarned": "125.5",
+    "accuracyStreak": 5,
+    "tier": "Elite 🌟"
+  }
+}
+```
+
+### GET /profile
+Get user profile with signals and stats.
+
+---
+
+## Trading Endpoints
+
+### POST /orders
+Place order on Polymarket.
+
+**Request:**
+```json
+{
+  "marketId": "0x...",
+  "side": "yes",
+  "amount": 100,
+  "price": 0.65,
+  "orderType": "limit"
+}
+```
+
+### Kalshi Trading
+
+#### POST /kalshi/login
+Authenticate with Kalshi.
+
+**Request:**
+```json
 {
   "email": "user@example.com",
   "password": "password123"
@@ -194,11 +326,11 @@ Content-Type: application/json
 }
 ```
 
-### Place Order
-```http
-POST /api/kalshi/orders
-Content-Type: application/json
+#### POST /kalshi/orders
+Place order on Kalshi.
 
+**Request:**
+```json
 {
   "token": "jwt_token",
   "order": {
@@ -212,10 +344,13 @@ Content-Type: application/json
 }
 ```
 
-### Get Balance
-```http
-GET /api/kalshi/balance?token=jwt_token
-```
+#### GET /kalshi/balance
+Get Kalshi account balance.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `token` | string | JWT token from login |
 
 **Response:**
 ```json
@@ -230,19 +365,29 @@ GET /api/kalshi/balance?token=jwt_token
 
 ---
 
-## Weather API
+## Data Endpoints
 
-### Get Weather
-```http
-GET /api/weather?location=London&days=3
-```
+### GET /weather
+Get weather data for location.
+
+**Query Parameters:**
+| Param | Type | Description | Default |
+|-------|------|-------------|---------|
+| `location` | string | City name or coordinates | Auto-detect |
+| `days` | number | Forecast days | `3` |
 
 **Response:**
 ```json
 {
   "success": true,
   "weather": {
-    "location": "London",
+    "location": {
+      "name": "London",
+      "country": "UK",
+      "lat": 51.5074,
+      "lon": -0.1278,
+      "localtime": "2025-02-25 14:30"
+    },
     "current": {
       "temperature": 15,
       "condition": "Rain",
@@ -264,76 +409,41 @@ GET /api/weather?location=London&days=3
 
 ---
 
-## Builder Stats API
+## Validation Endpoints
 
-### Get Builder Stats
-```http
-GET /api/builder?action=stats
-```
+### GET /validate/location
+Validate location for event type.
 
-**Response:**
-```json
-{
-  "success": true,
-  "stats": {
-    "configured": true,
-    "dailyVolume": 125000,
-    "leaderboard": {
-      "rank": 5,
-      "totalBuilders": 50,
-      "timeframe": "7d"
-    },
-    "performance": {
-      "totalVolume": 875000,
-      "avgDailyVolume": 125000
-    }
-  }
-}
-```
+### GET /validate/weather
+Validate weather data availability.
 
-**Actions:**
-- `stats` - All builder stats
-- `volume&date=2024-12-19` - Daily volume
-- `leaderboard&timeframe=7d` - Rank/position
-- `config` - Check configuration
-- `performance` - Performance metrics
+### GET /validate/market-compatibility
+Check if market is compatible with analysis.
+
+### GET /validate/order
+Validate order parameters.
 
 ---
 
-## Database Schema
+## Utility Endpoints
 
-### agent_forecasts
-```sql
-CREATE TABLE agent_forecasts (
-  id TEXT PRIMARY KEY,
-  market_id TEXT NOT NULL,
-  market_title TEXT,
-  platform TEXT,
-  ai_probability REAL NOT NULL,
-  market_odds REAL NOT NULL,
-  edge REAL NOT NULL,
-  confidence TEXT,
-  reasoning TEXT,
-  key_factors TEXT,
-  timestamp INTEGER NOT NULL,
-  resolved BOOLEAN DEFAULT 0,
-  actual_outcome REAL,
-  brier_score REAL,
-  resolution_time INTEGER
-);
-```
+### GET /predictions
+Get prediction health status.
 
-### agent_runs
-```sql
-CREATE TABLE agent_runs (
-  id TEXT PRIMARY KEY,
-  config TEXT,
-  markets_scanned INTEGER,
-  candidates_filtered INTEGER,
-  forecasts_made INTEGER,
-  timestamp INTEGER NOT NULL
-);
-```
+### GET /predictions/health
+Health check endpoint.
+
+### GET /wallet
+Get wallet status and balance.
+
+### GET /builder
+Get Polymarket builder stats.
+
+### POST /farcaster/webhook
+Farcaster webhook handler (optional integration).
+
+### GET /og
+Generate OpenGraph image for sharing.
 
 ---
 
@@ -349,17 +459,42 @@ All endpoints return consistent error format:
 ```
 
 **HTTP Status Codes:**
-- 200: Success
-- 400: Bad Request
-- 401: Unauthorized
-- 404: Not Found
-- 500: Internal Server Error
+- `200`: Success
+- `400`: Bad Request
+- `401`: Unauthorized
+- `404`: Not Found
+- `500`: Internal Server Error
 
 ---
 
 ## Rate Limits
 
-- Weather API: 15 requests/hour per IP (10-min cache)
-- Venice AI: 3 agent runs/hour per IP
-- Kalshi Trading: Token expires every 30 minutes
-- Movement RPC: Standard testnet limits
+| Endpoint | Limit |
+|----------|-------|
+| `/api/analyze` | 3 requests/hour per IP |
+| `/api/weather` | 15 requests/hour per IP |
+| `/api/signals` | Standard API limits |
+| `/api/kalshi/*` | Token expires every 30 minutes |
+| `/api/defi/arbitrage` | 10 requests/minute |
+
+---
+
+## Authentication
+
+Most endpoints are public. Authentication required for:
+- `/api/signals` (POST) - Wallet signature
+- `/api/orders` - Wallet connection
+- `/api/kalshi/*` - JWT token from login
+
+### Wallet Authentication (Aptos/Movement)
+```javascript
+// Sign message with wallet
+const message = "Sign to authenticate with Fourcast";
+const signature = await wallet.signMessage(message);
+
+// Include in request headers
+headers: {
+  "X-Wallet-Address": address,
+  "X-Signature": signature
+}
+```

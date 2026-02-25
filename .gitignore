@@ -30,7 +30,9 @@
 # ============================================
 .env
 .env*.local
+.env*.production
 !.env.local.example
+!.env.example
 
 # ============================================
 # Database Files

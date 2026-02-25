@@ -1,65 +1,64 @@
-# 🔮 Fourcast: Multi-Domain Signal Intelligence Layer
+# 🔮 Fourcast: Multi-Chain Prediction Market Intelligence
 
-**The first modular intelligence layer for the Movement network.** Fourcast aggregates off-chain data (Weather, Mobility, Sentiment), processes it via AI edge nodes, and publishes verifiable prediction signals on-chain.
+**AI-powered analysis for prediction markets with on-chain signal publishing and cross-platform trading.**
 
-![Movement Hackathon Badge](https://img.shields.io/badge/Movement-M1_Hackathon-yellow)
-![Status](https://img.shields.io/badge/Status-Testnet_Live-green)
+![Status](https://img.shields.io/badge/Status-Live-green)
+![Chains](https://img.shields.io/badge/Chains-Movement%20%7C%20BNB%20%7C%20Polygon%20%7C%20Arbitrum-blue)
 
-## 🎯 The Problem
+## 🎯 What We Do
 
-Prediction markets like Polymarket require sophisticated data analysis to win. Most tools are siloed (only weather, or only crypto prices). Developers building new signal feeds have to rebuild the entire stack (contracts, indexing, analysis) from scratch.
-
-## 💡 Our Solution
-
-Fourcast is a **generic signal infrastructure**. We built a unified pipeline that allows *any* data domain to be analyzed and published to the Movement network using a single standard.
-
-### Key Innovations
-
-1.  **EdgeAnalyzer Engine**: A polymorphic AI analysis pattern. Whether it's analyzing rain probability or stadium traffic, the logic flow remains identical.
-2.  **@fourcast/signal-sdk**: A developer-first SDK to spin up new signal domains in minutes, not days.
-3.  **Unified Reputation**: Analysts earn on-chain reputation (and tips!) regardless of the domain they predict on.
+Fourcast helps traders find edge in prediction markets through:
+- **AI-powered analysis** - Venice AI (Llama 3.3 70B) with weather data and ML forecasts
+- **Multi-platform trading** - Polymarket & Kalshi integration with live odds
+- **On-chain signals** - Publish verifiable predictions to Movement/Aptos blockchain
+- **DeFi arbitrage** - Detect price discrepancies across platforms
 
 ---
 
 ## 🚀 Features
 
-### 🌐 Multi-Domain Intelligence
-- **🌤️ Weather Domain**: Real-time analysis of forecast impact on event outcomes (e.g., "Will it rain in London?").
-- **🚗 Mobility Domain**: *NEW!* Crowd/Traffic analysis for sports events (e.g., "High turnout at Wembley?").
-- **🧠 Sentiment Domain**: (Coming Soon) Farcaster/social sentiment analysis.
+### For Traders
+- **Live Market Analysis** - AI-generated predictions with confidence scores (HIGH/MEDIUM/LOW)
+- **Weather-Aware Predictions** - Sports and event markets analyzed with real-time weather data
+- **ML-Backed Forecasts** - SynthData integration for crypto/equity price predictions (BTC, ETH, SOL, SPY, NVDA, etc.)
+- **Cross-Platform Arbitrage** - Find mispriced odds between Polymarket and Kalshi
+- **Direct Trading** - Place orders on Polymarket/Kalshi from the interface
 
-### 🛠️ For Developers (Bounty: Best DevEx)
-- **Signal SDK**: Zero-config library to publish to our generic Move contract.
-- **CLI Tools**: Scaffolding for new domain analyzers.
+### For Analysts
+- **Signal Publishing** - Publish predictions on-chain (Movement testnet)
+- **Reputation System** - Track win rates, Brier scores, and accuracy streaks
+- **Tipping** - Earn APT for high-quality signals
+- **Leaderboards** - Compete with other analysts
 
-### 📱 For Consumers (Bounty: Best Consumer App)
-- **Live Intelligence Feed**: Real-time stream of verified signals.
-- **Context-Aware Dashboard**: 3D visualizations that adapt to the signal type (Weather vs Mobility).
-- **On-Chain Tipping**: Reward top analysts directly on the Movement network.
+### For Developers
+- **Unified API** - Access markets, signals, and AI analysis
+- **SDK** - Build custom signal publishers and domain analyzers
+- **Modular Architecture** - Extend with new data sources and chains
 
 ---
 
 ## 🏗️ Architecture
 
 ```mermaid
-graph TD
-    A[Raw Data Sources] -->|Weather/Traffic/Social| B(EdgeAnalyzer Nodes)
-    B -->|AI Processing| C{Signal Verification}
-    C -->|Verified| D[Movement M1 Blockchain]
-    C -->|Indexed| E[Unified API / SQLite]
-    D -->|Reputation/Tips| F[Analyst Wallet]
-    E -->|Live Feed| G[React Frontend]
+graph LR
+    A[Polymarket/Kalshi] -->|Live Odds| B(AI Analysis Engine)
+    C[Weather API] -->|Real-time Data| B
+    D[SynthData] -->|ML Forecasts| B
+    B -->|Signals| E[SQLite Database]
+    B -->|Publish| F[Movement Blockchain]
+    E --> G[Frontend Dashboard]
+    F -->|Verify| G
+    G -->|Trade| A
 ```
-
-See [Architecture Guide](./docs/ARCHITECTURE.md) for details.
 
 ### Tech Stack
 - **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
 - **Backend**: Node.js, SQLite (Turso), Redis
 - **AI**: Venice AI (Llama 3.3 70B) with Edge Search
-- **Blockchain**: Movement Testnet (Bardock)
-- **Database**: Turso (LibSQL) / Local SQLite
-- **Wallet**: Nightly, Razor, Petra (Aptos Standard)
+- **Blockchains**: 
+  - Movement/Aptos (signal publishing, tipping)
+  - BNB, Polygon, Arbitrum (trading contracts)
+- **Data Sources**: Polymarket, Kalshi, Open-Meteo, SynthData
 
 ---
 
@@ -73,15 +72,27 @@ cd fourcast
 npm install
 ```
 
+The pre-commit hook will install automatically to protect against committing secrets.
+
 ### 2. Environment Setup
 
-Copy `.env.local.example` to `.env.local` and add your keys:
+Copy `.env.local.example` to `.env.local`:
 
 ```bash
-# Movement M1 Testnet Config
+# Required: AI & Weather
+VENICE_API_KEY=your_venice_api_key
+NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key
+
+# Optional: Movement (signal publishing)
 NEXT_PUBLIC_APTOS_NETWORK=custom
 NEXT_PUBLIC_APTOS_NODE_URL=https://testnet.movementnetwork.xyz/v1
-NEXT_PUBLIC_APTOS_MODULE_ADDRESS=0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c
+NEXT_PUBLIC_MOVEMENT_MODULE_ADDRESS=0x...
+
+# Optional: Polymarket Trading
+POLYMARKET_PRIVATE_KEY=your_private_key
+
+# Optional: Kalshi Trading
+KALSHI_API_KEY=your_api_key
 ```
 
 See [Setup Guide](./docs/SETUP.md) for complete configuration.
@@ -92,22 +103,7 @@ See [Setup Guide](./docs/SETUP.md) for complete configuration.
 npm run dev
 ```
 
-### 4. 🎥 Demo Flow (For Hackathon Video)
-
-1.  **Landing**: Show the 3D weather-responsive background.
-2.  **Connect**: Connect **Nightly Wallet** (Movement Testnet).
-3.  **Publish**:
-    *   Go to **Markets**.
-    *   Click "Analyze" on an event.
-    *   Show the **AI Analysis** loading (Venice AI processing with live web search).
-    *   Approve the `publish_signal` transaction.
-4.  **Verification**: Click "View On-Chain" to see the transaction on the Movement Explorer.
-5.  **Tipping**:
-    *   Switch to a different wallet (or dev account).
-    *   Go to **Signals Feed**.
-    *   Tip a top signal.
-    *   Show the "Tip sent successfully" toast.
-6.  **Leaderboard**: Show the user rising in the "Top Analysts" tab.
+Navigate to `http://localhost:3000`
 
 ---
 
@@ -115,61 +111,58 @@ npm run dev
 
 ```
 fourcast/
-├── app/                    # Next.js app (pages, API routes)
-├── components/             # Shared React components
-├── services/               # Backend services (AI, DB, APIs)
-├── sdk/                    # @fourcast/signal-sdk package
-├── contracts/              # Smart contracts (Solidity)
-├── move/                   # Move contracts (Aptos/Movement)
+├── app/                    # Next.js pages and components
+├── components/             # React components (UI, 3D, trading)
+├── services/               # Backend services (AI, markets, chains)
+├── sdk/                    # Signal SDK for developers
+├── move/                   # Move contracts (signal registry)
 └── docs/                   # Documentation
 ```
 
 ---
 
-## 📦 Using the SDK
+## 📊 Supported Platforms
 
-Want to build your own signal feed?
-
-```typescript
-import { SignalPublisher } from '@fourcast/signal-sdk';
-
-const publisher = new SignalPublisher({ network: 'custom', ... });
-
-await publisher.publish({
-  domain: 'mobility',
-  title: 'Knicks Game High Turnout',
-  confidence: 'HIGH'
-});
-```
-
-See [API Reference](./docs/API_REFERENCE.md) for complete documentation.
-
----
-
-## 📜 Contract Addresses (Movement M1)
-
-| Contract | Address |
-|----------|---------|
-| Signal Registry | `0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c` |
-| Marketplace | `0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c` |
-
-See [Deployment Guide](./docs/DEPLOYMENT.md) for deployment instructions.
+| Platform | Purpose | Status |
+|----------|---------|--------|
+| Polymarket | Live odds, trading | ✅ Live |
+| Kalshi | Live odds, trading | ✅ Live |
+| Movement/Aptos | Signal publishing, tipping | ✅ Testnet |
+| BNB Chain | Trading contracts | 🧪 Beta |
+| Polygon | Trading contracts | 🧪 Beta |
+| Arbitrum | Trading contracts | 🧪 Beta |
 
 ---
 
 ## 📚 Documentation
 
+- **[Features](./docs/FEATURES.md)** - What works today vs. future roadmap
 - **[Setup Guide](./docs/SETUP.md)** - Installation, environment, wallets
-- **[Architecture Guide](./docs/ARCHITECTURE.md)** - EdgeAnalyzer pattern, domains, agent system
+- **[Architecture](./docs/ARCHITECTURE.md)** - System design and data flows
 - **[API Reference](./docs/API_REFERENCE.md)** - All endpoints and schemas
-- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Movement network deployment
+- **[Deployment](./docs/DEPLOYMENT.md)** - Production deployment guide
 
 ---
 
 ## 🤝 Contributing
 
-We welcome new Domain Analyzers! Check out `services/analysis/EdgeAnalyzer.js` to see how to extend the base class.
+We welcome contributions! Areas of interest:
+- New data sources (sentiment, on-chain metrics)
+- Additional prediction market platforms
+- EVM chain integrations
+- UI/UX improvements
+
+---
 
 ## 📄 License
 
 MIT
+
+---
+
+## 🔮 Vision
+
+Fourcast is building a weather-aware prediction intelligence layer for the decentralized web. By combining real-time environmental data, ML forecasts, and AI reasoning, we create verifiable, composable signals that traders and developers can trust.
+
+**Today**: AI analysis, signal publishing, cross-platform trading  
+**Future**: Premium signals, developer ecosystem, DePIN weather integrations

@@ -13,7 +13,10 @@
     "test": "vitest --run",
     "test:turso": "node scripts/test-turso-connection.js",
     "test:db": "node scripts/test-db-operations.js",
-    "test:api": "node scripts/test-signals-api.js"
+    "test:api": "node scripts/test-signals-api.js",
+    "prepare": "chmod +x scripts/*.sh && if [ -d .git/hooks ]; then cp scripts/pre-commit.sh .git/hooks/pre-commit 2>/dev/null || true; fi",
+    "hooks:install": "./scripts/install-hooks.sh",
+    "hooks:test": "./scripts/pre-commit.sh"
   },
   "dependencies": {
     "@aptos-labs/ts-sdk": "^5.1.5",

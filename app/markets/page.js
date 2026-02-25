@@ -13,7 +13,7 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector } from "@/components";
+import { ActiveChainIndicator, ChainSelector, SynthShowcase } from "@/components";
 
 export default function MarketsPage() {
   // Unified chain connection state - single source of truth
@@ -517,6 +517,9 @@ export default function MarketsPage() {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
           {/* Active Chain Indicators */}
           <div className="mb-6 space-y-3">
+            {/* Synth ML Showcase */}
+            <SynthShowcase isNight={isNight} />
+
             {/* Signal Chain Indicator (Aptos/Movement) */}
             {(chains.aptos.connected || chains.movement.connected) && (
               <ActiveChainIndicator variant="badge" isNight={isNight} />
@@ -1506,6 +1509,28 @@ function MarketCard({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
+            {/* Synth ML Badge - Show when analysis uses SynthData */}
+            {isCurrentMarket && analysis?.source && (analysis.source === 'synthdata+llm' || analysis.source === 'synthdata+path') && (
+              <div className="relative group">
+                <span
+                  className={`px-3 py-1 rounded-full font-medium border cursor-help ${
+                    isNight
+                      ? "bg-purple-500/20 text-purple-200 border-purple-400/30"
+                      : "bg-purple-400/20 text-purple-800 border-purple-400/30"
+                  }`}
+                >
+                  🤖 ML
+                </span>
+                <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${
+                  isNight ? 'bg-gray-900 text-white border border-white/20' : 'bg-white text-gray-900 border border-gray-200 shadow-lg'
+                }`}>
+                  {analysis.source === 'synthdata+path' ? 'Path-dependent ML analysis' : 'SynthData 200+ ML models'}
+                  <div className={`absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 ${
+                    isNight ? 'bg-gray-900 border-r border-b border-white/20' : 'bg-white border-r border-b border-gray-200'
+                  }`}></div>
+                </div>
+              </div>
+            )}
             {market.volume24h !== undefined && (
               <div className="relative group">
                 <span
@@ -1629,6 +1654,70 @@ function MarketCard({
           <h2 className={`text-2xl font-light ${textColor} mb-6`}>Analysis</h2>
 
           <div className="space-y-4">
+            {/* SynthData ML Forecast - Show when available */}
+            {analysis?.synthData && (
+              <div className={`${cardBgColor} backdrop-blur-sm border-2 ${
+                isNight ? 'border-purple-500/30' : 'border-purple-400/30'
+              } rounded-xl p-5`}>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">🤖</span>
+                  <h4 className={`text-sm font-medium ${textColor}`}>
+                    SynthData ML Forecast
+                  </h4>
+                  <span className={`ml-auto px-2 py-0.5 rounded text-[10px] font-medium ${
+                    isNight ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-400/20 text-purple-700'
+                  }`}>
+                    200+ MODELS
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <div className={`text-xs ${textColor} opacity-60 mb-1`}>Asset</div>
+                    <div className={`font-medium ${textColor}`}>{analysis.synthData.asset}</div>
+                  </div>
+                  <div>
+                    <div className={`text-xs ${textColor} opacity-60 mb-1`}>Current</div>
+                    <div className={`font-medium ${textColor}`}>
+                      ${analysis.synthData.currentPrice?.toLocaleString()}
+                    </div>
+                  </div>
+                  {analysis.synthData.percentiles?.p5 && (
+                    <>
+                      <div>
+                        <div className={`text-xs ${textColor} opacity-60 mb-1`}>P5 (Bear)</div>
+                        <div className={`font-medium ${isNight ? 'text-red-400' : 'text-red-600'}`}>
+                          ${analysis.synthData.percentiles.p5.toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className={`text-xs ${textColor} opacity-60 mb-1`}>P95 (Bull)</div>
+                        <div className={`font-medium ${isNight ? 'text-green-400' : 'text-green-600'}`}>
+                          ${analysis.synthData.percentiles.p95.toLocaleString()}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {analysis.synthData.polymarketEdge && (
+                  <div className={`mt-4 pt-4 border-t ${isNight ? 'border-white/10' : 'border-black/10'}`}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={`${textColor} opacity-70`}>ML Fair Odds vs Market</span>
+                      <span className={`font-medium ${
+                        Math.abs(analysis.synthData.polymarketEdge.edge) > 0.05 
+                          ? isNight ? 'text-green-400' : 'text-green-600'
+                          : textColor
+                      }`}>
+                        {(analysis.synthData.polymarketEdge.synthFairProb * 100).toFixed(1)}% vs {(analysis.synthData.polymarketEdge.polymarketProb * 100).toFixed(1)}%
+                        {Math.abs(analysis.synthData.polymarketEdge.edge) > 0.05 && ' ⚡'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Market Context & Odds */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div

@@ -2,96 +2,190 @@
 
 ## Overview
 
-Fourcast is a **modular signal intelligence layer** for the Movement network. It aggregates off-chain data (Weather, Mobility, Sentiment), processes it via AI edge nodes, and publishes verifiable prediction signals on-chain.
+Fourcast is a **multi-chain prediction market intelligence platform** that combines AI analysis, live market data, and on-chain signal publishing to help traders find and act on market inefficiencies.
 
-## Core Innovation: EdgeAnalyzer Pattern
+## Core Components
 
-The `EdgeAnalyzer` pattern decouples the *method* of analysis from the *domain* of data, enabling any data domain to use the same signal infrastructure.
+### 1. AI Analysis Engine (`services/aiService.server.js`)
 
-### Base Class (`services/analysis/EdgeAnalyzer.js`)
+The AI engine generates predictions using Venice AI (Llama 3.3 70B) with multiple data sources:
 
 ```javascript
-class EdgeAnalyzer {
-  async analyze(context) {
-    // 1. Validate Context
-    this.validate(context);
+// Core analysis flow
+1. Fetch market data (Polymarket/Kalshi)
+2. Enrich with weather data (Open-Meteo)
+3. Add ML forecasts (SynthData for crypto/equities)
+4. Generate AI prediction with confidence score
+5. Optional: Publish to blockchain
+```
 
-    // 2. Enrich (Domain Specific)
-    const data = await this.enrichContext(context);
+**AI Models:**
+- **Production**: Llama 3.3 70B (~7.5s response, ~$0.01/analysis)
+- **Deep Analysis**: Qwen3-235B (~67s response, ~$0.03/analysis)
 
-    // 3. Construct Prompt (Domain Specific)
-    const prompt = this.constructPrompt(data);
-
-    // 4. AI Processing (Generic)
-    const result = await this.executeAnalysis(prompt);
-
-    // 5. Format for Blockchain (Standard)
-    return this.formatSignal(result);
-  }
+**Configuration:**
+```javascript
+{
+  model: "llama-3.3-70b",
+  enable_web_search: "auto",  // String, not boolean
+  disable_thinking: true      // For Qwen model
 }
 ```
 
-## Domain Implementations
+### 2. Market Data Services
 
-### Weather Domain
-- **Source**: Open-Meteo API (primary), WeatherAPI (fallback)
-- **Trigger**: Market title contains "Rain", "Temperature", "Snow"
-- **Enrichment**: GFS forecast models, 16-day forecasts
-- **Output**: Weather-weighted confidence score
+#### Polymarket Service (`services/polymarketService.js`)
+- Live odds fetching from `gamma-api.polymarket.com`
+- Order signing and placement via CLOB
+- Market catalog caching (30min)
+- Sports metadata caching (24hr)
 
-### Mobility Domain
-- **Source**: Google Popular Times (simulated)
-- **Trigger**: Market title contains "Attendance", "Turnout", "Delay"
-- **Enrichment**: Live crowd density, traffic flow
-- **Output**: Logistics-weighted confidence score
+#### Kalshi Service (`services/kalshiService.js`)
+- Series and event market fetching
+- Order placement with JWT authentication
+- Token auto-refresh (30min expiry)
 
-### Sentiment Domain (Coming Soon)
-- **Source**: Neynar API (Farcaster)
-- **Trigger**: Narrative shifts, social momentum
-- **Enrichment**: Cast engagement, follower sentiment
-- **Output**: Sentiment-weighted confidence score
+#### SynthData Service (`services/synthService.js`)
+- ML-backed price forecasts for crypto/equities
+- Supported assets: BTC, ETH, SOL, XAU, SPY, NVDA, GOOGL, TSLA, AAPL
+- Prediction percentiles (P5/P50/P95), volatility forecasts
+- Polymarket edge detection (fair odds vs market odds)
 
-### DeFi Arbitrage Domain
-- **Source**: Polymarket + Kalshi price feeds
-- **Trigger**: Price discrepancies >5%
-- **Enrichment**: Cross-platform odds, liquidity scores
-- **Output**: Arbitrage opportunity signals
+### 3. Weather Integration (`services/weatherService.js`)
 
-## Data Pipeline
+- **Primary**: Open-Meteo API (GFS forecast models)
+- **Fallback**: WeatherAPI
+- 16-day forecasts, current conditions
+- Location validation and venue extraction
+
+### 4. Data Pipeline
 
 ```
-Raw Data Sources → EdgeAnalyzer Nodes → Signal Verification → Movement M1 Blockchain
-                                              ↓
-                                    Unified API / SQLite
-                                              ↓
-                                    React Frontend (Live Feed)
-                                              ↓
-                                    Analyst Reputation/Tips
+┌─────────────────┐
+│ Polymarket      │
+│ Kalshi          │
+│ SynthData       │
+│ Weather API     │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ AI Analysis     │
+│ Engine          │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ SQLite Database │◄───┐
+│ (Signals,       │    │
+│  Forecasts,     │    │
+│  Track Record)  │    │
+└────────┬────────┘    │
+         │             │
+         ▼             │
+┌─────────────────┐    │
+│ Movement/Aptos  │────┘
+│ (On-chain       │    (async publish,
+│  signals)       │     verification)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Frontend        │
+│ (Signals Feed,  │
+│  Markets,       │
+│  Trading UI)    │
+└─────────────────┘
 ```
 
-### Polymorphic Dispatch
+### 5. Database Schema
 
+#### `agent_forecasts`
+Tracks AI predictions and outcomes for track record:
+```sql
+CREATE TABLE agent_forecasts (
+  id TEXT PRIMARY KEY,
+  market_id TEXT NOT NULL,
+  market_title TEXT,
+  platform TEXT,
+  ai_probability REAL NOT NULL,
+  market_odds REAL NOT NULL,
+  edge REAL NOT NULL,
+  confidence TEXT,
+  reasoning TEXT,
+  key_factors TEXT,
+  timestamp INTEGER NOT NULL,
+  resolved BOOLEAN DEFAULT 0,
+  actual_outcome REAL,
+  brier_score REAL,
+  resolution_time INTEGER
+);
+```
+
+#### `agent_runs`
+Execution metadata for agent loops:
+```sql
+CREATE TABLE agent_runs (
+  id TEXT PRIMARY KEY,
+  config TEXT,
+  markets_scanned INTEGER,
+  candidates_filtered INTEGER,
+  forecasts_made INTEGER,
+  timestamp INTEGER NOT NULL
+);
+```
+
+#### `signals` (SQLite cache)
+Local cache of on-chain signals:
+```sql
+CREATE TABLE signals (
+  id TEXT PRIMARY KEY,
+  event_id TEXT,
+  market_title TEXT,
+  venue TEXT,
+  ai_digest TEXT,
+  confidence TEXT,
+  odds_efficiency TEXT,
+  author_address TEXT,
+  timestamp INTEGER,
+  tx_hash TEXT
+);
+```
+
+## Multi-Chain Architecture
+
+### Movement/Aptos (Signal Layer)
+- **Purpose**: Publish verifiable prediction signals
+- **Network**: Movement testnet (Bardock, Chain ID 250)
+- **Contract**: `signal_registry.move`, `signal_marketplace.move`
+- **Features**: Signal publishing, tipping, reputation tracking
+
+### EVM Chains (Trading Layer)
+- **Supported**: BNB, Polygon, Arbitrum
+- **Purpose**: Trading contracts and prediction logging
+- **Contracts**: `PredictionReceipt` per chain
+- **Features**: On-chain trade logging, fee collection
+
+### Chain Connection Flow
 ```javascript
-const candidates = [
-  { domain: 'weather', title: 'Rain in London?' },
-  { domain: 'mobility', title: 'Wembley Crowd Size?' }
-];
-
-for (const market of candidates) {
-  const analyzer = getAnalyzer(market.domain);
-  const signal = await analyzer.analyze(market);
-  await db.save(signal);
+// useChainConnections hook manages multi-chain state
+{
+  chains: {
+    aptos: { connected, walletAddress, network },
+    evm: { connected, chainId, balance }
+  },
+  canPerform: { aptos: boolean, evm: boolean },
+  canPublish: boolean  // Aptos-only
 }
 ```
 
-## On-Chain Standardization
+## On-Chain Signal Structure
 
-All signals use a unified Move struct regardless of domain:
-
+### Move Struct (Signal Registry)
 ```move
 struct Signal {
     event_id: String,           // Market/event identifier
-    domain_hash: String,        // Hashed domain-specific data
+    domain_hash: String,        // Hash of domain-specific data
     ai_digest: String,          // Human-readable AI reasoning (max 512 bytes)
     confidence: String,         // HIGH/MEDIUM/LOW
     venue: String,              // Event location (max 128 bytes)
@@ -120,40 +214,17 @@ The agent scans markets, filters candidates, generates forecasts, and detects ar
 
 ### Track Record Infrastructure
 
-**Database Tables:**
-- `agent_forecasts`: Stores forecasts with AI probability, market odds, edge, Brier scores
-- `agent_runs`: Execution metadata (markets scanned, candidates filtered, forecasts made)
-
 **Key Functions:**
 - `saveForecast()`: Persist forecasts for track record
 - `resolveForecast()`: Update with actual outcome, calculate Brier score
 - `getAgentTrackRecord()`: Retrieve historical performance
-- `wasRecentlyAnalyzed()`: Check if market was analyzed recently (prevents redundant API calls)
+- `wasRecentlyAnalyzed()`: Check if market was analyzed recently
 
 ### Calibration Guardrails
 
 - If edge >30%, override confidence to LOW
 - Warning: "Edge >30% - high uncertainty"
 - Rationale: Markets are usually more right than LLMs; extreme edges are suspicious
-
-## AI Model Configuration
-
-### Production Model: Llama 3.3 70B
-- Response Time: ~7.5 seconds
-- Cost: ~$0.01 per analysis
-- Margin: 98%+ at $1 = 10 credits
-- Output: Clean, parseable JSON
-
-### Deep Analysis Model: Qwen3-235B
-- Response Time: ~67 seconds
-- Cost: ~$0.03 per analysis
-- Margin: 85%+ at $1 = 5 credits
-- Output: More specific analysis with causal reasoning
-- Use: `disable_thinking: true` parameter (NOT `strip_thinking_response`)
-
-### Hybrid Tier System (Future)
-- Basic Analysis: 1 credit (Llama 3.3 70B)
-- Deep Analysis: 5 credits (Qwen3-235B)
 
 ## Reputation System
 
@@ -170,28 +241,52 @@ The agent scans markets, filters candidates, generates forecasts, and detects ar
 - Signal count, accuracy streaks
 - Confidence-stratified accuracy
 
-## Tech Stack
+## API Architecture
 
-- **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
-- **Backend**: Node.js, SQLite (Turso), Redis
-- **AI**: Venice AI (Llama 3.3 70B) with Edge Search
-- **Blockchain**: Movement M1 Testnet (Bardock)
-- **Wallet**: Nightly, Petra, Razor (Aptos Standard)
+### Route Structure (`/app/api/*`)
+```
+/api/analyze        - AI analysis endpoint
+/api/signals        - Signal CRUD operations
+/api/markets        - Market discovery (Polymarket/Kalshi)
+/api/defi/arbitrage - Cross-platform arbitrage detection
+/api/agent          - Agent track record and forecasting
+/api/kalshi         - Kalshi trading (login, orders, balance)
+/api/leaderboard    - Analyst rankings
+/api/stats          - User statistics
+/api/weather        - Weather data
+/api/farcaster      - Social integration (optional)
+```
+
+### Caching Strategy
+- **Redis**: AI analysis results (15min), SynthData forecasts (15min)
+- **In-memory**: Market catalogs (30min), sports metadata (24hr)
+- **SQLite**: Persistent signals, forecasts, track records
 
 ## Design Principles
-
-### Enhancement First
-- Reuse existing signal marketplace
-- Extend services (no new service for each domain)
-- Single Move contract for all domains
-
-### Aggressive Consolidation
-- One signal shape (Move module)
-- One analyzer pattern (EdgeAnalyzer)
-- Config-driven domains (no code duplication)
 
 ### Progressive Enhancement
 1. Save to SQLite (immediate feedback)
 2. Publish to Movement (async, on-chain proof)
 3. Link records (update SQLite with tx_hash)
 4. Graceful degradation (works offline, retry mechanism)
+
+### Aggressive Consolidation
+- One signal shape (Move module)
+- Config-driven data sources (no code duplication)
+- Unified API for all market platforms
+
+### Enhancement First
+- Reuse existing signal marketplace
+- Extend services (no new service for each domain)
+- Single Move contract for all domains
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
+- **Backend**: Node.js, SQLite (Turso), Redis
+- **AI**: Venice AI (Llama 3.3 70B) with Edge Search
+- **Blockchains**: 
+  - Movement/Aptos (signal publishing)
+  - EVM chains (trading contracts)
+- **Wallets**: Nightly, Petra (Aptos); MetaMask, WalletConnect (EVM)
+- **Data**: Polymarket, Kalshi, Open-Meteo, SynthData

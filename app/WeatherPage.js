@@ -115,6 +115,17 @@ export default function WeatherPage() {
     [isPortalMode, isNight]
   );
 
+  // Show hero/onboarding on first visit
+  const [showHero, setShowHero] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return !localStorage.getItem('fourcast_visited');
+  });
+
+  const dismissHero = () => {
+    localStorage.setItem('fourcast_visited', 'true');
+    setShowHero(false);
+  };
+
   return (
     <div className="w-screen h-screen min-h-dvh relative flex flex-col">
       {/* 3D Scene fills entire viewport - base layer */}
@@ -127,6 +138,44 @@ export default function WeatherPage() {
           onPortalWeatherDataChange={handlePortalWeatherDataChange}
         />
       </div>
+
+      {/* Hero Overlay - First Visit */}
+      {showHero && (
+        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="max-w-xl bg-gradient-to-br from-purple-900/90 to-blue-900/90 rounded-2xl p-8 border border-purple-500/30 shadow-2xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-3xl">🔮</div>
+              <h1 className="text-2xl font-bold text-white">Fourcast</h1>
+            </div>
+            
+            <p className="text-lg text-purple-200 mb-5">
+              Quantitative prediction market intelligence powered by <span className="font-bold text-white">SynthData's 200+ ML models</span>
+            </p>
+            
+            <div className="space-y-2.5 mb-5 text-sm text-purple-100">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🤖</span>
+                <span>Probabilistic forecasts for BTC, ETH, SOL, Gold, Stocks</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📊</span>
+                <span>Edge detection: ML fair odds vs market prices</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎯</span>
+                <span>Path-dependent analysis (e.g., "BTC $60K before $65K?")</span>
+              </div>
+            </div>
+
+            <button
+              onClick={dismissHero}
+              className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold rounded-lg transition-all transform hover:scale-105"
+            >
+              Explore Markets →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Celebration Overlay */}
       <WinCelebration 
