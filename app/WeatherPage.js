@@ -6,7 +6,6 @@ import LocationSelector from '@/components/LocationSelector';
 import WalletConnect from '@/app/components/WalletConnect';
 import { weatherService } from '@/services/weatherService';
 import { WinCelebration } from '@/components/WinCelebration';
-import { BuilderDashboard } from '@/components/BuilderDashboard';
 
 export default function WeatherPage() {
   const [weatherData, setWeatherData] = useState(null);
@@ -18,8 +17,6 @@ export default function WeatherPage() {
   const [portalWeatherData, setPortalWeatherData] = useState(null);
   const [errorSearchQuery, setErrorSearchQuery] = useState('');
   
-  // New States for UX improvements
-  const [isBuilderMode, setIsBuilderMode] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [winningSignal, setWinningSignal] = useState(null);
 
@@ -146,27 +143,27 @@ export default function WeatherPage() {
             <div className="flex items-center gap-3 mb-4">
               <div className="text-3xl">🔮</div>
               <h1 className="text-2xl font-bold text-white">Fourcast</h1>
-              <span className="ml-auto px-2 py-1 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-xs font-medium">
-                Synth Hackathon
-              </span>
             </div>
             
-            <p className="text-base text-white/80 mb-6 leading-relaxed">
-              Quantitative prediction market intelligence powered by <span className="font-semibold text-white">SynthData's 200+ ML models</span>
+            <p className="text-lg text-white/90 mb-2 font-light">
+              Fourcast the future.
+            </p>
+            <p className="text-sm text-white/60 mb-6 leading-relaxed">
+              Quantitative prediction intelligence across crypto, sports, politics & more — powered by <span className="font-medium text-white/80">200+ ML models</span>
             </p>
             
             <div className="space-y-3 mb-6">
               <div className="flex items-start gap-3 text-sm text-white/70">
-                <span className="text-lg flex-shrink-0">🤖</span>
-                <span>Probabilistic forecasts for BTC, ETH, SOL, Gold, Stocks</span>
-              </div>
-              <div className="flex items-start gap-3 text-sm text-white/70">
-                <span className="text-lg flex-shrink-0">📊</span>
-                <span>Edge detection: ML fair odds vs market prices</span>
+                <span className="text-lg flex-shrink-0">📈</span>
+                <span>ML-driven edge detection across Polymarket & Kalshi</span>
               </div>
               <div className="flex items-start gap-3 text-sm text-white/70">
                 <span className="text-lg flex-shrink-0">🎯</span>
-                <span>Path-dependent analysis (e.g., "BTC $60K before $65K?")</span>
+                <span>Probabilistic forecasts for BTC, ETH, SOL & more</span>
+              </div>
+              <div className="flex items-start gap-3 text-sm text-white/70">
+                <span className="text-lg flex-shrink-0">📡</span>
+                <span>Publish signals on-chain and build your track record</span>
               </div>
             </div>
 
@@ -174,7 +171,7 @@ export default function WeatherPage() {
               onClick={dismissHero}
               className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium rounded-xl transition-all transform hover:scale-[1.02]"
             >
-              Explore Markets →
+              Start Fourcasting →
             </button>
           </div>
         </div>
@@ -250,23 +247,6 @@ export default function WeatherPage() {
                     </div>
                   </div>
 
-                  {/* Mode Toggle Switch - Dev Only */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="hidden sm:flex bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
-                      <button
-                        onClick={() => setIsBuilderMode(false)}
-                        className={`px-3 py-1 rounded-full text-xs transition-all ${!isBuilderMode ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'}`}
-                      >
-                        Trader
-                      </button>
-                      <button
-                        onClick={() => setIsBuilderMode(true)}
-                        className={`px-3 py-1 rounded-full text-xs transition-all ${isBuilderMode ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'}`}
-                      >
-                        Builder
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex items-center space-x-2 sm:space-x-4">
@@ -283,15 +263,8 @@ export default function WeatherPage() {
           </header>
         )}
 
-        {/* Builder Dashboard Overlay - Dev Only */}
-        {process.env.NODE_ENV === 'development' && isBuilderMode && !isPortalMode && !isLoading && (
-          <div className="absolute top-24 right-6 w-80 z-30 pointer-events-auto animate-in fade-in slide-in-from-right-10 duration-500">
-             <BuilderDashboard isNight={isNight} onClose={() => setIsBuilderMode(false)} />
-          </div>
-        )}
-
         {/* Portal Coach Mark — anchored near the portals at the bottom */}
-        {!isPortalMode && !isLoading && !isBuilderMode && weatherData && (
+        {!isPortalMode && !isLoading && weatherData && (
           <div className="absolute bottom-28 sm:bottom-32 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none portal-coach-mark">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border ${
               isNight
@@ -318,8 +291,8 @@ export default function WeatherPage() {
         {/* Spacer to push content to the bottom */}
         <div className="flex-grow" />
 
-        {/* Centered Floating Navigation - Trader Mode Only */}
-        {weatherData && !isLoading && !isBuilderMode && (
+        {/* Centered Floating Navigation */}
+        {weatherData && !isLoading && (
           <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto">
             <div className={`backdrop-blur-md border rounded-full px-4 sm:px-6 py-2.5 sm:py-3 transition-all duration-300 ${isNight
                 ? 'bg-white/10 border-white/20 hover:bg-white/15'
@@ -338,7 +311,7 @@ export default function WeatherPage() {
                   </svg>
                   <div className="flex flex-col items-start">
                     <span className="text-xs sm:text-sm font-medium leading-tight">Markets</span>
-                    <span className={`text-[10px] leading-tight ${isNight ? 'text-white/50' : 'text-black/40'}`}>Browse & trade</span>
+                    <span className={`text-[10px] leading-tight ${isNight ? 'text-white/50' : 'text-black/40'}`}>Browse & trade predictions</span>
                   </div>
                 </button>
 

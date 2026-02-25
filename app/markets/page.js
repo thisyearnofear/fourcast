@@ -444,8 +444,8 @@ export default function MarketsPage() {
               </h1>
               <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
                 {activeTab === "sports"
-                  ? "Event weather analysis for sports markets"
-                  : "Discover high-volume prediction markets globally"}
+                  ? "Sports predictions with weather-aware analysis"
+                  : "ML-powered edge detection across prediction markets"}
               </p>
             </div>
             <div className="flex items-center space-x-3">
@@ -496,7 +496,7 @@ export default function MarketsPage() {
                   : `${textColor} opacity-60 hover:opacity-100`
                   }`}
               >
-                ⚽ Sports (Event Weather)
+                🏆 Sports & Events
               </button>
               <button
                 onClick={() => setActiveTab("discovery")}
@@ -507,7 +507,7 @@ export default function MarketsPage() {
                   : `${textColor} opacity-60 hover:opacity-100`
                   }`}
               >
-                🔍 All Markets (Discovery)
+                📈 Crypto, Finance & More
               </button>
             </div>
           </div>

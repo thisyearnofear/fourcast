@@ -9,7 +9,7 @@ export default function PageNav({ currentPage, isNight }) {
     : "bg-black/10 border-black/20";
 
   const pages = [
-    { name: "Weather", href: "/", label: "🌤️" },
+    { name: "Home", href: "/", label: "🔮" },
     { name: "Markets", href: "/markets", label: "📊" },
     { name: "Signals", href: "/signals", label: "📡" },
   ];
