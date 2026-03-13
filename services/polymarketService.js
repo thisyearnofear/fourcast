@@ -188,8 +188,19 @@ class PolymarketService {
 
       for (const event of events) {
         if (event.markets && Array.isArray(event.markets)) {
+          // Filter out resolved/closed markets at extraction time
+          const activeMarkets = event.markets.filter(m => {
+            // Check multiple indicators of resolved status
+            const isClosed = m.closed === true || m.closed === 'true';
+            const isResolved = m.resolved === true || m.resolved === 'true';
+            const hasResolution = m.resolutionSource || m.winningOutcome;
+            const isArchived = m.archived === true || m.archived === 'true';
+            
+            return !isClosed && !isResolved && !hasResolution && !isArchived;
+          });
+          
           allMarkets = allMarkets.concat(
-            event.markets.map(m => ({
+            activeMarkets.map(m => ({
               ...m,
               eventTags: event.tags || []
             }))
@@ -240,9 +251,18 @@ class PolymarketService {
 
           // Match location (case-insensitive)
           if (eventLoc && eventLoc.toLowerCase() === location.toLowerCase()) {
-            // Add all markets from this event with event tags for metadata
+            // Add active markets from this event with event tags for metadata
             if (event.markets && Array.isArray(event.markets)) {
-              relevantMarkets.push(...event.markets.map(m => ({
+              // Filter out resolved/closed markets at extraction time
+              const activeMarkets = event.markets.filter(m => {
+                const isClosed = m.closed === true || m.closed === 'true';
+                const isResolved = m.resolved === true || m.resolved === 'true';
+                const hasResolution = m.resolutionSource || m.winningOutcome;
+                const isArchived = m.archived === true || m.archived === 'true';
+                return !isClosed && !isResolved && !hasResolution && !isArchived;
+              });
+              
+              relevantMarkets.push(...activeMarkets.map(m => ({
                 ...m,
                 eventTags: event.tags || [] // Include event tags for proper metadata extraction
               })));

@@ -14,6 +14,19 @@ import { saveForecast, wasRecentlyAnalyzed } from "./db.js";
 import { synthService } from "./synthService.js";
 import { analyzePathDependentMarket, detectPathDependentMarket } from "./pathDependentService.js";
 
+// Weather-sensitive market categories - weather impacts outcomes for these
+const WEATHER_SENSITIVE_CATEGORIES = [
+  'nfl', 'nba', 'mlb', 'nhl', 'soccer', 'golf', 'tennis', 'cricket', 'rugby', 'f1', 'formula 1',
+  'marathon', 'racing', 'outdoor', 'weather', 'sports'
+];
+
+// Check if a market category is weather-sensitive
+const isWeatherSensitiveCategory = (eventType) => {
+  if (!eventType) return false;
+  const type = String(eventType).toLowerCase();
+  return WEATHER_SENSITIVE_CATEGORIES.some(cat => type.includes(cat));
+};
+
 const callVeniceAI = async (params, options = {}) => {
   const {
     eventType,
@@ -61,31 +74,11 @@ const callVeniceAI = async (params, options = {}) => {
     );
   }
 
-  const messages = [
-    {
-      role: "system",
-      content: `You are an expert sports betting analyst specializing in weather impacts on game outcomes. Provide SPECIFIC, ACTIONABLE analysis with clear reasoning.
-
-STRICT REQUIREMENTS:
-- Tailor analysis to the given sport and participants only
-- Do NOT reuse or reference any example content; generate event-specific analysis
-- You MUST respond with ONLY a valid JSON object, no other text before or after
-- Do NOT wrap the JSON in markdown code blocks
-- Output a single JSON object with the required fields only
-      `,
-    },
-
-    {
-      role: "user",
-      content: `EVENT CONTEXT
-- Event Title: ${title || "Unknown"}
-- Event Type: ${eventType}
-- Participants: ${participantText || "Unknown"}
-- Venue: ${location?.name || location || "Unknown"}
-- Scheduled Date: ${
-        eventDate || weatherData?.forecast?.forecastday?.[0]?.date || "Unknown"
-      }
-
+  // Determine if this market is weather-sensitive
+  const isWeatherMarket = isWeatherSensitiveCategory(eventType);
+  
+  // Build weather section only for weather-sensitive markets
+  const weatherSection = isWeatherMarket ? `
 WEATHER
 - Temperature: ${
         weatherData?.current?.temp_f ||
@@ -107,12 +100,55 @@ WEATHER
         weatherData?.forecast?.forecastday?.[0]?.day?.maxwind_mph ||
         "0"
       } mph
+` : `
+CONTEXT NOTE
+- This is a ${eventType || 'financial/political'} market - weather is NOT a relevant factor
+- Focus analysis on market fundamentals, news, and odds efficiency only
+`;
 
+  // Adjust system prompt based on market type
+  const systemPrompt = isWeatherMarket 
+    ? `You are an expert sports betting analyst specializing in weather impacts on game outcomes. Provide SPECIFIC, ACTIONABLE analysis with clear reasoning.
+
+STRICT REQUIREMENTS:
+- Tailor analysis to the given sport and participants only
+- Consider how weather conditions may impact game outcomes
+- Do NOT reuse or reference any example content; generate event-specific analysis
+- You MUST respond with ONLY a valid JSON object, no other text before or after
+- Do NOT wrap the JSON in markdown code blocks
+- Output a single JSON object with the required fields only`
+    : `You are an expert prediction market analyst. Provide SPECIFIC, ACTIONABLE analysis with clear reasoning.
+
+STRICT REQUIREMENTS:
+- Focus on market fundamentals, news, and odds efficiency
+- Do NOT mention weather - it is NOT relevant for this market type
+- Do NOT reuse or reference any example content; generate market-specific analysis
+- You MUST respond with ONLY a valid JSON object, no other text before or after
+- Do NOT wrap the JSON in markdown code blocks
+- Output a single JSON object with the required fields only`;
+
+  const messages = [
+    {
+      role: "system",
+      content: systemPrompt,
+    },
+
+    {
+      role: "user",
+      content: `EVENT CONTEXT
+- Event Title: ${title || "Unknown"}
+- Event Type: ${eventType}
+- Participants: ${participantText || "Unknown"}
+- Venue: ${location?.name || location || "Unknown"}
+- Scheduled Date: ${
+        eventDate || weatherData?.forecast?.forecastday?.[0]?.date || "Unknown"
+      }
+${weatherSection}
 MARKET ODDS: ${oddsText}
 
 RESPONSE FORMAT - You MUST respond with ONLY this JSON structure, no other text:
 {
-  "weather_impact": "LOW|MEDIUM|HIGH",
+  "weather_impact": "${isWeatherMarket ? "LOW|MEDIUM|HIGH" : "N/A"}",
   "odds_efficiency": "FAIR|OVERPRICED|UNDERPRICED|UNKNOWN",
   "confidence": "LOW|MEDIUM|HIGH",
   "analysis": "Event-specific reasoning only, no example content",
@@ -396,6 +432,14 @@ export async function analyzeWeatherImpactServer(params) {
       };
     }
 
+    // Check if this market type is weather-sensitive
+    const isWeatherMarket = isWeatherSensitiveCategory(eventType);
+    if (!isWeatherMarket) {
+      console.log(`📊 Non-weather market detected (${eventType}), skipping weather data fetch`);
+      // For non-weather markets, proceed without weather data
+      weatherData = null;
+    }
+
     const deriveProvider = (id) => {
       if (!id) return "polymarket";
       if (typeof id === "string") {
@@ -480,7 +524,9 @@ export async function analyzeWeatherImpactServer(params) {
       effectiveLocation || location,
       { title }
     );
-    if (!effectiveLocation || initialValidation.warning) {
+    
+    // Only fetch weather for weather-sensitive markets
+    if (isWeatherMarket && (!effectiveLocation || initialValidation.warning)) {
       const inferred = await verifyEventLocation(title, eventType);
       if (inferred) {
         try {
@@ -498,8 +544,8 @@ export async function analyzeWeatherImpactServer(params) {
       }
     }
 
-    if (!correctedLocation && effectiveLocation && !weatherData) {
-      // Only fetch weather if we don't already have it
+    // Only fetch weather for weather-sensitive markets that don't already have it
+    if (isWeatherMarket && !correctedLocation && effectiveLocation && !weatherData) {
       try {
         const newWeather = await weatherService.getCurrentWeather(
           effectiveLocation
@@ -677,21 +723,24 @@ export async function analyzeWeatherImpactServer(params) {
       await redis.setEx(cacheKey, ttl, JSON.stringify(analysis));
     }
 
-    // Select forecast day aligned to eventDate if available
+    // Select forecast day aligned to eventDate if available (only for weather-sensitive markets)
     let forecastDay = null;
-    try {
-      const fd = weatherData?.forecast?.forecastday || [];
-      if (eventDate) {
-        forecastDay = fd.find((d) => d.date === eventDate) || fd[0] || null;
-      } else {
-        forecastDay = fd[0] || null;
+    if (isWeatherMarket && weatherData) {
+      try {
+        const fd = weatherData?.forecast?.forecastday || [];
+        if (eventDate) {
+          forecastDay = fd.find((d) => d.date === eventDate) || fd[0] || null;
+        } else {
+          forecastDay = fd[0] || null;
+        }
+      } catch (e) {
+        console.warn("Forecast day selection failed:", e?.message || e);
       }
-    } catch (e) {
-      console.warn("Forecast day selection failed:", e?.message || e);
     }
 
-    const wc = {
-      location: location.name || location,
+    // Build weather conditions - only include for weather-sensitive markets
+    const wc = isWeatherMarket ? {
+      location: location?.name || location || "Unknown",
       temperature: `${
         weatherData?.current?.temp_f || forecastDay?.day?.avgtemp_f || "N/A"
       }°F`,
@@ -707,6 +756,10 @@ export async function analyzeWeatherImpactServer(params) {
       wind: `${
         weatherData?.current?.wind_mph || forecastDay?.day?.maxwind_mph || "0"
       } mph`,
+    } : {
+      location: location?.name || location || "N/A",
+      note: "Weather data not applicable for this market type",
+      category: eventType || "Unknown"
     };
 
     // Derive chain recommendation from confidence, liquidity, and odds efficiency
