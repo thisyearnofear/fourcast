@@ -6,10 +6,11 @@ export default function TippingModal({ isOpen, onClose, onTip, recipientAddress,
 
     if (!isOpen) return null;
 
+    // Glass CSS classes (DRY)
     const textColor = isNight ? 'text-white' : 'text-black';
-    const bgColor = isNight ? 'bg-slate-900/90' : 'bg-white/90';
+    const glassPanel = isNight ? 'glass-heavy bg-slate-900/90' : 'glass-heavy-light bg-white/90';
+    const glassInput = isNight ? 'glass-input' : 'glass-input-light';
     const borderColor = isNight ? 'border-white/10' : 'border-black/10';
-    const inputBg = isNight ? 'bg-white/5' : 'bg-black/5';
 
     // Preset amounts in MOVE
     const PRESETS = [0.1, 0.5, 1, 5];
@@ -40,7 +41,7 @@ export default function TippingModal({ isOpen, onClose, onTip, recipientAddress,
             />
 
             {/* Modal */}
-            <div className={`relative w-full max-w-sm ${bgColor} backdrop-blur-xl border ${borderColor} rounded-3xl p-6 shadow-2xl transform transition-all`}>
+            <div className={`relative w-full max-w-sm ${glassPanel} rounded-3xl p-6 shadow-2xl transform transition-all`}>
                 <div className="flex justify-between items-center mb-6">
                     <h3 className={`text-xl font-light ${textColor}`}>
                         Tip Analyst
@@ -75,7 +76,7 @@ export default function TippingModal({ isOpen, onClose, onTip, recipientAddress,
                                     onClick={() => setAmount(preset.toString())}
                                     className={`py-2 px-1 rounded-xl text-sm transition-all ${amount === preset.toString()
                                         ? 'bg-amber-500 text-white font-medium shadow-lg shadow-amber-500/20'
-                                        : `${inputBg} ${textColor} hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20`
+                                        : `${glassInput} ${textColor} hover:bg-amber-500/10 border-transparent hover:border-amber-500/20`
                                         }`}
                                 >
                                     {preset}

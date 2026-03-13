@@ -29,8 +29,9 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
 
     if (!isOpen) return null;
 
+    // Glass CSS classes (DRY)
     const textColor = isNight ? 'text-white' : 'text-black';
-    const bgColor = isNight ? 'bg-slate-900/95' : 'bg-white/95';
+    const glassPanel = isNight ? 'glass-heavy bg-slate-900/95' : 'glass-heavy-light bg-white/95';
     const borderColor = isNight ? 'border-white/10' : 'border-black/10';
 
     return (
@@ -42,7 +43,7 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
             />
 
             {/* Drawer */}
-            <div className={`relative w-full max-w-md h-full ${bgColor} border-l ${borderColor} shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto`}>
+            <div className={`relative w-full max-w-md h-full ${glassPanel} border-l shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto`}>
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-8">
                         <h2 className={`text-2xl font-thin ${textColor}`}>Analyst Profile</h2>
