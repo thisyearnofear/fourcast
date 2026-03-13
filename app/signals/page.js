@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import WalletConnect from '@/app/components/WalletConnect';
 import { useSignalPublisher } from '@/hooks/useSignalPublisher';
 import { useChainConnections } from '@/hooks/useChainConnections';
-import PageNav from '@/app/components/PageNav';
+import PageNav, { SecondaryNav } from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
 import Scene3D from '@/components/Scene3D';
 import { weatherService } from '@/services/weatherService';
@@ -251,46 +251,17 @@ export default function SignalsPage() {
 
                     {/* Tab Switcher */}
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-4">
-                        <div className={`inline-flex rounded-2xl p-1 border ${cardBgColor} backdrop-blur-xl flex-wrap gap-1`}>
-                            <button
-                                onClick={() => setActiveTab('feed')}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'feed'
-                                    ? (isNight ? 'bg-blue-500/30 text-white border border-blue-400/40' : 'bg-blue-400/30 text-black border border-blue-500/40')
-                                    : `${textColor} opacity-60 hover:opacity-100`
-                                    }`}
-                            >
-                                📡 Signal Feed
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('defi')}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'defi'
-                                    ? (isNight ? 'bg-orange-500/30 text-white border border-orange-400/40' : 'bg-orange-400/30 text-black border border-orange-500/40')
-                                    : `${textColor} opacity-60 hover:opacity-100`
-                                    }`}
-                            >
-                                💱 DeFi Arbs
-                            </button>
-                            {aptosConnected && (
-                                <button
-                                    onClick={() => setActiveTab('my-signals')}
-                                    className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'my-signals'
-                                        ? (isNight ? 'bg-green-500/30 text-white border border-green-400/40' : 'bg-green-400/30 text-black border border-green-500/40')
-                                        : `${textColor} opacity-60 hover:opacity-100`
-                                        }`}
-                                >
-                                🎯 My Track Record
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setActiveTab('leaderboard')}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === 'leaderboard'
-                                    ? (isNight ? 'bg-purple-500/30 text-white border border-purple-400/40' : 'bg-purple-400/30 text-black border border-purple-500/40')
-                                    : `${textColor} opacity-60 hover:opacity-100`
-                                    }`}
-                            >
-                                🏆 Top Analysts
-                            </button>
-                        </div>
+                        <SecondaryNav
+                            items={[
+                                { id: 'feed', label: 'Signal Feed', icon: '📡' },
+                                { id: 'defi', label: 'DeFi Arbs', icon: '💱' },
+                                ...(aptosConnected ? [{ id: 'my-signals', label: 'My Track Record', icon: '🎯' }] : []),
+                                { id: 'leaderboard', label: 'Top Analysts', icon: '🏆' },
+                            ]}
+                            activeItem={activeTab}
+                            onChange={setActiveTab}
+                            isNight={isNight}
+                        />
                     </div>
                 </header>
 

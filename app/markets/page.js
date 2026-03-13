@@ -6,7 +6,7 @@ import { useSignalPublisher } from "@/hooks/useSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
 import { weatherService } from "@/services/weatherService";
 import { arbitrageService } from "@/services/arbitrageService";
-import PageNav from "@/app/components/PageNav";
+import PageNav, { SecondaryNav, HomeLink } from "@/app/components/PageNav";
 import Scene3D from "@/components/Scene3D";
 import { useToast, ToastContainer } from "@/components/Toast";
 import { OrderSigningPanel } from "@/components/OrderSigningPanel";
@@ -484,32 +484,15 @@ export default function MarketsPage() {
 
           {/* Tab Switcher */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-4">
-            <div
-              className={`inline-flex rounded-2xl p-1 border ${cardBgColor} backdrop-blur-xl`}
-            >
-              <button
-                onClick={() => setActiveTab("sports")}
-                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === "sports"
-                  ? isNight
-                    ? "bg-blue-500/30 text-white border border-blue-400/40"
-                    : "bg-blue-400/30 text-black border border-blue-500/40"
-                  : `${textColor} opacity-60 hover:opacity-100`
-                  }`}
-              >
-                🏆 Sports & Events
-              </button>
-              <button
-                onClick={() => setActiveTab("discovery")}
-                className={`px-6 py-2.5 rounded-xl text-sm font-light transition-all ${activeTab === "discovery"
-                  ? isNight
-                    ? "bg-purple-500/30 text-white border border-purple-400/40"
-                    : "bg-purple-400/30 text-black border border-purple-500/40"
-                  : `${textColor} opacity-60 hover:opacity-100`
-                  }`}
-              >
-                📈 Crypto, Finance & More
-              </button>
-            </div>
+            <SecondaryNav
+              items={[
+                { id: "sports", label: "Sports & Events", icon: "🏆" },
+                { id: "discovery", label: "Crypto, Finance & More", icon: "📈" },
+              ]}
+              activeItem={activeTab}
+              onChange={setActiveTab}
+              isNight={isNight}
+            />
           </div>
         </header>
 

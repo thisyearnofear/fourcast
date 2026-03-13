@@ -1,34 +1,147 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-export default function PageNav({ currentPage, isNight }) {
+/**
+ * Primary Navigation Component
+ * 
+ * Architecture:
+ * - Brand (Home) always visible
+ * - Primary nav: Markets, Signals
+ * - Mobile: Bottom tab bar style
+ * - Desktop: Horizontal nav with active state
+ * 
+ * Props:
+ * - currentPage: string - for backward compatibility
+ * - isNight: boolean - theme
+ * - secondaryNav: array - optional secondary navigation items
+ */
+export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
+  const pathname = usePathname();
+  
+  const textColor = isNight ? "text-white" : "text-black";
+  const bgClass = isNight
+    ? "bg-white/10 border-white/20"
+    : "bg-black/10 border-black/20";
+  const activeBgClass = isNight
+    ? "bg-white/20 border-white/30"
+    : "bg-black/20 border-black/30";
+
+  // Primary navigation structure
+  const primaryNav = [
+    { 
+      name: "Markets", 
+      href: "/markets", 
+      icon: "📊",
+      description: "ML-powered edge detection",
+      onboardId: "markets"
+    },
+    { 
+      name: "Signals", 
+      href: "/signals", 
+      icon: "📡",
+      description: "Track record & leaderboard",
+      onboardId: "publish"
+    },
+  ];
+
+  // Determine active page
+  const isActive = (href) => {
+    if (href === "/") return pathname === "/";
+    return pathname?.startsWith(href);
+  };
+
+  return (
+    <nav className="flex items-center gap-2">
+      {/* Desktop Navigation */}
+      <div className="hidden sm:flex items-center gap-2">
+        {primaryNav.map((item) => (
+          <Link
+            key={item.name}
+            href={item.href}
+            data-onboard={item.onboardId}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+              isActive(item.href)
+                ? `${activeBgClass} ${textColor}`
+                : `${bgClass} ${textColor} opacity-70 hover:opacity-100 hover:scale-[1.02]`
+            }`}
+          >
+            <span>{item.icon}</span>
+            <span>{item.name}</span>
+          </Link>
+        ))}
+      </div>
+
+      {/* Mobile Navigation - Icon only */}
+      <div className="flex sm:hidden items-center gap-1">
+        {primaryNav.map((item) => (
+          <Link
+            key={item.name}
+            href={item.href}
+            data-onboard={item.onboardId}
+            className={`flex items-center justify-center w-10 h-10 rounded-lg border text-lg transition-all ${
+              isActive(item.href)
+                ? `${activeBgClass}`
+                : `${bgClass} opacity-70`
+            }`}
+            aria-label={item.name}
+          >
+            <span>{item.icon}</span>
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+/**
+ * Secondary Navigation Component
+ * For page-specific tab navigation (used within pages)
+ */
+export function SecondaryNav({ items, activeItem, onChange, isNight }) {
   const textColor = isNight ? "text-white" : "text-black";
   const bgClass = isNight
     ? "bg-white/10 border-white/20"
     : "bg-black/10 border-black/20";
 
-  const pages = [
-    { name: "Home", href: "/", label: "🔮", onboardId: "weather" },
-    { name: "Markets", href: "/markets", label: "📊", onboardId: "markets" },
-    { name: "Signals", href: "/signals", label: "📡", onboardId: "publish" },
-  ];
-
-  const otherPages = pages.filter((page) => page.name !== currentPage);
-
   return (
-    <div className="flex items-center space-x-2">
-      {otherPages.map((page) => (
-        <Link
-          key={page.name}
-          href={page.href}
-          data-onboard={page.onboardId}
-          className={`flex items-center space-x-2 px-3 py-2 ${textColor} rounded-lg border ${bgClass} text-sm font-medium hover:scale-[1.03] transition-transform`}
+    <div className={`inline-flex rounded-2xl p-1 border ${bgClass} backdrop-blur-xl`}>
+      {items.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => onChange(item.id)}
+          className={`px-4 py-2 rounded-xl text-sm font-light transition-all ${
+            activeItem === item.id
+              ? isNight
+                ? "bg-purple-500/30 text-white border border-purple-400/40"
+                : "bg-purple-400/30 text-black border border-purple-500/40"
+              : `${textColor} opacity-60 hover:opacity-100`
+          }`}
         >
-          <span>{page.label}</span>
-          <span>{page.name}</span>
-        </Link>
+          {item.icon && <span className="mr-1.5">{item.icon}</span>}
+          {item.label}
+        </button>
       ))}
     </div>
+  );
+}
+
+/**
+ * Home Link Component
+ * Brand link for header
+ */
+export function HomeLink({ isNight, showLabel = false }) {
+  const textColor = isNight ? "text-white" : "text-black";
+  
+  return (
+    <Link
+      href="/"
+      data-onboard="weather"
+      className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all hover:opacity-80 ${textColor}`}
+    >
+      <span className="text-xl">🔮</span>
+      {showLabel && <span className="text-sm font-light">Fourcast</span>}
+    </Link>
   );
 }
