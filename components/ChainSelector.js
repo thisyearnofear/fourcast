@@ -93,7 +93,7 @@ function CompactChainSelector({ options, onNetworkChange }) {
                 option.onSwitch(e.target.value);
                 onNetworkChange?.({ chainId: option.chainId, networkId: e.target.value });
               }}
-              className="px-2 py-1 text-xs rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors cursor-pointer"
+              className="px-2 py-1 text-xs rounded-lg glass-subtle text-white hover:bg-white/20 transition-colors cursor-pointer"
             >
               {option.networks.map((net) => (
                 <option key={net.id} value={net.id}>
@@ -121,7 +121,7 @@ function FullChainSelector({ options, onNetworkChange }) {
       {options.map((option) => (
         <div
           key={option.chainId}
-          className="backdrop-blur-xl border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all"
+          className="glass-surface rounded-xl p-4 hover:border-white/20 transition-all"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">

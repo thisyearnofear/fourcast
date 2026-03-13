@@ -132,7 +132,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
     }
   };
 
-  const bgColor = isNight ? 'bg-black/40' : 'bg-white/40';
+  // Glass CSS classes (DRY)
+  const glassPanel = isNight ? 'glass-heavy' : 'glass-heavy-light';
   const textColor = isNight ? 'text-white' : 'text-black';
   const borderColor = isNight ? 'border-white/10' : 'border-black/10';
 
@@ -142,7 +143,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
       onClick={onClose}
     >
       <div
-        className={`${bgColor} backdrop-blur-xl border ${borderColor} rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl`}
+        className={`${glassPanel} rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
