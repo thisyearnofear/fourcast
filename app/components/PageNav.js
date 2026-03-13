@@ -21,9 +21,7 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
   const pathname = usePathname();
   
   const textColor = isNight ? "text-white" : "text-black";
-  const bgClass = isNight
-    ? "bg-white/10 border-white/20"
-    : "bg-black/10 border-black/20";
+  const glassClass = isNight ? "glass-subtle" : "glass-subtle-light";
   const activeBgClass = isNight
     ? "bg-white/20 border-white/30"
     : "bg-black/20 border-black/30";
@@ -61,10 +59,10 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
             key={item.name}
             href={item.href}
             data-onboard={item.onboardId}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               isActive(item.href)
                 ? `${activeBgClass} ${textColor}`
-                : `${bgClass} ${textColor} opacity-70 hover:opacity-100 hover:scale-[1.02]`
+                : `${glassClass} ${textColor} opacity-70 hover:opacity-100 hover:scale-[1.02]`
             }`}
           >
             <span>{item.icon}</span>
@@ -80,10 +78,10 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
             key={item.name}
             href={item.href}
             data-onboard={item.onboardId}
-            className={`flex items-center justify-center w-10 h-10 rounded-lg border text-lg transition-all ${
+            className={`flex items-center justify-center w-10 h-10 rounded-lg text-lg transition-all ${
               isActive(item.href)
                 ? `${activeBgClass}`
-                : `${bgClass} opacity-70`
+                : `${glassClass} opacity-70`
             }`}
             aria-label={item.name}
           >
@@ -101,12 +99,10 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
  */
 export function SecondaryNav({ items, activeItem, onChange, isNight }) {
   const textColor = isNight ? "text-white" : "text-black";
-  const bgClass = isNight
-    ? "bg-white/10 border-white/20"
-    : "bg-black/10 border-black/20";
+  const glassClass = isNight ? "glass-subtle" : "glass-subtle-light";
 
   return (
-    <div className={`inline-flex rounded-2xl p-1 border ${bgClass} backdrop-blur-xl`}>
+    <div className={`inline-flex rounded-2xl p-1 ${glassClass}`}>
       {items.map((item) => (
         <button
           key={item.id}

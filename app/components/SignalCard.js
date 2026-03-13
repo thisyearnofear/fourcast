@@ -12,9 +12,9 @@ export default function SignalCard({ signal, isNight = false }) {
   const domainName = isWeather ? 'Weather' : (isMobility ? 'Mobility' : 'General');
 
   // Dynamic Styles
-  const bgStyle = isNight
-    ? 'bg-slate-900/60 border-white/20 text-white'
-    : 'bg-white/60 border-black/20 text-black';
+  const glassClass = isNight
+    ? 'glass-subtle bg-slate-900/60 text-white'
+    : 'glass-subtle-light bg-white/60 text-black';
 
   const badgeStyle = isWeather
     ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
@@ -32,7 +32,7 @@ export default function SignalCard({ signal, isNight = false }) {
   };
 
   return (
-    <div className={`backdrop-blur-xl border rounded-2xl p-5 transition-all hover:scale-[1.02] ${bgStyle}`}>
+    <div className={`${glassClass} rounded-2xl p-5 transition-all hover:scale-[1.02]`}>
       {/* Header: Domain + Confidence */}
       <div className="flex justify-between items-start mb-3">
         <div className={`flex items-center space-x-2 px-2 py-1 rounded-full border text-xs font-medium ${badgeStyle}`}>

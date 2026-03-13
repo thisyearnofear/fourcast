@@ -10,10 +10,10 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
     const [error, setError] = useState(null);
     const { setAuth } = useKalshiAuth();
 
-    const bgColor = isNight ? 'bg-black/40' : 'bg-white/40';
-    const inputBg = isNight ? 'bg-white/5' : 'bg-black/5';
+    // Glass CSS classes (DRY)
+    const glassPanel = isNight ? 'glass-heavy' : 'glass-heavy-light';
+    const glassInput = isNight ? 'glass-input' : 'glass-input-light';
     const textColor = isNight ? 'text-white' : 'text-black';
-    const borderColor = isNight ? 'border-white/10' : 'border-black/10';
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -53,7 +53,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className={`${bgColor} backdrop-blur-xl border ${borderColor} rounded-2xl max-w-md w-full p-8 shadow-2xl`}>
+            <div className={`${glassPanel} rounded-2xl max-w-md w-full p-8 shadow-2xl`}>
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h2 className={`text-2xl font-light ${textColor} mb-2`}>Connect to Kalshi</h2>
@@ -76,7 +76,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className={`w-full px-4 py-3 rounded-xl ${inputBg} border ${borderColor} ${textColor} focus:border-emerald-500 outline-none transition-colors`}
+                            className={`w-full py-3 rounded-xl ${glassInput} ${textColor} focus:border-emerald-500 outline-none`}
                             placeholder="your@email.com"
                             required
                             disabled={isLoading}
@@ -89,7 +89,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className={`w-full px-4 py-3 rounded-xl ${inputBg} border ${borderColor} ${textColor} focus:border-emerald-500 outline-none transition-colors`}
+                            className={`w-full py-3 rounded-xl ${glassInput} ${textColor} focus:border-emerald-500 outline-none`}
                             placeholder="••••••••"
                             required
                             disabled={isLoading}
