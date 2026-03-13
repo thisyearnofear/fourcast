@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: false,
   
+  // Use standalone output for production deployments (Docker-friendly, no static export)
+  output: 'standalone',
+  
   // Disable static generation for pages that use client-side only libraries
   serverExternalPackages: [
     // Add packages that should only run on the client
