@@ -325,11 +325,7 @@ export default function WeatherPage() {
         {/* Portal Coach Mark — anchored near the portals at the bottom */}
         {!isPortalMode && !isLoading && weatherData && (
           <div className="absolute bottom-28 sm:bottom-32 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none portal-coach-mark">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border ${
-              isNight
-                ? 'bg-white/5 border-white/15 text-white/60'
-                : 'bg-black/5 border-black/10 text-black/40'
-            }`}>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${isNight ? 'glass-subtle' : 'glass-subtle-light'} ${isNight ? 'text-white/60' : 'text-black/40'}`}>
               <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
               </svg>

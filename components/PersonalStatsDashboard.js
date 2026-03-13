@@ -61,14 +61,12 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
     return null;
   }
 
-  const bgColor = isNight ? 'bg-white/5' : 'bg-black/5';
-  const borderColor = isNight ? 'border-white/10' : 'border-black/10';
   const textColor = isNight ? 'text-white' : 'text-black';
   const tier = stats.tier || { name: 'Predictor', emoji: '📊', color: 'gray' };
 
   if (compact) {
     return (
-      <div className={`${bgColor} border ${borderColor} rounded-lg p-4`}>
+      <div className={`${isNight ? 'glass-subtle' : 'glass-subtle-light'} rounded-lg p-4`}>
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className={`text-xs ${textColor} opacity-60`}>Accuracy</p>
@@ -101,7 +99,7 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
 
   // Full dashboard
   return (
-    <div className={`${bgColor} border ${borderColor} rounded-2xl p-6 space-y-6`}>
+    <div className={`${isNight ? 'glass-subtle' : 'glass-subtle-light'} rounded-2xl p-6 space-y-6`}>
       {/* Header with Tier */}
       <div className="flex items-center justify-between">
         <div>
@@ -215,11 +213,9 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
  */
 function StatCard({ label, value, subtext, isNight }) {
   const textColor = isNight ? 'text-white' : 'text-black';
-  const bgColor = isNight ? 'bg-white/5' : 'bg-black/5';
-  const borderColor = isNight ? 'border-white/10' : 'border-black/10';
 
   return (
-    <div className={`${bgColor} border ${borderColor} rounded-lg p-3 text-center`}>
+    <div className={`${isNight ? 'glass-input' : 'glass-input-light'} rounded-lg p-3 text-center`}>
       <p className={`text-xs ${textColor} opacity-60 mb-1`}>{label}</p>
       <p className={`text-2xl font-light ${textColor} mb-1`}>{value}</p>
       <p className={`text-xs ${textColor} opacity-50`}>{subtext}</p>

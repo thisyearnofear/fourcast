@@ -14,7 +14,7 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
 
     if (!signals || signals.length === 0) {
         return (
-            <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-12 text-center`}>
+            <div className={`glass-subtle rounded-3xl p-12 text-center`}>
                 <div className="text-6xl mb-4">🎯</div>
                 <h3 className={`text-xl font-light ${textColor} mb-2`}>No Predictions Yet</h3>
                 <p className={`${textColor} opacity-60 text-sm`}>
@@ -42,19 +42,19 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                 <>
                     {/* Fallback: Basic stats grid if userAddress not provided */}
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                        <div className={`glass-subtle rounded-2xl p-4`}>
                             <div className={`text-3xl font-light ${textColor} mb-1`}>{signals.length}</div>
                             <div className={`text-xs ${textColor} opacity-60`}>Total Published</div>
                         </div>
-                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                        <div className={`glass-subtle rounded-2xl p-4`}>
                             <div className={`text-3xl font-light ${isNight ? 'text-green-400' : 'text-green-600'} mb-1`}>{won}</div>
                             <div className={`text-xs ${textColor} opacity-60`}>Won</div>
                         </div>
-                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                        <div className={`glass-subtle rounded-2xl p-4`}>
                             <div className={`text-3xl font-light ${isNight ? 'text-red-400' : 'text-red-600'} mb-1`}>{lost}</div>
                             <div className={`text-xs ${textColor} opacity-60`}>Lost</div>
                         </div>
-                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                        <div className={`glass-subtle rounded-2xl p-4`}>
                             <div className={`text-3xl font-light ${textColor} mb-1`}>{pending}</div>
                             <div className={`text-xs ${textColor} opacity-60`}>Pending</div>
                         </div>
@@ -62,7 +62,7 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
 
                     {/* Win Rate */}
                     {winRate !== 'N/A' && (
-                        <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6`}>
+                        <div className={`glass-subtle rounded-3xl p-6`}>
                             <div className="flex items-end gap-4">
                                 <div>
                                     <div className={`text-xs ${textColor} opacity-60 mb-2 uppercase tracking-wider`}>Win Rate</div>
@@ -106,7 +106,7 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                     return (
                         <div
                             key={signal.id}
-                            className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 cursor-pointer hover:scale-[1.01] transition-all`}
+                            className={`glass-subtle rounded-3xl p-6 cursor-pointer hover:scale-[1.01] transition-all`}
                             onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)}
                         >
                             <div className="flex items-start justify-between mb-4">

@@ -24,7 +24,7 @@ export default function DeFiArbitrageTab({
   return (
     <div className="w-full">
       {/* Filter Controls */}
-      <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4 mb-6`}>
+      <div className={`glass-subtle rounded-2xl p-4 mb-6`}>
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
           <div className="flex-1">
             <label className={`block text-sm ${textColor} opacity-70 mb-2`}>
@@ -70,7 +70,7 @@ export default function DeFiArbitrageTab({
 
       {/* Error State */}
       {error && !isLoading && (
-        <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 text-center`}>
+        <div className={`glass-subtle rounded-3xl p-6 text-center`}>
           <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
           <button
             onClick={refresh}
@@ -83,7 +83,7 @@ export default function DeFiArbitrageTab({
 
       {/* Empty State */}
       {!isLoading && !error && opportunities.length === 0 && (
-        <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-12 text-center`}>
+        <div className={`glass-subtle rounded-3xl p-12 text-center`}>
           <div className="text-6xl mb-4">💱</div>
           <h3 className={`text-xl font-light ${textColor} mb-2`}>No Opportunities Found</h3>
           <p className={`${textColor} opacity-60 text-sm`}>
@@ -102,7 +102,7 @@ export default function DeFiArbitrageTab({
           {opportunities.map((opp, idx) => (
             <div
               key={opp.signal_id || idx}
-              className={`${cardBgColor} backdrop-blur-xl border rounded-2xl overflow-hidden transition-all`}
+              className={`glass-subtle rounded-2xl overflow-hidden transition-all`}
             >
               {/* Header / Always Visible */}
               <div

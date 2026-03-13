@@ -9,7 +9,7 @@ function getTierInfo(winRate) {
 export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBgColor, onProfileClick }) {
     if (!leaderboard || leaderboard.length === 0) {
         return (
-            <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-12 text-center`}>
+            <div className={`glass-subtle rounded-3xl p-12 text-center`}>
                 <div className="text-6xl mb-4">🏆</div>
                 <h3 className={`text-xl font-light ${textColor} mb-2`}>No Ranked Analysts Yet</h3>
                 <p className={`${textColor} opacity-60 text-sm`}>
@@ -39,7 +39,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
                         <div
                             key={user.user_address}
                             onClick={() => onProfileClick(user.user_address)}
-                            className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4 sm:p-6 hover:scale-[1.01] transition-all cursor-pointer`}
+                            className={`glass-subtle rounded-2xl p-4 sm:p-6 hover:scale-[1.01] transition-all cursor-pointer`}
                         >
                             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
                                 {/* Rank */}

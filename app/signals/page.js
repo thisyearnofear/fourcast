@@ -231,7 +231,7 @@ export default function SignalsPage() {
             {/* Scrollable Content */}
             <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
                 {/* Header */}
-                <header className={`sticky top-0 z-50 border-b ${cardBgColor} backdrop-blur-md`}>
+                <header className={`sticky top-0 z-50 border-b glass-subtle`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
                         <div>
                             <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
@@ -323,15 +323,15 @@ export default function SignalsPage() {
                             {/* Stats Summary */}
                             {!isLoading && !error && (
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                                    <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                                    <div className={`glass-subtle rounded-2xl p-4`}>
                                         <div className={`text-2xl font-light ${textColor} mb-1`}>{signals.length}</div>
                                         <div className={`text-xs ${textColor} opacity-60`}>Total Predictions</div>
                                     </div>
-                                    <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                                    <div className={`glass-subtle rounded-2xl p-4`}>
                                         <div className={`text-2xl font-light ${textColor} mb-1`}>{Object.keys(signalsByEvent).length}</div>
                                         <div className={`text-xs ${textColor} opacity-60`}>Unique Events</div>
                                     </div>
-                                    <div className={`${cardBgColor} backdrop-blur-xl border rounded-2xl p-4`}>
+                                    <div className={`glass-subtle rounded-2xl p-4`}>
                                         <div className={`text-2xl font-light ${textColor} mb-1`}>{filteredSignals.length}</div>
                                         <div className={`text-xs ${textColor} opacity-60`}>Filtered Results</div>
                                     </div>
@@ -348,7 +348,7 @@ export default function SignalsPage() {
 
                             {/* Error State */}
                             {error && (
-                                <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 text-center`}>
+                                <div className={`glass-subtle rounded-3xl p-6 text-center`}>
                                     <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
                                     <button
                                         onClick={fetchSignals}
@@ -361,7 +361,7 @@ export default function SignalsPage() {
 
                             {/* Signals List */}
                             {!isLoading && !error && filteredSignals.length === 0 && (
-                                <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-12 text-center`}>
+                                <div className={`glass-subtle rounded-3xl p-12 text-center`}>
                                     <div className="text-6xl mb-4">🎯</div>
                                     <h3 className={`text-xl font-light ${textColor} mb-2`}>No Predictions Yet</h3>
                                     <p className={`${textColor} opacity-60 text-sm`}>

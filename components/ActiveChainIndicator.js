@@ -45,10 +45,10 @@ export function ActiveChainIndicator({ variant = 'badge', isNight = false, class
 
   if (!activeChain) return null;
 
-  // Styling
+  // Styling - Glass CSS classes (DRY)
   const textColor = isNight ? 'text-white' : 'text-black';
   const mutedColor = isNight ? 'text-white/60' : 'text-black/60';
-  const borderColor = isNight ? 'border-white/20' : 'border-black/20';
+  const glassClass = isNight ? 'glass-subtle' : 'glass-subtle-light';
 
   const chainColorMap = {
     purple: isNight ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-purple-400/20 text-purple-800 border-purple-400/30',
@@ -78,7 +78,7 @@ export function ActiveChainIndicator({ variant = 'badge', isNight = false, class
 
   // Full variant - detailed card with capabilities
   return (
-    <div className={`backdrop-blur-xl border ${borderColor} rounded-xl p-4 ${className}`}>
+    <div className={`${glassClass} rounded-xl p-4 ${className}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-2xl">{activeChain.icon}</span>

@@ -2,7 +2,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
     return (
         <>
             {/* Search Bar */}
-            <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 mb-6`}>
+            <div className={`glass-subtle rounded-3xl p-6 mb-6`}>
                 <input
                     type="text"
                     value={filters.searchText}
@@ -13,7 +13,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
             </div>
 
             {/* Filters & Sort */}
-            <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 mb-8`}>
+            <div className={`glass-subtle rounded-3xl p-6 mb-8`}>
                 <div className="flex justify-between items-center mb-4">
                     <label className={`${textColor} text-xs opacity-60 uppercase tracking-wider`}>Filters & Sort</label>
                     <div className="flex gap-2">

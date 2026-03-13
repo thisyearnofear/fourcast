@@ -6,11 +6,11 @@
  */
 export function SynthShowcase({ isNight = false }) {
   const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const cardBg = isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/30';
+  // Using glass-subtle CSS class instead of inline styles
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
 
   return (
-    <div className={`backdrop-blur-xl border rounded-2xl p-6 ${cardBg}`}>
+    <div className={`rounded-2xl p-6 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
       <div className="flex items-center gap-2 mb-4">
         <span className="text-2xl">🤖</span>
         <h3 className={`font-medium text-lg ${textColor}`}>

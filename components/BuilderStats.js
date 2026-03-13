@@ -58,9 +58,7 @@ export function BuilderStats({ isNight = false }) {
       {/* Main Stats */}
       <div className="grid grid-cols-3 gap-2">
         {/* Daily Volume */}
-        <div className={`backdrop-blur-xl border rounded-xl p-3 ${
-          isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/30'
-        }`}>
+        <div className={`rounded-xl p-3 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
           <div className={`text-xs ${subtleText} font-light`}>24h Volume</div>
           <div className={`text-lg font-medium ${textColor} tracking-tight`}>
             {displayData.volume}
@@ -68,9 +66,7 @@ export function BuilderStats({ isNight = false }) {
         </div>
 
         {/* Order Count */}
-        <div className={`backdrop-blur-xl border rounded-xl p-3 ${
-          isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/30'
-        }`}>
+        <div className={`rounded-xl p-3 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
           <div className={`text-xs ${subtleText} font-light`}>Orders</div>
           <div className={`text-lg font-medium ${textColor} tracking-tight`}>
             {displayData.orderCount}
@@ -78,9 +74,7 @@ export function BuilderStats({ isNight = false }) {
         </div>
 
         {/* Leaderboard Rank */}
-        <div className={`backdrop-blur-xl border rounded-xl p-3 ${
-          isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/30'
-        }`}>
+        <div className={`rounded-xl p-3 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
           <div className={`text-xs ${subtleText} font-light`}>Rank</div>
           <div className={`text-lg font-medium ${textColor} tracking-tight`}>
             #{displayData.rank}

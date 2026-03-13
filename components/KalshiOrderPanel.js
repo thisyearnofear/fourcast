@@ -17,10 +17,11 @@ export default function KalshiOrderPanel({ market, isNight, onClose }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderResult, setOrderResult] = useState(null);
 
-    const bgColor = isNight ? 'bg-black/40' : 'bg-white/40';
+    // Glass CSS classes (DRY)
+    const glassPanel = isNight ? 'glass-heavy' : 'glass-heavy-light';
     const textColor = isNight ? 'text-white' : 'text-black';
     const borderColor = isNight ? 'border-white/10' : 'border-black/10';
-    const inputBg = isNight ? 'bg-white/5' : 'bg-black/5';
+    const glassInput = isNight ? 'glass-input' : 'glass-input-light';
 
     useEffect(() => {
         if (isAuthenticated && checkAuth()) {
@@ -106,7 +107,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose }) {
         <>
             <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
                 <div
-                    className={`${bgColor} backdrop-blur-xl border ${borderColor} rounded-2xl max-w-lg w-full p-8 shadow-2xl my-8`}
+                    className={`${glassPanel} rounded-2xl max-w-lg w-full p-8 shadow-2xl my-8`}
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
@@ -127,7 +128,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose }) {
 
                     {/* Balance Display */}
                     {isAuthenticated && balance !== null && (
-                        <div className={`${isNight ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-4 mb-6`}>
+                        <div className={`${glassInput} rounded-xl p-4 mb-6`}>
                             <div className={`text-sm ${textColor} opacity-70 mb-1`}>Available Balance</div>
                             <div className={`text-2xl font-light ${textColor}`}>${(balance / 100).toFixed(2)}</div>
                         </div>

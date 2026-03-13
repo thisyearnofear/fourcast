@@ -19,7 +19,7 @@ export function AgentDashboard({ isNight = false }) {
 
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
-  const cardBg = isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/30';
+  // Using glass-subtle CSS class instead of inline cardBg
   const inputBg = isNight ? 'bg-white/10 border-white/20 text-white' : 'bg-white/60 border-white/40 text-slate-900';
 
   const handleRun = () => {
@@ -38,7 +38,7 @@ export function AgentDashboard({ isNight = false }) {
   const forecastSteps = steps.filter(s => s.step === 'forecast');
 
   return (
-    <div className={`backdrop-blur-xl border rounded-2xl p-4 sm:p-6 ${cardBg} space-y-4`} role="region" aria-label="Agent Mode Dashboard">
+    <div className={`glass-subtle rounded-2xl p-4 sm:p-6 space-y-4`} role="region" aria-label="Agent Mode Dashboard">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">

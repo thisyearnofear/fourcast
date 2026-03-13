@@ -14,11 +14,7 @@ export function BuilderDashboard({ isNight = false, onClose = null }) {
 
   if (!isConfigured) {
     return (
-      <div className={`backdrop-blur-xl border rounded-2xl p-6 ${
-        isNight
-          ? 'bg-white/5 border-white/10'
-          : 'bg-white/30 border-white/30'
-      }`}>
+      <div className={`rounded-2xl p-6 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
         <h3 className={`font-medium mb-3 ${isNight ? 'text-white' : 'text-slate-900'}`}>
           Builder Program
         </h3>
@@ -37,10 +33,9 @@ export function BuilderDashboard({ isNight = false, onClose = null }) {
 
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
-  const cardBg = isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/30';
 
   return (
-    <div className={`backdrop-blur-xl border rounded-2xl p-6 ${cardBg} space-y-4`}>
+    <div className={`rounded-2xl p-6 ${isNight ? 'glass-subtle' : 'glass-subtle-light'} space-y-4`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -157,9 +152,7 @@ export function BuilderDashboard({ isNight = false, onClose = null }) {
 
 function MetricCard({ label, value, isNight }) {
   return (
-    <div className={`rounded-lg p-3 text-center border ${
-      isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/20'
-    }`}>
+    <div className={`rounded-lg p-3 text-center ${isNight ? 'glass-input' : 'glass-input-light'}`}>
       <div className={`text-xs font-light ${isNight ? 'text-white/60' : 'text-slate-600'}`}>
         {label}
       </div>

@@ -91,8 +91,8 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
                   ? 'bg-blue-500/30 border-blue-400 text-blue-100'
                   : 'bg-blue-400/30 border-blue-500 text-blue-900'
                 : isNight
-                ? 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                : 'bg-black/5 border-black/10 text-black/70 hover:bg-black/10'
+                ? 'glass-subtle text-white/70 hover:bg-white/10'
+                : 'glass-subtle-light text-black/70 hover:bg-black/10'
             } border`}
           >
             {f === 'all' && `All (${history.length})`}

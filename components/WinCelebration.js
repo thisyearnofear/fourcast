@@ -41,7 +41,7 @@ export function WinCelebration({ isOpen, signal, onClose }) {
       {showConfetti && <Confetti />}
 
       {/* Celebration Modal */}
-      <div className="pointer-events-auto bg-black/80 backdrop-blur-lg rounded-3xl p-8 max-w-md mx-4 text-center space-y-6 animate-bounce-in">
+      <div className="pointer-events-auto glass-heavy rounded-3xl p-8 max-w-md mx-4 text-center space-y-6 animate-bounce-in">
         {/* Big Win Emoji */}
         <div className="text-7xl animate-scale-in">🎉</div>
 
