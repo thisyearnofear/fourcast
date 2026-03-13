@@ -14,6 +14,8 @@ import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
 import { ActiveChainIndicator, ChainSelector, SynthShowcase } from "@/components";
+import BottomSheet from "@/components/BottomSheet";
+import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {
   // Unified chain connection state - single source of truth
@@ -1461,11 +1463,13 @@ function MarketCard({
   const isKalshi = platform === "kalshi";
 
   return (
+    <>
+    {/* Inline Card (always visible when not hidden) */}
     <div
-      className={`backdrop-blur-xl border rounded-3xl transition-all duration-500 ${isExpanded ? "fixed inset-4 p-8 z-40 overflow-y-auto" : "p-5 sm:p-6"
-        } ${isHidden
+      className={`glass-subtle rounded-3xl transition-all duration-500 p-5 sm:p-6
+        ${isHidden
           ? "opacity-0 pointer-events-none scale-95"
-          : `opacity-100 hover:scale-[1.01] ${cardBgColor}`
+          : "opacity-100 hover:scale-[1.01]"
         }`}
     >
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -2074,10 +2078,119 @@ function MarketCard({
           </div>
         </div>
       )}
-
-      {/* Order Signing Panel - Overlay */}
-
     </div>
+
+    {/* BottomSheet for Expanded Market Analysis */}
+    <BottomSheet
+      isOpen={isExpanded}
+      onClose={() => setExpandedMarketId(null)}
+      title={market.title || market.question}
+      isNight={isNight}
+      fullHeight={false}
+    >
+      <div className="p-6 space-y-6">
+        {/* Platform Badge */}
+        <span
+          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider border ${isKalshi
+            ? isNight
+              ? "bg-emerald-900/40 text-emerald-300 border-emerald-700/50"
+              : "bg-emerald-100 text-emerald-700 border-emerald-200"
+            : isNight
+              ? "bg-blue-900/40 text-blue-300 border-blue-700/50"
+              : "bg-blue-100 text-blue-700 border-blue-200"
+          }`}
+        >
+          {isKalshi ? "Kalshi" : "Polymarket"}
+        </span>
+
+        {/* Dynamic Loading State */}
+        {isAnalyzing && <LoadingAnalysisState isNight={isNight} textColor={textColor} />}
+
+        {/* Analysis Content */}
+        {analysis && (
+          <div className="space-y-4">
+            {/* SynthData ML Forecast */}
+            {analysis?.synthData && (
+              <div className={`glass-subtle border-2 ${isNight ? 'border-purple-500/30' : 'border-purple-400/30'} rounded-xl p-5`}>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">🤖</span>
+                  <h4 className={`text-sm font-medium ${textColor}`}>SynthData ML Forecast</h4>
+                  <span className={`ml-auto px-2 py-0.5 rounded text-[10px] font-medium ${isNight ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-400/20 text-purple-700'}`}>
+                    200+ MODELS
+                  </span>
+                </div>
+                <div className="text-center pb-3 border-b border-white/10">
+                  <div className={`text-xs ${textColor} opacity-50 mb-1`}>{analysis.synthData.asset}</div>
+                  <div className={`text-4xl font-light ${textColor}`}>${analysis.synthData.currentPrice?.toLocaleString()}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Market Odds */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className={`glass-input rounded-xl p-4 text-center`}>
+                <span className={`text-xs ${textColor} opacity-50`}>YES</span>
+                <div className={`text-3xl font-light ${isNight ? "text-green-400" : "text-green-600"}`}>
+                  {market.ask ? `${(market.ask * 100).toFixed(0)}%` : "N/A"}
+                </div>
+              </div>
+              <div className={`glass-input rounded-xl p-4 text-center`}>
+                <span className={`text-xs ${textColor} opacity-50`}>NO</span>
+                <div className={`text-3xl font-light ${isNight ? "text-red-400" : "text-red-600"}`}>
+                  {market.bid ? `${(market.bid * 100).toFixed(0)}%` : "N/A"}
+                </div>
+              </div>
+            </div>
+
+            {/* AI Reasoning */}
+            <div className={`glass-subtle rounded-xl p-5`}>
+              <h4 className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}>AI Reasoning</h4>
+              <p className={`text-base ${textColor} opacity-90 leading-relaxed font-light`}>
+                {analysis.reasoning || analysis.analysis || "No analysis available"}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => {
+                  if (isKalshi) {
+                    setSelectedKalshiMarket(market);
+                  } else {
+                    setSelectedMarketForOrder(market);
+                    setShowOrderPanel(true);
+                  }
+                }}
+                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border text-center ${isKalshi
+                  ? isNight
+                    ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border-emerald-400/30"
+                    : "bg-emerald-400/20 hover:bg-emerald-400/30 text-emerald-800 border-emerald-500/30"
+                  : isNight
+                    ? "bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30"
+                    : "bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border-blue-500/30"
+                }`}
+              >
+                {isKalshi ? "Trade on Kalshi ↗" : "📈 Trade Here"}
+              </button>
+              <button
+                onClick={onPublishSignal}
+                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border ${canPublish
+                  ? isNight
+                    ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
+                    : "bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30"
+                  : isNight
+                    ? "bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 border-orange-400/30"
+                    : "bg-orange-400/20 hover:bg-orange-400/30 text-orange-800 border-orange-500/30"
+                }`}
+              >
+                {canPublish ? "🎯 Make Your Call" : "🔗 Connect & Make Your Call"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </BottomSheet>
+    </>
   );
 }
 
