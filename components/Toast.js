@@ -110,7 +110,7 @@ function Toast({ toast, onRemove, isNight }) {
       }`}
     >
       <div
-        className={`backdrop-blur-xl border rounded-2xl p-4 pr-5 flex items-start gap-3 max-w-sm shadow-lg ${bg}`}
+        className={`glass-surface rounded-2xl p-4 pr-5 flex items-start gap-3 max-w-sm shadow-lg ${bg}`}
       >
         <span className="text-lg flex-shrink-0 mt-0.5">{getIcon(toast.type)}</span>
         <div className="flex-1">

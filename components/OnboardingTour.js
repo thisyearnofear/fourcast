@@ -175,7 +175,7 @@ export default function OnboardingTour({
 
       {/* Tooltip Card */}
       <div
-        className={`fixed z-[102] w-80 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all duration-300 ${
+        className={`fixed z-[102] w-80 rounded-2xl glass-surface shadow-2xl transition-all duration-300 ${
           isNight
             ? 'bg-slate-900/95 border-white/20'
             : 'bg-white/95 border-black/20'
