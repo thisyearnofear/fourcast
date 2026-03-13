@@ -138,32 +138,84 @@ export default function WeatherPage() {
 
       {/* Hero Overlay - First Visit */}
       {showHero && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="max-w-lg backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl">
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="max-w-lg w-full backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="text-3xl">🔮</div>
               <h1 className="text-2xl font-bold text-white">Fourcast</h1>
             </div>
             
-            <p className="text-lg text-white/90 mb-2 font-light">
-              Fourcast the future.
+            <p className="text-lg text-white/90 mb-1 font-light">
+              Predict Smarter with AI Intelligence
             </p>
             <p className="text-sm text-white/60 mb-6 leading-relaxed">
-              Quantitative prediction intelligence across crypto, sports, politics & more — powered by <span className="font-medium text-white/80">200+ ML models</span>
+              We analyze 200+ ML models, live weather data, and market dynamics to find prediction edges.
             </p>
-            
-            <div className="space-y-3 mb-6">
-              <div className="flex items-start gap-3 text-sm text-white/70">
-                <span className="text-lg flex-shrink-0">📈</span>
-                <span>ML-driven edge detection across Polymarket & Kalshi</span>
+
+            {/* Interactive Demo Card - Shows what the product does */}
+            <div className="mb-6 backdrop-blur-sm bg-white/5 border border-white/15 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                  Polymarket
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                  🤖 ML
+                </span>
               </div>
-              <div className="flex items-start gap-3 text-sm text-white/70">
-                <span className="text-lg flex-shrink-0">🎯</span>
-                <span>Probabilistic forecasts for BTC, ETH, SOL & more</span>
+              
+              <p className="text-white font-medium mb-3 text-sm">
+                Will Bitcoin exceed $100k by April 2026?
+              </p>
+
+              {/* AI Confidence Visualization */}
+              <div className="mb-3">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs text-white/60">AI Confidence</span>
+                  <span className="text-xs font-medium text-green-400">73%</span>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-purple-500/80 to-green-500/80 rounded-full" style={{width: '73%'}}></div>
+                </div>
               </div>
-              <div className="flex items-start gap-3 text-sm text-white/70">
-                <span className="text-lg flex-shrink-0">📡</span>
-                <span>Publish signals on-chain and build your track record</span>
+
+              {/* Weather Impact */}
+              <div className="flex items-center gap-4 mb-3 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span>☀️</span>
+                  <span className="text-white/70">Weather: Favorable</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-green-400">⚡</span>
+                  <span className="text-white/70">Edge: +8%</span>
+                </div>
+              </div>
+
+              {/* Market Odds */}
+              <div className="flex justify-between items-center pt-3 border-t border-white/10">
+                <div>
+                  <span className="text-xs text-white/50 block">Market YES</span>
+                  <span className="text-lg font-light text-green-400">65%</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-white/50 block">ML Fair</span>
+                  <span className="text-lg font-light text-purple-400">73%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature Pills - Quick value props */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white/70">
+                <span>🤖</span>
+                <span>200+ ML Models</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white/70">
+                <span>🌤️</span>
+                <span>Live Weather</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white/70">
+                <span>📡</span>
+                <span>On-Chain Proofs</span>
               </div>
             </div>
 
@@ -171,7 +223,14 @@ export default function WeatherPage() {
               onClick={dismissHero}
               className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium rounded-xl transition-all transform hover:scale-[1.02]"
             >
-              Start Fourcasting →
+              Explore Markets →
+            </button>
+            
+            <button
+              onClick={dismissHero}
+              className="w-full py-2 mt-2 text-white/50 hover:text-white/70 text-sm transition-colors"
+            >
+              Skip tour
             </button>
           </div>
         </div>
@@ -274,15 +333,15 @@ export default function WeatherPage() {
               <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
               </svg>
-              <span className="text-xs font-medium tracking-wide">Tap a forecast card to explore</span>
+              <span className="text-xs font-medium tracking-wide">Tap a forecast card to explore 3D weather</span>
             </div>
             <style jsx>{`
               .portal-coach-mark {
-                animation: coach-fade 6s ease-in-out infinite;
+                animation: coach-fade 8s ease-in-out infinite;
               }
               @keyframes coach-fade {
                 0%, 100% { opacity: 0; }
-                15%, 85% { opacity: 1; }
+                10%, 90% { opacity: 1; }
               }
             `}</style>
           </div>

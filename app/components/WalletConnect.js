@@ -148,9 +148,16 @@ export default function WalletConnect({ isNight = false }) {
       {showDropdown && (
         <div className={`absolute right-0 mt-2 w-80 rounded-xl border ${dropdownBg} backdrop-blur-xl p-4 z-50 shadow-xl`}>
           {/* Header */}
-          <div className={`text-xs font-medium ${isNight ? 'text-white/60' : 'text-black/60'} uppercase tracking-wide mb-4`}>
+          <div className={`text-xs font-medium ${isNight ? 'text-white/60' : 'text-black/60'} uppercase tracking-wide mb-2`}>
             Wallet Networks
           </div>
+          
+          {/* Helper Text - Explains why different chains */}
+          {!isAnyConnected && (
+            <p className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'} mb-4 leading-relaxed`}>
+              Connect wallets to trade on markets and publish prediction signals on-chain.
+            </p>
+          )}
 
           {/* Connected Chains */}
           <div className="mb-4">
@@ -162,10 +169,13 @@ export default function WalletConnect({ isNight = false }) {
           {/* EVM Connect Section */}
           {!chains?.evm?.connected && (
             <div className="mb-4 pb-4 border-b border-white/10">
-              <div className={`text-xs font-medium ${textColor} mb-3 flex items-center gap-2`}>
+              <div className={`text-xs font-medium ${textColor} mb-1 flex items-center gap-2`}>
                 <span>{CHAINS.EVM.icon}</span>
                 {CHAINS.EVM.display}
               </div>
+              <p className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'} mb-3`}>
+                Trade on Polymarket & Kalshi
+              </p>
               <ConnectKitButton mode={isNight ? "dark" : "light"} />
             </div>
           )}
@@ -173,9 +183,12 @@ export default function WalletConnect({ isNight = false }) {
           {/* Aptos/Movement Connect Section */}
           {!aptosWalletConnected && (
             <div className="mb-4">
-              <div className={`text-xs font-medium ${textColor} mb-3`}>
+              <div className={`text-xs font-medium ${textColor} mb-1`}>
                 Connect for Signal Publishing
               </div>
+              <p className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'} mb-3`}>
+                Publish predictions on-chain to build your verifiable track record.
+              </p>
 
               {/* Side-by-side chain info */}
               <div className="grid grid-cols-2 gap-2 mb-3">

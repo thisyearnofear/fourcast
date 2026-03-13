@@ -1584,6 +1584,40 @@ function MarketCard({
                 </div>
               </div>
             )}
+            {/* Weather Impact Indicator - Show if event has location data */}
+            {market.event_location && (
+              <div className="relative group">
+                <span
+                  className={`px-3 py-1 rounded-full font-light border cursor-help ${
+                    isNight
+                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                      : "bg-cyan-400/20 text-cyan-800 border-cyan-400/30"
+                  }`}
+                >
+                  🌤️ Weather
+                </span>
+                <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${
+                  isNight ? 'bg-gray-900 text-white border border-white/20' : 'bg-white text-gray-900 border border-gray-200 shadow-lg'
+                }`}>
+                  Event location: {market.event_location}
+                  <div className={`absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 ${
+                    isNight ? 'bg-gray-900 border-r border-b border-white/20' : 'bg-white border-r border-b border-gray-200'
+                  }`}></div>
+                </div>
+              </div>
+            )}
+            {/* AI-Ready Badge - Indicates market can be analyzed */}
+            {!isCurrentMarket && !analysis && (
+              <span
+                className={`px-3 py-1 rounded-full font-light border ${
+                  isNight
+                    ? "bg-purple-500/10 text-purple-300/60 border-purple-500/20"
+                    : "bg-purple-400/10 text-purple-700/60 border-purple-400/20"
+                }`}
+              >
+                🔍 Analyze
+              </span>
+            )}
             {/* Chain Recommendation Badge - Early visibility */}
             {isCurrentMarket && analysis?.chain_recommendation && (
               <ChainRecommendationBadge
