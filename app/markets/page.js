@@ -1618,6 +1618,22 @@ function MarketCard({
                 🔍 Analyze
               </span>
             )}
+            {/* Quick Publish CTA - Show when ML edge detected (even in collapsed state) */}
+            {isCurrentMarket && analysis?.synthData?.polymarketEdge && Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPublishSignal();
+                }}
+                className={`px-3 py-1 rounded-full font-medium border transition-all hover:scale-105 ${
+                  isNight
+                    ? "bg-green-500/20 text-green-300 border-green-500/40 hover:bg-green-500/30"
+                    : "bg-green-400/20 text-green-700 border-green-500/40 hover:bg-green-400/30"
+                }`}
+              >
+                🎯 Make Your Call
+              </button>
+            )}
             {/* Chain Recommendation Badge - Early visibility */}
             {isCurrentMarket && analysis?.chain_recommendation && (
               <ChainRecommendationBadge
@@ -1997,6 +2013,39 @@ function MarketCard({
               </div>
             )}
 
+            {/* ML Edge Detected - Prominent CTA */}
+            {analysis?.synthData?.polymarketEdge && Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03 && (
+              <div className={`${cardBgColor} backdrop-blur-sm border-2 rounded-xl p-5 ${
+                isNight ? 'border-green-500/40 bg-green-500/5' : 'border-green-500/40 bg-green-500/5'
+              }`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-2xl">⚡</span>
+                  <div>
+                    <h4 className={`text-sm font-medium ${isNight ? 'text-green-400' : 'text-green-700'}`}>
+                      ML Edge Detected
+                    </h4>
+                    <p className={`text-xs ${textColor} opacity-60`}>
+                      Fair odds: {(analysis.synthData.polymarketEdge.synthFairProb * 100).toFixed(1)}% vs Market: {(analysis.synthData.polymarketEdge.polymarketProb * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={onPublishSignal}
+                  className={`w-full px-6 py-4 rounded-xl font-medium text-sm transition-all ${
+                    canPublish
+                      ? isNight
+                        ? "bg-green-500/30 hover:bg-green-500/40 text-green-200 border border-green-500/50"
+                        : "bg-green-500/30 hover:bg-green-500/40 text-green-800 border border-green-500/50"
+                      : isNight
+                        ? "bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 border border-orange-500/30"
+                        : "bg-orange-400/20 hover:bg-orange-400/30 text-orange-800 border border-orange-500/30"
+                  }`}
+                >
+                  {canPublish ? "🎯 Publish Signal Now" : "🔗 Connect Wallet to Publish"}
+                </button>
+              </div>
+            )}
+
             {/* Action Buttons: Trade + Publish */}
             <div className="flex gap-3 pt-2">
               <button
@@ -2020,21 +2069,24 @@ function MarketCard({
                 {isKalshi ? "Trade on Kalshi ↗" : "📈 Trade Here"}
               </button>
 
-              <button
-                onClick={onPublishSignal}
-                className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border relative ${canPublish
-                  ? isNight
-                    ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
-                    : "bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30"
-                  : isNight
-                    ? "bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 border-orange-400/30"
-                    : "bg-orange-400/20 hover:bg-orange-400/30 text-orange-800 border-orange-500/30"
-                  }`}
-              >
-                {canPublish
-                  ? "🎯 Make Your Call"
-                  : "🔗 Connect & Make Your Call"}
-              </button>
+              {/* Hide regular publish button if edge section is shown */}
+              {!(analysis?.synthData?.polymarketEdge && Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03) && (
+                <button
+                  onClick={onPublishSignal}
+                  className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border relative ${canPublish
+                    ? isNight
+                      ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
+                      : "bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30"
+                    : isNight
+                      ? "bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 border-orange-400/30"
+                      : "bg-orange-400/20 hover:bg-orange-400/30 text-orange-800 border-orange-500/30"
+                    }`}
+                >
+                  {canPublish
+                    ? "🎯 Make Your Call"
+                    : "🔗 Connect & Make Your Call"}
+                </button>
+              )}
             </div>
           </div>
         </div>
