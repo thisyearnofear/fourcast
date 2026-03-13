@@ -76,6 +76,67 @@ html {
     @apply backdrop-blur-md border rounded-lg px-4 py-2;
     @apply bg-black/5 border-black/10;
   }
+
+  /* Button utilities - DRY consolidation */
+  .btn-base {
+    @apply font-light text-sm transition-all border rounded-2xl;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .btn-md {
+    @apply px-6 py-3 text-sm;
+  }
+
+  /* Primary action button (blue) */
+  .btn-primary {
+    @apply btn-base btn-md;
+    @apply bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30;
+  }
+
+  .btn-primary-light {
+    @apply btn-base btn-md;
+    @apply bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border-blue-500/30;
+  }
+
+  /* Success action button (green) */
+  .btn-success {
+    @apply btn-base btn-md;
+    @apply bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30;
+  }
+
+  .btn-success-light {
+    @apply btn-base btn-md;
+    @apply bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30;
+  }
+
+  /* Gradient button (for Analyze/Premium actions) */
+  .btn-gradient {
+    @apply btn-base btn-md;
+    @apply bg-gradient-to-r from-purple-500/20 to-pink-500/20;
+    @apply hover:from-purple-500/30 hover:to-pink-500/30;
+    @apply text-purple-200 border-purple-400/30;
+  }
+
+  .btn-gradient-light {
+    @apply btn-base btn-md;
+    @apply bg-gradient-to-r from-purple-400/20 to-pink-400/20;
+    @apply hover:from-purple-400/30 hover:to-pink-400/30;
+    @apply text-purple-800 border-purple-500/30;
+  }
+
+  /* Tab button */
+  .btn-tab {
+    @apply px-4 py-2 rounded-full text-sm font-light whitespace-nowrap transition-all;
+  }
+
+  /* Toggle button group */
+  .btn-toggle {
+    @apply btn-base btn-sm;
+    @apply bg-white/10 border-white/20;
+  }
 }
 
 /* Custom animations and utilities for weather app */
