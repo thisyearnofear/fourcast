@@ -127,8 +127,20 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
   const [portalMode, setPortalMode] = React.useState(false);
   const [portalWeatherData, setPortalWeatherData] = React.useState(null);
   
-  // Quality settings
-  const isAmbientMode = quality === 'ambient';
+  // Mobile detection for 'auto' quality mode
+  const isMobile = React.useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+  }, []);
+  
+  // Quality settings with 'auto' mode support
+  const isAmbientMode = React.useMemo(() => {
+    if (quality === 'auto') {
+      return isMobile; // Auto-switch to ambient on mobile
+    }
+    return quality === 'ambient';
+  }, [quality, isMobile]);
+  
   const performanceSettings = React.useMemo(() => {
     if (isAmbientMode) {
       return {

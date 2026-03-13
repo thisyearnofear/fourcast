@@ -1756,6 +1756,22 @@ function MarketCard({
 
                 {analysis.synthData.polymarketEdge && (
                   <div className={`mt-4 pt-4 border-t ${isNight ? 'border-white/10' : 'border-black/10'}`}>
+                    {/* Edge Detection Badge - Prominent when edge exists */}
+                    {Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03 && (
+                      <div className={`flex items-center gap-2 mb-3 px-3 py-2 rounded-lg ${
+                        isNight ? 'bg-green-500/10 border border-green-500/20' : 'bg-green-500/10 border border-green-500/20'
+                      }`}>
+                        <span className="text-lg">⚡</span>
+                        <div>
+                          <span className={`text-sm font-medium ${isNight ? 'text-green-400' : 'text-green-600'}`}>
+                            Edge Detected: {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}%
+                          </span>
+                          <span className={`text-xs ml-2 ${isNight ? 'text-white/50' : 'text-black/50'}`}>
+                            ML sees value
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between text-xs">
                       <span className={`${textColor} opacity-70`}>ML Fair Odds vs Market</span>
                       <span className={`font-medium ${
@@ -1764,7 +1780,6 @@ function MarketCard({
                           : textColor
                       }`}>
                         {(analysis.synthData.polymarketEdge.synthFairProb * 100).toFixed(1)}% vs {(analysis.synthData.polymarketEdge.polymarketProb * 100).toFixed(1)}%
-                        {Math.abs(analysis.synthData.polymarketEdge.edge) > 0.05 && ' ⚡'}
                       </span>
                     </div>
                   </div>
