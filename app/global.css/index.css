@@ -36,6 +36,48 @@ html {
   /* Dynamic viewport height for mobile */
 }
 
+/* Glassmorphism Components - DRY consolidation */
+@layer components {
+  /* Base glass surface with blur and border */
+  .glass-surface {
+    @apply backdrop-blur-xl border transition-all duration-300;
+  }
+  
+  /* Heavy glass for modals, panels, overlays */
+  .glass-heavy {
+    @apply glass-surface;
+    @apply bg-black/40 border-white/10;
+  }
+  
+  /* Subtle glass for nav, cards, buttons */
+  .glass-subtle {
+    @apply glass-surface;
+    @apply bg-white/10 border-white/20;
+  }
+  
+  /* Light theme variants (applied when not using dark mode) */
+  .glass-heavy-light {
+    @apply glass-surface;
+    @apply bg-white/40 border-black/10;
+  }
+  
+  .glass-subtle-light {
+    @apply glass-surface;
+    @apply bg-black/10 border-black/20;
+  }
+  
+  /* Input glass styling */
+  .glass-input {
+    @apply backdrop-blur-md border rounded-lg px-4 py-2;
+    @apply bg-white/5 border-white/10;
+  }
+  
+  .glass-input-light {
+    @apply backdrop-blur-md border rounded-lg px-4 py-2;
+    @apply bg-black/5 border-black/10;
+  }
+}
+
 /* Custom animations and utilities for weather app */
 @layer utilities {
   .animate-fade-in {
