@@ -30,11 +30,10 @@ export default function WalletConnect({ isNight = false }) {
   // Aptos/Movement (Signals) - raw wallet adapter for connection actions
   const { connected: aptosWalletConnected, account: aptosAccount, wallets, connect, disconnect } = useWallet();
 
-  // Styling
-  const bgColor = isNight ? 'bg-white/10 hover:bg-white/20' : 'bg-black/10 hover:bg-black/20';
-  const borderColor = isNight ? 'border-white/20' : 'border-black/20';
+  // Styling - Glass CSS classes (DRY)
+  const glassBtn = isNight ? 'glass-subtle' : 'glass-subtle-light';
   const textColor = isNight ? 'text-white' : 'text-black';
-  const dropdownBg = isNight ? 'bg-slate-900/95 border-white/10' : 'bg-white/95 border-black/10';
+  const dropdownGlass = isNight ? 'glass-heavy bg-slate-900/95' : 'glass-heavy-light bg-white/95';
 
   // Check if any wallet is connected using unified state
   const isAnyConnected = chains?.evm?.connected || chains?.aptos?.connected || chains?.movement?.connected;
@@ -57,7 +56,7 @@ export default function WalletConnect({ isNight = false }) {
   // Safety check - don't render if chains not initialized
   if (!chains) {
     return (
-      <button className={`px-4 py-2 rounded-xl text-sm font-light border transition-all ${bgColor} ${borderColor} ${textColor}`}>
+      <button className={`px-4 py-2 rounded-xl text-sm font-light ${glassBtn} ${textColor}`}>
         Loading...
       </button>
     );
@@ -117,7 +116,7 @@ export default function WalletConnect({ isNight = false }) {
     <div className="relative">
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className={`px-4 py-2 rounded-xl text-sm font-light border transition-all ${bgColor} ${borderColor} ${textColor}`}
+        className={`px-4 py-2 rounded-xl text-sm font-light ${glassBtn} ${textColor}`}
       >
         {isAnyConnected ? (
           <div className="flex items-center gap-2">
@@ -146,7 +145,7 @@ export default function WalletConnect({ isNight = false }) {
 
       {/* Dropdown */}
       {showDropdown && (
-        <div className={`absolute right-0 mt-2 w-80 rounded-xl border ${dropdownBg} backdrop-blur-xl p-4 z-50 shadow-xl`}>
+        <div className={`absolute right-0 mt-2 w-80 rounded-xl ${dropdownGlass} p-4 z-50 shadow-xl`}>
           {/* Header */}
           <div className={`text-xs font-medium ${isNight ? 'text-white/60' : 'text-black/60'} uppercase tracking-wide mb-2`}>
             Wallet Networks
