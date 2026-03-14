@@ -38,7 +38,22 @@ function getClientIdentifier(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { eventType, location, weatherData, currentOdds, participants, marketID, title, isFuturesBet, mode = 'basic' } = body;
+    const { 
+      eventType, 
+      location, 
+      weatherData, 
+      currentOdds, 
+      participants, 
+      marketID, 
+      title, 
+      isFuturesBet, 
+      mode = 'basic',
+      // New analysis options from UI toggles
+      includeWeather = true,
+      includeSynthData = true,
+      includeFutures = false,
+      webSearchEnabled = true
+    } = body;
 
     // ENHANCED: Comprehensive input validation using APIInputValidator
     const inputValidation = APIInputValidator.validateAPIInput('analyze', {

@@ -13,8 +13,7 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector, SynthShowcase } from "@/components";
-import BottomSheet from "@/components/BottomSheet";
+import { ActiveChainIndicator, ChainSelector, SynthShowcase, AnalysisOptions, useAnalysisOptions } from "@/components";
 import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {
@@ -64,6 +63,9 @@ export default function MarketsPage() {
   const [analysis, setAnalysis] = useState(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisMode, setAnalysisMode] = useState("basic");
+  
+  // Analysis options (user toggles for weather, ML, futures, web search)
+  const analysisOptions = useAnalysisOptions(selectedMarket?.eventType || 'unknown');
 
   // Sports-specific filters (date-first)
   const [sportsFilters, setSportsFilters] = useState({
@@ -285,6 +287,11 @@ export default function MarketsPage() {
           marketID: market.marketID || market.id || market.tokenID,
           eventDate: market.resolutionDate || market.expiresAt || null,
           mode,
+          // Analysis factor toggles from user preferences
+          includeWeather: analysisOptions.includeWeather,
+          includeSynthData: analysisOptions.includeSynthData,
+          includeFutures: analysisOptions.includeFutures,
+          webSearchEnabled: analysisOptions.webSearchEnabled,
         }),
       });
 
@@ -467,6 +474,14 @@ export default function MarketsPage() {
                   <option value="basic">Basic (Free)</option>
                   <option value="deep">Deep (Research)</option>
                 </select>
+              </div>
+              {/* Analysis Factor Toggles - Compact inline mode */}
+              <div className="hidden lg:flex items-center">
+                <AnalysisOptions
+                  marketType={selectedMarket?.eventType || activeTab === 'sports' ? 'sports' : 'crypto'}
+                  compact={true}
+                  className="ml-2"
+                />
               </div>
               <div className="flex items-center space-x-2">
                 <WalletConnect isNight={isNight} />
