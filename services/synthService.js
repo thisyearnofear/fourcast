@@ -67,6 +67,7 @@ const ASSET_PATTERNS = [
   { asset: 'ETH', keywords: ['ethereum', 'eth', 'ether'] },
   { asset: 'SOL', keywords: ['solana', 'sol'] },
   { asset: 'XAU', keywords: ['gold', 'xau'] },
+  { asset: 'XAG', keywords: ['silver', 'si', 'xag'] },
   { asset: 'SPY', keywords: ['s&p 500', 's&p500', 'spy', 'sp500', 'sp 500'] },
   { asset: 'NVDA', keywords: ['nvidia', 'nvda', 'nvdia'] },
   { asset: 'GOOGL', keywords: ['google', 'googl', 'alphabet'] },
@@ -178,6 +179,14 @@ export const synthService = {
   isSynthRelevantCategory,
   getCacheStats,
   resetCacheStats,
+
+  /**
+   * Check if SynthData service is available (API key configured)
+   * @returns {boolean} True if service is available
+   */
+  isAvailable() {
+    return !!process.env.SYNTH_API_KEY;
+  },
 
   /**
    * Invalidate cache for a specific asset
