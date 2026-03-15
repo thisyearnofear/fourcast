@@ -5,8 +5,8 @@ describe('MarketTypeDetector', () => {
   describe('NFL Markets', () => {
     test('detects Super Bowl futures bet', () => {
       const market = {
-        title: 'Will the Kansas City Chiefs win Super Bowl 2026?',
-        resolutionDate: '2026-02-08',
+        title: 'Will the Kansas City Chiefs win Super Bowl 2027?',
+        resolutionDate: '2027-02-14',
         currentOdds: { yes: 0.08, no: 0.92 }
       };
       
@@ -153,8 +153,8 @@ describe('MarketTypeDetector', () => {
   describe('Helper Methods', () => {
     test('isFuturesBet quick check', () => {
       const futures = {
-        title: 'Super Bowl winner 2026',
-        resolutionDate: '2026-02-08'
+        title: 'Super Bowl winner 2027',
+        resolutionDate: '2027-02-14'
       };
       
       expect(MarketTypeDetector.isFuturesBet(futures)).toBe(true);

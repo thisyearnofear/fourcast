@@ -2,10 +2,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useOrderSigning } from '../hooks/useOrderSigning';
 
-// Mock wagmi hooks
+const mockAddress = '0x1234567890123456789012345678901234567890';
+const mockWalletClient = {
+  signTypedData: vi.fn(),
+};
+
+// Mock wagmi hooks - set up return values in factory
 vi.mock('wagmi', () => ({
-  useAccount: vi.fn(),
-  useWalletClient: vi.fn(),
+  useAccount: vi.fn(() => ({
+    address: mockAddress,
+    isConnected: true,
+  })),
+  useWalletClient: vi.fn(() => ({
+    data: mockWalletClient,
+  })),
 }));
 
 // Mock Polymarket CLOB client
@@ -23,23 +33,8 @@ vi.mock('@polymarket/clob-client', () => ({
 }));
 
 describe('useOrderSigning with proper EIP-712', () => {
-  const mockAddress = '0x1234567890123456789012345678901234567890';
-  const mockWalletClient = {
-    signTypedData: vi.fn(),
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Setup wagmi mocks
-    const { useAccount, useWalletClient } = require('wagmi');
-    useAccount.mockReturnValue({
-      address: mockAddress,
-      isConnected: true,
-    });
-    useWalletClient.mockReturnValue({
-      data: mockWalletClient,
-    });
   });
 
   it('should build order with correct Polymarket format', () => {
