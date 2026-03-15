@@ -144,6 +144,8 @@ export async function POST(request) {
       citations: analysis.citations || [],
       limitations: analysis.limitations || null,
       web_search: mode === 'deep',
+      // ENHANCED: Include SynthData for finance markets
+      synthData: analysis.synthData || null,
       // ENHANCED: Include analysis types used for display badges
       analysisTypes: analysisTypes || [],
       // ENHANCED: Include validation results
