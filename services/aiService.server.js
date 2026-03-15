@@ -38,6 +38,7 @@ const callVeniceAI = async (params, options = {}) => {
     isFuturesBet,
     eventDate,
     analysisTypes = [], // Finance/stock analysis types: fundamental, technical, sentiment
+    synthContext = null, // SynthData context for finance markets
   } = params;
   const { webSearch = true, showThinking = false } = options;
 
@@ -165,6 +166,7 @@ STRICT REQUIREMENTS:
       }
 ${weatherSection}
 ${analysisTypesSection}
+${synthContext ? `\n${synthContext}` : ''}
 MARKET ODDS: ${oddsText}
 
 RESPONSE FORMAT - You MUST respond with ONLY this JSON structure, no other text:
@@ -464,6 +466,50 @@ export async function analyzeWeatherImpactServer(params) {
       location = null;
     }
 
+    // For finance/stock markets, try to get SynthData to inform the analysis
+    let synthData = null;
+    let synthContext = null;
+    if (!isWeatherMarket && synthService.isAvailable()) {
+      try {
+        const detectedAsset = synthService.detectAsset(title, title);
+        if (detectedAsset) {
+          console.log(`🎯 Detected asset for single-market analysis: ${detectedAsset}`);
+          const synthForecast = await synthService.buildForecast(detectedAsset, {
+            includePolymarket: true,
+          });
+          
+          if (synthForecast) {
+            synthData = {
+              asset: synthForecast.asset,
+              currentPrice: synthForecast.currentPrice,
+              percentiles: synthForecast.percentiles,
+              polymarketEdge: synthForecast.polymarketEdge,
+              confidence: synthForecast.confidence,
+            };
+            
+            // Build context for LLM to incorporate synth data into reasoning
+            const edge = synthForecast.polymarketEdge;
+            const edgeInfo = edge ? `
+- Polymarket Edge: ${Math.abs(edge.edge * 100).toFixed(1)}% ${edge.edge > 0 ? 'UNDERPRICED (YES value)' : 'OVERPRICED (YES overvalued)'}
+- Synth Fair Probability: ${(edge.synthFairProb * 100).toFixed(1)}%
+- Market Probability: ${(edge.polymarketProb * 100).toFixed(1)}%
+` : '';
+            
+            synthContext = `
+📊 SYNTHDATA MARKET INTELLIGENCE:
+- Current ${synthForecast.asset} Price: $${synthForecast.currentPrice?.toLocaleString()}
+- 24h Price Range (P5-P95): $${synthForecast.percentiles?.p5?.toLocaleString()} - $${synthForecast.percentiles?.p95?.toLocaleString()}
+- P50 (Median): $${synthForecast.percentiles?.p50?.toLocaleString()}
+- ML Confidence: ${synthForecast.confidence}
+${edgeInfo}
+`;
+          }
+        }
+      } catch (err) {
+        console.warn(`SynthData fetch failed for single-market analysis:`, err.message);
+      }
+    }
+
     const deriveProvider = (id) => {
       if (!id) return "polymarket";
       if (typeof id === "string") {
@@ -703,6 +749,7 @@ export async function analyzeWeatherImpactServer(params) {
           eventDate,
           isFuturesBet,
           analysisTypes, // Finance/stock analysis types
+          synthContext, // Include SynthData context for finance markets
         },
         {
           webSearch: true,
@@ -727,6 +774,7 @@ export async function analyzeWeatherImpactServer(params) {
             eventDate,
             isFuturesBet,
             analysisTypes, // Finance/stock analysis types
+            synthContext, // Include SynthData context for finance markets
           },
           {
             webSearch: true,
@@ -829,6 +877,7 @@ export async function analyzeWeatherImpactServer(params) {
       weather_conditions: wc,
       cached: false,
       source: "venice_ai",
+      synthData, // Include SynthData for finance markets (displays price, percentiles, edge)
     };
   } catch (error) {
     console.error("AI Analysis failed:", error);
