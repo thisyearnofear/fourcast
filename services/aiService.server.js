@@ -435,27 +435,11 @@ export async function analyzeWeatherImpactServer(params) {
     // Check if this market type is weather-sensitive
     const isWeatherMarket = isWeatherSensitiveCategory(eventType);
     if (!isWeatherMarket) {
-      console.log(`📊 Non-weather market detected (${eventType}), skipping weather data fetch`);
-      // For non-weather markets (finance, stocks, crypto, politics, etc.), skip venue resolution entirely
-      // These markets don't have physical venues and don't need weather data
-      return {
-        assessment: {
-          weather_impact: "N/A",
-          odds_efficiency: "UNKNOWN",
-          confidence: "LOW",
-        },
-        analysis: `This is a ${eventType || 'financial/political'} market. Weather analysis isn't applicable since ${eventType === 'stock' || eventType === 'finance' || eventType === 'crypto' ? "stock/crypto prices" : "these events"} are not influenced by weather conditions.`,
-        key_factors: [
-          `${eventType || 'This'} markets are not weather-dependent`,
-          "Weather conditions have no impact on financial or political outcomes",
-          "Analysis should focus on market fundamentals, news, and sentiment",
-        ],
-        recommended_action: `This market type doesn't require weather analysis. Focus on ${eventType === 'stock' || eventType === 'finance' || eventType === 'crypto' ? 'fundamental analysis, earnings, and market sentiment' : 'relevant news and event-specific factors'} instead.`,
-        citations: [],
-        limitations: "Weather analysis not applicable to non-weather-sensitive markets",
-        cached: false,
-        source: "non_weather_bypass",
-      };
+      console.log(`📊 Non-weather market detected (${eventType}), proceeding with financial/political analysis`);
+      // For non-weather markets (finance, stocks, crypto, politics, etc.), skip venue resolution and weather data
+      // The callVeniceAI function will handle these markets with appropriate prompts
+      weatherData = null;
+      location = null;
     }
 
     const deriveProvider = (id) => {
@@ -578,7 +562,8 @@ export async function analyzeWeatherImpactServer(params) {
       }
     }
 
-    if (!location) {
+    // For weather-sensitive markets, venue is required. For others, skip this check.
+    if (isWeatherMarket && !location) {
       return {
         assessment: {
           weather_impact: "UNKNOWN",
@@ -592,6 +577,11 @@ export async function analyzeWeatherImpactServer(params) {
         cached: false,
         source: "venue_missing",
       };
+    }
+
+    // For non-weather markets (finance, crypto, politics), set placeholder values for location
+    if (!isWeatherMarket) {
+      location = location || { name: "N/A (Non-weather market)" };
     }
 
     const apiKey = process.env.VENICE_API_KEY;
