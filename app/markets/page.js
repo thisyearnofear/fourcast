@@ -334,38 +334,41 @@ export default function MarketsPage() {
     setExpandedMarketId(market.marketID || market.id || market.tokenID);
 
     try {
+      const requestBody = {
+        eventType: market.eventType || market.title || "Market",
+        title: market.title || market.question,
+        location: market.location || market.eventLocation || "",
+        weatherData: null,
+        currentOdds:
+          market.currentOdds ||
+          (market.bid !== undefined && market.ask !== undefined
+            ? { yes: Number(market.ask), no: Number(market.bid) }
+            : null),
+        participants: market.teams || [],
+        marketID: market.marketID || market.id || market.tokenID,
+        eventDate: market.resolutionDate || market.expiresAt || null,
+        // Map modal's 'quick/standard/deep' to API's 'basic/detailed/deep'
+        mode: (config.depth === 'quick' ? 'basic' : config.depth === 'standard' ? 'detailed' : config.depth) || analysisMode,
+        // Config from modal
+        includeWeather: config.includeWeather,
+        includeSynthData: config.includeSynthData,
+        includeFutures: config.includeFutures,
+        webSearchEnabled: config.includeWebSearch,
+        analysisTypes: [
+          ...(config.includeFundamental ? ['fundamental'] : []),
+          ...(config.includeTechnical ? ['technical'] : []),
+          ...(config.includeSentiment ? ['sentiment'] : []),
+        ],
+        // Provider preferences
+        aiProvider: config.providers?.aiProvider,
+        weatherProvider: config.providers?.weatherProvider,
+        marketDataProvider: config.providers?.marketDataProvider,
+      };
+
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventType: market.eventType || market.title || "Market",
-          title: market.title || market.question,
-          location: market.location || market.eventLocation || "",
-          weatherData: null,
-          currentOdds:
-            market.currentOdds ||
-            (market.bid !== undefined && market.ask !== undefined
-              ? { yes: Number(market.ask), no: Number(market.bid) }
-              : null),
-          participants: market.teams || [],
-          marketID: market.marketID || market.id || market.tokenID,
-          eventDate: market.resolutionDate || market.expiresAt || null,
-          mode: config.depth || analysisMode,
-          // Config from modal
-          includeWeather: config.includeWeather,
-          includeSynthData: config.includeSynthData,
-          includeFutures: config.includeFutures,
-          webSearchEnabled: config.includeWebSearch,
-          analysisTypes: [
-            ...(config.includeFundamental ? ['fundamental'] : []),
-            ...(config.includeTechnical ? ['technical'] : []),
-            ...(config.includeSentiment ? ['sentiment'] : []),
-          ],
-          // Provider preferences
-          aiProvider: config.providers?.aiProvider,
-          weatherProvider: config.providers?.weatherProvider,
-          marketDataProvider: config.providers?.marketDataProvider,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
