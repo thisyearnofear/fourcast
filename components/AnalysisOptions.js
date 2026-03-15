@@ -33,11 +33,17 @@ export default function AnalysisOptions({
     const synthCategories = ['crypto', 'bitcoin', 'btc', 'eth', 'ethereum', 'price', 'stock', 'market', 'finance', 'trading'];
     const isSynthMarket = synthCategories.some(cat => typeLower.includes(cat));
     
+    // Finance/Stock categories
+    const financeCategories = ['stock', 'finance', 'crypto', 'bitcoin', 'btc', 'eth', 'trading', 'economy', 'earnings', 'market', 'price'];
+    const isFinanceMarket = financeCategories.some(cat => typeLower.includes(cat));
+    
     return {
       includeWeather: isWeatherMarket,
       includeSynthData: isSynthMarket,
       includeFutures: false,
       webSearchEnabled: true,
+      // Finance-specific analysis types
+      analysisTypes: isFinanceMarket ? ['fundamental', 'sentiment'] : [],
     };
   }, []);
   
@@ -97,6 +103,17 @@ export default function AnalysisOptions({
     }));
   };
   
+  // Toggle analysis types for finance markets
+  const toggleAnalysisType = (type) => {
+    setOptions(prev => {
+      const currentTypes = prev.analysisTypes || [];
+      const newTypes = currentTypes.includes(type)
+        ? currentTypes.filter(t => t !== type)
+        : [...currentTypes, type];
+      return { ...prev, analysisTypes: newTypes };
+    });
+  };
+  
   // Determine if weather toggle should show "auto-detected" indicator
   const weatherCategories = ['nfl', 'nba', 'mlb', 'nhl', 'soccer', 'golf', 'tennis', 'cricket', 'rugby', 'f1', 'formula', 'marathon', 'racing', 'outdoor', 'weather', 'sports'];
   const typeLower = String(marketType || '').toLowerCase();
@@ -104,24 +121,61 @@ export default function AnalysisOptions({
   
   const synthCategories = ['crypto', 'bitcoin', 'btc', 'eth', 'ethereum', 'price', 'stock', 'market', 'finance', 'trading'];
   const isSynthMarket = synthCategories.some(cat => typeLower.includes(cat));
+  
+  // Finance/Stock categories
+  const financeCategories = ['stock', 'finance', 'crypto', 'bitcoin', 'btc', 'eth', 'trading', 'economy', 'earnings', 'market', 'price'];
+  const isFinanceMarket = financeCategories.some(cat => typeLower.includes(cat));
 
   if (compact) {
     return (
       <div className={`flex flex-wrap gap-2 ${className}`}>
-        <ToggleButton
-          label="🌤️ Weather"
-          isActive={options.includeWeather}
-          onClick={() => toggleOption('includeWeather')}
-          autoDetected={isWeatherMarket}
-          compact
-        />
-        <ToggleButton
-          label="🤖 ML Models"
-          isActive={options.includeSynthData}
-          onClick={() => toggleOption('includeSynthData')}
-          autoDetected={isSynthMarket}
-          compact
-        />
+        {/* Weather toggle - show for sports markets */}
+        {isWeatherMarket && (
+          <ToggleButton
+            label="🌤️ Weather"
+            isActive={options.includeWeather}
+            onClick={() => toggleOption('includeWeather')}
+            autoDetected={isWeatherMarket}
+            compact
+          />
+        )}
+        
+        {/* Finance analysis toggles - show for finance markets */}
+        {isFinanceMarket && (
+          <>
+            <ToggleButton
+              label="📊 Fund."
+              isActive={options.analysisTypes?.includes('fundamental')}
+              onClick={() => toggleAnalysisType('fundamental')}
+              autoDetected={true}
+              compact
+            />
+            <ToggleButton
+              label="📈 Tech."
+              isActive={options.analysisTypes?.includes('technical')}
+              onClick={() => toggleAnalysisType('technical')}
+              compact
+            />
+            <ToggleButton
+              label="💬 Sent."
+              isActive={options.analysisTypes?.includes('sentiment')}
+              onClick={() => toggleAnalysisType('sentiment')}
+              compact
+            />
+          </>
+        )}
+        
+        {/* ML toggle - show for non-finance markets */}
+        {!isFinanceMarket && (
+          <ToggleButton
+            label="🤖 ML Models"
+            isActive={options.includeSynthData}
+            onClick={() => toggleOption('includeSynthData')}
+            autoDetected={isSynthMarket}
+            compact
+          />
+        )}
+        
         <ToggleButton
           label="📅 Futures"
           isActive={options.includeFutures}
@@ -160,6 +214,33 @@ export default function AnalysisOptions({
           onClick={() => toggleOption('includeSynthData')}
           autoDetected={isSynthMarket}
         />
+        
+        {/* Finance-specific analysis types - only show for finance markets */}
+        {isFinanceMarket && (
+          <>
+            <div className="pt-2 pb-1">
+              <p className="text-xs text-white/40 uppercase tracking-wider">Finance Analysis</p>
+            </div>
+            <ToggleRow
+              label="📊 Fundamental"
+              description="Earnings, macro factors, financials"
+              isActive={options.analysisTypes?.includes('fundamental')}
+              onClick={() => toggleAnalysisType('fundamental')}
+            />
+            <ToggleRow
+              label="📈 Technical"
+              description="Price patterns, trends, support/resistance"
+              isActive={options.analysisTypes?.includes('technical')}
+              onClick={() => toggleAnalysisType('technical')}
+            />
+            <ToggleRow
+              label="💬 Sentiment"
+              description="Social media, news, community mood"
+              isActive={options.analysisTypes?.includes('sentiment')}
+              onClick={() => toggleAnalysisType('sentiment')}
+            />
+          </>
+        )}
         
         <ToggleRow
           label="Include futures"

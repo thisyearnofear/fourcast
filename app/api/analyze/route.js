@@ -52,7 +52,8 @@ export async function POST(request) {
       includeWeather = true,
       includeSynthData = true,
       includeFutures = false,
-      webSearchEnabled = true
+      webSearchEnabled = true,
+      analysisTypes = []
     } = body;
 
     // ENHANCED: Comprehensive input validation using APIInputValidator
@@ -112,7 +113,8 @@ export async function POST(request) {
       isFuturesBet,
       marketId: marketID, // ← Roadmap-aligned cache key: analysis:{marketID}
       eventDate: body.eventDate, // ← Dynamic TTL based on event timing
-      mode
+      mode,
+      analysisTypes, // ← Finance analysis types (fundamental, technical, sentiment)
     });
 
     // Format weather conditions for display
@@ -142,6 +144,8 @@ export async function POST(request) {
       citations: analysis.citations || [],
       limitations: analysis.limitations || null,
       web_search: mode === 'deep',
+      // ENHANCED: Include analysis types used for display badges
+      analysisTypes: analysisTypes || [],
       // ENHANCED: Include validation results
       validation: {
         weatherDataQuality: weatherValidation.dataQuality,

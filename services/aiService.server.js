@@ -37,6 +37,7 @@ const callVeniceAI = async (params, options = {}) => {
     title,
     isFuturesBet,
     eventDate,
+    analysisTypes = [], // Finance/stock analysis types: fundamental, technical, sentiment
   } = params;
   const { webSearch = true, showThinking = false } = options;
 
@@ -76,6 +77,22 @@ const callVeniceAI = async (params, options = {}) => {
 
   // Determine if this market is weather-sensitive
   const isWeatherMarket = isWeatherSensitiveCategory(eventType);
+  
+  // Determine if this is a finance/stock market
+  const financeKeywords = ['stock', 'finance', 'crypto', 'bitcoin', 'btc', 'eth', 'trading', 'economy', 'earnings', 'market', 'price', 'index', 'futures', 'options', 'bond'];
+  const isFinanceMarket = financeKeywords.some(kw => (eventType || '').toLowerCase().includes(kw) || (title || '').toLowerCase().includes(kw));
+  
+  // Build analysis types section for finance markets
+  const analysisTypesSection = isFinanceMarket && analysisTypes.length > 0 ? `
+ANALYSIS TYPES ENABLED:
+- ${analysisTypes.map(t => {
+  switch(t) {
+    case 'fundamental': return '📊 Fundamental: Earnings, revenue, P/E ratios, macro factors';
+    case 'technical': return '📈 Technical: Price patterns, trends, support/resistance';
+    case 'sentiment': return '💬 Sentiment: Social media, news, community mood';
+    default: return t;
+  }
+}).join('\n- ')}` : '';
   
   // Build weather section only for weather-sensitive markets
   const weatherSection = isWeatherMarket ? `
@@ -117,7 +134,10 @@ STRICT REQUIREMENTS:
 - You MUST respond with ONLY a valid JSON object, no other text before or after
 - Do NOT wrap the JSON in markdown code blocks
 - Output a single JSON object with the required fields only`
-    : `You are an expert prediction market analyst. Provide SPECIFIC, ACTIONABLE analysis with clear reasoning.
+    : `You are an expert prediction market analyst specializing in ${isFinanceMarket ? 'stocks, crypto, and financial markets' : 'non-sports events'}. Provide SPECIFIC, ACTIONABLE analysis with clear reasoning.
+
+${isFinanceMarket && analysisTypes.length > 0 ? `You have access to the following analysis types - incorporate them into your analysis:
+- ${analysisTypes.join(', ')}` : ''}
 
 STRICT REQUIREMENTS:
 - Focus on market fundamentals, news, and odds efficiency
@@ -144,6 +164,7 @@ STRICT REQUIREMENTS:
         eventDate || weatherData?.forecast?.forecastday?.[0]?.date || "Unknown"
       }
 ${weatherSection}
+${analysisTypesSection}
 MARKET ODDS: ${oddsText}
 
 RESPONSE FORMAT - You MUST respond with ONLY this JSON structure, no other text:
@@ -404,6 +425,7 @@ export async function analyzeWeatherImpactServer(params) {
     title,
     isFuturesBet,
     mode = "basic",
+    analysisTypes = [], // Finance analysis types: fundamental, technical, sentiment
   } = params;
 
   try {
@@ -680,6 +702,7 @@ export async function analyzeWeatherImpactServer(params) {
           title,
           eventDate,
           isFuturesBet,
+          analysisTypes, // Finance/stock analysis types
         },
         {
           webSearch: true,
@@ -703,6 +726,7 @@ export async function analyzeWeatherImpactServer(params) {
             title,
             eventDate,
             isFuturesBet,
+            analysisTypes, // Finance/stock analysis types
           },
           {
             webSearch: true,

@@ -292,6 +292,7 @@ export default function MarketsPage() {
           includeSynthData: analysisOptions.includeSynthData,
           includeFutures: analysisOptions.includeFutures,
           webSearchEnabled: analysisOptions.webSearchEnabled,
+          analysisTypes: analysisOptions.analysisTypes || [],
         }),
       });
 
@@ -1907,6 +1908,34 @@ function MarketCard({
                   analysis.analysis ||
                   "No analysis available"}
               </p>
+              
+              {/* Analysis Factor Badges - show which analysis types were used */}
+              {analysis.analysisTypes && analysis.analysisTypes.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {analysis.analysisTypes.map((type, idx) => {
+                    const labels = {
+                      fundamental: { emoji: '📊', label: 'Fundamental' },
+                      technical: { emoji: '📈', label: 'Technical' },
+                      sentiment: { emoji: '💬', label: 'Sentiment' },
+                      weather: { emoji: '🌤️', label: 'Weather' },
+                      futures: { emoji: '📅', label: 'Futures' },
+                      news: { emoji: '📰', label: 'News' },
+                    };
+                    const info = labels[type] || { emoji: '🔍', label: type };
+                    return (
+                      <span
+                        key={idx}
+                        className={`px-2 py-1 rounded-full text-xs border ${isNight
+                          ? "bg-blue-500/10 border-blue-500/20 text-blue-300"
+                          : "bg-blue-400/10 border-blue-400/20 text-blue-700"
+                        }`}
+                      >
+                        {info.emoji} {info.label}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Recommendation */}
