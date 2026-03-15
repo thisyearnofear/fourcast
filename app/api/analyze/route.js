@@ -44,7 +44,8 @@ export async function POST(request) {
       weatherData, 
       currentOdds, 
       participants, 
-      marketID, 
+      marketID,      // Support both marketID and marketId for backward compatibility
+      marketId,
       title, 
       isFuturesBet, 
       mode = 'basic',
@@ -56,9 +57,15 @@ export async function POST(request) {
       analysisTypes = []
     } = body;
 
+    // Use either marketID or marketId (support both cases)
+    const resolvedMarketId = marketID || marketId;
+
+    // DEBUG: Log the incoming marketID
+    console.log('[DEBUG] resolvedMarketId:', resolvedMarketId);
+
     // ENHANCED: Comprehensive input validation using APIInputValidator
     const inputValidation = APIInputValidator.validateAPIInput('analyze', {
-      marketId: marketID,
+      marketId: resolvedMarketId,
       location,
       weatherData,
       eventType,
@@ -111,7 +118,7 @@ export async function POST(request) {
       participants,
       title,
       isFuturesBet,
-      marketId: marketID, // ← Roadmap-aligned cache key: analysis:{marketID}
+      marketId: resolvedMarketId, // ← Roadmap-aligned cache key
       eventDate: body.eventDate, // ← Dynamic TTL based on event timing
       mode,
       analysisTypes, // ← Finance analysis types (fundamental, technical, sentiment)
@@ -128,7 +135,7 @@ export async function POST(request) {
 
     return Response.json({
       success: true,
-      marketId: marketID,
+      marketId: resolvedMarketId,
       assessment: {
         weather_impact: analysis.assessment?.weather_impact || 'UNKNOWN',
         odds_efficiency: analysis.assessment?.odds_efficiency || 'UNKNOWN', 
