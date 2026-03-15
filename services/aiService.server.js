@@ -27,6 +27,47 @@ const isWeatherSensitiveCategory = (eventType) => {
   return WEATHER_SENSITIVE_CATEGORIES.some(cat => type.includes(cat));
 };
 
+// Auto-detect event type from title when not provided
+const detectEventTypeFromTitle = (title) => {
+  if (!title) return null;
+  const titleLower = title.toLowerCase();
+  
+  // Financial keywords
+  if (titleLower.includes('stock') || titleLower.includes('nvidia') || 
+      titleLower.includes('bitcoin') || titleLower.includes('crypto') ||
+      titleLower.includes('gold') || titleLower.includes('silver') ||
+      titleLower.includes('oil') || titleLower.includes('s&p') ||
+      titleLower.includes('dow') || titleLower.includes('nasdaq') ||
+      titleLower.includes('dip') || titleLower.includes('hit $') ||
+      titleLower.includes('price') || titleLower.includes('market') ||
+      titleLower.includes('forex') || titleLower.includes('currency') ||
+      titleLower.includes('bond') || titleLower.includes('treasury') ||
+      titleLower.includes('fed') || titleLower.includes('rate')) {
+    return 'finance';
+  }
+  
+  // Political keywords
+  if (titleLower.includes('election') || titleLower.includes('president') ||
+      titleLower.includes('congress') || titleLower.includes('senate') ||
+      titleLower.includes('parliament') || titleLower.includes('vote') ||
+      titleLower.includes('referendum') || titleLower.includes('trump') ||
+      titleLower.includes('biden')) {
+    return 'politics';
+  }
+  
+  // Sports keywords (check these last as they're more specific)
+  const sportsKeywords = ['nfl', 'nba', 'mlb', 'nhl', 'soccer', 'football', 
+    'tennis', 'golf', 'boxing', 'mma', 'ufc', 'cricket', 'rugby', 'f1', 
+    'formula 1', 'nascar', 'indycar', 'marathon', 'racing', 'game', 
+    'match', 'championship', 'season', 'playoffs', 'finals'];
+  
+  for (const keyword of sportsKeywords) {
+    if (titleLower.includes(keyword)) return keyword;
+  }
+  
+  return null;
+};
+
 const callVeniceAI = async (params, options = {}) => {
   const {
     eventType,
@@ -429,6 +470,15 @@ export async function analyzeWeatherImpactServer(params) {
     mode = "basic",
     analysisTypes = [], // Finance analysis types: fundamental, technical, sentiment
   } = params;
+
+  // Auto-detect event type from title if not provided
+  if (!eventType && title) {
+    const detected = detectEventTypeFromTitle(title);
+    if (detected) {
+      console.log(`🔍 Auto-detected eventType: ${detected} from title: "${title.substring(0, 50)}..."`);
+      eventType = detected;
+    }
+  }
 
   try {
     // Check for futures bets FIRST
