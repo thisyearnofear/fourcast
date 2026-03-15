@@ -13,7 +13,7 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector, SynthShowcase, AnalysisOptions, useAnalysisOptions } from "@/components";
+import { ActiveChainIndicator, ChainSelector, SynthShowcase, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal } from "@/components";
 import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {
@@ -63,6 +63,10 @@ export default function MarketsPage() {
   const [analysis, setAnalysis] = useState(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisMode, setAnalysisMode] = useState("basic");
+  
+  // Analysis config modal state
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [pendingMarket, setPendingMarket] = useState(null);
   
   // Analysis options (user toggles for weather, ML, futures, web search)
   const analysisOptions = useAnalysisOptions(selectedMarket?.eventType || 'unknown');
@@ -311,6 +315,75 @@ export default function MarketsPage() {
     }
   };
 
+  // Open analysis config modal instead of running directly
+  const openAnalyzeConfig = (market) => {
+    setPendingMarket(market);
+    setShowConfigModal(true);
+  };
+
+  // Run analysis with config from modal
+  const analyzeMarketWithConfig = async (config) => {
+    if (!pendingMarket) return;
+    
+    const market = pendingMarket;
+    setShowConfigModal(false);
+    setIsLoadingAnalysis(true);
+    setError(null);
+    setAnalysis(null);
+    setSelectedMarket(market);
+    setExpandedMarketId(market.marketID || market.id || market.tokenID);
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType: market.eventType || market.title || "Market",
+          title: market.title || market.question,
+          location: market.location || market.eventLocation || "",
+          weatherData: null,
+          currentOdds:
+            market.currentOdds ||
+            (market.bid !== undefined && market.ask !== undefined
+              ? { yes: Number(market.ask), no: Number(market.bid) }
+              : null),
+          participants: market.teams || [],
+          marketID: market.marketID || market.id || market.tokenID,
+          eventDate: market.resolutionDate || market.expiresAt || null,
+          mode: config.depth || analysisMode,
+          // Config from modal
+          includeWeather: config.includeWeather,
+          includeSynthData: config.includeSynthData,
+          includeFutures: config.includeFutures,
+          webSearchEnabled: config.includeWebSearch,
+          analysisTypes: [
+            ...(config.includeFundamental ? ['fundamental'] : []),
+            ...(config.includeTechnical ? ['technical'] : []),
+            ...(config.includeSentiment ? ['sentiment'] : []),
+          ],
+          // Provider preferences
+          aiProvider: config.providers?.aiProvider,
+          weatherProvider: config.providers?.weatherProvider,
+          marketDataProvider: config.providers?.marketDataProvider,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAnalysis(data);
+      } else {
+        setError(data.error || "Analysis failed");
+      }
+    } catch (err) {
+      console.error("Analysis failed:", err);
+      setError("Failed to analyze market");
+    } finally {
+      setIsLoadingAnalysis(false);
+      setPendingMarket(null);
+    }
+  };
+
   const handlePublishSignal = useCallback(async () => {
     if (!selectedMarket || !analysis) return;
 
@@ -441,6 +514,16 @@ export default function MarketsPage() {
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} removeToast={removeToast} isNight={isNight} />
 
+      {/* Analysis Config Modal */}
+      <AnalysisConfigModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        onConfirm={analyzeMarketWithConfig}
+        market={pendingMarket}
+        isLoading={isLoadingAnalysis}
+        defaultOptions={analysisOptions}
+      />
+
       {/* Scrollable Content */}
       <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
         {/* Header */}
@@ -544,7 +627,7 @@ export default function MarketsPage() {
               setDateRange={setSelectedDateRange}
               minVolume={sportsMinVolume}
               setMinVolume={setSportsMinVolume}
-              onAnalyze={analyzeMarket}
+              onAnalyze={openAnalyzeConfig}
               isNight={isNight}
               textColor={textColor}
               cardBgColor={cardBgColor}
@@ -574,7 +657,7 @@ export default function MarketsPage() {
               setFilters={setDiscoveryFilters}
               dateRange={discoveryDateRange}
               setDateRange={setDiscoveryDateRange}
-              onAnalyze={analyzeMarket}
+              onAnalyze={openAnalyzeConfig}
               isNight={isNight}
               textColor={textColor}
               cardBgColor={cardBgColor}

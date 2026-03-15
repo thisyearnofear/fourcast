@@ -11,3 +11,4 @@ export { ChainSelector } from './ChainSelector';
 export { AgentDashboard } from './AgentDashboard';
 export { SynthShowcase } from './SynthShowcase';
 export { default as AnalysisOptions, useAnalysisOptions } from './AnalysisOptions';
+export { default as AnalysisConfigModal } from './AnalysisConfigModal';
