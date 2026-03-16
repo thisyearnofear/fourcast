@@ -1,5 +1,6 @@
 import { polymarketService } from '@/services/polymarketService';
 import { kalshiService } from '@/services/kalshiService';
+import { synthService } from '@/services/synthService';
 
 export async function POST(request) {
   try {
@@ -151,6 +152,19 @@ export async function POST(request) {
         spreadPercent: m.orderBookMetrics?.spreadPercent || 0
       };
 
+      // Detect if this market can benefit from SynthData ML analysis
+      const detectedAsset = synthService.detectAsset(m.title, m.description || '');
+      const isMLReady = !!detectedAsset;
+
+      // Calculate days to resolution
+      let daysToResolution = null;
+      if (m.resolutionDate) {
+        const resDate = new Date(m.resolutionDate);
+        if (!isNaN(resDate.getTime())) {
+          daysToResolution = (resDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+        }
+      }
+
       return {
         marketID: m.marketID,
         platform: m.platform || 'polymarket', // Default to polymarket if missing
@@ -162,6 +176,7 @@ export async function POST(request) {
         liquidity: m.liquidity,
         tags: m.tags,
         resolutionDate: m.resolutionDate,
+        daysToResolution,
         eventType: m.eventType,
         teams: m.teams,
         edgeScore: m.edgeScore,
@@ -169,6 +184,8 @@ export async function POST(request) {
         confidence: m.confidence,
         weatherContext: m.weatherContext,
         isWeatherSensitive: m.isWeatherSensitive,
+        isMLReady,
+        detectedAsset,
 
         // Include enriched market data for richer UI
         bid: m.bid || validOdds.no,
@@ -183,8 +200,17 @@ export async function POST(request) {
       };
     });
 
+    // Filter out past markets
+    const activeMarkets = transformedMarkets.filter(m => {
+      // If we have daysToResolution, it must be in the future
+      if (m.daysToResolution !== null) {
+        return m.daysToResolution > 0;
+      }
+      return true;
+    });
+
     // Pre-cache market details for top 5 (fire and forget) - only for Polymarket for now
-    const top5PolymarketIds = transformedMarkets
+    const top5PolymarketIds = activeMarkets
       .filter(m => m.platform === 'polymarket')
       .slice(0, 5)
       .map(m => m.marketID);
@@ -197,7 +223,7 @@ export async function POST(request) {
 
     return Response.json({
       success: true,
-      markets: transformedMarkets,
+      markets: activeMarkets,
       totalFound: marketsList.length,
       cached: false,
       timestamp: new Date().toISOString()

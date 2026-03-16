@@ -1582,22 +1582,81 @@ function MarketCard({
             >
               {market.title || market.question}
             </h3>
-            {/* Platform Badge */}
-            <span
-              className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider border ${isKalshi
-                ? isNight
-                  ? "bg-emerald-900/40 text-emerald-300 border-emerald-700/50"
-                  : "bg-emerald-100 text-emerald-700 border-emerald-200"
-                : isNight
-                  ? "bg-blue-900/40 text-blue-300 border-blue-700/50"
-                  : "bg-blue-100 text-blue-700 border-blue-200"
-                }`}
-            >
-              {isKalshi ? "Kalshi" : "Polymarket"}
-            </span>
+            {/* Platform & Date Badge */}
+            <div className="flex flex-col items-end gap-1">
+              <span
+                className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider border ${isKalshi
+                  ? isNight
+                    ? "bg-emerald-900/40 text-emerald-300 border-emerald-700/50"
+                    : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                  : isNight
+                    ? "bg-blue-900/40 text-blue-300 border-blue-700/50"
+                    : "bg-blue-100 text-blue-700 border-blue-200"
+                  }`}
+              >
+                {isKalshi ? "Kalshi" : "Polymarket"}
+              </span>
+              {market.resolutionDate && (
+                <span className={`text-[10px] ${textColor} opacity-40 font-light`}>
+                  Ends {new Date(market.resolutionDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                </span>
+              )}
+            </div>
           </div>
 
+          {/* Market Odds Summary - NEW: Shows odds on the card! */}
+          {!isExpanded && (
+            <div className="flex items-center gap-4 py-1">
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-medium ${isNight ? "text-green-400/70" : "text-green-600/70"}`}>YES</span>
+                <span className={`text-sm font-light ${textColor}`}>
+                  {market.ask ? `${(market.ask * 100).toFixed(0)}%` : "—"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-medium ${isNight ? "text-red-400/70" : "text-red-600/70"}`}>NO</span>
+                <span className={`text-sm font-light ${textColor}`}>
+                  {market.bid ? `${(market.bid * 100).toFixed(0)}%` : "—"}
+                </span>
+              </div>
+              {/* ML Edge Preview (if analyzed) */}
+              {isCurrentMarket && analysis?.synthData?.polymarketEdge && (
+                <div className={`ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-md ${
+                  isNight ? "bg-purple-500/10 border border-purple-500/20" : "bg-purple-400/10 border border-purple-400/20"
+                }`}>
+                  <span className="text-xs">⚡</span>
+                  <span className={`text-[10px] font-medium ${isNight ? "text-purple-300" : "text-purple-700"}`}>
+                    {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}% EDGE
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-2 text-xs">
+            {/* ML Ready Badge - NEW: Highlight differentiator early! */}
+            {!isCurrentMarket && market.isMLReady && (
+              <div className="relative group">
+                <span
+                  className={`px-3 py-1 rounded-full font-medium border cursor-help ${
+                    isNight
+                      ? "bg-purple-500/20 text-purple-200 border-purple-400/30"
+                      : "bg-purple-400/20 text-purple-800 border-purple-400/30"
+                  }`}
+                >
+                  🤖 ML Ready
+                </span>
+                <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 ${
+                  isNight ? 'bg-gray-900 text-white border border-white/20' : 'bg-white text-gray-900 border border-gray-200 shadow-lg'
+                }`}>
+                  Quantitative analysis available via SynthData
+                  <div className={`absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 ${
+                    isNight ? 'bg-gray-900 border-r border-b border-white/20' : 'bg-white border-r border-b border-gray-200'
+                  }`}></div>
+                </div>
+              </div>
+            )}
+
             {/* Synth ML Badge - Show when analysis uses SynthData */}
             {isCurrentMarket && analysis?.source && (analysis.source === 'synthdata+llm' || analysis.source === 'synthdata+path') && (
               <div className="relative group">
@@ -1774,12 +1833,17 @@ function MarketCard({
                 disabled={isAnalyzing}
                 aria-label={`Analyze market: ${market.title || market.question}`}
                 aria-busy={isAnalyzing && isCurrentMarket}
-                className={`px-4 sm:px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${isNight
-                  ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 text-purple-200 border-purple-400/30"
-                  : "bg-gradient-to-r from-purple-400/20 to-pink-400/20 hover:from-purple-400/30 hover:to-pink-400/30 text-purple-800 border-purple-500/30"
-                  }`}
+                className={`px-4 sm:px-6 py-3 rounded-2xl font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${
+                  market.isMLReady
+                    ? isNight
+                      ? "bg-gradient-to-r from-purple-600/40 to-pink-600/40 hover:from-purple-600/60 hover:to-pink-600/60 text-white border-purple-400/50 shadow-lg shadow-purple-500/20"
+                      : "bg-gradient-to-r from-purple-500/30 to-pink-500/30 hover:from-purple-500/40 hover:to-pink-500/40 text-purple-900 border-purple-500/50 shadow-lg shadow-purple-500/10"
+                    : isNight
+                      ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
+                      : "bg-black/10 hover:bg-black/20 text-black border-black/20"
+                }`}
               >
-                {isAnalyzing && isCurrentMarket ? "Analyzing..." : "🔍 Analyze"}
+                {isAnalyzing && isCurrentMarket ? "Analyzing..." : market.isMLReady ? "🤖 ML Analyze" : "🔍 Analyze"}
               </button>
             </>
           )}
