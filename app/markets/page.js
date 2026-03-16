@@ -655,6 +655,7 @@ export default function MarketsPage() {
               setShowOrderPanel={setShowOrderPanel}
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
+              setOrderSide={setOrderSide}
             />
           )}
 
@@ -684,6 +685,7 @@ export default function MarketsPage() {
               setShowOrderPanel={setShowOrderPanel}
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
+              setOrderSide={setOrderSide}
             />
           )}
         </main>
@@ -749,6 +751,7 @@ function SportsTabContent({
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
+  setOrderSide,
 }) {
   const dateRangeLabels = {
     today: "Today",
@@ -1184,6 +1187,7 @@ function DiscoveryTabContent({
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
+  setOrderSide,
 }) {
   const dateRangeLabels = {
     today: "Today",
