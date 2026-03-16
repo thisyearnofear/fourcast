@@ -136,18 +136,32 @@ export async function POST(request) {
 
     // 4. Transform for Frontend
     const transformedMarkets = marketsList.map(m => {
-      // Ensure odds are always valid
-      const bestBid = m.oddsAnalysis?.bestBid ?? m.orderBookMetrics?.bestBid ?? m.currentOdds?.no ?? 0.5;
-      const bestAsk = m.oddsAnalysis?.bestAsk ?? m.orderBookMetrics?.bestAsk ?? m.currentOdds?.yes ?? 0.5;
+      // In binary markets, YES price + NO price should sum to ~1.0
+      // Polymarket currentOdds.yes/no are YES and NO prices respectively
+      let yesPrice = m.currentOdds?.yes ?? m.oddsAnalysis?.bestAsk ?? m.orderBookMetrics?.bestAsk ?? 0.5;
+      let noPrice = m.currentOdds?.no ?? m.oddsAnalysis?.bestBid ?? m.orderBookMetrics?.bestBid ?? (1 - yesPrice);
 
+      // Binary Market Sanity Check:
+      // If prices are identical and > 0.9, they are likely mapping errors (YES bid/ask mixed up)
+      if (Math.abs(yesPrice - noPrice) < 0.01 && yesPrice > 0.9) {
+        noPrice = 1 - yesPrice;
+      }
+      
+      // If both are 0, default to 50/50
+      if (yesPrice === 0 && noPrice === 0) {
+        yesPrice = 0.5;
+        noPrice = 0.5;
+      }
+
+      // Final bound check
       const validOdds = {
-        yes: bestAsk,
-        no: bestBid
+        yes: Math.max(0, Math.min(1, yesPrice)),
+        no: Math.max(0, Math.min(1, noPrice))
       };
 
       const validOddsAnalysis = m.oddsAnalysis || {
-        bestBid,
-        bestAsk,
+        bestBid: validOdds.no,
+        bestAsk: validOdds.yes,
         spread: m.orderBookMetrics?.spread || 0,
         spreadPercent: m.orderBookMetrics?.spreadPercent || 0
       };
@@ -188,8 +202,8 @@ export async function POST(request) {
         detectedAsset,
 
         // Include enriched market data for richer UI
-        bid: m.bid || validOdds.no,
-        ask: m.ask || validOdds.yes,
+        bid: validOdds.no,
+        ask: validOdds.yes,
         orderBookMetrics: m.orderBookMetrics,
         volumeMetrics: m.volumeMetrics,
         marketEfficiency: m.marketEfficiency,
