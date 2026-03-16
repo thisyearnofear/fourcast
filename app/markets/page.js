@@ -13,7 +13,7 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector, SynthShowcase, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal } from "@/components";
+import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal } from "@/components";
 import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {
@@ -105,6 +105,7 @@ export default function MarketsPage() {
   const [showOrderPanel, setShowOrderPanel] = useState(false);
   const [selectedMarketForOrder, setSelectedMarketForOrder] = useState(null);
   const [selectedKalshiMarket, setSelectedKalshiMarket] = useState(null);
+  const [orderSide, setOrderSide] = useState("YES");
 
   // Load weather on mount
   useEffect(() => {
@@ -603,7 +604,14 @@ export default function MarketsPage() {
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
           {/* Active Chain Indicators */}
-          <div className="mb-6 space-y-3">
+          <div className="mb-6 space-y-6">
+            {/* Live Edge Scanner - Discovery Hook */}
+            <MarketEdgeScanner 
+              markets={markets} 
+              onAnalyze={openAnalyzeConfig} 
+              isNight={isNight} 
+            />
+
             {/* Synth ML Showcase */}
             <SynthShowcase isNight={isNight} />
 
@@ -687,6 +695,7 @@ export default function MarketsPage() {
           <OrderSigningPanel
             market={selectedMarketForOrder}
             isNight={isNight}
+            initialSide={orderSide}
             onClose={() => {
               setShowOrderPanel(false);
               setSelectedMarketForOrder(null);
@@ -955,6 +964,7 @@ function SportsTabContent({
               setShowOrderPanel={setShowOrderPanel}
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
+              setOrderSide={setOrderSide}
             />
           ))}
         </div>
@@ -1517,6 +1527,7 @@ function DiscoveryTabContent({
                   setShowOrderPanel={setShowOrderPanel}
                   setSelectedMarketForOrder={setSelectedMarketForOrder}
                   setSelectedKalshiMarket={setSelectedKalshiMarket}
+                  setOrderSide={setOrderSide}
                 />
               ))}
             </div>
@@ -1555,6 +1566,7 @@ function MarketCard({
   setShowOrderPanel,
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
+  setOrderSide,
 }) {
   const isHidden = expandedMarketId && !isExpanded;
   const isCurrentMarket =
@@ -1607,18 +1619,50 @@ function MarketCard({
           {/* Market Odds Summary - NEW: Shows odds on the card! */}
           {!isExpanded && (
             <div className="flex items-center gap-4 py-1">
-              <div className="flex items-center gap-2">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isKalshi) {
+                    setSelectedKalshiMarket(market);
+                  } else {
+                    setOrderSide("YES");
+                    setSelectedMarketForOrder(market);
+                    setShowOrderPanel(true);
+                  }
+                }}
+                className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all border ${
+                  isNight 
+                    ? "hover:bg-green-500/10 border-transparent hover:border-green-500/30" 
+                    : "hover:bg-green-500/5 border-transparent hover:border-green-500/20"
+                }`}
+              >
                 <span className={`text-[10px] font-medium ${isNight ? "text-green-400/70" : "text-green-600/70"}`}>YES</span>
                 <span className={`text-sm font-light ${textColor}`}>
                   {market.ask ? `${(market.ask * 100).toFixed(0)}%` : "—"}
                 </span>
-              </div>
-              <div className="flex items-center gap-2">
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isKalshi) {
+                    setSelectedKalshiMarket(market);
+                  } else {
+                    setOrderSide("NO");
+                    setSelectedMarketForOrder(market);
+                    setShowOrderPanel(true);
+                  }
+                }}
+                className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all border ${
+                  isNight 
+                    ? "hover:bg-red-500/10 border-transparent hover:border-red-500/30" 
+                    : "hover:bg-red-500/5 border-transparent hover:border-red-500/20"
+                }`}
+              >
                 <span className={`text-[10px] font-medium ${isNight ? "text-red-400/70" : "text-red-600/70"}`}>NO</span>
                 <span className={`text-sm font-light ${textColor}`}>
                   {market.bid ? `${(market.bid * 100).toFixed(0)}%` : "—"}
                 </span>
-              </div>
+              </button>
               {/* ML Edge Preview (if analyzed) */}
               {isCurrentMarket && analysis?.synthData?.polymarketEdge && (
                 <div className={`ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-md ${
@@ -1925,32 +1969,95 @@ function MarketCard({
 
                 {analysis.synthData.polymarketEdge && (
                   <div className={`mt-4 pt-4 border-t ${isNight ? 'border-white/10' : 'border-black/10'}`}>
-                    {/* Edge Detection Badge - Prominent when edge exists */}
-                    {Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03 && (
-                      <div className={`flex items-center gap-2 mb-3 px-3 py-2 rounded-lg ${
-                        isNight ? 'bg-green-500/10 border border-green-500/20' : 'bg-green-500/10 border border-green-500/20'
+                    {/* Edge Detection Summary */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">⚖️</span>
+                        <h5 className={`text-sm font-medium ${textColor}`}>
+                          Edge Analysis
+                        </h5>
+                      </div>
+                      <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter ${
+                        Math.abs(analysis.synthData.polymarketEdge.edge) > 0.05
+                          ? 'bg-green-500 text-white animate-pulse'
+                          : isNight ? 'bg-white/10 text-white/70' : 'bg-black/10 text-black/70'
                       }`}>
-                        <span className="text-lg">⚡</span>
-                        <div>
-                          <span className={`text-sm font-medium ${isNight ? 'text-green-400' : 'text-green-600'}`}>
-                            Edge Detected: {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}%
+                        {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}% {analysis.synthData.polymarketEdge.edge > 0 ? 'Undervalued' : 'Overvalued'}
+                      </div>
+                    </div>
+
+                    {/* Tug-of-War Visualizer */}
+                    <div className="relative h-10 mb-6 px-1">
+                      {/* Central Axis */}
+                      <div className={`absolute left-1/2 top-0 bottom-0 w-px ${isNight ? 'bg-white/20' : 'bg-black/20'} z-10`} />
+                      
+                      {/* Labels */}
+                      <div className="flex justify-between text-[10px] uppercase tracking-widest opacity-40 mb-1">
+                        <span>Market</span>
+                        <span>ML Fair Odds</span>
+                      </div>
+
+                      <div className="flex items-center h-4 w-full bg-black/20 rounded-full overflow-hidden">
+                        {/* Market Probability Bar (Left) */}
+                        <div 
+                          className="h-full bg-blue-500/40 transition-all duration-1000"
+                          style={{ width: `${analysis.synthData.polymarketEdge.polymarketProb * 100}%` }}
+                        />
+                        {/* ML Probability Bar (Right - overlay or different color) */}
+                        <div 
+                          className="h-full bg-purple-500 transition-all duration-1000"
+                          style={{ width: `${analysis.synthData.polymarketEdge.synthFairProb * 100}%` }}
+                        />
+                      </div>
+
+                      {/* Detailed Odds Comparison */}
+                      <div className="flex justify-between items-center mt-2">
+                        <div className="flex flex-col">
+                          <span className={`text-[10px] ${textColor} opacity-50`}>Live Price</span>
+                          <span className={`text-lg font-light ${isNight ? 'text-blue-300' : 'text-blue-700'}`}>
+                            {(analysis.synthData.polymarketEdge.polymarketProb * 100).toFixed(1)}%
                           </span>
-                          <span className={`text-xs ml-2 ${isNight ? 'text-white/50' : 'text-black/50'}`}>
-                            ML sees value
+                        </div>
+
+                        {/* Edge Visual Indicator */}
+                        <div className="flex flex-col items-center">
+                           <div className={`text-[10px] font-bold ${
+                             analysis.synthData.polymarketEdge.edge > 0 
+                               ? isNight ? 'text-green-400' : 'text-green-600'
+                               : isNight ? 'text-red-400' : 'text-red-600'
+                           }`}>
+                             {analysis.synthData.polymarketEdge.edge > 0 ? '▲' : '▼'} {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}%
+                           </div>
+                           <div className={`text-[9px] uppercase opacity-40 ${textColor}`}>ML Edge</div>
+                        </div>
+
+                        <div className="flex flex-col text-right">
+                          <span className={`text-[10px] ${textColor} opacity-50`}>Fair Value</span>
+                          <span className={`text-lg font-light ${isNight ? 'text-purple-300' : 'text-purple-700'}`}>
+                            {(analysis.synthData.polymarketEdge.synthFairProb * 100).toFixed(1)}%
                           </span>
                         </div>
                       </div>
-                    )}
-                    <div className="flex items-center justify-between text-xs">
-                      <span className={`${textColor} opacity-70`}>ML Fair Odds vs Market</span>
-                      <span className={`font-medium ${
-                        Math.abs(analysis.synthData.polymarketEdge.edge) > 0.05 
-                          ? isNight ? 'text-green-400' : 'text-green-600'
-                          : textColor
-                      }`}>
-                        {(analysis.synthData.polymarketEdge.synthFairProb * 100).toFixed(1)}% vs {(analysis.synthData.polymarketEdge.polymarketProb * 100).toFixed(1)}%
-                      </span>
                     </div>
+
+                    {/* Edge Detection Badge - Prominent when edge exists */}
+                    {Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03 && (
+                      <div className={`flex items-center gap-3 px-3 py-3 rounded-xl ${
+                        isNight ? 'bg-green-500/10 border border-green-500/20 shadow-lg shadow-green-500/5' : 'bg-green-500/5 border border-green-500/20 shadow-md shadow-green-500/5'
+                      }`}>
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 animate-pulse">
+                          ⚡
+                        </div>
+                        <div>
+                          <p className={`text-sm font-medium ${isNight ? 'text-green-400' : 'text-green-600'}`}>
+                            Edge Detected: {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}%
+                          </p>
+                          <p className={`text-xs ${isNight ? 'text-white/50' : 'text-black/50'}`}>
+                            ML ensemble identifies {analysis.synthData.polymarketEdge.edge > 0 ? 'undervalued' : 'overvalued'} contract
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

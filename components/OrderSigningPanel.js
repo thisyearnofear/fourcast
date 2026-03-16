@@ -21,9 +21,9 @@ const USDC_ADDRESS = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
  * 3. Sign order in MetaMask
  * 4. Submit to server (server adds builder attribution)
  */
-export function OrderSigningPanel({ market, onClose, isNight, onSuccess }) {
+export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initialSide = 'YES' }) {
   // Order parameters
-  const [side, setSide] = useState('YES');
+  const [side, setSide] = useState(initialSide);
   const [price, setPrice] = useState('0.50');
   const [size, setSize] = useState('');
 
