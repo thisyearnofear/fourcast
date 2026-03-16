@@ -1,6 +1,7 @@
 import { polymarketService } from '@/services/polymarketService';
 import { kalshiService } from '@/services/kalshiService';
 import { synthService } from '@/services/synthService';
+import * as pathDependentService from '@/services/pathDependentService';
 
 export async function POST(request) {
   try {
@@ -170,6 +171,10 @@ export async function POST(request) {
       const detectedAsset = synthService.detectAsset(m.title, m.description || '');
       const isMLReady = !!detectedAsset;
 
+      // Detect if this is a path-dependent market (e.g. BTC touches $60k before $65k)
+      const pathContext = pathDependentService.detectPathDependentMarket(m.title);
+      const isPathDependent = pathContext.detected;
+
       // Calculate days to resolution
       let daysToResolution = null;
       if (m.resolutionDate) {
@@ -200,6 +205,8 @@ export async function POST(request) {
         isWeatherSensitive: m.isWeatherSensitive,
         isMLReady,
         detectedAsset,
+        isPathDependent,
+        pathContext,
 
         // Include enriched market data for richer UI
         bid: validOdds.no,

@@ -13,7 +13,7 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal } from "@/components";
+import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal } from "@/components";
 import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {
@@ -105,6 +105,7 @@ export default function MarketsPage() {
   const [showOrderPanel, setShowOrderPanel] = useState(false);
   const [selectedMarketForOrder, setSelectedMarketForOrder] = useState(null);
   const [selectedKalshiMarket, setSelectedKalshiMarket] = useState(null);
+  const [selectedArbitrage, setSelectedArbitrage] = useState(null);
   const [orderSide, setOrderSide] = useState("YES");
 
   // Load weather on mount
@@ -656,6 +657,7 @@ export default function MarketsPage() {
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
               setOrderSide={setOrderSide}
+              setSelectedArbitrage={setSelectedArbitrage}
             />
           )}
 
@@ -686,6 +688,7 @@ export default function MarketsPage() {
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
               setOrderSide={setOrderSide}
+              setSelectedArbitrage={setSelectedArbitrage}
             />
           )}
         </main>
@@ -716,6 +719,16 @@ export default function MarketsPage() {
             market={selectedKalshiMarket}
             isNight={isNight}
             onClose={() => setSelectedKalshiMarket(null)}
+          />
+        )
+      }
+
+      {
+        selectedArbitrage && (
+          <ArbitrageExecutionPanel
+            opportunity={selectedArbitrage}
+            isNight={isNight}
+            onClose={() => setSelectedArbitrage(null)}
           />
         )
       }
@@ -752,6 +765,7 @@ function SportsTabContent({
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
   setOrderSide,
+  setSelectedArbitrage,
 }) {
   const dateRangeLabels = {
     today: "Today",
@@ -968,6 +982,7 @@ function SportsTabContent({
               setSelectedMarketForOrder={setSelectedMarketForOrder}
               setSelectedKalshiMarket={setSelectedKalshiMarket}
               setOrderSide={setOrderSide}
+              setSelectedArbitrage={setSelectedArbitrage}
             />
           ))}
         </div>
@@ -1188,6 +1203,7 @@ function DiscoveryTabContent({
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
   setOrderSide,
+  setSelectedArbitrage,
 }) {
   const dateRangeLabels = {
     today: "Today",
@@ -1224,6 +1240,7 @@ function DiscoveryTabContent({
             <option value="Weather">🌤️ Weather</option>
             <option value="Entertainment">🎬 Entertainment</option>
             <option value="Crypto">₿ Crypto</option>
+            <option value="Path">🔗 Path Analysis</option>
           </select>
         </div>
 
@@ -1429,6 +1446,16 @@ function DiscoveryTabContent({
                             <div className={`text-xs ${textColor} opacity-60`}>
                               spread
                             </div>
+                            <button
+                              onClick={() => setSelectedArbitrage(opp)}
+                              className={`mt-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-tight transition-all ${
+                                isNight
+                                  ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
+                                  : "bg-green-500/10 hover:bg-green-500/20 text-green-700 border border-green-500/20"
+                              }`}
+                            >
+                              Capture Spread
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -1498,13 +1525,18 @@ function DiscoveryTabContent({
         markets &&
         markets.length > 0 &&
         (() => {
-          // Apply client-side platform filter
-          const filteredMarkets =
+          // Apply client-side filters
+          let filteredMarkets =
             filters.platform === "all"
               ? markets
               : markets.filter(
                 (m) => (m.platform || "polymarket") === filters.platform
               );
+
+          // Category filter for Path Analysis (special client-side flag)
+          if (filters.category === "Path") {
+            filteredMarkets = filteredMarkets.filter(m => m.isPathDependent);
+          }
 
           return filteredMarkets.length > 0 ? (
             <div className="space-y-4">
@@ -1571,6 +1603,7 @@ function MarketCard({
   setSelectedMarketForOrder,
   setSelectedKalshiMarket,
   setOrderSide,
+  setSelectedArbitrage,
 }) {
   const isHidden = expandedMarketId && !isExpanded;
   const isCurrentMarket =

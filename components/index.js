@@ -11,5 +11,7 @@ export { ChainSelector } from './ChainSelector';
 export { AgentDashboard } from './AgentDashboard';
 export { SynthShowcase } from './SynthShowcase';
 export { MarketEdgeScanner } from './MarketEdgeScanner';
+export { ArbitrageExecutionPanel } from './ArbitrageExecutionPanel';
+export { default as KalshiOrderPanel } from './KalshiOrderPanel';
 export { default as AnalysisOptions, useAnalysisOptions } from './AnalysisOptions';
 export { default as AnalysisConfigModal } from './AnalysisConfigModal';
