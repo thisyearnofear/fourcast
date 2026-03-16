@@ -223,6 +223,32 @@ export async function POST(request) {
       return true;
     });
 
+    // 5. PRE-BAKED INSIGHTS: Pre-calculate ML Fair odds for top 5 ML-ready markets
+    const topMLReadyMarkets = activeMarkets
+      .filter(m => m.isMLReady && m.detectedAsset)
+      .slice(0, 5);
+
+    if (topMLReadyMarkets.length > 0 && synthService.isAvailable()) {
+      console.log(`[Markets API] Pre-calculating ML forecasts for ${topMLReadyMarkets.length} markets...`);
+      
+      const forecastResults = await Promise.allSettled(
+        topMLReadyMarkets.map(m => synthService.buildForecast(m.detectedAsset, { horizon: '24h' }))
+      );
+
+      // Inject forecast data into the activeMarkets objects
+      forecastResults.forEach((result, idx) => {
+        if (result.status === 'fulfilled' && result.value) {
+          const market = topMLReadyMarkets[idx];
+          // Find the actual object in activeMarkets to update it
+          const originalMarket = activeMarkets.find(m => m.marketID === market.marketID);
+          if (originalMarket) {
+            originalMarket.preCalculatedForecast = result.value;
+            console.log(`[Markets API] Pre-calculated forecast for ${market.detectedAsset} (${market.marketID})`);
+          }
+        }
+      });
+    }
+
     // Pre-cache market details for top 5 (fire and forget) - only for Polymarket for now
     const top5PolymarketIds = activeMarkets
       .filter(m => m.platform === 'polymarket')

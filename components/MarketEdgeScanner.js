@@ -38,6 +38,24 @@ export function MarketEdgeScanner({
   if (edgeMarkets.length === 0) return null;
 
   const currentMarket = edgeMarkets[currentIndex];
+  const forecast = currentMarket.preCalculatedForecast;
+  
+  // Calculate edge if pre-calculated forecast exists
+  let edge = null;
+  let mlFairOdds = null;
+  
+  if (forecast && forecast.polymarketEdge) {
+    // Handle both array and object responses for polymarketEdge
+    const edgeData = Array.isArray(forecast.polymarketEdge) 
+      ? forecast.polymarketEdge[0] 
+      : forecast.polymarketEdge;
+      
+    if (edgeData) {
+      edge = edgeData.edge;
+      mlFairOdds = edgeData.synthFairProb;
+    }
+  }
+
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
 
@@ -53,6 +71,12 @@ export function MarketEdgeScanner({
         <h3 className={`text-xs font-bold uppercase tracking-[0.2em] ${isNight ? 'text-purple-400' : 'text-purple-600'}`}>
           Live Edge Scanner
         </h3>
+
+        {edge !== null && Math.abs(edge) > 0.05 && (
+          <span className="animate-bounce px-2 py-0.5 rounded bg-green-500 text-[10px] text-white font-bold tracking-tighter">
+            SIGNIFICANT EDGE
+          </span>
+        )}
         
         {/* Progress indicators */}
         <div className="ml-auto flex gap-1">
@@ -100,15 +124,24 @@ export function MarketEdgeScanner({
             
             <div className="flex flex-col items-center justify-center">
               <div className={`h-8 w-px ${isNight ? 'bg-white/10' : 'bg-black/10'}`} />
-              <span className="text-xs py-1">vs</span>
+              {edge !== null ? (
+                <div className={`text-[10px] font-bold py-1 ${edge > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {edge > 0 ? '▲' : '▼'} {Math.abs(edge * 100).toFixed(0)}%
+                </div>
+              ) : (
+                <span className="text-xs py-1">vs</span>
+              )}
               <div className={`h-8 w-px ${isNight ? 'bg-white/10' : 'bg-black/10'}`} />
             </div>
 
             <div className="flex flex-col">
               <span className={`text-[10px] uppercase tracking-wider ${isNight ? 'text-purple-400' : 'text-purple-600'} font-bold`}>ML Fair</span>
               <span className={`text-xl font-bold ${isNight ? 'text-purple-300' : 'text-purple-700'}`}>
-                 {/* This is a visual "hook" - we show it's ready for analysis */}
-                <span className="opacity-50 italic">Calc...</span>
+                {mlFairOdds !== null ? (
+                  `${(mlFairOdds * 100).toFixed(1)}%`
+                ) : (
+                  <span className="opacity-50 italic">Calc...</span>
+                )}
               </span>
             </div>
           </div>
@@ -121,7 +154,7 @@ export function MarketEdgeScanner({
                 : 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
             }`}
           >
-            Reveal Edge
+            {edge !== null ? 'View Analysis' : 'Reveal Edge'}
           </button>
         </div>
       </div>
