@@ -33,6 +33,22 @@ if (process.env.TURSO_CONNECTION_URL && process.env.TURSO_AUTH_TOKEN) {
 
 // Create tables
 const initSql = `
+  CREATE TABLE IF NOT EXISTS positions (
+    id TEXT PRIMARY KEY,
+    user_address TEXT NOT NULL,
+    market_id TEXT NOT NULL,
+    side TEXT NOT NULL,
+    entry_price REAL NOT NULL,
+    size REAL NOT NULL,
+    status TEXT DEFAULT 'OPEN',
+    realized_pnl REAL DEFAULT 0,
+    created_at INTEGER DEFAULT (strftime('%s', 'now')),
+    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_positions_user ON positions(user_address);
+  CREATE INDEX IF NOT EXISTS idx_positions_market ON positions(market_id);
+
   CREATE TABLE IF NOT EXISTS predictions (
     id TEXT PRIMARY KEY,
     user_address TEXT NOT NULL,
@@ -198,8 +214,47 @@ async function query(sql, params = []) {
 }
 
 /**
- * Save a prediction to the database
+ * Position Management
  */
+export async function openPosition(position) {
+  try {
+    await execute(
+      `INSERT INTO positions (id, user_address, market_id, side, entry_price, size)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [position.id, position.userAddress.toLowerCase(), position.marketId, position.side, position.entryPrice, position.size]
+    );
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function closePosition(positionId, exitPrice, realizedPnl) {
+  try {
+    await execute(
+      `UPDATE positions
+       SET status = 'CLOSED', realized_pnl = ?, updated_at = strftime('%s', 'now')
+       WHERE id = ?`,
+      [realizedPnl, positionId]
+    );
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getUserPositions(userAddress) {
+  try {
+    const rows = await query(
+      `SELECT * FROM positions WHERE user_address = ? ORDER BY created_at DESC`,
+      [userAddress.toLowerCase()]
+    );
+    return { success: true, positions: rows };
+  } catch (error) {
+    return { success: false, error: error.message, positions: [] };
+  }
+}
+
 export async function savePrediction(prediction) {
   try {
     // Validate timestamp is reasonable (within 5 min of now)

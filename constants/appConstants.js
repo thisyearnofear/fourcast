@@ -67,6 +67,16 @@ export const CHAINS = {
     capabilities: ['Publish signals', 'Build track record', 'Receive tips'],
     disabled: [],
     moduleAddress: '0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c'
+  },
+  ARC: {
+    id: 'arc',
+    name: 'Arc',
+    display: 'Settlement + USDC (Arc)',
+    icon: '🌀',
+    color: 'indigo',
+    purpose: 'Primary settlement & USDC',
+    capabilities: ['USDC-native signals', 'Sub-second finality', 'USDC tipping'],
+    disabled: []
   }
 };
 
@@ -100,6 +110,16 @@ export const EVM_NETWORKS = {
     icon: '🔵',
     rpcUrl: 'https://arb1.arbitrum.io/rpc',
     explorerUrl: 'https://arbiscan.io',
+    isDefault: false
+  },
+  ARC: {
+    id: 'arc',
+    chainId: 5042002,
+    name: 'Arc',
+    display: 'Arc Testnet (USDC)',
+    icon: '🌀',
+    rpcUrl: 'https://arc-node.thecanteenapp.com/',
+    explorerUrl: 'https://arc-explorer.thecanteenapp.com/',
     isDefault: false
   }
 };

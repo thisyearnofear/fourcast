@@ -2,24 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 /**
  * Personal Stats Dashboard
- * 
- * Shows user's prediction stats:
- * - Win rate, accuracy %, total predictions
- * - Best/worst confidence levels
- * - Current streak
- * - Calibration score
- * - Reputation tier
- * 
- * Used in profile, signals page, and as shareable widget
  */
 export function PersonalStatsDashboard({ userAddress, isNight = true, compact = false }) {
   const { address: connectedAddress } = useAccount();
   const displayAddress = userAddress || connectedAddress;
 
+  const [positions, setPositions] = useState([]);
   const [stats, setStats] = useState(null);
+  const [trustMetrics, setTrustMetrics] = useState(null);
+  const [timeRange, setTimeRange] = useState('30d');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -29,29 +24,29 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
       return;
     }
 
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(
-          `/api/stats?address=${displayAddress}&includeRanking=true`
-        );
-        const result = await response.json();
+        const [statsRes, posRes, trustRes] = await Promise.all([
+          fetch(`/api/stats?address=${displayAddress}&includeRanking=true`),
+          fetch(`/api/positions?address=${displayAddress}&range=${timeRange}`),
+          fetch(`/api/agent/backtest?days=${timeRange.replace('d', '')}`)
+        ]);
+        
+        const statsData = await statsRes.json();
+        const posData = await posRes.json();
+        const trustData = await trustRes.json();
 
-        if (result.success) {
-          setStats(result.stats);
-          setError(null);
-        } else {
-          setError(result.error);
-        }
+        if (statsData.success) setStats(statsData.stats);
+        if (posData.success) setPositions(posData.positions);
+        if (trustData.success) setTrustMetrics(trustData.metrics);
       } catch (err) {
-        console.error('Failed to fetch stats:', err);
-        setError('Unable to load stats');
+        setError('Unable to load data');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchStats();
-  }, [displayAddress]);
+    fetchData();
+  }, [displayAddress, timeRange]);
 
   if (loading) {
     return <StatsSkeleton isNight={isNight} compact={compact} />;
@@ -97,123 +92,106 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
     );
   }
 
-  // Full dashboard
   return (
     <div className={`${isNight ? 'glass-subtle' : 'glass-subtle-light'} rounded-2xl p-6 space-y-6`}>
-      {/* Header with Tier */}
       <div className="flex items-center justify-between">
         <div>
-          <p className={`text-xs ${textColor} opacity-60 uppercase tracking-wider`}>
-            Your Tier
-          </p>
+          <p className={`text-xs ${textColor} opacity-60 uppercase tracking-wider`}>Your Tier</p>
           <p className={`text-3xl font-light ${textColor} flex items-center gap-3 mt-1`}>
             {tier.emoji} {tier.name}
           </p>
         </div>
         {stats.rank && (
           <div className="text-right">
-            <p className={`text-xs ${textColor} opacity-60 uppercase tracking-wider`}>
-              Leaderboard Rank
-            </p>
-            <p className={`text-3xl font-light ${textColor} mt-1`}>
-              #{stats.rank}
-            </p>
+            <p className={`text-xs ${textColor} opacity-60 uppercase tracking-wider`}>Leaderboard Rank</p>
+            <p className={`text-3xl font-light ${textColor} mt-1`}>#{stats.rank}</p>
           </div>
         )}
       </div>
 
-      {/* Main Stats Grid */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard
-          label="Win Rate"
-          value={`${stats.winRate}%`}
-          subtext={`${stats.wins} wins, ${stats.losses} losses`}
-          isNight={isNight}
-        />
-        <StatCard
-          label="Total Predictions"
-          value={stats.totalPredictions}
-          subtext={`${stats.totalResolved} resolved`}
-          isNight={isNight}
-        />
-        <StatCard
-          label="Calibration"
-          value={`${Math.round(stats.calibrationScore)}%`}
-          subtext={stats.calibrationScore > 50 ? '✓ Well calibrated' : '⚠ Review confidence'}
-          isNight={isNight}
-        />
-        <StatCard
-          label="Best Streak"
-          value={stats.longestWinStreak}
-          subtext="consecutive wins"
-          isNight={isNight}
-        />
+        <StatCard label="Win Rate" value={`${stats.winRate}%`} subtext={`${stats.wins} wins, ${stats.losses} losses`} isNight={isNight} />
+        <StatCard label="Total Predictions" value={stats.totalPredictions} subtext={`${stats.totalResolved} resolved`} isNight={isNight} />
+        <StatCard label="Calibration" value={`${Math.round(stats.calibrationScore)}%`} subtext={stats.calibrationScore > 50 ? '✓ Well calibrated' : '⚠ Review confidence'} isNight={isNight} />
+        <StatCard label="Best Streak" value={stats.longestWinStreak} subtext="consecutive wins" isNight={isNight} />
       </div>
 
-      {/* Current Streak Badge */}
-      {stats.streak > 0 && (
-        <div className={`${isNight ? 'bg-green-500/20 border-green-400/30' : 'bg-green-400/20 border-green-500/30'} border rounded-lg p-4 flex items-center gap-3`}>
-          <span className="text-2xl">🔥</span>
-          <div>
-            <p className={`text-sm font-light ${textColor}`}>
-              {stats.streak}-Day Winning Streak
-            </p>
-            <p className={`text-xs ${textColor} opacity-60`}>
-              Keep it going! Next win extends your streak.
-            </p>
+      <div className="space-y-4 mt-6">
+        <div className="flex justify-between items-center">
+          <h4 className={`text-sm font-medium ${textColor} uppercase tracking-wider opacity-70`}>Performance Chart</h4>
+          <div className="flex gap-1">
+            {['7d', '30d', '90d', 'all'].map(range => (
+              <button 
+                key={range}
+                onClick={() => setTimeRange(range)}
+                className={`text-[10px] px-2 py-1 rounded ${timeRange === range ? (isNight ? 'bg-blue-500/30 text-blue-200' : 'bg-blue-500/20 text-blue-800') : 'opacity-50'}`}
+              >
+                {range.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="h-48 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={positions}>
+              <CartesianGrid strokeDasharray="3 3" stroke={isNight ? '#ffffff10' : '#00000010'} />
+              <XAxis dataKey="created_at" hide />
+              <YAxis hide domain={['auto', 'auto']} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: isNight ? '#1e293b' : '#ffffff', borderColor: 'transparent' }}
+                itemStyle={{ color: isNight ? '#fff' : '#000' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="realized_pnl" 
+                stroke={positions.length > 0 && positions[positions.length - 1].realized_pnl >= 0 ? '#22c55e' : '#ef4444'} 
+                strokeWidth={2} 
+                dot={false} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        
+        <h4 className={`text-sm font-medium ${textColor} uppercase tracking-wider opacity-70`}>Recent Positions</h4>
+        {positions.length > 0 ? (
+          <div className="space-y-2">
+            {positions.map(pos => (
+              <div key={pos.id} className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/10">
+                <div>
+                  <p className={`text-sm ${textColor}`}>{pos.market_id}</p>
+                  <p className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'}`}>{pos.side} @ ${pos.entry_price}</p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-sm ${pos.realized_pnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {pos.realized_pnl >= 0 ? '+' : ''}{pos.realized_pnl} USDC
+                  </p>
+                  <p className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'}`}>{pos.status}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className={`text-sm ${textColor} opacity-50 italic`}>No active positions found.</p>
+        )}
+      </div>
+
+      {trustMetrics && (
+        <div className="space-y-4 mt-8">
+          <h4 className={`text-sm font-medium ${textColor} uppercase tracking-wider opacity-70`}>Agent Intelligence Trust</h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div title="Measures how well the AI's probability estimates match outcomes. A score of 0 is perfect.">
+              <StatCard label="Avg Brier Score" value={trustMetrics.avg_brier.toFixed(3)} subtext="Lower is better (0=perfect)" isNight={isNight} />
+            </div>
+            <StatCard label="Hit Rate" value={`${Math.round((trustMetrics.hits / trustMetrics.total_forecasts) * 100)}%`} subtext={`${trustMetrics.hits} hits / ${trustMetrics.total_forecasts} total`} isNight={isNight} />
           </div>
         </div>
       )}
-
-      {/* Best/Worst Markets */}
-      <div className="grid grid-cols-2 gap-4">
-        {stats.bestMarket && (
-          <MarketCard
-            title="Best at"
-            market={stats.bestMarket}
-            type="best"
-            isNight={isNight}
-          />
-        )}
-        {stats.worstMarket && (
-          <MarketCard
-            title="Needs Work"
-            market={stats.worstMarket}
-            type="worst"
-            isNight={isNight}
-          />
-        )}
-      </div>
-
-      {/* Calibration Explanation */}
-      <div className={`${isNight ? 'bg-blue-500/10 border-blue-400/20' : 'bg-blue-400/10 border-blue-500/20'} border rounded-lg p-4`}>
-        <p className={`text-xs ${textColor} opacity-70 font-light leading-relaxed`}>
-          <strong className="font-medium">Calibration Score:</strong> Measures how well your confidence levels match outcomes. A score of 70+ means you're accurately assessing your confidence. Under 50? You might be overconfident in certain conditions.
-        </p>
-      </div>
-
-      {/* Improvement Tips */}
-      <div className="space-y-2">
-        <p className={`text-xs ${textColor} opacity-60 uppercase tracking-wider`}>
-          🎯 Tips for Improvement
-        </p>
-        <ul className={`space-y-1 text-xs ${textColor} opacity-70 font-light`}>
-          <li>• Keep your streak alive - daily predictions build momentum</li>
-          <li>• Review your low-confidence predictions - are you calibrated?</li>
-          <li>• Focus on markets where you consistently win</li>
-          <li>• Share your analysis - great forecasters build reputation</li>
-        </ul>
-      </div>
     </div>
   );
 }
 
-/**
- * Individual stat card component
- */
 function StatCard({ label, value, subtext, isNight }) {
   const textColor = isNight ? 'text-white' : 'text-black';
-
   return (
     <div className={`${isNight ? 'glass-input' : 'glass-input-light'} rounded-lg p-3 text-center`}>
       <p className={`text-xs ${textColor} opacity-60 mb-1`}>{label}</p>
@@ -223,71 +201,12 @@ function StatCard({ label, value, subtext, isNight }) {
   );
 }
 
-/**
- * Market card showing best/worst performance
- */
-function MarketCard({ title, market, type, isNight }) {
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const bgColor = type === 'best'
-    ? isNight ? 'bg-green-500/10' : 'bg-green-400/10'
-    : isNight ? 'bg-yellow-500/10' : 'bg-yellow-400/10';
-  const borderColor = type === 'best'
-    ? isNight ? 'border-green-400/30' : 'border-green-500/30'
-    : isNight ? 'border-yellow-400/30' : 'border-yellow-500/30';
-  const emoji = type === 'best' ? '✓' : '⚠';
-
-  return (
-    <div className={`${bgColor} border ${borderColor} rounded-lg p-3`}>
-      <p className={`text-xs ${textColor} opacity-60 mb-2`}>{title}</p>
-      <p className={`text-sm font-light ${textColor} mb-1`}>
-        {emoji} {market.confidence || 'High confidence'}
-      </p>
-      <p className={`text-xs ${textColor} opacity-70`}>
-        {Math.round(market.winRate)}% win rate
-      </p>
-    </div>
-  );
-}
-
-/**
- * Loading skeleton
- */
 function StatsSkeleton({ isNight, compact }) {
   const bgColor = isNight ? 'bg-white/5' : 'bg-black/5';
   const borderColor = isNight ? 'border-white/10' : 'border-black/10';
-
-  if (compact) {
-    return (
-      <div className={`${bgColor} border ${borderColor} rounded-lg p-4 animate-pulse`}>
-        <div className="flex justify-between">
-          <div className="space-y-2">
-            <div className="h-3 w-12 rounded bg-white/10"></div>
-            <div className="h-8 w-20 rounded bg-white/10"></div>
-          </div>
-          <div className="space-y-2">
-            <div className="h-3 w-16 rounded bg-white/10"></div>
-            <div className="h-8 w-12 rounded bg-white/10"></div>
-          </div>
-          <div className="space-y-2">
-            <div className="h-3 w-12 rounded bg-white/10"></div>
-            <div className="h-8 w-8 rounded bg-white/10"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={`${bgColor} border ${borderColor} rounded-2xl p-6 space-y-4 animate-pulse`}>
       <div className="h-12 w-40 rounded bg-white/10"></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="space-y-2">
-            <div className="h-3 w-16 rounded bg-white/10"></div>
-            <div className="h-6 w-20 rounded bg-white/10"></div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

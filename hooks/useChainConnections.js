@@ -42,6 +42,7 @@ export function useChainConnections() {
   const [preferredEvmNetwork, setPreferredEvmNetwork] = useState('polygon');
   const [preferredAptosNetwork, setPreferredAptosNetwork] = useState('aptos-mainnet');
   const [preferredMovementNetwork, setPreferredMovementNetwork] = useState('movement-mainnet');
+  const [preferredArcNetwork, setPreferredArcNetwork] = useState('arc');
 
   /**
    * Determine if connected wallet is Movement or standard Aptos
@@ -93,8 +94,18 @@ export function useChainConnections() {
         address: evmAddress || null,
         chainName: 'Polygon',
         currentNetwork: currentEvmNetwork,
-        availableNetworks: Object.values(EVM_NETWORKS),
+        availableNetworks: Object.values(EVM_NETWORKS).filter(n => n.id !== 'arc'),
         isCorrectNetwork: currentEvmChain?.id === 137, // Polygon is primary
+        isSwitching: isEvmSwitching,
+      },
+      arc: {
+        id: 'arc',
+        connected: evmConnected && currentEvmChain?.id === 5042002,
+        address: evmAddress || null,
+        chainName: 'Arc',
+        currentNetwork: currentEvmNetwork?.id === 'arc' ? currentEvmNetwork : EVM_NETWORKS.ARC,
+        availableNetworks: [EVM_NETWORKS.ARC],
+        isCorrectNetwork: currentEvmChain?.id === 5042002,
         isSwitching: isEvmSwitching,
       },
       aptos: {
@@ -125,8 +136,9 @@ export function useChainConnections() {
    * 
    * Actions:
    * - 'trade': Place market orders (EVM only)
-   * - 'publish': Publish signals (Aptos + Movement)
-   * - 'publish_and_monetize': Publish + receive tips (Movement only)
+   * - 'publish': Publish signals (Aptos + Movement + Arc)
+   * - 'publish_and_monetize': Publish + receive tips (Movement + Arc)
+   * - 'settle': Arc-native USDC settlement
    */
   const canPerform = useCallback((chainId, action) => {
     try {
@@ -135,11 +147,13 @@ export function useChainConnections() {
 
       switch (action) {
         case 'trade':
-          return chainId === 'evm';
+          return chainId === 'evm' || chainId === 'arc';
         case 'publish':
-          return chainId === 'aptos' || chainId === 'movement';
+          return chainId === 'aptos' || chainId === 'movement' || chainId === 'arc';
         case 'publish_and_monetize':
-          return chainId === 'movement';
+          return chainId === 'movement' || chainId === 'arc';
+        case 'settle':
+          return chainId === 'arc';
         default:
           return false;
       }
@@ -165,7 +179,7 @@ export function useChainConnections() {
   const canPublish = useMemo(
     () => {
       try {
-        return canPerform('aptos', 'publish') || canPerform('movement', 'publish');
+        return canPerform('aptos', 'publish') || canPerform('movement', 'publish') || canPerform('arc', 'publish');
       } catch (error) {
         console.warn('Error calculating canPublish:', error);
         return false;
@@ -266,6 +280,16 @@ export function useChainConnections() {
         needsSwitch: true,
         targetChain: 'polygon',
         guidance: `Switch to Polygon network to ${action}`
+      };
+    }
+
+    // For Arc, check if on correct network
+    if (chainId === 'arc' && !chain.isCorrectNetwork) {
+      return {
+        canAct: false,
+        needsSwitch: true,
+        targetChain: 'arc',
+        guidance: `Switch to Arc network to ${action}`
       };
     }
 
