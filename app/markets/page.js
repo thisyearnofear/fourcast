@@ -81,9 +81,21 @@ export default function MarketsPage() {
     const autoId = window.__fourcast_autoAnalyzeId;
     if (!autoId || !markets || markets.length === 0) return;
 
-    const target = markets.find(m =>
-      (m.marketID === autoId) || (m.id === autoId) || (m.tokenID === autoId)
-    );
+    let target;
+
+    if (autoId === 'auto') {
+      // Find the market with highest volume
+      target = [...markets].sort((a, b) => {
+        const volA = a.volume || a.volume24h || 0;
+        const volB = b.volume || b.volume24h || 0;
+        return volB - volA;
+      })[0];
+    } else {
+      target = markets.find(m =>
+        (m.marketID === autoId) || (m.id === autoId) || (m.tokenID === autoId)
+      );
+    }
+
     if (target) {
       window.__fourcast_autoAnalyzeId = null; // Prevent re-run
       // Small delay to let UI settle

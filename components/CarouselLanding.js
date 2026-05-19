@@ -16,6 +16,10 @@ export default function CarouselLanding() {
     return !localStorage.getItem('fourcast_visited');
   });
   const [skeletonHidden, setSkeletonHidden] = useState(false);
+  const [revealedCards, setRevealedCards] = useState(() => {
+    if (typeof window === 'undefined') return 4;
+    return localStorage.getItem('fourcast_visited') ? 4 : 2;
+  });
 
   const {
     stageRef, cardsRootRef, bgCanvasRef, loaderRef, stateRef,
@@ -38,7 +42,7 @@ export default function CarouselLanding() {
     let mounted = true;
 
     async function init() {
-      createCards();
+      createCards(revealedCards);
       await new Promise((r) => requestAnimationFrame(r));
       measure();
       s.scrollX = 0;
@@ -80,10 +84,34 @@ export default function CarouselLanding() {
       startCarousel();
     }
 
+    // Keyboard navigation
+    const onKey = (e) => {
+      const s = stateRef.current;
+      if (s.isEntering) return;
+      if (e.key === 'ArrowLeft') { s.velocity -= 400; e.preventDefault(); }
+      if (e.key === 'ArrowRight') { s.velocity += 400; e.preventDefault(); }
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const card = CARDS[s.activeIndex >= 0 ? s.activeIndex : 0];
+        if (card) {
+          try {
+            localStorage.setItem('fourcast_interests', JSON.stringify([card.id]));
+            localStorage.setItem('fourcast_visited', 'true');
+            setRevealedCards(4);
+          } catch {}
+          router.push(card.route);
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+
     if (stageRef.current) init();
 
-    return () => { mounted = false; cleanup(); };
-  }, []);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      mounted = false; cleanup();
+    };
+  }, [revealedCards]);
 
   // --------------------------------------------------------------------------
   // Resize Handler
@@ -187,7 +215,7 @@ export default function CarouselLanding() {
 
       {/* Dot Navigation */}
       <div className={`carousel-dots ${isEntered ? 'visible' : ''}`}>
-        {CARDS.map((c, i) => {
+        {CARDS.slice(0, revealedCards).map((c, i) => {
           const isActive = activeCard?.id === c.id;
           return (
             <button
@@ -210,6 +238,13 @@ export default function CarouselLanding() {
         })}
       </div>
 
+      {/* Remaining cards hint — only on first visit with 2 cards */}
+      {revealedCards < 4 && isEntered && (
+        <div className="carousel-reveal-hint">
+          <span>Explore a vertical to unlock Politics + Weather →</span>
+        </div>
+      )}
+
       {/* Gesture Hint */}
       {showGestureHint && (
         <div className="carousel-gesture-hint">
@@ -227,6 +262,9 @@ export default function CarouselLanding() {
             <p className="carousel-welcome-desc">
               AI-powered prediction intelligence. Drag through verticals to explore markets, then click to dive into AI-driven edge analysis.
             </p>
+            <div className="carousel-welcome-note">
+              <span>💡 Quick start: just need a wallet + Venice AI key</span>
+            </div>
             <button
               className="carousel-welcome-cta"
               onClick={() => {

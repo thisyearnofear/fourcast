@@ -27,7 +27,7 @@ export const CARDS = [
     description: 'AI-driven edge detection across crypto prediction markets. 200+ ML models surface mispriced opportunities.',
     icon: '₿', badge: 'ML',
     gradient: ['#6B21A8', '#BE185D'], gradientLight: ['#A855F7', '#F472B6'],
-    route: '/markets?category=Crypto',
+    route: '/markets?category=Crypto&analyze=auto',
     features: ['ML Confidence Scores', 'Live Odds Comparison', 'Edge Detection'],
   },
   {
@@ -35,7 +35,7 @@ export const CARDS = [
     description: 'Real-time weather data combined with AI analysis to find edges in sports prediction markets.',
     icon: '⚽', badge: 'Wx',
     gradient: ['#059669', '#0D9488'], gradientLight: ['#34D399', '#2DD4BF'],
-    route: '/markets?category=Sports',
+    route: '/markets?category=Sports&analyze=auto',
     features: ['Weather Impact Analysis', 'Game-Day Forecasts', 'Multi-League Coverage'],
   },
   {
@@ -43,7 +43,7 @@ export const CARDS = [
     description: 'Multi-source sentiment analysis with polling data, news signals, and historical patterns.',
     icon: '🏛', badge: 'AI',
     gradient: ['#4338CA', '#2563EB'], gradientLight: ['#818CF8', '#60A5FA'],
-    route: '/markets?category=Politics',
+    route: '/markets?category=Politics&analyze=auto',
     features: ['Poll Aggregation', 'Sentiment Analysis', 'Historical Models'],
   },
   {
@@ -467,14 +467,16 @@ export default function useCarouselPhysics({ onActiveCardChange, onCardClick }) 
   // Create Card DOM
   // --------------------------------------------------------------------------
 
-  const createCards = useCallback(() => {
+  const createCards = useCallback((maxCards = 4) => {
     const root = cardsRootRef.current;
     if (!root) return;
     root.innerHTML = '';
     const fragment = document.createDocumentFragment();
     const sItems = [];
 
-    CARDS.forEach((cardData) => {
+    const visibleCards = CARDS.slice(0, Math.min(maxCards, CARDS.length));
+
+    visibleCards.forEach((cardData) => {
       const card = document.createElement('article');
       card.className = 'carousel-card';
       card.style.willChange = 'transform';

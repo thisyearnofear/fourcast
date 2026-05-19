@@ -19,3 +19,4 @@ export { default as EmptyMarketState } from './EmptyMarketState';
 export { default as UnifiedConnect } from './UnifiedConnect';
 export { default as PortfolioCard } from './PortfolioCard';
 export { default as PricingOverlay } from './PricingOverlay';
+export { default as CctpTransfer } from './CctpTransfer';

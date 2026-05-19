@@ -287,6 +287,21 @@ code {
    Carousel Landing — 3D Interactive Card Carousel
    ========================================================================== */
 
+/* Design System Tokens */
+:root {
+  --carousel-bg: #0a0a0f;
+  --carousel-card-radius: 16px;
+  --carousel-card-gap: 28px;
+  --carousel-glass-bg: rgba(10, 10, 15, 0.55);
+  --carousel-glass-border: rgba(255, 255, 255, 0.08);
+  --carousel-text-primary: #ffffff;
+  --carousel-text-muted: rgba(255, 255, 255, 0.55);
+  --carousel-gradient-cta: linear-gradient(135deg, rgba(168,85,247,0.6), rgba(236,72,153,0.6));
+  --carousel-gradient-cta-hover: linear-gradient(135deg, rgba(168,85,247,0.8), rgba(236,72,153,0.8));
+  --carousel-blur-amount: 40px;
+  --carousel-loader-ring: rgba(168, 85, 247, 0.8);
+}
+
 /* Stage */
 .carousel-stage {
   position: fixed;
@@ -793,6 +808,17 @@ code {
   margin: 0 0 24px 0;
 }
 
+.carousel-welcome-note {
+  margin: -16px 0 20px 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 300;
+}
+
 .carousel-welcome-cta {
   display: inline-flex;
   align-items: center;
@@ -877,4 +903,29 @@ code {
   opacity: 0.5;
   z-index: 0;
   border-radius: 16px;
+}
+
+/* Reveal hint — shown below dots when cards are locked */
+.carousel-reveal-hint {
+  position: fixed;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(10, 10, 15, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  animation: reveal-in 0.5s ease-out;
+}
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }

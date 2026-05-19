@@ -103,6 +103,18 @@ Fourcast → Arc (signals + settlement + USDC tipping + gas)
 - [x] **UnifiedConnect** — single button for all chains (EVM + Aptos + Arc)
 - [x] **3D interactive carousel landing** — 4 verticals with canvas animations
 - [x] **PortfolioCard** — track record overview (signals, win rate, Brier)
+- [x] **CctpTransfer component** — UI for cross-chain USDC (needs Circle API key)
+- [x] **POST /api/cctp/transfer** — API stub for CCTP endpoint (needs CIRCLE_API_KEY)
+
+### CCTP/Gateway Setup
+To enable cross-chain USDC transfers:
+1. Get Circle API key from https://console.circle.com
+2. Add `CIRCLE_API_KEY` to .env.local
+3. Add CCTP contract addresses to .env.local:
+   - `NEXT_PUBLIC_CCTP_ARC_CONTRACT`
+   - `NEXT_PUBLIC_CCTP_POLYGON_CONTRACT`
+4. Set `NEXT_PUBLIC_CCTP_ENABLED=true`
+5. The `CctpTransfer` component and `/api/cctp/transfer` endpoint will go live
 
 ### Day 3-4: Feature Enhancements (Core Differentiation)
 - [ ] Add Kelly Criterion position sizing to analysis output
