@@ -392,6 +392,12 @@ export default function useCarouselPhysics({ onActiveCardChange, onCardClick }) 
     if (s.bgRAF) { cancelAnimationFrame(s.bgRAF); s.bgRAF = null; }
   }, []);
 
+  const pauseCarouselMotion = useCallback(() => {
+    const s = stateRef.current;
+    if (s.rafId) { cancelAnimationFrame(s.rafId); s.rafId = null; }
+    s.velocity = 0;
+  }, []);
+
   const startCarousel = useCallback(() => {
     const s = stateRef.current;
     if (s.rafId) cancelAnimationFrame(s.rafId);
@@ -480,6 +486,7 @@ export default function useCarouselPhysics({ onActiveCardChange, onCardClick }) 
       const card = document.createElement('article');
       card.className = 'carousel-card';
       card.style.willChange = 'transform';
+      card.setAttribute('data-onboard', cardData.id);
 
       const inner = document.createElement('div');
       inner.className = 'carousel-card-inner';
@@ -567,6 +574,12 @@ export default function useCarouselPhysics({ onActiveCardChange, onCardClick }) 
 
   const onPointerDown = useCallback((e) => {
     if (stateRef.current.isEntering) return;
+
+    // Don't start drag if clicking an interactive element
+    if (e.target.closest('button, a, input, [role="button"]')) {
+      return;
+    }
+
     const s = stateRef.current;
     s.isDragging = true;
     s.lastPointerX = e.clientX;
@@ -614,7 +627,7 @@ export default function useCarouselPhysics({ onActiveCardChange, onCardClick }) 
 
   return {
     stageRef, cardsRootRef, bgCanvasRef, loaderRef, stateRef,
-    measure, updateTransforms, startCarousel, stopCarousel,
+    measure, updateTransforms, startCarousel, stopCarousel, pauseCarouselMotion,
     drawBackground, transitionGradient, resizeBG,
     animateEntry, warmupCompositing, createCards,
     onWheel, onPointerDown, onPointerMove, onPointerUp,

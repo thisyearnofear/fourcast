@@ -1,37 +1,44 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-const ONBOARDING_KEY = 'fourcast_onboarding_complete';
+export const ONBOARDING_KEY = 'fourcast_onboarding_complete';
 
 const STEPS = [
   {
     id: 'welcome',
     title: 'Welcome to FourCast',
     description: 'Your AI-powered prediction market companion. Discover insights, track your calls, and build a verifiable track record.',
-    icon: '🌍',
+    icon: '🔮',
     target: null, // Center screen
   },
   {
+    id: 'crypto',
+    title: 'Crypto Edge',
+    description: 'ML-powered crypto prediction edges. 200+ ML models surface mispriced opportunities.',
+    icon: '₿',
+    target: '[data-onboard="crypto"]',
+  },
+  {
+    id: 'sports',
+    title: 'Sports Intelligence',
+    description: 'Weather-aware sports market analysis. See how conditions impact the game.',
+    icon: '⚽',
+    target: '[data-onboard="sports"]',
+  },
+  {
+    id: 'politics',
+    title: 'Political Forecasts',
+    description: 'Data-driven insights into global events and political outcomes.',
+    icon: '🏛',
+    target: '[data-onboard="politics"]',
+  },
+  {
     id: 'weather',
-    title: 'Weather Intelligence',
-    description: 'Explore our 3D weather visualization. Weather impacts sports, events, and markets — we surface those connections.',
+    title: 'Weather & Markets',
+    description: 'Predict how weather moves markets across sports, agriculture, and events.',
     icon: '🌤️',
     target: '[data-onboard="weather"]',
-  },
-  {
-    id: 'markets',
-    title: 'Discover Market Edge',
-    description: 'ML-powered analysis finds value across prediction markets. Look for the edge indicator when our models spot opportunities.',
-    icon: '📊',
-    target: '[data-onboard="markets"]',
-  },
-  {
-    id: 'publish',
-    title: 'Build Your Track Record',
-    description: 'Make your calls and prove your edge. Every prediction is recorded on-chain — immutable, timestamped, verifiable.',
-    icon: '🎯',
-    target: '[data-onboard="publish"]',
   },
 ];
 
@@ -45,11 +52,6 @@ export function useOnboarding() {
     if (typeof window !== 'undefined') {
       const completed = localStorage.getItem(ONBOARDING_KEY);
       setIsComplete(!!completed);
-      if (!completed) {
-        // Small delay to let page render
-        const timer = setTimeout(() => setIsActive(true), 1500);
-        return () => clearTimeout(timer);
-      }
     }
   }, []);
 
@@ -69,6 +71,7 @@ export function useOnboarding() {
 
   const skipOnboarding = useCallback(() => {
     setIsActive(false);
+    setIsComplete(true);
     localStorage.setItem(ONBOARDING_KEY, 'skipped');
   }, []);
 
@@ -88,6 +91,7 @@ export function useOnboarding() {
   return {
     isActive,
     currentStep,
+    setCurrentStep,
     isComplete,
     steps: STEPS,
     step: STEPS[currentStep],
@@ -108,6 +112,7 @@ export default function OnboardingTour({
   onNext,
   onPrev,
   onSkip,
+  onStepClick,
   isNight = true,
 }) {
   const [targetRect, setTargetRect] = useState(null);
@@ -119,13 +124,30 @@ export default function OnboardingTour({
       return;
     }
 
-    const element = document.querySelector(step.target);
-    if (element) {
-      const rect = element.getBoundingClientRect();
-      setTargetRect(rect);
-    } else {
-      setTargetRect(null);
-    }
+    let frameId;
+    let stopAt = performance.now() + 700;
+
+    const measureTarget = () => {
+      const element = document.querySelector(step.target);
+      setTargetRect(element ? element.getBoundingClientRect() : null);
+
+      if (performance.now() < stopAt) {
+        frameId = requestAnimationFrame(measureTarget);
+      }
+    };
+
+    const onResize = () => {
+      stopAt = performance.now() + 300;
+      if (!frameId) frameId = requestAnimationFrame(measureTarget);
+    };
+
+    measureTarget();
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', onResize);
+    };
   }, [isActive, step?.target, currentStep]);
 
   if (!isActive) return null;
@@ -157,7 +179,7 @@ export default function OnboardingTour({
       <div
         className="fixed inset-0 z-[100] transition-opacity duration-300"
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
-        onClick={onSkip}
+        aria-hidden="true"
       />
 
       {/* Spotlight on target */}
@@ -213,7 +235,7 @@ export default function OnboardingTour({
             {STEPS.map((s, i) => (
               <button
                 key={s.id}
-                onClick={() => i <= currentStep ? onNext() : null}
+                onClick={() => onStepClick?.(i)}
                 className={`w-2 h-2 rounded-full transition-all ${
                   i === currentStep
                     ? 'w-6 bg-purple-500'

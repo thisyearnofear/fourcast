@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { createElement, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import useCarouselPhysics, { CARDS } from '@/hooks/useCarouselPhysics';
+import OnboardingTour, { ONBOARDING_KEY, useOnboarding } from './OnboardingTour';
 
 export default function CarouselLanding() {
   const router = useRouter();
+
+  const onboarding = useOnboarding();
 
   const [isEntered, setIsEntered] = useState(false);
   const [activeCard, setActiveCard] = useState(null);
@@ -24,7 +27,7 @@ export default function CarouselLanding() {
 
   const {
     stageRef, cardsRootRef, bgCanvasRef, loaderRef, stateRef,
-    measure, updateTransforms, startCarousel,
+    measure, updateTransforms, startCarousel, pauseCarouselMotion,
     drawBackground, transitionGradient, resizeBG,
     animateEntry, warmupCompositing, createCards,
     onWheel, onPointerDown, onPointerMove, onPointerUp,
@@ -33,6 +36,14 @@ export default function CarouselLanding() {
     onActiveCardChange: setActiveCard,
     onCardClick: (card) => router.push(card.route),
   });
+
+  const finishWelcome = (visitState, completeTour = false) => {
+    setShowWelcome(false);
+    try {
+      localStorage.setItem('fourcast_visited', visitState);
+      if (completeTour) localStorage.setItem(ONBOARDING_KEY, visitState);
+    } catch { /* noop */ }
+  };
 
   // --------------------------------------------------------------------------
   // INIT
@@ -98,8 +109,8 @@ export default function CarouselLanding() {
           try {
             localStorage.setItem('fourcast_interests', JSON.stringify([card.id]));
             localStorage.setItem('fourcast_visited', 'true');
-            setRevealedCards(4);
-          } catch {}
+            setRevealedCards(CARDS.length);
+          } catch { /* noop */ }
           router.push(card.route);
         }
       }
@@ -113,6 +124,43 @@ export default function CarouselLanding() {
       mounted = false; cleanup();
     };
   }, [revealedCards]);
+
+  useEffect(() => {
+    const s = stateRef.current;
+
+    if (!onboarding.isActive) {
+      if (isEntered) startCarousel();
+      return;
+    }
+
+    pauseCarouselMotion();
+    s.velocity = 0;
+
+    const stepId = onboarding.step?.id;
+    const targetIndex = CARDS.findIndex((card) => card.id === stepId);
+    if (targetIndex === -1 || !s.TRACK || !s.STEP) return;
+
+    if (revealedCards < CARDS.length) {
+      setRevealedCards(CARDS.length);
+      return;
+    }
+
+    gsap.to(s, {
+      scrollX: ((targetIndex * s.STEP) % s.TRACK + s.TRACK) % s.TRACK,
+      duration: 0.35,
+      ease: 'power3.out',
+      onUpdate: () => updateTransforms(),
+    });
+  }, [
+    onboarding.isActive,
+    onboarding.currentStep,
+    onboarding.step?.id,
+    revealedCards,
+    isEntered,
+    startCarousel,
+    pauseCarouselMotion,
+    updateTransforms,
+  ]);
 
   // --------------------------------------------------------------------------
   // Resize Handler
@@ -130,8 +178,15 @@ export default function CarouselLanding() {
     };
 
     let timer;
-    window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(onResize, 80); });
-    return () => window.removeEventListener('resize', onResize);
+    const onResizeDebounced = () => {
+      clearTimeout(timer);
+      timer = setTimeout(onResize, 80);
+    };
+    window.addEventListener('resize', onResizeDebounced);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', onResizeDebounced);
+    };
   }, [measure, updateTransforms, resizeBG]);
 
   // --------------------------------------------------------------------------
@@ -204,7 +259,7 @@ export default function CarouselLanding() {
                 try {
                   localStorage.setItem('fourcast_interests', JSON.stringify([activeCard.id]));
                   localStorage.setItem('fourcast_visited', 'true');
-                } catch {}
+                } catch { /* noop */ }
                 router.push(activeCard.route);
               }}
             >
@@ -257,8 +312,7 @@ export default function CarouselLanding() {
       {/* Welcome Overlay */}
       {showWelcome && (
         <div className="carousel-welcome" onClick={() => {
-          setShowWelcome(false);
-          try { localStorage.setItem('fourcast_visited', 'dismiss'); } catch {}
+          finishWelcome('dismiss', true);
         }}>
           <div className="carousel-welcome-card" onClick={(e) => e.stopPropagation()}>
             <span className="carousel-welcome-icon">🔮</span>
@@ -272,10 +326,10 @@ export default function CarouselLanding() {
             <button
               className="carousel-welcome-cta"
               onClick={() => {
-                setShowWelcome(false);
-                setShowGestureHint(true);
-                setTimeout(() => setShowGestureHint(false), 4000);
-                try { localStorage.setItem('fourcast_visited', 'true'); } catch {}
+                finishWelcome('true');
+                setRevealedCards(CARDS.length);
+                setShowGestureHint(false);
+                onboarding.restartOnboarding();
               }}
             >
               Show me around →
@@ -283,8 +337,8 @@ export default function CarouselLanding() {
             <button
               className="carousel-welcome-skip"
               onClick={() => {
-                setShowWelcome(false);
-                try { localStorage.setItem('fourcast_visited', 'skip'); } catch {}
+                finishWelcome('skipped', true);
+                onboarding.skipOnboarding();
               }}
             >
               Skip — I know my way around
@@ -292,6 +346,18 @@ export default function CarouselLanding() {
           </div>
         </div>
       )}
+
+      {createElement(OnboardingTour, {
+        isActive: onboarding.isActive,
+        step: onboarding.step,
+        currentStep: onboarding.currentStep,
+        progress: onboarding.progress,
+        onNext: onboarding.nextStep,
+        onPrev: onboarding.prevStep,
+        onSkip: onboarding.skipOnboarding,
+        onStepClick: onboarding.setCurrentStep,
+        isNight: true,
+      })}
     </div>
   );
 }
