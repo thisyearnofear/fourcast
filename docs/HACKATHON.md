@@ -104,7 +104,11 @@ Fourcast → Arc (signals + settlement + USDC tipping + gas)
 - [x] **3D interactive carousel landing** — 4 verticals with canvas animations
 - [x] **PortfolioCard** — track record overview (signals, win rate, Brier)
 - [x] **CctpTransfer component** — UI for cross-chain USDC (needs Circle API key)
-- [x] **POST /api/cctp/transfer** — API stub for CCTP endpoint (needs CIRCLE_API_KEY)
+- [x] **POST /api/cctp/transfer** — API stub for CCTP endpoint (CIRCLE_API_KEY set)
+- [x] **Unified arbitrage executor** — one-click cross-platform arb (Polymarket + Kalshi)
+- [x] **Telegram bot (@fourcasterbot)** — /edge commands for AI analysis via messaging
+- [x] **Progressive disclosure** — 2 cards on first visit, keyboard nav, auto-analyze on entry
+- [x] **Onboarding fixes** — skip button, click-outside dismiss, gesture hint on welcome
 
 ### CCTP/Gateway Setup
 To enable cross-chain USDC transfers:

@@ -45,6 +45,8 @@
 - **Polymarket** - Live odds, order placement
 - **Kalshi** - Live odds, order placement
 - **Cross-Platform Arbitrage** - Detect price discrepancies
+- **Unified Arbitrage Execution** — One-click buy on cheap venue, sell on expensive with real-time per-leg status
+- **Telegram Bot (@fourcasterbot)** — /edge commands for AI prediction analysis via messaging
 
 #### On-Chain Signals (Movement Testnet)
 - **Signal Publishing** - Publish predictions to blockchain

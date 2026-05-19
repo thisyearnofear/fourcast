@@ -326,6 +326,23 @@ https://faucet.testnet.movementnetwork.xyz/
 - Ensure wallet has USDC on Polygon
 - Check network is Polygon mainnet (not testnet)
 
+### Telegram Bot (@fourcasterbot)
+
+```bash
+# 1. Create bot (already done: @fourcasterbot)
+# Skip this step — bot exists.
+
+# 2. Set token in .env.local
+echo "TELEGRAM_BOT_TOKEN=your_token_here" >> .env.local
+
+# 3. Verify webhook
+curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+
+# 4. Test: message @fourcasterbot on Telegram
+# /start — welcome
+# /edge BTC — analyze Bitcoin markets
+```
+
 ---
 
 ## Production Deployment
