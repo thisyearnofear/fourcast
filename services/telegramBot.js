@@ -263,7 +263,21 @@ async function handleEdge(chatId, query, messageId = null) {
     session.awaitingFollowUp = true;
 
     if (!data.success) {
-      return handleCasualQuery(chatId, query);
+      // Don't use LLM for failed market lookups — be honest about no data
+      const msg = [
+        `🔮 *I couldn't find prediction market data for that.*`,
+        ``,
+        `The Fourcast AI scans Polymarket and Kalshi for active markets. Try:`,
+        `• \`/edge Bitcoin June 2026\``,
+        `• \`/edge Chiefs Super Bowl\``,
+        `• \`/edge Fed rate cut\``,
+        `• \`/edge rain Miami tomorrow\``,
+        ``,
+        `Or browse all markets at [fourcastapp.vercel.app/markets](${APP_URL}/markets)`,
+      ].join('\n');
+      return messageId
+        ? editMessage(chatId, messageId, msg)
+        : sendMessage(chatId, msg);
     }
 
     const analysis = data.analysis || data.assessment || {};
