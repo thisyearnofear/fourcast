@@ -138,3 +138,5 @@ cache/
 # Other
 # ============================================
 config.yaml
+# CLI binaries
+bin/

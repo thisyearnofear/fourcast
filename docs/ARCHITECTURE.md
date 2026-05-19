@@ -154,11 +154,20 @@ CREATE TABLE signals (
 
 ## Multi-Chain Architecture
 
-### Movement/Aptos (Signal Layer)
+### Arc (Primary Settlement Layer) — Agora Agents Hackathon
+- **Purpose**: Signal publishing, USDC settlement, agent accounts, cross-chain coordination
+- **Network**: Arc testnet (Chain ID 5042002)
+- **Contract**: `SignalRegistry.sol`, `PredictionReceipt.sol`, `BuilderFeeSplitter.sol`
+- **Features**: On-chain signals with USDC tipping, sub-second finality, ~$0.01 tx fees
+- **Circle Tools**: CCTP, Gateway, Wallets, Paymaster, USYC, App Kit
+- **Status**: 🔄 Integrating for Agora Agents Hackathon (May 2026)
+
+### Movement/Aptos (Signal Layer — Legacy)
 - **Purpose**: Publish verifiable prediction signals
 - **Network**: Movement testnet (Bardock, Chain ID 250)
 - **Contract**: `signal_registry.move`, `signal_marketplace.move`
 - **Features**: Signal publishing, tipping, reputation tracking
+- **Status**: Being superseded by Arc integration
 
 ### EVM Chains (Trading Layer)
 - **Supported**: BNB, Polygon, Arbitrum
@@ -166,16 +175,53 @@ CREATE TABLE signals (
 - **Contracts**: `PredictionReceipt` per chain
 - **Features**: On-chain trade logging, fee collection
 
+### Arc Data Flow (Agora Agents Hackathon)
+```
+┌─────────────────┐     ┌──────────────────┐
+│ Polymarket      │     │ Kalshi           │
+│ (Odds + Trading)│     │ (Odds + Trading) │
+└────────┬────────┘     └────────┬─────────┘
+         │                       │
+         ▼                       ▼
+┌─────────────────────────────────────────┐
+│ AI Analysis Engine (Venice AI)          │
+│ + SynthData ML Forecasts               │
+│ + Weather Data (Open-Meteo)            │
+│ + Kelly Criterion Position Sizing      │
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────┐
+│ Arc Settlement Layer                     │
+│ ├─ SignalRegistry.sol (on-chain preds)  │
+│ ├─ PredictionReceipt.sol (trade logs)   │
+│ ├─ BuilderFeeSplitter.sol (monetize)    │
+│ ├─ CCTP/Gateway (cross-chain USDC)     │
+│ ├─ Circle Wallets (agent accounts)     │
+│ ├─ Paymaster (USDC gas)                │
+│ └─ USYC (idle capital yield)           │
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────┐
+│ Frontend Dashboard                      │
+│ + App Kit (Bridge/Swap/Send)           │
+│ + Arc chain selector                    │
+│ + USDC-denominated tipping              │
+└─────────────────────────────────────────┘
+```
+
 ### Chain Connection Flow
 ```javascript
 // useChainConnections hook manages multi-chain state
 {
   chains: {
+    arc: { connected, walletAddress, chainId: 5042002, balance },  // NEW
     aptos: { connected, walletAddress, network },
     evm: { connected, chainId, balance }
   },
-  canPerform: { aptos: boolean, evm: boolean },
-  canPublish: boolean  // Aptos-only
+  canPerform: { arc: boolean, aptos: boolean, evm: boolean },
+  canPublish: boolean  // Arc or Aptos
 }
 ```
 
@@ -286,7 +332,9 @@ The agent scans markets, filters candidates, generates forecasts, and detects ar
 - **Backend**: Node.js, SQLite (Turso), Redis
 - **AI**: Venice AI (Llama 3.3 70B) with Edge Search
 - **Blockchains**: 
-  - Movement/Aptos (signal publishing)
-  - EVM chains (trading contracts)
-- **Wallets**: Nightly, Petra (Aptos); MetaMask, WalletConnect (EVM)
+  - **Arc** (Circle L1) — primary settlement, USDC-native, sub-second finality
+  - Movement/Aptos (signal publishing — legacy)
+  - EVM chains (BNB, Polygon, Arbitrum — trading contracts)
+- **Circle Tools**: CCTP, Gateway, Circle Wallets, Paymaster, USYC, App Kit
+- **Wallets**: MetaMask, WalletConnect (EVM + Arc); Nightly, Petra (Aptos)
 - **Data**: Polymarket, Kalshi, Open-Meteo, SynthData
