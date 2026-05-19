@@ -99,9 +99,45 @@ export async function POST(request) {
       ...futuresValidation.warnings
     ];
 
-    // Rate limiting
+    // Rate limiting — skip for subscribers
     const clientId = getClientIdentifier(request);
-    const limitPerHour = mode === 'deep' ? 10 : ANALYSIS_RATE_LIMIT;
+
+    // Check if user has an active subscription (bypass rate limit)
+    let isSubscriber = false;
+    const contractAddr = process.env.NEXT_PUBLIC_SUBSCRIPTION_CONTRACT;
+    const usdcAddr = process.env.NEXT_PUBLIC_USDC_TOKEN;
+    if (contractAddr && usdcAddr) {
+      try {
+        const { createPublicClient, http } = await import('viem');
+        const arcChain = {
+          id: 5042002, name: 'Arc Testnet',
+          nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
+        };
+        const pc = createPublicClient({
+          chain: arcChain,
+          transport: http(process.env.ARC_RPC_URL || 'https://arc-node.thecanteenapp.com/'),
+        });
+        const data = await pc.readContract({
+          address: contractAddr,
+          abi: [{
+            inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+            name: 'getSubscription',
+            outputs: [
+              { internalType: 'bool', name: 'active', type: 'bool' },
+              { internalType: 'uint8', name: 'tier', type: 'uint8' },
+              { internalType: 'uint256', name: 'expiresAt', type: 'uint256' },
+            ],
+            stateMutability: 'view', type: 'function',
+          }],
+          functionName: 'getSubscription',
+          args: [clientId],
+        });
+        // Data[0] = active boolean, data[1] = tier (1=Pro, 2=Premium)
+        isSubscriber = data[0] && Number(data[1]) > 0;
+      } catch { /* if contract call fails, fall through to normal rate limit */ }
+    }
+
+    const limitPerHour = isSubscriber ? Infinity : (mode === 'deep' ? 10 : ANALYSIS_RATE_LIMIT);
     if (!checkAnalysisRateLimit(clientId)) {
       return Response.json({
         error: 'Analysis rate limit exceeded. Please try again later.',

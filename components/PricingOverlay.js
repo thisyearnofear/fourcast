@@ -1,69 +1,52 @@
 'use client';
 
 import { useState } from 'react';
+import { useSubscription, TIERS } from '@/hooks/useSubscription';
 
 const PLANS = [
   {
-    id: 'free',
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
+    id: 'free', name: 'Free', price: '$0', period: 'forever',
     description: 'Get started with basic AI analysis',
-    features: [
-      '3 AI analyses per day',
-      'Basic confidence scoring',
-      'Market browsing & discovery',
-      'Public track record',
-    ],
-    cta: 'Current plan',
-    disabled: true,
-    popular: false,
+    features: ['3 AI analyses per day', 'Basic confidence scoring', 'Market browsing & discovery', 'Public track record'],
+    cta: 'Current plan', disabled: true, popular: false,
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    price: '$9.99',
-    period: '/month',
+    id: 'pro', name: 'Pro', price: '$9.99', period: '/month',
     description: 'Unlimited analysis for serious traders',
-    features: [
-      'Unlimited AI analyses',
-      'Deep analysis mode (Qwen3-235B)',
-      'Live weather data integration',
-      'Web search for context',
-      'Cross-platform arbitrage detection',
-      'Priority AI processing',
-    ],
-    cta: 'Upgrade to Pro',
-    disabled: false,
-    popular: true,
+    features: ['Unlimited AI analyses', 'Deep analysis mode (Qwen3-235B)', 'Live weather data integration', 'Web search for context', 'Cross-platform arbitrage detection', 'Priority AI processing'],
+    cta: 'Upgrade to Pro', disabled: false, popular: true, tier: TIERS.PRO,
   },
   {
-    id: 'premium',
-    name: 'Premium',
-    price: '$19.99',
-    period: '/month',
+    id: 'premium', name: 'Premium', price: '$19.99', period: '/month',
     description: 'Maximum edge for active traders',
-    features: [
-      'Everything in Pro',
-      'Kelly Criterion position sizing',
-      'API access for developers',
-      'Automated arbitrage execution',
-      'Custom alert system',
-      'Dedicated support',
-    ],
-    cta: 'Go Premium',
-    disabled: false,
-    popular: false,
+    features: ['Everything in Pro', 'Kelly Criterion position sizing', 'API access for developers', 'Automated arbitrage execution', 'Custom alert system', 'Dedicated support'],
+    cta: 'Go Premium', disabled: false, popular: false, tier: TIERS.PREMIUM,
   },
 ];
 
 export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
   const [selectedPlan, setSelectedPlan] = useState('pro');
+  const { txState, subscribe, resetTx, subscription, isConfigured } = useSubscription();
 
   if (!isOpen) return null;
 
   const textColor = isNight ? 'text-white' : 'text-black';
   const mutedColor = isNight ? 'text-white/50' : 'text-black/50';
+
+  const activePlan = PLANS.find(p => p.id === selectedPlan);
+  const isProcessing = txState.status !== 'idle' && txState.status !== 'success' && txState.status !== 'error';
+
+  const getTxStatusText = () => {
+    switch (txState.status) {
+      case 'approving': return 'Approving USDC...';
+      case 'approving-wallet': return 'Approve in wallet...';
+      case 'subscribing': return 'Subscribing...';
+      case 'confirming': return 'Confirming transaction...';
+      case 'success': return '✅ Subscription active!';
+      case 'error': return `❌ ${txState.error || 'Transaction failed'}`;
+      default: return '';
+    }
+  };
 
   return (
     <div
@@ -84,8 +67,15 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
             Unlock Your Full Edge
           </h2>
           <p className={`text-sm ${mutedColor} max-w-md mx-auto`}>
-            You've experienced the power of AI-driven prediction analysis. Upgrade for unlimited access to every feature.
+            {subscription.active
+              ? `You're currently on ${PLANS.find(p => p.tier === subscription.tier)?.name || 'a paid'} plan. Upgrade or extend below.`
+              : "You've experienced the power of AI-driven prediction analysis. Upgrade for unlimited access to every feature."}
           </p>
+          {!isConfigured && (
+            <p className="text-xs text-amber-400 mt-2">
+              ⚙️ Payment not configured — add contract addresses to .env.local
+            </p>
+          )}
         </div>
 
         {/* Plans */}
@@ -97,8 +87,8 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
             return (
               <button
                 key={plan.id}
-                onClick={() => !plan.disabled && setSelectedPlan(plan.id)}
-                disabled={plan.disabled}
+                onClick={() => !plan.disabled && !isProcessing && setSelectedPlan(plan.id)}
+                disabled={plan.disabled || isProcessing}
                 className={`relative flex flex-col p-5 rounded-2xl text-left transition-all border ${
                   isProPlan
                     ? isNight
@@ -156,34 +146,64 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
           })}
         </div>
 
+        {/* Transaction Status */}
+        {txState.status !== 'idle' && (
+          <div className={`px-6 pb-3 text-center ${txState.status === 'success' ? 'text-green-400' : txState.status === 'error' ? 'text-red-400' : ''}`}>
+            <p className="text-sm font-medium">{getTxStatusText()}</p>
+            {txState.hash && (
+              <a
+                href={`https://arc-explorer.thecanteenapp.com/tx/${txState.hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`text-xs underline mt-1 inline-block ${mutedColor} hover:opacity-80`}
+              >
+                View on Arc Explorer ↗
+              </a>
+            )}
+          </div>
+        )}
+
         {/* Annual upsell note */}
         <div className={`px-6 pb-4 text-center`}>
           <p className={`text-xs ${mutedColor}`}>
-            Annual plans available at ~33% off. All plans include a 7-day free trial.
-            {' '}Payments processed in USDC on Arc.
+            {!subscription.active
+              ? 'Annual plans available at ~33% off. All plans include a 7-day free trial. Payments in USDC on Arc.'
+              : 'Extend your subscription or upgrade for more features. USDC payments on Arc.'}
           </p>
         </div>
 
         {/* Footer */}
         <div className={`flex items-center justify-center gap-4 px-6 pb-6`}>
           <button
-            onClick={onClose}
+            onClick={() => { onClose(); resetTx(); }}
             className={`text-sm font-medium px-4 py-2 rounded-xl transition-all ${
               isNight ? 'text-white/60 hover:text-white/80' : 'text-black/60 hover:text-black/80'
             }`}
           >
-            Maybe later
+            {txState.status === 'success' ? 'Close' : 'Maybe later'}
           </button>
           {selectedPlan !== 'free' && (
             <button
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 transition-all shadow-lg"
+              className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg ${
+                txState.status === 'success'
+                  ? 'bg-green-500 text-white cursor-default'
+                  : isProcessing
+                    ? 'bg-white/20 text-white/60 cursor-wait'
+                    : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90'
+              }`}
+              disabled={isProcessing || txState.status === 'success'}
               onClick={() => {
-                // Placeholder — payment integration point
-                // In production: redirect to USDC checkout or Stripe
-                alert(`🚧 Payment integration placeholder\n\nSelected plan: ${PLANS.find(p => p.id === selectedPlan)?.name}\n\nTo complete: integrate Stripe or Circle USDC checkout.`);
+                if (activePlan?.tier !== undefined) {
+                  subscribe(activePlan.tier);
+                }
               }}
             >
-              Continue with {PLANS.find(p => p.id === selectedPlan)?.name}
+              {txState.status === 'success'
+                ? '✓ Subscribed'
+                : isProcessing
+                  ? getTxStatusText()
+                  : `Continue with ${activePlan?.name || 'Pro'}`
+              }
             </button>
           )}
         </div>
