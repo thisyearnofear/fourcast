@@ -138,16 +138,63 @@ async function handleStart(chatId, userName) {
   return sendMessage(chatId, msg, { reply_markup: mainMenuKeyboard() });
 }
 
+async function handleCasualQuery(chatId, query) {
+  await sendTyping(chatId);
+
+  const systemPrompt = `You are Fourcast, an AI prediction intelligence bot.
+Your voice: confident, data-driven oracle/seer. You speak in short, warm messages.
+You help users discover edge opportunities in prediction markets (crypto, sports, politics, weather).
+End every response by inviting them to try a market: "Try asking me something like: Will Bitcoin hit $100k?"
+
+Keep responses under 3 sentences unless they ask a specific question.
+Never mention that you're an AI or language model.
+Sign off naturally.`;
+
+  const userMessage = (query && query.trim().length > 0) ? query : 'introduce yourself';
+
+  try {
+    const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        max_tokens: 250,
+        temperature: 0.7,
+      }),
+    });
+
+    const data = await response.json();
+    const reply = data?.choices?.[0]?.message?.content?.trim();
+
+    if (reply) {
+      return sendMessage(chatId, `🔮 ${reply}`);
+    }
+  } catch (err) {
+    console.error('[Bot] Venice AI fallback failed:', err.message);
+  }
+
+  // Ultimate fallback if everything fails
+  const fallback = `I'm your prediction intelligence agent. Try /edge to analyze a market, or just type something like "Will the Chiefs win?" and I'll check the odds for you.`;
+  return sendMessage(chatId, `🔮 ${fallback}`);
+}
+
 async function handleEdge(chatId, query, messageId = null) {
+  // Greeting/niceties — don't even try market analysis
+  const greetings = ['hi', 'hello', 'hey', 'gm', 'gn', 'good morning', 'good evening', 'sup', 'yo', 'g\'day', 'howdy'];
+  const isGreeting = greetings.includes(query.trim().toLowerCase());
+  if (isGreeting) {
+    return handleCasualQuery(chatId, query);
+  }
+
   if (!query || query.trim().length < 2) {
-    const msg = [
-      `🔮 *I need a market to analyze.*`,
-      `Example: /edge \`Bitcoin $100k\``,
-      `Or just type what you're curious about.`,
-    ].join('\n');
-    return messageId
-      ? editMessage(chatId, messageId, msg)
-      : sendMessage(chatId, msg);
+    return handleCasualQuery(chatId, query);
   }
 
   await sendTyping(chatId);
@@ -173,16 +220,7 @@ async function handleEdge(chatId, query, messageId = null) {
     session.awaitingFollowUp = true;
 
     if (!data.success) {
-      const msg = [
-        `🔮 *I couldn't find a direct market match for "${query.trim()}"*`,
-        ``,
-        `Try being more specific:`,
-        `• \`Bitcoin price June 2026\``,
-        `• \`Will the Chiefs win Super Bowl\``,
-      ].join('\n');
-      return messageId
-        ? editMessage(chatId, messageId, msg)
-        : sendMessage(chatId, msg);
+      return handleCasualQuery(chatId, query);
     }
 
     const analysis = data.analysis || data.assessment || {};
