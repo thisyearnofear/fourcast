@@ -4,6 +4,31 @@
 
 ### 🎯 Core Features
 
+#### 3D Interactive Landing
+- **Vertical card carousel** — Drag through Crypto, Sports, Politics, Weather
+- **Reactive gradient background** — Colors shift with active card
+- **Procedural canvas scenes** — Animated particles, terrain, nodes, weather inside each card
+- **Skeleton loaders** — Blurred card outlines during loading (no black screen)
+- **First-visit welcome overlay** + gesture hint ("Drag to browse · Click to explore")
+
+#### Unified Wallet Connection
+- **Single Connect Wallet button** — Hides EVM/Aptos/Arc chain complexity
+- **Connected status chip** — Green pulse dot + truncated address
+- **Chain details popover** — Optional per-chain status and "Disconnect all"
+
+#### Portfolio Overview
+- **Track record card** — Signals count, win rate %, Brier score at a glance
+- **Loading skeleton** — Graceful fetch state
+- **Auto-hides** when no data (first-time user)
+- **Links to /signals** for full stats
+
+#### Monetization (USDC on Arc)
+- **Free tier**: 3 AI analyses per day
+- **Pro tier** ($9.99/mo): Unlimited analyses, deep mode, weather, web search
+- **Premium tier** ($19.99/mo): Kelly Criterion, API access, arbitrage execution
+- **Subscription smart contract** on Arc testnet (0xC7e26e89...)
+- **Rate limit bypass** for active subscribers — checked on-chain via viem
+
 #### AI-Powered Market Analysis
 - **Venice AI Integration** - Llama 3.3 70B with web search
 - **ML-Backed Forecasts** - SynthData integration for crypto/equities
@@ -221,3 +246,42 @@ Combine ML forecasts, AI reasoning, and real-time data sources to create verifia
 ---
 
 **Last Updated**: February 2025
+
+---
+
+## 🏆 Agora Agents Hackathon Integration
+
+Fourcast is competing in the [Agora Agents Hackathon](https://agora.thecanteenapp.com/) (Canteen × Circle, May 11–25 2026), targeting **RFB 02** (Prediction Market Trader Intelligence) as primary and **RFB 05** (Cross-Platform Arbitrage Agent) as secondary.
+
+### Arc-Native Features (New)
+
+#### Arc Settlement Layer
+- **Signal publishing on Arc** — On-chain predictions with sub-second finality, ~$0.01 USDC fees
+- **USDC-denominated tipping** — Reward analysts with USDC instead of APT
+- **Circle Wallets** — Agent-managed trading accounts with automated key management
+- **Paymaster** — All gas fees paid in USDC, no volatile gas tokens
+- **CCTP/Gateway** — Cross-chain USDC transfers for multi-venue trading
+
+#### Enhanced Agent Intelligence
+- **Kelly Criterion sizing** — Optimal bet sizing based on edge magnitude and confidence
+- **Builder code monetization** — Polymarket V2 builder integration earns USDC per fill
+- **Reasoning trace on-chain** — Hash AI reasoning and pin on Arc for verification
+- **USYC idle capital** — Park agent capital in yield between trading cycles
+- **App Kit integration** — Bridge/Swap/Send components in UI
+
+### Supported Chains (Updated)
+
+| Chain | Purpose | Status |
+|-------|---------|--------|
+| **Arc (Circle L1)** | Primary settlement, USDC signals, tipping, gas | 🔄 Integrating |
+| Movement/Aptos | Signal publishing (legacy) | ✅ Testnet |
+| BNB Chain | Trading contracts | 🧪 Beta |
+| Polygon | Trading contracts | 🧪 Beta |
+| Arbitrum | Trading contracts | 🧪 Beta |
+
+### Hackathon Resources
+- **Strategy doc**: [HACKATHON.md](./HACKATHON.md)
+- **Arc CLI**: `uv tool install git+https://github.com/the-canteen-dev/ARC-cli`
+- **Arc docs**: https://arc-node.thecanteenapp.com/
+- **Hackathon page**: https://agora.thecanteenapp.com/
+- **Submission form**: https://forms.gle/hFPM2t4Jt1zGfqzM7

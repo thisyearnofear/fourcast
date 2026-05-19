@@ -109,6 +109,127 @@ ARB_RPC_URL=...
 ARB_PRIVATE_KEY=...
 ```
 
+### Optional: Arc & Circle (Agora Agents Hackathon)
+
+For deploying and transacting on Arc (Circle's stablecoin-native L1):
+
+```env
+# Arc (Circle L1)
+ARC_RPC_URL=https://arc-node.thecanteenapp.com/...  # From arc-canteen login
+ARC_CHAIN_ID=5042002
+ARC_PRIVATE_KEY=your_arc_deployer_private_key
+NEXT_PUBLIC_ARC_CHAIN_ID=5042002
+NEXT_PUBLIC_ARC_RPC_URL=https://arc-node.thecanteenapp.com/...
+NEXT_PUBLIC_ARC_SIGNAL_REGISTRY=0x...  # After deployment
+NEXT_PUBLIC_ARC_PREDICTION_RECEIPT=0x...  # After deployment
+NEXT_PUBLIC_ARC_BUILDER_FEE_SPLITTER=0x...  # After deployment
+NEXT_PUBLIC_ARC_USDC_ADDRESS=0x...  # USDC on Arc testnet
+
+# Circle Developer Tools
+NEXT_PUBLIC_CIRCLE_API_KEY=your_circle_api_key
+NEXT_PUBLIC_CIRCLE_WALLET_SET_ID=your_wallet_set_id
+```
+
+See [Arc & Circle Setup](#arc--circle-setup-agora-agents-hackathon) below for full setup instructions.
+
+---
+
+## Arc & Circle Setup (Agora Agents Hackathon)
+
+Fourcast integrates with Arc (Circle's stablecoin-native L1) for the [Agora Agents Hackathon](https://agora.thecanteenapp.com/). Arc provides sub-second deterministic finality and ~$0.01 USDC transaction fees.
+
+### 1. Install ARC CLI
+
+```bash
+# Install uv if you haven't
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install ARC CLI
+uv tool install git+https://github.com/the-canteen-dev/ARC-cli
+
+# Login to get RPC access
+arc-canteen login
+
+# Verify connection
+arc-canteen rpc eth_chainId
+# Should return: 0x4d24b2 (Chain ID 5042002)
+```
+
+### 2. Join Hackathon Discords
+
+- **Canteen Discord**: https://discord.gg/TGnyfKh23V
+- **Arc Builder Discord**: https://discord.com/invite/buildonarc (mention Canteen + Agora in onboarding)
+
+### 3. Set Up Circle Developer Account
+
+1. Create account at https://developers.circle.com
+2. Generate an API key
+3. Create a Wallet Set for agent wallets
+4. Note your API key and Wallet Set ID
+
+### 4. Foundry (for Solidity contracts on Arc)
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+
+# Verify
+forge --version
+cast --version
+```
+
+### 5. Arc Environment Variables
+
+Add these to your `.env.local`:
+
+```env
+# Arc (Circle L1)
+ARC_RPC_URL=https://arc-node.thecanteenapp.com/...  # From arc-canteen login
+ARC_CHAIN_ID=5042002
+ARC_PRIVATE_KEY=your_arc_deployer_private_key
+NEXT_PUBLIC_ARC_CHAIN_ID=5042002
+NEXT_PUBLIC_ARC_RPC_URL=https://arc-node.thecanteenapp.com/...
+NEXT_PUBLIC_ARC_SIGNAL_REGISTRY=0x...  # After deployment
+NEXT_PUBLIC_ARC_PREDICTION_RECEIPT=0x...  # After deployment
+NEXT_PUBLIC_ARC_BUILDER_FEE_SPLITTER=0x...  # After deployment
+NEXT_PUBLIC_ARC_USDC_ADDRESS=0x...  # USDC on Arc testnet
+
+# Circle Developer Tools
+NEXT_PUBLIC_CIRCLE_API_KEY=your_circle_api_key
+NEXT_PUBLIC_CIRCLE_WALLET_SET_ID=your_wallet_set_id
+```
+
+### 6. Get Testnet USDC
+
+Arc testnet USDC can be obtained through:
+- The ARC CLI faucet: `arc-canteen faucet`
+- Circle testnet faucet (check Arc builder Discord)
+- Request in Canteen Discord
+
+### 7. Deploy Contracts on Arc
+
+See [Deployment Guide](./DEPLOYMENT.md#arc-contract-deployment-agora-agents-hackathon) for full deployment instructions.
+
+Quick start:
+```bash
+cd contracts
+forge build
+forge create SignalRegistry.sol:SignalRegistry --rpc-url $ARC_RPC_URL --private-key $ARC_PRIVATE_KEY
+```
+
+### 8. Verify Everything Works
+
+```bash
+# Check Arc connection
+arc-canteen rpc eth_chainId
+
+# Check your balance
+cast balance $YOUR_ADDRESS --rpc-url $ARC_RPC_URL
+
+# Run the app
+npm run dev
+```
+
 ---
 
 ## Wallet Setup
@@ -215,6 +336,47 @@ https://faucet.testnet.movementnetwork.xyz/
 4. Update `NEXT_PUBLIC_HOST` to production URL
 5. Deploy Move contracts to testnet/mainnet
 
+### Arc Subscription Contract
+
+The optional USDC subscription system uses a smart contract on Arc (Circle L1):
+
+```bash
+# Prerequisites: Foundry (forge)
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+
+# Set env vars in .env.local:
+# ARC_RPC_URL — from `arc-canteen status`
+# NEXT_PUBLIC_USDC_TOKEN — USDC token on Arc testnet
+# TREASURY_ADDRESS — wallet receiving subscription payments
+# DEPLOYER_PRIVATE_KEY — deployer wallet (send testnet USDC for gas)
+
+# Compile and deploy
+cd contracts/subscription
+forge build
+cd ../..
+forge create --rpc-url "$ARC_RPC_URL" --private-key "$DEPLOYER_PRIVATE_KEY" --broadcast \
+  contracts/SubscriptionManager.sol:SubscriptionManager \
+  --constructor-args "$NEXT_PUBLIC_USDC_TOKEN" "$TREASURY_ADDRESS"
+
+# Add the deployed address to .env.local:
+# NEXT_PUBLIC_SUBSCRIPTION_CONTRACT=0x<address>
+```
+
+### Build
+
+```bash
+# Development
+npm run dev
+
+# Production build (Turbopack — no --webpack flag needed)
+npm run build
+
+# Lint & TypeScript check
+npm run lint
+npm run typecheck
+```
+
 See [Deployment Guide](./docs/DEPLOYMENT.md) for detailed instructions.
 
 ---
@@ -228,3 +390,6 @@ See [Deployment Guide](./docs/DEPLOYMENT.md) for detailed instructions.
 - **Polymarket**: https://polymarket.com
 - **Kalshi**: https://kalshi.com
 - **SynthData**: https://synthdata.co
+- **Arc (Circle L1)**: https://www.arcchain.xyz/
+- **Circle Developer**: https://developers.circle.com
+- **Agora Agents Hackathon**: https://agora.thecanteenapp.com/
