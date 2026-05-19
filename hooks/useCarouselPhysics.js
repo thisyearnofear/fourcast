@@ -68,6 +68,135 @@ function hexToRgb(hex) {
 }
 
 // ============================================================================
+// CARD SCENE — Procedural canvas animations inside each carousel card
+// ============================================================================
+
+const CARD_SCENE_DRAW = {
+  crypto(ctx, w, h, t) {
+    const cx = w / 2, cy = h / 2;
+    // Orbiting particles
+    for (let i = 0; i < 16; i++) {
+      const angle = t * 0.5 + (i / 16) * Math.PI * 2;
+      const r = Math.min(w, h) * 0.2 + Math.sin(t * 1.3 + i) * 6;
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+      ctx.beginPath();
+      ctx.arc(px, py, 2 - (i / 16), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(168, 85, 247, ${(1 - i / 16) * 0.5})`;
+      ctx.fill();
+    }
+    // Rotating cube
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(t * 0.3);
+    const s = Math.min(w, h) * 0.1;
+    for (let i = 0; i < 3; i++) {
+      const o = i * 3;
+      ctx.strokeStyle = `rgba(168, 85, 247, ${0.35 - i * 0.1})`;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-(s - o) / 2, -(s - o) / 2, s - o, s - o);
+    }
+    ctx.restore();
+    // Center glow
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * 0.15);
+    g.addColorStop(0, 'rgba(168, 85, 247, 0.1)');
+    g.addColorStop(1, 'rgba(168, 85, 247, 0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - 40, cy - 40, 80, 80);
+  },
+
+  sports(ctx, w, h, t) {
+    const cx = w / 2, gy = h * 0.72;
+    // Animated terrain
+    ctx.fillStyle = 'rgba(5, 150, 105, 0.12)';
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    for (let x = 0; x <= w; x += 2) {
+      ctx.lineTo(x, gy - Math.sin(x * 0.03 + t * 0.6) * 5 - Math.sin(x * 0.05 + t * 1.0) * 3);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+    // Ball
+    const bx = cx + Math.sin(t * 0.5) * w * 0.18;
+    const by = gy - 6 - Math.abs(Math.sin(t * 0.7)) * 18;
+    ctx.beginPath(); ctx.arc(bx, by, 4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+  },
+
+  politics(ctx, w, h, t) {
+    const cx = w / 2, cy = h / 2;
+    const nodes = [
+      [cx, cy - 20], [cx - 18, cy + 12], [cx + 18, cy + 12],
+      [cx - 8, cy - 4], [cx + 8, cy - 4],
+    ];
+    const pulse = Math.sin(t * 1.5) * 0.3 + 0.7;
+    ctx.strokeStyle = `rgba(67, 56, 202, ${pulse * 0.25})`;
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i < nodes.length; i++)
+      for (let j = i + 1; j < nodes.length; j++) {
+        const d = Math.hypot(nodes[j][0] - nodes[i][0], nodes[j][1] - nodes[i][1]);
+        if (d < 40) { ctx.beginPath(); ctx.moveTo(...nodes[i]); ctx.lineTo(...nodes[j]); ctx.stroke(); }
+      }
+    nodes.forEach(([x, y], i) => {
+      const g = Math.sin(t * 1.2 + i) * 0.3 + 0.7;
+      ctx.beginPath(); ctx.arc(x, y, 2.5 + g, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(67, 56, 202, ${0.4 + g * 0.3})`; ctx.fill();
+    });
+  },
+
+  weather(ctx, w, h, t) {
+    const cx = w / 2, cy = h / 2 - 5;
+    // Cloud
+    const cxo = cx + Math.sin(t * 0.3) * 12;
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.07)';
+    [[cxo, cy - 2, 24, 15], [cxo - 10, cy + 2, 18, 11], [cxo + 12, cy + 1, 16, 10]].forEach(([x, y, rw, rh]) => {
+      ctx.beginPath(); ctx.ellipse(x, y, rw, rh, 0, 0, Math.PI * 2); ctx.fill();
+    });
+    // Rain
+    for (let i = 0; i < 6; i++) {
+      const rx = cx + Math.sin(t * 0.5 + i * 2) * 20 + (i - 3) * 6;
+      const ry = ((t * 35 + i * 30) % 70) + 18;
+      ctx.fillStyle = `rgba(56, 189, 248, ${ry > 15 && ry < 60 ? 0.35 : 0.05})`;
+      ctx.fillRect(rx, ry, 1.2, 4);
+    }
+    // Sun glow
+    const g = ctx.createRadialGradient(cx + 20, cy - 18, 0, cx + 20, cy - 18, 28);
+    g.addColorStop(0, 'rgba(251, 191, 36, 0.07)'); g.addColorStop(1, 'rgba(251, 191, 36, 0)');
+    ctx.fillStyle = g; ctx.fillRect(cx - 10, cy - 48, 60, 60);
+  },
+};
+
+function startCardScene(canvas, cardId, stateRef) {
+  const drawFn = CARD_SCENE_DRAW[cardId];
+  if (!drawFn) return;
+
+  let rafId;
+  let startTime = performance.now();
+
+  const resize = () => {
+    const p = canvas.parentElement;
+    if (p) { canvas.width = p.clientWidth; canvas.height = p.clientHeight; }
+  };
+  resize();
+
+  const loop = (now) => {
+    if (stateRef.current.isEntering) { rafId = requestAnimationFrame(loop); return; }
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawFn(ctx, canvas.width, canvas.height, (now - startTime) / 1000);
+    }
+    rafId = requestAnimationFrame(loop);
+  };
+  rafId = requestAnimationFrame(loop);
+
+  const ro = new ResizeObserver(resize);
+  ro.observe(canvas.parentElement);
+
+  canvas._sceneCleanup = () => { cancelAnimationFrame(rafId); ro.disconnect(); };
+}
+
+// ============================================================================
 // HOOK
 // ============================================================================
 
@@ -377,6 +506,14 @@ export default function useCarouselPhysics({ onActiveCardChange, onCardClick }) 
 
       card.append(overlay, inner);
 
+      // Scene canvas — procedural animation inside each card
+      const sceneCanvas = document.createElement('canvas');
+      sceneCanvas.className = 'carousel-card-scene';
+      sceneCanvas.setAttribute('data-card-scene', cardData.id);
+      sceneCanvas.setAttribute('aria-hidden', 'true');
+      card.appendChild(sceneCanvas);
+      startCardScene(sceneCanvas, cardData.id, stateRef);
+
       card.addEventListener('click', (e) => {
         e.stopPropagation();
         if (stateRef.current.isEntering) return;
@@ -466,6 +603,11 @@ export default function useCarouselPhysics({ onActiveCardChange, onCardClick }) 
     const s = stateRef.current;
     if (s.rafId) cancelAnimationFrame(s.rafId);
     if (s.bgRAF) cancelAnimationFrame(s.bgRAF);
+    // Cleanup card scene canvases
+    s.items.forEach((it) => {
+      const canvas = it.el?.querySelector('.carousel-card-scene');
+      if (canvas?._sceneCleanup) canvas._sceneCleanup();
+    });
   }, []);
 
   return {
