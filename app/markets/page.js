@@ -13,7 +13,7 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal, EmptyMarketState, UnifiedConnect, PortfolioCard } from "@/components";
+import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal, EmptyMarketState, UnifiedConnect, PortfolioCard, PricingOverlay } from "@/components";
 import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {
@@ -173,6 +173,11 @@ export default function MarketsPage() {
   const [selectedKalshiMarket, setSelectedKalshiMarket] = useState(null);
   const [selectedArbitrage, setSelectedArbitrage] = useState(null);
   const [orderSide, setOrderSide] = useState("YES");
+  const [showPricing, setShowPricing] = useState(false);
+  const [freeAnalysesUsed, setFreeAnalysesUsed] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    return parseInt(localStorage.getItem('fourcast_free_analyses') || '0', 10);
+  });
 
   // Load weather on mount
   useEffect(() => {
@@ -372,8 +377,34 @@ export default function MarketsPage() {
 
       if (data.success) {
         setAnalysis(data);
+        // Track free analysis usage
+        const used = parseInt(localStorage.getItem('fourcast_free_analyses') || '0', 10) + 1;
+        localStorage.setItem('fourcast_free_analyses', String(used));
+        setFreeAnalysesUsed(used);
+
+        // Show upsell toast after 2 free analyses
+        if (used === 2) {
+          addToast(
+            "Free analysis used 2/3. One more left — then upgrade for unlimited access.",
+            'info',
+            6000
+          );
+        }
+        if (used === 3) {
+          addToast(
+            "You've used all free analyses. Upgrade to Pro for unlimited AI analysis.",
+            'info',
+            8000
+          );
+        }
       } else {
-        setError(data.error || "Analysis failed");
+        // Check if rate limited (429)
+        if (response.status === 429) {
+          setShowPricing(true);
+          setError("You've used your free analyses. Upgrade to Pro for unlimited AI analysis.");
+        } else {
+          setError(data.error || "Analysis failed");
+        }
       }
     } catch (err) {
       console.error("Analysis failed:", err);
@@ -443,8 +474,28 @@ export default function MarketsPage() {
 
       if (data.success) {
         setAnalysis(data);
+        const used = parseInt(localStorage.getItem('fourcast_free_analyses') || '0', 10) + 1;
+        localStorage.setItem('fourcast_free_analyses', String(used));
+        setFreeAnalysesUsed(used);
+        if (used === 2) {
+          addToast(
+            "Free analysis used 2/3. One more left — then upgrade for unlimited access.",
+            'info', 6000
+          );
+        }
+        if (used === 3) {
+          addToast(
+            "You've used all free analyses. Upgrade to Pro for unlimited AI analysis.",
+            'info', 8000
+          );
+        }
       } else {
-        setError(data.error || "Analysis failed");
+        if (response.status === 429) {
+          setShowPricing(true);
+          setError("You've used your free analyses. Upgrade to Pro for unlimited AI analysis.");
+        } else {
+          setError(data.error || "Analysis failed");
+        }
       }
     } catch (err) {
       console.error("Analysis failed:", err);
@@ -774,6 +825,13 @@ export default function MarketsPage() {
           />
         )
       }
+
+      {/* Pricing Overlay */}
+      <PricingOverlay
+        isOpen={showPricing}
+        onClose={() => setShowPricing(false)}
+        isNight={isNight}
+      />
 
       {
         selectedKalshiMarket && (
