@@ -165,7 +165,7 @@ Sign off naturally.`;
           'Authorization': `Bearer ${featherlessKey}`,
         },
         body: JSON.stringify({
-          model: 'meta-llama/Llama-3.3-70B-Instruct',
+          model: '0xA50C1A1/Phi-4-mini-instruct-heretic',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage },
