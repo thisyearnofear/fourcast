@@ -2,25 +2,21 @@
  * Fourcast Bot — Conversational AI Prediction Agent
  *
  * Multi-turn conversation agent with per-user state.
- * Users can drill deeper into analyses with inline buttons.
- *
- * Commands:
- *   /start  — Welcome & introduction
- *   /edge   — Analyze a prediction market
- *   /alerts — Set up edge alerts (coming soon)
- *   /pro    — Upgrade to Pro
- *   (any text) — Treated as /edge query
- *   (callback buttons) — Follow-up actions on previous analysis
+ * Features: immediate feedback, per-user request queue, timeout handling.
  */
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN || ''}`;
 const APP_URL = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
+const ANALYSIS_TIMEOUT = 45000; // 45s max per analysis
+const PROGRESS_INTERVAL = 12000; // Update "still working..." every 12s
 
 // ============================================================================
-// Session Store — per-user conversation state
+// Session & Queue
 // ============================================================================
 
 const sessions = new Map();
+const pendingRequests = new Map(); // chatId → true (currently processing)
+const requestQueue = []; // [{chatId, query, userName, timestamp}]
 
 function getSession(chatId) {
   if (!sessions.has(chatId)) {
@@ -30,7 +26,7 @@ function getSession(chatId) {
 }
 
 // ============================================================================
-// Telegram API Helpers
+// Helpers
 // ============================================================================
 
 async function callTelegram(method, payload = {}) {
@@ -53,22 +49,14 @@ async function callTelegram(method, payload = {}) {
 
 async function sendMessage(chatId, text, extra = {}) {
   return callTelegram('sendMessage', {
-    chat_id: chatId,
-    text,
-    parse_mode: 'Markdown',
-    disable_web_page_preview: false,
-    ...extra,
+    chat_id: chatId, text, parse_mode: 'Markdown', disable_web_page_preview: false, ...extra,
   });
 }
 
 async function editMessage(chatId, messageId, text, extra = {}) {
   return callTelegram('editMessageText', {
-    chat_id: chatId,
-    message_id: messageId,
-    text,
-    parse_mode: 'Markdown',
-    disable_web_page_preview: false,
-    ...extra,
+    chat_id: chatId, message_id: messageId, text, parse_mode: 'Markdown',
+    disable_web_page_preview: false, ...extra,
   });
 }
 
@@ -77,173 +65,124 @@ async function sendTyping(chatId) {
 }
 
 async function answerCallback(queryId, text) {
-  return callTelegram('answerCallbackQuery', {
-    callback_query_id: queryId,
-    text,
-    show_alert: false,
-  });
+  return callTelegram('answerCallbackQuery', { callback_query_id: queryId, text, show_alert: false });
+}
+
+function queuePosition(chatId) {
+  return requestQueue.findIndex(r => r.chatId === chatId);
 }
 
 // ============================================================================
-// Keyboards
+// Thinking message — immediate feedback, edited with result
 // ============================================================================
 
-function mainMenuKeyboard() {
-  return {
-    inline_keyboard: [
-      [{ text: '🔮 Analyze Market', switch_inline_query_current_chat: '' },
-       { text: '📊 Open App', url: `${APP_URL}/markets` }],
-      [{ text: '⭐ Pro Features', url: `${APP_URL}/markets` },
-       { text: '💬 Feedback', url: 'https://t.me/papajams' }],
-    ],
-  };
+async function sendThinkingMessage(chatId, query) {
+  const loadingMessages = [
+    '🔮 *Gazing into the crystal ball...*',
+    '🔮 *Scanning prediction markets...*',
+    '🔮 *Consulting the ML models...*',
+    '🔮 *Cross-referencing odds...*',
+    '🔮 *Analyzing market data...*',
+  ];
+  const msg = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+  return sendMessage(chatId, msg);
 }
 
-function analysisFollowUpKeyboard(query) {
-  return {
-    inline_keyboard: [
-      [{ text: '1️⃣ Full Reasoning', callback_data: `reason:${query}` },
-       { text: '2️⃣ Compare Kalshi', callback_data: `kalshi:${query}` }],
-      [{ text: '3️⃣ Set Alert', callback_data: `alert:${query}` },
-       { text: '4️⃣ New Analysis', switch_inline_query_current_chat: '' }],
-    ],
-  };
-}
-
-function backToAnalysisKeyboard(query) {
-  return {
-    inline_keyboard: [
-      [{ text: '← Back to Analysis', callback_data: `back:${query}` }],
-    ],
-  };
+async function updateProgress(chatId, messageId, attempt = 1) {
+  const messages = [
+    '🔮 *Still analyzing... checking multiple data sources.*',
+    '🔮 *Crunching the numbers... almost there.*',
+    '🔮 *This one\'s taking a moment — good markets are worth the wait.*',
+  ];
+  const msg = messages[Math.min(attempt - 1, messages.length - 1)];
+  await editMessage(chatId, messageId, msg).catch(() => {});
 }
 
 // ============================================================================
-// Commands
+// Queue processor — processes one request at a time per user
 // ============================================================================
 
-async function handleStart(chatId, userName) {
-  const greeting = userName ? `Hey ${userName}! ` : '';
-  const msg = [
-    `🔮 *Fourcast* — AI Prediction Intelligence`,
-    ``,
-    `${greeting}I see edges in prediction markets that others miss. I scan 200+ ML models, live weather data, and market dynamics to find opportunities.`,
-    ``,
-    `*Try these:*`,
-    `• /edge \`Bitcoin $100k June\``,
-    `• /edge \`Lakers championship\``,
-    `• /edge \`will it rain tomorrow\``,
-    `• /alerts — Set up edge notifications`,
-    `• /pro — Unlimited analysis`,
-    ``,
-    `[Open App](${APP_URL}/markets)`,
-  ].join('\n');
-  return sendMessage(chatId, msg, { reply_markup: mainMenuKeyboard() });
-}
+async function processQueue() {
+  if (requestQueue.length === 0) return;
 
-async function handleCasualQuery(chatId, query) {
-  await sendTyping(chatId);
+  const entry = requestQueue[0];
+  if (pendingRequests.get(entry.chatId)) return; // Still processing
 
-  const systemPrompt = `You are Fourcast, an AI prediction intelligence bot.
-Your voice: confident, data-driven oracle/seer. You speak in short, warm messages.
-You help users discover edge opportunities in prediction markets (crypto, sports, politics, weather).
-End every response by inviting them to try a market: "Try asking me something like: Will Bitcoin hit $100k?"
+  requestQueue.shift();
+  pendingRequests.set(entry.chatId, true);
 
-Keep responses under 3 sentences unless they ask a specific question.
-Never mention that you're an AI or language model.
-Sign off naturally.`;
-
-  const userMessage = (query && query.trim().length > 0) ? query : 'introduce yourself';
-
-  const featherlessKey = process.env.FEATHERLESS_API_KEY;
-  const veniceKey = process.env.VENICE_API_KEY;
-
-  // Preferred: Featherless AI
-  if (featherlessKey) {
-    try {
-      const response = await fetch('https://api.featherless.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${featherlessKey}`,
-        },
-        body: JSON.stringify({
-          model: '0xA50C1A1/Phi-4-mini-instruct-heretic',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          max_tokens: 250,
-          temperature: 0.7,
-        }),
-      });
-
-      // Check for expired subscription
-      if (response.status === 401 || response.status === 403) {
-        const errData = await response.json().catch(() => ({}));
-        if (errData?.error?.code === 'upgrade_required' || errData?.error?.message?.includes('expired')) {
-          // Fall through to Venice or hardcoded fallback
-          console.warn('[Bot] Featherless subscription expired');
-        } else {
-          const data = await response.json().catch(() => ({}));
-          const reply = data?.choices?.[0]?.message?.content?.trim();
-          if (reply) return sendMessage(chatId, `🔮 ${reply}`);
-        }
-      } else if (response.ok) {
-        const data = await response.json();
-        const reply = data?.choices?.[0]?.message?.content?.trim();
-        if (reply) return sendMessage(chatId, `🔮 ${reply}`);
+  try {
+    // Update queue positions for remaining entries
+    for (const q of requestQueue) {
+      const pos = queuePosition(q.chatId);
+      if (pos >= 0) {
+        await sendMessage(q.chatId,
+          `⏳ *Your request is #${pos + 1} in queue.*\nProcessing previous analysis...`
+        ).catch(() => {});
       }
-    } catch (err) {
-      console.error('[Bot] Featherless AI failed:', err.message);
     }
-  }
 
-  // Fallback: Venice AI
-  if (veniceKey) {
-    try {
-      const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${veniceKey}`,
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          max_tokens: 250,
-          temperature: 0.7,
-        }),
-      });
-      const data = await response.json();
-      const reply = data?.choices?.[0]?.message?.content?.trim();
-      if (reply) return sendMessage(chatId, `🔮 ${reply}`);
-    } catch (err) {
-      console.error('[Bot] Venice AI failed:', err.message);
-    }
+    await executeAnalysis(entry.chatId, entry.query, entry.userName);
+  } finally {
+    pendingRequests.delete(entry.chatId);
+    // Process next in queue
+    setImmediate(processQueue);
   }
-
-  // Ultimate fallback
-  const fallback = `I'm your prediction intelligence agent. Try /edge to analyze a market, or just type something like "Will the Chiefs win?" and I'll check the odds for you.`;
-  return sendMessage(chatId, `🔮 ${fallback}`);
 }
 
-async function handleEdge(chatId, query, messageId = null) {
-  // Greeting/niceties — don't even try market analysis
-  const greetings = ['hi', 'hello', 'hey', 'gm', 'gn', 'good morning', 'good evening', 'sup', 'yo', 'g\'day', 'howdy'];
-  const isGreeting = greetings.includes(query.trim().toLowerCase());
-  if (isGreeting) {
+function enqueueRequest(chatId, query, userName) {
+  const existing = requestQueue.find(r => r.chatId === chatId);
+  if (existing) {
+    // Update existing entry instead of duplicating
+    existing.query = query;
+    existing.timestamp = Date.now();
+    return queuePosition(chatId) + 1;
+  }
+  requestQueue.push({ chatId, query, userName, timestamp: Date.now() });
+  return requestQueue.length; // New position
+}
+
+// ============================================================================
+// Core analysis execution
+// ============================================================================
+
+async function executeAnalysis(chatId, query, userName) {
+  // Check for greeting
+  const greetings = ['hi','hello','hey','gm','gn','good morning','good evening','sup','yo',"g'day",'howdy'];
+  if (greetings.includes(query.trim().toLowerCase()) || query.trim().length < 2) {
+    pendingRequests.delete(chatId);
     return handleCasualQuery(chatId, query);
   }
 
-  if (!query || query.trim().length < 2) {
-    return handleCasualQuery(chatId, query);
+  // Send immediate feedback
+  const thinkingMsg = await sendThinkingMessage(chatId, query);
+  const thinkingMsgId = thinkingMsg?.result?.message_id;
+  if (!thinkingMsgId) {
+    pendingRequests.delete(chatId);
+    return; // Could not send message
   }
 
   await sendTyping(chatId);
+
+  // Progress update timer
+  let progressAttempt = 0;
+  const progressTimer = setInterval(async () => {
+    progressAttempt++;
+    if (progressAttempt <= 3) {
+      await updateProgress(chatId, thinkingMsgId, progressAttempt);
+    }
+  }, PROGRESS_INTERVAL);
+
+  // Timeout
+  const timeout = setTimeout(() => {
+    clearInterval(progressTimer);
+    editMessage(chatId, thinkingMsgId, [
+      `🔮 *Analysis timed out.*`,
+      `The prediction data services are taking longer than expected.`,
+      `Try again in a moment, or check the app directly:`,
+      `[fourcastapp.vercel.app](${APP_URL})`,
+    ].join('\n')).catch(() => {});
+  }, ANALYSIS_TIMEOUT);
 
   try {
     const response = await fetch(`${APP_URL}/api/analyze`, {
@@ -260,30 +199,29 @@ async function handleEdge(chatId, query, messageId = null) {
       }),
     });
 
+    clearTimeout(timeout);
+    clearInterval(progressTimer);
+
     const data = await response.json();
 
-    // Save to session for follow-ups
     const session = getSession(chatId);
     session.lastQuery = query.trim();
     session.lastAnalysis = data;
     session.awaitingFollowUp = true;
 
     if (!data.success) {
-      // Don't use LLM for failed market lookups — be honest about no data
       const msg = [
         `🔮 *I couldn't find prediction market data for that.*`,
         ``,
-        `The Fourcast AI scans Polymarket and Kalshi for active markets. Try:`,
+        `Fourcast scans Polymarket and Kalshi for active markets. Try:`,
         `• \`/edge Bitcoin June 2026\``,
         `• \`/edge Chiefs Super Bowl\``,
         `• \`/edge Fed rate cut\``,
         `• \`/edge rain Miami tomorrow\``,
         ``,
-        `Or browse all markets at [fourcastapp.vercel.app/markets](${APP_URL}/markets)`,
+        `[Browse all markets →](${APP_URL}/markets)`,
       ].join('\n');
-      return messageId
-        ? editMessage(chatId, messageId, msg)
-        : sendMessage(chatId, msg);
+      return editMessage(chatId, thinkingMsgId, msg);
     }
 
     const analysis = data.analysis || data.assessment || {};
@@ -299,94 +237,169 @@ async function handleEdge(chatId, query, messageId = null) {
       ``,
       `${confEmoji} *Confidence:* ${confidence}`,
     ];
-
     if (probability) {
       const p = typeof probability === 'number' ? (probability * 100).toFixed(1) + '%' : probability;
       msg.push(`📊 *AI Probability:* ${p}`);
     }
     if (edge) msg.push(`⚡ *Edge:* +${typeof edge === 'number' ? edge.toFixed(1) : edge}%`);
-
     msg.push('');
     msg.push(`💡 *Signal:* ${reasoning.length > 200 ? reasoning.slice(0, 200) + '...' : reasoning}`);
-    msg.push('');
 
-    if (messageId) {
-      // If editing, keep it shorter
-      return editMessage(chatId, messageId, msg.join('\n'), {
-        reply_markup: analysisFollowUpKeyboard(query.trim()),
-      });
-    }
-
-    return sendMessage(chatId, msg.join('\n'), {
+    return editMessage(chatId, thinkingMsgId, msg.join('\n'), {
       reply_markup: analysisFollowUpKeyboard(query.trim()),
     });
   } catch (err) {
+    clearTimeout(timeout);
+    clearInterval(progressTimer);
     console.error('Edge analysis failed:', err);
-    const msg = [
+    return editMessage(chatId, thinkingMsgId, [
       `🔮 *The void is quiet right now.*`,
       `The analysis service is temporarily unavailable. Try again in a moment.`,
-    ].join('\n');
-    return messageId
-      ? editMessage(chatId, messageId, msg)
-      : sendMessage(chatId, msg);
+    ].join('\n'));
   }
 }
 
 // ============================================================================
-// Follow-up Actions (callback query handlers)
+// Keyboards
+// ============================================================================
+
+function analysisFollowUpKeyboard(query) {
+  return {
+    inline_keyboard: [
+      [{ text: '1️⃣ Full Reasoning', callback_data: `reason:${query}` },
+       { text: '2️⃣ Compare Kalshi', callback_data: `kalshi:${query}` }],
+      [{ text: '3️⃣ Set Alert', callback_data: `alert:${query}` },
+       { text: '4️⃣ New Analysis', switch_inline_query_current_chat: '' }],
+    ],
+  };
+}
+
+function backToAnalysisKeyboard(query) {
+  return { inline_keyboard: [
+    [{ text: '← Back to Analysis', callback_data: `back:${query}` }],
+  ]};
+}
+
+function mainMenuKeyboard() {
+  return { inline_keyboard: [
+    [{ text: '🔮 Analyze Market', switch_inline_query_current_chat: '' },
+     { text: '📊 Open App', url: `${APP_URL}/markets` }],
+    [{ text: '⭐ Pro Features', url: `${APP_URL}/markets` },
+     { text: '💬 Feedback', url: 'https://t.me/papajams' }],
+  ]};
+}
+
+// ============================================================================
+// Command Handlers
+// ============================================================================
+
+async function handleStart(chatId, userName) {
+  const greeting = userName ? `Hey ${userName}! ` : '';
+  const msg = [
+    `🔮 *Fourcast* — AI Prediction Intelligence`,
+    ``,
+    `${greeting}I see edges in prediction markets. Try:`,
+    `• \`/edge Bitcoin $100k June\``,
+    `• \`/edge Chiefs Super Bowl\``,
+    `• \`/edge will it rain tomorrow\``,
+    `• \`/alerts\` — Edge notifications`,
+    `• \`/pro\` — Unlimited analysis`,
+    ``,
+    `[Open App](${APP_URL}/markets)`,
+  ].join('\n');
+  return sendMessage(chatId, msg, { reply_markup: mainMenuKeyboard() });
+}
+
+async function handleCasualQuery(chatId, query) {
+  await sendTyping(chatId);
+
+  const systemPrompt = `You are Fourcast, an AI prediction intelligence bot.
+Your voice: confident, data-driven oracle/seer. Keep responses under 3 sentences.
+End by inviting them to try a market. Never mention you're an AI.`;
+
+  const userMessage = (query && query.trim().length > 0) ? query : 'introduce yourself';
+  const featherlessKey = process.env.FEATHERLESS_API_KEY;
+
+  if (featherlessKey) {
+    try {
+      const response = await fetch('https://api.featherless.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${featherlessKey}` },
+        body: JSON.stringify({
+          model: '0xA50C1A1/Phi-4-mini-instruct-heretic',
+          messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }],
+          max_tokens: 250, temperature: 0.7,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const reply = data?.choices?.[0]?.message?.content?.trim();
+        if (reply) return sendMessage(chatId, `🔮 ${reply}`);
+      }
+    } catch (err) { console.error('[Bot] Featherless AI failed:', err.message); }
+  }
+
+  return sendMessage(chatId, `🔮 I'm your prediction intelligence agent. Try /edge to analyze a market.`);
+}
+
+async function handleEdge(chatId, query, userName) {
+  // Greetings go to casual handler immediately
+  const greetings = ['hi','hello','hey','gm','gn','good morning','good evening','sup','yo',"g'day",'howdy'];
+  if (greetings.includes(query.trim().toLowerCase()) || query.trim().length < 2) {
+    return handleCasualQuery(chatId, query);
+  }
+
+  // Check if user already has a request in progress
+  if (pendingRequests.get(chatId)) {
+    const pos = enqueueRequest(chatId, query, userName);
+    return sendMessage(chatId,
+      `⏳ *Analysis in progress.* Your request for "${query.slice(0, 40)}" is #${pos} in queue.\n` +
+      `I'll notify you when it's ready.`
+    );
+  }
+
+  // Process directly
+  pendingRequests.set(chatId, true);
+  try {
+    await executeAnalysis(chatId, query, userName);
+  } finally {
+    pendingRequests.delete(chatId);
+    // Kick the queue
+    setImmediate(processQueue);
+  }
+}
+
+// ============================================================================
+// Follow-up Actions
 // ============================================================================
 
 async function handleFollowUpReasoning(chatId, messageId, query, data) {
-  const analysis = data?.analysis || data?.assessment || {};
-  const fullReasoning = analysis.reasoning || data?.reasoning || analysis.summary || 'No detailed reasoning available.';
-
   await sendTyping(chatId);
-
+  const analysis = data?.analysis || data?.assessment || {};
+  const reasoning = analysis.reasoning || data?.reasoning || analysis.summary || 'No detailed reasoning.';
   const msg = [
-    `🔮 *Full Reasoning: ${query}*`,
-    ``,
-    fullReasoning.length > 1500 ? fullReasoning.slice(0, 1500) + '...' : fullReasoning,
-    ``,
+    `🔮 *Full Reasoning: ${query}*`, ``,
+    reasoning.length > 1500 ? reasoning.slice(0, 1500) + '...' : reasoning, ``,
     `← Reply to go back.`,
   ].join('\n');
-
-  return sendMessage(chatId, msg, {
-    reply_markup: backToAnalysisKeyboard(query),
-  });
+  return sendMessage(chatId, msg, { reply_markup: backToAnalysisKeyboard(query) });
 }
 
 async function handleFollowUpKalshi(chatId, messageId, query) {
   await sendTyping(chatId);
-
   try {
     const response = await fetch(`${APP_URL}/api/analyze`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Fourcast-Auth': process.env.BOT_API_SECRET || '',
-      },
-      body: JSON.stringify({
-        eventType: query.trim(),
-        title: query.trim(),
-        location: '',
-        mode: 'deep',
-      }),
+      headers: { 'Content-Type': 'application/json', 'X-Fourcast-Auth': process.env.BOT_API_SECRET || '' },
+      body: JSON.stringify({ eventType: query.trim(), title: query.trim(), location: '', mode: 'deep' }),
     });
     const data = await response.json();
-
-    // Also fetch current Polymarket odds via the arbitrage endpoint
     const arbResponse = await fetch(`${APP_URL}/api/defi/arbitrage?limit=5&minSpread=1&minVolume=10000`);
     const arbData = await arbResponse.json();
-
     const matches = arbData?.opportunities?.filter(o =>
       o.market_title?.toLowerCase().includes(query.trim().toLowerCase().slice(0, 20))
     ) || [];
-
-    let msg = [
-      `🔮 *Cross-Platform Comparison: ${query}*`,
-      ``,
-    ];
-
+    let msg = [`🔮 *Cross-Platform Comparison: ${query}*`, ``];
     if (matches.length > 0) {
       matches.slice(0, 2).forEach(m => {
         msg.push(`📊 *${m.market_title}*`);
@@ -397,43 +410,26 @@ async function handleFollowUpKalshi(chatId, messageId, query) {
       });
     } else {
       msg.push(`No cross-platform data available for this query.`);
-      msg.push(`The arbitrage scanner checks Polymarket vs Kalshi for matching events.`);
       msg.push('');
     }
-
     msg.push(`← Reply to go back.`);
-
-    return sendMessage(chatId, msg.join('\n'), {
-      reply_markup: backToAnalysisKeyboard(query),
-    });
+    return sendMessage(chatId, msg.join('\n'), { reply_markup: backToAnalysisKeyboard(query) });
   } catch (err) {
-    return sendMessage(chatId, [
-      `🔮 Cross-platform comparison unavailable.`,
-      `Try the full app: [markets](${APP_URL}/markets)`,
-    ].join('\n'));
+    return sendMessage(chatId, `🔮 Cross-platform comparison unavailable.\n[Markets](${APP_URL}/markets)`);
   }
 }
 
 async function handleFollowUpAlert(chatId, query) {
-  const msg = [
-    `🔮 *Edge Alerts*`,
-    ``,
-    `I'll notify you when I detect edges above your threshold for "${query}".`,
-    ``,
-    `*Coming soon:*`,
-    `• Set a minimum edge % (e.g., 5%)`,
-    `• Get push notifications`,
-    `• Filter by category`,
-    ``,
-    `For now, use /edge to manually check this market.`,
-  ].join('\n');
-  return sendMessage(chatId, msg, {
-    reply_markup: backToAnalysisKeyboard(query),
-  });
+  return sendMessage(chatId, [
+    `🔮 *Edge Alerts*`, ``,
+    `I'll notify you when I detect edges for "${query}".`,
+    `*Coming soon:* Set minimum edge %, get push notifications.`,
+    `For now, use /edge to check manually.`,
+  ].join('\n'), { reply_markup: backToAnalysisKeyboard(query) });
 }
 
 // ============================================================================
-// Callback Query Handler — inline button presses
+// Callback Query Handler
 // ============================================================================
 
 async function handleCallbackQuery(callbackQuery) {
@@ -441,8 +437,6 @@ async function handleCallbackQuery(callbackQuery) {
   const chatId = message.chat.id;
   const messageId = message.message_id;
   const session = getSession(chatId);
-
-  // Split callback data: action:query
   const colonIdx = data.indexOf(':');
   const action = colonIdx > 0 ? data.slice(0, colonIdx) : data;
   const query = colonIdx > 0 ? data.slice(colonIdx + 1) : '';
@@ -453,22 +447,17 @@ async function handleCallbackQuery(callbackQuery) {
     case 'reason':
       await answerCallback(id, 'Loading full reasoning...');
       return handleFollowUpReasoning(chatId, messageId, query, session.lastAnalysis);
-
     case 'kalshi':
       await answerCallback(id, 'Comparing platforms...');
       return handleFollowUpKalshi(chatId, messageId, query);
-
     case 'alert':
       await answerCallback(id, 'Setting up...');
       return handleFollowUpAlert(chatId, query);
-
     case 'back':
       await answerCallback(id, 'Going back...');
-      return handleEdge(chatId, query, messageId);
-
+      return handleEdge(chatId, query, '');
     default:
       await answerCallback(id, 'Unknown action');
-      return;
   }
 }
 
@@ -477,10 +466,7 @@ async function handleCallbackQuery(callbackQuery) {
 // ============================================================================
 
 export async function handleTelegramUpdate(update) {
-  // Handle callback queries (inline button presses)
-  if (update.callback_query) {
-    return handleCallbackQuery(update.callback_query);
-  }
+  if (update.callback_query) return handleCallbackQuery(update.callback_query);
 
   const message = update.message || update.edited_message;
   if (!message?.text) return { ok: true };
@@ -500,27 +486,22 @@ export async function handleTelegramUpdate(update) {
     case '/start':
       return handleStart(chatId, userName);
     case '/edge':
-      return handleEdge(chatId, args);
+      return handleEdge(chatId, args, userName);
     case '/alerts':
       return handleFollowUpAlert(chatId, args || 'all markets');
     case '/pro':
     case '/subscribe':
       return sendMessage(chatId, [
         `🔮 *Fourcast Pro*`,
-        ``,
-        `✅ Unlimited analyses — no daily cap`,
-        `✅ Deep mode — advanced reasoning models`,
-        `✅ Weather data — real-time sports/event conditions`,
-        `✅ Web search — up-to-date context`,
-        `✅ Arbitrage detection — cross-platform gaps`,
-        ``,
+        `✅ Unlimited analyses · ✅ Deep mode · ✅ Weather data`,
+        `✅ Web search · ✅ Arbitrage detection`,
         `*Pro:* $9.99/mo · *Premium:* $19.99/mo`,
-        `[Upgrade in the app →](${APP_URL}/markets)`,
+        `[Upgrade →](${APP_URL}/markets)`,
       ].join('\n'));
     default:
       if (text.startsWith('/')) {
         return sendMessage(chatId, `🔮 I don't know that command. Try /start`);
       }
-      return handleEdge(chatId, text);
+      return handleEdge(chatId, text, userName);
   }
 }
