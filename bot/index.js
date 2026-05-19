@@ -3,7 +3,7 @@
  *
  * Runs as a persistent process using pm2.
  * Polls Telegram for updates instead of using webhooks.
- * Uses the same command handlers from services/telegramBot.js.
+ * Uses dynamic import to ensure .env loads before module-level code.
  *
  * Resource usage: ~30MB RAM, <50MB disk
  *
@@ -16,9 +16,14 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-// Load .env file manually (pm2 doesn't auto-load .env)
+// ---------------------------------------------------------------------------
+// 1. Load .env FIRST — before any imports that depend on process.env
+//    (ESM hoists static imports, so we use dynamic import() to control order)
+// ---------------------------------------------------------------------------
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPath = resolve(__dirname, '../.env');
+
 try {
   const envContent = readFileSync(envPath, 'utf-8');
   for (const line of envContent.split('\n')) {
@@ -28,20 +33,31 @@ try {
     if (eqIdx === -1) continue;
     const key = trimmed.slice(0, eqIdx).trim();
     const val = trimmed.slice(eqIdx + 1).trim();
-    if (!process.env[key]) process.env[key] = val;
+    process.env[key] = val;
   }
   console.log(`[Bot] Loaded env from ${envPath}`);
 } catch (err) {
   console.warn(`[Bot] No .env file at ${envPath}, using system env vars`);
 }
 
-import { handleTelegramUpdate } from '../services/telegramBot.js';
+console.log(`[Bot] TELEGRAM_BOT_TOKEN set: ${!!process.env.TELEGRAM_BOT_TOKEN}`);
+console.log(`[Bot] NEXT_PUBLIC_HOST: ${process.env.NEXT_PUBLIC_HOST}`);
+
+// ---------------------------------------------------------------------------
+// 2. Dynamic import of the service (runs AFTER env is loaded)
+// ---------------------------------------------------------------------------
+
+const { handleTelegramUpdate } = await import('../services/telegramBot.js');
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN || ''}`;
-const POLL_TIMEOUT = 30; // seconds — Telegram will hold the connection
+const POLL_TIMEOUT = 30;
 
 let offset = 0;
 let isRunning = true;
+
+// ---------------------------------------------------------------------------
+// 3. Polling
+// ---------------------------------------------------------------------------
 
 async function getUpdates() {
   try {
@@ -51,19 +67,27 @@ async function getUpdates() {
       body: JSON.stringify({
         offset,
         timeout: POLL_TIMEOUT,
-        allowed_updates: ['message', 'edited_message'],
+        allowed_updates: ['message', 'edited_message', 'callback_query'],
       }),
       signal: AbortSignal.timeout((POLL_TIMEOUT + 5) * 1000),
     });
-    const data = await res.json();
-    if (!data.ok) {
-      console.error('[Bot] Telegram API error:', data);
-      return [];
+
+    if (res.status === 200) {
+      const data = await res.json();
+      return data.result || [];
     }
-    return data.result || [];
+
+    // Non-200 — try to parse error, but don't crash
+    try {
+      const errData = await res.json();
+      console.error(`[Bot] getUpdates error (${res.status}):`, JSON.stringify(errData).slice(0, 200));
+    } catch {
+      console.error(`[Bot] getUpdates HTTP ${res.status}`);
+    }
+    return [];
   } catch (err) {
     if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-      return []; // Normal timeout — no updates
+      return []; // Normal long-poll timeout
     }
     console.error('[Bot] Poll error:', err.message);
     return [];
@@ -72,7 +96,6 @@ async function getUpdates() {
 
 async function pollLoop() {
   console.log('[Bot] Fourcast bot started — polling for updates...');
-  console.log(`[Bot] Server: ${process.env.NEXT_PUBLIC_HOST || 'http://localhost:3000'}`);
 
   while (isRunning) {
     try {
@@ -88,12 +111,10 @@ async function pollLoop() {
           console.error(`[Bot] Handler error for update ${updateId}:`, err.message);
         }
 
-        // Mark as processed
         offset = updateId + 1;
       }
     } catch (err) {
       console.error('[Bot] Poll loop error:', err.message);
-      // Wait before retrying on unexpected errors
       await new Promise(r => setTimeout(r, 5000));
     }
   }

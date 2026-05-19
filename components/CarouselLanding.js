@@ -323,6 +323,9 @@ export default function CarouselLanding() {
             <div className="carousel-welcome-note">
               <span>💡 Quick start: just need a wallet + Venice AI key</span>
             </div>
+            <div className="carousel-welcome-note" style={{ marginTop: 0, borderColor: 'rgba(168,85,247,0.2)' }}>
+              <span>💬 Or try <strong>@fourcasterbot</strong> on Telegram — no setup needed</span>
+            </div>
             <button
               className="carousel-welcome-cta"
               onClick={() => {
