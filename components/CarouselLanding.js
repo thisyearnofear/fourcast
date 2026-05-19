@@ -231,6 +231,8 @@ export default function CarouselLanding() {
               className="carousel-welcome-cta"
               onClick={() => {
                 setShowWelcome(false);
+                setShowGestureHint(true);
+                setTimeout(() => setShowGestureHint(false), 4000);
                 try { localStorage.setItem('fourcast_visited', 'true'); } catch {}
               }}
             >
