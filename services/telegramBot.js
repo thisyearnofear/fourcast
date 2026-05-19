@@ -1,96 +1,138 @@
 /**
- * Telegram Bot — Edge Detection via Messaging
+ * Fourcast Bot — AI Prediction Intelligence via Telegram
+ *
+ * Personality: Oracle / Seer character. Speaks in confident, data-driven tones.
+ * Signature: 🔮 crystal ball — "I see an edge..."
  *
  * Commands:
- *   /start — Welcome & instructions
- *   /edge <query> — AI analysis of a prediction market
+ *   /start  — Welcome & introduction
+ *   /edge   — Analyze a prediction market
+ *   /alerts — Set up price edge alerts (coming soon)
+ *   /pro    — Upgrade to Pro for unlimited analysis
  *
- * Architecture:
- *   Telegram → Webhook POST → /api/bot/telegram → reply via Telegram API
- *
- * Setup:
- *   1. Create bot via @BotFather on Telegram, get token
- *   2. Set TELEGRAM_BOT_TOKEN in .env.local
- *   3. Set webhook: curl "https://api.telegram.org/bot<token>/setWebhook?url=https://fourcast.vercel.app/api/bot/telegram"
+ * Architecture: Webhook-based. Telegram POSTs → /api/bot/telegram → reply via API.
  */
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN || ''}`;
+const BOT_USERNAME = 'fourcasterbot';
+const APP_URL = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
 
 // ============================================================================
 // Telegram API helpers
 // ============================================================================
 
-async function sendMessage(chatId, text, parseMode = 'Markdown') {
+async function callTelegram(method, payload = {}) {
   if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set' };
-
   try {
-    const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
+    const res = await fetch(`${TELEGRAM_API}/${method}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: parseMode,
-        disable_web_page_preview: false,
-      }),
+      body: JSON.stringify(payload),
     });
     return await res.json();
   } catch (err) {
-    console.error('Telegram sendMessage failed:', err);
+    console.error(`Telegram ${method} failed:`, err);
     return { ok: false, error: err.message };
   }
 }
 
+async function sendMessage(chatId, text, extra = {}) {
+  return callTelegram('sendMessage', {
+    chat_id: chatId,
+    text,
+    parse_mode: 'Markdown',
+    disable_web_page_preview: false,
+    ...extra,
+  });
+}
+
 async function sendTyping(chatId) {
-  try {
-    await fetch(`${TELEGRAM_API}/sendChatAction`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, action: 'typing' }),
-    });
-  } catch {}
+  return callTelegram('sendChatAction', { chat_id: chatId, action: 'typing' });
 }
 
 // ============================================================================
-// Command handlers
+// Inline Keyboards
 // ============================================================================
 
-async function handleStart(chatId) {
-  const msg = `🔮 *Fourcast Bot*
+function mainMenuKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🔮 Analyze Market', switch_inline_query_current_chat: '' },
+        { text: '📊 Open App', url: `${APP_URL}/markets` },
+      ],
+      [
+        { text: '⭐ Pro Features', url: `${APP_URL}/markets` },
+        { text: '💬 Feedback', url: 'https://t.me/papajams' },
+      ],
+    ],
+  };
+}
 
-AI-powered prediction market intelligence, now in your pocket.
+function marketResultKeyboard(marketUrl) {
+  return {
+    inline_keyboard: [
+      [
+        { text: '📈 Full Analysis', url: marketUrl || `${APP_URL}/markets` },
+        { text: '🔍 Another Market', switch_inline_query_current_chat: '' },
+      ],
+    ],
+  };
+}
 
-*Commands:*
-• /edge \`<query>\` — Analyze a prediction market
-  Examples:
-  /edge BTC
-  /edge will trump win 2026
-  /edge lakers vs celtics
-  /edge rain in Miami tomorrow
+// ============================================================================
+// Command Handlers
+// ============================================================================
 
-*Setup:* Connect your wallet at fourcast.vercel.app to publish predictions and track your record.
+async function handleStart(chatId, userName) {
+  const greeting = userName ? `Hey ${userName}! ` : '';
 
-*Pro:* Unlimited analyses, deep AI mode, cross-platform arbitrage — /subscribe
+  const msg = [
+    `🔮 *Fourcast* — AI Prediction Intelligence`,
+    ``,
+    `${greeting}I see edges in prediction markets that others miss. I scan 200+ ML models, live weather data, and market dynamics to find opportunities.`,
+    ``,
+    `*What I can do:*`,
+    `📊 Analyze any prediction market with AI`,
+    `🌤️ Factor in weather for sports & events`,
+    `⚡ Detect mispriced odds across platforms`,
+    `⛓️ Publish predictions on-chain (Arc/Circle USDC)`,
+    ``,
+    `*Try these:*`,
+    `• /edge \`Bitcoin $100k June\``,
+    `• /edge \`Lakers championship\``,
+    `• /edge \`Trump 2028\``,
+    `• /edge \`rain in Miami tomorrow\``,
+    ``,
+    `[Open Full App](${APP_URL}/markets) · [Pro Features](${APP_URL}/markets)`,
+  ].join('\n');
 
-Built with Circle USDC on Arc.`;
-  return sendMessage(chatId, msg);
+  return sendMessage(chatId, msg, {
+    reply_markup: mainMenuKeyboard(),
+  });
 }
 
 async function handleEdge(chatId, query) {
   if (!query || query.trim().length < 2) {
-    return sendMessage(chatId, `⚠️ Please provide a market to analyze.
+    const msg = [
+      `🔮 *I need a market to analyze.*`,
+      ``,
+      `Tell me what you want me to look into. Examples:`,
+      `• /edge \`Bitcoin $100k\``,
+      `• /edge \`Lakers vs Celtics\``,
+      `• /edge \`will it rain in London tomorrow\``,
+      `• /edge \`Fed interest rate 2026\``,
+      ``,
+      `Or just type what you're curious about — I'll figure it out.`,
+    ].join('\n');
 
-Examples:
-• /edge BTC
-• /edge will trump win
-• /edge lakers vs celtics`);
+    return sendMessage(chatId, msg);
   }
 
-  // Show typing indicator while we process
   await sendTyping(chatId);
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_HOST || 'http://localhost:3000'}/api/analyze`, {
+    const response = await fetch(`${APP_URL}/api/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -104,38 +146,102 @@ Examples:
     const data = await response.json();
 
     if (!data.success) {
-      // If the AI engine fails, give a friendly response
-      const fallbackMsg = `🔍 *Analysis: ${query.trim()}*
-
-I couldn't find a direct market match. Try being more specific:
-• /edge Bitcoin price June 2026
-• /edge will Trump win 2028 election
-• /edge Lakers championship 2026
-
-Or browse markets at fourcast.vercel.app/markets`;
+      const fallbackMsg = [
+        `🔮 *I couldn't find a direct market match for "${query.trim()}"*`,
+        ``,
+        `Try being more specific:`,
+        `• /edge \`Bitcoin price June 2026\``,
+        `• /edge \`Will the Chiefs win Super Bowl\``,
+        `• /edge \`US unemployment rate\``,
+        ``,
+        `You can also browse all markets at the app:`,
+        `[fourcastapp.vercel.app/markets](${APP_URL}/markets)`,
+      ].join('\n');
       return sendMessage(chatId, fallbackMsg);
     }
 
     const analysis = data.analysis || data.assessment || {};
     const confidence = analysis.confidence || data.confidence || 'MEDIUM';
     const reasoning = analysis.reasoning || data.reasoning || analysis.summary || '';
-    const probability = analysis.probability || data.aiProbability || '';
+    const probability = analysis.probability || data.aiProbability || analysis.aiProbability || '';
     const edge = data.edge || analysis.edge || '';
+    const marketUrl = data.marketUrl || `${APP_URL}/markets`;
 
-    const confidenceEmoji = confidence === 'HIGH' ? '🟢' : confidence === 'MEDIUM' ? '🟡' : '🔴';
+    const confEmoji = confidence === 'HIGH' ? '🟢' : confidence === 'MEDIUM' ? '🟡' : '🔴';
 
-    let msg = `🔮 *AI Analysis: ${query.trim()}*\n\n`;
-    msg += `${confidenceEmoji} Confidence: *${confidence}*\n`;
-    if (probability) msg += `📊 AI Probability: *${probability}*\n`;
-    if (edge) msg += `⚡ Edge: *+${edge}%*\n\n`;
-    if (reasoning) msg += `💡 *Reasoning:*\n${reasoning.slice(0, 600)}\n\n`;
-    msg += `\n📈 View full analysis: fourcast.vercel.app/markets`;
+    let msg = [
+      `🔮 *I see an edge on: ${query.trim()}*`,
+      ``,
+      `${confEmoji} *Confidence:* ${confidence}`,
+    ];
 
-    return sendMessage(chatId, msg);
+    if (probability) msg.push(`📊 *AI Probability:* ${typeof probability === 'number' ? (probability * 100).toFixed(1) + '%' : probability}`);
+    if (edge) msg.push(`⚡ *Edge:* +${typeof edge === 'number' ? edge.toFixed(1) : edge}%`);
+
+    msg.push('');
+
+    if (reasoning) {
+      const shortReasoning = reasoning.length > 500 ? reasoning.slice(0, 500) + '...' : reasoning;
+      msg.push(`💡 *Signal:*`);
+      msg.push(`${shortReasoning}`);
+      msg.push('');
+    }
+
+    msg.push(`📈 [View full analysis →](${marketUrl})`);
+
+    return sendMessage(chatId, msg.join('\n'), {
+      reply_markup: marketResultKeyboard(marketUrl),
+    });
   } catch (err) {
     console.error('Edge analysis failed:', err);
-    return sendMessage(chatId, `❌ Analysis failed. The market data service is temporarily unavailable. Try again later.`);
+    return sendMessage(chatId, [
+      `🔮 *The void is quiet right now.*`,
+      ``,
+      `I couldn't complete that analysis. The prediction data services may be temporarily unavailable.`,
+      `Try again in a few moments, or check the app directly:`,
+      `[fourcastapp.vercel.app](${APP_URL})`,
+    ].join('\n'));
   }
+}
+
+async function handleAlerts(chatId, args) {
+  const msg = [
+    `🔮 *Edge Alerts — Coming Soon*`,
+    ``,
+    `I'll notify you when I detect profitable edges above your threshold.`,
+    ``,
+    `*Planned features:*`,
+    `• Set a minimum edge % (e.g., \`/alerts 5\` for >5% edges)`,
+    `• Choose categories (crypto, sports, politics)`,
+    `• Get push notifications when opportunities arise`,
+    ``,
+    `For now, use /edge to manually check specific markets.`,
+  ].join('\n');
+
+  return sendMessage(chatId, msg);
+}
+
+async function handlePro(chatId) {
+  const msg = [
+    `🔮 *Fourcast Pro*`,
+    ``,
+    `Unlock unlimited AI-powered prediction analysis:`,
+    ``,
+    `✅ *Unlimited analyses* — no daily cap`,
+    `✅ *Deep mode* — Qwen3-235B model for thorough reasoning`,
+    `✅ *Weather data* — real-time conditions for sports/events`,
+    `✅ *Web search* — up-to-date context for every prediction`,
+    `✅ *Arbitrage detection* — cross-platform price gaps`,
+    ``,
+    `*Pro:* $9.99/month`,
+    `*Premium:* $19.99/month (adds API access, Kelly sizing)`,
+    ``,
+    `🔗 [Upgrade in the app →](${APP_URL}/markets)`,
+    ``,
+    `*Already subscribed?* Connect your wallet in the app to activate.`,
+  ].join('\n');
+
+  return sendMessage(chatId, msg);
 }
 
 // ============================================================================
@@ -149,8 +255,9 @@ export async function handleTelegramUpdate(update) {
   const chatId = message.chat.id;
   const text = message.text.trim();
   const userId = message.from?.id;
+  const userName = message.from?.first_name || message.from?.username || '';
 
-  console.log(`[Telegram Bot] Message from ${userId}: ${text.slice(0, 100)}`);
+  console.log(`[Fourcast Bot] ${userName} (${userId}): ${text.slice(0, 100)}`);
 
   // Parse command and arguments
   const parts = text.split(/\s+/);
@@ -159,13 +266,23 @@ export async function handleTelegramUpdate(update) {
 
   switch (command) {
     case '/start':
-      return handleStart(chatId);
+      return handleStart(chatId, userName);
 
     case '/edge':
       return handleEdge(chatId, args);
 
+    case '/alerts':
+      return handleAlerts(chatId, args);
+
+    case '/pro':
+    case '/subscribe':
+      return handlePro(chatId);
+
     default:
-      // Treat unknown messages as /edge queries
+      // Treat unknown messages as casual edge queries
+      if (text.startsWith('/')) {
+        return sendMessage(chatId, `🔮 I don't recognize that command. Try /start to see what I can do.`);
+      }
       return handleEdge(chatId, text);
   }
 }
