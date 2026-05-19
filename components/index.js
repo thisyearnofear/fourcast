@@ -16,3 +16,5 @@ export { default as KalshiOrderPanel } from './KalshiOrderPanel';
 export { default as AnalysisOptions, useAnalysisOptions } from './AnalysisOptions';
 export { default as AnalysisConfigModal } from './AnalysisConfigModal';
 export { default as EmptyMarketState } from './EmptyMarketState';
+export { default as UnifiedConnect } from './UnifiedConnect';
+export { default as PortfolioCard } from './PortfolioCard';

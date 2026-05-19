@@ -1,0 +1,104 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function PortfolioCard({ isNight = false }) {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    let mounted = true;
+    fetch('/api/agent/track-record')
+      .then(r => r.json())
+      .then(data => {
+        if (!mounted) return;
+        if (data.success && data.stats) {
+          setStats(data.stats);
+        } else {
+          setStats(null);
+        }
+      })
+      .catch(() => { if (mounted) setStats(null); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
+  }, []);
+
+  // Don't render if no data and not loading
+  if (!loading && !stats) return null;
+
+  const textColor = isNight ? 'text-white' : 'text-black';
+  const mutedColor = isNight ? 'text-white/50' : 'text-black/50';
+  const cardBg = isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10';
+  const glassClass = isNight ? 'glass-subtle' : 'glass-subtle-light';
+
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className={`rounded-2xl border ${cardBg} p-4 mb-4 animate-pulse`}>
+        <div className="flex items-center gap-4">
+          {[0, 1, 2].map(i => (
+            <div key={i} className={`h-10 w-20 rounded-lg ${isNight ? 'bg-white/10' : 'bg-black/10'}`} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const totalForecasts = stats?.totalForecasts || stats?.totalPredictions || 0;
+  const winRate = stats?.winRate || 0;
+  const winRateDisplay = typeof winRate === 'number'
+    ? `${(winRate * 100).toFixed(0)}%`
+    : '—';
+
+  return (
+    <div className={`rounded-2xl border ${cardBg} ${glassClass} p-4 mb-4 transition-all`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-6 flex-wrap">
+          {/* Signals */}
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📡</span>
+            <div>
+              <div className={`text-xs ${mutedColor}`}>Signals</div>
+              <div className={`text-lg font-semibold ${textColor}`}>{totalForecasts}</div>
+            </div>
+          </div>
+
+          {/* Win Rate */}
+          {winRate > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🎯</span>
+              <div>
+                <div className={`text-xs ${mutedColor}`}>Win Rate</div>
+                <div className={`text-lg font-semibold ${textColor}`}>{winRateDisplay}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Brier Score */}
+          {stats?.brierScore !== undefined && (
+            <div className="flex items-center gap-2">
+              <span className="text-lg">📊</span>
+              <div>
+                <div className={`text-xs ${mutedColor}`}>Brier</div>
+                <div className={`text-lg font-semibold ${textColor}`}>{stats.brierScore.toFixed(3)}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => router.push('/signals')}
+          className={`text-xs font-medium px-3 py-1.5 rounded-full transition-all whitespace-nowrap
+            ${isNight
+              ? 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
+              : 'bg-black/10 hover:bg-black/20 text-black/70 hover:text-black'
+            }`}
+        >
+          Full stats →
+        </button>
+      </div>
+    </div>
+  );
+}

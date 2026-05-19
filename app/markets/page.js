@@ -13,7 +13,7 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal, EmptyMarketState } from "@/components";
+import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal, EmptyMarketState, UnifiedConnect, PortfolioCard } from "@/components";
 import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {
@@ -682,15 +682,11 @@ export default function MarketsPage() {
             {/* Synth ML Showcase */}
             <SynthShowcase isNight={isNight} />
 
-            {/* Signal Chain Indicator (Aptos/Movement) */}
-            {(chains.aptos.connected || chains.movement.connected) && (
-              <ActiveChainIndicator variant="badge" isNight={isNight} />
-            )}
+            {/* Portfolio Card — track record overview */}
+            <PortfolioCard isNight={isNight} />
 
-            {/* EVM Network Selector (Trading chains) */}
-            {chains.evm.connected && (
-              <ChainSelector compact={true} isNight={isNight} />
-            )}
+            {/* Unified chain connection */}
+            <UnifiedConnect isNight={isNight} variant="header" />
           </div>
 
           {/* Sports Tab Content */}
