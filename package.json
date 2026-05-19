@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint -c .eslintrc.json . --ext .js,.jsx,.ts,.tsx",
     "lint:next": "next lint",
@@ -57,7 +57,9 @@
     "three": "^0.179.1",
     "viem": "^2.41.2",
     "wagmi": "^2.19.4",
-    "zustand": "5.0.9"
+    "zustand": "5.0.9",
+    "ws": "^7.5.10",
+    "gsap": "^3.12.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",

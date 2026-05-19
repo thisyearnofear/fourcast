@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Scene3D from '@/components/Scene3D';
 import LocationSelector from '@/components/LocationSelector';
 import WalletConnect from '@/app/components/WalletConnect';
@@ -8,6 +9,7 @@ import { weatherService } from '@/services/weatherService';
 import { WinCelebration } from '@/components/WinCelebration';
 
 export default function WeatherPage() {
+  const router = useRouter();
   const [weatherData, setWeatherData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -355,7 +357,7 @@ export default function WeatherPage() {
               }`}>
               <div className="flex items-center space-x-1 sm:space-x-6">
                 <button
-                  onClick={() => window.location.href = '/markets'}
+                  onClick={() => router.push('/markets')}
                   className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full transition-all hover:scale-105 ${isNight
                       ? 'text-white hover:bg-white/15'
                       : 'text-black hover:bg-black/10'
@@ -374,7 +376,7 @@ export default function WeatherPage() {
                 <div className={`w-px h-6 sm:h-8 ${isNight ? 'bg-white/15' : 'bg-black/15'}`}></div>
 
                 <button
-                  onClick={() => window.location.href = '/signals'}
+                  onClick={() => router.push('/signals')}
                   className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full transition-all hover:scale-105 ${isNight
                       ? 'text-white hover:bg-white/15'
                       : 'text-black hover:bg-black/10'

@@ -282,3 +282,587 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ==========================================================================
+   Carousel Landing — 3D Interactive Card Carousel
+   ========================================================================== */
+
+/* Stage */
+.carousel-stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: #0a0a0f;
+  overflow: hidden;
+  perspective: 1800px;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+}
+.carousel-stage.dragging {
+  cursor: grabbing;
+}
+
+/* Background canvas (moving gradient) */
+#carousel-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: blur(40px) saturate(1.1);
+  pointer-events: none;
+}
+
+/* Loader */
+.carousel-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: #0a0a0f;
+  transition: opacity 0.3s ease, visibility 0.3s linear;
+}
+.carousel-loader.loader--hide {
+  opacity: 0;
+  visibility: hidden;
+}
+.carousel-loader-content {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+.carousel-loader-ring {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: rgba(168,85,247,0.8);
+  animation: carousel-spin 1s linear infinite;
+}
+.carousel-loader-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+}
+@keyframes carousel-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Cards container */
+.carousel-cards {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  transform-style: preserve-3d;
+}
+
+/* Individual card */
+.carousel-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(26vw, 360px);
+  aspect-ratio: 4/5;
+  isolation: isolate;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, filter;
+  transform-origin: 50% 100%;
+  contain: layout paint;
+  border-radius: 16px;
+  cursor: pointer;
+  overflow: hidden;
+}
+@media (max-width: 768px) {
+  .carousel-card {
+    width: min(60vw, 280px);
+  }
+}
+
+/* Card gradient overlay background */
+.carousel-card-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  z-index: 0;
+}
+
+/* Card inner content */
+.carousel-card-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1;
+  text-align: center;
+  background: rgba(10, 10, 15, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: background 0.3s ease;
+}
+.carousel-card:hover .carousel-card-inner {
+  background: rgba(10, 10, 15, 0.45);
+}
+
+/* Card icon */
+.carousel-card-icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 20px rgba(255,255,255,0.15));
+}
+@media (max-width: 768px) {
+  .carousel-card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+  }
+}
+
+/* Card badge */
+.carousel-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 16px;
+}
+@media (max-width: 768px) {
+  .carousel-card-badge {
+    font-size: 9px;
+    padding: 2px 8px;
+    margin-bottom: 10px;
+  }
+}
+
+/* Card title */
+.carousel-card-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+@media (max-width: 768px) {
+  .carousel-card-title {
+    font-size: 1.3rem;
+  }
+}
+
+/* Card tagline */
+.carousel-card-tagline {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+@media (max-width: 768px) {
+  .carousel-card-tagline {
+    font-size: 0.7rem;
+  }
+}
+
+/* Card features list (hidden; shown in info panel below) */
+.carousel-card-features {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Active Card Info Panel
+   -------------------------------------------------------------------------- */
+
+.carousel-info {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: none;
+  animation: carousel-info-in 0.5s ease-out;
+}
+@keyframes carousel-info-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+@media (max-width: 768px) {
+  .carousel-info {
+    bottom: 85px;
+    width: 90%;
+    max-width: 320px;
+  }
+}
+
+.carousel-info-inner {
+  background: rgba(10, 10, 15, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px 24px;
+  text-align: center;
+  pointer-events: auto;
+  max-width: 420px;
+  margin: 0 auto;
+}
+@media (max-width: 768px) {
+  .carousel-info-inner {
+    padding: 16px 18px;
+  }
+}
+
+.carousel-info-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+}
+.carousel-info-icon {
+  margin-right: 4px;
+}
+
+.carousel-info-description {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 14px 0;
+  line-height: 1.5;
+}
+@media (max-width: 768px) {
+  .carousel-info-description {
+    font-size: 0.75rem;
+    margin-bottom: 10px;
+  }
+}
+
+.carousel-info-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+@media (max-width: 768px) {
+  .carousel-info-features {
+    margin-bottom: 12px;
+    gap: 4px;
+  }
+}
+
+.carousel-info-badge {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+}
+@media (max-width: 768px) {
+  .carousel-info-badge {
+    font-size: 0.62rem;
+    padding: 2px 8px;
+  }
+}
+
+.carousel-info-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(168,85,247,0.6), rgba(236,72,153,0.6));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.carousel-info-cta:hover {
+  transform: scale(1.03);
+  background: linear-gradient(135deg, rgba(168,85,247,0.8), rgba(236,72,153,0.8));
+}
+.carousel-info-cta:active {
+  transform: scale(0.98);
+}
+@media (max-width: 768px) {
+  .carousel-info-cta {
+    padding: 8px 20px;
+    font-size: 0.8rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Dot Navigation
+   -------------------------------------------------------------------------- */
+
+.carousel-dots {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.carousel-dots.visible {
+  opacity: 1;
+}
+@media (max-width: 768px) {
+  .carousel-dots {
+    bottom: 32px;
+    gap: 8px;
+  }
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+.carousel-dot.active {
+  width: 24px;
+  border-radius: 4px;
+}
+.carousel-dot:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   Reduced Motion
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-card {
+    transition: none !important;
+    animation: none !important;
+  }
+  #carousel-bg {
+    animation: none !important;
+  }
+  .carousel-info {
+    animation: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Gesture Hint — appears briefly on first carousel visit
+   -------------------------------------------------------------------------- */
+
+.carousel-gesture-hint {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -80%);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: rgba(10, 10, 15, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  animation: gesture-in 0.5s ease-out, gesture-out 0.5s ease-in 3.5s forwards;
+}
+@keyframes gesture-in {
+  from { opacity: 0; transform: translate(-50%, -60%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -80%) scale(1); }
+}
+@keyframes gesture-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.carousel-gesture-icon {
+  display: inline-block;
+  font-size: 18px;
+  animation: gesture-swipe 1.5s ease-in-out infinite;
+}
+@keyframes gesture-swipe {
+  0%, 100% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+}
+
+/* --------------------------------------------------------------------------
+   Welcome Tooltip — first visit overlay
+   -------------------------------------------------------------------------- */
+
+.carousel-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: welcome-in 0.4s ease-out;
+}
+@keyframes welcome-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.carousel-welcome-card {
+  max-width: 380px;
+  width: 90%;
+  background: rgba(20, 20, 30, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-align: center;
+  animation: welcome-card-in 0.5s ease-out 0.1s both;
+}
+@keyframes welcome-card-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.carousel-welcome-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.carousel-welcome-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.carousel-welcome-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+.carousel-welcome-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 28px;
+  border-radius: 999px;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(168,85,247,0.7), rgba(236,72,153,0.7));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.carousel-welcome-cta:hover {
+  transform: scale(1.03);
+  background: linear-gradient(135deg, rgba(168,85,247,0.9), rgba(236,72,153,0.9));
+}
+
+/* --------------------------------------------------------------------------
+   Skeleton Loader — card outlines during loading
+   -------------------------------------------------------------------------- */
+
+.carousel-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: #0a0a0f;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.carousel-skeleton.hidden {
+  opacity: 0;
+}
+
+.carousel-skeleton-card {
+  width: min(26vw, 360px);
+  aspect-ratio: 4/5;
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+.carousel-skeleton-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.carousel-skeleton-card:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@media (max-width: 768px) {
+  .carousel-skeleton-card {
+    width: min(60vw, 280px);
+  }
+  .carousel-skeleton-card:nth-child(2),
+  .carousel-skeleton-card:nth-child(3) {
+    display: none;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}

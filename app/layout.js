@@ -10,7 +10,7 @@ export const revalidate = 0;
 export async function generateMetadata() {
   return {
     title: "Fourcast",
-    description: "A decentralized weather application.",
+    description: "Prediction intelligence powered by AI, ML models & live weather data. Find edges across crypto, sports, and political prediction markets.",
     openGraph: {
       images: [`${process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app'}/logo.png`],
     },

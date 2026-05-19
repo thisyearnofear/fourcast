@@ -13,7 +13,7 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal } from "@/components";
+import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal, EmptyMarketState } from "@/components";
 import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {
@@ -24,6 +24,72 @@ export default function MarketsPage() {
   // Provide default values to prevent undefined errors during initial render
   const { chains, canPerform, canPublish = false } = chainConnections || {};
   // console.log('[Markets Page] chains:', chains, 'canPerform:', canPerform, 'canPublish:', canPublish);
+
+  // Read URL search params for pre-filtering from carousel landing
+  const [urlParamsRead, setUrlParamsRead] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || urlParamsRead) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const category = params.get('category');
+    const analyzeId = params.get('analyze');
+
+    if (category) {
+      const categoryMap = {
+        crypto: 'Crypto',
+        sports: 'Sports',
+        politics: 'Politics',
+      };
+      const mapped = categoryMap[category.toLowerCase()] || category;
+      setDiscoveryFilters(prev => ({ ...prev, category: mapped }));
+      setActiveTab('discovery');
+    }
+
+    // Also read from localStorage if carousel landing stored interests
+    if (!category) {
+      try {
+        const interests = localStorage.getItem('fourcast_interests');
+        if (interests) {
+          const parsed = JSON.parse(interests);
+          if (parsed.length === 1) {
+            const categoryMap = {
+              crypto: 'Crypto',
+              sports: 'Sports',
+              politics: 'Politics',
+            };
+            const mapped = categoryMap[parsed[0].toLowerCase()];
+            if (mapped) {
+              setDiscoveryFilters(prev => ({ ...prev, category: mapped }));
+              setActiveTab('discovery');
+            }
+          }
+        }
+      } catch {}
+    }
+
+    // Store analyze ID to auto-run after markets load
+    if (analyzeId) {
+      window.__fourcast_autoAnalyzeId = analyzeId;
+    }
+
+    setUrlParamsRead(true);
+  }, [urlParamsRead]);
+
+  // Auto-analyze market if ?analyze= was specified (fires after markets load)
+  useEffect(() => {
+    const autoId = window.__fourcast_autoAnalyzeId;
+    if (!autoId || !markets || markets.length === 0) return;
+
+    const target = markets.find(m =>
+      (m.marketID === autoId) || (m.id === autoId) || (m.tokenID === autoId)
+    );
+    if (target) {
+      window.__fourcast_autoAnalyzeId = null; // Prevent re-run
+      // Small delay to let UI settle
+      setTimeout(() => analyzeMarket(target), 300);
+    }
+  }, [markets]);
 
   // Safety check: ensure all required values exist
   if (!chains) {
@@ -921,39 +987,18 @@ function SportsTabContent({
       )}
 
       {error && (
-        <div
-          className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 text-center`}
-        >
-          <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
-          <div className="flex justify-center gap-3">
-            <button
-              onClick={() => {
-                setDateRange("this-week");
-                setMinVolume(10000);
-                setFilters((prev) => ({
-                  ...prev,
-                  confidence: "all",
-                  includeFutures: true,
-                }));
-              }}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
-                ? "bg-white/20 hover:bg-white/30 text-white"
-                : "bg-black/20 hover:bg-black/30 text-black"
-                }`}
-            >
-              Broaden Filters
-            </button>
-            <button
-              onClick={fetchMarkets}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
-                ? "bg-white/20 hover:bg-white/30 text-white"
-                : "bg-black/20 hover:bg-black/30 text-black"
-                }`}
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
+        <EmptyMarketState
+          category={activeTab === 'sports' ? sportsFilters.eventType : discoveryFilters.category}
+          message={error}
+          onSwitchCategory={(cat) => {
+            if (activeTab === 'sports') {
+              setSportsFilters(prev => ({ ...prev, eventType: cat }));
+            } else {
+              setDiscoveryFilters(prev => ({ ...prev, category: cat }));
+            }
+            setError(null);
+          }}
+        />
       )}
 
       {!isLoading && !error && markets && markets.length > 0 && (
@@ -1484,40 +1529,18 @@ function DiscoveryTabContent({
       )}
 
       {error && (
-        <div
-          className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 text-center`}
-        >
-          <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
-          <div className="flex justify-center gap-3">
-            <button
-              onClick={() => {
-                setDateRange("this-week");
-                setFilters((prev) => ({
-                  ...prev,
-                  minVolume: "10000",
-                  category: "all",
-                  confidence: "all",
-                  includeFutures: true,
-                }));
-              }}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
-                ? "bg-white/20 hover:bg-white/30 text-white"
-                : "bg-black/20 hover:bg-black/30 text-black"
-                }`}
-            >
-              Broaden Filters
-            </button>
-            <button
-              onClick={fetchMarkets}
-              className={`px-4 py-2 rounded-lg text-sm font-light ${isNight
-                ? "bg-white/20 hover:bg-white/30 text-white"
-                : "bg-black/20 hover:bg-black/30 text-black"
-                }`}
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
+        <EmptyMarketState
+          category={activeTab === 'sports' ? sportsFilters.eventType : discoveryFilters.category}
+          message={error}
+          onSwitchCategory={(cat) => {
+            if (activeTab === 'sports') {
+              setSportsFilters(prev => ({ ...prev, eventType: cat }));
+            } else {
+              setDiscoveryFilters(prev => ({ ...prev, category: cat }));
+            }
+            setError(null);
+          }}
+        />
       )}
 
       {!isLoading &&
