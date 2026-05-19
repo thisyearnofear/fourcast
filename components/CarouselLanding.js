@@ -13,7 +13,8 @@ export default function CarouselLanding() {
   const [showGestureHint, setShowGestureHint] = useState(false);
   const [showWelcome, setShowWelcome] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return !localStorage.getItem('fourcast_visited');
+    const v = localStorage.getItem('fourcast_visited');
+    return !v || v === 'false' ? true : false;
   });
   const [skeletonHidden, setSkeletonHidden] = useState(false);
   const [revealedCards, setRevealedCards] = useState(() => {
@@ -255,8 +256,11 @@ export default function CarouselLanding() {
 
       {/* Welcome Overlay */}
       {showWelcome && (
-        <div className="carousel-welcome">
-          <div className="carousel-welcome-card">
+        <div className="carousel-welcome" onClick={() => {
+          setShowWelcome(false);
+          try { localStorage.setItem('fourcast_visited', 'dismiss'); } catch {}
+        }}>
+          <div className="carousel-welcome-card" onClick={(e) => e.stopPropagation()}>
             <span className="carousel-welcome-icon">🔮</span>
             <h2 className="carousel-welcome-title">Welcome to Fourcast</h2>
             <p className="carousel-welcome-desc">
@@ -275,6 +279,15 @@ export default function CarouselLanding() {
               }}
             >
               Show me around →
+            </button>
+            <button
+              className="carousel-welcome-skip"
+              onClick={() => {
+                setShowWelcome(false);
+                try { localStorage.setItem('fourcast_visited', 'skip'); } catch {}
+              }}
+            >
+              Skip — I know my way around
             </button>
           </div>
         </div>

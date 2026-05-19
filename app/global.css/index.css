@@ -839,6 +839,24 @@ code {
   background: linear-gradient(135deg, rgba(168,85,247,0.9), rgba(236,72,153,0.9));
 }
 
+.carousel-welcome-skip {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.carousel-welcome-skip:hover {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 /* --------------------------------------------------------------------------
    Skeleton Loader — card outlines during loading
    -------------------------------------------------------------------------- */
