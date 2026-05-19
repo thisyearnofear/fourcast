@@ -2,9 +2,9 @@
 # Dependencies
 # ============================================
 /node_modules
+**/node_modules
 /.pnp
 .pnp.js
-/sdk/node_modules
 
 # ============================================
 # Testing
@@ -107,7 +107,6 @@ next-env.d.ts
 # ============================================
 pnpm-lock.yaml
 yarn.lock
-package-lock.json
 
 # ============================================
 # Vercel
@@ -125,7 +124,7 @@ package-lock.json
 # ============================================
 # Binaries
 # ============================================
-/bin/
+# If you need to ignore generated binaries, add specific patterns here.
 
 # ============================================
 # Temporary Files
@@ -133,6 +132,7 @@ package-lock.json
 *.tmp
 *.temp
 .cache/
+cache/
 
 # ============================================
 # Other
