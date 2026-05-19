@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import WalletConnect from '@/app/components/WalletConnect';
+import UnifiedConnect from '@/components/UnifiedConnect';
 import { useSignalPublisher } from '@/hooks/useSignalPublisher';
 import { useChainConnections } from '@/hooks/useChainConnections';
 import PageNav, { SecondaryNav } from '@/app/components/PageNav';
@@ -244,7 +244,7 @@ export default function SignalsPage() {
                         <div className="flex items-center space-x-3">
                             <PageNav currentPage="Signals" isNight={isNight} />
                             <div className="flex items-center space-x-2">
-                                <WalletConnect isNight={isNight} />
+                                <UnifiedConnect isNight={isNight} variant="header" />
                             </div>
                         </div>
                     </div>
