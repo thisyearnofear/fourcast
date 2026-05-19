@@ -1,105 +1,72 @@
 /**
  * Spectrum Multi-Platform Agent
- *
- * Uses Photon's Spectrum SDK to run the Fourcast bot across
- * iMessage, WhatsApp, and other messaging platforms.
- *
- * The same handleTelegramUpdate() function handles commands
- * regardless of platform — Spectrum routes messages to us.
- *
- * Setup:
- *   1. Sign up at https://app.photon.codes — get Project ID + Secret
- *   2. Set PHOTON_PROJECT_ID and PHOTON_PROJECT_SECRET in .env
- *   3. Run: node bot/spectrum.js
- *
- * Telegram polling still runs alongside via pm2 (bot/index.js)
- * for the Telegram platform. Once Spectrum supports Telegram,
- * this can replace that.
  */
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-import { Spectrum } from 'spectrum-ts';
-import { imessage } from 'spectrum-ts/providers/imessage';
-import { whatsapp } from 'spectrum-ts/providers/whatsapp';
-import { terminal } from 'spectrum-ts/providers/terminal';
-import { handleTelegramUpdate } from '../services/telegramBot.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = resolve(__dirname, '../.env');
 
-const APP_URL = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
-
-// ============================================================================
-// Main
-// ============================================================================
-
-async function main() {
-  const projectId = process.env.PHOTON_PROJECT_ID;
-  const projectSecret = process.env.PHOTON_PROJECT_SECRET;
-
-  if (!projectId || !projectSecret) {
-    console.log('');
-    console.log('╔════════════════════════════════════════════════════╗');
-    console.log('║  Photon Spectrum — Not Configured                ║');
-    console.log('╠════════════════════════════════════════════════════╣');
-    console.log('║  To enable iMessage + WhatsApp:                   ║');
-    console.log('║                                                   ║');
-    console.log('║  1. Sign up at https://app.photon.codes           ║');
-    console.log('║  2. Create a project → get ID + Secret           ║');
-    console.log('║  3. Add to .env:                                  ║');
-    console.log('║     PHOTON_PROJECT_ID=your_id                     ║');
-    console.log('║     PHOTON_PROJECT_SECRET=your_secret             ║');
-    console.log('║                                                   ║');
-    console.log('║  Telegram bot continues running at @fourcasterbot ║');
-    console.log('╚════════════════════════════════════════════════════╝');
-    console.log('');
-    return;
+try {
+  const envContent = readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const val = trimmed.slice(eqIdx + 1).trim();
+    process.env[key] = val;
   }
-
-  console.log('[Spectrum] Starting Fourcast agent...');
-
-  const app = await Spectrum({
-    projectId,
-    projectSecret,
-    providers: [
-      imessage.config(),
-      whatsapp.config(),
-      terminal.config(),
-    ],
-  });
-
-  console.log('[Spectrum] Agent running on iMessage + WhatsApp + Terminal');
-  console.log(`[Spectrum] App URL: ${APP_URL}`);
-
-  // Handle messages from any platform
-  for await (const [space, message] of app.messages) {
-    if (message.content.type === 'text') {
-      const text = message.content.text.trim();
-      const platform = message.platform || 'unknown';
-      const senderId = message.sender?.id || 'unknown';
-      console.log(`[Spectrum:${platform}] ${senderId}: ${text.slice(0, 100)}`);
-
-      // Convert Spectrum message to a format handleTelegramUpdate can process
-      const fakeUpdate = {
-        message: {
-          chat: { id: `${platform}:${senderId}` },
-          from: {
-            id: senderId,
-            first_name: message.sender?.name || 'User',
-          },
-          text,
-          message_id: Date.now(),
-        },
-      };
-
-      // Send typing indicator
-      await space.responding(async () => {
-        await handleTelegramUpdate(fakeUpdate);
-        // Note: handleTelegramUpdate uses sendMessage which posts to Telegram API.
-        // For Spectrum, we need to instead use space.send().
-        // This is a stub — real integration requires adapting the response path.
-      });
-    }
-  }
+  console.log(`[Spectrum] Loaded env from ${envPath}`);
+  console.log(`[Spectrum] PHOTON_PROJECT_ID: ${!!process.env.PHOTON_PROJECT_ID}`);
+  console.log(`[Spectrum] PHOTON_PROJECT_SECRET: ${!!process.env.PHOTON_PROJECT_SECRET}`);
+} catch (err) {
+  console.log(`[Spectrum] Cannot load env: ${err.message}`);
+  console.log(`[Spectrum] Try path: ${envPath}`);
 }
 
-main().catch((err) => {
-  console.error('[Spectrum] Fatal error:', err);
-  process.exit(1);
+const projectId = process.env.PHOTON_PROJECT_ID;
+const projectSecret = process.env.PHOTON_PROJECT_SECRET;
+const APP_URL = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
+
+if (!projectId || !projectSecret) {
+  console.log('[Spectrum] PHOTON_PROJECT_ID or PHOTON_PROJECT_SECRET not set');
+  console.log('[Spectrum] Exiting — Telegram bot continues at @fourcasterbot');
+  process.exit(0);
+}
+
+const { Spectrum } = await import('spectrum-ts');
+const { imessage } = await import('spectrum-ts/providers/imessage');
+const { terminal } = await import('spectrum-ts/providers/terminal');
+const { handleTelegramUpdate } = await import('../services/telegramBot.js');
+
+const app = await Spectrum({
+  projectId,
+  projectSecret,
+  providers: [imessage.config(), terminal.config()],
 });
+
+console.log(`[Spectrum] Running on iMessage + Terminal | ${APP_URL}`);
+
+for await (const [space, message] of app.messages) {
+  if (message.content.type === 'text') {
+    const text = message.content.text.trim();
+    const platform = message.platform || 'unknown';
+    console.log(`[Spectrum:${platform}] ${text.slice(0, 100)}`);
+
+    const fakeUpdate = {
+      message: {
+        chat: { id: `${platform}:${message.sender?.id}` },
+        from: { id: message.sender?.id, first_name: message.sender?.name || 'User' },
+        text,
+        message_id: Date.now(),
+      },
+    };
+
+    await space.responding(async () => {
+      await handleTelegramUpdate(fakeUpdate);
+    });
+  }
+}
