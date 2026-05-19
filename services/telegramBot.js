@@ -226,8 +226,8 @@ async function executeAnalysis(chatId, query, userName) {
 
     const analysis = data.analysis || data.assessment || {};
     const confidence = analysis.confidence || data.confidence || 'MEDIUM';
-    const reasoning = analysis.reasoning || data.reasoning || analysis.summary || '';
-    const probability = analysis.probability || data.aiProbability || analysis.aiProbability || '';
+    const reasoning = data.reasoning || analysis.reasoning || analysis.summary || data.assessment?.summary || '';
+    const probability = data.probability || data.aiProbability || analysis.probability || analysis.aiProbability || '';
     const edge = data.edge || analysis.edge || '';
 
     const confEmoji = confidence === 'HIGH' ? '🟢' : confidence === 'MEDIUM' ? '🟡' : '🔴';
@@ -240,10 +240,18 @@ async function executeAnalysis(chatId, query, userName) {
     if (probability) {
       const p = typeof probability === 'number' ? (probability * 100).toFixed(1) + '%' : probability;
       msg.push(`📊 *AI Probability:* ${p}`);
+    } else {
+      msg.push(`📊 *Market odds:* Not available — Fourcast AI analyzed fundamentals instead`);
     }
     if (edge) msg.push(`⚡ *Edge:* +${typeof edge === 'number' ? edge.toFixed(1) : edge}%`);
     msg.push('');
-    msg.push(`💡 *Signal:* ${reasoning.length > 200 ? reasoning.slice(0, 200) + '...' : reasoning}`);
+
+    const signalText = reasoning.length > 200 ? reasoning.slice(0, 200) + '...' : reasoning;
+    if (signalText) {
+      msg.push(`💡 *Signal:* ${signalText}`);
+    } else {
+      msg.push(`💡 *Analysis:* ${confidence === 'HIGH' ? 'Strong indicators across ML models.' : 'Mixed signals — review the full reasoning for details.'}`);
+    }
 
     return editMessage(chatId, thinkingMsgId, msg.join('\n'), {
       reply_markup: analysisFollowUpKeyboard(query.trim()),
@@ -375,8 +383,9 @@ async function handleEdge(chatId, query, userName) {
 
 async function handleFollowUpReasoning(chatId, messageId, query, data) {
   await sendTyping(chatId);
-  const analysis = data?.analysis || data?.assessment || {};
-  const reasoning = analysis.reasoning || data?.reasoning || analysis.summary || 'No detailed reasoning.';
+  // Check multiple paths for reasoning text
+  const reasoning = data?.reasoning || data?.analysis?.reasoning || data?.assessment?.reasoning ||
+    data?.assessment?.summary || data?.analysis?.summary || 'No detailed reasoning available for this market.';
   const msg = [
     `🔮 *Full Reasoning: ${query}*`, ``,
     reasoning.length > 1500 ? reasoning.slice(0, 1500) + '...' : reasoning, ``,
