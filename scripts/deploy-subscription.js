@@ -2,12 +2,15 @@
  * Deploy SubscriptionManager contract to Arc testnet.
  *
  * Usage:
- *   node scripts/deploy-subscription.js
+ *   node --import dotenv/config scripts/deploy-subscription.js
  *
- * Requires env vars:
+ * Or load .env.local directly:
+ *   node -r dotenv/config scripts/deploy-subscription.js dotenv_config_path=.env.local
+ *
+ * Requires env vars (set in .env.local):
  *   ARC_RPC_URL — Arc testnet RPC endpoint
- *   DEPLOYER_PRIVATE_KEY — deployer wallet private key (with testnet USDC for gas)
- *   USDC_TOKEN_ADDRESS — USDC token address on Arc testnet
+ *   DEPLOYER_PRIVATE_KEY — deployer wallet private key
+ *   NEXT_PUBLIC_USDC_TOKEN — USDC token address on Arc testnet
  *   TREASURY_ADDRESS — where subscription USDC payments are collected
  *
  * Outputs:
@@ -38,7 +41,7 @@ const arcTestnet = {
 async function main() {
   const rpcUrl = process.env.ARC_RPC_URL || 'https://arc-node.thecanteenapp.com/';
   const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
-  const usdcAddress = process.env.USDC_TOKEN_ADDRESS;
+  const usdcAddress = process.env.NEXT_PUBLIC_USDC_TOKEN;
   const treasuryAddress = process.env.TREASURY_ADDRESS;
 
   if (!privateKey) throw new Error('DEPLOYER_PRIVATE_KEY not set in .env.local');
