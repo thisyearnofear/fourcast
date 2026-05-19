@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import KalshiOrderPanel from '@/components/KalshiOrderPanel';
+import ArbitrageExecutor from '@/components/ArbitrageExecutor';
 import { useArbitrageOpportunities } from '@/hooks/useArbitrageOpportunities';
 
 export default function DeFiArbitrageTab({
@@ -20,6 +21,7 @@ export default function DeFiArbitrageTab({
 
   const [expandedOppId, setExpandedOppId] = useState(null);
   const [selectedKalshiMarket, setSelectedKalshiMarket] = useState(null);
+  const [selectedArbitrageOpp, setSelectedArbitrageOpp] = useState(null);
 
   return (
     <div className="w-full">
@@ -230,6 +232,13 @@ export default function DeFiArbitrageTab({
 
                   {/* Action Buttons */}
                   <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => setSelectedArbitrageOpp(opp)}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold text-center transition-all shadow-sm
+                        bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90`}
+                    >
+                      ⚡ Execute Arbitrage
+                    </button>
                     <a
                       href={`https://polymarket.com/market/${opp.polymarket.id}`}
                       target="_blank"
@@ -273,6 +282,15 @@ export default function DeFiArbitrageTab({
           market={selectedKalshiMarket}
           isNight={isNight}
           onClose={() => setSelectedKalshiMarket(null)}
+        />
+      )}
+
+      {/* Arbitrage Executor */}
+      {selectedArbitrageOpp && (
+        <ArbitrageExecutor
+          opportunity={selectedArbitrageOpp}
+          onClose={() => setSelectedArbitrageOpp(null)}
+          isNight={isNight}
         />
       )}
     </div>
