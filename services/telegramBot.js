@@ -152,35 +152,78 @@ Sign off naturally.`;
 
   const userMessage = (query && query.trim().length > 0) ? query : 'introduce yourself';
 
-  try {
-    const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-        max_tokens: 250,
-        temperature: 0.7,
-      }),
-    });
+  const featherlessKey = process.env.FEATHERLESS_API_KEY;
+  const veniceKey = process.env.VENICE_API_KEY;
 
-    const data = await response.json();
-    const reply = data?.choices?.[0]?.message?.content?.trim();
+  // Preferred: Featherless AI
+  if (featherlessKey) {
+    try {
+      const response = await fetch('https://api.featherless.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${featherlessKey}`,
+        },
+        body: JSON.stringify({
+          model: 'meta-llama/Llama-3.3-70B-Instruct',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage },
+          ],
+          max_tokens: 250,
+          temperature: 0.7,
+        }),
+      });
 
-    if (reply) {
-      return sendMessage(chatId, `🔮 ${reply}`);
+      // Check for expired subscription
+      if (response.status === 401 || response.status === 403) {
+        const errData = await response.json().catch(() => ({}));
+        if (errData?.error?.code === 'upgrade_required' || errData?.error?.message?.includes('expired')) {
+          // Fall through to Venice or hardcoded fallback
+          console.warn('[Bot] Featherless subscription expired');
+        } else {
+          const data = await response.json().catch(() => ({}));
+          const reply = data?.choices?.[0]?.message?.content?.trim();
+          if (reply) return sendMessage(chatId, `🔮 ${reply}`);
+        }
+      } else if (response.ok) {
+        const data = await response.json();
+        const reply = data?.choices?.[0]?.message?.content?.trim();
+        if (reply) return sendMessage(chatId, `🔮 ${reply}`);
+      }
+    } catch (err) {
+      console.error('[Bot] Featherless AI failed:', err.message);
     }
-  } catch (err) {
-    console.error('[Bot] Venice AI fallback failed:', err.message);
   }
 
-  // Ultimate fallback if everything fails
+  // Fallback: Venice AI
+  if (veniceKey) {
+    try {
+      const response = await fetch('https://api.venice.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${veniceKey}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage },
+          ],
+          max_tokens: 250,
+          temperature: 0.7,
+        }),
+      });
+      const data = await response.json();
+      const reply = data?.choices?.[0]?.message?.content?.trim();
+      if (reply) return sendMessage(chatId, `🔮 ${reply}`);
+    } catch (err) {
+      console.error('[Bot] Venice AI failed:', err.message);
+    }
+  }
+
+  // Ultimate fallback
   const fallback = `I'm your prediction intelligence agent. Try /edge to analyze a market, or just type something like "Will the Chiefs win?" and I'll check the odds for you.`;
   return sendMessage(chatId, `🔮 ${fallback}`);
 }
