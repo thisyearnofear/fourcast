@@ -1,6 +1,15 @@
 import { analyzeWeatherImpactServer, getAIStatus } from '@/services/aiService.server';
 import { APIInputValidator, WeatherDataValidator, FuturesBetValidator } from '@/services/validators/index.js';
 
+// Simple API auth for bot/external access
+const BOT_API_SECRET = process.env.BOT_API_SECRET || '';
+
+function isAuthorized(request) {
+  const auth = request.headers.get('x-fourcast-auth');
+  if (!BOT_API_SECRET) return true; // No secret set = open access
+  return auth === BOT_API_SECRET;
+}
+
 // Rate limiting for AI analysis
 const analysisRateLimit = new Map();
 const ANALYSIS_RATE_LIMIT = 10; // 10 analyses per hour
@@ -37,6 +46,11 @@ function getClientIdentifier(request) {
 
 export async function POST(request) {
   try {
+    // Auth check
+    if (!isAuthorized(request)) {
+      return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { 
       eventType, 
@@ -72,13 +86,19 @@ export async function POST(request) {
       mode
     });
 
+    // Allow free-form queries (no marketId) when eventType is provided
     if (!inputValidation.valid) {
-      return Response.json({
-        success: false,
-        error: 'Input validation failed',
-        errors: inputValidation.errors,
-        warnings: inputValidation.warnings
-      }, { status: 400 });
+      // If only marketId is missing but eventType is provided, proceed
+      const missingMarketId = inputValidation.errors?.length === 1 &&
+        inputValidation.errors[0]?.toLowerCase().includes('marketid');
+      if (!missingMarketId) {
+        return Response.json({
+          success: false,
+          error: 'Input validation failed',
+          errors: inputValidation.errors,
+          warnings: inputValidation.warnings
+        }, { status: 400 });
+      }
     }
 
     let weatherValidation = { valid: true, errors: [], warnings: [], dataQuality: 'UNKNOWN' };

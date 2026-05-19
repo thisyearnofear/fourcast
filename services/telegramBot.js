@@ -38,7 +38,10 @@ async function callTelegram(method, payload = {}) {
   try {
     const res = await fetch(`${TELEGRAM_API}/${method}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Fourcast-Auth': process.env.BOT_API_SECRET || '',
+      },
       body: JSON.stringify(payload),
     });
     return await res.json();
@@ -245,7 +248,10 @@ async function handleEdge(chatId, query, messageId = null) {
   try {
     const response = await fetch(`${APP_URL}/api/analyze`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Fourcast-Auth': process.env.BOT_API_SECRET || '',
+      },
       body: JSON.stringify({
         eventType: query.trim(),
         title: query.trim(),
@@ -355,7 +361,10 @@ async function handleFollowUpKalshi(chatId, messageId, query) {
   try {
     const response = await fetch(`${APP_URL}/api/analyze`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Fourcast-Auth': process.env.BOT_API_SECRET || '',
+      },
       body: JSON.stringify({
         eventType: query.trim(),
         title: query.trim(),
