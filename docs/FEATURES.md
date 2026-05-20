@@ -4,12 +4,14 @@
 
 ### 🎯 Core Features
 
-#### 3D Interactive Landing
-- **Vertical card carousel** — Drag through Crypto, Sports, Politics, Weather
-- **Reactive gradient background** — Colors shift with active card
-- **Procedural canvas scenes** — Animated particles, terrain, nodes, weather inside each card
-- **Skeleton loaders** — Blurred card outlines during loading (no black screen)
-- **First-visit welcome overlay** + gesture hint ("Drag to browse · Click to explore")
+#### Search-First Intelligence
+- **AI-Powered Search Landing** — Instant analysis entry with "Quick Search" and category navigation
+- **Deep Reasoning Visualizer** — Real-time "thinking" overlay for AI analysis, showing provenance and provenance-backed logic
+- **Evidence-Based UI** — Explicit data provenance for AI predictions, citing data sources (SynthData, OpenMeteo, Venice AI)
+
+#### Prediction Markets Distribution
+- **One-Click Prediction Deep-Linking** — Shareable, pre-analyzed market links that hydrate state automatically
+- **Frictionless Capital Flow** — Integrated "Quick Swap" (ETH to USDC) for users with insufficient liquidity
 
 #### Unified Wallet Connection
 - **Single Connect Wallet button** — Hides EVM/Aptos/Arc chain complexity
