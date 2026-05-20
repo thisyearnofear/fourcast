@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+
+const Scene3D = lazy(() => import('@/components/Scene3D'));
 
 const QUICK_SEARCHES = [
   { label: 'BTC $100k', query: 'Bitcoin $100k June 2026' },
@@ -34,12 +36,15 @@ export default function SearchLanding() {
 
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ background: '#0a0a0f' }}>
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-gradient-radial from-purple-900/40 via-transparent to-transparent animate-pulse-slow" />
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-float-delayed" />
+      {/* 3D Scene Background */}
+      <div className="absolute inset-0 z-0 opacity-60">
+        <Suspense fallback={null}>
+          <Scene3D />
+        </Suspense>
       </div>
+
+      {/* Overlay gradient for readability */}
+      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
@@ -54,10 +59,10 @@ export default function SearchLanding() {
           </p>
         </div>
 
-        {/* Search Bar — primary action */}
+        {/* Search Bar */}
         <div className={`w-full max-w-xl transition-all duration-300 ${focused ? 'scale-105' : ''}`}>
           <div className={`
-            flex items-center gap-3 px-5 py-3.5 rounded-2xl border transition-all duration-300
+            flex items-center gap-3 px-5 py-3.5 rounded-2xl border transition-all duration-300 backdrop-blur-md
             ${focused
               ? 'bg-white/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
               : 'bg-white/5 border-white/10 hover:bg-white/8'
@@ -92,7 +97,7 @@ export default function SearchLanding() {
               key={item.query}
               onClick={() => handleSearch(item.query)}
               className="px-3.5 py-1.5 rounded-full text-xs text-white/50 bg-white/5 border border-white/5 
-                hover:bg-white/10 hover:text-white/70 hover:border-white/10 transition-all"
+                hover:bg-white/10 hover:text-white/70 hover:border-white/10 transition-all backdrop-blur-sm"
             >
               {item.label}
             </button>
@@ -106,7 +111,7 @@ export default function SearchLanding() {
               key={cat.id}
               onClick={() => handleCategoryClick(cat)}
               className="group relative p-4 rounded-2xl border border-white/5 bg-white/5 
-                hover:bg-white/10 hover:border-white/10 transition-all text-center"
+                hover:bg-white/10 hover:border-white/10 transition-all text-center backdrop-blur-sm"
             >
               <div className={`text-2xl mb-1.5 bg-gradient-to-br ${cat.gradient} w-10 h-10 rounded-xl 
                 flex items-center justify-center mx-auto text-white shadow-lg`}>
@@ -124,7 +129,7 @@ export default function SearchLanding() {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs text-white/30 
-              bg-white/5 border border-white/5 hover:text-white/50 hover:bg-white/10 transition-all"
+              bg-white/5 border border-white/5 hover:text-white/50 hover:bg-white/10 transition-all backdrop-blur-sm"
           >
             <span>💬</span>
             Try @fourcasterbot on Telegram — no setup needed
