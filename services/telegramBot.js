@@ -233,7 +233,7 @@ async function executeAnalysis(chatId, query, userName) {
     const confEmoji = confidence === 'HIGH' ? '🟢' : confidence === 'MEDIUM' ? '🟡' : '🔴';
 
     let msg = [
-      `🔮 *I see an edge on: ${query.trim()}*`,
+      `🔮 *Analysis for: ${query.trim()}*`,
       ``,
       `${confEmoji} *Confidence:* ${confidence}`,
     ];
@@ -243,7 +243,9 @@ async function executeAnalysis(chatId, query, userName) {
     } else {
       msg.push(`📊 *Market odds:* Not available — Fourcast AI analyzed fundamentals instead`);
     }
-    if (edge) msg.push(`⚡ *Edge:* +${typeof edge === 'number' ? edge.toFixed(1) : edge}%`);
+    if (edge) {
+      msg.push(`⚡ *Price discrepancy:* +${typeof edge === 'number' ? edge.toFixed(1) : edge}% vs market odds`);
+    }
     msg.push('');
 
     const signalText = reasoning.length > 200 ? reasoning.slice(0, 200) + '...' : reasoning;
@@ -306,11 +308,10 @@ async function handleStart(chatId, userName) {
   const msg = [
     `🔮 *Fourcast* — AI Prediction Intelligence`,
     ``,
-    `${greeting}I see edges in prediction markets. Try:`,
-    `• \`/edge Bitcoin $100k June\``,
-    `• \`/edge Chiefs Super Bowl\``,
-    `• \`/edge will it rain tomorrow\``,
-    `• \`/alerts\` — Edge notifications`,
+    `${greeting}Fourcast connects you with prediction market analysts. Try:`,
+    `• \`/edge Bitcoin $100k June\` — AI-assisted market analysis`,
+    `• \`/top\` — Today's top signals from leading analysts`,
+    `• \`/alerts\` — Get notified when analysts publish`,
     `• \`/pro\` — Unlimited analysis`,
     ``,
     `[Open App](${APP_URL}/markets)`,
@@ -321,9 +322,10 @@ async function handleStart(chatId, userName) {
 async function handleCasualQuery(chatId, query) {
   await sendTyping(chatId);
 
-  const systemPrompt = `You are Fourcast, an AI prediction intelligence bot.
-Your voice: confident, data-driven oracle/seer. Keep responses under 3 sentences.
-End by inviting them to try a market. Never mention you're an AI.`;
+  const systemPrompt = `You are Fourcast, a prediction market insights curator.
+Your voice: data-driven, analytical, neutral. Keep responses under 3 sentences.
+You help users discover analysis published by prediction market analysts.
+End by inviting them to try a market query. Never claim you found an edge.`;
 
   const userMessage = (query && query.trim().length > 0) ? query : 'introduce yourself';
   const featherlessKey = process.env.FEATHERLESS_API_KEY;
@@ -347,7 +349,35 @@ End by inviting them to try a market. Never mention you're an AI.`;
     } catch (err) { console.error('[Bot] Featherless AI failed:', err.message); }
   }
 
-  return sendMessage(chatId, `🔮 I'm your prediction intelligence agent. Try /edge to analyze a market.`);
+  return sendMessage(chatId, `🔮 I'm Fourcast. I surface prediction market analysis from AI and community analysts. Try /edge to analyze a market, or /top to see today's best signals.`);
+}
+
+async function handleTop(chatId) {
+  await sendTyping(chatId);
+  try {
+    const resp = await fetch(`${APP_URL}/api/signals?limit=5`);
+    const data = await resp.json();
+    const signals = data?.signals || data?.results || [];
+    if (signals.length > 0) {
+      let msg = [`📊 *Top Signals Today*`, ``];
+      signals.slice(0, 5).forEach((s, i) => {
+        const author = s.author || s.analyst || s.publisher || 'Analyst';
+        const conf = s.confidence || s.probability || '';
+        msg.push(`${i + 1}. *${s.title || s.market || 'Market'}*`);
+        msg.push(`   👤 ${author} · ${conf ? `🎯 ${conf}%` : ''} · ${s.winRate || s.accuracy || ''}`);
+        msg.push('');
+      });
+      msg.push(`[View all signals →](${APP_URL}/signals)`);
+      msg.push(`📈 [Publish your own →](${APP_URL}/signals)`);
+      return sendMessage(chatId, msg.join('\n'));
+    }
+  } catch {}
+  return sendMessage(chatId, [
+    `📊 *Top Signals*`,
+    ``,
+    `No analyst signals available right now. Be the first to publish!`,
+    `[Open the app →](${APP_URL}/signals)`,
+  ].join('\n'));
 }
 
 async function handleEdge(chatId, query, userName) {
@@ -496,6 +526,8 @@ export async function handleTelegramUpdate(update) {
       return handleStart(chatId, userName);
     case '/edge':
       return handleEdge(chatId, args, userName);
+    case '/top':
+      return handleTop(chatId);
     case '/alerts':
       return handleFollowUpAlert(chatId, args || 'all markets');
     case '/pro':
