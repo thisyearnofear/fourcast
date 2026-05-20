@@ -1,34 +1,26 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { WagmiProvider } from 'wagmi';
-import { ConnectKitProvider } from 'connectkit';
-import { AptosProvider } from './providers/AptosProvider';
-import { config } from '../onchain/config';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
+import { AptosProvider } from './providers/AptosProvider';
+
+// Dynamic import to prevent chunk loading race conditions with wagmi/connectkit
+const WalletLayer = dynamic(
+  () => import('./WalletLayer'),
+  { ssr: false }
+);
 
 export function Providers({ children }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={config}>
-        <ConnectKitProvider
-          mode="dark"
-          customTheme={{
-            "--ck-accent-color": "#2563eb",
-            "--ck-accent-text": "#ffffff",
-            "--ck-primary-button-background": "#1f2937",
-            "--ck-primary-button-hover-background": "#374151",
-            "--ck-secondary-button-background": "#6b7280",
-          }}
-        >
-          <AptosProvider>
-            {children}
-          </AptosProvider>
-        </ConnectKitProvider>
-      </WagmiProvider>
+      <WalletLayer>
+        <AptosProvider>
+          {children}
+        </AptosProvider>
+      </WalletLayer>
     </QueryClientProvider>
   );
 }
-
