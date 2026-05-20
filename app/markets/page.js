@@ -34,6 +34,7 @@ export default function MarketsPage() {
     const params = new URLSearchParams(window.location.search);
     const category = params.get('category');
     const analyzeId = params.get('analyze');
+    const shareId = params.get('share_id');
     const searchQuery = params.get('q');
 
     if (category) {
@@ -47,8 +48,13 @@ export default function MarketsPage() {
       setActiveTab('discovery');
     }
 
+    // Handle shared analysis
+    if (shareId) {
+      window.__fourcast_autoAnalyzeId = shareId;
+    }
+    
     // Also read from localStorage if carousel landing stored interests
-    if (!category) {
+    if (!category && !shareId) {
       try {
         const interests = localStorage.getItem('fourcast_interests');
         if (interests) {
@@ -2523,7 +2529,7 @@ function MarketCard({
               {/* Hide regular publish button if edge section is shown */}
               {!(analysis?.synthData?.polymarketEdge && Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03) && (
                 <button
-                  onClick={onPublishSignal}
+                  onClick={handlePublishSignal}
                   className={`flex-1 px-6 py-3 rounded-2xl font-light text-sm transition-all border relative ${canPublish
                     ? isNight
                       ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
@@ -2538,6 +2544,19 @@ function MarketCard({
                     : "🔗 Connect & Make Your Call"}
                 </button>
               )}
+
+              {/* Share Button */}
+              <button
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/markets?share_id=${market.marketID || market.id}`;
+                  navigator.clipboard.writeText(shareUrl);
+                  addToast("Link copied to clipboard!", "success");
+                }}
+                className={`px-6 py-3 rounded-2xl font-light text-sm transition-all border ${isNight ? "bg-white/5 hover:bg-white/10 text-white/70 border-white/10" : "bg-black/5 hover:bg-black/10 text-black/70 border-black/10"}`}
+                title="Copy shareable link"
+              >
+                🔗
+              </button>
             </div>
           </div>
         </div>
