@@ -1,5 +1,7 @@
 import { analyzeWeatherImpactServer, getAIStatus } from '@/services/aiService.server';
 import { APIInputValidator, WeatherDataValidator, FuturesBetValidator } from '@/services/validators/index.js';
+import { polymarketService } from '@/services/polymarketService';
+import { kalshiService } from '@/services/kalshiService';
 
 // Simple API auth for bot/external access
 const BOT_API_SECRET = process.env.BOT_API_SECRET || '';
@@ -72,7 +74,7 @@ export async function POST(request) {
     } = body;
 
     // Use either marketID or marketId (support both cases)
-    const resolvedMarketId = marketID || marketId;
+    let resolvedMarketId = marketID || marketId;
 
     // DEBUG: Log the incoming marketID
     console.log('[DEBUG] resolvedMarketId:', resolvedMarketId);
@@ -118,6 +120,62 @@ export async function POST(request) {
       ...weatherValidation.warnings,
       ...futuresValidation.warnings
     ];
+
+    // Market-first lookup: when no marketId, search for matching markets
+    let marketSearched = false;
+    if (!resolvedMarketId && eventType && eventType.trim().length > 0) {
+      try {
+        const query = (title || eventType).trim().toLowerCase();
+        console.log(`[Analyze] Searching markets for: "${query}"`);
+
+        // Fetch markets from both platforms
+        const [polyMarkets, kalshiMarkets] = await Promise.allSettled([
+          polymarketService.buildMarketCatalog(10000, null, 'discovery').catch(() => ({ markets: [] })),
+          kalshiService.getMarketsByCategory('all', 50).catch(() => []),
+        ]);
+
+        const polyList = polyMarkets.status === 'fulfilled' ? (polyMarkets.value?.markets || []) : [];
+        const kalshiList = kalshiMarkets.status === 'fulfilled' ? kalshiMarkets.value : [];
+
+        // Search titles for the query
+        const searchWords = query.split(/\s+/).filter(w => w.length > 2);
+
+        const findMatch = (markets, idField, titleField) => {
+          if (!markets || markets.length === 0) return null;
+          // Exact match first
+          const exact = markets.find(m =>
+            (m[titleField] || m.title || '').toLowerCase().includes(query)
+          );
+          if (exact) return exact;
+          // Word-level match
+          for (const word of searchWords) {
+            const match = markets.find(m =>
+              (m[titleField] || m.title || '').toLowerCase().includes(word)
+            );
+            if (match) return match;
+          }
+          return null;
+        };
+
+        const polyMatch = findMatch(polyList, 'id', 'title');
+        const kalshiMatch = findMatch(kalshiList, 'marketID', 'title');
+
+        if (polyMatch) {
+          resolvedMarketId = polyMatch.id || polyMatch.marketID;
+          marketSearched = true;
+          console.log(`[Analyze] Matched Polymarket market: ${polyMatch.title?.slice(0, 60)} (${resolvedMarketId})`);
+        } else if (kalshiMatch) {
+          resolvedMarketId = kalshiMatch.marketID || kalshiMatch.id;
+          marketSearched = true;
+          console.log(`[Analyze] Matched Kalshi market: ${kalshiMatch.title?.slice(0, 60)} (${resolvedMarketId})`);
+        } else {
+          console.log(`[Analyze] No market match for: "${query}"`);
+        }
+      } catch (err) {
+        console.error('[Analyze] Market search failed:', err.message);
+        // Continue without marketId — analysis may be less specific
+      }
+    }
 
     // Rate limiting — skip for subscribers
     const clientId = getClientIdentifier(request);
@@ -192,6 +250,7 @@ export async function POST(request) {
     return Response.json({
       success: true,
       marketId: resolvedMarketId,
+      marketSearched,
       assessment: {
         weather_impact: analysis.assessment?.weather_impact || 'UNKNOWN',
         odds_efficiency: analysis.assessment?.odds_efficiency || 'UNKNOWN', 
