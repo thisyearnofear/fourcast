@@ -2606,6 +2606,26 @@ function MarketCard({
               </div>
             </div>
 
+            {/* Data Provenance (Evidence) */}
+            {analysis && (
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <h4 className={`text-xs font-light ${textColor} opacity-40 uppercase tracking-widest mb-3`}>Data Provenance</h4>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { name: 'Polymarket/Kalshi', icon: '🏦' },
+                    analysis.synthData ? { name: 'SynthData ML', icon: '🤖' } : null,
+                    analysis.weather_conditions ? { name: 'OpenMeteo', icon: '🌤' } : null,
+                    { name: 'Venice AI Mesh', icon: '🌐' }
+                  ].filter(Boolean).map((source) => (
+                    <div key={source.name} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                      <span className="text-sm">{source.icon}</span>
+                      <span className={`text-[10px] ${textColor} opacity-60 font-medium`}>{source.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             {/* AI Reasoning */}
             <div className={`glass-subtle rounded-xl p-5`}>
               <h4 className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}>AI Reasoning</h4>
