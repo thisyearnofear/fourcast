@@ -34,6 +34,7 @@ export default function MarketsPage() {
     const params = new URLSearchParams(window.location.search);
     const category = params.get('category');
     const analyzeId = params.get('analyze');
+    const searchQuery = params.get('q');
 
     if (category) {
       const categoryMap = {
@@ -73,6 +74,12 @@ export default function MarketsPage() {
       window.__fourcast_autoAnalyzeId = analyzeId;
     }
 
+    // Store search query from landing page search bar
+    if (searchQuery) {
+      window.__fourcast_autoAnalyzeId = 'auto';
+      window.__fourcast_autoQuery = searchQuery;
+    }
+
     setUrlParamsRead(true);
   }, [urlParamsRead]);
 
@@ -84,12 +91,21 @@ export default function MarketsPage() {
     let target;
 
     if (autoId === 'auto') {
-      // Find the market with highest volume
-      target = [...markets].sort((a, b) => {
-        const volA = a.volume || a.volume24h || 0;
-        const volB = b.volume || b.volume24h || 0;
-        return volB - volA;
-      })[0];
+      // Use custom query if provided (from landing page search)
+      const customQuery = window.__fourcast_autoQuery;
+      if (customQuery) {
+        // Trigger a title-based analysis by analyzing the first market
+        // with the custom query as eventType
+        target = { title: customQuery, eventType: customQuery };
+        window.__fourcast_autoQuery = null;
+      } else {
+        // Find the market with highest volume
+        target = [...markets].sort((a, b) => {
+          const volA = a.volume || a.volume24h || 0;
+          const volB = b.volume || b.volume24h || 0;
+          return volB - volA;
+        })[0];
+      }
     } else {
       target = markets.find(m =>
         (m.marketID === autoId) || (m.id === autoId) || (m.tokenID === autoId)
