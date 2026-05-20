@@ -13,7 +13,7 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal, EmptyMarketState, UnifiedConnect, PortfolioCard, PricingOverlay } from "@/components";
+import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal, EmptyMarketState, UnifiedConnect, PortfolioCard, PricingOverlay, ReasoningVisualizer } from "@/components";
 import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {
@@ -859,6 +859,12 @@ export default function MarketsPage() {
         isOpen={showPricing}
         onClose={() => setShowPricing(false)}
         isNight={isNight}
+      />
+
+      {/* Reasoning Visualizer Overlay */}
+      <ReasoningVisualizer 
+        isActive={isLoadingAnalysis} 
+        title={selectedMarket ? `Analyzing ${selectedMarket.title || selectedMarket.question}` : "Analyzing Market"}
       />
 
       {
@@ -2307,6 +2313,21 @@ function MarketCard({
                   analysis.analysis ||
                   "No analysis available"}
               </p>
+
+              {/* Deep Reasoning (Thinking) Toggle */}
+              {analysis.thinking && (
+                <div className="mt-4 pt-4 border-t border-white/5">
+                  <details className="group">
+                    <summary className="flex items-center gap-2 text-xs font-light text-purple-400 cursor-pointer hover:text-purple-300 transition-colors list-none">
+                      <span className="group-open:rotate-180 transition-transform">▼</span>
+                      <span>View Deep Reasoning Process</span>
+                    </summary>
+                    <div className="mt-3 p-4 rounded-lg bg-black/40 border border-purple-500/10 text-xs font-mono text-white/50 leading-relaxed whitespace-pre-wrap">
+                      {analysis.thinking}
+                    </div>
+                  </details>
+                </div>
+              )}
               
               {/* Analysis Factor Badges - show which analysis types were used */}
               {analysis.analysisTypes && analysis.analysisTypes.length > 0 && (
@@ -2591,6 +2612,21 @@ function MarketCard({
               <p className={`text-base ${textColor} opacity-90 leading-relaxed font-light`}>
                 {analysis.reasoning || analysis.analysis || "No analysis available"}
               </p>
+
+              {/* Deep Reasoning (Thinking) Toggle */}
+              {analysis.thinking && (
+                <div className="mt-4 pt-4 border-t border-white/5">
+                  <details className="group">
+                    <summary className="flex items-center gap-2 text-xs font-light text-purple-400 cursor-pointer hover:text-purple-300 transition-colors list-none">
+                      <span className="group-open:rotate-180 transition-transform">▼</span>
+                      <span>View Deep Reasoning Process</span>
+                    </summary>
+                    <div className="mt-3 p-4 rounded-lg bg-black/40 border border-purple-500/10 text-xs font-mono text-white/50 leading-relaxed whitespace-pre-wrap">
+                      {analysis.thinking}
+                    </div>
+                  </details>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}

@@ -236,6 +236,7 @@ export async function POST(request) {
       eventDate: body.eventDate, // ← Dynamic TTL based on event timing
       mode,
       analysisTypes, // ← Finance analysis types (fundamental, technical, sentiment)
+      includeThinking: true, // ← Enable deep reasoning for visualizer
     });
 
     // Format weather conditions for display
@@ -257,6 +258,7 @@ export async function POST(request) {
         confidence: analysis.assessment?.confidence || 'LOW'
       },
       reasoning: analysis.analysis || 'Analysis not available',
+      thinking: analysis.thinking, // ← Deep reasoning for visualizer
       key_factors: analysis.key_factors || [],
       recommended_action: analysis.recommended_action || 'Monitor manually',
       chain_recommendation: analysis.chain_recommendation || 'BOTH',

@@ -254,11 +254,17 @@ Respond with ONLY the JSON object above. Do not include any text before or after
     // Venice may include thinking tags or markdown - clean them
     content = content.trim();
     
-    // Remove thinking tags if present
+    let thinking = null;
+    // Extract thinking tags if present
     if (content.includes('<think>')) {
+      const thinkStart = content.indexOf('<think>');
       const thinkEnd = content.lastIndexOf('</think>');
       if (thinkEnd !== -1) {
-        content = content.substring(thinkEnd + 8).trim();
+        thinking = content.substring(thinkStart + 7, thinkEnd).trim();
+        // Only strip if not requested to keep it
+        if (!options.includeThinking) {
+          content = content.substring(thinkEnd + 8).trim();
+        }
       }
     }
     
@@ -332,6 +338,7 @@ Respond with ONLY the JSON object above. Do not include any text before or after
       chain_recommendation: parsed.chain_recommendation || "BOTH",
       citations: Array.isArray(parsed.citations) ? parsed.citations : [],
       limitations: parsed.limitations || null,
+      thinking: thinking,
     };
   } catch (error) {
     console.error("Venice AI error:", error);
@@ -469,6 +476,7 @@ export async function analyzeWeatherImpactServer(params) {
     isFuturesBet,
     mode = "basic",
     analysisTypes = [], // Finance analysis types: fundamental, technical, sentiment
+    includeThinking = false,
   } = params;
 
   // Auto-detect event type from title if not provided
@@ -804,6 +812,7 @@ ${edgeInfo}
         {
           webSearch: true,
           showThinking: false,
+          includeThinking: includeThinking,
         }
       );
     } catch (primaryError) {
@@ -829,6 +838,7 @@ ${edgeInfo}
           {
             webSearch: true,
             showThinking: false,
+            includeThinking: includeThinking,
           }
         );
       } catch (secondaryError) {
