@@ -1,9 +1,7 @@
 'use client';
 
-import { useState, lazy, Suspense } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-const Scene3D = lazy(() => import('@/components/Scene3D'));
 
 const QUICK_SEARCHES = [
   { label: 'BTC $100k', query: 'Bitcoin $100k June 2026' },
@@ -36,15 +34,16 @@ export default function SearchLanding() {
 
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ background: '#0a0a0f' }}>
-      {/* 3D Scene Background */}
-      <div className="absolute inset-0 z-0 opacity-60">
-        <Suspense fallback={null}>
-          <Scene3D />
-        </Suspense>
+      {/* Animated gradient background — light, no WebGL */}
+      <div className="absolute inset-0 opacity-40">
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900/30 via-transparent to-pink-900/30" />
+        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-float-delayed" />
       </div>
 
-      {/* Overlay gradient for readability */}
-      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+      {/* Decorative grid */}
+      <div className="absolute inset-0 opacity-[0.03]"
+        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
