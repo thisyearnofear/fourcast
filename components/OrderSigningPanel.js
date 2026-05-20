@@ -282,9 +282,19 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                 </span>
               </div>
               {isConnected && isCorrectChain && userBalance < estimatedCost && (
-                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
-                  <span className="text-red-400">⚠️</span>
-                  <span className={`text-xs text-red-400`}>Insufficient balance</span>
+                <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/10">
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-400">⚠️</span>
+                    <span className={`text-xs text-red-400`}>Insufficient balance</span>
+                  </div>
+                  <button
+                    onClick={() => window.open('https://app.uniswap.org/swap?outputCurrency=0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', '_blank')}
+                    className={`w-full py-2 rounded-lg font-light text-xs transition-all border ${isNight 
+                      ? 'bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 text-blue-300'
+                      : 'bg-blue-400/20 hover:bg-blue-400/30 border-blue-500/30 text-blue-900'}`}
+                  >
+                    Quick Swap ETH to USDC ↗
+                  </button>
                 </div>
               )}
             </div>
