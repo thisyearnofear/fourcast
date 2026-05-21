@@ -11,3 +11,4 @@ export { aiService } from './aiService.server';
 export { synthService } from './synthService';
 export { tradingService } from './tradingService';
 export { analyzePathDependentMarket, detectPathDependentMarket } from './pathDependentService';
+export { calculateKellySizing } from './aiService.server';

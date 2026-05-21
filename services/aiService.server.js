@@ -10,7 +10,7 @@ import { polymarketService } from "./polymarketService.js";
 import { kalshiService } from "./kalshiService.js";
 import { VenueExtractor } from "./venueExtractor.js";
 import { arbitrageService } from "./arbitrageService.js";
-import { saveForecast, wasRecentlyAnalyzed } from "./db.js";
+import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution } from "./db.js";
 import { synthService } from "./synthService.js";
 import { analyzePathDependentMarket, detectPathDependentMarket } from "./pathDependentService.js";
 
@@ -959,6 +959,87 @@ ${edgeInfo}
 }
 
 /**
+ * Calculates position sizing using the calibrated fractional Kelly Criterion.
+ * Factoring in AI probability, market odds, confidence level, and risk tolerance.
+ * Capped at 25% portfolio size.
+ *
+ * @param {number} aiProb - The estimated AI probability (0 to 1)
+ * @param {number} marketYesOdds - The current market YES price (0 to 1)
+ * @param {number} riskTolerance - Fractional Kelly scaling parameter (0 to 1)
+ * @param {string} confidence - AI confidence: 'HIGH', 'MEDIUM', 'LOW'
+ * @param {string} source - Forecast source
+ * @returns {{ sizePct: number, kellyPct: number, edge: number, direction: string, actionable: boolean }}
+ */
+export function calculateKellySizing(aiProb, marketYesOdds, riskTolerance = 0.5, confidence = "LOW", source = "llm") {
+  if (aiProb == null || marketYesOdds == null || marketYesOdds <= 0 || marketYesOdds >= 1) {
+    return { sizePct: 0, kellyPct: 0, edge: 0, direction: "NO TRADE", actionable: false };
+  }
+
+  const edge = aiProb - marketYesOdds;
+  const absEdge = Math.abs(edge);
+  
+  // Edge threshold for trade actionability is 5%
+  const actionable = absEdge > 0.05;
+  const direction = edge > 0 ? "BUY YES" : "BUY NO";
+
+  if (!actionable) {
+    return { sizePct: 0, kellyPct: 0, edge, direction: "NO TRADE", actionable: false };
+  }
+
+  // Define probability and odds for the trade direction
+  let p, odds;
+  if (direction === "BUY YES") {
+    p = aiProb;
+    odds = marketYesOdds;
+  } else {
+    p = 1 - aiProb;
+    odds = 1 - marketYesOdds;
+  }
+
+  // Net odds: b = (1 - price) / price
+  const b = (1 - odds) / odds;
+  if (b <= 0) {
+    return { sizePct: 0, kellyPct: 0, edge, direction, actionable: true };
+  }
+
+  const q = 1 - p;
+  // Standard Kelly Formula: f* = (p * b - q) / b
+  const kellyPct = (p * b - q) / b;
+
+  if (kellyPct <= 0) {
+    return { sizePct: 0, kellyPct: 0, edge, direction, actionable: true };
+  }
+
+  // Calibrate based on AI Confidence Level (highly aligned with risk calibration)
+  let confidenceMultiplier = 0.25; // LOW confidence
+  if (confidence === "HIGH") {
+    confidenceMultiplier = 1.0;
+  } else if (confidence === "MEDIUM") {
+    confidenceMultiplier = 0.5;
+  }
+
+  // SynthData ML models get a slight credibility boost
+  if (source.includes("synthdata")) {
+    confidenceMultiplier = Math.min(1.0, confidenceMultiplier * 1.2);
+  }
+
+  // Fractional Kelly factor: scaled by riskTolerance and confidence multiplier
+  // Standard fractional Kelly divisor is 4 (quarter Kelly), scaled by riskTolerance
+  const fractionalKelly = kellyPct * (riskTolerance * 0.25) * confidenceMultiplier;
+
+  // Cap size at 25% (0.25) to prevent over-allocation
+  const sizePct = Math.min(0.25, Math.round(fractionalKelly * 100) / 100);
+
+  return {
+    sizePct,
+    kellyPct: Math.round(kellyPct * 1000) / 1000,
+    edge: Math.round(edge * 1000) / 1000,
+    direction,
+    actionable: sizePct > 0
+  };
+}
+
+/**
  * Autonomous agent loop that discovers, filters, forecasts, and detects edge
  * across prediction markets. Yields step-by-step updates for SSE streaming.
  *
@@ -1473,10 +1554,8 @@ Output ONLY valid JSON:
     .filter((f) => f.aiProbability != null)
     .map((f) => {
       const marketYes = f.currentOdds?.yes ?? 0.5;
-      const edge = f.aiProbability - marketYes;
-      const absEdge = Math.abs(edge);
-      const actionable = absEdge > 0.05;
-      const direction = edge > 0 ? "BUY YES" : "BUY NO";
+      const kelly = calculateKellySizing(f.aiProbability, marketYes, riskTolerance, f.confidence, f.source || "llm");
+      const absEdge = Math.abs(kelly.edge);
 
       // Calibration guardrail: relax threshold for SynthData-backed forecasts
       // SynthData uses 200+ ML models so large edges are more credible
@@ -1486,23 +1565,18 @@ Output ONLY valid JSON:
         adjustedConfidence = "LOW";
       }
 
-      // Size recommendation: edge magnitude * risk tolerance, capped at 0.25
-      // SynthData-backed forecasts get a slight sizing boost
-      const sizeMultiplier = f.source === "synthdata+llm" ? 2.5 : 2;
-      const sizeRaw = absEdge * riskTolerance * sizeMultiplier;
-      const sizePct = Math.min(0.25, Math.round(sizeRaw * 100) / 100);
-
       return {
         marketID: f.marketID,
         title: f.title,
         platform: f.platform,
         aiProbability: f.aiProbability,
         marketOdds: marketYes,
-        edge: Math.round(edge * 1000) / 1000,
-        absEdge: Math.round(absEdge * 1000) / 1000,
-        actionable,
-        direction: actionable ? direction : "NO TRADE",
-        sizePct: actionable ? sizePct : 0,
+        edge: kelly.edge,
+        absEdge,
+        actionable: kelly.actionable,
+        direction: kelly.direction,
+        sizePct: kelly.sizePct,
+        kellyPct: kelly.kellyPct,
         confidence: adjustedConfidence,
         originalConfidence: f.confidence,
         calibrationWarning: absEdge > edgeThreshold ? `Edge >${(edgeThreshold * 100).toFixed(0)}% - high uncertainty` : null,
@@ -1540,6 +1614,78 @@ Output ONLY valid JSON:
     status: "complete",
     data: { recommendations },
   };
+
+  // ── Autopilot: Execute actionable trades ──────────────────────────────
+  if (config.autopilot && process.env.POLYMARKET_PRIVATE_KEY) {
+    yield { step: "execute", status: "running", message: "Autopilot executing trades..." };
+
+    const privateKey = process.env.POLYMARKET_PRIVATE_KEY;
+    const executedTrades = [];
+
+    for (const rec of recommendations) {
+      if (!rec.actionable || rec.sizePct <= 0) continue;
+
+      yield {
+        step: "execute",
+        status: "running",
+        market: { title: rec.title, marketID: rec.marketID },
+        message: `Executing ${rec.direction} ${(rec.sizePct * 100).toFixed(1)}% at ${rec.marketOdds}`,
+      };
+
+      try {
+        const result = await polymarketService.executeServerOrder(
+          {
+            tokenID: rec.marketID,
+            price: rec.marketOdds.toString(),
+            side: rec.direction === "BUY YES" ? "BUY" : "SELL",
+            size: (rec.sizePct * 100).toFixed(2),
+            tickSize: "0.01",
+          },
+          privateKey
+        );
+
+        const execResult = {
+          success: result.success,
+          orderID: result.orderID,
+          error: result.error,
+          sizePct: rec.sizePct,
+          kellyPct: rec.kellyPct,
+          direction: rec.direction,
+        };
+
+        if (result.success) {
+          console.log(`✅ Autopilot: Executed ${rec.direction} on ${rec.title}`);
+        } else {
+          console.warn(`⚠️ Autopilot: Failed ${rec.direction} on ${rec.title}: ${result.error}`);
+        }
+
+        executedTrades.push({ ...rec, execution: execResult });
+
+        // Save execution result to DB
+        try {
+          await updateForecastExecution(
+            `forecast-${rec.marketID}-${loopTimestamp}`,
+            execResult
+          );
+        } catch (dbErr) {
+          console.warn("Autopilot: DB save failed:", dbErr.message);
+        }
+      } catch (execErr) {
+        console.error(`Autopilot: Execution error for ${rec.title}:`, execErr.message);
+        executedTrades.push({ ...rec, execution: { success: false, error: execErr.message } });
+      }
+    }
+
+    yield {
+      step: "execute",
+      status: "complete",
+      data: {
+        executed: executedTrades.filter(t => t.execution?.success).length,
+        failed: executedTrades.filter(t => !t.execution?.success).length,
+        trades: executedTrades,
+      },
+    };
+  }
 }
 
 export function getAIStatus() {

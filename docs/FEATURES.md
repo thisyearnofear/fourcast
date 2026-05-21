@@ -37,6 +37,7 @@
 - **Sports & Events Intelligence** - Weather-aware analysis for sports and event markets
 - **Confidence Scoring** - HIGH/MEDIUM/LOW with calibration
 - **Edge Detection** - Identify mispriced markets (>5% edge)
+- **Kelly Criterion Sizing** - Mathematically optimal fractional Kelly sizing calibrated to wallet balance and AI confidence levels (Pro/Premium feature)
 
 **Supported Assets for ML Forecasts:**
 - Crypto: BTC, ETH, SOL
@@ -48,6 +49,7 @@
 - **Kalshi** - Live odds, order placement
 - **Cross-Platform Arbitrage** - Detect price discrepancies
 - **Unified Arbitrage Execution** — One-click buy on cheap venue, sell on expensive with real-time per-leg status
+- **Autonomous Autopilot Trading** — Programmatic server-side signing and gasless relayer order execution using Polymarket private keys and Builder Program attribution
 - **Telegram Bot (@fourcasterbot)** — /edge commands for AI prediction analysis via messaging
 
 #### On-Chain Signals (Movement Testnet)

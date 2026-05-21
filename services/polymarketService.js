@@ -3,6 +3,7 @@ import axios from 'axios';
 import { MarketTypeDetector } from './marketTypeDetector.js';
 import { MarketDataValidator, WeatherDataValidator } from './validators/index.js';
 import { VenueExtractor } from './venueExtractor.js';
+import { Wallet } from 'ethers';
 import { weatherService } from './weatherService.js';
 
 class PolymarketService {
@@ -2578,6 +2579,102 @@ class PolymarketService {
       tokenID: order.tokenID,
       tradingMetadata: marketData?.tradingMetadata
     };
+  }
+
+  /**
+   * Execute a trade server-side using a private key and the Polymarket Builder SDK
+   * Handles EIP-712 order signing and submission with builder attribution
+   */
+  async executeServerOrder(orderData, privateKey) {
+    try {
+      const { tokenID, price, side, size, tickSize } = orderData;
+      if (!privateKey) {
+        throw new Error('Private key is required for server-side order execution');
+      }
+
+      const signer = new Wallet(privateKey);
+
+      // Initialize BuilderConfig if builder credentials are configured
+      let builderConfig;
+      const { BuilderConfig } = await import('@polymarket/builder-signing-sdk');
+      const builderKey = process.env.POLY_BUILDER_API_KEY;
+      const builderSecret = process.env.POLY_BUILDER_SECRET;
+      const builderPassphrase = process.env.POLY_BUILDER_PASSPHRASE;
+
+      if (builderKey && builderSecret && builderPassphrase) {
+        builderConfig = new BuilderConfig({
+          localBuilderCreds: {
+            key: builderKey,
+            secret: builderSecret,
+            passphrase: builderPassphrase,
+          },
+        });
+        console.log('Attributing order to Builder Program API Key:', builderKey);
+      } else {
+        console.warn('Builder credentials not configured. Order will not be attributed.');
+      }
+
+      // Import ClobClient dynamically to prevent any initialization race conditions
+      const { ClobClient } = await import('@polymarket/clob-client');
+
+      // Initialize temp client without credentials to derive/create them
+      const tempClient = new ClobClient(
+        this.clobBaseURL,
+        137, // Polygon mainnet
+        signer,
+        undefined,
+        0, // signatureType: EOA
+        undefined, // funderAddress
+        undefined, // geoBlockToken
+        true, // useServerTime
+        builderConfig
+      );
+
+      console.log('Deriving L1 API credentials for address:', signer.address);
+      const creds = await tempClient.createOrDeriveApiKey();
+
+      // Initialize fully-authenticated client
+      const client = new ClobClient(
+        this.clobBaseURL,
+        137,
+        signer,
+        creds,
+        0,
+        undefined,
+        undefined,
+        true,
+        builderConfig
+      );
+
+      console.log(`Placing order: ${side} ${size} shares at ${price} for token ${tokenID}`);
+
+      // Create and post the order
+      const response = await client.createAndPostOrder(
+        {
+          tokenID,
+          price: parseFloat(price),
+          size: parseFloat(size),
+          side,
+        },
+        {
+          tickSize: tickSize || '0.01',
+          negRisk: false,
+        }
+      );
+
+      console.log('Order executed successfully:', response);
+      return {
+        success: true,
+        orderID: response.orderID || response.orderId,
+        response,
+      };
+    } catch (error) {
+      console.error('Server-side order execution failed:', error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
   }
 
   /**

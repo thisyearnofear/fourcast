@@ -127,12 +127,20 @@ const initSql = `
     actual_outcome REAL,
     brier_score REAL,
     resolution_time INTEGER,
+    -- Autopilot execution tracking
+    autopilot_executed BOOLEAN DEFAULT 0,
+    execution_status TEXT,
+    execution_response TEXT,
+    size_pct REAL,
+    kelly_pct REAL,
+    direction TEXT,
     created_at INTEGER DEFAULT (strftime('%s', 'now'))
   );
 
   CREATE INDEX IF NOT EXISTS idx_forecasts_market_id ON agent_forecasts(market_id);
   CREATE INDEX IF NOT EXISTS idx_forecasts_timestamp ON agent_forecasts(timestamp DESC);
   CREATE INDEX IF NOT EXISTS idx_forecasts_resolved ON agent_forecasts(resolved);
+  CREATE INDEX IF NOT EXISTS idx_forecasts_autopilot ON agent_forecasts(autopilot_executed);
 
   CREATE TABLE IF NOT EXISTS agent_runs (
     id TEXT PRIMARY KEY,
@@ -147,10 +155,40 @@ const initSql = `
   CREATE INDEX IF NOT EXISTS idx_agent_runs_timestamp ON agent_runs(timestamp DESC);
 `;
 
+// ── Migration: Add autopilot columns to agent_forecasts (safe for existing DBs) ──
+const migrationSql = `
+  ALTER TABLE agent_forecasts ADD COLUMN autopilot_executed BOOLEAN DEFAULT 0;
+  ALTER TABLE agent_forecasts ADD COLUMN execution_status TEXT;
+  ALTER TABLE agent_forecasts ADD COLUMN execution_response TEXT;
+  ALTER TABLE agent_forecasts ADD COLUMN size_pct REAL;
+  ALTER TABLE agent_forecasts ADD COLUMN kelly_pct REAL;
+  ALTER TABLE agent_forecasts ADD COLUMN direction TEXT;
+`;
+
 // Initialize tables
+const runMigrations = () => {
+  const migrationStmts = migrationSql.split(';').filter(s => s.trim());
+  for (const stmt of migrationStmts) {
+    if (stmt.trim()) {
+      try {
+        if (isTurso) {
+          // Turso handled asynchronously below
+        } else {
+          db.exec(stmt.trim());
+        }
+      } catch (err) {
+        if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
+          console.warn('Migration warning:', err.message);
+        }
+      }
+    }
+  }
+};
+
 if (isTurso) {
   // Split SQL statements for Turso (it doesn't support multiple statements at once)
   const statements = initSql.split(';').filter(s => s.trim());
+  const migrationStatements = migrationSql.split(';').filter(s => s.trim());
   (async () => {
     for (const stmt of statements) {
       if (stmt.trim()) {
@@ -163,9 +201,22 @@ if (isTurso) {
         }
       }
     }
+    // Run migrations
+    for (const stmt of migrationStatements) {
+      if (stmt.trim()) {
+        try {
+          await db.execute(stmt.trim());
+        } catch (err) {
+          if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
+            console.warn('Migration failed:', err.message);
+          }
+        }
+      }
+    }
   })();
 } else {
   db.exec(initSql);
+  runMigrations();
 }
 
 // Database operation helpers
@@ -635,6 +686,36 @@ export async function wasRecentlyAnalyzed(marketId, hoursAgo = 6) {
   } catch (error) {
     console.error('Failed to check recent analysis:', error);
     return false;
+  }
+}
+
+/**
+ * Update a forecast record with autopilot execution result
+ */
+export async function updateForecastExecution(forecastId, execution) {
+  try {
+    await execute(
+      `UPDATE agent_forecasts 
+       SET autopilot_executed = 1,
+           execution_status = ?,
+           execution_response = ?,
+           size_pct = ?,
+           kelly_pct = ?,
+           direction = ?
+       WHERE id = ?`,
+      [
+        execution.success ? 'SUCCESS' : 'FAILED',
+        execution.orderID || execution.error || '',
+        execution.sizePct || null,
+        execution.kellyPct || null,
+        execution.direction || null,
+        forecastId
+      ]
+    );
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to update forecast execution:', error);
+    return { success: false, error: error.message };
   }
 }
 

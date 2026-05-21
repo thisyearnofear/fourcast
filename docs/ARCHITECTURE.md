@@ -251,12 +251,14 @@ struct Signal {
 
 ### Autonomous Forecasting Loop
 
-The agent scans markets, filters candidates, generates forecasts, and detects arbitrage:
+The agent scans markets, filters candidates, generates forecasts, detects arbitrage, and manages risk:
 
 1. **Discover**: Scan Polymarket/Kalshi for markets
 2. **Filter**: Remove recently analyzed (<6hrs), low-volume markets
-3. **Forecast**: Generate AI predictions with confidence scores
-4. **Arbitrage**: Detect cross-platform price discrepancies
+3. **Forecast**: Generate AI predictions using Venice LLMs and SynthData ML percentiles
+4. **Sizing (Kelly Criterion)**: Calculate mathematically optimal fractional Kelly sizing ($p \cdot b - q)/b$ scaled by confidence and risk tolerance
+5. **Arbitrage**: Detect cross-platform price discrepancies
+6. **Autopilot Execution**: (Optional) Programmatically sign and submit trades using a server-side private key with Polymarket Builder attribution headers
 
 ### Track Record Infrastructure
 
