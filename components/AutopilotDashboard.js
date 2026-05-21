@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const PAGE_SIZE = 10;
+const MAX_LIVE_STEPS = 50;
 
 export function AutopilotDashboard({ isNight = false }) {
   const [executions, setExecutions] = useState([]);
@@ -10,8 +11,22 @@ export function AutopilotDashboard({ isNight = false }) {
   const [error, setError] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  // Live SSE agent state
+  const [agentRunning, setAgentRunning] = useState(false);
+  const [liveSteps, setLiveSteps] = useState([]);
+  const abortRef = useRef(null);
+  const [showConfig, setShowConfig] = useState(false);
+  const [agentConfig, setAgentConfig] = useState({
+    maxMarkets: 5,
+    minVolume: 10000,
+    riskTolerance: 0.5,
+  });
+  const liveFeedRef = useRef(null);
+
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
+  const mutedBg = isNight ? 'bg-white/5' : 'bg-black/5';
+  const cardBg = isNight ? 'bg-slate-900/60' : 'bg-white/60';
 
   const fetchExecutions = useCallback(async () => {
     setLoading(true);
@@ -35,6 +50,98 @@ export function AutopilotDashboard({ isNight = false }) {
     fetchExecutions();
   }, [fetchExecutions]);
 
+  // Auto-scroll live feed
+  useEffect(() => {
+    if (liveFeedRef.current) {
+      liveFeedRef.current.scrollTop = liveFeedRef.current.scrollHeight;
+    }
+  }, [liveSteps]);
+
+  // ── Run agent with SSE streaming ──────────────────────────────────────
+  const runAgent = useCallback(async () => {
+    setAgentRunning(true);
+    setLiveSteps([]);
+    setError(null);
+
+    const abortController = new AbortController();
+    abortRef.current = abortController;
+
+    try {
+      const response = await fetch('/api/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...agentConfig,
+          autopilot: true,
+          categories: ['all'],
+        }),
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || `Agent failed (${response.status})`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const update = JSON.parse(line);
+            setLiveSteps(prev => {
+              const next = [...prev, { ...update, _ts: Date.now() }];
+              return next.length > MAX_LIVE_STEPS
+                ? next.slice(next.length - MAX_LIVE_STEPS)
+                : next;
+            });
+
+            // Auto-refresh execution history when agent completes
+            if (update.step === 'execute' && update.status === 'complete') {
+              fetchExecutions();
+            }
+            if (update.step === 'edge' && update.status === 'complete' && update.message) {
+              // Also refresh if no autopilot run but edge complete
+              fetchExecutions();
+            }
+            if (update.step === 'error') {
+              setError(update.message);
+            }
+          } catch {
+            // skip malformed lines
+          }
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setError(err.message);
+      }
+    } finally {
+      setAgentRunning(false);
+      abortRef.current = null;
+      // Final refresh of execution history
+      fetchExecutions();
+    }
+  }, [agentConfig, fetchExecutions]);
+
+  const stopAgent = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    setAgentRunning(false);
+  }, []);
+
   // Compute stats
   const totalTrades = executions.length;
   const successfulTrades = executions.filter(e => e.execution_status === 'SUCCESS').length;
@@ -48,6 +155,16 @@ export function AutopilotDashboard({ isNight = false }) {
   const visibleExecutions = executions.slice(0, visibleCount);
   const hasMore = visibleCount < executions.length;
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+    };
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -57,22 +174,146 @@ export function AutopilotDashboard({ isNight = false }) {
             🤖 Autopilot
           </h2>
           <p className={`text-xs ${subtleText} mt-1`}>
-            Autonomous trade execution history — Kelly-sized orders placed by the agent
+            Live agent loop progress and autonomous trade execution history
           </p>
         </div>
-        <button
-          onClick={fetchExecutions}
-          disabled={loading}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-            isNight
-              ? 'bg-white/10 hover:bg-white/20 text-white border-white/20'
-              : 'bg-black/10 hover:bg-black/20 text-black border-black/20'
-          } disabled:opacity-40`}
-          aria-label="Refresh execution history"
-        >
-          {loading ? '⟳' : '↻'} Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Config Toggle */}
+          <button
+            onClick={() => setShowConfig(!showConfig)}
+            className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+              isNight
+                ? 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
+                : 'bg-black/5 hover:bg-black/10 text-black/70 border-black/10'
+            }`}
+            aria-label="Toggle agent config"
+          >
+            ⚙
+          </button>
+          {/* Refresh */}
+          <button
+            onClick={fetchExecutions}
+            disabled={loading || agentRunning}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+              isNight
+                ? 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+                : 'bg-black/10 hover:bg-black/20 text-black border-black/20'
+            } disabled:opacity-40`}
+            aria-label="Refresh execution history"
+          >
+            {loading ? '⟳' : '↻'}
+          </button>
+          {/* Run / Stop */}
+          {agentRunning ? (
+            <button
+              onClick={stopAgent}
+              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30"
+              aria-label="Stop agent"
+            >
+              ⏹ Stop
+            </button>
+          ) : (
+            <button
+              onClick={runAgent}
+              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/30"
+              aria-label="Run agent"
+            >
+              ▶ Run Agent
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Config Panel */}
+      {showConfig && (
+        <div className={`glass-subtle rounded-xl p-4 space-y-3 border ${isNight ? 'border-cyan-500/20' : 'border-cyan-200'}`}>
+          <div className="flex items-center justify-between">
+            <h3 className={`text-xs font-medium ${textColor}`}>Agent Configuration</h3>
+            <button
+              onClick={() => setShowConfig(false)}
+              className={`text-xs ${subtleText} hover:opacity-80`}
+            >
+              ✕
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className={`text-[10px] ${subtleText} block mb-1`}>Max Markets</label>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={agentConfig.maxMarkets}
+                onChange={e => setAgentConfig(prev => ({ ...prev, maxMarkets: parseInt(e.target.value) || 5 }))}
+                className={`w-full px-2 py-1.5 rounded-lg text-xs border ${
+                  isNight ? 'bg-white/5 border-white/10 text-white' : 'bg-black/5 border-black/10 text-black'
+                }`}
+              />
+            </div>
+            <div>
+              <label className={`text-[10px] ${subtleText} block mb-1`}>Min Volume</label>
+              <input
+                type="number"
+                min={1000}
+                step={1000}
+                value={agentConfig.minVolume}
+                onChange={e => setAgentConfig(prev => ({ ...prev, minVolume: parseInt(e.target.value) || 10000 }))}
+                className={`w-full px-2 py-1.5 rounded-lg text-xs border ${
+                  isNight ? 'bg-white/5 border-white/10 text-white' : 'bg-black/5 border-black/10 text-black'
+                }`}
+              />
+            </div>
+            <div>
+              <label className={`text-[10px] ${subtleText} block mb-1`}>Risk Tolerance</label>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.1}
+                value={agentConfig.riskTolerance}
+                onChange={e => setAgentConfig(prev => ({ ...prev, riskTolerance: parseFloat(e.target.value) }))}
+                className="w-full accent-emerald-500"
+              />
+              <div className={`text-[10px] ${subtleText} mt-0.5 text-right`}>
+                {(agentConfig.riskTolerance * 100).toFixed(0)}%
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Progress Feed */}
+      {liveSteps.length > 0 && (
+        <div className={`glass-subtle rounded-xl border ${isNight ? 'border-cyan-500/20' : 'border-cyan-200'} overflow-hidden`}>
+          {/* Progress header */}
+          <div className={`flex items-center justify-between px-4 py-2.5 border-b ${isNight ? 'border-white/10' : 'border-black/10'}`}>
+            <div className="flex items-center gap-2">
+              {agentRunning && (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+              )}
+              <h3 className={`text-xs font-medium ${textColor}`}>
+                Live Agent Progress
+              </h3>
+            </div>
+            <span className={`text-[10px] ${subtleText}`}>
+              {liveSteps.length} updates
+            </span>
+          </div>
+
+          {/* Scrollable feed */}
+          <div
+            ref={liveFeedRef}
+            className="overflow-y-auto max-h-[320px] p-2 space-y-1"
+          >
+            {liveSteps.map((step, i) => (
+              <LiveStep key={i} step={step} isNight={isNight} textColor={textColor} subtleText={subtleText} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -108,7 +349,7 @@ export function AutopilotDashboard({ isNight = false }) {
           <div className="text-4xl mb-3 opacity-40">🤖</div>
           <p className={`text-sm ${textColor} opacity-70 mb-1`}>No autopilot trades yet</p>
           <p className={`text-xs ${subtleText}`}>
-            Run the agent with <code className={`px-1 py-0.5 rounded text-[10px] ${isNight ? 'bg-white/10' : 'bg-black/10'}`}>autopilot: true</code> to execute trades automatically
+            Click <strong>Run Agent</strong> above to scan markets and execute trades automatically
           </p>
         </div>
       )}
@@ -129,7 +370,6 @@ export function AutopilotDashboard({ isNight = false }) {
             />
           ))}
 
-          {/* Load More */}
           {hasMore && (
             <button
               onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
@@ -144,6 +384,89 @@ export function AutopilotDashboard({ isNight = false }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Live Step Component ─────────────────────────────────────────────────
+function LiveStep({ step, isNight, textColor, subtleText }) {
+  const { step: stepName, status, message, market, data } = step;
+
+  const isComplete = status === 'complete';
+  const isRunning = status === 'running';
+  const isSkipped = status === 'skipped';
+  const isFailed = status === 'failed';
+
+  // Icon & color
+  let icon, color;
+  if (isFailed) {
+    icon = '❌';
+    color = isNight ? 'text-red-300 border-red-500/30 bg-red-500/10' : 'text-red-700 bg-red-50 border-red-200';
+  } else if (isComplete) {
+    icon = '✅';
+    color = isNight ? 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' : 'text-emerald-700 bg-emerald-50 border-emerald-200';
+  } else if (isSkipped) {
+    icon = '⏭';
+    color = isNight ? 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10' : 'text-yellow-700 bg-yellow-50 border-yellow-200';
+  } else if (isRunning) {
+    icon = '⟳';
+    color = isNight ? 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10' : 'text-cyan-700 bg-cyan-50 border-cyan-200';
+  } else {
+    icon = '•';
+    color = isNight ? 'text-white/50 border-white/10 bg-white/5' : 'text-black/50 border-black/10 bg-black/5';
+  }
+
+  // Step label
+  const stepLabel = stepName?.charAt(0).toUpperCase() + stepName?.slice(1) || 'Update';
+
+  // Market title if available
+  const marketTitle = market?.title || null;
+
+  // Progress info for forecast step
+  const index = step.index;
+  const total = step.total;
+  const progressInfo = index != null && total != null ? `${index + 1}/${total}` : null;
+
+  // Data summary for complete steps
+  let dataSummary = null;
+  if (status === 'complete' && data) {
+    if (data.polymarket != null || data.kalshi != null) {
+      dataSummary = `${data.polymarket || 0} Polymarket, ${data.kalshi || 0} Kalshi`;
+    } else if (data.candidates) {
+      dataSummary = `${data.candidates.length} candidates`;
+    } else if (data.recommendations) {
+      dataSummary = `${data.recommendations.length} recommendations`;
+    } else if (data.executed != null) {
+      dataSummary = `${data.executed} executed, ${data.failed || 0} failed`;
+    }
+  }
+
+  return (
+    <div className={`flex items-start gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors ${color}`}>
+      <span className="flex-shrink-0 w-4 text-center leading-4">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className={`font-medium ${textColor} text-[11px]`}>{stepLabel}</span>
+          {progressInfo && (
+            <span className={`text-[10px] font-mono ${isNight ? 'text-white/40' : 'text-black/40'}`}>
+              [{progressInfo}]
+            </span>
+          )}
+          <span className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'} truncate`}>
+            {isComplete ? 'complete' : isRunning ? 'running…' : isSkipped ? 'skipped' : message || ''}
+          </span>
+        </div>
+        {marketTitle && (
+          <div className={`text-[10px] mt-0.5 truncate ${isNight ? 'text-white/50' : 'text-black/50'}`}>
+            {marketTitle}
+          </div>
+        )}
+        {dataSummary && (
+          <div className={`text-[10px] mt-0.5 font-mono ${isNight ? 'text-white/40' : 'text-black/40'}`}>
+            {dataSummary}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
