@@ -37,11 +37,14 @@ const initSql = `
     id TEXT PRIMARY KEY,
     user_address TEXT NOT NULL,
     market_id TEXT NOT NULL,
+    market_title TEXT,
+    platform TEXT,
     side TEXT NOT NULL,
     entry_price REAL NOT NULL,
     size REAL NOT NULL,
     status TEXT DEFAULT 'OPEN',
     realized_pnl REAL DEFAULT 0,
+    entry_timestamp INTEGER,
     created_at INTEGER DEFAULT (strftime('%s', 'now')),
     updated_at INTEGER DEFAULT (strftime('%s', 'now'))
   );
@@ -163,6 +166,9 @@ const migrationSql = `
   ALTER TABLE agent_forecasts ADD COLUMN size_pct REAL;
   ALTER TABLE agent_forecasts ADD COLUMN kelly_pct REAL;
   ALTER TABLE agent_forecasts ADD COLUMN direction TEXT;
+  ALTER TABLE positions ADD COLUMN market_title TEXT;
+  ALTER TABLE positions ADD COLUMN platform TEXT;
+  ALTER TABLE positions ADD COLUMN entry_timestamp INTEGER;
 `;
 
 // Initialize tables
@@ -270,9 +276,20 @@ async function query(sql, params = []) {
 export async function openPosition(position) {
   try {
     await execute(
-      `INSERT INTO positions (id, user_address, market_id, side, entry_price, size)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [position.id, position.userAddress.toLowerCase(), position.marketId, position.side, position.entryPrice, position.size]
+      `INSERT INTO positions (
+        id, user_address, market_id, market_title, platform, side, entry_price, size, entry_timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        position.id,
+        position.userAddress.toLowerCase(),
+        position.marketId,
+        position.marketTitle || null,
+        position.platform || null,
+        position.side,
+        position.entryPrice,
+        position.size,
+        position.entryTimestamp || Math.floor(Date.now() / 1000),
+      ]
     );
     return { success: true };
   } catch (error) {
@@ -294,11 +311,15 @@ export async function closePosition(positionId, exitPrice, realizedPnl) {
   }
 }
 
-export async function getUserPositions(userAddress) {
+export async function getUserPositions(userAddress, status = 'all') {
   try {
+    const statusFilter = status === 'all' ? '' : 'AND status = ?';
+    const params = status === 'all'
+      ? [userAddress.toLowerCase()]
+      : [userAddress.toLowerCase(), status];
     const rows = await query(
-      `SELECT * FROM positions WHERE user_address = ? ORDER BY created_at DESC`,
-      [userAddress.toLowerCase()]
+      `SELECT * FROM positions WHERE user_address = ? ${statusFilter} ORDER BY created_at DESC`,
+      params
     );
     return { success: true, positions: rows };
   } catch (error) {
@@ -716,6 +737,25 @@ export async function updateForecastExecution(forecastId, execution) {
   } catch (error) {
     console.error('Failed to update forecast execution:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get autopilot execution history from agent_forecasts
+ */
+export async function getAutopilotExecutions(limit = 20) {
+  try {
+    const rows = await query(
+      `SELECT * FROM agent_forecasts 
+       WHERE autopilot_executed = 1
+       ORDER BY timestamp DESC
+       LIMIT ?`,
+      [limit]
+    );
+    return { success: true, executions: rows };
+  } catch (error) {
+    console.error('Failed to get autopilot executions:', error);
+    return { success: false, error: error.message, executions: [] };
   }
 }
 

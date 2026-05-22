@@ -49,6 +49,13 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
       description: "Autonomous trade execution",
       onboardId: "autopilot"
     },
+    { 
+      name: "Positions", 
+      href: "/positions", 
+      icon: "💼",
+      description: "Position management & P&L",
+      onboardId: "positions"
+    },
   ];
 
   // Determine active page
