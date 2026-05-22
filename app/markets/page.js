@@ -13,7 +13,18 @@ import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { CHAINS } from "@/constants/appConstants";
 import { getChainActionGuidance, getRecommendationExplanation } from "@/utils/chainUtils";
-import { ActiveChainIndicator, ChainSelector, SynthShowcase, MarketEdgeScanner, ArbitrageExecutionPanel, AnalysisOptions, useAnalysisOptions, AnalysisConfigModal, EmptyMarketState, UnifiedConnect, PortfolioCard, PricingOverlay, ReasoningVisualizer } from "@/components";
+import { ActiveChainIndicator } from "@/components/ActiveChainIndicator";
+import { ChainSelector } from "@/components/ChainSelector";
+import { SynthShowcase } from "@/components/SynthShowcase";
+import { MarketEdgeScanner } from "@/components/MarketEdgeScanner";
+import { ArbitrageExecutionPanel } from "@/components/ArbitrageExecutionPanel";
+import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
+import AnalysisConfigModal from "@/components/AnalysisConfigModal";
+import EmptyMarketState from "@/components/EmptyMarketState";
+import UnifiedConnect from "@/components/UnifiedConnect";
+import PortfolioCard from "@/components/PortfolioCard";
+import PricingOverlay from "@/components/PricingOverlay";
+import ReasoningVisualizer from "@/components/ReasoningVisualizer";
 import BottomSheet from "@/components/BottomSheet";
 
 export default function MarketsPage() {

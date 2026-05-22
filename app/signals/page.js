@@ -13,7 +13,8 @@ import SignalCard from '@/app/components/signals/SignalCard';
 import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
 import MySignalsTab from '@/app/components/signals/MySignalsTab';
 import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
-import { ActiveChainIndicator, ChainSelector } from '@/components';
+import { ActiveChainIndicator } from '@/components/ActiveChainIndicator';
+import { ChainSelector } from '@/components/ChainSelector';
 import { useToast, ToastContainer } from '@/components/Toast';
 
 export default function SignalsPage() {
