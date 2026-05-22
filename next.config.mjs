@@ -24,6 +24,11 @@ const nextConfig = {
         enforce: true,
       };
     }
+    // Suppress MetaMask SDK's optional React Native dependency warning
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@react-native-async-storage/async-storage': false,
+    };
     return config;
   },
 };

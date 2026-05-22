@@ -169,6 +169,9 @@ const migrationSql = `
   ALTER TABLE positions ADD COLUMN market_title TEXT;
   ALTER TABLE positions ADD COLUMN platform TEXT;
   ALTER TABLE positions ADD COLUMN entry_timestamp INTEGER;
+  ALTER TABLE signals ADD COLUMN outcome TEXT DEFAULT 'PENDING';
+  ALTER TABLE signals ADD COLUMN chain_origin TEXT DEFAULT 'APTOS';
+  ALTER TABLE signals ADD COLUMN resolved_at INTEGER;
 `;
 
 // Initialize tables
