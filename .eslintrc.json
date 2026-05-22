@@ -7,11 +7,11 @@
   },
   "extends": ["eslint:recommended"],
   "parserOptions": {
-    "ecmaVersion": 2021,
+    "ecmaVersion": 2022,
     "sourceType": "module",
     "ecmaFeatures": { "jsx": true }
   },
-  "ignorePatterns": ["node_modules/", "dist/", ".next/", "coverage/"],
+  "ignorePatterns": ["node_modules/", "dist/", ".next/", "coverage/", "lib/", "sdk/", "types/"],
   "rules": {
     "no-unused-vars": [
       "warn",

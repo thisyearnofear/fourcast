@@ -55,7 +55,7 @@ export async function GET() {
   // ── Database ──────────────────────────────────────────────────────────
   let db = { status: 'unknown', latencyMs: 0 };
   try {
-    const { getRedisClient } = await import('../../services/redisService.js');
+    const { getRedisClient } = await import('@/services/redisService.js');
     const redis = await getRedisClient();
     if (redis) {
       const start = Date.now();

@@ -79,10 +79,10 @@ export class MarketDataProcessor {
     // Try to find team names in parentheses or brackets
     const bracketRegex = /[($$](.*?)[$$)]/g;
     const teams = [];
-    let match;
+    let bracketMatch;
     
-    while ((match = bracketRegex.exec(question)) !== null) {
-      const team = match[1].trim();
+    while ((bracketMatch = bracketRegex.exec(question)) !== null) {
+      const team = bracketMatch[1].trim();
       if (team.length > 2 && !teams.includes(team)) {
         teams.push(team);
       }

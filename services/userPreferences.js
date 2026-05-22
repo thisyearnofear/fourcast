@@ -92,6 +92,14 @@ export class UserPreferences {
   }
   
   /**
+   * Enable or disable BYOK mode
+   * ENHANCEMENT: Allows explicit control override
+   */
+  static setBYOKEnabled(enabled) {
+    localStorage.setItem(this.KEYS.BYOK_ENABLED, enabled ? 'true' : 'false');
+  }
+
+  /**
    * Check if BYOK is properly configured
    * ENHANCEMENT: Comprehensive validation
    */
