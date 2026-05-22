@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { UserPreferences } from '../services/userPreferences.js';
 import { AIRouter } from '../services/aiRouter.js';

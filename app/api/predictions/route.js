@@ -2,6 +2,8 @@ import { ethers } from 'ethers'
 import { savePrediction } from '@/services/db'
 import { getChainConfig, getSigner } from '@/services/chainConfig'
 
+export const runtime = 'nodejs';
+
 const RATE_LIMIT = 50
 const WINDOW_MS = 60 * 60 * 1000
 const rateMap = new Map()

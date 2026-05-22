@@ -1,0 +1,344 @@
+'use client';
+
+import { useState } from 'react';
+
+/**
+ * EvidenceBlock
+ *
+ * Reusable provenance display for every AI prediction.
+ * Shows: data sources used (with timestamps), confidence methodology,
+ * counter-signals / "what would change my mind", and a link to
+ * the agent's public track record.
+ *
+ * Usage:
+ * <EvidenceBlock
+ *   signal={signal}
+ *   isNight={isNight}
+ *   textColor={textColor}
+ *   calibrationScore={72}
+ *   agentBrierScore={0.12}
+ * />
+ *
+ * Can be embedded in SignalCard, MySignalsTab, analysis results, etc.
+ */
+export default function EvidenceBlock({
+  signal,
+  isNight = true,
+  textColor = 'text-white',
+  calibrationScore,
+  agentBrierScore,
+  sources,
+  counterSignals,
+  className = '',
+}) {
+  const [sourcesExpanded, setSourcesExpanded] = useState(false);
+  const [trackRecordOpen, setTrackRecordOpen] = useState(false);
+
+  const bg = isNight ? 'bg-white/[0.03]' : 'bg-black/[0.03]';
+  const border = isNight ? 'border-white/[0.06]' : 'border-black/[0.06]';
+  const muted = isNight ? 'opacity-50' : 'opacity-60';
+  const labelColor = isNight ? 'text-white/60' : 'text-black/60';
+
+  // --- Derive sources from signal metadata ---
+  const derivedSources = sources || buildSources(signal);
+
+  // --- Derive counter-signals ---
+  const derivedCounterSignals = counterSignals || buildCounterSignals(signal);
+
+  // --- Confidence methodology ---
+  const confidenceMethod = getConfidenceMethod(signal);
+
+  return (
+    <div className={`rounded-xl ${bg} border ${border} overflow-hidden transition-all ${className}`}>
+      {/* Reputation Spine — always visible */}
+      {(calibrationScore != null || agentBrierScore != null) && (
+        <div className={`px-4 pt-3 pb-2 ${isNight ? 'bg-white/[0.02]' : 'bg-black/[0.02]'}`}>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {/* Calibration gauge */}
+            {calibrationScore != null && (
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`text-[10px] font-medium uppercase tracking-wider ${labelColor}`}>
+                  Calibration
+                </span>
+                {/* Gauge bar */}
+                <div className="relative w-16 h-1.5 rounded-full overflow-hidden bg-white/10">
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
+                      calibrationScore >= 70 ? 'bg-green-400' : calibrationScore >= 50 ? 'bg-yellow-400' : 'bg-red-400'
+                    }`}
+                    style={{ width: `${Math.min(100, Math.max(0, calibrationScore))}%` }}
+                  />
+                </div>
+                <span className={`text-xs font-semibold ${
+                  calibrationScore >= 70 ? 'text-green-400' : calibrationScore >= 50 ? 'text-yellow-400' : 'text-red-400'
+                }`}>
+                  {Math.round(calibrationScore)}%
+                </span>
+              </div>
+            )}
+            {/* Brier score */}
+            {agentBrierScore != null && (
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className={`text-[10px] font-medium uppercase tracking-wider ${labelColor}`}>
+                  Brier
+                </span>
+                <span className={`text-xs font-semibold ${
+                  agentBrierScore < 0.15 ? 'text-green-400' : agentBrierScore < 0.25 ? 'text-yellow-400' : 'text-red-400'
+                }`}>
+                  {agentBrierScore.toFixed(3)}
+                </span>
+                {/* Quality icon */}
+                <span className={`text-[10px] ${muted}`}>
+                  {agentBrierScore < 0.1 ? '★' : agentBrierScore < 0.2 ? '●' : '○'}
+                </span>
+              </div>
+            )}
+            {/* Track Record CTA */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setTrackRecordOpen(!trackRecordOpen);
+              }}
+              className={`ml-auto text-[10px] font-medium tracking-wider px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
+                isNight
+                  ? 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-300'
+                  : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-700'
+              }`}
+            >
+              How has Fourcast done? →
+            </button>
+          </div>
+          {/* Track record dropdown inline */}
+          {trackRecordOpen && (
+            <div className={`mt-2 text-xs ${isNight ? 'bg-white/[0.04]' : 'bg-black/[0.04]'} rounded-lg p-3 space-y-2`}>
+              <p className={`${textColor} ${muted}`}>
+                Fourcast&apos;s agent uses ensemble AI (Venice LLM + SynthData ML) to generate predictions.
+                Performance is tracked retroactively via Brier scores and calibration metrics on resolved markets.
+              </p>
+              <a
+                href="/signals?tab=leaderboard"
+                onClick={(e) => e.stopPropagation()}
+                className={`inline-flex items-center gap-1 font-medium ${
+                  isNight ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-600'
+                } transition-colors`}
+              >
+                View full track record →
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Evidence Header (collapsible) */}
+      <button
+        onClick={() => setSourcesExpanded(!sourcesExpanded)}
+        className={`w-full flex items-center justify-between px-4 py-3 text-xs font-medium ${labelColor} uppercase tracking-wider hover:opacity-80 transition-opacity ${
+          sourcesExpanded ? '' : isNight ? 'border-t border-white/[0.04]' : 'border-t border-black/[0.04]'
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <span>🔬</span>
+          <span>Evidence &amp; Provenance</span>
+        </span>
+        <span className={`transform transition-transform duration-200 ${sourcesExpanded ? 'rotate-180' : ''}`}>
+          ▼
+        </span>
+      </button>
+
+      {sourcesExpanded && (
+        <div className="px-4 pb-4 space-y-4">
+          {/* Data Sources */}
+          {derivedSources.length > 0 && (
+            <div>
+              <p className={`text-[10px] ${labelColor} uppercase tracking-wider mb-2 font-medium`}>
+                Data Sources
+              </p>
+              <div className="space-y-1.5">
+                {derivedSources.map((source, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-center justify-between text-xs px-3 py-2 rounded-lg ${isNight ? 'bg-white/[0.04]' : 'bg-black/[0.04]'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{source.icon}</span>
+                      <span className={`${textColor}`}>{source.label}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {source.subtype && (
+                        <span className={`text-[10px] ${isNight ? 'text-white/30' : 'text-black/30'}`}>
+                          {source.subtype}
+                        </span>
+                      )}
+                      {source.timestamp && (
+                        <span className={`text-[10px] ${isNight ? 'text-white/30' : 'text-black/30'}`}>
+                          {formatRelativeTime(source.timestamp)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Confidence Methodology */}
+          <div>
+            <p className={`text-[10px] ${labelColor} uppercase tracking-wider mb-2 font-medium`}>
+              Confidence Methodology
+            </p>
+            <div className={`text-xs ${textColor} ${isNight ? 'opacity-80' : 'opacity-90'} leading-relaxed px-3 py-2 rounded-lg ${isNight ? 'bg-white/[0.04]' : 'bg-black/[0.04]'}`}>
+              {confidenceMethod}
+            </div>
+          </div>
+
+          {/* Counter-signals: What Would Change My Mind */}
+          {derivedCounterSignals.length > 0 && (
+            <div>
+              <p className={`text-[10px] ${labelColor} uppercase tracking-wider mb-2 font-medium`}>
+                What Would Change This Prediction
+              </p>
+              <div className="space-y-1">
+                {derivedCounterSignals.map((counter, idx) => (
+                  <div key={idx} className="flex items-start gap-2 text-xs">
+                    <span className={`${isNight ? 'text-amber-400/70' : 'text-amber-600/70'} mt-0.5`}>⚡</span>
+                    <span className={`${textColor} ${isNight ? 'opacity-70' : 'opacity-80'}`}>{counter}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- Helper factories ----
+
+function buildSources(signal) {
+  const sources = [];
+
+  // AI reasoning (always present for AI-generated predictions)
+  if (signal.source === 'synthdata+llm' || signal.source === 'llm') {
+    sources.push({
+      icon: '🧠',
+      label: 'Venice AI Multi-Agent Mesh',
+      subtype: signal.source === 'synthdata+llm' ? 'Llama 3.3 70B + SynthData' : 'Llama 3.3 70B',
+      timestamp: signal.timestamp || signal.created_at,
+    });
+  }
+
+  // SynthData ML (if applicable)
+  if (signal.source === 'synthdata+llm' || signal.synth_ml_percentile != null) {
+    sources.push({
+      icon: '📈',
+      label: 'SynthData ML Ensemble',
+      subtype: signal.synth_ml_percentile != null
+        ? `${signal.synth_ml_percentile}th percentile`
+        : '200+ models',
+      timestamp: signal.timestamp,
+    });
+  }
+
+  // Market data
+  if (signal.event_id || signal.market_title) {
+    sources.push({
+      icon: '📊',
+      label: signal.event_id?.startsWith('kalshi') ? 'Kalshi Order Book' : 'Polymarket Order Book',
+      subtype: signal.odds_efficiency === 'INEFFICIENT' ? 'Mispricing detected' : 'Market consensus',
+      timestamp: signal.timestamp,
+    });
+  }
+
+  // Weather data
+  if (signal.venue || signal.market_title?.toLowerCase().includes('weather')) {
+    sources.push({
+      icon: '🌤️',
+      label: 'Open-Meteo Weather API',
+      subtype: signal.venue || 'Local conditions',
+      timestamp: signal.timestamp,
+    });
+  }
+
+  // Market state snapshot (technical transparency)
+  if (signal.market_snapshot_hash) {
+    sources.push({
+      icon: '🔗',
+      label: 'Market State Snapshot',
+      subtype: typeof signal.market_snapshot_hash === 'string'
+        ? signal.market_snapshot_hash.substring(0, 16) + '...'
+        : 'Verified',
+      timestamp: signal.timestamp,
+    });
+  }
+
+  return sources;
+}
+
+function buildCounterSignals(signal) {
+  const counters = [];
+
+  if (signal.confidence === 'HIGH') {
+    counters.push('Sudden shift in market sentiment or liquidity');
+    counters.push('Unexpected macro event (Fed, regulatory, geopolitical)');
+  } else if (signal.confidence === 'MEDIUM') {
+    counters.push('Rapid change in baseline conditions (weather, news)');
+    counters.push('Divergence from historical pattern in similar events');
+  } else {
+    counters.push('High uncertainty — any significant new information could flip this prediction');
+  }
+
+  // Asset-specific counter-signals (only when confidence >= MEDIUM)
+  if (signal.confidence === 'HIGH' || signal.confidence === 'MEDIUM') {
+    const title = signal.market_title?.toLowerCase() || '';
+    if (title.includes('btc') || title.includes('eth') || title.includes('crypto')) {
+      counters.push('Flash crash or abnormal on-chain activity');
+    }
+    if (title.includes('sport') || title.includes('game') || title.includes('match')) {
+      counters.push('Key player injury or lineup change');
+    }
+    if (title.includes('weather') || title.includes('temp') || title.includes('storm')) {
+      counters.push('Sudden meteorological model divergence');
+    }
+  }
+
+  // De-duplicate and limit
+  return [...new Set(counters)].slice(0, 3);
+}
+
+function getConfidenceMethod(signal) {
+  if (!signal || !signal.confidence) {
+    return 'Confidence derived from ensemble signal strength across multiple model outputs.';
+  }
+
+  switch (signal.confidence) {
+    case 'HIGH':
+      return 'Strong cross-model agreement between Venice LLM reasoning and SynthData ML ensemble. ' +
+        'Edge exceeds minimum threshold with high odds-efficiency. ' +
+        (signal.source === 'synthdata+llm'
+          ? 'SynthData ML percentiles reinforce the directional conviction.'
+          : '');
+    case 'MEDIUM':
+      return 'Moderate alignment between AI reasoning and market data. ' +
+        'Venice LLM identifies a directional bias but SynthData ML shows mixed signals. ' +
+        'Odds efficiency suggests partial mispricing.';
+    case 'LOW':
+      return 'Weak or conflicting signals across data sources. ' +
+        'Either market is highly efficient (no clear edge) or AI models lack sufficient ' +
+        'training data for this specific scenario. Low-conviction signals are candid about uncertainty.';
+    default:
+      return 'Confidence derived from ensemble signal strength across multiple model outputs.';
+  }
+}
+
+function formatRelativeTime(timestamp) {
+  if (!timestamp) return '';
+  const now = Math.floor(Date.now() / 1000);
+  const diff = now - (typeof timestamp === 'number' ? timestamp : parseInt(timestamp));
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}

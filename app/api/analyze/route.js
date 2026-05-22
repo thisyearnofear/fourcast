@@ -4,6 +4,8 @@ import { polymarketService } from '@/services/polymarketService';
 import { kalshiService } from '@/services/kalshiService';
 
 // Simple API auth for bot/external access
+export const runtime = 'nodejs';
+
 const BOT_API_SECRET = process.env.BOT_API_SECRET || '';
 
 function isAuthorized(request) {

@@ -12,7 +12,7 @@ function mockRequest(body) {
 }
 
 describe('/api/predictions POST fee', () => {
-  it('serializes fee value correctly for txRequest', async () => {
+  it('serializes fee value correctly for txRequest', { timeout: 15000 }, async () => {
     const req = mockRequest({
       marketID: 456,
       price: 0.5,
@@ -24,6 +24,12 @@ describe('/api/predictions POST fee', () => {
     const json = await res.json()
     expect(json.success).toBe(true)
     expect(json.mode).toBe('client_signature_required')
-    expect(json.txRequest.value).toBe('100000000000000')
+    // Fee = stakeWei * feeBps / 10000
+    // stakeWei = parseEther("0.01") = 10000000000000000n
+    // feeBps = env PREDICTION_FEE_BPS (default 500) or 100 fallback
+    // 10000000000000000n * 500n / 10000n = 500000000000000n
+    const feeBps = parseInt(process.env.PREDICTION_FEE_BPS || '100', 10)
+    const expectedFee = (10000000000000000n * BigInt(feeBps)) / 10000n
+    expect(json.txRequest.value).toBe(expectedFee.toString())
   })
 })

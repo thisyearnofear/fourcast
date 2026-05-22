@@ -14,6 +14,8 @@
 
 import { handleTelegramUpdate } from '@/services/telegramBot';
 
+export const runtime = 'nodejs';
+
 export async function POST(request) {
   try {
     const update = await request.json();

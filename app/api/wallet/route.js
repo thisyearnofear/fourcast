@@ -2,6 +2,8 @@ import { ethers } from 'ethers';
 import { getChainConfig, getProvider } from '@/services/chainConfig';
 
 // ERC20 ABI for Balance Checking
+export const runtime = 'nodejs';
+
 const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function decimals() view returns (uint8)"

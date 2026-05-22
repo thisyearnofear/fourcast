@@ -10,6 +10,8 @@ import { builderService } from '@/services/builderService';
  * GET /api/builder
  * Fetch all builder stats (volume, leaderboard, configuration)
  */
+export const runtime = 'nodejs';
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action') || 'stats';

@@ -18,6 +18,8 @@ import { weatherService } from '@/services/weatherService';
  * @param {string} signature - X-Neynar-Signature header
  * @returns {boolean}
  */
+export const runtime = 'nodejs';
+
 const verifyWebhookSignature = (payload, signature) => {
   const secret = process.env.NEYNAR_WEBHOOK_SECRET;
   if (!secret) {

@@ -9,6 +9,8 @@
 
 import { getUserStats, getUserRanking, getUserPredictionHistory } from '@/services/reputationService.js';
 
+export const runtime = 'nodejs';
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);

@@ -140,3 +140,5 @@ cache/
 config.yaml
 # CLI binaries
 bin/
+.blackboxcli/
+.antigravitycli/

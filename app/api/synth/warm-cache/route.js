@@ -6,6 +6,8 @@ import { synthService } from '@/services/synthService';
  * Warm Synth cache for popular assets
  * Can be called on app startup or via cron
  */
+export const runtime = 'nodejs';
+
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));

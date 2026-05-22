@@ -5,11 +5,8 @@ import PageNav, { HomeLink } from "@/app/components/PageNav";
 import Scene3D from "@/components/Scene3D";
 import PositionsDashboard from "@/components/PositionsDashboard";
 import { weatherService } from "@/services/weatherService";
-import dynamic from "next/dynamic";
-
-const WalletConnect = dynamic(() => import("@/app/components/WalletConnect"), {
-  ssr: false,
-});
+import WalletConnect from "@/app/components/WalletConnect";
+import NarrativeSteps from "@/components/NarrativeSteps";
 
 export default function PositionsPage() {
   const [isNight, setIsNight] = useState(() => {
@@ -75,15 +72,16 @@ export default function PositionsPage() {
       <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
         {/* Header */}
         <header className={`sticky top-0 z-50 border-b ${cardBgColor} backdrop-blur-md`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
-            <div>
-              <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
-                Positions
-              </h1>
-              <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                Track and manage your open and closed trading positions
-              </p>
-            </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">          <div>
+                            <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
+                                You
+                            </h1>
+                            <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
+                                Your positions, reputation, and performance across every market
+                            </p>
+                            {/* Narrative step — step 4: Get Scored */}
+                            <NarrativeSteps currentStep="scored" isNight={isNight} className="mt-3" />
+                        </div>
             <div className="flex items-center space-x-3">
               <PageNav currentPage="Positions" isNight={isNight} />
               <WalletConnect isNight={isNight} />

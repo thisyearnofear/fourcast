@@ -1,6 +1,8 @@
 import { runAgentLoop } from '@/services/aiService.server';
 import { saveAgentRun } from '@/services/db';
 
+export const runtime = 'nodejs';
+
 const agentRateLimit = new Map();
 const AGENT_RATE_LIMIT = 3; // 3 agent runs per hour
 const AGENT_WINDOW = 60 * 60 * 1000;

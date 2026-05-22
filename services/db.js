@@ -1,9 +1,15 @@
 // Database service for prediction history and analytics
 // Uses Turso (LibSQL) for production, SQLite for local development
+//
+// NOTE: Schema changes MUST go through migrations/ directory.
+// See migrations/0001_init.sql, 0002_*.sql, etc.
+// DO NOT add inline ALTER TABLE statements here.
 
 import { createClient } from '@libsql/client';
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
 
 let db;
 let isTurso = false;
@@ -31,200 +37,161 @@ if (process.env.TURSO_CONNECTION_URL && process.env.TURSO_AUTH_TOKEN) {
   console.log('Using local SQLite database');
 }
 
-// Create tables
-const initSql = `
-  CREATE TABLE IF NOT EXISTS positions (
-    id TEXT PRIMARY KEY,
-    user_address TEXT NOT NULL,
-    market_id TEXT NOT NULL,
-    market_title TEXT,
-    platform TEXT,
-    side TEXT NOT NULL,
-    entry_price REAL NOT NULL,
-    size REAL NOT NULL,
-    status TEXT DEFAULT 'OPEN',
-    realized_pnl REAL DEFAULT 0,
-    entry_timestamp INTEGER,
-    created_at INTEGER DEFAULT (strftime('%s', 'now')),
-    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-  );
+// ─────────────────────────────────────────────────────────────
+// Migration System
+// ─────────────────────────────────────────────────────────────
 
-  CREATE INDEX IF NOT EXISTS idx_positions_user ON positions(user_address);
-  CREATE INDEX IF NOT EXISTS idx_positions_market ON positions(market_id);
+// Calculate SHA256 hash of file content
+function getFileHash(content) {
+  return crypto.createHash('sha256').update(content).digest('hex').substring(0, 16);
+}
 
-  CREATE TABLE IF NOT EXISTS predictions (
-    id TEXT PRIMARY KEY,
-    user_address TEXT NOT NULL,
-    market_id TEXT NOT NULL,
-    market_title TEXT,
-    side TEXT NOT NULL,
-    stake_wei TEXT NOT NULL,
-    odds_bps INTEGER NOT NULL,
-    chain_id INTEGER NOT NULL,
-    tx_hash TEXT,
-    metadata_uri TEXT,
-    timestamp INTEGER NOT NULL,
-    created_at INTEGER DEFAULT (strftime('%s', 'now'))
-  );
+// Get migration files sorted by version
+function getMigrationFiles(migrationsDir) {
+  if (!fs.existsSync(migrationsDir)) return [];
+  
+  return fs.readdirSync(migrationsDir)
+    .filter(f => f.endsWith('.sql'))
+    .filter(f => /^\d{4}_/.test(f))
+    .sort()
+    .map(f => ({
+      filename: f,
+      filepath: path.join(migrationsDir, f),
+      version: parseInt(f.split('_')[0], 10),
+      name: f.replace(/^\d{4}_/, '').replace('.sql', ''),
+    }));
+}
 
-  CREATE INDEX IF NOT EXISTS idx_user_address ON predictions(user_address);
-  CREATE INDEX IF NOT EXISTS idx_market_id ON predictions(market_id);
-  CREATE INDEX IF NOT EXISTS idx_chain_id ON predictions(chain_id);
-  CREATE INDEX IF NOT EXISTS idx_timestamp ON predictions(timestamp DESC);
+// Initialize migrations tracking table
+async function initMigrationsTable() {
+  const sql = `
+    CREATE TABLE IF NOT EXISTS migrations_applied (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      version INTEGER UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      hash TEXT NOT NULL,
+      applied_at INTEGER DEFAULT (strftime('%s', 'now'))
+    )
+  `;
+  
+  if (isTurso) {
+    await db.execute(sql);
+  } else {
+    db.exec(sql);
+  }
+}
 
-  CREATE TABLE IF NOT EXISTS market_outcomes (
-    market_id TEXT PRIMARY KEY,
-    resolved BOOLEAN DEFAULT 0,
-    outcome TEXT,
-    resolution_time INTEGER,
-    created_at INTEGER DEFAULT (strftime('%s', 'now'))
-  );
+// Get list of applied migrations
+async function getAppliedMigrations() {
+  const sql = 'SELECT version, hash FROM migrations_applied ORDER BY version';
+  
+  let rows;
+  if (isTurso) {
+    const result = await db.execute(sql);
+    rows = Array.isArray(result) ? result : (result.rows || []);
+  } else {
+    rows = db.prepare(sql).all();
+  }
+  
+  return new Map(rows.map(r => [r.version, r.hash]));
+}
 
-  CREATE TABLE IF NOT EXISTS user_stats (
-    user_address TEXT PRIMARY KEY,
-    total_predictions INTEGER DEFAULT 0,
-    total_stake_wei TEXT DEFAULT '0',
-    win_count INTEGER DEFAULT 0,
-    loss_count INTEGER DEFAULT 0,
-    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-  );
+// Check if migration was already applied (by hash)
+async function isMigrationApplied(version, hash) {
+  const sql = 'SELECT hash FROM migrations_applied WHERE version = ? AND hash = ?';
+  
+  let rows;
+  if (isTurso) {
+    const result = await db.execute({ sql, args: [version, hash] });
+    rows = Array.isArray(result) ? result : (result.rows || []);
+  } else {
+    rows = db.prepare(sql).all(version, hash);
+  }
+  
+  return rows.length > 0;
+}
 
-  CREATE TABLE IF NOT EXISTS signals (
-    id TEXT PRIMARY KEY,
-    event_id TEXT NOT NULL,
-    market_title TEXT,
-    venue TEXT,
-    event_time INTEGER,
-    market_snapshot_hash TEXT,
-    weather_json TEXT,
-    ai_digest TEXT,
-    confidence TEXT,
-    odds_efficiency TEXT,
-    author_address TEXT,
-    tx_hash TEXT,
-    timestamp INTEGER NOT NULL,
-    outcome TEXT DEFAULT 'PENDING',
-    total_tips TEXT DEFAULT '0',
-    chain_origin TEXT DEFAULT 'APTOS',
-    resolved_at INTEGER,
-    created_at INTEGER DEFAULT (strftime('%s', 'now'))
-  );
+// Record migration as applied
+async function recordMigration(version, name, hash) {
+  const sql = 'INSERT OR IGNORE INTO migrations_applied (version, name, hash) VALUES (?, ?, ?)';
+  
+  if (isTurso) {
+    await db.execute({ sql, args: [version, name, hash] });
+  } else {
+    db.prepare(sql).run(version, name, hash);
+  }
+}
 
-  CREATE INDEX IF NOT EXISTS idx_signals_event_id ON signals(event_id);
-  CREATE INDEX IF NOT EXISTS idx_signals_timestamp ON signals(timestamp DESC);
-  CREATE INDEX IF NOT EXISTS idx_signals_author_outcome ON signals(author_address, outcome);
+// Parse SQL file into executable statements
+function parseSqlStatements(sql) {
+  return sql
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+    .filter(s => !s.startsWith('--'));
+}
 
-  CREATE TABLE IF NOT EXISTS agent_forecasts (
-    id TEXT PRIMARY KEY,
-    market_id TEXT NOT NULL,
-    market_title TEXT,
-    platform TEXT,
-    ai_probability REAL NOT NULL,
-    market_odds REAL NOT NULL,
-    edge REAL NOT NULL,
-    confidence TEXT,
-    reasoning TEXT,
-    key_factors TEXT,
-    timestamp INTEGER NOT NULL,
-    resolved BOOLEAN DEFAULT 0,
-    actual_outcome REAL,
-    brier_score REAL,
-    resolution_time INTEGER,
-    -- Autopilot execution tracking
-    autopilot_executed BOOLEAN DEFAULT 0,
-    execution_status TEXT,
-    execution_response TEXT,
-    size_pct REAL,
-    kelly_pct REAL,
-    direction TEXT,
-    created_at INTEGER DEFAULT (strftime('%s', 'now'))
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_forecasts_market_id ON agent_forecasts(market_id);
-  CREATE INDEX IF NOT EXISTS idx_forecasts_timestamp ON agent_forecasts(timestamp DESC);
-  CREATE INDEX IF NOT EXISTS idx_forecasts_resolved ON agent_forecasts(resolved);
-  CREATE INDEX IF NOT EXISTS idx_forecasts_autopilot ON agent_forecasts(autopilot_executed);
-
-  CREATE TABLE IF NOT EXISTS agent_runs (
-    id TEXT PRIMARY KEY,
-    config TEXT,
-    markets_scanned INTEGER,
-    candidates_filtered INTEGER,
-    forecasts_made INTEGER,
-    timestamp INTEGER NOT NULL,
-    created_at INTEGER DEFAULT (strftime('%s', 'now'))
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_agent_runs_timestamp ON agent_runs(timestamp DESC);
-`;
-
-// ── Migration: Add autopilot columns to agent_forecasts (safe for existing DBs) ──
-const migrationSql = `
-  ALTER TABLE agent_forecasts ADD COLUMN autopilot_executed BOOLEAN DEFAULT 0;
-  ALTER TABLE agent_forecasts ADD COLUMN execution_status TEXT;
-  ALTER TABLE agent_forecasts ADD COLUMN execution_response TEXT;
-  ALTER TABLE agent_forecasts ADD COLUMN size_pct REAL;
-  ALTER TABLE agent_forecasts ADD COLUMN kelly_pct REAL;
-  ALTER TABLE agent_forecasts ADD COLUMN direction TEXT;
-  ALTER TABLE positions ADD COLUMN market_title TEXT;
-  ALTER TABLE positions ADD COLUMN platform TEXT;
-  ALTER TABLE positions ADD COLUMN entry_timestamp INTEGER;
-  ALTER TABLE signals ADD COLUMN outcome TEXT DEFAULT 'PENDING';
-  ALTER TABLE signals ADD COLUMN chain_origin TEXT DEFAULT 'APTOS';
-  ALTER TABLE signals ADD COLUMN resolved_at INTEGER;
-`;
-
-// Initialize tables
-const runMigrations = () => {
-  const migrationStmts = migrationSql.split(';').filter(s => s.trim());
-  for (const stmt of migrationStmts) {
-    if (stmt.trim()) {
+// Run all pending migrations
+async function runMigrations() {
+  const migrationsDir = path.join(process.cwd(), 'migrations');
+  const migrations = getMigrationFiles(migrationsDir);
+  
+  if (migrations.length === 0) {
+    console.log('No migration files found');
+    return;
+  }
+  
+  await initMigrationsTable();
+  const applied = await getAppliedMigrations();
+  
+  console.log(`\n🔄 Running ${migrations.length - applied.size} pending migration(s)...`);
+  
+  for (const migration of migrations) {
+    // Skip if already applied
+    if (applied.has(migration.version)) {
+      continue;
+    }
+    
+    const content = fs.readFileSync(migration.filepath, 'utf-8');
+    const hash = getFileHash(content);
+    
+    // Double-check (race condition protection)
+    if (await isMigrationApplied(migration.version, hash)) {
+      continue;
+    }
+    
+    console.log(`  → ${migration.filename}`);
+    
+    const statements = parseSqlStatements(content);
+    
+    for (const stmt of statements) {
       try {
         if (isTurso) {
-          // Turso handled asynchronously below
+          await db.execute(stmt);
         } else {
-          db.exec(stmt.trim());
+          db.exec(stmt);
         }
       } catch (err) {
-        if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
-          console.warn('Migration warning:', err.message);
+        // Ignore expected errors for idempotent migrations
+        if (!err.message.includes('duplicate column') && 
+            !err.message.includes('already exists') &&
+            !err.message.includes('no such column')) {
+          console.warn(`    ⚠ ${err.message}`);
         }
       }
     }
+    
+    await recordMigration(migration.version, migration.name, hash);
+    console.log(`  ✓ Applied`);
   }
-};
+}
 
+// Run migrations on module load (non-blocking for Turso)
 if (isTurso) {
-  // Split SQL statements for Turso (it doesn't support multiple statements at once)
-  const statements = initSql.split(';').filter(s => s.trim());
-  const migrationStatements = migrationSql.split(';').filter(s => s.trim());
-  (async () => {
-    for (const stmt of statements) {
-      if (stmt.trim()) {
-        try {
-          await db.execute(stmt.trim());
-        } catch (err) {
-          if (!err.message.includes('already exists')) {
-            console.warn('Failed to create table:', err.message);
-          }
-        }
-      }
-    }
-    // Run migrations
-    for (const stmt of migrationStatements) {
-      if (stmt.trim()) {
-        try {
-          await db.execute(stmt.trim());
-        } catch (err) {
-          if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
-            console.warn('Migration failed:', err.message);
-          }
-        }
-      }
-    }
-  })();
+  runMigrations().catch(err => {
+    console.error('Migration error:', err.message);
+  });
 } else {
-  db.exec(initSql);
   runMigrations();
 }
 
@@ -559,6 +526,22 @@ export async function updateSignalTxHash(id, txHash) {
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get a signal by its ID
+ */
+export async function getSignalById(id) {
+  try {
+    const rows = await query(
+      `SELECT * FROM signals WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    return { success: true, signal: rows[0] || null };
+  } catch (error) {
+    console.error('Failed to get signal by ID:', error);
+    return { success: false, error: error.message, signal: null };
   }
 }
 

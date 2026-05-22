@@ -3,6 +3,8 @@ import { builderService } from '@/services/builderService';
 import { APIInputValidator, TradingValidator, MarketDataValidator } from '@/services/validators/index.js';
 
 // Order submission rate limiting
+export const runtime = 'nodejs';
+
 const orderRateLimit = new Map();
 const ORDER_RATE_LIMIT = 20; // 20 orders per hour per user
 const ORDER_WINDOW = 60 * 60 * 1000; // 1 hour

@@ -291,19 +291,98 @@ The agent scans markets, filters candidates, generates forecasts, detects arbitr
 
 ## API Architecture
 
-### Route Structure (`/app/api/*`)
+### Canonical Namespace Structure (`/app/api/*`)
+
+The API routes are organized into canonical namespaces. Every route exists at its original path for backwards compatibility, but new code should use the canonical paths below.
+
 ```
-/api/analyze        - AI analysis endpoint
-/api/signals        - Signal CRUD operations
-/api/markets        - Market discovery (Polymarket/Kalshi)
-/api/defi/arbitrage - Cross-platform arbitrage detection
-/api/agent          - Agent track record and forecasting
-/api/kalshi         - Kalshi trading (login, orders, balance)
-/api/leaderboard    - Analyst rankings
-/api/stats          - User statistics
-/api/weather        - Weather data
-/api/farcaster      - Social integration (optional)
+intelligence/           # AI analysis & predictions
+├── analyze             # POST /api/intelligence/analyze  — AI forecast + weather analysis
+├── predictions         # POST /api/intelligence/predictions — On-chain prediction requests
+└── (future: validate, weather, synth)
+
+markets/                # Market data
+└── ...                 # /api/markets — Discovery (Polymarket/Kalshi)
+
+agent/                  # Autonomous agent
+├── /                   # Loop execution
+├── track-record        # Performance history
+├── backtest            # Historical backtesting
+├── resolve             # Outcome resolution
+└── executions          # Trade execution log
+
+signals/                # Signal CRUD
+├── /                   # Create, read signals
+└── resolve             # On-chain signal resolution
+
+wallet/                 # Wallet connection & chain interactions
+├── /                   # Wallet state
+├── orders              # Polymarket orders
+├── positions           # Open positions
+├── cctp/transfer       # Cross-chain USDC transfers
+└── kalshi/             # Kalshi login, orders, balance
+
+social/                 # Social & communication
+├── bot/telegram        # Telegram bot (@fourcasterbot)
+├── farcaster/webhook   # Farcaster frames integration
+└── (future: discord, web push)
+
+meta/                   # System & observability
+├── health              # Service health
+├── stats               # Usage statistics
+├── leaderboard         # Analyst rankings
+└── (future: status, metrics)
+
+legacy/                 # Deprecated — kept for backwards compatibility
+├── weather             # /api/weather → use intelligence/analyze with weather
+├── debug               # /api/debug — dev only
+├── og                  # /api/og — Open Graph image generation
+├── synth/warm-cache    # /api/synth/warm-cache
+└── defi/arbitrage      # /api/defi/arbitrage
 ```
+
+### Route Inventory (36 routes)
+
+| Path | Canonical Namespace | Description |
+|------|-------------------|-------------|
+| `/api/analyze` → `intelligence/analyze` | intelligence | AI analysis endpoint (Venice AI + weather + SynthData) |
+| `/api/predictions` → `intelligence/predictions` | intelligence | On-chain prediction requests |
+| `/api/validate/*` → `intelligence/validate/*` | intelligence | Input/weather/market validation |
+| `/api/markets` | markets | Market discovery (Polymarket/Kalshi) |
+| `/api/signals` | signals | Signal CRUD |
+| `/api/agent/*` | agent | Agent loop, track record, backtest |
+| `/api/kalshi/*` | wallet | Kalshi trading |
+| `/api/wallet` | wallet | Wallet connection state |
+| `/api/orders` | wallet | Polymarket orders |
+| `/api/positions` | wallet | Open positions |
+| `/api/bot/telegram` | social | Telegram bot |
+| `/api/farcaster/*` | social | Farcaster integration |
+| `/api/cctp/transfer` | wallet | Cross-chain USDC |
+| `/api/leaderboard` | meta | Analyst rankings |
+| `/api/stats` | meta | User statistics |
+| `/api/meta/health` | meta | Service health |
+
+### Data Flow
+
+```
+Frontend (markets page, signals page, landing)
+  │
+  ├── /api/intelligence/analyze ──→ aiService.server.js ──→ Venice AI + SynthData + Weather
+  ├── /api/markets               ──→ polymarketService.js / kalshiService.js
+  ├── /api/signals               ──→ db.js (SQLite + Movement/Aptos)
+  ├── /api/agent/*               ──→ aiService.server.js (agent loop)
+  └── /api/wallet/*              ──→ chainConfig.js / polymarketService.js
+```
+
+### Caching Strategy
+- **Redis**: AI analysis results (15min), SynthData forecasts (15min)
+- **In-memory**: Market catalogs (30min), sports metadata (24hr)
+- **SQLite**: Persistent signals, forecasts, track records
+
+### Runtime Rules
+- **`export const runtime = 'nodejs'`** for all routes that need `fs`, `crypto`, or server-only imports
+- **`export const runtime = 'edge'`** for high-throughput validation-only routes: `validate/order`, `validate/location`, `validate/weather`, `validate/market-compatibility`, `api/weather`
+- CI enforces runtime declarations via lint rules
 
 ### Caching Strategy
 - **Redis**: AI analysis results (15min), SynthData forecasts (15min)

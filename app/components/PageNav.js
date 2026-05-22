@@ -27,6 +27,8 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
     : "bg-black/20 border-black/30";
 
   // Primary navigation structure
+  // Core loop: Search → Analyze → Publish/Trade → Track
+  // Everything experimental moves to /labs
   const primaryNav = [
     { 
       name: "Markets", 
@@ -43,18 +45,28 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
       onboardId: "publish"
     },
     { 
-      name: "Autopilot", 
-      href: "/autopilot", 
+      name: "Agent", 
+      href: "/agent", 
       icon: "🤖",
-      description: "Autonomous trade execution",
-      onboardId: "autopilot"
+      description: "Mission control & agent loop",
+      onboardId: "agent"
     },
     { 
-      name: "Positions", 
+      name: "You", 
       href: "/positions", 
       icon: "💼",
-      description: "Position management & P&L",
+      description: "Your positions & reputation",
       onboardId: "positions"
+    },
+  ];
+
+  // Labs link — shown as a secondary accessory in the nav bar
+  const labsNav = [
+    {
+      name: "Labs",
+      href: "/labs",
+      icon: "🧪",
+      description: "Experimental features"
     },
   ];
 
@@ -83,6 +95,22 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
             <span>{item.name}</span>
           </Link>
         ))}
+        {/* Divider */}
+        <span className={`w-px h-5 ${isNight ? 'bg-white/10' : 'bg-black/10'} mx-1`} />
+        {labsNav.map((item) => (
+          <Link
+            key={item.name}
+            href={item.href}
+            className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-light transition-all ${
+              isActive(item.href)
+                ? `${activeBgClass} ${textColor}`
+                : `${glassClass} ${textColor} opacity-40 hover:opacity-80 hover:scale-[1.02]`
+            }`}
+          >
+            <span>{item.icon}</span>
+            <span className="text-[11px]">{item.name}</span>
+          </Link>
+        ))}
       </div>
 
       {/* Mobile Navigation - Icon only */}
@@ -102,6 +130,18 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
             <span>{item.icon}</span>
           </Link>
         ))}
+        {/* Labs icon on mobile */}
+        <Link
+          href="/labs"
+          className={`flex items-center justify-center w-9 h-9 rounded-lg text-base transition-all ${
+            isActive('/labs')
+              ? `${activeBgClass}`
+              : `${glassClass} opacity-50`
+          }`}
+          aria-label="Labs"
+        >
+          <span>🧪</span>
+        </Link>
       </div>
     </nav>
   );

@@ -12,6 +12,8 @@
  * See: https://developers.circle.com/cctp
  */
 
+export const runtime = 'nodejs';
+
 export async function POST(request) {
   try {
     const body = await request.json();

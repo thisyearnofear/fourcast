@@ -2,6 +2,8 @@
 import { reputationService } from '@/services/reputationService.js';
 import { db } from '@/services/db.js';
 
+export const runtime = 'nodejs';
+
 export async function POST(req) {
   try {
     const body = await req.json();

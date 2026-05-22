@@ -5,6 +5,8 @@ import { resolveForecast } from '@/services/db';
  * POST /api/agent/resolve
  * Body: { marketId: string, actualOutcome: number (0 or 1) }
  */
+export const runtime = 'nodejs';
+
 export async function POST(request) {
   try {
     const { marketId, actualOutcome } = await request.json();

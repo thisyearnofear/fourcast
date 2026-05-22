@@ -2,10 +2,10 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { 
   savePrediction, 
   getUserPredictions, 
-  getMarketPredictions,
+  getPredictionsByMarket,
   getUserStats,
   getLeaderboard,
-  closeDatabase 
+  db
 } from '../services/db';
 
 describe('Database Service', () => {
@@ -17,10 +17,10 @@ describe('Database Service', () => {
   });
 
   afterAll(() => {
-    closeDatabase();
+    try { db.close(); } catch (_) {}
   });
 
-  it('should save a prediction', () => {
+  it('should save a prediction', async () => {
     const prediction = {
       id: `test_pred_${Date.now()}_1`,
       userAddress: testAddress,
@@ -35,50 +35,50 @@ describe('Database Service', () => {
       timestamp: Math.floor(Date.now() / 1000)
     };
 
-    const result = savePrediction(prediction);
+    const result = await savePrediction(prediction);
     expect(result.success).toBe(true);
   });
 
-  it('should retrieve user predictions', () => {
-    const result = getUserPredictions(testAddress, 10);
+  it('should retrieve user predictions', async () => {
+    const result = await getUserPredictions(testAddress, 10);
     expect(result.success).toBe(true);
     expect(result.predictions).toBeDefined();
     expect(result.predictions.length).toBeGreaterThan(0);
   });
 
-  it('should retrieve market predictions', () => {
-    const result = getMarketPredictions(testMarketId);
+  it('should retrieve market predictions', async () => {
+    const result = await getPredictionsByMarket(testMarketId);
     expect(result.success).toBe(true);
     expect(result.predictions).toBeDefined();
   });
 
-  it('should get user stats', () => {
-    const result = getUserStats(testAddress);
+  it('should get user stats', async () => {
+    const result = await getUserStats(testAddress);
     expect(result.success).toBe(true);
     expect(result.stats).toBeDefined();
     expect(result.stats.total_predictions).toBeGreaterThan(0);
   });
 
-  it('should handle case-insensitive addresses', () => {
+  it('should handle case-insensitive addresses', async () => {
     const upperCase = testAddress.toUpperCase();
     const lowerCase = testAddress.toLowerCase();
     
-    const result1 = getUserPredictions(upperCase, 10);
-    const result2 = getUserPredictions(lowerCase, 10);
+    const result1 = await getUserPredictions(upperCase, 10);
+    const result2 = await getUserPredictions(lowerCase, 10);
     
     expect(result1.success).toBe(true);
     expect(result2.success).toBe(true);
     expect(result1.predictions.length).toBe(result2.predictions.length);
   });
 
-  it('should get leaderboard', () => {
-    const result = getLeaderboard(10);
+  it('should get leaderboard', async () => {
+    const result = await getLeaderboard(10);
     expect(result.success).toBe(true);
     expect(result.leaderboard).toBeDefined();
     expect(Array.isArray(result.leaderboard)).toBe(true);
   });
 
-  it('should save multiple predictions and update stats', () => {
+  it('should save multiple predictions and update stats', async () => {
     const prediction2 = {
       id: `test_pred_${Date.now()}_2`,
       userAddress: testAddress,
@@ -93,10 +93,10 @@ describe('Database Service', () => {
       timestamp: Math.floor(Date.now() / 1000)
     };
 
-    const result = savePrediction(prediction2);
+    const result = await savePrediction(prediction2);
     expect(result.success).toBe(true);
 
-    const stats = getUserStats(testAddress);
+    const stats = await getUserStats(testAddress);
     expect(stats.success).toBe(true);
     expect(stats.stats.total_predictions).toBeGreaterThanOrEqual(1);
   });

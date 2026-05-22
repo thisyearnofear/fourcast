@@ -1,365 +1,270 @@
-# 7→9 Action Plan: UI/UX, Frontend, Product Design, Intuitiveness
+# Fourcast → 9/10 on Product & Architecture
 
-## Priority Matrix
-
-| # | Change | Dimension | Effort | Impact |
-|---|--------|-----------|--------|--------|
-| 1 | Fix meta description in layout.js | Product | 30s | Low but sets the right frame |
-| 2 | Add gesture guidance to carousel | Intuitiveness | 1hr | High — fixes click vs drag confusion |
-| 3 | Extract carousel physics → hook | Frontend | 2hr | High — splits 810-line monolith |
-| 4 | Replace `window.location.href` with `router.push()` | Frontend | 30min | Medium — removes full page reloads |
-| 5 | Add empty states to MarketsPage | Intuitiveness | 1hr | High — eliminates raw error messages |
-| 6 | Add skeleton loaders for carousel | UI | 1hr | High — removes black-screen spinner |
-| 7 | Add first-visit tooltip to carousel | Intuitiveness | 2hr | High — guides first-time users |
-| 8 | Simplify chain connection UX | Intuitiveness | 3hr | High — hides blockchain complexity |
-| 9 | Create next.config.js with ws fallback | Frontend | 10min | Medium — fixes dependency warnings |
-| 10 | Add portfolio overview card on Markets | Product | 3hr | Medium — shows "where's my money" |
-| 11 | Rate limit → paywall conversion flow | Product | 4hr | Medium — monetization foundation |
-| 12 | Split carousel into components | UI | 3hr | Medium — component hygiene |
-| 13 | Create CSS custom properties for design system | UI | 4hr | Medium — stops style drift |
+A 6-week, opinionated plan. Each phase ships a tangible artifact and a measurable improvement. The order matters: foundation → focus → polish.
 
 ---
 
-## 1. Meta Description (layout.js)
+## Phase 0 — Stop the bleeding (Week 1, ~3 days)
 
-**Change**: `"A decentralized weather application."` → `"Prediction intelligence powered by AI, ML models & live weather data. Find edges across crypto, sports, and political prediction markets."`
+**Goal:** never again have a Friday-night Vercel surprise.
 
-**File**: `app/layout.js` line 13
-**Effort**: 30 seconds
+### P0.1 — Pre-deploy CI gate (½ day)
 
----
+- GitHub Action that runs on every PR: `npm run lint && npm run typecheck && npm run test && next build`
+- Fails if any Edge route bundle > 900 KB (warn at 750 KB) using a tiny script that parses `.next/server/app/api/**/route.js` size.
+- Fails if any new `app/api/**/route.js` lacks an explicit `export const runtime` line.
 
-## 2. Carousel Gesture Guidance
+### P0.2 — Runtime policy doc + lint (½ day)
 
-Add a small "Drag to browse" / "Click to enter" hint that appears briefly on first visit and then fades. This solves the core intuitiveness problem: users don't know the carousel is interactive.
+- Add `docs/RUNTIME_POLICY.md`: Edge = read-only JSON, no WASM, no Node SDK with native bindings; Node = DB writes, large SDKs (`@vercel/og`, `@polymarket/clob-client`, `better-sqlite3`), anything pulling WASM.
+- Add an ESLint rule (custom or `no-restricted-syntax`) requiring `runtime` to be declared in every API route.
 
-**In `CarouselLanding.js`**, add state and a toast-like hint:
+### P0.3 — Schema migrations runner (1 day)
 
-```jsx
-// State
-const [showGestureHint, setShowGestureHint] = useState(true);
+- Create `migrations/` with numbered files: `0001_init.sql`, `0002_signals_outcome.sql`, `0003_agent_forecasts_autopilot.sql`.
+- Add `migrations_applied` table (`id`, `hash`, `applied_at`). On boot, `services/db.js` runs only un-applied migrations.
+- Delete the inline `ALTER TABLE` blob in `services/db.js`.
+- `npm run migrate:status` and `npm run migrate:new <name>` scripts.
 
-// In render, after the dots:
-{showGestureHint && (
-  <div className="carousel-gesture-hint">
-    <span className="carousel-gesture-icon">↔</span>
-    <span>Drag to browse · Click to explore</span>
-  </div>
-)}
-```
+### P0.4 — Bundle audit (½ day)
 
-Auto-dismiss: `setShowGestureHint(false)` fires 4 seconds after entry animation completes.
+- Add `@next/bundle-analyzer`; commit a baseline `bundle-report.json`.
+- File issues for any client chunk > 250 KB gz.
 
-**CSS addition** in global.css:
-```css
-.carousel-gesture-hint {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -80%);
-  z-index: 15;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  background: rgba(10, 10, 15, 0.6);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 13px;
-  font-weight: 300;
-  pointer-events: none;
-  animation: gesture-hint-in 0.5s ease-out, gesture-hint-out 0.5s ease-in 3.5s forwards;
-}
-@keyframes gesture-hint-in { from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -80%); } }
-@keyframes gesture-hint-out { from { opacity: 1; } to { opacity: 0; } }
-.carousel-gesture-icon { font-size: 18px; animation: gesture-pulse 2s ease-in-out infinite; }
-@keyframes gesture-pulse { 0%, 100% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
-```
+**Exit criteria:** PR cannot merge without green CI; no route can grow past its size budget silently; no schema change can ship without a migration file.
 
 ---
 
-## 3. Extract Carousel Physics → Hook
+## Phase 1 — Architectural focus (Week 2)
 
-Extract all physics, scroll, and interaction logic from `CarouselLanding.js` into `hooks/useCarouselPhysics.js`. This drops the component from 810 lines to ~250, making it maintainable.
+**Goal:** collapse sprawl into legible domains.
 
-**New file**: `hooks/useCarouselPhysics.js` (~450 lines)
-**Refactored**: `components/CarouselLanding.js` (~250 lines, imports the hook)
+### P1.1 — API namespacing
 
-The hook exposes:
-```js
-{
-  stateRef,       // Same mutable ref
-  measure,        // Re-mesures card dimensions
-  updateTransforms, // Updates card CSS transforms
-  startCarousel,  // Starts physics loop
-  stopCarousel,   // Stops physics loop
-  animateEntry,   // GSAP entry animation
-  onWheel,
-  onPointerDown,
-  onPointerMove,
-  onPointerUp,
-}
+Today: `agent/`, `bot/`, `builder/`, `analyze/`, `predictions/`, `validate/` — overlapping concepts.
+
+Target structure:
 ```
+app/api/
+  markets/          # external feeds (Polymarket, Kalshi, counts)
+  intelligence/     # analyze, predict, builder, validate  ← merge
+  agent/           # autopilot loop (runs, executions, backtest, track-record)
+  signals/         # on-chain publish + resolve + leaderboard
+  wallet/          # positions, orders, balance, cctp
+  social/          # farcaster, telegram bot
+  meta/            # og, debug, stats, health
+```
+
+Use Next.js route groups or re-exports so URLs change once with a redirect map in `next.config.mjs`.
+
+### P1.2 — services/ layering
+
+Current `services/` has 25+ flat files. Reorganize:
+```
+services/
+  providers/    # polymarket, kalshi, venice, synth, openMeteo, neynar  (pure I/O)
+  domain/       # analysis, arbitrage, reputation, pathDependent       (pure logic)
+  chain/        # movePublisher, chainConfig, cctp                      (on-chain I/O)
+  infra/        # db, redis, telemetry, aiRouter                        (cross-cutting)
+```
+
+Each provider exposes a typed client with: timeout, retry, cache key, error type. No more raw fetch in route handlers.
+
+### P1.3 — One typed contract
+
+- Define `types/intelligence.ts` for `Market`, `Signal`, `Forecast`, `Position`, `Outcome` — single source of truth.
+- Convert route handlers to TS one namespace at a time (start with `intelligence/`).
+
+### P1.4 — Pick the EVM chain
+
+- Choose one of BNB / Polygon / Arbitrum as GA, demote the other two to a single `docs/ROADMAP.md` entry.
+- Update `README.md` badges to reflect reality.
+- Reason: an architecture that maintains three half-finished EVM integrations cannot be 9/10.
+
+**Exit criteria:** API tree fits on one screen; every external call goes through a provider client; one EVM chain documented as GA.
 
 ---
 
-## 4. Fix Navigation (window.location → router.push)
+## Phase 2 — Reliability fabric (Week 3)
 
-In `WeatherPage.js`, lines 358 and 377:
-```js
-// BEFORE
-onClick={() => window.location.href = '/markets'}
-onClick={() => window.location.href = '/signals'}
+**Goal:** failures become observable and bounded.
 
-// AFTER
-import { useRouter } from 'next/navigation';
-// ...
-const router = useRouter();
-// ...
-onClick={() => router.push('/markets')}
-onClick={() => router.push('/signals')}
-```
+### P2.1 — Resilience primitives (in `services/infra/http.ts`)
 
-This eliminates full-page reloads when navigating from the weather page.
+- `fetchWithBudget({ url, timeoutMs, retries, cacheTtl })` — used by every provider.
+- Per-provider circuit breaker (open after N consecutive failures, half-open after 30s).
+- Standard error type: `ProviderError { provider, code, retryable }`.
 
----
+### P2.2 — Caching discipline
 
-## 5. Empty States on MarketsPage
+- Audit Redis usage; document a key namespace convention: `fc:<domain>:<entity>:<id>:v<n>`.
+- Add `Cache-Control` + `s-maxage` headers on every read-only route in `markets/` and `intelligence/`.
+- Stale-while-revalidate for Polymarket/Kalshi odds (1s fresh, 10s stale).
 
-The markets page currently shows: `setError(result.message || "No markets found. Try adjusting filters.")`
+### P2.3 — Observability
 
-Replace with actual empty state component that provides guidance:
+- Wire structured logs (already have `pino-pretty`): one line per request with `route`, `runtime`, `provider_calls[]`, `db_ms`, `total_ms`, `status`.
+- Add `/api/meta/health` that returns provider health (last ok timestamp, circuit state) — uses what P2.1 collects.
+- Vercel log drain → a cheap sink (Axiom / Better Stack free tier) for searchable history.
 
-```jsx
-function EmptyState({ category, onSwitchCategory }) {
-  return (
-    <div className="empty-state">
-      <div className="empty-icon">{category === 'Crypto' ? '₿' : '📊'}</div>
-      <h3>No {category} markets right now</h3>
-      <p>Try a different category, or expand your filters for more results.</p>
-      <div className="empty-suggestions">
-        {['Sports', 'Politics', 'Weather'].filter(c => c !== category).map(c => (
-          <button key={c} onClick={() => onSwitchCategory(c)}>
-            Browse {c} →
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-```
+### P2.4 — Test pyramid
 
-Replace the raw error display in `MarketsPage.js`:
-```jsx
-// Find the error display section and wrap it:
-{error && (
-  <EmptyState
-    category={discoveryFilters.category}
-    onSwitchCategory={(cat) => setDiscoveryFilters(prev => ({...prev, category: cat}))}
-  />
-)}
-```
+- **Unit:** provider clients (mock fetch) + domain logic (`marketTypeDetector.test.js` is the only one — add 5 more for `arbitrage`, `pathDependent`, `reputation`, `kelly`, migration runner).
+- **Integration:** one happy-path test per API namespace using `next/test` and the local SQLite db.
+- **E2E smoke (Playwright):** landing search → analyze → see result. 1 test, runs in CI.
+
+**Exit criteria:** every external dep has a timeout + retry + circuit breaker; one health endpoint shows truth; CI has unit + integration + 1 e2e.
 
 ---
 
-## 6. Skeleton Loaders for Carousel
+## Phase 3 — Product sharpening (Week 4)
 
-Replace the solid black loader background with skeleton card outlines:
+**Goal:** the product does fewer things, and each thing is undeniably better.
 
-```css
-/* In carousel CSS */
-.carousel-skeleton {
-  position: absolute;
-  inset: 0;
-  z-index: 99;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  background: #0a0a0f;
-  transition: opacity 0.3s ease;
-}
-.carousel-skeleton.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-.carousel-skeleton-card {
-  width: min(26vw, 360px);
-  aspect-ratio: 4/5;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.06));
-  border: 1px solid rgba(255,255,255,0.04);
-  animation: skeleton-pulse 1.5s ease-in-out infinite;
-}
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-}
-```
+### P3.1 — The "one loop" decision
 
-Then in `CarouselLanding.js`, render 3 skeleton cards behind the loader that are replaced by real cards when entry animation begins.
+Pick one primary user loop and make it 9/10:
+
+> "I search a market → I see AI + ML forecast with evidence → I publish a signal OR place a trade → I get scored."
+
+Everything else (autopilot, 3D landing, deep-reasoning visualizer, Farcaster, Telegram, builder) is a side door, not part of the headline narrative.
+
+### P3.2 — Information architecture rewrite
+
+- **Landing:** search (already shipped). Keep it.
+- **One nav:** Markets · Signals · Agent · You (positions + reputation). Retire any nav item that doesn't map.
+- Move `autopilot`/`builder`/3D scene to "Labs" — labeled experimental. Honesty is a 9/10 product trait.
+
+### P3.3 — Evidence-first analysis card
+
+- Every AI prediction must show: data sources used (timestamps), confidence with method, "what would change my mind" counter-signal.
+- No probability is rendered without provenance. This is the single biggest credibility lever.
+
+### P3.4 — Reputation as the spine
+
+- Surface Brier score, calibration curve, and 30-day win rate on every analyst profile and every published signal card.
+- Add public, immutable "track record" page (already have `agent/track-record`) — link it from every AI output.
+
+### P3.5 — Onboarding cut
+
+- Empty-state for unconnected users: "Try a signal in 10 seconds" — preloaded market, no wallet required.
+- ConnectKit only when actually needed (publish/trade).
+
+**Exit criteria:** one primary loop, zero unlabeled experiments, every probability has provenance, reputation visible everywhere.
 
 ---
 
-## 7. First-Visit Tooltip
+## Phase 4 — Performance & polish (Week 5)
 
-Combine with the gesture hint from #2, but add a "Let's find your first edge" CTA:
+### P4.1 — Streaming where it matters
 
-```jsx
-// New component: CarouselWelcome.js
-export default function CarouselWelcome({ onEnter }) {
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return !!localStorage.getItem('fourcast_visited');
-  });
+- `analyze/stream` exists — make it the default for analysis. Show partial reasoning + provenance progressively.
 
-  if (dismissed) return null;
+### P4.2 — Three.js triage
 
-  return (
-    <div className="carousel-welcome">
-      <h2>🔮 Fourcast</h2>
-      <p>AI-powered prediction intelligence. Drag to explore verticals, then click to dive in.</p>
-      <div className="carousel-welcome-actions">
-        <button onClick={() => { setDismissed(true); localStorage.setItem('fourcast_visited', 'true'); onEnter(); }}>
-          Show me around →
-        </button>
-      </div>
-    </div>
-  );
-}
-```
+- Lazy-load `Scene3D` only on routes where it's the headline (landing). Use `<Suspense>` + `dynamic(..., { ssr:false })`.
+- Add a `prefers-reduced-motion` and low-power fallback (static gradient). This kills the ConnectKit/WebGL conflicts at the root.
 
-This appears as a floating card in the center of the carousel on the very first visit, then auto-dismisses.
+### P4.3 — Image / OG hygiene
+
+- Now that `api/og` is on Node runtime, it can include richer dynamic content. Make every signal share a beautiful OG (market, AI %, edge, author).
+- This is high-leverage product surface — every Twitter share is a billboard.
+
+### P4.4 — Web vitals budget
+
+- LCP < 2.0s, TBT < 200ms, CLS < 0.05 on landing and a typical market page.
+- Add Vercel Analytics watchdog or a Lighthouse-CI step in P0.1.
 
 ---
 
-## 8. Simplify Chain Connection UX
+## Phase 5 — Trust, docs, and contributor surface (Week 6)
 
-**Problem**: 4 chains (Arc, Aptos, Movement, EVM) with 3 purposes (settlement, signals, trading) = 12 combinations. Users don't know what to connect.
+### P5.1 — Architecture truth
 
-**Solution**: Single "Connect Wallet" button that auto-detects the right chain:
+- Rewrite `docs/ARCHITECTURE.md` with the real fan-out (providers, caches, circuit breakers, on-chain settlement), not the simplified mermaid in the README.
+- Add a sequence diagram for the headline loop end-to-end with retry/cache annotations.
 
-```jsx
-// Simplified approach — file: app/components/UnifiedConnect.js
-export default function UnifiedConnect() {
-  const { chains, canPublish } = useChainConnections();
-  const [showDetails, setShowDetails] = useState(false);
+### P5.2 — Honest status page
 
-  // Show simple state
-  if (canPublish) return <WalletStatus connected />;
+- `app/status` (public) reading `/api/meta/health`. Visitors see whether Polymarket/Kalshi/Venice/Synth are healthy right now.
+- This converts an embarrassment vector (flaky third parties) into a trust signal.
 
-  return (
-    <div>
-      <button onClick={/* evm wallet connect flow */}>
-        Connect Wallet ←
-      </button>
-      {showDetails && (
-        <ChainDetail>
-          <p>Fourcast uses Arc for USDC settlement and Movement for on-chain signals.</p>
-          <p>Connect any EVM wallet — we'll handle the rest.</p>
-        </ChainDetail>
-      )}
-    </div>
-  );
-}
-```
+### P5.3 — SDK & extension story
 
-Hide the `ActiveChainIndicator` and `ChainSelector` behind a "Details" toggle. Default: one-button connect.
+- The `sdk/` folder is a real differentiator. Ship a 1-screen "Build a custom signal publisher" tutorial + a working example repo.
+
+### P5.4 — License & contribution
+
+- `CONTRIBUTING.md` with the runtime policy, migration policy, provider-client policy, and "where features go to die" (Labs criteria).
 
 ---
 
-## 9. Create next.config.js
+## Sequencing & risk
 
-```js
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  webpack: (config) => {
-    // Polyfill ws for walletconnect
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      ws: false,
-    };
-    return config;
-  },
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: '**' },
-    ],
-  },
-};
+| Week | Phases | Notes |
+|------|--------|-------|
+| Week 1 | P0 (foundation) | Must come first; everything else depends on it |
+| Week 2 | P1 (structure) | Do before adding more reliability code |
+| Week 3 | P2 (reliability) | Now that structure exists, harden it |
+| Week 4 | P3 (product focus) | Parallelizable with P2 in second half |
+| Week 5 | P4 (perf & polish) | |
+| Week 6 | P5 (trust & docs) | |
 
-module.exports = nextConfig;
-```
+### What we explicitly do NOT do
 
-This suppresses the `ws` module resolution warnings and allows dynamic images.
+- No new chains, no new providers, no new top-level features for 6 weeks.
+- No rewrites. Every change is in-place, behind feature flags where risky.
 
 ---
 
-## 10. Portfolio Overview Card
+## Definition of 9/10
 
-On the MarketsPage, above the filter bar, add a compact card:
+### Architecture (9/10)
 
-```jsx
-function PortfolioOverview() {
-  const { stats } = useAgentTrackRecord();
+- Zero ad-hoc `ALTER TABLE`. All schema via migrations.
+- Every external call goes through a typed provider client with timeout/retry/circuit-breaker.
+- Every API route declares its runtime; CI enforces bundle budgets.
+- One health endpoint reflects reality; structured logs are searchable.
+- One EVM chain GA, others honestly labeled.
+- Test pyramid in place; PRs blocked without it.
 
-  return (
-    <div className="portfolio-card">
-      <div className="portfolio-stat">
-        <span className="portfolio-label">Signals Published</span>
-        <span className="portfolio-value">{stats.totalForecasts || 0}</span>
-      </div>
-      <div className="portfolio-stat">
-        <span className="portfolio-label">Win Rate</span>
-        <span className="portfolio-value">{stats.winRate || '—'}%</span>
-      </div>
-      <div className="portfolio-stat">
-        <span className="portfolio-label">Tips (USDC)</span>
-        <span className="portfolio-value">{stats.totalTips || '0.00'}</span>
-      </div>
-    </div>
-  );
-}
-```
+### Product (9/10)
+
+- One headline loop, executed beautifully.
+- Every probability shows provenance.
+- Reputation is the spine, visible everywhere.
+- Experiments are labeled "Labs," not hidden among GA features.
+- Onboarding is action-first, wallet-lazy.
+- Status page makes third-party flakiness a trust signal, not a tax.
 
 ---
 
-## 11. Rate Limit → Paywall Flow
+## Progress Tracking
 
-Already have `analysisRateLimit` map in `api/analyze/route.js`. Add a toast + overlay:
-
-```jsx
-// In MarketsPage.js, after each analysis attempt fails from rate limit:
-if (result.rateLimited) {
-  addToast(
-    "You've used your free analyses. Upgrade to Pro for unlimited access.",
-    'info',
-    8000,
-    null,
-    'Upgrade →'
-  );
-}
-```
-
-This is a low-friction conversion point — the user just experienced value (they got some free analyses) and now hits a gentle wall.
-
----
-
-## Implementation Order
-
-Execute in this sequence for maximum impact per hour:
-
-| Order | Item | Hours | Gain |
-|-------|------|-------|------|
-| 1 | Meta description (layout.js) | 0.01 | Sets product identity |
-| 2 | next.config.js | 0.2 | Stabilizes build |
-| 3 | Fix window.location → router.push | 0.5 | Smoother navigation |
-| 4 | Add gesture guidance to carousel | 1 | Fixes #1 confusion |
-| 5 | Add skeleton loaders | 1 | Removes black screen |
-| 6 | Add empty states | 1.5 | Eliminates raw errors |
-| 7 | Extract carousel physics hook | 2 | Architectural hygiene |
-| 8 | Add first-visit tooltip | 2 | Guides first-time users |
-
-That's ~8 hours of work to hit high-impact changes across all 4 dimensions. Items 9-13 can wait.
+| Phase | Status | Completed |
+|-------|--------|-----------|
+| P0.1 — Pre-deploy CI gate | ⬜ Pending | |
+| P0.2 — Runtime policy doc + lint | ⬜ Pending | |
+| P0.3 — Schema migrations runner | ⬜ Pending | |
+| P0.4 — Bundle audit | ⬜ Pending | |
+| P1.1 — API namespacing | ⬜ Pending | |
+| P1.2 — services/ layering | ⬜ Pending | |
+| P1.3 — One typed contract | ⬜ Pending | |
+| P1.4 — Pick the EVM chain | ⬜ Pending | |
+| P2.1 — Resilience primitives | ⬜ Pending | |
+| P2.2 — Caching discipline | ⬜ Pending | |
+| P2.3 — Observability | ⬜ Pending | |
+| P2.4 — Test pyramid | ⬜ Pending | |
+| P3.1 — The "one loop" decision | ⬜ Pending | |
+| P3.2 — Information architecture rewrite | ⬜ Pending | |
+| P3.3 — Evidence-first analysis card | ⬜ Pending | |
+| P3.4 — Reputation as the spine | ⬜ Pending | |
+| P3.5 — Onboarding cut | ⬜ Pending | |
+| P4.1 — Streaming where it matters | ⬜ Pending | |
+| P4.2 — Three.js triage | ⬜ Pending | |
+| P4.3 — Image / OG hygiene | ⬜ Pending | |
+| P4.4 — Web vitals budget | ⬜ Pending | |
+| P5.1 — Architecture truth | ⬜ Pending | |
+| P5.2 — Honest status page | ⬜ Pending | |
+| P5.3 — SDK & extension story | ⬜ Pending | |
+| P5.4 — License & contribution | ⬜ Pending | |

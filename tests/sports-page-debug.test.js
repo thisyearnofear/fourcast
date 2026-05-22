@@ -1,8 +1,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { polymarketService } from '../services/polymarketService.js';
 
+// Debug/exploratory tests that make live Polymarket API calls.
+// These are useful for manual debugging but shouldn't run in CI.
+const runLiveTests = process.env.RUN_LIVE_API_TESTS === 'true';
+
 describe('Sports Page Market Fetching - Debug', () => {
-  it('should demonstrate the market catalog building process', async () => {
+  (runLiveTests ? it : it.skip)('should demonstrate the market catalog building process', async () => {
     console.log('\n🔍 Starting market catalog build for NFL...\n');
     
     const catalogResult = await polymarketService.buildMarketCatalog(50000, 'NFL');

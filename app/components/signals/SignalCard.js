@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { ChainNetworkBadge, ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
-import { generateXUrl, generateFarcasterUrl } from '@/utils/shareSignal';
+import { generateXUrl, generateFarcasterUrl, generateSignalUrl, copySignalLink } from '@/utils/shareSignal';
+import EvidenceBlock from '@/components/EvidenceBlock';
+import ReputationBadge from '@/components/ReputationBadge';
 import TippingModal from './TippingModal';
 
 export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip, userStats, onExpand }) {
     const [shareOpen, setShareOpen] = useState(false);
     const [tipModalOpen, setTipModalOpen] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const handleToggle = () => {
         onToggle();
@@ -41,23 +44,39 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                 </p>
             )}
 
-            {isExpanded && signal.market_snapshot_hash && (
-                <div className={`mt-3 text-xs ${textColor} opacity-40`}>
-                    Snapshot: {typeof signal.market_snapshot_hash === 'string' && signal.market_snapshot_hash ? signal.market_snapshot_hash.substring(0, 16) : 'N/A'}...
+            {/* Evidence Block — shown when expanded */}
+            {isExpanded && (
+                <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                    <EvidenceBlock
+                        signal={signal}
+                        isNight={isNight}
+                        textColor={textColor}
+                        calibrationScore={userStats?.calibrationScore}
+                        agentBrierScore={userStats?.agentBrierScore}
+                    />
                 </div>
             )}
 
             {signal.author_address && (
                 <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onProfileClick(signal.author_address);
-                        }}
-                        className={`text-xs ${textColor} opacity-50 hover:opacity-100 hover:underline text-left`}
-                    >
-                        By: {typeof signal.author_address === 'string' && signal.author_address ? `${signal.author_address.substring(0, 6)}...${signal.author_address.substring(signal.author_address.length - 4)}` : 'Unknown'}
-                    </button>
+                    <div className="flex items-center gap-2 min-w-0">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onProfileClick(signal.author_address);
+                            }}
+                            className={`text-xs ${textColor} opacity-50 hover:opacity-100 hover:underline text-left shrink-0`}
+                        >
+                            By: {typeof signal.author_address === 'string' && signal.author_address ? `${signal.author_address.substring(0, 6)}...${signal.author_address.substring(signal.author_address.length - 4)}` : 'Unknown'}
+                        </button>
+                        {isExpanded && userStats && (
+                            <ReputationBadge
+                                stats={userStats}
+                                isNight={isNight}
+                                variant="compact"
+                            />
+                        )}
+                    </div>
 
                     <div className="flex items-center gap-2 ml-auto">
                         {/* Tip Button - Visible for Movement signals */}
@@ -99,29 +118,50 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
 
             {/* Share Menu */}
             {isExpanded && shareOpen && (
-                <div className={`mt-4 flex gap-2 p-3 rounded-lg ${isNight ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/10'}`}>
-                    <a
-                        href={generateXUrl(signal, userStats)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`flex-1 text-xs px-3 py-2 rounded transition-all text-center ${isNight
-                            ? 'bg-black/40 hover:bg-black/60 text-white border border-white/20'
-                            : 'bg-gray-200 hover:bg-gray-300 text-black'
+                <div className={`mt-4 flex flex-col gap-2 p-3 rounded-lg ${isNight ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/10'}`}>
+                    {/* First row: Social links */}
+                    <div className="flex gap-2">
+                        <a
+                            href={generateXUrl(signal, userStats)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className={`flex-1 text-xs px-3 py-2 rounded transition-all text-center ${isNight
+                                ? 'bg-black/40 hover:bg-black/60 text-white border border-white/20'
+                                : 'bg-gray-200 hover:bg-gray-300 text-black'
+                                }`}
+                        >
+                            𝕏 Share
+                        </a>
+                        <a
+                            href={generateFarcasterUrl(signal, userStats)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className={`flex-1 text-xs px-3 py-2 rounded transition-all text-center ${isNight
+                                ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/30'
+                                : 'bg-purple-100 hover:bg-purple-200 text-purple-900'
+                                }`}
+                        >
+                            ⛵ Warpcast
+                        </a>
+                    </div>
+                    {/* Second row: Copy link (enables OG card previews on social platforms) */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            copySignalLink(signal);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className={`w-full text-xs px-3 py-2 rounded transition-all text-center flex items-center justify-center gap-1.5 ${isNight
+                            ? 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20'
+                            : 'bg-blue-600/5 hover:bg-blue-600/15 text-blue-700 border border-blue-600/15'
                             }`}
                     >
-                        𝕏 Share
-                    </a>
-                    <a
-                        href={generateFarcasterUrl(signal, userStats)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`flex-1 text-xs px-3 py-2 rounded transition-all text-center ${isNight
-                            ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/30'
-                            : 'bg-purple-100 hover:bg-purple-200 text-purple-900'
-                            }`}
-                    >
-                        ⛵ Warpcast
-                    </a>
+                        <span>🌐</span>
+                        <span>{copied ? '✓ Copied!' : 'Copy Signal Link (OG Preview)'}</span>
+                    </button>
                 </div>
             )}
 

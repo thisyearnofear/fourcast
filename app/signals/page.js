@@ -16,6 +16,7 @@ import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ActiveChainIndicator } from '@/components/ActiveChainIndicator';
 import { ChainSelector } from '@/components/ChainSelector';
 import { useToast, ToastContainer } from '@/components/Toast';
+import NarrativeSteps from '@/components/NarrativeSteps';
 
 export default function SignalsPage() {
     const { connected: aptosConnected, walletAddress, tipSignal } = useSignalPublisher();
@@ -49,6 +50,9 @@ export default function SignalsPage() {
         return hour >= 19 || hour <= 6;
     });
 
+    // Track record state (Brier scores, calibration)
+    const [agentTrackStats, setAgentTrackStats] = useState(null);
+
     // Load weather on mount
     useEffect(() => {
         loadWeather();
@@ -59,6 +63,24 @@ export default function SignalsPage() {
         fetchSignals();
         fetchLeaderboard();
     }, []);
+
+    // Fetch agent track record for reputation spine
+    useEffect(() => {
+        fetch('/api/agent/track-record')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.stats) {
+                    setAgentTrackStats(data.stats);
+                }
+            })
+            .catch(err => console.warn('Could not fetch track record:', err.message));
+    }, []);
+
+    // Compute calibration score from Brier
+    const calibrationScore = agentTrackStats?.avg_brier_score != null
+        ? Math.max(0, Math.round((1 - agentTrackStats.avg_brier_score) * 100))
+        : null;
+    const agentBrierScore = agentTrackStats?.avg_brier_score ?? null;
 
     const fetchLeaderboard = async () => {
         try {
@@ -234,13 +256,15 @@ export default function SignalsPage() {
                 {/* Header */}
                 <header className={`sticky top-0 z-50 border-b glass-subtle`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
-                        <div>
+          <div>
                             <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
                                 Signals
                             </h1>
                             <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
                                 Prove your edge — verifiable predictions with on-chain track records
                             </p>
+                            {/* Narrative step — step 4: Get Scored */}
+                            <NarrativeSteps currentStep="scored" isNight={isNight} className="mt-3" />
                         </div>
                         <div className="flex items-center space-x-3">
                             <PageNav currentPage="Signals" isNight={isNight} />
@@ -308,6 +332,8 @@ export default function SignalsPage() {
                             setExpandedSignalId={setExpandedSignalId}
                             formatTimestamp={formatTimestamp}
                             userAddress={walletAddress}
+                            calibrationScore={calibrationScore}
+                            agentBrierScore={agentBrierScore}
                         />
                     ) : (
                         <>

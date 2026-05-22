@@ -7,6 +7,8 @@ import { LocationValidator } from '@/services/validators/index.js';
  * Validates location appropriateness for market types
  */
 
+export const runtime = 'edge';
+
 export async function POST(request) {
   try {
     const { eventType, location, additionalContext } = await request.json();

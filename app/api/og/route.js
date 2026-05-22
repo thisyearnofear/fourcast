@@ -4,7 +4,19 @@ export const runtime = "nodejs";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
+  const type = searchParams.get("type");
 
+  if (type === "signal") {
+    return renderSignalOG(searchParams);
+  }
+
+  return renderWeatherOG(searchParams);
+}
+
+/**
+ * OG card for weather-based pages (existing functionality)
+ */
+function renderWeatherOG(searchParams) {
   const title = searchParams.get("title");
   const temp = searchParams.get("temp");
   const condition = searchParams.get("condition");
@@ -47,6 +59,257 @@ export async function GET(req) {
             <p style={{ fontSize: "40px", opacity: 0.7 }}>{condition}</p>
           </>
         )}
+      </div>
+    ),
+    {
+      width: 1200,
+      height: 630,
+    }
+  );
+}
+
+/**
+ * OG card for prediction signals
+ * Renders market title, confidence, edge, author, and Fourcast branding
+ */
+function renderSignalOG(searchParams) {
+  const title = searchParams.get("title") || "Prediction Signal";
+  const confidence = (searchParams.get("confidence") || "LOW").toUpperCase();
+  const edge = searchParams.get("edge");
+  const probability = searchParams.get("probability");
+  const author = searchParams.get("author") || "";
+  const venue = searchParams.get("venue") || "";
+
+  // Confidence colors
+  const confidenceColors = {
+    HIGH: { bg: "#065f46", text: "#6ee7b7", border: "#10b981" },
+    MEDIUM: { bg: "#78350f", text: "#fcd34d", border: "#f59e0b" },
+    LOW: { bg: "#451a03", text: "#fb923c", border: "#f97316" },
+    DEFAULT: { bg: "#1e293b", text: "#94a3b8", border: "#475569" },
+  };
+  const cc = confidenceColors[confidence] || confidenceColors.DEFAULT;
+
+  // Edge display
+  const edgeValue = edge ? parseFloat(edge) : null;
+  const edgeColor = edgeValue !== null && edgeValue > 0 ? "#34d399" : edgeValue !== null && edgeValue < 0 ? "#f87171" : "#94a3b8";
+  const edgeLabel = edgeValue !== null ? `${edgeValue > 0 ? "+" : ""}${(edgeValue * 100).toFixed(1)}%` : null;
+
+  // Probability display
+  const probValue = probability ? parseFloat(probability) : null;
+
+  // Author display
+  const authorDisplay = author
+    ? `${author.substring(0, 6)}...${author.substring(author.length - 4)}`
+    : null;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#0a0a0f",
+          color: "white",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Subtle grid pattern background */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+
+        {/* Gradient accent line at top */}
+        <div
+          style={{
+            height: "4px",
+            width: "100%",
+            background: "linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)",
+          }}
+        />
+
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            padding: "48px 56px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          {/* Header: Brand */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "auto",
+            }}
+          >
+            <span style={{ fontSize: "28px", opacity: 0.5 }}>fourcast</span>
+            <span
+              style={{
+                fontSize: "14px",
+                padding: "6px 14px",
+                borderRadius: "999px",
+                background: "rgba(59, 130, 246, 0.15)",
+                color: "#93c5fd",
+                border: "1px solid rgba(59, 130, 246, 0.3)",
+              }}
+            >
+              Signal
+            </span>
+            {venue && (
+              <span
+                style={{
+                  fontSize: "14px",
+                  padding: "6px 14px",
+                  borderRadius: "999px",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "#94a3b8",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                {venue}
+              </span>
+            )}
+          </div>
+
+          {/* Market Title */}
+          <div
+            style={{
+              fontSize: "40px",
+              fontWeight: 300,
+              lineHeight: 1.3,
+              maxWidth: "900px",
+              marginTop: "24px",
+              marginBottom: "32px",
+              color: "#f1f5f9",
+            }}
+          >
+            {title.length > 100 ? title.substring(0, 100) + "..." : title}
+          </div>
+
+          {/* Stats Row */}
+          <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+            {/* Confidence Badge */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                padding: "16px 24px",
+                borderRadius: "12px",
+                background: cc.bg,
+                border: `1px solid ${cc.border}`,
+              }}
+            >
+              <span style={{ fontSize: "12px", color: cc.text, opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Confidence
+              </span>
+              <span style={{ fontSize: "28px", fontWeight: 700, color: cc.text }}>
+                {confidence}
+              </span>
+            </div>
+
+            {/* Edge */}
+            {edgeLabel && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px",
+                  padding: "16px 24px",
+                  borderRadius: "12px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                <span style={{ fontSize: "12px", color: "#94a3b8", opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Edge
+                </span>
+                <span style={{ fontSize: "28px", fontWeight: 700, color: edgeColor }}>
+                  {edgeLabel}
+                </span>
+              </div>
+            )}
+
+            {/* Probability */}
+            {probValue !== null && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px",
+                  padding: "16px 24px",
+                  borderRadius: "12px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                <span style={{ fontSize: "12px", color: "#94a3b8", opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  AI Probability
+                </span>
+                <span style={{ fontSize: "28px", fontWeight: 700, color: "#60a5fa" }}>
+                  {(probValue * 100).toFixed(0)}%
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Footer: Author + CTA */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "auto",
+              paddingTop: "24px",
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              {authorDisplay && (
+                <>
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {author[0]?.toUpperCase() || "?"}
+                  </div>
+                  <span style={{ fontSize: "16px", color: "#94a3b8" }}>
+                    {authorDisplay}
+                  </span>
+                </>
+              )}
+            </div>
+            <span style={{ fontSize: "18px", color: "#60a5fa", fontWeight: 500 }}>
+              Analyze on Fourcast →
+            </span>
+          </div>
+        </div>
       </div>
     ),
     {

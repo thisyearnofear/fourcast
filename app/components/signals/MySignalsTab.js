@@ -1,8 +1,9 @@
 import { ConfidenceBadge, EfficiencyBadge } from './SignalBadges';
 import { PersonalStatsDashboard } from '@/components/PersonalStatsDashboard';
 import { MarketInsightsTimeline } from '@/components/MarketInsightsTimeline';
+import EvidenceBlock from '@/components/EvidenceBlock';
 
-export default function MySignalsTab({ signals, isLoading, isNight, textColor, cardBgColor, expandedSignalId, setExpandedSignalId, formatTimestamp, userAddress }) {
+export default function MySignalsTab({ signals, isLoading, isNight, textColor, cardBgColor, expandedSignalId, setExpandedSignalId, formatTimestamp, userAddress, calibrationScore, agentBrierScore }) {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
@@ -162,6 +163,13 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                                             Snapshot: {typeof signal.market_snapshot_hash === 'string' ? signal.market_snapshot_hash.substring(0, 16) : ''}...
                                         </div>
                                     )}
+                                    <EvidenceBlock
+                                        signal={signal}
+                                        isNight={isNight}
+                                        textColor={textColor}
+                                        calibrationScore={calibrationScore}
+                                        agentBrierScore={agentBrierScore}
+                                    />
                                 </div>
                             )}
                         </div>

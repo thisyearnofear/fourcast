@@ -1,6 +1,8 @@
 import { saveSignal, getLatestSignals, updateSignalTxHash } from '@/services/db.js'
 import { createHash } from 'crypto'
 
+export const runtime = 'nodejs';
+
 export async function POST(request) {
   try {
     const body = await request.json()

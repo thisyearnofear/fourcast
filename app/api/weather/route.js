@@ -1,6 +1,8 @@
 import { convertOpenMeteoToWeatherAPI } from '../../../services/dataConverter.js';
 
 // Simple in-memory cache that works locally and with Next.js
+export const runtime = 'edge';
+
 const cache = new Map();
 const rateLimitMap = new Map();
 

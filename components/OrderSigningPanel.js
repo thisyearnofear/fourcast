@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useOrderSigning } from '@/hooks/useOrderSigning';
 import { ConnectKitButton } from 'connectkit';
 import { useBalance, useAccount, useSwitchChain } from 'wagmi';
+import { calculateKellySizing } from '@/utils/kellySizing';
 
 // Polygon Configuration
 const POLYGON_CHAIN_ID = 137;
@@ -21,7 +22,7 @@ const USDC_ADDRESS = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
  * 3. Sign order in MetaMask
  * 4. Submit to server (server adds builder attribution)
  */
-export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initialSide = 'YES', embedded = false }) {
+export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initialSide = 'YES', embedded = false, analysis = null }) {
   // Order parameters
   const [side, setSide] = useState(initialSide);
   const [price, setPrice] = useState('0.50');
@@ -64,6 +65,38 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
       setEstimatedCost(parseFloat(size) * parseFloat(price));
     }
   }, [size, price]);
+
+  // ── Kelly Criterion Position Sizing ───────────────────────────────────
+  // Compute recommended bet size based on AI analysis confidence & edge
+  const kellyResult = useMemo(() => {
+    if (!analysis) return null;
+
+    // Extract AI probability from analysis data
+    // Prefer synthFairProb (ML ensemble), fallback to any aiProbability field
+    const aiProb =
+      analysis.synthData?.polymarketEdge?.synthFairProb ??
+      analysis.aiProbability ??
+      null;
+
+    // Market YES odds from current market data
+    const marketYesOdds = market?.ask ?? market?.currentOdds?.yes ?? null;
+
+    if (aiProb == null || marketYesOdds == null) return null;
+
+    const confidence = analysis.assessment?.confidence || 'LOW';
+    const source = analysis.source || 'llm';
+
+    return calculateKellySizing(aiProb, marketYesOdds, 0.5, confidence, source);
+  }, [analysis, market]);
+
+  // Apply Kelly size to the size input
+  const applyKellySize = () => {
+    if (kellyResult?.actionable && kellyResult.sizePct > 0 && userBalance > 0) {
+      // Calculate size in shares: sizePct * balance / price
+      const shares = (kellyResult.sizePct * userBalance) / parseFloat(price || '0.50');
+      setSize(Math.max(1, Math.round(shares)).toString());
+    }
+  };
 
   // Handle successful submission
   useEffect(() => {
@@ -215,6 +248,133 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                 Connect wallet to trade
               </p>
               <ConnectKitButton />
+            </div>
+          )}
+
+          {/* ── Kelly Criterion Position Sizing Card ── */}
+          {kellyResult && (
+            <div className={`rounded-xl border overflow-hidden transition-all ${
+              kellyResult.actionable
+                ? isNight
+                  ? 'bg-gradient-to-br from-purple-900/40 via-blue-900/20 to-emerald-900/30 border-purple-500/30 shadow-lg shadow-purple-500/10'
+                  : 'bg-gradient-to-br from-purple-100/80 via-blue-50/60 to-emerald-100/70 border-purple-400/40 shadow-md shadow-purple-500/10'
+                : isNight
+                  ? 'bg-white/5 border-white/10'
+                  : 'bg-black/5 border-black/10'
+            }`}>
+              {/* Header */}
+              <div className={`flex items-center gap-2 px-3 py-2 border-b ${
+                kellyResult.actionable
+                  ? isNight ? 'border-purple-500/20' : 'border-purple-400/20'
+                  : borderColor
+              }`}>
+                <span className="text-sm">🧮</span>
+                <span className={`text-[11px] font-medium uppercase tracking-wider ${textColor} opacity-70`}>
+                  Kelly Criterion Sizing
+                </span>
+                {kellyResult.actionable && (
+                  <span className={`ml-auto px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                    analysis?.source?.includes('synthdata')
+                      ? isNight ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-400/30 text-purple-800'
+                      : isNight ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-400/30 text-blue-800'
+                  }`}>
+                    {analysis?.source?.includes('synthdata') ? 'ML ENSEMBLE' : 'AI'}
+                  </span>
+                )}
+              </div>
+
+              {/* Body */}
+              <div className="p-3 space-y-2">
+                {kellyResult.actionable ? (
+                  <>
+                    {/* Direction + Edge row */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          kellyResult.direction === 'BUY YES'
+                            ? isNight ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-green-400/20 text-green-800 border border-green-500/30'
+                            : isNight ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-red-400/20 text-red-800 border border-red-500/30'
+                        }`}>
+                          {kellyResult.direction === 'BUY YES' ? '▲ BUY YES' : '▼ BUY NO'}
+                        </span>
+                        <span className={`text-lg font-bold ${
+                          kellyResult.edge > 0
+                            ? isNight ? 'text-emerald-400' : 'text-emerald-600'
+                            : isNight ? 'text-red-400' : 'text-red-600'
+                        }`}>
+                          {(kellyResult.edge * 100).toFixed(1)}%
+                        </span>
+                        <span className={`text-[10px] ${textColor} opacity-40`}>edge</span>
+                      </div>
+
+                      {/* Kelly fraction badge */}
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${isNight ? 'bg-white/5 text-white/50' : 'bg-black/5 text-black/50'}`}>
+                        k = {kellyResult.kellyPct.toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Recommended size row */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs ${textColor} opacity-60`}>
+                          Recommended:
+                        </span>
+                        <span className={`text-base font-semibold ${textColor}`}>
+                          {(kellyResult.sizePct * 100).toFixed(1)}%
+                        </span>
+                        <span className={`text-[10px] ${textColor} opacity-40`}>of wallet</span>
+                      </div>
+
+                      {/* Apply button */}
+                      <button
+                        onClick={applyKellySize}
+                        disabled={userBalance <= 0}
+                        className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-all border ${
+                          userBalance > 0
+                            ? isNight
+                              ? 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-400/30 text-purple-200 hover:scale-105'
+                              : 'bg-purple-400/20 hover:bg-purple-400/30 border-purple-500/30 text-purple-800 hover:scale-105'
+                            : isNight
+                              ? 'bg-gray-500/20 border-gray-400/20 text-gray-400 cursor-not-allowed'
+                              : 'bg-gray-400/20 border-gray-500/20 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Apply ✓
+                      </button>
+                    </div>
+
+                    {/* Confidence + source row */}
+                    <div className="flex items-center gap-3 text-[10px]">
+                      <span className={`px-1.5 py-0.5 rounded ${
+                        (analysis?.assessment?.confidence || 'LOW') === 'HIGH'
+                          ? isNight ? 'bg-green-500/20 text-green-300' : 'bg-green-400/20 text-green-800'
+                          : (analysis?.assessment?.confidence || 'LOW') === 'MEDIUM'
+                            ? isNight ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-400/20 text-yellow-800'
+                            : isNight ? 'bg-red-500/20 text-red-300' : 'bg-red-400/20 text-red-800'
+                      }`}>
+                        {analysis?.assessment?.confidence || 'LOW'}
+                      </span>
+                      {analysis?.source?.includes('synthdata') && (
+                        <span className={`${textColor} opacity-50`}>
+                          SynthData 200+ ML models
+                        </span>
+                      )}
+                      {userBalance > 0 && !isNaN(kellyResult.sizePct * userBalance) && (
+                        <span className={`${textColor} opacity-40 ml-auto`}>
+                          ≈ ${(kellyResult.sizePct * userBalance).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 py-1">
+                    <span className="text-xs opacity-50">⚖️</span>
+                    <p className={`text-xs ${textColor} opacity-50`}>
+                      No actionable edge — edge too small ({Math.abs(kellyResult.edge * 100).toFixed(1)}%) to recommend a Kelly-sized position
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

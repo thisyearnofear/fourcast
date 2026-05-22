@@ -11,4 +11,7 @@ export { aiService } from './aiService.server';
 export { synthService } from './synthService';
 export { tradingService } from './tradingService';
 export { analyzePathDependentMarket, detectPathDependentMarket } from './pathDependentService';
-export { calculateKellySizing } from './aiService.server';
+// Re-export from pure utility (no server dependencies) so client components can import safely
+// The original in aiService.server.js is identical — this ensures tree-shaking safety
+// eslint-disable-next-line no-restricted-imports
+export { calculateKellySizing } from '../utils/kellySizing';

@@ -7,6 +7,8 @@ import { FuturesBetValidator, MarketDataValidator } from '@/services/validators/
  * Validates market compatibility with weather analysis and data quality
  */
 
+export const runtime = 'edge';
+
 export async function POST(request) {
   try {
     const { market, location, weatherData, requestedAnalysis = 'weather' } = await request.json();

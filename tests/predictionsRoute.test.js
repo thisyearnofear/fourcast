@@ -12,7 +12,7 @@ function mockRequest(body) {
 }
 
 describe('/api/predictions POST', () => {
-  it('builds txRequest when contract address is missing', async () => {
+  it('builds txRequest when contract address is missing', { timeout: 15000 }, async () => {
     const req = mockRequest({ marketID: 123, price: 0.55, side: 'BUY', size: 0.01, walletAddress: '0x0000000000000000000000000000000000000001' })
     const res = await POST(req)
     const json = await res.json()

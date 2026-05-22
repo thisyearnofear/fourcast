@@ -3,6 +3,8 @@ import { kalshiService } from '@/services/kalshiService';
 import { synthService } from '@/services/synthService';
 import * as pathDependentService from '@/services/pathDependentService';
 
+export const runtime = 'nodejs';
+
 export async function POST(request) {
   try {
     let body;

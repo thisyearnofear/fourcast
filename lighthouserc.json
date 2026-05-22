@@ -1,0 +1,22 @@
+{
+  "ci": {
+    "collect": {
+      "settings": {
+        "urls": [
+          "http://localhost:3000"
+        ],
+        "startServerCommand": "npm run start",
+        "startServerReadyPattern": "Ready"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["warn", { "minScore": 0.8 }],
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "first-contentful-paint": ["warn", { "maxNumericValue": 2000 }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 200 }],
+        "cumulative-layout-shift": ["warn", { "maxNumericValue": 0.05 }]
+      }
+    }
+  }
+}

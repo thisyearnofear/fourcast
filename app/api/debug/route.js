@@ -2,6 +2,8 @@
  * Debug endpoint to check environment and database configuration
  */
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     const hasUrl = !!process.env.TURSO_CONNECTION_URL;

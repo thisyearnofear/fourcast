@@ -7,6 +7,8 @@ import { WeatherDataValidator } from '@/services/validators/index.js';
  * Validates weather data quality and completeness
  */
 
+export const runtime = 'edge';
+
 export async function POST(request) {
   try {
     const { weatherData, dataType = 'current', analysisType } = await request.json();

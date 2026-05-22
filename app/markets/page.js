@@ -26,6 +26,8 @@ import PortfolioCard from "@/components/PortfolioCard";
 import PricingOverlay from "@/components/PricingOverlay";
 import ReasoningVisualizer from "@/components/ReasoningVisualizer";
 import BottomSheet from "@/components/BottomSheet";
+import EvidenceBlock from "@/components/EvidenceBlock";
+import NarrativeSteps from "@/components/NarrativeSteps";
 
 export default function MarketsPage() {
   // Unified chain connection state - single source of truth
@@ -100,7 +102,45 @@ export default function MarketsPage() {
     setUrlParamsRead(true);
   }, [urlParamsRead]);
 
+  // Safety check: ensure all required values exist
+  if (!chains) {
+    console.error('[Markets Page] ChainConnections initialization failed:', {
+      chains: !!chains,
+      canPerform: !!canPerform,
+      canPublish: typeof canPublish,
+      chainConnections
+    });
+    return <div>Loading wallet connections...</div>;
+  }
+  // console.log('[Markets Page] ChainConnections initialized successfully');
+
+  const {
+    publishToAptos,
+    getMySignalCount,
+    isPublishing,
+    publishError,
+    connected: aptosConnected,
+    walletAddress,
+  } = useSignalPublisher();
+  const { toasts, addToast, removeToast } = useToast();
+
+  // Tab state: 'sports' or 'discovery'
+  const [activeTab, setActiveTab] = useState("discovery"); // Default to discovery for Synth-optimized markets
+
+  // Weather state (for UI theming and discovery mode)
+  const [weatherData, setWeatherData] = useState(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+
+  // Market state (shared across tabs)
+  const [markets, setMarkets] = useState(null);
+  const [selectedMarket, setSelectedMarket] = useState(null);
+  const [isLoadingMarkets, setIsLoadingMarkets] = useState(false);
+
   // Auto-analyze market if ?analyze= was specified (fires after markets load)
+  // NOTE: Must be declared AFTER `markets` state (above) — otherwise the
+  // dependency array `[markets]` is evaluated during render while `markets`
+  // is still in the Temporal Dead Zone, throwing
+  // "Cannot access 'markets' before initialization" in production builds.
   useEffect(() => {
     const autoId = window.__fourcast_autoAnalyzeId;
     if (!autoId || !markets || markets.length === 0) return;
@@ -136,40 +176,6 @@ export default function MarketsPage() {
     }
   }, [markets]);
 
-  // Safety check: ensure all required values exist
-  if (!chains) {
-    console.error('[Markets Page] ChainConnections initialization failed:', {
-      chains: !!chains,
-      canPerform: !!canPerform,
-      canPublish: typeof canPublish,
-      chainConnections
-    });
-    return <div>Loading wallet connections...</div>;
-  }
-  // console.log('[Markets Page] ChainConnections initialized successfully');
-
-  const {
-    publishToAptos,
-    getMySignalCount,
-    isPublishing,
-    publishError,
-    connected: aptosConnected,
-    walletAddress,
-  } = useSignalPublisher();
-  const { toasts, addToast, removeToast } = useToast();
-
-  // Tab state: 'sports' or 'discovery'
-  const [activeTab, setActiveTab] = useState("discovery"); // Default to discovery for Synth-optimized markets
-
-  // Weather state (for UI theming and discovery mode)
-  const [weatherData, setWeatherData] = useState(null);
-  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
-
-  // Market state (shared across tabs)
-  const [markets, setMarkets] = useState(null);
-  const [selectedMarket, setSelectedMarket] = useState(null);
-  const [isLoadingMarkets, setIsLoadingMarkets] = useState(false);
-
   // Analysis state (shared across tabs)
   const [analysis, setAnalysis] = useState(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
@@ -202,6 +208,27 @@ export default function MarketsPage() {
   });
   const [discoveryDateRange, setDiscoveryDateRange] = useState("this-week");
   const [showArbitrage, setShowArbitrage] = useState(false); // Arbitrage detection toggle
+
+  // Track record state (Brier scores, calibration)
+  const [agentTrackStats, setAgentTrackStats] = useState(null);
+
+  // Fetch agent track record on mount
+  useEffect(() => {
+    fetch('/api/agent/track-record')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.stats) {
+          setAgentTrackStats(data.stats);
+        }
+      })
+      .catch(err => console.warn('Could not fetch track record:', err.message));
+  }, []);
+
+  // Compute calibration score from Brier: Brier 0 = perfect → 100% Calibration
+  const calibrationScore = agentTrackStats?.avg_brier_score != null
+    ? Math.max(0, Math.round((1 - agentTrackStats.avg_brier_score) * 100))
+    : null;
+  const agentBrierScore = agentTrackStats?.avg_brier_score ?? null;
 
   // UI state
   const [error, setError] = useState(null);
@@ -699,6 +726,7 @@ export default function MarketsPage() {
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
             <div>
+              <div>
               <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
                 Markets
               </h1>
@@ -707,6 +735,9 @@ export default function MarketsPage() {
                   ? "Sports predictions with weather-aware analysis"
                   : "ML-powered edge detection across prediction markets"}
               </p>
+              {/* Narrative step — step 2 & 3: Analyze → Publish/Trade */}
+              <NarrativeSteps currentStep="analyze" isNight={isNight} className="mt-3" />
+            </div>
             </div>
             <div className="flex items-center space-x-3">
               <PageNav currentPage="Markets" isNight={isNight} />
@@ -816,6 +847,8 @@ export default function MarketsPage() {
               setSelectedKalshiMarket={setSelectedKalshiMarket}
               setOrderSide={setOrderSide}
               setSelectedArbitrage={setSelectedArbitrage}
+              agentBrierScore={agentBrierScore}
+              calibrationScore={calibrationScore}
             />
           )}
 
@@ -847,6 +880,8 @@ export default function MarketsPage() {
               setSelectedKalshiMarket={setSelectedKalshiMarket}
               setOrderSide={setOrderSide}
               setSelectedArbitrage={setSelectedArbitrage}
+              agentBrierScore={agentBrierScore}
+              calibrationScore={calibrationScore}
             />
           )}
         </main>
@@ -854,9 +889,10 @@ export default function MarketsPage() {
 
       {/* Modal Layers */}
       {
-        showOrderPanel && selectedMarketForOrder && (
+        showOrderPanel &&        selectedMarketForOrder && (
           <OrderSigningPanel
             market={selectedMarketForOrder}
+            analysis={analysis}
             isNight={isNight}
             initialSide={orderSide}
             onClose={() => {
@@ -937,6 +973,8 @@ function SportsTabContent({
   setSelectedKalshiMarket,
   setOrderSide,
   setSelectedArbitrage,
+  agentBrierScore,
+  calibrationScore,
 }) {
   const dateRangeLabels = {
     today: "Today",
@@ -1133,6 +1171,8 @@ function SportsTabContent({
               setSelectedKalshiMarket={setSelectedKalshiMarket}
               setOrderSide={setOrderSide}
               setSelectedArbitrage={setSelectedArbitrage}
+              agentBrierScore={agentBrierScore}
+              calibrationScore={calibrationScore}
             />
           ))}
         </div>
@@ -1354,6 +1394,8 @@ function DiscoveryTabContent({
   setSelectedKalshiMarket,
   setOrderSide,
   setSelectedArbitrage,
+  agentBrierScore,
+  calibrationScore,
 }) {
   const dateRangeLabels = {
     today: "Today",
@@ -1692,6 +1734,9 @@ function DiscoveryTabContent({
                   setSelectedMarketForOrder={setSelectedMarketForOrder}
                   setSelectedKalshiMarket={setSelectedKalshiMarket}
                   setOrderSide={setOrderSide}
+                  setSelectedArbitrage={setSelectedArbitrage}
+                  agentBrierScore={agentBrierScore}
+                  calibrationScore={calibrationScore}
                 />
               ))}
             </div>
@@ -1732,6 +1777,8 @@ function MarketCard({
   setSelectedKalshiMarket,
   setOrderSide,
   setSelectedArbitrage,
+  agentBrierScore,
+  calibrationScore,
 }) {
   const isHidden = expandedMarketId && !isExpanded;
   const isCurrentMarket =
@@ -2374,6 +2421,29 @@ function MarketCard({
                 </div>
               )}
             </div>
+
+            {/* Evidence & Provenance — shows data sources, confidence methodology, counter-signals */}
+            <EvidenceBlock
+              signal={{
+                source: analysis.source || 'llm',
+                confidence: analysis.assessment?.confidence || 'LOW',
+                market_title: market.title || market.question,
+                odds_efficiency: analysis.assessment?.odds_efficiency,
+                venue: market.event_location || market.location || '',
+                timestamp: Math.floor(Date.now() / 1000),
+                synth_ml_percentile: analysis.synthData?.percentiles?.p50 != null
+                  ? Math.round(analysis.synthData.percentiles.p50)
+                  : null,
+                event_id: market.platform === 'kalshi'
+                  ? `kalshi:${market.marketID || market.id}`
+                  : `polymarket:${market.marketID || market.id}`,
+              }}
+              isNight={isNight}
+              textColor={textColor}
+              agentBrierScore={agentBrierScore}
+              calibrationScore={calibrationScore}
+              className="mb-4"
+            />
 
             {/* Recommendation */}
             {analysis.recommended_action && (

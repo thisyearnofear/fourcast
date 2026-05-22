@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'nodejs';
+
 const KALSHI_BASE_URL = process.env.KALSHI_BASE_URL || 'https://trading-api.kalshi.com/trade-api/v2';
 
 export async function POST(request) {

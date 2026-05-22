@@ -1,5 +1,7 @@
 import { analyzeWeatherImpactServer } from '@/services/aiService.server'
 
+export const runtime = 'nodejs';
+
 const analysisRateLimit = new Map()
 const ANALYSIS_RATE_LIMIT = 10
 const ANALYSIS_WINDOW = 60 * 60 * 1000

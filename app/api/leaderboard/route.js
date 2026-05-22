@@ -1,5 +1,7 @@
 import { getLeaderboard } from '@/services/db.js';
 
+export const runtime = 'nodejs';
+
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);

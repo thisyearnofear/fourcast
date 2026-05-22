@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import NarrativeSteps from '@/components/NarrativeSteps';
 
 const QUICK_SEARCHES = [
-  { label: 'BTC $100k', query: 'Bitcoin $100k June 2026' },
+  { label: 'BTC $100k', query: 'Bitcoin $100k June 2026', featured: true },
   { label: 'Chiefs Super Bowl', query: 'Chiefs Super Bowl' },
   { label: 'Fed Rate Cut', query: 'Fed interest rate cut 2026' },
   { label: 'Rain in Miami', query: 'rain in Miami tomorrow' },
@@ -89,6 +90,34 @@ export default function SearchLanding() {
           </div>
         </div>
 
+        {/* Try Demo — one-click, no wallet needed */}
+        {/* Try Demo — one-click, no wallet needed */}
+        <div className="mt-8 text-center">
+          <button
+            onClick={() => handleSearch((QUICK_SEARCHES.find(q => q.featured) || QUICK_SEARCHES[0]).query)}
+            className="group relative inline-flex items-center gap-3 px-6 py-3 rounded-2xl 
+              bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium
+              hover:from-purple-500 hover:to-pink-500 hover:scale-105 
+              transition-all duration-300 shadow-lg shadow-purple-500/25
+              active:scale-95"
+          >
+            <span className="relative">
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-ping" />
+              <span className="text-lg">🎯</span>
+            </span>
+            Try a Demo — No Wallet Needed
+            <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
+          </button>
+          <p className="text-xs text-white/25 mt-3 font-light">
+            See AI-powered analysis with full provenance. Zero setup, zero cost.
+          </p>
+        </div>
+
+        {/* Narrative indicator — step 1: Search */}
+        <div className="mt-8 mb-6">
+          <NarrativeSteps currentStep="search" isNight={false} />
+        </div>
+
         {/* Quick Search Pills */}
         <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-xl">
           {QUICK_SEARCHES.map((item) => (
@@ -131,7 +160,7 @@ export default function SearchLanding() {
               bg-white/5 border border-white/5 hover:text-white/50 hover:bg-white/10 transition-all backdrop-blur-sm"
           >
             <span>💬</span>
-            Try @fourcasterbot on Telegram — no setup needed
+            Or try @fourcasterbot on Telegram
           </a>
         </div>
 

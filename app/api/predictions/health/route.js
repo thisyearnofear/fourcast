@@ -1,5 +1,7 @@
 import { ethers } from 'ethers'
 
+export const runtime = 'nodejs';
+
 const ABI = [
   'function feeBps() view returns (uint16)',
   'function treasury() view returns (address)',

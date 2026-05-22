@@ -3,7 +3,7 @@
  * Tests the fractional Kelly Criterion position sizing math
  */
 import { describe, it, expect } from 'vitest';
-import { calculateKellySizing } from '../services/aiService.server.js';
+import { calculateKellySizing } from '../utils/kellySizing.js';
 
 describe('calculateKellySizing', () => {
   // ── Edge cases: null/invalid inputs ──

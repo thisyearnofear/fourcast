@@ -309,6 +309,7 @@ function RecommendationCard({ rec, isNight }) {
   const hasCalibrationWarning = rec.calibrationWarning;
   const isSynthBacked = rec.source === 'synthdata+llm' || rec.source === 'synthdata+path';
   const isPathDependent = rec.source === 'synthdata+path';
+  const hasReputation = rec.calibrationScore != null || rec.agentBrierScore != null;
 
   return (
     <div className={`border rounded-xl p-4 ${
@@ -365,6 +366,36 @@ function RecommendationCard({ rec, isNight }) {
           isNight ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-800'
         }`}>
           ⚠️ {rec.calibrationWarning}
+        </div>
+      )}
+
+      {/* Reputation spine - calibration + Brier when available */}
+      {hasReputation && (
+        <div className={`flex items-center gap-3 text-xs mb-2 px-2 py-1.5 rounded-lg ${
+          isNight ? 'bg-white/[0.03]' : 'bg-black/[0.03]'
+        }`}>
+          {rec.calibrationScore != null && (
+            <span className={isNight ? 'text-white/60' : 'text-black/60'}>
+              Cal: <strong className={
+                rec.calibrationScore >= 70
+                  ? isNight ? 'text-green-400' : 'text-green-600'
+                  : rec.calibrationScore >= 50
+                  ? isNight ? 'text-yellow-400' : 'text-yellow-600'
+                  : isNight ? 'text-red-400' : 'text-red-600'
+              }>{Math.round(rec.calibrationScore)}%</strong>
+            </span>
+          )}
+          {rec.agentBrierScore != null && (
+            <span className={isNight ? 'text-white/60' : 'text-black/60'}>
+              Brier: <strong className={
+                rec.agentBrierScore < 0.15
+                  ? isNight ? 'text-green-400' : 'text-green-600'
+                  : rec.agentBrierScore < 0.25
+                  ? isNight ? 'text-yellow-400' : 'text-yellow-600'
+                  : isNight ? 'text-red-400' : 'text-red-600'
+              }>{rec.agentBrierScore.toFixed(3)}</strong>
+            </span>
+          )}
         </div>
       )}
 
