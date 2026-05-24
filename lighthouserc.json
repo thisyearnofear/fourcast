@@ -3,7 +3,11 @@
     "collect": {
       "url": ["http://localhost:3000"],
       "startServerCommand": "npm run start",
-      "startServerReadyPattern": "Ready"
+      "startServerReadyPattern": "Ready",
+      "startServerReadyTimeout": 60000,
+      "settings": {
+        "chromeFlags": "--no-sandbox --ignore-certificate-errors"
+      }
     },
     "assert": {
       "assertions": {
