@@ -11,7 +11,7 @@
     "sourceType": "module",
     "ecmaFeatures": { "jsx": true }
   },
-  "ignorePatterns": ["node_modules/", "dist/", ".next/", "coverage/", "lib/", "sdk/", "types/"],
+  "ignorePatterns": ["node_modules/", "dist/", ".next/", "coverage/", "lib/", "types/"],
   "rules": {
     "no-unused-vars": [
       "warn",
