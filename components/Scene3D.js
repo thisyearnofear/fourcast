@@ -291,10 +291,13 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
     
     if (!weatherData?.current?.condition) return '#0D7FDB';
     const condition = weatherData.current.condition.text.toLowerCase();
-    
+    const cloudCover = weatherData.current?.cloud_cover ?? weatherData.current?.cloud ?? 0;
+
     if (condition.includes('storm')) return '#263238';
-    if (condition.includes('rain') || condition.includes('overcast')) return '#546E7A';
-    if (condition.includes('cloudy')) return '#1E88E5';
+    if (condition.includes('rain')) return '#37474F';
+    if (cloudCover > 80) return '#455A64';
+    if (cloudCover > 50) return '#546E7A';
+    if (condition.includes('overcast') || condition.includes('cloudy')) return '#1E88E5';
     return '#0D7FDB';
   };
 
@@ -359,11 +362,14 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
                 }
               })()}
               turbidity={(() => {
+                const cloudCover = weatherData?.current?.cloud_cover ?? weatherData?.current?.cloud ?? 0;
                 if (timeOfDay === 'dawn' || timeOfDay === 'dusk') {
-                  return 8; // Higher turbidity for atmospheric scattering
-                } else { // day
-                  return 2; // Keep existing day value
+                  return cloudCover > 50 ? 10 : 8;
                 }
+                if (cloudCover > 80) return 6;
+                if (cloudCover > 50) return 4;
+                if (cloudCover > 20) return 3;
+                return 2;
               })()}
             />
           )}
@@ -406,7 +412,12 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
             <>
               {/* Main Scene */}
               {/* Stars only visible at night in main scene */}
-              {isNight && <Stars radius={100} depth={50} count={performanceSettings.starsCount} factor={4} saturation={0} fade speed={isAmbientMode ? 0 : 1} />}
+              {isNight && (() => {
+                const isOvercast = weatherData?.current?.condition?.text?.toLowerCase().match(/overcast|rain|drizzle|fog|snow/);
+                const precip = weatherData?.current?.precip_mm || 0;
+                const ratio = isOvercast ? 0.1 : precip > 3 ? 0.2 : precip > 1 ? 0.5 : 1;
+                return <Stars radius={100} depth={50} count={Math.floor(performanceSettings.starsCount * ratio)} factor={4} saturation={0} fade speed={isAmbientMode ? 0 : 1} />;
+              })()}
               
               <WeatherVisualization 
                 weatherData={weatherData} 
@@ -443,7 +454,13 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
               <Sky
                 sunPosition={[100, 20, 100]}
                 inclination={0.9}
-                turbidity={2}
+                turbidity={(() => {
+                  const cloudCover = weatherData?.current?.cloud_cover ?? weatherData?.current?.cloud ?? 0;
+                  if (cloudCover > 80) return 6;
+                  if (cloudCover > 50) return 4;
+                  if (cloudCover > 20) return 3;
+                  return 2;
+                })()}
               />
               <ambientLight intensity={0.4} />
               <directionalLight 

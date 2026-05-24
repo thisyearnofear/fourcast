@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { AptosProvider } from './providers/AptosProvider';
+import { ToastProvider } from '@/components/ToastProvider';
 
 // Dynamic import to prevent chunk loading race conditions with wagmi/connectkit
 const WalletLayer = dynamic(
@@ -16,11 +17,13 @@ export function Providers({ children }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WalletLayer>
-        <AptosProvider>
-          {children}
-        </AptosProvider>
-      </WalletLayer>
+      <ToastProvider>
+        <WalletLayer>
+          <AptosProvider>
+            {children}
+          </AptosProvider>
+        </WalletLayer>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

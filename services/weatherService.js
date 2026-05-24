@@ -154,6 +154,15 @@ const getDemoWeatherData = (requestedLocation) => ({
 
 
 
+// Static list of cities for random location assignment
+const RANDOM_CITIES = [
+  'Nairobi', 'Tokyo', 'London', 'New York', 'Sydney',
+  'São Paulo', 'Berlin', 'Mumbai', 'Reykjavik', 'Bangkok',
+  'Cape Town', 'Dubai', 'Toronto', 'Mexico City', 'Seoul',
+  'Paris', 'Singapore', 'Moscow', 'Istanbul', 'Buenos Aires',
+  'Amsterdam', 'Cairo', 'Beijing', 'Lagos', 'Lima'
+];
+
 export const weatherService = {
   getCurrentWeather: async (location) => {
     try {
@@ -282,6 +291,10 @@ export const weatherService = {
         }
       );
     });
+  },
+
+  getRandomCity: () => {
+    return RANDOM_CITIES[Math.floor(Math.random() * RANDOM_CITIES.length)];
   }
 };
 

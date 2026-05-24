@@ -4,12 +4,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import WalletConnect from "@/app/components/WalletConnect";
 import { useSignalPublisher } from "@/hooks/useSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
-import { weatherService } from "@/services/weatherService";
 import useHUDStore from "@/hooks/useHUDStore";
 import useFilterStore from "@/hooks/useFilterStore";
-import PageNav, { SecondaryNav } from "@/app/components/PageNav";
+import { useWeather } from "@/hooks/useWeather";
 import Scene3D from "@/components/Scene3D";
-import { useToast, ToastContainer } from "@/components/Toast";
+import { useGlobalToast } from "@/components/ToastProvider";
+import PublishConfirmModal from "@/components/PublishConfirmModal";
 import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { MarketEdgeScanner } from "@/components/MarketEdgeScanner";
@@ -101,7 +101,7 @@ export default function MarketsPage() {
     connected: aptosConnected,
     walletAddress,
   } = useSignalPublisher();
-  const { toasts, addToast, removeToast } = useToast();
+  const { addToast, removeToast } = useGlobalToast();
 
   // Tab state: 'sports' or 'discovery' (persisted)
   const filterStore = useFilterStore();
@@ -109,8 +109,7 @@ export default function MarketsPage() {
   const setActiveTab = (tab) => filterStore.setMarketsActiveTab(tab);
 
   // Weather state (for UI theming and discovery mode)
-  const [weatherData, setWeatherData] = useState(null);
-  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+  const { weatherData, isLoading: isLoadingWeather, currentLocationName, isNight } = useWeather();
   const { isHUDVisible } = useHUDStore();
 
   // Market state (shared across tabs)
@@ -183,10 +182,6 @@ export default function MarketsPage() {
   // UI state
   const [error, setError] = useState(null);
   const [expandedMarketId, setExpandedMarketId] = useState(null);
-  const [isNight, setIsNight] = useState(() => {
-    const hour = new Date().getHours();
-    return hour >= 19 || hour <= 6;
-  });
   const [mySignalCount, setMySignalCount] = useState(null);
 
   // Order signing state
@@ -196,15 +191,11 @@ export default function MarketsPage() {
   const [selectedArbitrage, setSelectedArbitrage] = useState(null);
   const [orderSide, setOrderSide] = useState("YES");
   const [showPricing, setShowPricing] = useState(false);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const [freeAnalysesUsed, setFreeAnalysesUsed] = useState(() => {
     if (typeof window === 'undefined') return 0;
     return parseInt(localStorage.getItem('fourcast_free_analyses') || '0', 10);
   });
-
-  // Load weather on mount
-  useEffect(() => {
-    loadWeather();
-  }, []);
 
   // Fetch markets when tab or filters change (independent of user weather)
   useEffect(() => {
@@ -227,33 +218,6 @@ export default function MarketsPage() {
       setMySignalCount(null);
     }
   }, [canPublish, getMySignalCount]);
-
-  const loadWeather = async () => {
-    setIsLoadingWeather(true);
-    try {
-      const location = await weatherService.getCurrentLocation();
-      const data = await weatherService.getCurrentWeather(location);
-      setWeatherData(data);
-
-      // Update theme
-      if (data?.location?.localtime) {
-        const currentHour = new Date(data.location.localtime).getHours();
-        setIsNight(currentHour >= 19 || currentHour <= 6);
-      }
-      setError(null);
-    } catch (err) {
-      try {
-        const data = await weatherService.getCurrentWeather("Nairobi");
-        setWeatherData(data);
-        setError(null);
-      } catch (fallbackErr) {
-        console.warn("Unable to load weather:", fallbackErr.message);
-        setError(null);
-      }
-    } finally {
-      setIsLoadingWeather(false);
-    }
-  };
 
   const fetchMarkets = async () => {
     setIsLoadingMarkets(true);
@@ -639,9 +603,6 @@ export default function MarketsPage() {
         />
       </div>
 
-      {/* Toast Notifications */}
-      <ToastContainer toasts={toasts} removeToast={removeToast} isNight={isNight} />
-
       {/* Analysis Config Modal */}
       <AnalysisConfigModal
         isOpen={showConfigModal}
@@ -762,7 +723,7 @@ export default function MarketsPage() {
               analysis={analysis}
               isAnalyzing={isLoadingAnalysis}
               selectedMarket={selectedMarket}
-              onPublishSignal={handlePublishSignal}
+              onPublishSignal={() => setShowPublishConfirm(true)}
               analysisMode={analysisMode}
               fetchMarkets={fetchMarkets}
               chains={chains}
@@ -796,7 +757,7 @@ export default function MarketsPage() {
               analysis={analysis}
               isAnalyzing={isLoadingAnalysis}
               selectedMarket={selectedMarket}
-              onPublishSignal={handlePublishSignal}
+              onPublishSignal={() => setShowPublishConfirm(true)}
               fetchMarkets={fetchMarkets}
               chains={chains}
               canPublish={canPublish}
@@ -837,6 +798,20 @@ export default function MarketsPage() {
         isOpen={showPricing}
         onClose={() => setShowPricing(false)}
         isNight={isNight}
+      />
+
+      {/* Publish Confirmation Modal */}
+      <PublishConfirmModal
+        isOpen={showPublishConfirm}
+        onClose={() => setShowPublishConfirm(false)}
+        onConfirm={() => {
+          setShowPublishConfirm(false);
+          handlePublishSignal();
+        }}
+        market={selectedMarket}
+        analysis={analysis}
+        isNight={isNight}
+        isPublishing={isPublishing}
       />
 
       {

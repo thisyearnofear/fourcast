@@ -2,6 +2,7 @@ import './global.css/index.css';
 import { Providers } from './providers';
 import Link from 'next/link';
 import HUDToggle from '@/components/HUDToggle';
+import LocationSettingsButton from '@/components/LocationSettingsButton';
 import HUDFooterWrapper from '@/components/HUDFooterWrapper';
 
 // Force all pages to be dynamic to avoid SSR/static generation issues with wallet libraries
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
         <Providers>
           {children}
           <HUDToggle />
+          <LocationSettingsButton />
           <HUDFooterWrapper>
           {/* Global Footer */}
           <footer className="w-full border-t border-white/[0.04] bg-[#0a0a0f] py-6 px-5">

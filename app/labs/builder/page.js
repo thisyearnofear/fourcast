@@ -5,7 +5,7 @@ import PageNav, { HomeLink } from '@/app/components/PageNav';
 import Scene3D from '@/components/Scene3D';
 import useHUDStore from '@/hooks/useHUDStore';
 import { BuilderDashboard } from '@/components/BuilderDashboard';
-import { weatherService } from '@/services/weatherService';
+import { useWeather } from '@/hooks/useWeather';
 import dynamic from 'next/dynamic';
 
 const WalletConnect = dynamic(() => import('@/app/components/WalletConnect'), {
@@ -13,36 +13,8 @@ const WalletConnect = dynamic(() => import('@/app/components/WalletConnect'), {
 });
 
 export default function LabsBuilderPage() {
-  const [isNight, setIsNight] = useState(() => {
-    const hour = new Date().getHours();
-    return hour >= 19 || hour <= 6;
-  });
-  const [weatherData, setWeatherData] = useState(null);
-  const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+  const { weatherData, isLoading: isLoadingWeather, isNight } = useWeather();
   const { isHUDVisible } = useHUDStore();
-
-  useEffect(() => {
-    loadWeather();
-  }, []);
-
-  const loadWeather = async () => {
-    try {
-      const location = await weatherService.getCurrentLocation();
-      const data = await weatherService.getCurrentWeather(location);
-      setWeatherData(data);
-      if (data?.location?.localtime) {
-        const currentHour = new Date(data.location.localtime).getHours();
-        setIsNight(currentHour >= 19 || currentHour <= 6);
-      }
-    } catch (err) {
-      try {
-        const data = await weatherService.getCurrentWeather('Nairobi');
-        setWeatherData(data);
-      } catch { /* ignore */ }
-    } finally {
-      setIsLoadingWeather(false);
-    }
-  };
 
   const textColor = isNight ? 'text-white' : 'text-black';
   const cardBgColor = isNight

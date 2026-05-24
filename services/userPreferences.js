@@ -6,6 +6,8 @@
 
 export class UserPreferences {
   static KEYS = {
+    LOCATION: "fourcast_user_location",
+    LOCATION_MODE: "fourcast_location_mode",
     AI_PROVIDER: 'ai-provider-preference',
     GEMINI_KEY: 'user-gemini-api-key', 
     BYOK_ENABLED: 'byok-gemini-enabled',
@@ -170,6 +172,19 @@ export class UserPreferences {
     }
     
     return { valid: true, error: null };
+  }
+
+  static getUserLocation() {
+    return localStorage.getItem(this.KEYS.LOCATION);
+  }
+
+  static getLocationMode() {
+    return localStorage.getItem(this.KEYS.LOCATION_MODE) || "random";
+  }
+
+  static setUserLocation(city, mode) {
+    localStorage.setItem(this.KEYS.LOCATION, city);
+    localStorage.setItem(this.KEYS.LOCATION_MODE, mode);
   }
 }
 

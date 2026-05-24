@@ -6,10 +6,11 @@ import { useSignalPublisher } from '@/hooks/useSignalPublisher';
 import { useChainConnections } from '@/hooks/useChainConnections';
 import useHUDStore from '@/hooks/useHUDStore';
 import useFilterStore from '@/hooks/useFilterStore';
+import { useWeather } from '@/hooks/useWeather';
+import { useGlobalToast } from '@/components/ToastProvider';
 import PageNav, { SecondaryNav } from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
 import Scene3D from '@/components/Scene3D';
-import { weatherService } from '@/services/weatherService';
 import SignalFilters from '@/app/components/signals/SignalFilters';
 import SignalCard from '@/app/components/signals/SignalCard';
 import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
@@ -17,13 +18,12 @@ import MySignalsTab from '@/app/components/signals/MySignalsTab';
 import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ActiveChainIndicator } from '@/components/ActiveChainIndicator';
 import { ChainSelector } from '@/components/ChainSelector';
-import { useToast, ToastContainer } from '@/components/Toast';
 import NarrativeSteps from '@/components/NarrativeSteps';
 
 export default function SignalsPage() {
     const { connected: aptosConnected, walletAddress, tipSignal } = useSignalPublisher();
     const { chains } = useChainConnections();
-    const { toasts, addToast, removeToast } = useToast();
+    const { addToast } = useGlobalToast();
 
     const [signals, setSignals] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
@@ -53,11 +53,6 @@ export default function SignalsPage() {
 
     // Track record state (Brier scores, calibration)
     const [agentTrackStats, setAgentTrackStats] = useState(null);
-
-    // Load weather on mount
-    useEffect(() => {
-        loadWeather();
-    }, []);
 
     // Fetch signals on mount
     useEffect(() => {
@@ -110,23 +105,6 @@ export default function SignalsPage() {
             console.error('Failed to fetch user stats:', err);
         }
         return null;
-    };
-
-    const loadWeather = async () => {
-        try {
-            const location = await weatherService.getCurrentLocation();
-            const data = await weatherService.getCurrentWeather(location);
-            setWeatherData(data);
-
-            if (data?.location?.localtime) {
-                const currentHour = new Date(data.location.localtime).getHours();
-                setIsNight(currentHour >= 19 || currentHour <= 6);
-            }
-        } catch (err) {
-            console.warn('Unable to load weather:', err.message);
-        } finally {
-            setIsLoadingWeather(false);
-        }
     };
 
     const fetchSignals = async () => {
@@ -238,8 +216,6 @@ export default function SignalsPage() {
                     quality="ambient"
                 />
             </div>
-
-            <ToastContainer toasts={toasts} removeToast={removeToast} isNight={isNight} />
 
             {/* Scrollable Content */}
             <div className={`relative z-20 flex flex-col min-h-screen overflow-y-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
