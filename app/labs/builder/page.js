@@ -36,7 +36,7 @@ export default function LabsBuilderPage() {
       try {
         const data = await weatherService.getCurrentWeather('Nairobi');
         setWeatherData(data);
-      } catch {}
+      } catch { /* ignore */ }
     } finally {
       setIsLoadingWeather(false);
     }

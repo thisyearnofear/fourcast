@@ -47,7 +47,7 @@ export async function POST(request) {
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       start(controller) {
-        ;(async () => {
+        (async () => {
           try {
             const result = await analyzeWeatherImpactServer({
               eventType,

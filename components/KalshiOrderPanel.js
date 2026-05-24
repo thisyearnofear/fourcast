@@ -24,13 +24,61 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
     const glassInput = isNight ? 'glass-input' : 'glass-input-light';
     const inputBg = isNight ? 'bg-white/5' : 'bg-black/5';
 
+    const yesOdds = market.currentOdds?.yes || market.odds_yes || 0.5;
+    const noOdds = 1 - yesOdds;
+    const priceCents = orderType === 'limit' ? limitPrice : Math.round(yesOdds * 100);
+    const estimatedCost = contracts * priceCents;
+    const potentialProfit = contracts * (100 - priceCents);
+
+    const fetchBalance = async () => {
+        try {
+            const response = await fetch('/api/kalshi/balance', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setBalance(data.balance);
+            }
+        } catch (err) {
+            console.error('Failed to fetch balance:', err);
+        }
+    };
+
+    const handleSubmitOrder = async () => {
+        setIsSubmitting(true);
+        setOrderResult(null);
+        try {
+            const response = await fetch('/api/kalshi/order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ticker: market.ticker,
+                    side: orderSide,
+                    type: orderType,
+                    contracts,
+                    price: orderType === 'limit' ? limitPrice : undefined
+                })
+            });
+            const data = await response.json();
+            setOrderResult(data);
+            if (data.success) {
+                fetchBalance();
+            }
+        } catch (err) {
+            setOrderResult({ success: false, message: 'Order failed: ' + err.message });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     useEffect(() => {
         if (isAuthenticated && checkAuth()) {
             fetchBalance();
         }
     }, [isAuthenticated]);
-    
-    // ... existing functions ...
 
     const content = (
         <div

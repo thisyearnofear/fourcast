@@ -183,14 +183,14 @@ export default function SignalsPage() {
         // Sort signals
         const sorted = [...filtered].sort((a, b) => {
             switch (sortBy) {
-                case 'confidence':
-                    // HIGH > MEDIUM > LOW
+                case 'confidence': {
                     const confidenceOrder = { HIGH: 3, MEDIUM: 2, LOW: 1, UNKNOWN: 0 };
                     return (confidenceOrder[b.confidence] || 0) - (confidenceOrder[a.confidence] || 0);
-                case 'accuracy':
-                    // Won > Pending > Lost
+                }
+                case 'accuracy': {
                     const accuracyOrder = { YES: 2, CORRECT: 2, PENDING: 1, NO: 0, INCORRECT: 0 };
                     return (accuracyOrder[b.outcome] || 1) - (accuracyOrder[a.outcome] || 1);
+                }
                 case 'newest':
                 default:
                     return b.timestamp - a.timestamp;

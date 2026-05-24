@@ -371,7 +371,7 @@ async function handleTop(chatId) {
       msg.push(`📈 [Publish your own →](${APP_URL}/signals)`);
       return sendMessage(chatId, msg.join('\n'));
     }
-  } catch {}
+  } catch { /* ignore */ }
   return sendMessage(chatId, [
     `📊 *Top Signals*`,
     ``,

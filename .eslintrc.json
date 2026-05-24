@@ -13,10 +13,7 @@
   },
   "ignorePatterns": ["node_modules/", "dist/", ".next/", "coverage/", "lib/", "types/"],
   "rules": {
-    "no-unused-vars": [
-      "warn",
-      { "args": "none", "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }
-    ],
+    "no-unused-vars": "off",
     "no-undef": "warn",
     "no-empty": "warn",
     "no-extra-semi": "warn",

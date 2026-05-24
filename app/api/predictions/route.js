@@ -76,8 +76,7 @@ export async function POST(request) {
     if (!cfg.address) {
       const idNum = Number(chainId || 0)
       if (idNum === 137 || idNum === 80001) {
-        return Response.json({
-          success: true,
+        return Response.json({ success: true,
           mode: 'unsupported_chain',
           note: 'Polygon ERC20 receipt not configured. Deploy and set PREDICTION_CONTRACT_ADDRESS_POLYGON to enable.'
         }, { status: 200 })
@@ -104,7 +103,7 @@ export async function POST(request) {
       const contract = new ethers.Contract(cfg.address, ['function feeBps() view returns (uint16)'], provider)
       const chainFee = await contract.feeBps()
       effectiveFeeBps = Number(chainFee)
-    } catch (_) {}
+    } catch (_) { /* ignore */ }
 
     const txRequest = buildTxData(cfg.address, {
       marketId: Number(marketID),

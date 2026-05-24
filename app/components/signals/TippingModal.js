@@ -11,6 +11,7 @@ export default function TippingModal({ isOpen, onClose, onTip, recipientAddress,
     const glassPanel = isNight ? 'glass-heavy bg-slate-900/90' : 'glass-heavy-light bg-white/90';
     const glassInput = isNight ? 'glass-input' : 'glass-input-light';
     const borderColor = isNight ? 'border-white/10' : 'border-black/10';
+    const inputBg = isNight ? 'bg-white/5' : 'bg-black/5';
 
     // Preset amounts in MOVE
     const PRESETS = [0.1, 0.5, 1, 5];

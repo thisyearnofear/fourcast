@@ -323,14 +323,26 @@ switch (command) {
     showStatus().catch(console.error);
     break;
     
-  case 'new':
+  case 'new': {
     const name = process.argv[3];
     if (!name) {
       console.error('Usage: npm run migrate:new <name>');
       process.exit(1);
     }
-    createMigration(name);
+    const dir = path.dirname(new URL(import.meta.url).pathname);
+    const now = new Date();
+    const timestamp = now.getFullYear().toString() +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0') +
+      String(now.getHours()).padStart(2, '0') +
+      String(now.getMinutes()).padStart(2, '0') +
+      String(now.getSeconds()).padStart(2, '0');
+    const filename = `${timestamp}_${name.replace(/\s+/g, '_')}.sql`;
+    const filepath = path.join(dir, filename);
+    fs.writeFileSync(filepath, `-- Migration: ${name}\n-- Description: TODO\n\n`);
+    console.log(`Created migration: ${filepath}`);
     break;
+  }
     
   case 'up':
     runMigrations().catch(err => {

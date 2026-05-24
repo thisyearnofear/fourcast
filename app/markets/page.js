@@ -75,7 +75,7 @@ export default function MarketsPage() {
             }
           }
         }
-      } catch {}
+      } catch { /* ignore */ }
     }
 
     // Store analyze ID to auto-run after markets load
@@ -640,7 +640,7 @@ export default function MarketsPage() {
         try {
           const c = await getMySignalCount();
           setMySignalCount(c);
-        } catch { }
+        } catch { /* ignore */ }
 
         addToast(
           `Call recorded on-chain · TX: ${txHash ? txHash.slice(0, 10) : 'Unknown'}...`,
