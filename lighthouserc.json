@@ -3,7 +3,10 @@
     "collect": {
       "url": ["http://localhost:3000"],
       "startServerCommand": "npm run build && npm run start",
-      "startServerReadyPattern": "Ready"
+      "startServerReadyPattern": "Ready",
+      "settings": {
+        "chromeFlags": "--no-sandbox --ignore-certificate-errors"
+      }
     },
     "assert": {
       "assertions": {
