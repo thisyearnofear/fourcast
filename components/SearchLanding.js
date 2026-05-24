@@ -26,11 +26,11 @@ export default function SearchLanding() {
   const handleSearch = (q) => {
     const searchQuery = q || query.trim();
     if (!searchQuery) return;
-    router.push(`/markets?analyze=auto&q=${encodeURIComponent(searchQuery)}`);
+    router.push(`/markets?q=${encodeURIComponent(searchQuery)}`);
   };
 
   const handleCategoryClick = (cat) => {
-    router.push(`/markets?category=${cat.id}&analyze=auto`);
+    router.push(`/markets?category=${cat.id}`);
   };
 
   return (

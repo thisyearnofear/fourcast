@@ -27,7 +27,7 @@ export const CARDS = [
     description: 'AI-driven edge detection across crypto prediction markets. 200+ ML models surface mispriced opportunities.',
     icon: '₿', badge: 'ML',
     gradient: ['#6B21A8', '#BE185D'], gradientLight: ['#A855F7', '#F472B6'],
-    route: '/markets?category=Crypto&analyze=auto',
+    route: '/markets?category=Crypto',
     features: ['ML Confidence Scores', 'Live Odds Comparison', 'Edge Detection'],
   },
   {
@@ -35,7 +35,7 @@ export const CARDS = [
     description: 'Real-time weather data combined with AI analysis to find edges in sports prediction markets.',
     icon: '⚽', badge: 'Wx',
     gradient: ['#059669', '#0D9488'], gradientLight: ['#34D399', '#2DD4BF'],
-    route: '/markets?category=Sports&analyze=auto',
+    route: '/markets?category=Sports',
     features: ['Weather Impact Analysis', 'Game-Day Forecasts', 'Multi-League Coverage'],
   },
   {
@@ -43,7 +43,7 @@ export const CARDS = [
     description: 'Multi-source sentiment analysis with polling data, news signals, and historical patterns.',
     icon: '🏛', badge: 'AI',
     gradient: ['#4338CA', '#2563EB'], gradientLight: ['#818CF8', '#60A5FA'],
-    route: '/markets?category=Politics&analyze=auto',
+    route: '/markets?category=Politics',
     features: ['Poll Aggregation', 'Sentiment Analysis', 'Historical Models'],
   },
   {

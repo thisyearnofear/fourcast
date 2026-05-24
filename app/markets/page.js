@@ -36,7 +36,6 @@ export default function MarketsPage() {
 
     const params = new URLSearchParams(window.location.search);
     const category = params.get('category');
-    const analyzeId = params.get('analyze');
     const shareId = params.get('share_id');
     const searchQuery = params.get('q');
 
@@ -78,17 +77,6 @@ export default function MarketsPage() {
       } catch { /* ignore */ }
     }
 
-    // Store analyze ID to auto-run after markets load
-    if (analyzeId) {
-      window.__fourcast_autoAnalyzeId = analyzeId;
-    }
-
-    // Store search query from landing page search bar
-    if (searchQuery) {
-      window.__fourcast_autoAnalyzeId = 'auto';
-      window.__fourcast_autoQuery = searchQuery;
-    }
-
     setUrlParamsRead(true);
   }, [urlParamsRead]);
 
@@ -126,42 +114,17 @@ export default function MarketsPage() {
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [isLoadingMarkets, setIsLoadingMarkets] = useState(false);
 
-  // Auto-analyze market if ?analyze= was specified (fires after markets load)
-  // NOTE: Must be declared AFTER `markets` state (above) — otherwise the
-  // dependency array `[markets]` is evaluated during render while `markets`
-  // is still in the Temporal Dead Zone, throwing
-  // "Cannot access 'markets' before initialization" in production builds.
+  // Shared analysis deep-link: auto-analyze specific market by share_id
   useEffect(() => {
-    const autoId = window.__fourcast_autoAnalyzeId;
-    if (!autoId || !markets || markets.length === 0) return;
+    const shareId = window.__fourcast_autoAnalyzeId;
+    if (!shareId || !markets || markets.length === 0) return;
+    if (shareId === 'auto') return; // No longer supported — user must click Analyze
 
-    let target;
-
-    if (autoId === 'auto') {
-      // Use custom query if provided (from landing page search)
-      const customQuery = window.__fourcast_autoQuery;
-      if (customQuery) {
-        // Trigger a title-based analysis by analyzing the first market
-        // with the custom query as eventType
-        target = { title: customQuery, eventType: customQuery };
-        window.__fourcast_autoQuery = null;
-      } else {
-        // Find the market with highest volume
-        target = [...markets].sort((a, b) => {
-          const volA = a.volume || a.volume24h || 0;
-          const volB = b.volume || b.volume24h || 0;
-          return volB - volA;
-        })[0];
-      }
-    } else {
-      target = markets.find(m =>
-        (m.marketID === autoId) || (m.id === autoId) || (m.tokenID === autoId)
-      );
-    }
-
+    const target = markets.find(m =>
+      (m.marketID === shareId) || (m.id === shareId) || (m.tokenID === shareId)
+    );
     if (target) {
-      window.__fourcast_autoAnalyzeId = null; // Prevent re-run
-      // Small delay to let UI settle
+      window.__fourcast_autoAnalyzeId = null;
       setTimeout(() => analyzeMarket(target), 300);
     }
   }, [markets]);

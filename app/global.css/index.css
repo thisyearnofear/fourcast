@@ -104,6 +104,7 @@ html {
   /* Button utilities - DRY consolidation */
   .btn-base {
     @apply font-light text-sm transition-all border rounded-2xl;
+    @apply active:scale-[0.97];
   }
 
   .btn-sm {
@@ -201,6 +202,10 @@ html {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.content-reveal {
+  animation: fadeInUp 0.35s ease-out both;
 }
 
 @keyframes slideUp {
