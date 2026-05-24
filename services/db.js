@@ -122,13 +122,18 @@ async function recordMigration(version, name, hash) {
   }
 }
 
-// Parse SQL file into executable statements
+// Parse SQL file into executable statements.
+// Strips `-- line comments` so statements with leading header comments
+// (e.g. "-- Positions table\nCREATE TABLE ...") are not discarded.
 function parseSqlStatements(sql) {
   return sql
     .split(';')
-    .map(s => s.trim())
-    .filter(s => s.length > 0)
-    .filter(s => !s.startsWith('--'));
+    .map(chunk => chunk
+      .split('\n')
+      .map(line => line.replace(/--.*$/, '')) // strip line comments
+      .join('\n')
+      .trim())
+    .filter(s => s.length > 0);
 }
 
 // Run all pending migrations
