@@ -99,7 +99,7 @@ export default function ReasoningVisualizer({
                 <span className="inline-block w-8 text-left ml-1">{dots}</span>
               </h2>
               <p className="text-xs text-white/30 uppercase tracking-widest mt-1">
-                Venice AI • DeepSeek-R1 • 70B
+                Venice AI • Llama 3.3 • 70B
               </p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-2xl animate-pulse">

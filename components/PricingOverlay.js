@@ -28,7 +28,8 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
   const [selectedPlan, setSelectedPlan] = useState('pro');
   const { txState, subscribe, resetTx, subscription, isConfigured } = useSubscription();
 
-  if (!isOpen) return null;
+  // Don't show pricing overlay if payment system isn't configured
+  if (!isOpen || !isConfigured) return null;
 
   const textColor = isNight ? 'text-white' : 'text-black';
   const mutedColor = isNight ? 'text-white/50' : 'text-black/50';

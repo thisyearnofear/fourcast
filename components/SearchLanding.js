@@ -91,7 +91,6 @@ export default function SearchLanding() {
         </div>
 
         {/* Try Demo — one-click, no wallet needed */}
-        {/* Try Demo — one-click, no wallet needed */}
         <div className="mt-8 text-center">
           <button
             onClick={() => handleSearch((QUICK_SEARCHES.find(q => q.featured) || QUICK_SEARCHES[0]).query)}

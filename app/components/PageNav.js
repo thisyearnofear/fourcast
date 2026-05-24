@@ -52,7 +52,7 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
       onboardId: "agent"
     },
     { 
-      name: "You", 
+      name: "Positions", 
       href: "/positions", 
       icon: "💼",
       description: "Your positions & reputation",
@@ -113,34 +113,36 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
         ))}
       </div>
 
-      {/* Mobile Navigation - Icon only */}
+      {/* Mobile Navigation - Icon + label */}
       <div className="flex sm:hidden items-center gap-1">
         {primaryNav.map((item) => (
           <Link
             key={item.name}
             href={item.href}
             data-onboard={item.onboardId}
-            className={`flex items-center justify-center w-10 h-10 rounded-lg text-lg transition-all ${
+            className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-all ${
               isActive(item.href)
                 ? `${activeBgClass}`
                 : `${glassClass} opacity-70`
             }`}
             aria-label={item.name}
           >
-            <span>{item.icon}</span>
+            <span className="text-base leading-none">{item.icon}</span>
+            <span className={`text-[8px] mt-0.5 font-medium ${textColor} leading-none`}>{item.name}</span>
           </Link>
         ))}
         {/* Labs icon on mobile */}
         <Link
           href="/labs"
-          className={`flex items-center justify-center w-9 h-9 rounded-lg text-base transition-all ${
+          className={`flex flex-col items-center justify-center w-11 h-12 rounded-lg transition-all ${
             isActive('/labs')
               ? `${activeBgClass}`
               : `${glassClass} opacity-50`
           }`}
           aria-label="Labs"
         >
-          <span>🧪</span>
+          <span className="text-base leading-none">🧪</span>
+          <span className={`text-[8px] mt-0.5 font-medium ${textColor} leading-none`}>Labs</span>
         </Link>
       </div>
     </nav>
