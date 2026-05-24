@@ -127,11 +127,6 @@ yarn.lock
 # If you need to ignore generated binaries, add specific patterns here.
 
 # ============================================
-# SDK Build Output
-# ============================================
-sdk/dist
-
-# ============================================
 # Temporary Files
 # ============================================
 *.tmp
