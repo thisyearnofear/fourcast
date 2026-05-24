@@ -52,7 +52,7 @@ async function main() {
   // 2. Test API connectivity
   log('blue', '\n2. Testing API connectivity...');
   try {
-    const response = await axios.get('https://gamma-api.polymarket.com/markets?limit=1', {
+    const _response = await axios.get('https://gamma-api.polymarket.com/markets?limit=1', {
       timeout: 5000
     });
     log('green', '✅ Polymarket API reachable');

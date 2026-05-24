@@ -1,7 +1,7 @@
 'use client';
 
-import LocationSelector from '@/components/LocationSelector';
-import { ConnectKitButton } from 'connectkit';
+
+
 
 export default function WeatherHeader({ 
   weatherData, 

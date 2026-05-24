@@ -183,13 +183,13 @@ function cacheKey(url, options) {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const noop = () => {};
+const _noop = () => {};
 
 /**
  * Create an AbortSignal that fires after `timeoutMs`.
  * Falls back to a no-op if `AbortSignal.timeout` is unavailable.
  */
-function abortSignal(timeoutMs) {
+function _abortSignal(timeoutMs) {
   if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
     return AbortSignal.timeout(timeoutMs);
   }

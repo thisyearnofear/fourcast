@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import WalletConnect from "@/app/components/WalletConnect";
+import { useState, useEffect, useCallback } from 'react';
+
 import { useSignalPublisher } from "@/hooks/useSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
 import { weatherService } from "@/services/weatherService";
-import PageNav, { SecondaryNav } from "@/app/components/PageNav";
-import Scene3D from "@/components/Scene3D";
-import { useToast, ToastContainer } from "@/components/Toast";
-import { OrderSigningPanel } from "@/components/OrderSigningPanel";
-import KalshiOrderPanel from "@/components/KalshiOrderPanel";
-import { MarketEdgeScanner } from "@/components/MarketEdgeScanner";
-import { ArbitrageExecutionPanel } from "@/components/ArbitrageExecutionPanel";
-import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
-import AnalysisConfigModal from "@/components/AnalysisConfigModal";
-import PricingOverlay from "@/components/PricingOverlay";
-import ReasoningVisualizer from "@/components/ReasoningVisualizer";
-import NarrativeSteps from "@/components/NarrativeSteps";
-import { SportsTabContent, DiscoveryTabContent } from "./components";
+
+
+import { useToast } from '@/components/Toast';
+
+
+
+
+import { useAnalysisOptions } from '@/components/AnalysisOptions';
+
+
+
+
+
 
 export default function MarketsPage() {
   // Unified chain connection state - single source of truth
@@ -75,7 +75,7 @@ export default function MarketsPage() {
             }
           }
         }
-      } catch {}
+      } catch { /* empty */ }
     }
 
     // Store analyze ID to auto-run after markets load
@@ -107,10 +107,10 @@ export default function MarketsPage() {
   const {
     publishToAptos,
     getMySignalCount,
-    isPublishing,
+    _isPublishing,
     publishError,
-    connected: aptosConnected,
-    walletAddress,
+    connected: _aptosConnected,
+    _walletAddress,
   } = useSignalPublisher();
   const { toasts, addToast, removeToast } = useToast();
 
@@ -235,7 +235,7 @@ export default function MarketsPage() {
   const [selectedArbitrage, setSelectedArbitrage] = useState(null);
   const [orderSide, setOrderSide] = useState("YES");
   const [showPricing, setShowPricing] = useState(false);
-  const [freeAnalysesUsed, setFreeAnalysesUsed] = useState(() => {
+  const [_freeAnalysesUsed, setFreeAnalysesUsed] = useState(() => {
     if (typeof window === 'undefined') return 0;
     return parseInt(localStorage.getItem('fourcast_free_analyses') || '0', 10);
   });
@@ -640,7 +640,7 @@ export default function MarketsPage() {
         try {
           const c = await getMySignalCount();
           setMySignalCount(c);
-        } catch { }
+        } catch { /* empty */ }
 
         addToast(
           `Call recorded on-chain · TX: ${txHash ? txHash.slice(0, 10) : 'Unknown'}...`,

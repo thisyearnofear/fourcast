@@ -1,12 +1,12 @@
 'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { AptosProvider } from './providers/AptosProvider';
+
 
 // Dynamic import to prevent chunk loading race conditions with wagmi/connectkit
-const WalletLayer = dynamic(
+const _WalletLayer = dynamic(
   () => import('./WalletLayer'),
   { ssr: false }
 );

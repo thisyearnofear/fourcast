@@ -371,7 +371,7 @@ async function handleTop(chatId) {
       msg.push(`📈 [Publish your own →](${APP_URL}/signals)`);
       return sendMessage(chatId, msg.join('\n'));
     }
-  } catch {}
+  } catch { /* empty */ }
   return sendMessage(chatId, [
     `📊 *Top Signals*`,
     ``,
@@ -432,7 +432,7 @@ async function handleFollowUpKalshi(chatId, messageId, query) {
       headers: { 'Content-Type': 'application/json', 'X-Fourcast-Auth': process.env.BOT_API_SECRET || '' },
       body: JSON.stringify({ eventType: query.trim(), title: query.trim(), location: '', mode: 'deep' }),
     });
-    const data = await response.json();
+    const _data = await response.json();
     const arbResponse = await fetch(`${APP_URL}/api/defi/arbitrage?limit=5&minSpread=1&minVolume=10000`);
     const arbData = await arbResponse.json();
     const matches = arbData?.opportunities?.filter(o =>

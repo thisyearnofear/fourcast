@@ -294,7 +294,7 @@ if (successTests.length < results.length) {
 
 const llama = results.find(r => r.name.includes('Llama'));
 const qwenStrip = results.find(r => r.name.includes('Strip'));
-const qwenDisable = results.find(r => r.name.includes('Disable'));
+const _qwenDisable = results.find(r => r.name.includes('Disable'));
 
 if (llama && llama.success) {
   console.log('📌 LLAMA 3.3 70B (Current Setup):');

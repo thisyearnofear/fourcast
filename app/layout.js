@@ -1,6 +1,6 @@
 import './global.css/index.css';
-import { Providers } from './providers';
-import Link from 'next/link';
+
+
 
 // Force all pages to be dynamic to avoid SSR/static generation issues with wallet libraries
 export const dynamic = 'force-dynamic';

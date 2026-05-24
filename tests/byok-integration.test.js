@@ -91,7 +91,7 @@ describe('BYOK Integration System', () => {
       router.geminiService.analyze = vi.fn().mockRejectedValue(new Error('API Error'));
 
       const mockVeniceResult = { assessment: { confidence: 'LOW' } };
-      const originalAnalyzeMarket = router.veniceService.analyzeMarket;
+      const _originalAnalyzeMarket = router.veniceService.analyzeMarket;
       router.veniceService.analyzeMarket = vi.fn().mockResolvedValue(mockVeniceResult);
 
       const result = await router.analyze({

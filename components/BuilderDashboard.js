@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useBuilder } from '@/hooks/useBuilder';
 
 /**
@@ -150,7 +150,7 @@ export function BuilderDashboard({ isNight = false, onClose = null }) {
   );
 }
 
-function MetricCard({ label, value, isNight }) {
+function _MetricCard({ label, value, isNight }) {
   return (
     <div className={`rounded-lg p-3 text-center ${isNight ? 'glass-input' : 'glass-input-light'}`}>
       <div className={`text-xs font-light ${isNight ? 'text-white/60' : 'text-slate-600'}`}>

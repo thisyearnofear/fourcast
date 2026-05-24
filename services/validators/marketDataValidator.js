@@ -46,7 +46,7 @@ export class MarketDataValidator {
       id,
       tokenID,
       title,
-      description,
+      _description,
       endDate,
       resolutionDate,
       closed,
@@ -129,7 +129,7 @@ export class MarketDataValidator {
       bestBid,
       bestAsk,
       lastPrice,
-      midPrice
+      _midPrice
     } = pricingData;
     
     // VALIDATION 1: Odds structure
@@ -231,8 +231,8 @@ export class MarketDataValidator {
       location,
       teams,
       eventType,
-      venue,
-      extractedData
+      _venue,
+      _extractedData
     } = metadataData;
     
     // VALIDATION 1: Location data
@@ -297,7 +297,7 @@ export class MarketDataValidator {
       asks,
       bestBid,
       bestAsk,
-      spread,
+      _spread,
       totalDepth
     } = orderBookData;
     

@@ -2,20 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import useKalshiAuth from '@/hooks/useKalshiAuth';
-import KalshiLoginModal from './KalshiLoginModal';
+
 
 export default function KalshiOrderPanel({ market, isNight, onClose, embedded = false }) {
-    const { token, isAuthenticated, checkAuth } = useKalshiAuth();
+    const { _token, isAuthenticated, checkAuth } = useKalshiAuth();
     const [showLogin, setShowLogin] = useState(false);
-    const [balance, setBalance] = useState(null);
+    const [balance, _setBalance] = useState(null);
     const [orderSide, setOrderSide] = useState('yes');
     const [orderType, setOrderType] = useState('limit');
     const [contracts, setContracts] = useState(10);
     const [limitPrice, setLimitPrice] = useState(
         Math.round((market.currentOdds?.yes || market.odds_yes || 0.5) * 100)
     );
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [orderResult, setOrderResult] = useState(null);
+    const [isSubmitting, _setIsSubmitting] = useState(false);
+    const [orderResult, _setOrderResult] = useState(null);
 
     // Glass CSS classes (DRY)
     const glassPanel = isNight ? 'glass-heavy' : 'glass-heavy-light';
@@ -23,14 +23,24 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
     const borderColor = isNight ? 'border-white/10' : 'border-black/10';
     const glassInput = isNight ? 'glass-input' : 'glass-input-light';
     const inputBg = isNight ? 'bg-white/5' : 'bg-black/5';
+    const yesOdds = market.currentOdds?.yes || market.odds_yes || 0.5;
+    const noOdds = market.currentOdds?.no || market.odds_no || 0.5;
+    const estimatedCost = contracts * (limitPrice / 100);
+    const potentialProfit = contracts * (orderSide === 'yes' ? (1 - limitPrice / 100) : limitPrice / 100);
+
+    const fetchBalance = async () => {
+        // TODO: implement balance fetch from Kalshi API
+    };
+
+    const handleSubmitOrder = () => {
+        // TODO: implement order submission
+    };
 
     useEffect(() => {
         if (isAuthenticated && checkAuth()) {
             fetchBalance();
         }
     }, [isAuthenticated]);
-    
-    // ... existing functions ...
 
     const content = (
         <div

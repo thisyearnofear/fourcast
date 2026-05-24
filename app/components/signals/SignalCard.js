@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { ChainNetworkBadge, ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
-import { generateXUrl, generateFarcasterUrl, generateSignalUrl, copySignalLink } from '@/utils/shareSignal';
-import EvidenceBlock from '@/components/EvidenceBlock';
-import ReputationBadge from '@/components/ReputationBadge';
-import TippingModal from './TippingModal';
+
+import { generateXUrl, generateFarcasterUrl, copySignalLink } from '@/utils/shareSignal';
+
+
+
 
 export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip, userStats, onExpand }) {
     const [shareOpen, setShareOpen] = useState(false);

@@ -1,7 +1,7 @@
-import { ConfidenceBadge, EfficiencyBadge } from './SignalBadges';
-import { PersonalStatsDashboard } from '@/components/PersonalStatsDashboard';
-import { MarketInsightsTimeline } from '@/components/MarketInsightsTimeline';
-import EvidenceBlock from '@/components/EvidenceBlock';
+
+
+
+
 
 export default function MySignalsTab({ signals, isLoading, isNight, textColor, cardBgColor, expandedSignalId, setExpandedSignalId, formatTimestamp, userAddress, calibrationScore, agentBrierScore }) {
     if (isLoading) {

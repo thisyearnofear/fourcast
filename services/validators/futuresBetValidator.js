@@ -189,7 +189,7 @@ export class FuturesBetValidator {
     const warnings = [];
     
     const classification = MarketTypeDetector.detectMarketType(marketData);
-    const { currentOdds, volume24h, liquidity } = marketData;
+    const { currentOdds, volume24h, _liquidity } = marketData;
     
     // VALIDATION 1: Futures-specific risks
     if (classification.isFutures) {

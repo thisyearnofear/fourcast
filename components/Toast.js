@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState } from 'react';
 
 export function useToast() {
   const [toasts, setToasts] = useState([]);
@@ -53,7 +53,7 @@ export function ToastContainer({ toasts, removeToast, isNight = false }) {
   );
 }
 
-function Toast({ toast, onRemove, isNight }) {
+function _Toast({ toast, onRemove, isNight }) {
   const getIcon = (type) => {
     const icons = {
       success: "✅",

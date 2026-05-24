@@ -1,6 +1,6 @@
 import { polymarketService } from '@/services/polymarketService';
 import { builderService } from '@/services/builderService';
-import { APIInputValidator, TradingValidator, MarketDataValidator } from '@/services/validators/index.js';
+import { MarketDataValidator } from '@/services/validators/index.js';
 
 // Order submission rate limiting
 export const runtime = 'nodejs';
@@ -44,7 +44,7 @@ function getClientIdentifier(request) {
  * Validate wallet is connected and has sufficient balance
  * Fetched from frontend after wallet connection
  */
-function validateWalletData(walletData) {
+function _validateWalletData(walletData) {
   if (!walletData?.address || !walletData?.signer) {
     throw new Error('Wallet not connected');
   }

@@ -19,7 +19,7 @@ describe('Database Service', () => {
   });
 
   afterAll(() => {
-    try { db.close(); } catch (_) {}
+    try { db.close(); } catch (_) { /* empty */ }
   });
 
   it('should save a prediction', async () => {

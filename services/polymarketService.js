@@ -934,7 +934,7 @@ class PolymarketService {
    */
   assessMarketWeatherEdge(market, weatherData = null) {
     const title = (market.title || '').toLowerCase();
-    const description = (market.description || '').toLowerCase();
+    const _description = (market.description || '').toLowerCase();
     const tags = (market.tags || []).map(t => {
       if (typeof t === 'string') return t.toLowerCase();
       if (typeof t === 'object' && t.label) return t.label.toLowerCase();
@@ -2047,7 +2047,7 @@ class PolymarketService {
    */
   assessWeatherRelevance(market, weatherData) {
     const title = (market.title || market.question || '').toLowerCase();
-    const description = (market.description || '').toLowerCase();
+    const _description = (market.description || '').toLowerCase();
 
     // Extract actual weather conditions if available
     const currentTemp = weatherData?.current?.temp_f;

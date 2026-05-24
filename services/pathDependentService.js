@@ -147,7 +147,7 @@ export function detectPathDependentMarket(title) {
   for (const pattern of patterns) {
     const match = title.match(pattern);
     if (match) {
-      const [, assetHint, priceAStr, priceBStr] = match;
+      const [, _assetHint, priceAStr, priceBStr] = match;
       
       // Parse prices (handle 'k' suffix)
       const priceA = parsePrice(priceAStr);

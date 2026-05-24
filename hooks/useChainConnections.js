@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { CHAINS, EVM_NETWORKS, APTOS_NETWORKS, MOVEMENT_NETWORKS, NETWORK_SWITCH_CONFIGS } from '@/constants/appConstants';
+import { EVM_NETWORKS, APTOS_NETWORKS, MOVEMENT_NETWORKS, NETWORK_SWITCH_CONFIGS } from '@/constants/appConstants';
 
 /**
  * Unified Chain Connection State Management
@@ -33,16 +33,16 @@ export function useChainConnections() {
   const {
     account: aptosAccount,
     connected: aptosWalletConnected,
-    wallet: connectedWallet,
+    wallet: _connectedWallet,
     network: aptosNetwork,
     changeNetwork: aptosChangeNetwork,  // ✅ Get network switching function
   } = useWallet();
 
   // Track preferred networks (user's explicit choice)
-  const [preferredEvmNetwork, setPreferredEvmNetwork] = useState('polygon');
-  const [preferredAptosNetwork, setPreferredAptosNetwork] = useState('aptos-mainnet');
-  const [preferredMovementNetwork, setPreferredMovementNetwork] = useState('movement-mainnet');
-  const [preferredArcNetwork, setPreferredArcNetwork] = useState('arc');
+  const [_preferredEvmNetwork, setPreferredEvmNetwork] = useState('polygon');
+  const [_preferredAptosNetwork, setPreferredAptosNetwork] = useState('aptos-mainnet');
+  const [_preferredMovementNetwork, setPreferredMovementNetwork] = useState('movement-mainnet');
+  const [_preferredArcNetwork, _setPreferredArcNetwork] = useState('arc');
 
   /**
    * Determine if connected wallet is Movement or standard Aptos

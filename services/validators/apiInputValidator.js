@@ -114,8 +114,8 @@ export class APIInputValidator {
     const warnings = [];
     
     const {
-      location,
-      eventType,
+      _location,
+      _eventType,
       limit,
       minVolume,
       tags,
@@ -266,7 +266,7 @@ export class APIInputValidator {
     
     if (method === 'GET') {
       // GET requests for retrieving predictions
-      const { userId, marketId, limit, offset } = input;
+      const { _userId, _marketId, limit, offset } = input;
       
       if (limit !== undefined) {
         const limitNum = parseInt(limit);

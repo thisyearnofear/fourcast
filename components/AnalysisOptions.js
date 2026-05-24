@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * AnalysisOptions Component
@@ -272,7 +272,7 @@ export default function AnalysisOptions({
 }
 
 // Toggle row for full mode
-function ToggleRow({ label, description, isActive, onClick, autoDetected = false }) {
+function _ToggleRow({ label, description, isActive, onClick, autoDetected = false }) {
   return (
     <div
       className="flex items-center justify-between py-2 px-2 -mx-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors"
@@ -310,7 +310,7 @@ function ToggleRow({ label, description, isActive, onClick, autoDetected = false
 }
 
 // Compact toggle button for inline use
-function ToggleButton({ label, isActive, onClick, autoDetected = false, compact = false }) {
+function _ToggleButton({ label, isActive, onClick, autoDetected = false, compact = false }) {
   return (
     <button
       onClick={onClick}
@@ -334,7 +334,7 @@ function ToggleButton({ label, isActive, onClick, autoDetected = false, compact 
 
 // Hook for using analysis options in other components
 export function useAnalysisOptions(marketType = 'unknown') {
-  const [options, setOptions] = useState(() => {
+  const [options, _setOptions] = useState(() => {
     if (typeof window === 'undefined') {
       return {
         includeWeather: false,

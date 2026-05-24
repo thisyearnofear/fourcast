@@ -53,12 +53,12 @@ export class WeatherDataValidator {
       condition,
       humidity,
       wind_mph,
-      wind_kph,
+      _wind_kph,
       precip_chance,
       precip_in,
-      pressure_mb,
-      vis_miles,
-      uv,
+      _pressure_mb,
+      _vis_miles,
+      _uv,
       last_updated
     } = current;
     

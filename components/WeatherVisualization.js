@@ -1,12 +1,12 @@
-import React from 'react';
-import { getWeatherConditionType, shouldShowSun, isPartlyCloudy } from '../services/weatherService';
-import Sun from './weather3d/Sun';
-import Moon from './weather3d/Moon';
-import Clouds from './weather3d/Clouds';
-import Rain from './weather3d/Rain';
-import Snow from './weather3d/Snow';
-import Storm from './weather3d/Storm';
-import { Text } from '@react-three/drei';
+
+import { getWeatherConditionType, isPartlyCloudy } from '../services/weatherService';
+
+
+
+
+
+
+
 
 const WeatherVisualization = ({ weatherData, isLoading, portalMode = false, rainCount, snowCount }) => {
 

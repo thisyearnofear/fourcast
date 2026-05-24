@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import PageNav, { HomeLink } from "@/app/components/PageNav";
-import Scene3D from "@/components/Scene3D";
-import PositionsDashboard from "@/components/PositionsDashboard";
+import { useState, useEffect } from 'react';
+
+
+
 import { weatherService } from "@/services/weatherService";
-import WalletConnect from "@/app/components/WalletConnect";
-import NarrativeSteps from "@/components/NarrativeSteps";
+
+
 
 export default function PositionsPage() {
   const [isNight, setIsNight] = useState(() => {

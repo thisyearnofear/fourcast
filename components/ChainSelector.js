@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useChainConnections } from '@/hooks/useChainConnections';
-import { EVM_NETWORKS, APTOS_NETWORKS, MOVEMENT_NETWORKS } from '@/constants/appConstants';
+
 
 /**
  * Smart Chain/Network Selector
@@ -80,7 +80,7 @@ export function ChainSelector({ compact = false, showLabel = true, onNetworkChan
 /**
  * Compact version: Single line with dropdowns
  */
-function CompactChainSelector({ options, onNetworkChange }) {
+function _CompactChainSelector({ options, onNetworkChange }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {options.map((option) => (
@@ -115,7 +115,7 @@ function CompactChainSelector({ options, onNetworkChange }) {
 /**
  * Full version: Card-style with icons and descriptions
  */
-function FullChainSelector({ options, onNetworkChange }) {
+function _FullChainSelector({ options, onNetworkChange }) {
   return (
     <div className="space-y-3">
       {options.map((option) => (

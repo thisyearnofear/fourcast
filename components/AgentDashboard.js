@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAgentLoop } from '@/hooks/useAgentLoop';
 
 const CATEGORY_OPTIONS = [
@@ -239,7 +239,7 @@ export function AgentDashboard({ isNight = false }) {
   );
 }
 
-function StepIndicator({ step, label, current, isNight, result, forecastSteps }) {
+function _StepIndicator({ step, label, current, isNight, result, forecastSteps }) {
   const isActive = current?.step === step;
   const isComplete = current?.step !== step &&
     (result || (step === 'edge' && current?.step === 'edge' && current?.status === 'complete'));
@@ -303,7 +303,7 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
   );
 }
 
-function RecommendationCard({ rec, isNight }) {
+function _RecommendationCard({ rec, isNight }) {
   const isActionable = rec.actionable;
   const edgeColor = rec.edge > 0 ? 'green' : 'red';
   const hasCalibrationWarning = rec.calibrationWarning;

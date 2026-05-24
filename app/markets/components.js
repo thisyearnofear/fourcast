@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import { useChainConnections } from "@/hooks/useChainConnections";
 import { arbitrageService } from "@/services/arbitrageService";
 import { CHAINS } from "@/constants/appConstants";
 import { getRecommendationExplanation } from "@/utils/chainUtils";
-import EmptyMarketState from "@/components/EmptyMarketState";
-import BottomSheet from "@/components/BottomSheet";
-import EvidenceBlock from "@/components/EvidenceBlock";
+
+
+
 
 // Sports Tab Component - Date-First Design
 export function SportsTabContent({

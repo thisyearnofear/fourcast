@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
     const [profile, setProfile] = useState(null);

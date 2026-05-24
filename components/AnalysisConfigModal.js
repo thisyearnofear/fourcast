@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 /**
  * AnalysisConfigModal
@@ -373,7 +373,7 @@ export default function AnalysisConfigModal({
 }
 
 // Toggle chip component
-function ToggleChip({ label, active, onClick, auto = false }) {
+function _ToggleChip({ label, active, onClick, auto = false }) {
   return (
     <button
       onClick={onClick}
@@ -390,7 +390,7 @@ function ToggleChip({ label, active, onClick, auto = false }) {
 }
 
 // Select field component
-function SelectField({ label, value, onChange, options, disabled = false }) {
+function _SelectField({ label, value, onChange, options, disabled = false }) {
   return (
     <div className="flex items-center justify-between">
       <label className="text-sm text-white/70">{label}</label>

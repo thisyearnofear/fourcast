@@ -108,7 +108,7 @@ export function WinCelebration({ isOpen, signal, onClose }) {
 /**
  * Share button for X or Farcaster
  */
-function ShareButton({ platform, signal }) {
+function _ShareButton({ platform, signal }) {
   const handleShare = async () => {
     const text = generateShareText(platform, signal);
     const url = platform === 'farcaster'
@@ -152,7 +152,7 @@ function generateShareText(platform, signal) {
 /**
  * Confetti animation
  */
-function Confetti() {
+function _Confetti() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden">
       {[...Array(50)].map((_, i) => (

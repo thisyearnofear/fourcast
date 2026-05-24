@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Scene3D from '@/components/Scene3D';
-import LocationSelector from '@/components/LocationSelector';
-import UnifiedConnect from '@/components/UnifiedConnect';
+
+
+
 import { weatherService } from '@/services/weatherService';
-import { WinCelebration } from '@/components/WinCelebration';
+
 
 export default function WeatherPage() {
   const router = useRouter();
@@ -92,7 +92,7 @@ export default function WeatherPage() {
   // Callback to trigger celebration from child components (e.g. OrderSigningPanel)
   // To be passed down via Context or Props if we were rendering OrderSigningPanel here.
   // For now, we simulate it for the demo or when a trade confirms.
-  const handleTradeSuccess = (orderData) => {
+  const _handleTradeSuccess = (orderData) => {
     setWinningSignal({
       marketTitle: orderData.marketTitle || "Your Prediction Market",
       side: orderData.side || "YES",

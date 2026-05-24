@@ -16,11 +16,11 @@ export default function UnifiedConnect({ isNight = false, variant = 'header' }) 
   const [mounted, setMounted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  const { chains, canPublish } = useChainConnections();
-  const { isConnected: evmConnected, address: evmAddress } = useAccount();
+  const { chains, _canPublish } = useChainConnections();
+  const { isConnected: _evmConnected, address: _evmAddress } = useAccount();
   const { connect: evmConnect, connectors } = useConnect();
   const { disconnect: evmDisconnect } = useDisconnect();
-  const { connected: aptosConnected, account: aptosAccount, wallets, connect: aptosConnect, disconnect: aptosDisconnect } = useWallet();
+  const { connected: _aptosConnected, account: _aptosAccount, _wallets, connect: _aptosConnect, disconnect: aptosDisconnect } = useWallet();
 
   useEffect(() => { setMounted(true); }, []);
 

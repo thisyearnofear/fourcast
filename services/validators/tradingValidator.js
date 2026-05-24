@@ -47,7 +47,7 @@ export class TradingValidator {
       side, 
       marketID, 
       walletAddress, 
-      chainId 
+      _chainId 
     } = orderData;
     
     const { 
@@ -212,7 +212,7 @@ export class TradingValidator {
     const { 
       userLocation, 
       marketType, 
-      marketJurisdiction,
+      _marketJurisdiction,
       userAge 
     } = accessData;
     
@@ -250,7 +250,7 @@ export class TradingValidator {
    */
   static validatePriceImpact(orderData, context = {}) {
     const warnings = [];
-    const { size, price, side } = orderData;
+    const { size, _price, side } = orderData;
     const { marketData } = context;
     
     if (!marketData?.orderBookMetrics) {
