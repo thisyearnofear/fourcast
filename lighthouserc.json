@@ -1,13 +1,9 @@
 {
   "ci": {
     "collect": {
-      "settings": {
-        "urls": [
-          "http://localhost:3000"
-        ],
-        "startServerCommand": "npm run start",
-        "startServerReadyPattern": "Ready"
-      }
+      "url": ["http://localhost:3000"],
+      "startServerCommand": "npm run start",
+      "startServerReadyPattern": "Ready"
     },
     "assert": {
       "assertions": {

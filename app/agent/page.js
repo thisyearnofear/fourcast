@@ -46,17 +46,6 @@ export default function AgentPage() {
     ? 'bg-slate-900/60 border-white/20'
     : 'bg-white/60 border-black/20';
 
-  if (isLoadingWeather) {
-    return (
-      <div className="w-screen h-screen flex items-center justify-center bg-black">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-current/30 border-t-current rounded-full animate-spin text-white mb-4" />
-          <p className="text-white font-light">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen relative">
       {/* 3D Scene Background */}

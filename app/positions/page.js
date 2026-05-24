@@ -46,17 +46,6 @@ export default function PositionsPage() {
     ? "bg-slate-900/60 border-white/20"
     : "bg-white/60 border-black/20";
 
-  if (isLoadingWeather) {
-    return (
-      <div className="w-screen h-screen flex items-center justify-center bg-black">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-current/30 border-t-current rounded-full animate-spin text-white mb-4" />
-          <p className="text-white font-light">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen relative">
       {/* 3D Scene Background */}
@@ -74,10 +63,10 @@ export default function PositionsPage() {
         <header className={`sticky top-0 z-50 border-b ${cardBgColor} backdrop-blur-md`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">          <div>
                             <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
-                                You
+                                Positions
                             </h1>
                             <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                                Your positions, reputation, and performance across every market
+                                Your positions, reputation, and performance
                             </p>
                             {/* Narrative step — step 4: Get Scored */}
                             <NarrativeSteps currentStep="scored" isNight={isNight} className="mt-3" />

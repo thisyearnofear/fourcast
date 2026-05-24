@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
                 <span className="text-slate-700 text-[10px]">·</span>
                 <Link href="/agent" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">Agent</Link>
                 <span className="text-slate-700 text-[10px]">·</span>
-                <Link href="/positions" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">You</Link>
+                <Link href="/positions" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">Positions</Link>
                 <span className="text-slate-700 text-[10px]">·</span>
                 <Link href="/labs" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">🧪 Labs</Link>
                 <span className="text-slate-700 text-[10px]">·</span>

@@ -122,13 +122,18 @@ async function recordMigration(version, name, hash) {
   }
 }
 
-// Parse SQL file into executable statements
+// Parse SQL file into executable statements.
+// Strips `-- line comments` so statements with leading header comments
+// (e.g. "-- Positions table\nCREATE TABLE ...") are not discarded.
 function parseSqlStatements(sql) {
   return sql
     .split(';')
-    .map(s => s.trim())
-    .filter(s => s.length > 0)
-    .filter(s => !s.startsWith('--'));
+    .map(chunk => chunk
+      .split('\n')
+      .map(line => line.replace(/--.*$/, '')) // strip line comments
+      .join('\n')
+      .trim())
+    .filter(s => s.length > 0);
 }
 
 // Run all pending migrations
@@ -186,14 +191,12 @@ async function runMigrations() {
   }
 }
 
-// Run migrations on module load (non-blocking for Turso)
-if (isTurso) {
-  runMigrations().catch(err => {
-    console.error('Migration error:', err.message);
-  });
-} else {
-  runMigrations();
-}
+// Run migrations on module load and expose readiness promise.
+// Tests (and any consumer that needs guaranteed-ready tables) should
+// `await migrationsReady` before performing queries.
+const migrationsReady = runMigrations().catch(err => {
+  console.error('Migration error:', err.message);
+});
 
 // Database operation helpers
 async function execute(sql, params = []) {
@@ -770,5 +773,5 @@ export async function saveAgentRun(runData) {
   }
 }
 
-// Export db instance and helpers
-export { db, execute, query };
+// Export db instance, helpers, and migrations readiness
+export { db, execute, query, migrationsReady };
