@@ -7,6 +7,7 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import UltimateLensFlare from './lensflare/LensFlare';
 import ForecastPortals from './ForecastPortals';
 import { getWeatherConditionType, shouldShowSun } from '../services/weatherService';
+import useHUDStore from '@/hooks/useHUDStore';
 import * as THREE from 'three';
 import WeatherVisualization from './WeatherVisualization';
 
@@ -126,6 +127,7 @@ const PostProcessingEffects = ({ showLensFlare, isPortalMode = false, enableOccl
 const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFunction, onPortalWeatherDataChange, quality = 'full' }) => {
   const [portalMode, setPortalMode] = React.useState(false);
   const [portalWeatherData, setPortalWeatherData] = React.useState(null);
+  const { isHUDVisible } = useHUDStore();
   
   // Mobile detection for 'auto' quality mode
   const isMobile = React.useMemo(() => {
@@ -414,7 +416,7 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
               />
               
               {/* Three Day Forecast 3D Label - responsive for mobile - only in full quality */}
-              {!isAmbientMode && <ResponsiveText isNight={isNight} isLoading={isLoading} />}
+              {!isAmbientMode && isHUDVisible && <ResponsiveText isNight={isNight} isLoading={isLoading} />}
 
               {/* 3D Forecast Portals - only in full quality */}
               {performanceSettings.enablePortals && (

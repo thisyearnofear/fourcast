@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Scene3D from '@/components/Scene3D';
 import LocationSelector from '@/components/LocationSelector';
 import UnifiedConnect from '@/components/UnifiedConnect';
+import useHUDStore from '@/hooks/useHUDStore';
 import { weatherService } from '@/services/weatherService';
 import { WinCelebration } from '@/components/WinCelebration';
 
@@ -12,6 +13,7 @@ export default function WeatherPage() {
   const router = useRouter();
   const [weatherData, setWeatherData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { isHUDVisible } = useHUDStore();
   const [error, setError] = useState(null);
   const [currentLocationName, setCurrentLocationName] = useState('');
   const [isPortalMode, setIsPortalMode] = useState(false);
@@ -350,7 +352,7 @@ export default function WeatherPage() {
 
         {/* Centered Floating Navigation - Icons on mobile, full labels on desktop */}
         {weatherData && !isLoading && (
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto">
+          <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <div className={`backdrop-blur-md border rounded-full px-2 sm:px-6 py-2 sm:py-3 transition-all duration-300 ${isNight
                 ? 'bg-white/10 border-white/20 hover:bg-white/15'
                 : 'bg-white/20 border-white/30 hover:bg-white/25'

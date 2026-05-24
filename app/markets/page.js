@@ -5,6 +5,8 @@ import WalletConnect from "@/app/components/WalletConnect";
 import { useSignalPublisher } from "@/hooks/useSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
 import { weatherService } from "@/services/weatherService";
+import useHUDStore from "@/hooks/useHUDStore";
+import useFilterStore from "@/hooks/useFilterStore";
 import PageNav, { SecondaryNav } from "@/app/components/PageNav";
 import Scene3D from "@/components/Scene3D";
 import { useToast, ToastContainer } from "@/components/Toast";
@@ -15,7 +17,6 @@ import { ArbitrageExecutionPanel } from "@/components/ArbitrageExecutionPanel";
 import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
 import AnalysisConfigModal from "@/components/AnalysisConfigModal";
 import PricingOverlay from "@/components/PricingOverlay";
-import ReasoningVisualizer from "@/components/ReasoningVisualizer";
 import NarrativeSteps from "@/components/NarrativeSteps";
 import { SportsTabContent, DiscoveryTabContent } from "./components";
 
@@ -102,12 +103,15 @@ export default function MarketsPage() {
   } = useSignalPublisher();
   const { toasts, addToast, removeToast } = useToast();
 
-  // Tab state: 'sports' or 'discovery'
-  const [activeTab, setActiveTab] = useState("discovery"); // Default to discovery for Synth-optimized markets
+  // Tab state: 'sports' or 'discovery' (persisted)
+  const filterStore = useFilterStore();
+  const activeTab = filterStore.marketsActiveTab;
+  const setActiveTab = (tab) => filterStore.setMarketsActiveTab(tab);
 
   // Weather state (for UI theming and discovery mode)
   const [weatherData, setWeatherData] = useState(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+  const { isHUDVisible } = useHUDStore();
 
   // Market state (shared across tabs)
   const [markets, setMarkets] = useState(null);
@@ -141,25 +145,19 @@ export default function MarketsPage() {
   // Analysis options (user toggles for weather, ML, futures, web search)
   const analysisOptions = useAnalysisOptions(selectedMarket?.eventType || 'unknown');
 
-  // Sports-specific filters (date-first)
-  const [sportsFilters, setSportsFilters] = useState({
-    eventType: "Soccer",
-    confidence: "all",
-    includeFutures: false,
-    bestEdgesOnly: true,
-  });
-  const [selectedDateRange, setSelectedDateRange] = useState("this-week");
-  const [sportsMinVolume, setSportsMinVolume] = useState(10000);
+  // Sports-specific filters (persisted)
+  const sportsFilters = filterStore.sportsFilters;
+  const setSportsFilters = (f) => filterStore.setSportsFilters(f);
+  const selectedDateRange = filterStore.selectedDateRange;
+  const setSelectedDateRange = (r) => filterStore.setSelectedDateRange(r);
+  const sportsMinVolume = filterStore.sportsMinVolume;
+  const setSportsMinVolume = (v) => filterStore.setSportsMinVolume(v);
 
-  // Discovery-specific filters (date-first)
-  const [discoveryFilters, setDiscoveryFilters] = useState({
-    category: "Crypto", // Default to Crypto for Synth ML coverage
-    minVolume: "50000",
-    confidence: "all",
-    includeFutures: false,
-    platform: "all", // 'all', 'polymarket', 'kalshi'
-  });
-  const [discoveryDateRange, setDiscoveryDateRange] = useState("this-week");
+  // Discovery-specific filters (persisted)
+  const discoveryFilters = filterStore.discoveryFilters;
+  const setDiscoveryFilters = (f) => filterStore.setDiscoveryFilters(f);
+  const discoveryDateRange = filterStore.discoveryDateRange;
+  const setDiscoveryDateRange = (r) => filterStore.setDiscoveryDateRange(r);
 
   // Track record state (Brier scores, calibration)
   const [agentTrackStats, setAgentTrackStats] = useState(null);
@@ -655,7 +653,7 @@ export default function MarketsPage() {
       />
 
       {/* Scrollable Content */}
-      <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
+      <div className={`relative z-20 flex flex-col min-h-screen overflow-y-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {/* Header */}
         <header
           className={`sticky top-0 z-50 border-b ${cardBgColor} backdrop-blur-md`}
@@ -839,12 +837,6 @@ export default function MarketsPage() {
         isOpen={showPricing}
         onClose={() => setShowPricing(false)}
         isNight={isNight}
-      />
-
-      {/* Reasoning Visualizer Overlay */}
-      <ReasoningVisualizer 
-        isActive={isLoadingAnalysis} 
-        title={selectedMarket ? `Analyzing ${selectedMarket.title || selectedMarket.question}` : "Analyzing Market"}
       />
 
       {

@@ -25,8 +25,17 @@ export default function PortfolioCard({ isNight = false }) {
     return () => { mounted = false; };
   }, []);
 
-  // Don't render if no data and not loading
-  if (!loading && !stats) return null;
+  // Show placeholder when no data available
+  if (!loading && !stats) {
+    return (
+      <div className={`rounded-2xl border p-4 text-center mb-4 ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
+        <p className={`text-sm ${isNight ? 'text-white/40' : 'text-black/40'}`}>No portfolio data yet</p>
+        <p className={`text-xs mt-1 ${isNight ? 'text-white/25' : 'text-black/25'}`}>
+          Connect wallet and publish signals to build your portfolio
+        </p>
+      </div>
+    );
+  }
 
   const textColor = isNight ? 'text-white' : 'text-black';
   const mutedColor = isNight ? 'text-white/50' : 'text-black/50';

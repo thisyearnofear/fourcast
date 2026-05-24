@@ -1,6 +1,8 @@
 import './global.css/index.css';
 import { Providers } from './providers';
 import Link from 'next/link';
+import HUDToggle from '@/components/HUDToggle';
+import HUDFooterWrapper from '@/components/HUDFooterWrapper';
 
 // Force all pages to be dynamic to avoid SSR/static generation issues with wallet libraries
 export const dynamic = 'force-dynamic';
@@ -24,6 +26,8 @@ export default function RootLayout({ children }) {
       <body suppressHydrationWarning>
         <Providers>
           {children}
+          <HUDToggle />
+          <HUDFooterWrapper>
           {/* Global Footer */}
           <footer className="w-full border-t border-white/[0.04] bg-[#0a0a0f] py-6 px-5">
             <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -45,6 +49,7 @@ export default function RootLayout({ children }) {
               </div>
             </div>
           </footer>
+          </HUDFooterWrapper>
         </Providers>
       </body>
     </html>

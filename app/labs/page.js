@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
 import Scene3D from '@/components/Scene3D';
+import useHUDStore from '@/hooks/useHUDStore';
 import { weatherService } from '@/services/weatherService';
 import dynamic from 'next/dynamic';
 
@@ -66,6 +67,7 @@ export default function LabsPage() {
   });
   const [weatherData, setWeatherData] = useState(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+  const { isHUDVisible } = useHUDStore();
 
   useEffect(() => {
     loadWeather();
@@ -107,7 +109,7 @@ export default function LabsPage() {
       </div>
 
       {/* Content */}
-      <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
+      <div className={`relative z-20 flex flex-col min-h-screen overflow-y-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {/* Header */}
         <header className={`sticky top-0 z-50 border-b ${cardBgColor} backdrop-blur-md`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">

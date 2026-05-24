@@ -35,7 +35,13 @@ export function MarketEdgeScanner({
     return () => clearInterval(interval);
   }, [edgeMarkets]);
 
-  if (edgeMarkets.length === 0) return null;
+  if (edgeMarkets.length === 0) {
+    return (
+      <div className={`glass-subtle rounded-2xl p-4 text-center ${isNight ? 'text-white/40' : 'text-black/40'}`}>
+        <span className="text-sm font-light">No edge opportunities detected yet</span>
+      </div>
+    );
+  }
 
   const currentMarket = edgeMarkets[currentIndex];
   const forecast = currentMarket.preCalculatedForecast;

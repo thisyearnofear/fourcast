@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
 import Scene3D from '@/components/Scene3D';
+import useHUDStore from '@/hooks/useHUDStore';
 import AutopilotDashboard from '@/components/AutopilotDashboard';
 import { weatherService } from '@/services/weatherService';
 import dynamic from 'next/dynamic';
@@ -18,6 +19,7 @@ export default function LabsAutopilotPage() {
   });
   const [weatherData, setWeatherData] = useState(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+  const { isHUDVisible } = useHUDStore();
 
   useEffect(() => {
     loadWeather();
@@ -49,17 +51,6 @@ export default function LabsAutopilotPage() {
     ? 'bg-slate-900/60 border-white/20'
     : 'bg-white/60 border-black/20';
 
-  if (isLoadingWeather) {
-    return (
-      <div className="w-screen h-screen flex items-center justify-center bg-black">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-current/30 border-t-current rounded-full animate-spin text-white mb-4" />
-          <p className="text-white font-light">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen relative">
       {/* 3D Scene Background */}
@@ -72,7 +63,7 @@ export default function LabsAutopilotPage() {
       </div>
 
       {/* Content */}
-      <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
+      <div className={`relative z-20 flex flex-col min-h-screen overflow-y-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {/* Header */}
         <header className={`sticky top-0 z-50 border-b ${cardBgColor} backdrop-blur-md`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">

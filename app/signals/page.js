@@ -4,6 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import UnifiedConnect from '@/components/UnifiedConnect';
 import { useSignalPublisher } from '@/hooks/useSignalPublisher';
 import { useChainConnections } from '@/hooks/useChainConnections';
+import useHUDStore from '@/hooks/useHUDStore';
+import useFilterStore from '@/hooks/useFilterStore';
 import PageNav, { SecondaryNav } from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
 import Scene3D from '@/components/Scene3D';
@@ -26,25 +28,24 @@ export default function SignalsPage() {
     const [signals, setSignals] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [userStatsCache, setUserStatsCache] = useState({}); // Cache user stats
-    const [activeTab, setActiveTab] = useState('feed'); // 'feed', 'defi', 'my-signals', or 'leaderboard'
+    const filterStore = useFilterStore();
+    const activeTab = filterStore.signalsActiveTab;
+    const setActiveTab = (tab) => filterStore.setSignalsActiveTab(tab);
     const [selectedProfile, setSelectedProfile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [expandedSignalId, setExpandedSignalId] = useState(null); // Track expanded signals
+    const [expandedSignalId, setExpandedSignalId] = useState(null);
 
-    // Filters & Search
-    const [filters, setFilters] = useState({
-        eventId: '',
-        confidence: 'all',
-        oddsEfficiency: 'all',
-        author: '', // Filter by author address
-        searchText: '' // Full-text search
-    });
-    const [sortBy, setSortBy] = useState('newest'); // 'newest', 'confidence', 'accuracy'
+    // Filters & Search (persisted)
+    const filters = filterStore.signalsFilters;
+    const setFilters = (f) => filterStore.setSignalsFilters(f);
+    const sortBy = filterStore.signalsSortBy;
+    const setSortBy = (s) => filterStore.setSignalsSortBy(s);
 
     // Weather for theming
     const [weatherData, setWeatherData] = useState(null);
     const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+    const { isHUDVisible } = useHUDStore();
     const [isNight, setIsNight] = useState(() => {
         const hour = new Date().getHours();
         return hour >= 19 || hour <= 6;
@@ -227,17 +228,6 @@ export default function SignalsPage() {
         setSelectedProfile(address);
     };
 
-    if (isLoadingWeather) {
-        return (
-            <div className={`w-screen h-screen flex items-center justify-center ${bgColor}`}>
-                <div className="flex flex-col items-center">
-                    <div className={`w-12 h-12 border-4 border-current/30 border-t-current rounded-full animate-spin ${textColor} mb-4`}></div>
-                    <p className={`${textColor} font-light`}>Loading...</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen relative">
             {/* 3D Scene Background */}
@@ -252,7 +242,7 @@ export default function SignalsPage() {
             <ToastContainer toasts={toasts} removeToast={removeToast} isNight={isNight} />
 
             {/* Scrollable Content */}
-            <div className="relative z-20 flex flex-col min-h-screen overflow-y-auto">
+            <div className={`relative z-20 flex flex-col min-h-screen overflow-y-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 {/* Header */}
                 <header className={`sticky top-0 z-50 border-b glass-subtle`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">

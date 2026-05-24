@@ -182,16 +182,19 @@ export function SportsTabContent({
 
       {/* Markets List */}
       {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <div
-            className={`w-6 h-6 border-2 ${isNight
-              ? "border-white/30 border-t-white"
-              : "border-black/30 border-t-black"
-              } rounded-full animate-spin`}
-          ></div>
-          <span className={`ml-3 ${textColor} opacity-70`}>
-            Loading markets...
-          </span>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className={`glass-subtle rounded-3xl p-5 ${isNight ? 'border-white/10' : 'border-black/10'}`}>
+              <div className="space-y-3">
+                <div className={isNight ? 'skeleton' : 'skeleton-light'} style={{ height: '1.25rem', width: '60%', borderRadius: '0.5rem' }} />
+                <div className={isNight ? 'skeleton' : 'skeleton-light'} style={{ height: '1rem', width: '40%', borderRadius: '0.5rem' }} />
+                <div className="flex gap-2">
+                  <div className={isNight ? 'skeleton' : 'skeleton-light'} style={{ height: '1.5rem', width: '4rem', borderRadius: '999px' }} />
+                  <div className={isNight ? 'skeleton' : 'skeleton-light'} style={{ height: '1.5rem', width: '5rem', borderRadius: '999px' }} />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -725,16 +728,19 @@ export function DiscoveryTabContent({
 
       {/* Markets List */}
       {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <div
-            className={`w-6 h-6 border-2 ${isNight
-              ? "border-white/30 border-t-white"
-              : "border-black/30 border-t-black"
-              } rounded-full animate-spin`}
-          ></div>
-          <span className={`ml-3 ${textColor} opacity-70`}>
-            Loading markets...
-          </span>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className={`glass-subtle rounded-3xl p-5 ${isNight ? 'border-white/10' : 'border-black/10'}`}>
+              <div className="space-y-3">
+                <div className={isNight ? 'skeleton' : 'skeleton-light'} style={{ height: '1.25rem', width: '60%', borderRadius: '0.5rem' }} />
+                <div className={isNight ? 'skeleton' : 'skeleton-light'} style={{ height: '1rem', width: '40%', borderRadius: '0.5rem' }} />
+                <div className="flex gap-2">
+                  <div className={isNight ? 'skeleton' : 'skeleton-light'} style={{ height: '1.5rem', width: '4rem', borderRadius: '999px' }} />
+                  <div className={isNight ? 'skeleton' : 'skeleton-light'} style={{ height: '1.5rem', width: '5rem', borderRadius: '999px' }} />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
