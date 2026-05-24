@@ -324,9 +324,7 @@ switch (command) {
     break;
     
   case 'new':
-    {
-      /* empty */
-    }
+    const name = process.argv[3];
     if (!name) {
       console.error('Usage: npm run migrate:new <name>');
       process.exit(1);

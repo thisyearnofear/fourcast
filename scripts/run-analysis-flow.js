@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { WeatherAnalyzer } from "../services/analysis/WeatherAnalyzer.js";
 import { MobilityAnalyzer } from "../services/analysis/MobilityAnalyzer.js";
-import { saveSignal } from '../services/db.js';
+import { saveSignal, db } from "../services/db.js";
 import { v4 as uuidv4 } from 'uuid'; 
 
 // Polyfill randomUUID if needed (node < 14.17)

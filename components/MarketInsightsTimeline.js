@@ -120,10 +120,10 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
 /**
  * Individual prediction card in timeline
  */
-function _PredictionCard({ prediction, isNight }) {
+function PredictionCard({ prediction, isNight }) {
   const textColor = isNight ? 'text-white' : 'text-black';
-  const _bgColor = isNight ? 'bg-white/5' : 'bg-black/5';
-  const _borderColor = isNight ? 'border-white/10' : 'border-black/10';
+  const bgColor = isNight ? 'bg-white/5' : 'bg-black/5';
+  const borderColor = isNight ? 'border-white/10' : 'border-black/10';
 
   const isWin = prediction.outcome === 'WIN';
   const isPending = prediction.outcome === 'PENDING';
@@ -139,7 +139,7 @@ function _PredictionCard({ prediction, isNight }) {
   const statusText = isWin ? 'You were right!' : isLoss ? 'Incorrect, but data-driven' : 'Waiting for resolution';
 
   const predictionDate = new Date(prediction.timestamp * 1000);
-  const _resolutionDate = prediction.resolvedAt 
+  const resolutionDate = prediction.resolvedAt 
     ? new Date(prediction.resolvedAt * 1000)
     : null;
   const daysAgo = Math.floor((Date.now() - predictionDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -228,7 +228,7 @@ function _PredictionCard({ prediction, isNight }) {
 /**
  * Loading skeleton
  */
-function _TimelineSkeleton({ isNight }) {
+function TimelineSkeleton({ isNight }) {
   return (
     <div className="space-y-4">
       <div className="flex gap-2 pb-2">

@@ -68,10 +68,10 @@ export async function POST(request) {
       isFuturesBet, 
       mode = 'basic',
       // New analysis options from UI toggles
-      _includeWeather = true,
-      _includeSynthData = true,
-      _includeFutures = false,
-      _webSearchEnabled = true,
+      includeWeather = true,
+      includeSynthData = true,
+      includeFutures = false,
+      webSearchEnabled = true,
       analysisTypes = []
     } = body;
 
@@ -217,7 +217,7 @@ export async function POST(request) {
       } catch { /* if contract call fails, fall through to normal rate limit */ }
     }
 
-    const _limitPerHour = isSubscriber ? Infinity : (mode === 'deep' ? 10 : ANALYSIS_RATE_LIMIT);
+    const limitPerHour = isSubscriber ? Infinity : (mode === 'deep' ? 10 : ANALYSIS_RATE_LIMIT);
     if (!checkAnalysisRateLimit(clientId)) {
       return Response.json({
         error: 'Analysis rate limit exceeded. Please try again later.',

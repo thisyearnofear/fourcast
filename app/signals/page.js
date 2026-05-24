@@ -1,22 +1,22 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-
+import React, { useState, useEffect, useMemo } from 'react';
+import UnifiedConnect from '@/components/UnifiedConnect';
 import { useSignalPublisher } from '@/hooks/useSignalPublisher';
 import { useChainConnections } from '@/hooks/useChainConnections';
-
-
-
+import PageNav, { SecondaryNav } from '@/app/components/PageNav';
+import ProfileDrawer from '@/app/components/ProfileDrawer';
+import Scene3D from '@/components/Scene3D';
 import { weatherService } from '@/services/weatherService';
-
-
-
-
-
-
-
-import { useToast } from '@/components/Toast';
-
+import SignalFilters from '@/app/components/signals/SignalFilters';
+import SignalCard from '@/app/components/signals/SignalCard';
+import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
+import MySignalsTab from '@/app/components/signals/MySignalsTab';
+import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
+import { ActiveChainIndicator } from '@/components/ActiveChainIndicator';
+import { ChainSelector } from '@/components/ChainSelector';
+import { useToast, ToastContainer } from '@/components/Toast';
+import NarrativeSteps from '@/components/NarrativeSteps';
 
 export default function SignalsPage() {
     const { connected: aptosConnected, walletAddress, tipSignal } = useSignalPublisher();
@@ -182,14 +182,14 @@ export default function SignalsPage() {
 
         // Sort signals
         const sorted = [...filtered].sort((a, b) => {
-            const confidenceOrder = { HIGH: 1, MEDIUM: 2, LOW: 3 };
-            const accuracyOrder = { Won: 1, Pending: 2, Lost: 3 };
             switch (sortBy) {
                 case 'confidence':
                     // HIGH > MEDIUM > LOW
+                    const confidenceOrder = { HIGH: 3, MEDIUM: 2, LOW: 1, UNKNOWN: 0 };
                     return (confidenceOrder[b.confidence] || 0) - (confidenceOrder[a.confidence] || 0);
                 case 'accuracy':
                     // Won > Pending > Lost
+                    const accuracyOrder = { YES: 2, CORRECT: 2, PENDING: 1, NO: 0, INCORRECT: 0 };
                     return (accuracyOrder[b.outcome] || 1) - (accuracyOrder[a.outcome] || 1);
                 case 'newest':
                 default:
@@ -430,7 +430,7 @@ export default function SignalsPage() {
                                                                     addToast("Please connect your wallet to tip!", "warning");
                                                                     return;
                                                                 }
-                                                                const _tx = await tipSignal(signal.author_address, signal.signal_id || index, amount);
+                                                                const tx = await tipSignal(signal.author_address, signal.signal_id || index, amount);
                                                                 addToast("Tip sent successfully!", "success");
                                                             } catch (e) {
                                                                 console.error(e);

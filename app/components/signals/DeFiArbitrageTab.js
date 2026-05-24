@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-
-
+import React, { useState } from 'react';
+import KalshiOrderPanel from '@/components/KalshiOrderPanel';
+import ArbitrageExecutor from '@/components/ArbitrageExecutor';
 import { useArbitrageOpportunities } from '@/hooks/useArbitrageOpportunities';
 
 export default function DeFiArbitrageTab({

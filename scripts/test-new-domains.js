@@ -33,7 +33,7 @@ async function testAnalyzers() {
   // 1. Weather (Existing)
   try {
     console.log('--- Testing WeatherAnalyzer ---');
-    const _weather = new WeatherAnalyzer();
+    const weather = new WeatherAnalyzer();
     // Mock weather service call if needed, or rely on service resilience
     // For this test we assume weatherService might fail without network/keys, 
     // so we wrap strictly.

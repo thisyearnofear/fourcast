@@ -1,6 +1,6 @@
 import { getSignalById } from '@/services/db.js';
 import { notFound } from 'next/navigation';
-
+import Link from 'next/link';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

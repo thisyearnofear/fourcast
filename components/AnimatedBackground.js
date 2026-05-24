@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 export default function AnimatedBackground({ isNight = true, timeOfDay = 'day' }) {
   const bgGradient = useMemo(() => {

@@ -5,7 +5,7 @@
  */
 
 import axios from 'axios';
-import { Builder } from '@polymarket/builder-signing-sdk';
+import { Builder, SigningMethod } from '@polymarket/builder-signing-sdk';
 
 class BuilderService {
   constructor() {

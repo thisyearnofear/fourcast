@@ -111,7 +111,7 @@ export class LensFlareEffect extends Effect {
   }
 }
 
-const _LensFlare = wrapEffect(LensFlareEffect)
+const LensFlare = wrapEffect(LensFlareEffect)
 
 function UltimateLensFlare({
   position = [0, 3, 0],  // Sun position

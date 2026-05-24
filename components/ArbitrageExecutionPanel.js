@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-
-
+import { OrderSigningPanel } from './OrderSigningPanel';
+import KalshiOrderPanel from './KalshiOrderPanel';
 
 /**
  * Arbitrage Execution Panel
  * Split-screen view to execute both legs of an arbitrage trade simultaneously.
  */
 export function ArbitrageExecutionPanel({ opportunity, onClose, isNight }) {
-  const [_step, _setStep] = useState('review'); // 'review' | 'execute'
-  const [_polyStatus, _setPolyStatus] = useState('pending'); // 'pending' | 'signed' | 'submitted' | 'failed'
-  const [_kalshiStatus, _setKalshiStatus] = useState('pending');
+  const [step, setStep] = useState('review'); // 'review' | 'execute'
+  const [polyStatus, setPolyStatus] = useState('pending'); // 'pending' | 'signed' | 'submitted' | 'failed'
+  const [kalshiStatus, setKalshiStatus] = useState('pending');
 
   const { polymarket, kalshi, arbitrage } = opportunity;
   const textColor = isNight ? 'text-white' : 'text-slate-900';

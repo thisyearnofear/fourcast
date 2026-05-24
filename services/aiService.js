@@ -7,7 +7,7 @@
 import { WeatherAnalyzer } from './analysis/WeatherAnalyzer.js';
 
 // Singleton instance
-const _weatherAnalyzer = new WeatherAnalyzer();
+const weatherAnalyzer = new WeatherAnalyzer();
 
 export const aiService = {
 

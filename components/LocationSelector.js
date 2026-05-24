@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 const LocationSelector = ({ onLocationChange, currentLocation, isLoading, isNight }) => {
   const [searchQuery, setSearchQuery] = useState('');

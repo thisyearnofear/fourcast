@@ -139,7 +139,7 @@ describe('useOrderSigning with proper EIP-712', () => {
 
     const { result } = renderHook(() => useOrderSigning());
 
-    const _signedData = {
+    const signedData = {
       order: {},
       signature: '0x...',
       payload: { token_id: '1', price: '0.5', side: 'BUY', size: '10', signature: '0x...' },

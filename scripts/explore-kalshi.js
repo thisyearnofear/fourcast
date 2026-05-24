@@ -31,7 +31,7 @@ async function discoverAllSeries() {
 
             // Group by category
             const byCategory = {};
-            for (const [_ticker, info] of seriesMap) {
+            for (const [ticker, info] of seriesMap) {
                 const cat = info.category || 'Other';
                 if (!byCategory[cat]) byCategory[cat] = [];
                 byCategory[cat].push(info);

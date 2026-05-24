@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useOrderSigning } from '@/hooks/useOrderSigning';
-
+import { ConnectKitButton } from 'connectkit';
 import { useBalance, useAccount, useSwitchChain } from 'wagmi';
 import { calculateKellySizing } from '@/utils/kellySizing';
 
@@ -603,7 +603,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
 /**
  * Review row component
  */
-function _OrderReviewRow({ label, value, textColor }) {
+function OrderReviewRow({ label, value, textColor }) {
   return (
     <div className="flex justify-between items-center">
       <span className={`text-sm ${textColor} opacity-70`}>{label}</span>

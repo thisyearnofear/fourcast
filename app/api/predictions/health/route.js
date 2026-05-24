@@ -101,7 +101,7 @@ export async function GET(request) {
     let events = []
     try {
       events = await fetchRecentEvents(provider, cfg.address, iface, topic, latest, lookback, chunk, maxEvents)
-    } catch (_) { /* empty */ }
+    } catch (_) {}
 
     const payload = {
       success: true,

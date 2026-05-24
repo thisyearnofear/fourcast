@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 
 const PAGE_SIZE = 10;
@@ -17,7 +17,7 @@ export function PositionsDashboard({ isNight = false }) {
 
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
-  const _cardBg = isNight ? 'bg-slate-900/60' : 'bg-white/60';
+  const cardBg = isNight ? 'bg-slate-900/60' : 'bg-white/60';
 
   const fetchPositions = useCallback(async () => {
     if (!walletAddress) return;
@@ -232,7 +232,7 @@ export function PositionsDashboard({ isNight = false }) {
   );
 }
 
-function _StatCard({ label, value, isNight, accent = true }) {
+function StatCard({ label, value, isNight, accent = true }) {
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
   const accentColor = accent
@@ -252,7 +252,7 @@ function _StatCard({ label, value, isNight, accent = true }) {
   );
 }
 
-function _PositionCard({ position, isNight, textColor, subtleText, onClose, closing }) {
+function PositionCard({ position, isNight, textColor, subtleText, onClose, closing }) {
   const isOpen = position.status === 'OPEN';
   const isProfitable = (position.realized_pnl || 0) >= 0;
 

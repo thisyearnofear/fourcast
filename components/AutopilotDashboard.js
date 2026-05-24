@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const PAGE_SIZE = 10;
 const MAX_LIVE_STEPS = 50;
@@ -25,8 +25,8 @@ export function AutopilotDashboard({ isNight = false }) {
 
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
-  const _mutedBg = isNight ? 'bg-white/5' : 'bg-black/5';
-  const _cardBg = isNight ? 'bg-slate-900/60' : 'bg-white/60';
+  const mutedBg = isNight ? 'bg-white/5' : 'bg-black/5';
+  const cardBg = isNight ? 'bg-slate-900/60' : 'bg-white/60';
 
   const fetchExecutions = useCallback(async () => {
     setLoading(true);
@@ -390,7 +390,7 @@ export function AutopilotDashboard({ isNight = false }) {
 }
 
 // ── Live Step Component ─────────────────────────────────────────────────
-function _LiveStep({ step, isNight, textColor, subtleText }) {
+function LiveStep({ step, isNight, textColor, subtleText }) {
   const { step: stepName, status, message, market, data } = step;
 
   const isComplete = status === 'complete';
@@ -472,7 +472,7 @@ function _LiveStep({ step, isNight, textColor, subtleText }) {
   );
 }
 
-function _StatCard({ label, value, isNight, accent = true }) {
+function StatCard({ label, value, isNight, accent = true }) {
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
   const accentColor = accent
@@ -489,7 +489,7 @@ function _StatCard({ label, value, isNight, accent = true }) {
   );
 }
 
-function _ExecutionCard({ exec, isNight, textColor, subtleText }) {
+function ExecutionCard({ exec, isNight, textColor, subtleText }) {
   const isSuccess = exec.execution_status === 'SUCCESS';
   const isFailed = exec.execution_status === 'FAILED';
   const statusIcon = isSuccess ? '✅' : isFailed ? '❌' : '⏳';

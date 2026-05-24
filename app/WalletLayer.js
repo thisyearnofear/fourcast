@@ -1,7 +1,7 @@
 'use client';
 
-
-
+import { WagmiProvider } from 'wagmi';
+import { ConnectKitProvider } from 'connectkit';
 import { config } from '../onchain/config';
 
 export default function WalletLayer({ children }) {

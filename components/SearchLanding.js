@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import NarrativeSteps from '@/components/NarrativeSteps';
 
 const QUICK_SEARCHES = [
   { label: 'BTC $100k', query: 'Bitcoin $100k June 2026', featured: true },

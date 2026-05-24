@@ -21,7 +21,7 @@ export async function POST(request) {
 
     console.log('[POST /api/markets] Request body:', JSON.stringify(body, null, 2));
 
-    const { location, weatherData, eventType, confidence, limitCount, _theme, excludeFutures, searchText, maxDaysToResolution, minVolume, analysisType, platform } = body;
+    const { location, weatherData, eventType, confidence, limitCount, theme, excludeFutures, searchText, maxDaysToResolution, minVolume, analysisType, platform } = body;
 
     // REFACTORED: New architecture - supports two analysis modes:
     // 1. 'event-weather' (/ai page): Fetches weather at event venues

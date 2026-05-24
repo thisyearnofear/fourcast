@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 /**
  * Personal Stats Dashboard
@@ -190,7 +190,7 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
   );
 }
 
-function _StatCard({ label, value, subtext, isNight }) {
+function StatCard({ label, value, subtext, isNight }) {
   const textColor = isNight ? 'text-white' : 'text-black';
   return (
     <div className={`${isNight ? 'glass-input' : 'glass-input-light'} rounded-lg p-3 text-center`}>
@@ -201,7 +201,7 @@ function _StatCard({ label, value, subtext, isNight }) {
   );
 }
 
-function _StatsSkeleton({ isNight, compact }) {
+function StatsSkeleton({ isNight, compact }) {
   const bgColor = isNight ? 'bg-white/5' : 'bg-black/5';
   const borderColor = isNight ? 'border-white/10' : 'border-black/10';
   return (

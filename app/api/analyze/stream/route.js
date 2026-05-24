@@ -36,7 +36,7 @@ export async function POST(request) {
     }
 
     const clientId = getClientIdentifier(request)
-    const _limitPerHour = mode === 'deep' ? 10 : ANALYSIS_RATE_LIMIT
+    const limitPerHour = mode === 'deep' ? 10 : ANALYSIS_RATE_LIMIT
     if (!checkAnalysisRateLimit(clientId)) {
       return new Response(JSON.stringify({ success: false, error: 'Analysis rate limit exceeded. Please try again later.' }) + '\n', {
         status: 429,
@@ -47,7 +47,7 @@ export async function POST(request) {
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       start(controller) {
-        (async () => {
+        ;(async () => {
           try {
             const result = await analyzeWeatherImpactServer({
               eventType,

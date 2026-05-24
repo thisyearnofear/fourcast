@@ -1,4 +1,4 @@
-import { execute, saveSignal } from '../services/db.js';
+import { db, execute, saveSignal } from '../services/db.js';
 // import { v4 as uuidv4 } from 'uuid'; // Removed dependency
 
 const uuidv4 = () => crypto.randomUUID(); // Polyfill using native Node.js crypto

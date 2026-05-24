@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useAccount, useDisconnect } from 'wagmi';
-
+import { ConnectKitButton } from 'connectkit';
 import { CHAINS } from '@/constants/appConstants';
 import { useChainConnections } from '@/hooks/useChainConnections';
 
@@ -24,11 +24,11 @@ export default function WalletConnect({ isNight = false }) {
   const { chains } = useChainConnections();
 
   // EVM (Trading)
-  const { address: evmAddress, isConnected: _evmConnected } = useAccount();
+  const { address: evmAddress, isConnected: evmConnected } = useAccount();
   const { disconnect: disconnectEvm } = useDisconnect();
 
   // Aptos/Movement (Signals) - raw wallet adapter for connection actions
-  const { connected: aptosWalletConnected, account: _aptosAccount, wallets, connect, disconnect } = useWallet();
+  const { connected: aptosWalletConnected, account: aptosAccount, wallets, connect, disconnect } = useWallet();
 
   // Styling - Glass CSS classes (DRY)
   const glassBtn = isNight ? 'glass-subtle' : 'glass-subtle-light';
@@ -51,7 +51,7 @@ export default function WalletConnect({ isNight = false }) {
     }
   };
 
-  const _evmDisplay = evmAddress ? formatAddress(evmAddress) : null;
+  const evmDisplay = evmAddress ? formatAddress(evmAddress) : null;
 
   // Safety check - don't render if chains not initialized
   if (!chains) {

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
-
+import React, { useState, useEffect } from 'react';
+import PageNav, { HomeLink } from '@/app/components/PageNav';
+import Scene3D from '@/components/Scene3D';
 import { weatherService } from '@/services/weatherService';
 import dynamic from 'next/dynamic';
 
-const _WalletConnect = dynamic(() => import('@/app/components/WalletConnect'), {
+const WalletConnect = dynamic(() => import('@/app/components/WalletConnect'), {
   ssr: false,
 });
 
@@ -84,7 +84,7 @@ export default function LabsPage() {
       try {
         const data = await weatherService.getCurrentWeather('Nairobi');
         setWeatherData(data);
-      } catch { /* empty */ }
+      } catch {}
     } finally {
       setIsLoadingWeather(false);
     }
@@ -162,11 +162,11 @@ export default function LabsPage() {
   );
 }
 
-function _FeatureCard({ feature, isNight, textColor }) {
+function FeatureCard({ feature, isNight, textColor }) {
   const isStable = feature.status === 'stable';
   const isExternal = feature.external;
 
-  const _Tag = isExternal ? 'a' : 'a';
+  const Tag = isExternal ? 'a' : 'a';
   const extraProps = isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {};
 
   return (

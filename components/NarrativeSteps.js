@@ -21,7 +21,7 @@ export default function NarrativeSteps({ currentStep, isNight = false, className
 
   const currentIdx = steps.findIndex(s => s.id === currentStep);
 
-  const _textColor = isNight ? 'text-white' : 'text-black';
+  const textColor = isNight ? 'text-white' : 'text-black';
   const activeBg = isNight
     ? 'bg-purple-500/20 border-purple-400/40 text-purple-200'
     : 'bg-purple-400/20 border-purple-500/40 text-purple-800';

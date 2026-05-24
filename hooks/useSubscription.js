@@ -77,7 +77,7 @@ const SUBSCRIPTION_CONTRACT = process.env.NEXT_PUBLIC_SUBSCRIPTION_CONTRACT || '
 export const TIERS = { NONE: 0, PRO: 1, PREMIUM: 2 };
 
 export function useSubscription() {
-  const { address, _isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
 

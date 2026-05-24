@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { polymarketService } from '../services/polymarketService.js';
 
 // Debug/exploratory tests that make live Polymarket API calls.

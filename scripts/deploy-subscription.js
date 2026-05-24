@@ -17,7 +17,7 @@
  *   Contract address to stdout and saves to .contract-address
  */
 
-import { createWalletClient, createPublicClient, http } from 'viem';
+import { createWalletClient, createPublicClient, http, parseEther } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';

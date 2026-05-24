@@ -9,7 +9,7 @@
  * - MODULAR: Composable validators for each market type
  */
 
-
+import { MarketTypeDetector } from './marketTypeDetector.js';
 
 export class LocationValidator {
 

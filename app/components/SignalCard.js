@@ -1,4 +1,4 @@
-
+import React from 'react';
 
 /**
  * SignalCard - Unified display for multi-domain signals

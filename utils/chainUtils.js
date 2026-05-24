@@ -5,7 +5,7 @@
  * Works with unified chain state from useChainConnections
  */
 
-
+import { CHAINS } from '@/constants/appConstants';
 
 /**
  * Determine if user can take a specific action on a chain
@@ -122,7 +122,7 @@ export function getRecommendationExplanation(chainRec, confidence, oddsEfficienc
  * Format chain-specific messages based on user context
  */
 export function formatChainMessage(chain, context = {}) {
-  const { _confidence, _oddsEfficiency, marketVolume } = context;
+  const { confidence, oddsEfficiency, marketVolume } = context;
 
   if (chain.id === 'movement') {
     return {

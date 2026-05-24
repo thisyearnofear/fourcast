@@ -35,7 +35,7 @@ export async function GET() {
           url: process.env.TURSO_CONNECTION_URL,
           authToken: process.env.TURSO_AUTH_TOKEN,
         });
-        const _result = await db.execute('SELECT 1 as test');
+        const result = await db.execute('SELECT 1 as test');
         dbTest = { status: 'connected', result: 'OK' };
       } else {
         dbTest = { status: 'skipped', error: 'Missing credentials' };

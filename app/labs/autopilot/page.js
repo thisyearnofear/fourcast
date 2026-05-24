@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
-
-
+import React, { useState, useEffect } from 'react';
+import PageNav, { HomeLink } from '@/app/components/PageNav';
+import Scene3D from '@/components/Scene3D';
+import AutopilotDashboard from '@/components/AutopilotDashboard';
 import { weatherService } from '@/services/weatherService';
 import dynamic from 'next/dynamic';
 
-const _WalletConnect = dynamic(() => import('@/app/components/WalletConnect'), {
+const WalletConnect = dynamic(() => import('@/app/components/WalletConnect'), {
   ssr: false,
 });
 

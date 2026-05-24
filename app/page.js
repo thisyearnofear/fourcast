@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 
-const _SearchLanding = dynamic(() => import('@/components/SearchLanding'), {
+const SearchLanding = dynamic(() => import('@/components/SearchLanding'), {
   ssr: false,
   loading: () => (
     <div style={{

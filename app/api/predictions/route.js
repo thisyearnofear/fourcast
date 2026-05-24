@@ -104,7 +104,7 @@ export async function POST(request) {
       const contract = new ethers.Contract(cfg.address, ['function feeBps() view returns (uint16)'], provider)
       const chainFee = await contract.feeBps()
       effectiveFeeBps = Number(chainFee)
-    } catch (_) { /* empty */ }
+    } catch (_) {}
 
     const txRequest = buildTxData(cfg.address, {
       marketId: Number(marketID),
