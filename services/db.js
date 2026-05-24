@@ -186,14 +186,12 @@ async function runMigrations() {
   }
 }
 
-// Run migrations on module load (non-blocking for Turso)
-if (isTurso) {
-  runMigrations().catch(err => {
-    console.error('Migration error:', err.message);
-  });
-} else {
-  runMigrations();
-}
+// Run migrations on module load and expose readiness promise.
+// Tests (and any consumer that needs guaranteed-ready tables) should
+// `await migrationsReady` before performing queries.
+const migrationsReady = runMigrations().catch(err => {
+  console.error('Migration error:', err.message);
+});
 
 // Database operation helpers
 async function execute(sql, params = []) {
@@ -770,5 +768,5 @@ export async function saveAgentRun(runData) {
   }
 }
 
-// Export db instance and helpers
-export { db, execute, query };
+// Export db instance, helpers, and migrations readiness
+export { db, execute, query, migrationsReady };

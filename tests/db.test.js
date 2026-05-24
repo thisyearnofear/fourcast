@@ -5,15 +5,17 @@ import {
   getPredictionsByMarket,
   getUserStats,
   getLeaderboard,
-  db
+  db,
+  migrationsReady
 } from '../services/db';
 
 describe('Database Service', () => {
   const testAddress = '0x1234567890123456789012345678901234567890';
   const testMarketId = 'market_test_123';
 
-  beforeAll(() => {
-    // Database is auto-initialized on import
+  beforeAll(async () => {
+    // Wait for migrations to apply before exercising the DB
+    await migrationsReady;
   });
 
   afterAll(() => {
