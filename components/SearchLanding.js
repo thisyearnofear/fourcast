@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NarrativeSteps from '@/components/NarrativeSteps';
+import { BRAND } from '@/constants/brand';
 
 const QUICK_SEARCHES = [
   { label: 'BTC $100k', query: 'Bitcoin $100k June 2026', featured: true },
@@ -50,12 +51,15 @@ export default function SearchLanding() {
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
         {/* Logo / Title */}
         <div className="mb-8 text-center">
-          <div className="text-5xl mb-4">🔮</div>
+          <div className="text-5xl mb-4">{BRAND.emoji}</div>
           <h1 className="text-3xl font-light text-white/90 tracking-tight">
-            Fourcast
+            {BRAND.name}
           </h1>
-          <p className="text-sm text-white/40 mt-2 font-light">
-            AI-powered prediction intelligence
+          <p className="text-sm text-white/50 mt-2 font-light max-w-md mx-auto leading-relaxed">
+            {BRAND.tagline}
+          </p>
+          <p className="text-[11px] text-white/25 mt-1.5 font-light max-w-lg mx-auto">
+            {BRAND.subhead}
           </p>
         </div>
 
@@ -104,11 +108,11 @@ export default function SearchLanding() {
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-ping" />
               <span className="text-lg">🎯</span>
             </span>
-            Try a Demo — No Wallet Needed
+            {BRAND.demoTitle}
             <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
           </button>
-          <p className="text-xs text-white/25 mt-3 font-light">
-            See AI-powered analysis with full provenance. Zero setup, zero cost.
+          <p className="text-xs text-white/25 mt-3 font-light max-w-sm mx-auto">
+            {BRAND.demoSubcopy}
           </p>
         </div>
 
@@ -164,8 +168,11 @@ export default function SearchLanding() {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-[10px] text-white/15 font-light tracking-wider uppercase">
-          Powered by AI · On-chain via Arc · USDC
+        <div className="mt-8 text-[10px] text-white/20 font-light tracking-wider uppercase">
+          {BRAND.footerStrip}
+        </div>
+        <div className="mt-1 text-[9px] text-white/15 font-light">
+          {BRAND.hackathon.label} · {BRAND.hackathon.rfbs}
         </div>
       </div>
     </div>

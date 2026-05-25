@@ -126,7 +126,7 @@ export default function TippingModal({ isOpen, onClose, onTip, recipientAddress,
                     </button>
 
                     <p className={`text-center text-xs ${textColor} opacity-40`}>
-                        Transactions are secured by Movement network
+                        Tips settle on-chain — USDC on Arc (primary) or MOVE on Movement testnet
                     </p>
                 </div>
             </div>

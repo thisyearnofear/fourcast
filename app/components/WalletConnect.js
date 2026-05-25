@@ -5,6 +5,7 @@ import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useAccount, useDisconnect } from 'wagmi';
 import { ConnectKitButton } from 'connectkit';
 import { CHAINS } from '@/constants/appConstants';
+import { BRAND } from '@/constants/brand';
 import { useChainConnections } from '@/hooks/useChainConnections';
 
 /**
@@ -21,7 +22,7 @@ export default function WalletConnect({ isNight = false }) {
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Get unified chain state
-  const { chains } = useChainConnections();
+  const { chains, switchToArc, switchToEvmNetwork } = useChainConnections();
 
   // EVM (Trading)
   const { address: evmAddress, isConnected: evmConnected } = useAccount();
@@ -36,7 +37,8 @@ export default function WalletConnect({ isNight = false }) {
   const dropdownGlass = isNight ? 'glass-heavy bg-slate-900/95' : 'glass-heavy-light bg-white/95';
 
   // Check if any wallet is connected using unified state
-  const isAnyConnected = chains?.evm?.connected || chains?.aptos?.connected || chains?.movement?.connected;
+  const isAnyConnected =
+    chains?.evm?.connected || chains?.arc?.connected || chains?.aptos?.connected || chains?.movement?.connected;
 
   // Format address display
   // Format address display
@@ -67,7 +69,8 @@ export default function WalletConnect({ isNight = false }) {
     const colorMap = {
       blue: 'bg-blue-500/30 text-blue-200 border-blue-500/50',
       purple: 'bg-purple-500/30 text-purple-200 border-purple-500/50',
-      amber: 'bg-amber-500/30 text-amber-200 border-amber-500/50'
+      amber: 'bg-amber-500/30 text-amber-200 border-amber-500/50',
+      indigo: 'bg-indigo-500/30 text-indigo-200 border-indigo-500/50',
     };
     return colorMap[chain.color] || colorMap.blue;
   };
@@ -120,8 +123,13 @@ export default function WalletConnect({ isNight = false }) {
       >
         {isAnyConnected ? (
           <div className="flex items-center gap-2">
-            <div className="flex gap-1.5">
-              {chains?.evm?.connected && (
+            <div className="flex gap-1.5 flex-wrap justify-end">
+              {chains?.arc?.connected && (
+                <span className={`px-2 py-0.5 rounded-full text-xs border ${getChainColorClasses(CHAINS.ARC)}`}>
+                  {CHAINS.ARC.icon} Arc
+                </span>
+              )}
+              {chains?.evm?.connected && !chains?.arc?.connected && (
                 <span className={`px-2 py-0.5 rounded-full text-xs border ${getChainColorClasses(CHAINS.EVM)}`}>
                   {CHAINS.EVM.icon} {formatAddress(chains.evm.address)}
                 </span>
@@ -154,13 +162,36 @@ export default function WalletConnect({ isNight = false }) {
           {/* Helper Text - Explains why different chains */}
           {!isAnyConnected && (
             <p className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'} mb-4 leading-relaxed`}>
-              Connect wallets to trade on markets and publish prediction signals on-chain.
+              {BRAND.walletExplainer.headline}{' '}
+              {BRAND.walletExplainer.layers.map((l) => l.name).join(' · ')}.
+            </p>
+          )}
+
+          {chains?.evm?.connected && !chains?.arc?.connected && (
+            <button
+              type="button"
+              onClick={() => switchToArc()}
+              disabled={chains.evm?.isSwitching}
+              className={`w-full mb-4 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                isNight
+                  ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 hover:bg-indigo-500/30'
+                  : 'bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100'
+              }`}
+            >
+              🌀 Switch to Arc testnet (USDC settlement)
+            </button>
+          )}
+
+          {chains?.arc?.connected && (
+            <p className={`text-[10px] mb-3 ${isNight ? 'text-indigo-300/70' : 'text-indigo-700/80'}`}>
+              ✓ Arc testnet — ready to publish signals in USDC
             </p>
           )}
 
           {/* Connected Chains */}
           <div className="mb-4">
-            {renderChainSection(CHAINS.EVM, chains?.evm)}
+            {renderChainSection(CHAINS.ARC, chains?.arc)}
+            {chains?.evm?.connected && !chains?.arc?.connected && renderChainSection(CHAINS.EVM, chains.evm)}
             {renderChainSection(CHAINS.APTOS, chains?.aptos)}
             {renderChainSection(CHAINS.MOVEMENT, chains?.movement)}
           </div>
@@ -173,9 +204,18 @@ export default function WalletConnect({ isNight = false }) {
                 {CHAINS.EVM.display}
               </div>
               <p className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'} mb-3`}>
-                Trade on Polymarket & Kalshi
+                Connect EVM wallet, then switch to Arc or Polygon via network picker
               </p>
               <ConnectKitButton mode={isNight ? "dark" : "light"} />
+              {chains?.evm?.connected && !chains?.arc?.connected && (
+                <button
+                  type="button"
+                  onClick={() => switchToEvmNetwork('polygon')}
+                  className={`mt-2 w-full text-[10px] underline ${isNight ? 'text-white/40' : 'text-black/40'}`}
+                >
+                  Use Polygon for trading instead
+                </button>
+              )}
             </div>
           )}
 
@@ -183,10 +223,10 @@ export default function WalletConnect({ isNight = false }) {
           {!aptosWalletConnected && (
             <div className="mb-4">
               <div className={`text-xs font-medium ${textColor} mb-1`}>
-                Connect for Signal Publishing
+                Legacy signal networks (optional)
               </div>
               <p className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'} mb-3`}>
-                Publish predictions on-chain to build your verifiable track record.
+                {BRAND.publish.footnote}
               </p>
 
               {/* Side-by-side chain info */}
@@ -244,12 +284,16 @@ export default function WalletConnect({ isNight = false }) {
           <div className={`mt-4 pt-4 border-t ${isNight ? 'border-white/10' : 'border-black/10'} space-y-1.5`}>
             <div className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'}`}>
               <p className="flex items-center gap-1.5">
+                <span>{CHAINS.ARC.icon}</span>
+                <span>{CHAINS.ARC.purpose}</span>
+              </p>
+              <p className="flex items-center gap-1.5 mt-1">
                 <span>{CHAINS.EVM.icon}</span>
                 <span>{CHAINS.EVM.purpose}</span>
               </p>
             </div>
             <div className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'}`}>
-              <p className="mb-1 font-medium">Signal Networks:</p>
+              <p className="mb-1 font-medium">Legacy signal networks:</p>
               <p className="flex items-center gap-1.5 ml-2">
                 <span>{CHAINS.APTOS.icon}</span>
                 <span>{CHAINS.APTOS.purpose}</span>

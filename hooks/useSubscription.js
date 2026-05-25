@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
 import { parseUnits } from 'viem';
-
-// USDC has 6 decimals on most EVM chains including Arc
-const USDC_DECIMALS = 6;
+import { USDC_ABI, USDC_DECIMALS } from '@/constants/evmContracts';
 
 // ABI for the SubscriptionManager contract
 const SUBSCRIPTION_ABI = [
@@ -32,41 +30,6 @@ const SUBSCRIPTION_ABI = [
     name: 'getPrice',
     outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
     stateMutability: 'pure',
-    type: 'function',
-  },
-];
-
-// IUSDC ABI (minimal — just transferFrom + allowance + approve)
-const USDC_ABI = [
-  {
-    inputs: [
-      { internalType: 'address', name: 'owner', type: 'address' },
-      { internalType: 'address', name: 'spender', type: 'address' },
-    ],
-    name: 'allowance',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      { internalType: 'address', name: 'spender', type: 'address' },
-      { internalType: 'uint256', name: 'amount', type: 'uint256' },
-    ],
-    name: 'approve',
-    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      { internalType: 'address', name: 'from', type: 'address' },
-      { internalType: 'address', name: 'to', type: 'address' },
-      { internalType: 'uint256', name: 'amount', type: 'uint256' },
-    ],
-    name: 'transferFrom',
-    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-    stateMutability: 'nonpayable',
     type: 'function',
   },
 ];

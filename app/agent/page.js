@@ -8,6 +8,7 @@ import { AgentDashboard } from '@/components/AgentDashboard';
 import { useWeather } from '@/hooks/useWeather';
 import WalletConnect from '@/app/components/WalletConnect';
 import NarrativeSteps from '@/components/NarrativeSteps';
+import { BRAND } from '@/constants/brand';
 
 export default function AgentPage() {
   const { weatherData, isLoading: isLoadingWeather, isNight } = useWeather();
@@ -36,10 +37,10 @@ export default function AgentPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
             <div>
               <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
-                Agent
+                {BRAND.agent.title}
               </h1>
-              <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                Mission control — scan markets, detect edges, and track the AI agent's performance
+              <p className={`text-sm ${textColor} opacity-60 mt-2 font-light max-w-xl`}>
+                {BRAND.agent.subtitle}
               </p>
 
               {/* Agent as monitoring layer — sits above all 4 steps */}
@@ -52,7 +53,7 @@ export default function AgentPage() {
                       : 'bg-cyan-400/10 text-cyan-700 border-cyan-500/20'
                   }`}>
                     <span>🤖</span>
-                    <span>Agent monitors all</span>
+                    <span>{BRAND.agent.badge}</span>
                   </div>
                 </div>
                 {/* The 4-step loop — all steps shown as completed (observed) */}
@@ -73,7 +74,7 @@ export default function AgentPage() {
           {/* Labs CTA */}
           <div className="mt-12 text-center">
             <p className={`text-xs ${textColor} opacity-40 mb-3 font-light`}>
-              Looking for the full autopilot with autonomous trade execution?
+              {BRAND.agent.labsCta}
             </p>
             <a
               href="/labs"

@@ -60,10 +60,10 @@ export const CHAINS = {
   MOVEMENT: {
     id: 'movement',
     name: 'Movement',
-    display: 'Signals + Tips (Movement)',
+    display: 'Signals (Movement · legacy)',
     icon: '💎',
     color: 'amber',
-    purpose: 'Publish & monetize',
+    purpose: 'Legacy testnet signals & APT tips',
     capabilities: ['Publish signals', 'Build track record', 'Receive tips'],
     disabled: [],
     moduleAddress: '0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c'
@@ -71,11 +71,11 @@ export const CHAINS = {
   ARC: {
     id: 'arc',
     name: 'Arc',
-    display: 'Settlement + USDC (Arc)',
+    display: 'Settlement (Arc · USDC)',
     icon: '🌀',
     color: 'indigo',
-    purpose: 'Primary settlement & USDC',
-    capabilities: ['USDC-native signals', 'Sub-second finality', 'USDC tipping'],
+    purpose: 'Primary settlement — signals, subs, tips in USDC',
+    capabilities: ['USDC subscriptions', 'Sub-second finality', 'USDC tipping (rolling out)', 'Paymaster gas in USDC'],
     disabled: []
   }
 };

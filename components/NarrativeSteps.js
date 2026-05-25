@@ -11,12 +11,14 @@
  *   isNight: boolean
  *   className?: string
  */
+import { BRAND } from '@/constants/brand';
+
 export default function NarrativeSteps({ currentStep, isNight = false, className = '' }) {
   const steps = [
-    { id: 'search',  label: 'Search',      icon: '🔮', short: 'Search' },
-    { id: 'analyze', label: 'Analyze',     icon: '📊', short: 'Analyze' },
-    { id: 'publish', label: 'Publish',     icon: '🎯', short: 'Publish' },
-    { id: 'scored',  label: 'Get Scored',  icon: '📡', short: 'Score' },
+    { id: 'search',  ...BRAND.loop.search },
+    { id: 'analyze', ...BRAND.loop.analyze },
+    { id: 'publish', ...BRAND.loop.publish },
+    { id: 'scored',  ...BRAND.loop.scored },
   ];
 
   const currentIdx = steps.findIndex(s => s.id === currentStep);

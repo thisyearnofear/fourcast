@@ -6,6 +6,7 @@ import Scene3D from '@/components/Scene3D';
 import useHUDStore from '@/hooks/useHUDStore';
 import { useWeather } from '@/hooks/useWeather';
 import dynamic from 'next/dynamic';
+import { BRAND } from '@/constants/brand';
 
 const WalletConnect = dynamic(() => import('@/app/components/WalletConnect'), {
   ssr: false,
@@ -14,17 +15,17 @@ const WalletConnect = dynamic(() => import('@/app/components/WalletConnect'), {
 const LAB_FEATURES = [
   {
     id: 'autopilot',
-    title: 'Autopilot',
-    description: 'Full autonomous trade execution with Kelly Criterion sizing, live agent loop, and execution history.',
+    title: BRAND.labs.autopilot.title,
+    description: BRAND.labs.autopilot.description,
     href: '/labs/autopilot',
     icon: '🤖',
-    status: 'beta',
+    status: BRAND.labs.autopilot.status,
     gradient: 'from-cyan-600 to-blue-500',
   },
   {
     id: 'builder',
     title: 'Builder Program',
-    description: 'Polymarket Builder integration with gasless trading, volume tracking, and leaderboard.',
+    description: BRAND.labs.builder.description,
     href: '/labs/builder',
     icon: '🏗️',
     status: 'beta',
@@ -89,8 +90,8 @@ export default function LabsPage() {
               <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
                 🧪 Labs
               </h1>
-              <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                Experimental features — not part of the core product loop
+              <p className={`text-sm ${textColor} opacity-60 mt-2 font-light max-w-xl`}>
+                {BRAND.labs.subtitle}
               </p>
             </div>
             <div className="flex items-center space-x-3">
@@ -108,12 +109,11 @@ export default function LabsPage() {
               <div className="text-2xl flex-shrink-0">🧪</div>
               <div>
                 <h3 className={`text-sm font-medium ${textColor} mb-1`}>
-                  Experimental Zone
+                  Execution &amp; monetization
                 </h3>
                 <p className={`text-xs ${textColor} opacity-60 leading-relaxed`}>
-                  These features are experimental or peripheral to the core product loop. 
-                  They remain fully functional but are not actively promoted in the primary navigation.
-                  Feedback welcome.
+                  Autopilot runs the agent loop with real order execution (RFB 05). Builder Program
+                  attributes fills for USDC builder fees (RFB 06). Weather, Telegram, and 3D are supporting tools.
                 </p>
               </div>
             </div>
@@ -138,6 +138,7 @@ export default function LabsPage() {
 
 function FeatureCard({ feature, isNight, textColor }) {
   const isStable = feature.status === 'stable';
+  const isCore = feature.status === 'core';
   const isExternal = feature.external;
 
   const Tag = isExternal ? 'a' : 'a';
@@ -164,7 +165,11 @@ function FeatureCard({ feature, isNight, textColor }) {
           {feature.title}
         </h3>
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-          isStable
+          isCore
+            ? isNight
+              ? 'bg-cyan-500/15 text-cyan-300'
+              : 'bg-cyan-400/15 text-cyan-700'
+            : isStable
             ? isNight
               ? 'bg-green-500/15 text-green-300'
               : 'bg-green-400/15 text-green-700'
@@ -172,7 +177,7 @@ function FeatureCard({ feature, isNight, textColor }) {
               ? 'bg-amber-500/15 text-amber-300'
               : 'bg-amber-400/15 text-amber-700'
         }`}>
-          {isStable ? 'Stable' : 'Beta'}
+          {isCore ? 'Core' : isStable ? 'Stable' : 'Beta'}
         </span>
         {isExternal && (
           <span className={`text-[10px] ${isNight ? 'text-white/30' : 'text-black/30'}`}>

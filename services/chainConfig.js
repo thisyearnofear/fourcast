@@ -46,7 +46,16 @@ const CHAIN_CONFIGS = {
     signerKeyKey: 'ARB_PRIVATE_KEY',
     fallbackRpc: 'https://arb1.arbitrum.io/rpc',
     usdcAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' // Native USDC
-  }
+  },
+  5042002: {
+    name: 'Arc Testnet',
+    addressKey: 'NEXT_PUBLIC_PREDICTION_RECEIPT_CONTRACT',
+    feeBpsKey: 'PREDICTION_FEE_BPS_ARC',
+    rpcUrlKey: 'ARC_RPC_URL',
+    signerKeyKey: 'DEPLOYER_PRIVATE_KEY',
+    fallbackRpc: 'https://arc-node.thecanteenapp.com/',
+    usdcAddress: '0x3600000000000000000000000000000000000000',
+  },
 }
 
 export function getChainConfig(chainId) {

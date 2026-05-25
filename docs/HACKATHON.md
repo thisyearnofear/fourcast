@@ -5,12 +5,29 @@
 **Settlement**: Arc (Circle's stablecoin-native L1), USDC-denominated  
 **Prizes**: $50k total — 1st ($10k), 2nd ($7.5k×2), 3rd ($5k×3), standout teams, feedback incentives, easter eggs  
 **Submission Form**: https://forms.gle/hFPM2t4Jt1zGfqzM7  
+**Demo script**: [DEMO_SCRIPT.md](./DEMO_SCRIPT.md)  
+**Brand copy (UI)**: [constants/brand.js](../constants/brand.js)
+
+---
+
+## Brand & positioning (aligned in codebase)
+
+| Layer | Message |
+|-------|---------|
+| **One-liner** | Arc-native prediction market intelligence agent |
+| **Subhead** | Scan Polymarket & Kalshi · detect edge · publish on Arc · cross-venue arb |
+| **Primary RFB** | 02 Prediction Market Trader Intelligence |
+| **Secondary** | 05 Cross-Platform Arbitrage · 06 Social Trading / builder fees |
+| **Settlement story** | Arc first; Polygon for venue orders; Movement/Aptos = legacy testnet |
+| **Product loop** | Search → Analyze → Publish on Arc → Get Scored |
+
+Judges should never see "multi-chain" as the lead — **Arc is settlement**, other chains are **venues or legacy**.
 
 ---
 
 ## Why Fourcast Fits
 
-Fourcast is a **multi-chain prediction market intelligence platform** that already solves the hackathon's core challenge: AI agents that trade, invest, and interface with markets.
+Fourcast is an **Arc-native prediction market intelligence agent** that already solves the hackathon's core challenge: AI agents that trade, invest, and interface with markets — with USDC settlement on Circle Arc.
 
 Our existing features map directly to hackathon RFBs:
 
@@ -86,8 +103,8 @@ Fourcast → Arc (signals + settlement + USDC tipping + gas)
 ### Day 1: Arc Chain Integration (10% of Judging)
 - [x] Run `arc-canteen login` and get RPC credentials
 - [x] Add Arc to `constants/appConstants.js` (Chain ID 5042002)
-- [ ] Deploy SignalRegistry.sol on Arc testnet
-- [ ] Deploy PredictionReceipt.sol on Arc testnet
+- [x] Arc publish wired in `useSignalPublisher` → `services/arcPublisher.js`
+- [ ] Deploy PredictionReceiptERC20 on Arc (`node scripts/deploy-prediction-receipt.js`)
 - [x] Test basic RPC interactions (`arc-canteen rpc eth_chainId`)
 
 ### Day 2-3: Circle Tool Integration (20% of Judging)

@@ -1,16 +1,17 @@
-# 🔮 Fourcast: Multi-Chain Prediction Market Intelligence
+# 🔮 Fourcast: Arc-Native Prediction Market Intelligence Agent
 
-**AI-powered analysis for prediction markets with on-chain signal publishing and cross-platform trading.**
+**AI agent for Polymarket & Kalshi — edge detection, Kelly sizing, USDC settlement on Arc, cross-platform arbitrage.**
 
 ![Status](https://img.shields.io/badge/Status-Live-green)
-![Chains](https://img.shields.io/badge/Chains-Movement%20%7C%20BNB%20%7C%20Polygon%20%7C%20Arbitrum-blue)
+![Settlement](https://img.shields.io/badge/Settlement-Arc%20%C2%B7%20USDC-indigo)
+![Hackathon](https://img.shields.io/badge/Agora-RFB%2002%20%C2%B7%2005%20%C2%B7%2006-purple)
 
 ## 🎯 What We Do
 
-Fourcast helps traders find edge in prediction markets through:
+Fourcast is an intelligence agent for prediction markets. It helps traders and autonomous workflows:
 - **AI-powered analysis** - Venice AI (Llama 3.3 70B) with 200+ ML models across crypto, sports, politics & more
 - **Multi-platform trading** - Polymarket & Kalshi integration with live odds
-- **On-chain signals** - Publish verifiable predictions to Movement/Aptos blockchain
+- **On-chain signals** - USDC settlement on Arc (Circle L1); legacy Movement/Aptos testnet
 - **DeFi arbitrage** - Detect price discrepancies across platforms
 
 ---
@@ -25,7 +26,7 @@ Fourcast helps traders find edge in prediction markets through:
 - **Direct Trading** - Place orders on Polymarket/Kalshi from the interface
 
 ### For Analysts
-- **Signal Publishing** - Publish predictions on-chain (Movement testnet)
+- **Signal Publishing** - Publish predictions on-chain with Arc as the preferred settlement path when configured, with Movement testnet as legacy fallback
 - **Reputation System** - Track win rates, Brier scores, and accuracy streaks
 - **Tipping** - Earn APT for high-quality signals
 - **Leaderboards** - Compete with other analysts
@@ -45,7 +46,7 @@ graph LR
     C[Weather API] -->|Real-time Data| B
     D[SynthData] -->|ML Forecasts| B
     B -->|Signals| E[SQLite Database]
-    B -->|Publish| F[Movement Blockchain]
+    B -->|Publish| F[Arc · USDC Settlement]
     E --> G[Frontend Dashboard]
     F -->|Verify| G
     G -->|Trade| A
@@ -56,8 +57,9 @@ graph LR
 - **Backend**: Node.js, SQLite (Turso), Redis
 - **AI**: Venice AI (Llama 3.3 70B) with Edge Search
 - **Blockchains**: 
-  - Movement/Aptos (signal publishing, tipping)
-  - BNB, Polygon, Arbitrum (trading contracts)
+  - **Arc (Circle L1)** — primary settlement, USDC subscriptions, signals (integrating)
+  - Polygon — Polymarket/Kalshi execution
+  - Movement/Aptos — legacy testnet signals
 - **Data Sources**: Polymarket, Kalshi, Open-Meteo, SynthData
 
 ---
@@ -127,7 +129,8 @@ fourcast/
 |----------|---------|--------|
 | Polymarket | Live odds, trading | ✅ Live |
 | Kalshi | Live odds, trading | ✅ Live |
-| Movement/Aptos | Signal publishing, tipping | ✅ Testnet |
+| **Arc (Circle)** | USDC settlement, subscriptions | ✅ Testnet |
+| Movement/Aptos | Legacy signal publishing | ✅ Testnet |
 | BNB Chain | Trading contracts | 🧪 Beta |
 | Polygon | Trading contracts | 🧪 Beta |
 | Arbitrum | Trading contracts | 🧪 Beta |
@@ -162,7 +165,7 @@ MIT
 
 ## 🔮 Vision
 
-Fourcast the future. We're building quantitative prediction intelligence for the decentralized web — combining ML forecasts, AI reasoning, and real-time data to create verifiable, composable signals that traders and developers can trust.
+**Fourcast the future** — quantitative prediction intelligence with Arc-native USDC settlement. The agent scans venues, sizes edge with Kelly, publishes verifiable signals, and executes cross-platform arbitrage when fees allow.
 
-**Today**: AI analysis across crypto, sports & politics; signal publishing; cross-platform trading  
-**Future**: Premium signals, developer ecosystem, expanded data integrations
+**Today**: RFB 02 intelligence · RFB 05 cross-venue arb · RFB 06 social signals & builder monetization  
+**Docs**: [Hackathon strategy](./docs/HACKATHON.md) · [Demo script](./docs/DEMO_SCRIPT.md) · [Brand copy](./constants/brand.js)

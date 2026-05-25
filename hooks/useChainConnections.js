@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { CHAINS, EVM_NETWORKS, APTOS_NETWORKS, MOVEMENT_NETWORKS, NETWORK_SWITCH_CONFIGS } from '@/constants/appConstants';
+import { ARC_CHAIN_ID } from '@/constants/evmContracts';
 
 /**
  * Unified Chain Connection State Management
@@ -149,9 +150,11 @@ export function useChainConnections() {
         case 'trade':
           return chainId === 'evm' || chainId === 'arc';
         case 'publish':
-          return chainId === 'aptos' || chainId === 'movement' || chainId === 'arc';
+          if (chainId === 'arc') return chain.isCorrectNetwork;
+          return chainId === 'aptos' || chainId === 'movement';
         case 'publish_and_monetize':
-          return chainId === 'movement' || chainId === 'arc';
+          if (chainId === 'arc') return chain.isCorrectNetwork;
+          return chainId === 'movement';
         case 'settle':
           return chainId === 'arc';
         default:
@@ -188,6 +191,14 @@ export function useChainConnections() {
     [canPerform]
   );
 
+  /** Preferred publish target: Arc first, then legacy Move chains */
+  const resolvePublishChain = useCallback(() => {
+    if (canPerform('arc', 'publish')) return 'arc';
+    if (canPerform('movement', 'publish')) return 'movement';
+    if (canPerform('aptos', 'publish')) return 'aptos';
+    return null;
+  }, [canPerform]);
+
   /**
    * Switch to a specific EVM network
    * Returns true if switch was successful/initiated
@@ -205,6 +216,8 @@ export function useChainConnections() {
       return false;
     }
   }, [evmSwitchChain]);
+
+  const switchToArc = useCallback(() => switchToEvmNetwork('arc'), [switchToEvmNetwork]);
 
   /**
    * Switch to Aptos network (mainnet or testnet)
@@ -308,15 +321,17 @@ export function useChainConnections() {
     canPerform,
     connectedChains,
     canPublish,
+    resolvePublishChain,
     
     // Network switching
     switchToEvmNetwork,
-    switchToAptosNetwork,      // ✅ New: Switch to Aptos
-    switchToMovementNetwork,   // ✅ New: Switch to Movement
+    switchToArc,
+    switchToAptosNetwork,
+    switchToMovementNetwork,
     getActionGuidance,
+    arcChainId: ARC_CHAIN_ID,
 
-    // Legacy: Keep for gradual migration (deprecated)
-    // Remove after all consumers updated
+    // Legacy compat
     isConnected: evmConnected,
     aptosConnected: aptosWalletConnected,
   };

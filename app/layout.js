@@ -4,6 +4,7 @@ import Link from 'next/link';
 import HUDToggle from '@/components/HUDToggle';
 import LocationSettingsButton from '@/components/LocationSettingsButton';
 import HUDFooterWrapper from '@/components/HUDFooterWrapper';
+import { BRAND } from '@/constants/brand';
 
 // Force all pages to be dynamic to avoid SSR/static generation issues with wallet libraries
 export const dynamic = 'force-dynamic';
@@ -13,8 +14,8 @@ export const revalidate = 0;
 // Metadata moved to generateMetadata to avoid build-time evaluation issues
 export async function generateMetadata() {
   return {
-    title: "Fourcast",
-    description: "Prediction intelligence powered by AI, ML models & live weather data. Find edges across crypto, sports, and political prediction markets.",
+    title: BRAND.metadata.title,
+    description: BRAND.metadata.description,
     openGraph: {
       images: [`${process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app'}/logo.png`],
     },
@@ -46,8 +47,10 @@ export default function RootLayout({ children }) {
                 <span className="text-slate-700 text-[10px]">·</span>
                 <Link href="/status" className="text-[12px] text-slate-400 hover:text-slate-200 transition-colors no-underline font-medium">🩺 Status</Link>
               </div>
-              <div className="text-[11px] text-slate-700 font-light">
-                Fourcast · {new Date().getFullYear()}
+              <div className="text-[11px] text-slate-600 font-light text-center sm:text-right">
+                {BRAND.name} · {new Date().getFullYear()}
+                <span className="hidden sm:inline text-slate-700"> · </span>
+                <span className="block sm:inline text-slate-700 mt-0.5 sm:mt-0">{BRAND.footerStrip}</span>
               </div>
             </div>
           </footer>

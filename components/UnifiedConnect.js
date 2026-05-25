@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useAccount, useDisconnect, useConnect } from 'wagmi';
 import { useChainConnections } from '@/hooks/useChainConnections';
+import { BRAND } from '@/constants/brand';
 
 const CHAIN_META = {
   arc: { label: 'Arc (USDC)', icon: '🌀', color: '#6366f1' },
@@ -16,7 +17,7 @@ export default function UnifiedConnect({ isNight = false, variant = 'header' }) 
   const [mounted, setMounted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  const { chains, canPublish } = useChainConnections();
+  const { chains, canPublish, switchToArc } = useChainConnections();
   const { isConnected: evmConnected, address: evmAddress } = useAccount();
   const { connect: evmConnect, connectors } = useConnect();
   const { disconnect: evmDisconnect } = useDisconnect();
@@ -75,15 +76,17 @@ export default function UnifiedConnect({ isNight = false, variant = 'header' }) 
             style={{ maxWidth: 280 }}
           >
             <p className={`font-medium mb-1 ${isNight ? 'text-white/80' : 'text-black/80'}`}>
-              Fourcast uses blockchain for:
+              {BRAND.walletExplainer.headline}
             </p>
-            <ul className={`space-y-1 ${isNight ? 'text-white/50' : 'text-black/50'}`}>
-              <li>🌀 Arc — USDC settlement &amp; on-chain signals</li>
-              <li>💎 Movement — on-chain prediction records</li>
-              <li>📊 EVM — market order placement</li>
+            <ul className={`space-y-1.5 ${isNight ? 'text-white/50' : 'text-black/50'}`}>
+              {BRAND.walletExplainer.layers.map((layer) => (
+                <li key={layer.name}>
+                  {layer.icon} <strong>{layer.name}</strong> — {layer.detail}
+                </li>
+              ))}
             </ul>
             <p className={`mt-2 ${isNight ? 'text-white/40' : 'text-black/40'}`}>
-              Connect any EVM wallet — we handle the rest.
+              {BRAND.walletExplainer.cta}
             </p>
           </div>
         )}
@@ -127,6 +130,17 @@ export default function UnifiedConnect({ isNight = false, variant = 'header' }) 
               <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
             </div>
           ))}
+          {chains?.evm?.connected && !chains?.arc?.connected && (
+            <button
+              type="button"
+              onClick={() => switchToArc()}
+              className={`mt-2 w-full text-left text-[10px] py-1.5 px-2 rounded-lg ${
+                isNight ? 'bg-indigo-500/15 text-indigo-300' : 'bg-indigo-50 text-indigo-700'
+              }`}
+            >
+              🌀 Switch to Arc for USDC signals
+            </button>
+          )}
           <div className={`mt-2 pt-2 border-t ${isNight ? 'border-white/10' : 'border-black/10'}`}>
             <button
               onClick={() => {

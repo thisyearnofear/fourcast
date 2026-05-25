@@ -1608,7 +1608,7 @@ export function MarketCard({
                     Connect wallet to start your track record
                   </p>
                   <p className={`text-xs ${textColor} opacity-70 font-light`}>
-                    Link an Aptos or Movement wallet to make your call
+                    Connect wallet — Arc (USDC) or legacy Aptos/Movement to publish
                     and start building a verifiable prediction history
                   </p>
                 </div>

@@ -13,6 +13,7 @@ import PublishConfirmModal from "@/components/PublishConfirmModal";
 import { OrderSigningPanel } from "@/components/OrderSigningPanel";
 import KalshiOrderPanel from "@/components/KalshiOrderPanel";
 import { MarketEdgeScanner } from "@/components/MarketEdgeScanner";
+import { BRAND } from "@/constants/brand";
 import { ArbitrageExecutionPanel } from "@/components/ArbitrageExecutionPanel";
 import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
 import AnalysisConfigModal from "@/components/AnalysisConfigModal";
@@ -94,7 +95,8 @@ export default function MarketsPage() {
   // console.log('[Markets Page] ChainConnections initialized successfully');
 
   const {
-    publishToAptos,
+    publishSignal,
+    publishChain,
     getMySignalCount,
     isPublishing,
     publishError,
@@ -499,7 +501,7 @@ export default function MarketsPage() {
     if (!canPublish) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       addToast(
-        "Connect your Aptos or Movement wallet to start your track record",
+        "Connect a wallet — Arc testnet for USDC settlement, or Aptos/Movement for legacy testnet signals",
         "warning",
         5000
       );
@@ -508,9 +510,11 @@ export default function MarketsPage() {
 
     try {
       // 1. Save to SQLite first (fast feedback)
-      // Use Movement address if available, otherwise Aptos
-      const publishChain = chains.movement.connected ? 'movement' : 'aptos';
-      const rawAddress = chains[publishChain].address;
+      const targetChain = publishChain || (chains.movement.connected ? 'movement' : 'aptos');
+      const rawAddress =
+        targetChain === 'arc'
+          ? chains.arc?.address || chains.evm?.address
+          : chains[targetChain]?.address;
       const authorAddress = typeof rawAddress === 'string' ? rawAddress : String(rawAddress || '');
 
       const response = await fetch("/api/signals", {
@@ -521,8 +525,8 @@ export default function MarketsPage() {
           analysis,
           weather: weatherData,
           authorAddress,
-          publishChain,
-          chainOrigin: publishChain.toUpperCase(), // 'APTOS' or 'MOVEMENT'
+          publishChain: targetChain,
+          chainOrigin: targetChain.toUpperCase(),
         }),
       });
 
@@ -533,7 +537,6 @@ export default function MarketsPage() {
         return;
       }
 
-      // 2. Publish to Aptos
       const signalData = {
         event_id: selectedMarket.marketID || selectedMarket.id,
         market_title: selectedMarket.title || selectedMarket.question,
@@ -550,33 +553,42 @@ export default function MarketsPage() {
         ai_digest_hash: result.aiDigestHash || null,
       };
 
-      const txHash = await publishToAptos(signalData);
+      const { txHash, chain: settledChain } = await publishSignal(signalData, result.id);
 
       if (txHash) {
-        // Update SQLite with tx_hash
         await fetch("/api/signals", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: result.id,
             tx_hash: txHash,
+            chain_origin: settledChain?.toUpperCase(),
           }),
         });
-        try {
-          const c = await getMySignalCount();
-          setMySignalCount(c);
-        } catch { /* ignore */ }
+        if (settledChain !== 'arc') {
+          try {
+            const c = await getMySignalCount();
+            setMySignalCount(c);
+          } catch { /* ignore */ }
+        }
+
+        const explorer =
+          settledChain === 'arc'
+            ? `https://arc-explorer.thecanteenapp.com/tx/${txHash}`
+            : null;
 
         addToast(
-          `Call recorded on-chain · TX: ${txHash ? txHash.slice(0, 10) : 'Unknown'}...`,
+          settledChain === 'arc'
+            ? `Published on Arc · ${txHash.slice(0, 10)}…`
+            : `Call recorded on-chain · ${txHash.slice(0, 10)}…`,
           "success",
           5000,
-          "/signals",
-          "View Track Record"
+          explorer || "/signals",
+          explorer ? "Arc Explorer" : "View Track Record"
         );
       } else {
         addToast(
-          `Prediction saved locally but on-chain record failed: ${publishError || "Unknown error"}`,
+          `Saved locally; on-chain publish failed: ${publishError || "Unknown error"}`,
           "warning",
           5000
         );
@@ -585,7 +597,7 @@ export default function MarketsPage() {
       console.error("Failed to publish signal:", err);
       addToast("Failed to record prediction", "error", 5000);
     }
-  }, [selectedMarket, analysis, canPublish, chains, weatherData, addToast, publishToAptos]);
+  }, [selectedMarket, analysis, canPublish, chains, weatherData, addToast, publishSignal, publishChain, publishError, getMySignalCount]);
 
   const textColor = isNight ? "text-white" : "text-black";
   const cardBgColor = isNight
@@ -628,7 +640,7 @@ export default function MarketsPage() {
               <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
                 {activeTab === "sports"
                   ? "Sports predictions with weather-aware analysis"
-                  : "ML-powered edge detection across prediction markets"}
+                  : BRAND.pages.markets}
               </p>
               {/* Narrative step — step 2 & 3: Analyze → Publish/Trade */}
               <NarrativeSteps currentStep="analyze" isNight={isNight} className="mt-3" />

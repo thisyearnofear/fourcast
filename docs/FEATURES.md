@@ -52,9 +52,10 @@
 - **Autonomous Autopilot Trading** — Programmatic server-side signing and gasless relayer order execution using Polymarket private keys and Builder Program attribution
 - **Telegram Bot (@fourcasterbot)** — /edge commands for AI prediction analysis via messaging
 
-#### On-Chain Signals (Movement Testnet)
-- **Signal Publishing** - Publish predictions to blockchain
-- **Tipping System** - Reward analysts with APT
+#### On-Chain Signals
+- **Arc Publishing** - Publish predictions on Arc testnet via PredictionReceiptERC20 when configured
+- **Legacy Fallback** - Movement/Aptos publish path remains available when Arc is not connected
+- **Tipping System** - Reward analysts with APT on legacy Movement signals
 - **Reputation Tracking** - Win rates, Brier scores, accuracy streaks
 - **Leaderboards** - Top analysts by performance
 
@@ -257,7 +258,7 @@ Combine ML forecasts, AI reasoning, and real-time data sources to create verifia
 
 ## 🏆 Agora Agents Hackathon Integration
 
-Fourcast is competing in the [Agora Agents Hackathon](https://agora.thecanteenapp.com/) (Canteen × Circle, May 11–25 2026), targeting **RFB 02** (Prediction Market Trader Intelligence) as primary and **RFB 05** (Cross-Platform Arbitrage Agent) as secondary.
+Fourcast is an **Arc-native prediction market intelligence agent** in the [Agora Agents Hackathon](https://agora.thecanteenapp.com/) (Canteen × Circle). **RFB 02** (primary) · **RFB 05** · **RFB 06**. Demo: [DEMO_SCRIPT.md](./DEMO_SCRIPT.md). UI copy: [constants/brand.js](../constants/brand.js).
 
 ### Arc-Native Features (New)
 
@@ -279,8 +280,8 @@ Fourcast is competing in the [Agora Agents Hackathon](https://agora.thecanteenap
 
 | Chain | Purpose | Status |
 |-------|---------|--------|
-| **Arc (Circle L1)** | Primary settlement, USDC signals, tipping, gas | 🔄 Integrating |
-| Movement/Aptos | Signal publishing (legacy) | ✅ Testnet |
+| **Arc (Circle L1)** | Primary settlement — USDC subs ✅, signals/tips rolling out | ✅ Testnet |
+| Movement/Aptos | Legacy signal publishing | ✅ Testnet |
 | BNB Chain | Trading contracts | 🧪 Beta |
 | Polygon | Trading contracts | 🧪 Beta |
 | Arbitrum | Trading contracts | 🧪 Beta |

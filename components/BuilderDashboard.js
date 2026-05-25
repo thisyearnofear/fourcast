@@ -8,9 +8,45 @@ import { useBuilder } from '@/hooks/useBuilder';
  * Integrates with existing design patterns
  * Shows all builder features and metrics
  */
-export function BuilderDashboard({ isNight = false, onClose = null }) {
+function formatVolume(volume) {
+  if (!volume) return '$0';
+  if (volume >= 1000000) return `$${(volume / 1000000).toFixed(1)}M`;
+  if (volume >= 1000) return `$${(volume / 1000).toFixed(1)}K`;
+  return `$${volume.toFixed(0)}`;
+}
+
+export function BuilderDashboard({ isNight = false, onClose = null, variant = 'full' }) {
   const { stats, loading, error, isConfigured, relayerConfig, refresh } = useBuilder();
   const [refreshing, setRefreshing] = useState(false);
+
+  const textColor = isNight ? 'text-white' : 'text-slate-900';
+  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
+
+  if (variant === 'compact') {
+    if (!isConfigured) return null;
+    return (
+      <div className={`rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
+        <div className="flex items-center gap-4 text-xs">
+          <span className={subtleText}>Builder (RFB 06)</span>
+          <span className={textColor}>
+            24h <strong>{formatVolume(stats?.dailyVolume?.volume)}</strong>
+          </span>
+          <span className={textColor}>
+            Orders <strong>{stats?.dailyVolume?.orderCount ?? 0}</strong>
+          </span>
+          <span className={textColor}>
+            Rank <strong>{stats?.leaderboard?.rank ? `#${stats.leaderboard.rank}` : '—'}</strong>
+          </span>
+        </div>
+        <a
+          href="/labs/builder"
+          className={`text-xs no-underline ${isNight ? 'text-indigo-300 hover:text-indigo-200' : 'text-indigo-600 hover:text-indigo-800'}`}
+        >
+          Details →
+        </a>
+      </div>
+    );
+  }
 
   if (!isConfigured) {
     return (
@@ -30,9 +66,6 @@ export function BuilderDashboard({ isNight = false, onClose = null }) {
     await refresh();
     setRefreshing(false);
   };
-
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
 
   return (
     <div className={`rounded-2xl p-6 ${isNight ? 'glass-subtle' : 'glass-subtle-light'} space-y-4`}>
@@ -161,11 +194,4 @@ function MetricCard({ label, value, isNight }) {
       </div>
     </div>
   );
-}
-
-function formatVolume(volume) {
-  if (!volume) return '$0';
-  if (volume >= 1000000) return `$${(volume / 1000000).toFixed(1)}M`;
-  if (volume >= 1000) return `$${(volume / 1000).toFixed(1)}K`;
-  return `$${volume.toFixed(0)}`;
 }

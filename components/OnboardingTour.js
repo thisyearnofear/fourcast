@@ -4,43 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 
 export const ONBOARDING_KEY = 'fourcast_onboarding_complete';
 
-const STEPS = [
-  {
-    id: 'welcome',
-    title: 'Welcome to Fourcast',
-    description: 'Your AI-powered prediction market companion. Discover insights, track your calls, and build a verifiable track record.',
-    icon: '🔮',
-    target: null, // Center screen
-  },
-  {
-    id: 'markets',
-    title: 'Browse & Analyze Markets',
-    description: 'Explore prediction markets from Polymarket and Kalshi. Run AI analysis with ML-backed edge detection.',
-    icon: '📊',
-    target: '[data-onboard="markets"]',
-  },
-  {
-    id: 'publish',
-    title: 'Publish Signals',
-    description: 'Record your predictions on-chain. Build a provable track record and earn tips from the community.',
-    icon: '📡',
-    target: '[data-onboard="publish"]',
-  },
-  {
-    id: 'agent',
-    title: 'Agent Mode',
-    description: 'Let the AI autonomously scan markets, detect edges, and generate forecasts for you.',
-    icon: '🤖',
-    target: '[data-onboard="agent"]',
-  },
-  {
-    id: 'positions',
-    title: 'Your Track Record',
-    description: 'View your positions, reputation, win rate, and Brier scores across every market.',
-    icon: '💼',
-    target: '[data-onboard="positions"]',
-  },
-];
+import { ONBOARDING_COPY } from '@/constants/brand';
+
+const STEPS = ONBOARDING_COPY;
 
 export function useOnboarding() {
   const [isActive, setIsActive] = useState(false);

@@ -2,118 +2,152 @@
 
 import { useState, useCallback } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
 import { movePublisher } from '@/services/movePublisher';
+import { publishSignalOnArc, isArcPublishConfigured } from '@/services/arcPublisher';
+import { useChainConnections } from '@/hooks/useChainConnections';
 
 /**
- * Custom hook for publishing signals to Move-based blockchains (Aptos, Movement)
- * 
- * Product Design:
- * 1. User clicks "Publish Signal" → wallet popup
- * 2. User approves → signal saves to SQLite + Chain
- * 3. Success → shows tx_hash and explorer link
- * 4. Failure → signal still in SQLite, can retry
- * 
- * Security:
- * - No private keys in backend
- * - User wallet signs all transactions
- * - Each signal tied to user's address (reputation)
+ * Unified signal publishing — Arc (primary) or legacy Aptos/Movement.
+ * Single hook for markets, signals, and future surfaces.
  */
 export function useSignalPublisher() {
-    const { account, signAndSubmitTransaction, connected, network } = useWallet();
-    const [isPublishing, setIsPublishing] = useState(false);
-    const [publishError, setPublishError] = useState(null);
+  const { resolvePublishChain, chains } = useChainConnections();
+  const { account, signAndSubmitTransaction, connected: aptosConnected, network } = useWallet();
+  const { address: evmAddress, isConnected: evmConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
-    /**
-     * Publish signal to Aptos/Movement blockchain
-     * Returns tx_hash on success, null on failure
-     */
-    const publishToAptos = useCallback(async (signalData) => {
-        if (!connected || !account) {
-            setPublishError('Please connect your wallet first');
-            return null;
-        }
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState(null);
 
-        setIsPublishing(true);
-        setPublishError(null);
+  const publishToAptos = useCallback(
+    async (signalData) => {
+      if (!aptosConnected || !account) {
+        setPublishError('Connect Aptos/Movement wallet for legacy publish');
+        return null;
+      }
 
-        try {
-            // Prepare transaction payload with current network context
-            const payload = movePublisher.preparePublishSignalPayload(signalData, network);
+      setIsPublishing(true);
+      setPublishError(null);
 
-            // User wallet signs and submits transaction
-            const response = await signAndSubmitTransaction({
-                sender: account.address,
-                data: payload,
-            });
+      try {
+        const payload = movePublisher.preparePublishSignalPayload(signalData, network);
+        const response = await signAndSubmitTransaction({
+          sender: account.address,
+          data: payload,
+        });
+        const result = await movePublisher.waitForTransaction(response.hash, network);
+        if (result.success) return response.hash;
+        throw new Error(result.vm_status || 'Transaction failed');
+      } catch (error) {
+        console.error('Publish failed:', error);
+        setPublishError(error.message || 'Failed to publish to chain');
+        return null;
+      } finally {
+        setIsPublishing(false);
+      }
+    },
+    [aptosConnected, account, signAndSubmitTransaction, network]
+  );
 
-            // Wait for transaction confirmation
-            const result = await movePublisher.waitForTransaction(response.hash, network);
+  const publishToArc = useCallback(
+    async (signalData, signalDbId) => {
+      if (!chains?.arc?.connected || !evmConnected || !evmAddress) {
+        setPublishError('Switch wallet to Arc testnet (chain 5042002)');
+        return null;
+      }
+      if (!isArcPublishConfigured()) {
+        setPublishError('Arc prediction contract not deployed — set NEXT_PUBLIC_PREDICTION_RECEIPT_CONTRACT');
+        return null;
+      }
 
-            if (result.success) {
-                return response.hash;
-            } else {
-                throw new Error(result.vm_status || 'Transaction failed');
-            }
-        } catch (error) {
-            console.error('Publish failed:', error);
-            setPublishError(error.message || 'Failed to publish to chain');
-            return null;
-        } finally {
-            setIsPublishing(false);
-        }
-    }, [connected, account, signAndSubmitTransaction, network]);
+      setIsPublishing(true);
+      setPublishError(null);
 
-    /**
-     * Tip an analyst (Movement Only)
-     */
-    const tipSignal = useCallback(async (authorAddress, signalId, amount) => {
-        if (!connected || !account) {
-            throw new Error("Please connect your wallet to tip");
-        }
+      try {
+        const hash = await publishSignalOnArc({
+          walletClient,
+          publicClient,
+          account: evmAddress,
+          signalData,
+          signalDbId,
+        });
+        return hash;
+      } catch (error) {
+        console.error('Arc publish failed:', error);
+        setPublishError(error.message || 'Failed to publish on Arc');
+        return null;
+      } finally {
+        setIsPublishing(false);
+      }
+    },
+    [chains?.arc?.connected, evmConnected, evmAddress, walletClient, publicClient]
+  );
 
-        // Prevent tipping yourself
-        if (typeof account.address === 'string' && typeof authorAddress === 'string' &&
-            account.address.toLowerCase() === authorAddress.toLowerCase()) {
-            throw new Error("You cannot tip your own signal");
-        }
+  /**
+   * Publish to the best available chain: Arc → Movement → Aptos
+   */
+  const publishSignal = useCallback(
+    async (signalData, signalDbId) => {
+      const target = resolvePublishChain();
+      if (!target) {
+        setPublishError('Connect a wallet to publish');
+        return { txHash: null, chain: null };
+      }
 
-        try {
-            const payload = movePublisher.prepareTipAnalystPayload(authorAddress, signalId, amount, network);
+      if (target === 'arc') {
+        const txHash = await publishToArc(signalData, signalDbId);
+        return { txHash, chain: 'arc' };
+      }
 
-            const response = await signAndSubmitTransaction({
-                sender: account.address,
-                data: payload,
-            });
+      const txHash = await publishToAptos(signalData);
+      return { txHash, chain: target };
+    },
+    [resolvePublishChain, publishToArc, publishToAptos]
+  );
 
-            // Wait for transaction confirmation
-            const result = await movePublisher.waitForTransaction(response.hash, network);
+  const tipSignal = useCallback(
+    async (authorAddress, signalId, amount) => {
+      if (!aptosConnected || !account) {
+        throw new Error('Connect your wallet to tip');
+      }
+      if (
+        typeof account.address === 'string' &&
+        typeof authorAddress === 'string' &&
+        account.address.toLowerCase() === authorAddress.toLowerCase()
+      ) {
+        throw new Error('You cannot tip your own signal');
+      }
 
-            if (result.success) {
-                return response.hash;
-            } else {
-                throw new Error(result.vm_status || 'Tip transaction failed');
-            }
-        } catch (error) {
-            console.error("Tip failed:", error);
-            throw error;
-        }
-    }, [connected, account, signAndSubmitTransaction, network]);
+      const payload = movePublisher.prepareTipAnalystPayload(authorAddress, signalId, amount, network);
+      const response = await signAndSubmitTransaction({
+        sender: account.address,
+        data: payload,
+      });
+      const result = await movePublisher.waitForTransaction(response.hash, network);
+      if (result.success) return response.hash;
+      throw new Error(result.vm_status || 'Tip transaction failed');
+    },
+    [aptosConnected, account, signAndSubmitTransaction, network]
+  );
 
-    /**
-     * Get user's signal count
-     */
-    const getMySignalCount = useCallback(async () => {
-        if (!account?.address) return 0;
-        return await movePublisher.getSignalCount(account.address, network);
-    }, [account, network]);
+  const getMySignalCount = useCallback(async () => {
+    if (!account?.address) return 0;
+    return await movePublisher.getSignalCount(account.address, network);
+  }, [account, network]);
 
-    return {
-        publishToAptos,
-        tipSignal,
-        getMySignalCount,
-        isPublishing,
-        publishError,
-        connected,
-        walletAddress: account?.address,
-    };
+  return {
+    publishSignal,
+    publishToAptos,
+    publishToArc,
+    tipSignal,
+    getMySignalCount,
+    isPublishing,
+    publishError,
+    connected: aptosConnected || evmConnected,
+    walletAddress: account?.address || evmAddress,
+    publishChain: resolvePublishChain(),
+    arcPublishReady: isArcPublishConfigured() && chains?.arc?.connected,
+  };
 }

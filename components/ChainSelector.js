@@ -19,15 +19,19 @@ export function ChainSelector({ compact = false, showLabel = true, onNetworkChan
   const connectedChainOptions = useMemo(() => {
     const options = [];
 
-    // EVM networks
-    if (chains.evm.connected) {
+    // EVM + Arc networks
+    if (chains.evm.connected || chains.arc.connected) {
+      const tradingNetworks = [
+        ...Object.values(EVM_NETWORKS).filter((n) => n.id !== 'arc'),
+        EVM_NETWORKS.ARC,
+      ];
       options.push({
-        category: 'Trading (EVM)',
-        icon: '📊',
-        networks: chains.evm.availableNetworks,
-        currentNetwork: chains.evm.currentNetwork,
+        category: chains.arc.connected ? 'Settlement & trading' : 'Trading (EVM)',
+        icon: chains.arc.connected ? '🌀' : '📊',
+        networks: tradingNetworks,
+        currentNetwork: chains.arc.connected ? EVM_NETWORKS.ARC : chains.evm.currentNetwork,
         onSwitch: switchToEvmNetwork,
-        chainId: 'evm'
+        chainId: chains.arc.connected ? 'arc' : 'evm'
       });
     }
 

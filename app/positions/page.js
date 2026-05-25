@@ -8,6 +8,7 @@ import PositionsDashboard from "@/components/PositionsDashboard";
 import { useWeather } from "@/hooks/useWeather";
 import WalletConnect from "@/app/components/WalletConnect";
 import NarrativeSteps from "@/components/NarrativeSteps";
+import { BRAND } from "@/constants/brand";
 
 export default function PositionsPage() {
   const { weatherData, isLoading: isLoadingWeather, isNight } = useWeather();
@@ -38,7 +39,7 @@ export default function PositionsPage() {
                                 Positions
                             </h1>
                             <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                                Your positions, reputation, and performance
+                                {BRAND.pages.positions}
                             </p>
                             {/* Narrative step — step 4: Get Scored */}
                             <NarrativeSteps currentStep="scored" isNight={isNight} className="mt-3" />

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Fourcast is a **multi-chain prediction market intelligence platform** that combines AI analysis, live market data, and on-chain signal publishing to help traders find and act on market inefficiencies.
+Fourcast is an **Arc-native prediction market intelligence agent** that combines AI analysis, Polymarket/Kalshi venue data, and USDC settlement on Circle Arc to help traders and autonomous workflows find and act on market inefficiencies.
 
 ## Core Components
 
@@ -157,10 +157,10 @@ CREATE TABLE signals (
 ### Arc (Primary Settlement Layer) — Agora Agents Hackathon
 - **Purpose**: Signal publishing, USDC settlement, agent accounts, cross-chain coordination
 - **Network**: Arc testnet (Chain ID 5042002)
-- **Contract**: `SignalRegistry.sol`, `PredictionReceipt.sol`, `BuilderFeeSplitter.sol`
-- **Features**: On-chain signals with USDC tipping, sub-second finality, ~$0.01 tx fees
+- **Contract**: `PredictionReceiptERC20` for signal publishing; SubscriptionManager for USDC plans
+- **Features**: On-chain signals, USDC-denominated subscriptions, sub-second finality, ~$0.01 tx fees
 - **Circle Tools**: CCTP, Gateway, Wallets, Paymaster, USYC, App Kit
-- **Status**: 🔄 Integrating for Agora Agents Hackathon (May 2026)
+- **Status**: Arc publish routing is wired in the app; contract deployment/env config still required for live publishing
 
 ### Movement/Aptos (Signal Layer — Legacy)
 - **Purpose**: Publish verifiable prediction signals

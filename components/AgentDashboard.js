@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useAgentLoop } from '@/hooks/useAgentLoop';
+import { BRAND } from '@/constants/brand';
+import { BuilderDashboard } from '@/components/BuilderDashboard';
 
 const CATEGORY_OPTIONS = [
   { value: 'all', label: 'All Markets' },
@@ -43,10 +45,10 @@ export function AgentDashboard({ isNight = false }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3 className={`font-medium text-base sm:text-lg ${textColor}`}>
-            🤖 Agent Mode
+            🤖 {BRAND.agent.title}
           </h3>
           <p className={`text-xs ${subtleText} mt-1`}>
-            Autonomous market scanning &amp; edge detection
+            {BRAND.agent.subtitle}
           </p>
         </div>
         <div 
@@ -132,7 +134,7 @@ export function AgentDashboard({ isNight = false }) {
             : isNight ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-200' : 'bg-blue-100 hover:bg-blue-200 text-blue-900'
         }`}
       >
-        {isRunning ? '⏹ Stop Agent' : '▶ Run Agent'}
+        {isRunning ? '⏹ Stop Agent' : `▶ ${BRAND.agent.runCta}`}
       </button>
 
       {/* Error */}
@@ -235,6 +237,8 @@ export function AgentDashboard({ isNight = false }) {
           ))}
         </div>
       )}
+
+      <BuilderDashboard isNight={isNight} variant="compact" />
     </div>
   );
 }

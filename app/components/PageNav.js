@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BRAND } from "@/constants/brand";
 
 /**
  * Primary Navigation Component
@@ -34,28 +35,28 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
       name: "Markets", 
       href: "/markets", 
       icon: "📊",
-      description: "ML-powered edge detection",
+      description: BRAND.nav.markets,
       onboardId: "markets"
     },
     { 
       name: "Signals", 
       href: "/signals", 
       icon: "📡",
-      description: "Track record & leaderboard",
+      description: BRAND.nav.signals,
       onboardId: "publish"
     },
     { 
       name: "Agent", 
       href: "/agent", 
       icon: "🤖",
-      description: "Mission control & agent loop",
+      description: BRAND.nav.agent,
       onboardId: "agent"
     },
     { 
       name: "Positions", 
       href: "/positions", 
       icon: "💼",
-      description: "Your positions & reputation",
+      description: BRAND.nav.positions,
       onboardId: "positions"
     },
   ];
@@ -66,7 +67,7 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
       name: "Labs",
       href: "/labs",
       icon: "🧪",
-      description: "Experimental features"
+      description: BRAND.nav.labs
     },
   ];
 

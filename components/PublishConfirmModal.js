@@ -1,6 +1,13 @@
 'use client';
 
+import { useChainConnections } from '@/hooks/useChainConnections';
+import { BRAND } from '@/constants/brand';
+
 export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market, analysis, isNight, isPublishing }) {
+  const { chains } = useChainConnections();
+  const onArc = chains?.arc?.connected;
+  const chainLabel = onArc ? BRAND.publish.arcPreferred.chain : BRAND.publish.legacy.chain;
+  const gasLabel = onArc ? BRAND.publish.arcPreferred.gas : BRAND.publish.legacy.gas;
   if (!isOpen) return null;
 
   const recommendation = analysis?.recommended_action || analysis?.assessment?.direction || 'Neutral';
@@ -47,11 +54,18 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
           </div>
 
           <div className={`flex items-center justify-between rounded-xl p-3 border ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
-            <div className="text-[10px] uppercase tracking-wider opacity-40">On-Chain</div>
-            <div className={`text-xs font-medium ${isNight ? 'text-white/80' : 'text-black/80'}`}>Aptos</div>
-            <div className="text-[10px] uppercase tracking-wider opacity-40">Gas</div>
-            <div className={`text-xs font-medium ${isNight ? 'text-white/80' : 'text-black/80'}`}>~0.001 APT</div>
+            <div className="text-[10px] uppercase tracking-wider opacity-40">Settlement</div>
+            <div className={`text-xs font-medium ${onArc ? (isNight ? 'text-indigo-300' : 'text-indigo-700') : (isNight ? 'text-white/80' : 'text-black/80')}`}>
+              {chainLabel}
+            </div>
+            <div className="text-[10px] uppercase tracking-wider opacity-40">Fee</div>
+            <div className={`text-xs font-medium ${isNight ? 'text-white/80' : 'text-black/80'}`}>{gasLabel}</div>
           </div>
+          {!onArc && (
+            <p className={`text-[10px] ${isNight ? 'text-amber-400/60' : 'text-amber-700/70'}`}>
+              {BRAND.publish.footnote}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-3">

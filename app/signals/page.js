@@ -19,6 +19,7 @@ import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ActiveChainIndicator } from '@/components/ActiveChainIndicator';
 import { ChainSelector } from '@/components/ChainSelector';
 import NarrativeSteps from '@/components/NarrativeSteps';
+import { BRAND } from '@/constants/brand';
 
 export default function SignalsPage() {
     const { connected: aptosConnected, walletAddress, tipSignal } = useSignalPublisher();
@@ -227,7 +228,7 @@ export default function SignalsPage() {
                                 Signals
                             </h1>
                             <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                                Prove your edge — verifiable predictions with on-chain track records
+                                {BRAND.pages.signals}
                             </p>
                             {/* Narrative step — step 4: Get Scored */}
                             <NarrativeSteps currentStep="scored" isNight={isNight} className="mt-3" />

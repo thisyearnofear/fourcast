@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { BRAND } from '@/constants/brand';
 
 const PAGE_SIZE = 10;
 const MAX_LIVE_STEPS = 50;
@@ -172,10 +173,10 @@ export function AutopilotDashboard({ isNight = false }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className={`text-xl font-medium ${textColor}`}>
-            🤖 Autopilot
+            🤖 {BRAND.labs.autopilot.title}
           </h2>
           <p className={`text-xs ${subtleText} mt-1`}>
-            Live agent loop progress and autonomous trade execution history
+            {BRAND.labs.autopilot.description}
           </p>
         </div>
         <div className="flex items-center gap-2">
