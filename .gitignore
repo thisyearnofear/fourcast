@@ -75,6 +75,8 @@ movement-key.txt.pub
 .zenflow/
 .cursor/
 .windsurf/
+.claude/
+.commandcode/
 
 # ============================================
 # OS Files
@@ -142,3 +144,6 @@ config.yaml
 bin/
 .blackboxcli/
 .antigravitycli/
+
+# Deploy artifacts
+.prediction-receipt-address
