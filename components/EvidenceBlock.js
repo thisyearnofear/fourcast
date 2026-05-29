@@ -254,7 +254,7 @@ export default function EvidenceBlock({
                   {' '}Scraped {signal.brightData.deepResearch.charCount?.toLocaleString()} chars
                   {signal.brightData.deepResearch.sentenceCount
                     ? ` (${signal.brightData.deepResearch.sentenceCount} evidence sentences)`
-                    : ''} via Scraping Browser from{' '}
+                    : ''} via {signal.brightData.deepResearch.product || 'Bright Data'} from{' '}
                   <a
                     href={signal.brightData.deepResearch.url}
                     target="_blank"
@@ -291,9 +291,12 @@ function buildSources(signal) {
       label = 'Bright Data Intelligence';
       subtype = 'SERP Search-Enhanced';
     } else if (signal.source === 'brightdata+research') {
+      const product = signal.brightData?.deepResearch?.product;
       icon = '🔬';
       label = 'Bright Data Deep Research';
-      subtype = 'Scraping Browser-Verified';
+      subtype = product === 'Web Unlocker'
+        ? 'Web Unlocker-Verified'
+        : 'Scraping Browser-Verified';
     } else if (signal.source === 'synthdata+llm') {
       subtype = 'Llama 3.3 70B + SynthData';
     }
@@ -390,12 +393,16 @@ function getConfidenceMethod(signal) {
   }
 
   const isBrightData = signal.source?.startsWith('brightdata');
+  const bdProduct = signal.brightData?.deepResearch?.product || 'Scraping Browser';
 
   switch (signal.confidence) {
     case 'HIGH':
-      return isBrightData 
-        ? 'High conviction derived from cross-referencing multiple real-time search results via Bright Data. ' +
-          (signal.source === 'brightdata+research' ? 'Deep research via Scraping Browser confirmed the primary evidence source.' : '')
+      return isBrightData
+        ? `High conviction derived from real-time market intelligence via Bright Data. ` +
+          `Cross-referenced ${signal.brightData?.sources?.length || 'multiple'} live web sources via SERP API` +
+          (signal.source === 'brightdata+research'
+            ? `. Deep research via ${bdProduct} extracted ${signal.brightData?.deepResearch?.sentenceCount || 'detailed'} evidence sentences from the primary source, confirming directional bias.`
+            : '. Search snippets indicate strong directional alignment.')
         : 'Strong cross-model agreement between Venice LLM reasoning and SynthData ML ensemble. ' +
           'Edge exceeds minimum threshold with high odds-efficiency. ' +
           (signal.source === 'synthdata+llm'
@@ -403,13 +410,20 @@ function getConfidenceMethod(signal) {
             : '');
     case 'MEDIUM':
       return isBrightData
-        ? 'Moderate evidence found via Bright Data. Multiple sources suggest a directional bias, but some counter-signals remain.'
+        ? `Moderate evidence found via Bright Data real-time web intelligence. ` +
+          `SERP API returned ${signal.brightData?.sources?.length || 'several'} relevant sources suggesting a directional bias, but some counter-signals remain.` +
+          (signal.source === 'brightdata+research'
+            ? ` Deep research via ${bdProduct} provided additional context but mixed signals persist.`
+            : '')
         : 'Moderate alignment between AI reasoning and market data. ' +
           'Venice LLM identifies a directional bias but SynthData ML shows mixed signals. ' +
           'Odds efficiency suggests partial mispricing.';
     case 'LOW':
       return isBrightData
-        ? 'Scant evidence found via real-time search. Market appears efficient or information is too fragmented for a high-conviction forecast.'
+        ? `Scant evidence found via Bright Data real-time search. Market appears efficient or information is too fragmented for high-conviction forecasting.` +
+          (signal.brightData?.sources?.length
+            ? ` Only ${signal.brightData.sources.length} source(s) returned relevant results.`
+            : '')
         : 'Weak or conflicting signals across data sources. ' +
           'Either market is highly efficient (no clear edge) or AI models lack sufficient ' +
           'training data for this specific scenario. Low-conviction signals are candid about uncertainty.';

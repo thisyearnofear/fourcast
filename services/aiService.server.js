@@ -13,6 +13,7 @@ import { arbitrageService } from "./arbitrageService.js";
 import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution } from "./db.js";
 import { synthService } from "./synthService.js";
 import { brightDataService } from "./brightDataService.js";
+import { MarketIntelligenceAnalyzer } from "./analysis/MarketIntelligenceAnalyzer.js";
 import { analyzePathDependentMarket, detectPathDependentMarket } from "./pathDependentService.js";
 import { calculateKellySizing } from "../utils/kellySizing.js";
 
@@ -1104,6 +1105,7 @@ export async function* runAgentLoop(config = {}) {
   });
 
   const hasSynthData = synthService.isAvailable();
+  const intelligenceAnalyzer = new MarketIntelligenceAnalyzer();
   const forecasts = [];
 
   // Pre-filter: Separate Synth-eligible from non-eligible markets for efficiency
@@ -1165,6 +1167,8 @@ export async function* runAgentLoop(config = {}) {
     let keyFactors = [];
     let confidence = "LOW";
     let forecastSource = "llm";
+    let brightDataSources = [];
+    let brightDataDeepResearch = null;
 
     // Try SynthData first for supported price/crypto assets (only if pre-filtered as eligible)
     const detectedAsset = isSynthEligible ? synthService.detectAsset(market.title, market.description) : null;
@@ -1354,102 +1358,96 @@ Output ONLY valid JSON:
           keyFactors = [...keyFactors, ...parsed.key_factors];
         }
       } else {
-        // Fallback: intelligent forecast using Bright Data SERP API
+        // Fallback: intelligent forecast using Bright Data (SERP API + Scraping Browser + Web Unlocker)
         yield {
           step: "forecast",
           status: "running",
           market: { title: market.title, marketID: market.marketID },
-          message: `Deep scanning with Bright Data SERP API...`,
+          message: `Deep scanning with Bright Data intelligence...`,
           index: i,
           total: orderedMarkets.length,
         };
 
         let intelligenceContext = "";
         let deepResearchData = "";
-        let brightDataSources = [];
-        let brightDataDeepResearch = null;
         try {
-          if (brightDataService.isAvailable()) {
-            const searchQuery = `${market.title} status resolution news evidence`;
-            const searchData = await brightDataService.search(searchQuery);
-            // Bright Data SERP API returns { organic: [...] } with fields:
-            // link, source, title, description, rank
-            const results = searchData.organic || [];
+          // Use MarketIntelligenceAnalyzer to gather intelligence via all Bright Data products
+          const enriched = await intelligenceAnalyzer.enrichContext({
+            title: market.title,
+            description: market.description,
+            marketID: market.marketID,
+            currentOdds: market.currentOdds,
+          });
 
-            if (searchData.error) {
-              yield {
-                step: "forecast",
-                status: "running",
-                market: { title: market.title, marketID: market.marketID },
-                message: `Bright Data SERP error (${searchData.error.status}), using LLM knowledge...`,
-                index: i,
-                total: orderedMarkets.length,
-                data: { brightDataError: searchData.error.message }
-              };
-            }
+          const intel = enriched.intelligenceData;
 
-            intelligenceContext = results.slice(0, 5).map((r, idx) =>
-              `[Source ${idx + 1}]: ${r.title}\nURL: ${r.link}\nSnippet: ${r.description}`
+          if (intel?.error) {
+            yield {
+              step: "forecast",
+              status: "running",
+              market: { title: market.title, marketID: market.marketID },
+              message: `Bright Data SERP error (${intel.error.status}), using LLM knowledge...`,
+              index: i,
+              total: orderedMarkets.length,
+              data: { brightDataError: intel.error.message }
+            };
+          }
+
+          if (intel && intel.results.length > 0) {
+            intelligenceContext = intel.results.map((r, idx) =>
+              `[Source ${idx + 1}]: ${r.title}\nURL: ${r.link}\nSnippet: ${r.snippet}`
             ).join('\n\n');
 
-            brightDataSources = results.slice(0, 5).map(r => ({
+            brightDataSources = intel.results.map(r => ({
               title: r.title,
               url: r.link,
-              snippet: r.description,
+              snippet: r.snippet,
               source: r.source || 'Bright Data SERP',
               rank: r.rank,
             }));
 
-            if (intelligenceContext) {
-              forecastSource = "brightdata+llm";
+            forecastSource = intel.source || 'brightdata+llm';
 
-              // DEEP RESEARCH: Scrape the top result if Scraping Browser is configured
-              if (results.length > 0 && brightDataService.sbrEnabled) {
-                const topUrl = results[0].link;
-                yield {
-                  step: "forecast",
-                  status: "running",
-                  market: { title: market.title, marketID: market.marketID },
-                  message: `Deep research via Scraping Browser: ${results[0].title}...`,
-                  index: i,
-                  total: orderedMarkets.length,
-                };
+            if (intel.deepResearch?.text) {
+              deepResearchData = intel.deepResearch.text;
+              brightDataDeepResearch = {
+                title: intel.deepResearch.title,
+                url: intel.deepResearch.url,
+                charCount: intel.deepResearch.charCount,
+                sentenceCount: intel.deepResearch.sentenceCount,
+                product: intel.productsUsed?.scrapingBrowser ? 'Scraping Browser' : 'Web Unlocker',
+              };
 
-                const scraped = await brightDataService.scrapeWithBrowser(topUrl);
-                if (scraped && scraped.text) {
-                  forecastSource = "brightdata+research";
-                  deepResearchData = scraped.text;
-                  brightDataDeepResearch = {
-                    title: scraped.title || results[0].title,
-                    url: scraped.url,
-                    charCount: scraped.charCount,
-                    sentenceCount: scraped.sentenceCount,
-                  };
-                  yield {
-                    step: "forecast",
-                    status: "running",
-                    market: { title: market.title, marketID: market.marketID },
-                    message: `Extracted ${scraped.sentenceCount} evidence sentences (${scraped.charCount.toLocaleString()} chars). Synthesizing...`,
-                    index: i,
-                    total: orderedMarkets.length,
-                  };
-                }
-              }
-
-              // Emit confirmed sources AFTER research completes (not during)
               yield {
                 step: "forecast",
                 status: "running",
                 market: { title: market.title, marketID: market.marketID },
-                message: `${forecastSource === "brightdata+research" ? "Deep research complete" : "Gathered ${results.length} sources"}. Synthesizing with AI...`,
+                message: `Deep research via ${brightDataDeepResearch.product}: ${intel.deepResearch.sentenceCount ? intel.deepResearch.sentenceCount + ' evidence sentences' : intel.deepResearch.charCount.toLocaleString() + ' chars'}. Synthesizing...`,
                 index: i,
                 total: orderedMarkets.length,
-                data: {
-                  sources: brightDataSources,
-                  ...(brightDataDeepResearch ? { deepResearch: brightDataDeepResearch } : {}),
-                },
               };
             }
+
+            // Emit confirmed sources AFTER research completes
+            const productSummary = [
+              intel.productsUsed?.serp ? 'SERP' : null,
+              intel.productsUsed?.scrapingBrowser ? 'Scraping Browser' : null,
+              intel.productsUsed?.webUnlocker ? 'Web Unlocker' : null,
+            ].filter(Boolean).join(' + ');
+
+            yield {
+              step: "forecast",
+              status: "running",
+              market: { title: market.title, marketID: market.marketID },
+              message: `Gathered ${intel.results.length} sources via ${productSummary}. Synthesizing with AI...`,
+              index: i,
+              total: orderedMarkets.length,
+              data: {
+                sources: brightDataSources,
+                ...(brightDataDeepResearch ? { deepResearch: brightDataDeepResearch } : {}),
+                productsUsed: intel.productsUsed,
+              },
+            };
           }
         } catch (searchErr) {
           console.warn("Bright Data research failed, falling back to basic LLM search:", searchErr.message);
@@ -1470,8 +1468,7 @@ Output ONLY valid JSON:
               role: "system",
               content: `You are a Superforecaster tasked with estimating probabilities for prediction market outcomes.
 
-${intelligenceContext ? "You have been provided with real-time search intelligence gathered via Bright Data SERP API and Scraping Browser." : "Use your internal knowledge and logic to estimate the probability."}
-${deepResearchData ? "Additionally, deep research was performed via Bright Data Scraping Browser on the primary source to extract detailed evidence." : ""}
+${intelligenceContext ? `You have been provided with real-time search intelligence gathered via Bright Data SERP API${deepResearchData ? ` and deep research via ${brightDataDeepResearch?.product || 'Scraping Browser'}` : ''}.` : "Use your internal knowledge and logic to estimate the probability."}
 
 Process:
 1. Analyze provided evidence (if any)
@@ -1489,7 +1486,7 @@ Description: ${market.description || "N/A"}
 
 ${intelligenceContext ? `BRIGHT DATA SEARCH INTELLIGENCE:\n${intelligenceContext}` : ""}
 
-${deepResearchData ? `DEEP RESEARCH EVIDENCE (Extracted from top source via Scraping Browser):\n${deepResearchData}` : ""}
+${deepResearchData ? `DEEP RESEARCH EVIDENCE (Extracted from top source via ${brightDataDeepResearch?.product || 'Bright Data'}):\n${deepResearchData}` : ""}
 
 Output ONLY valid JSON:
 { "probability": 0.XX, "reasoning": "...", "key_factors": ["..."], "confidence": "HIGH|MEDIUM|LOW" }`,

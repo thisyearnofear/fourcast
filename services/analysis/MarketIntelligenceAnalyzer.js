@@ -57,6 +57,7 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
       }));
 
       let deepResearch = null;
+      let deepResearchProduct = null;
 
       // Attempt deep research on the top result if Scraping Browser is available
       if (topResults.length > 0 && brightDataService.sbrEnabled) {
@@ -72,6 +73,7 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
             sentenceCount: scraped.sentenceCount,
             text: scraped.text,
           };
+          deepResearchProduct = 'scrapingBrowser';
         }
       }
 
@@ -89,6 +91,7 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
             sentenceCount: null,
             text: unlocked.content.substring(0, 6000),
           };
+          deepResearchProduct = 'webUnlocker';
         }
       }
 
@@ -99,12 +102,12 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
           results: topResults,
           resultCount: results.length,
           deepResearch,
-          source: deepResearch ? 'brightdata+research' : 'brightdata+llm',
+          source: deepResearch ? 'brightdata+research' : (topResults.length > 0 ? 'brightdata+llm' : 'llm'),
           error: searchData.error || null,
           productsUsed: {
-            serp: true,
-            scrapingBrowser: !!deepResearch && brightDataService.sbrEnabled,
-            webUnlocker: !!deepResearch && !brightDataService.sbrEnabled && brightDataService.unlockerEnabled,
+            serp: topResults.length > 0,
+            scrapingBrowser: deepResearchProduct === 'scrapingBrowser',
+            webUnlocker: deepResearchProduct === 'webUnlocker',
           },
         }
       };

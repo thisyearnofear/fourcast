@@ -28,6 +28,9 @@ export function AutopilotDashboard({ isNight = false }) {
   const [brightDataActive, setBrightDataActive] = useState(false);
   const [brightDataProducts, setBrightDataProducts] = useState({ serp: false, scrapingBrowser: false, webUnlocker: false });
 
+  // Bright Data connection status (fetched once on mount)
+  const [bdStatus, setBdStatus] = useState(null);
+
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
   const mutedBg = isNight ? 'bg-white/5' : 'bg-black/5';
@@ -54,6 +57,14 @@ export function AutopilotDashboard({ isNight = false }) {
   useEffect(() => {
     fetchExecutions();
   }, [fetchExecutions]);
+
+  // Fetch Bright Data connection status on mount
+  useEffect(() => {
+    fetch('/api/brightdata/status')
+      .then(res => res.json())
+      .then(data => { if (data.success) setBdStatus(data); })
+      .catch(() => {}); // silent fail, status is optional
+  }, []);
 
   // Auto-scroll live feed
   useEffect(() => {
@@ -120,10 +131,21 @@ export function AutopilotDashboard({ isNight = false }) {
               setBrightDataProducts(prev => ({ ...prev, serp: true }));
             }
             if (update.data?.deepResearch) {
-              setBrightDataProducts(prev => ({ ...prev, scrapingBrowser: true }));
+              if (update.data.deepResearch.product === 'Web Unlocker') {
+                setBrightDataProducts(prev => ({ ...prev, webUnlocker: true }));
+              } else {
+                setBrightDataProducts(prev => ({ ...prev, scrapingBrowser: true }));
+              }
+            }
+            if (update.data?.productsUsed) {
+              setBrightDataProducts(prev => ({
+                serp: prev.serp || update.data.productsUsed.serp,
+                scrapingBrowser: prev.scrapingBrowser || update.data.productsUsed.scrapingBrowser,
+                webUnlocker: prev.webUnlocker || update.data.productsUsed.webUnlocker,
+              }));
             }
             if (update.data?.brightDataError) {
-              setBrightDataActive(true); // Shows we tried, even if it failed
+              setBrightDataActive(true);
             }
 
             // Auto-refresh execution history when agent completes
@@ -209,6 +231,21 @@ export function AutopilotDashboard({ isNight = false }) {
               </span>
             )}
           </div>
+          {/* Bright Data connection status */}
+          {bdStatus && (
+            <div className={`flex items-center gap-3 mt-1.5 text-[10px] ${subtleText}`}>
+              <span className="font-medium uppercase tracking-wider">Bright Data:</span>
+              <span className={bdStatus.products?.serp ? 'text-emerald-500' : 'text-red-400'}>
+                {bdStatus.products?.serp ? 'SERP connected' : 'SERP not configured'}
+              </span>
+              <span className={bdStatus.products?.scrapingBrowser ? 'text-emerald-500' : 'text-slate-400'}>
+                {bdStatus.products?.scrapingBrowser ? 'Scraping Browser connected' : 'Scraping Browser off'}
+              </span>
+              <span className={bdStatus.products?.webUnlocker ? 'text-emerald-500' : 'text-slate-400'}>
+                {bdStatus.products?.webUnlocker ? 'Web Unlocker connected' : 'Web Unlocker off'}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {/* Config Toggle */}
@@ -564,6 +601,21 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
                 ({data.deepResearch.charCount.toLocaleString()} chars total)
               </span>
             )}
+            {data.deepResearch.product && (
+              <span className={`ml-1 ${isNight ? 'text-cyan-300/40' : 'text-cyan-600/40'}`}>
+                via {data.deepResearch.product}
+              </span>
+            )}
+          </div>
+        )}
+        {/* Research Transparency: show products used */}
+        {data?.productsUsed && data?.sources && (
+          <div className={`mt-1.5 flex items-center gap-2 text-[8px] ${isNight ? 'text-white/30' : 'text-black/30'}`}>
+            <span>Products:</span>
+            {data.productsUsed.serp && <span className="px-1 rounded bg-emerald-500/10 text-emerald-500">SERP</span>}
+            {data.productsUsed.scrapingBrowser && <span className="px-1 rounded bg-emerald-500/10 text-emerald-500">Scraping Browser</span>}
+            {data.productsUsed.webUnlocker && <span className="px-1 rounded bg-emerald-500/10 text-emerald-500">Web Unlocker</span>}
+            <span>{data.sources.length} sources</span>
           </div>
         )}
       </div>
