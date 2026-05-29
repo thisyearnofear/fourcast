@@ -475,6 +475,29 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
             {dataSummary}
           </div>
         )}
+        {data?.sources && (
+          <div className="mt-2 space-y-1">
+            {data.sources.map((src, idx) => (
+              <a 
+                key={idx}
+                href={src.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block text-[9px] truncate hover:underline ${isNight ? 'text-cyan-300/60' : 'text-cyan-700/60'}`}
+              >
+                🔗 {src.title}
+              </a>
+            ))}
+          </div>
+        )}
+        {data?.deepResearch && (
+          <div className={`mt-2 p-1.5 rounded border text-[9px] ${
+            isNight ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-200' : 'bg-cyan-50 border-cyan-100 text-cyan-800'
+          }`}>
+            <span className="font-bold">DEEP RESEARCH:</span> Scraped {data.deepResearch.length.toLocaleString()} chars from 
+            <span className="ml-1 opacity-70 italic">{data.deepResearch.title}</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -221,11 +221,27 @@ function buildSources(signal) {
   const sources = [];
 
   // AI reasoning (always present for AI-generated predictions)
-  if (signal.source === 'synthdata+llm' || signal.source === 'llm') {
+  if (signal.source === 'synthdata+llm' || signal.source === 'llm' || signal.source?.startsWith('brightdata')) {
+    let icon = '🧠';
+    let label = 'Venice AI Multi-Agent Mesh';
+    let subtype = 'Llama 3.3 70B';
+
+    if (signal.source === 'brightdata+llm') {
+      icon = '🔍';
+      label = 'Bright Data Intelligence';
+      subtype = 'SERP Search-Enhanced';
+    } else if (signal.source === 'brightdata+research') {
+      icon = '🔬';
+      label = 'Bright Data Deep Research';
+      subtype = 'Scraping Browser-Verified';
+    } else if (signal.source === 'synthdata+llm') {
+      subtype = 'Llama 3.3 70B + SynthData';
+    }
+
     sources.push({
-      icon: '🧠',
-      label: 'Venice AI Multi-Agent Mesh',
-      subtype: signal.source === 'synthdata+llm' ? 'Llama 3.3 70B + SynthData' : 'Llama 3.3 70B',
+      icon,
+      label,
+      subtype,
       timestamp: signal.timestamp || signal.created_at,
     });
   }
@@ -313,21 +329,30 @@ function getConfidenceMethod(signal) {
     return 'Confidence derived from ensemble signal strength across multiple model outputs.';
   }
 
+  const isBrightData = signal.source?.startsWith('brightdata');
+
   switch (signal.confidence) {
     case 'HIGH':
-      return 'Strong cross-model agreement between Venice LLM reasoning and SynthData ML ensemble. ' +
-        'Edge exceeds minimum threshold with high odds-efficiency. ' +
-        (signal.source === 'synthdata+llm'
-          ? 'SynthData ML percentiles reinforce the directional conviction.'
-          : '');
+      return isBrightData 
+        ? 'High conviction derived from cross-referencing multiple real-time search results via Bright Data. ' +
+          (signal.source === 'brightdata+research' ? 'Deep research via Scraping Browser confirmed the primary evidence source.' : '')
+        : 'Strong cross-model agreement between Venice LLM reasoning and SynthData ML ensemble. ' +
+          'Edge exceeds minimum threshold with high odds-efficiency. ' +
+          (signal.source === 'synthdata+llm'
+            ? 'SynthData ML percentiles reinforce the directional conviction.'
+            : '');
     case 'MEDIUM':
-      return 'Moderate alignment between AI reasoning and market data. ' +
-        'Venice LLM identifies a directional bias but SynthData ML shows mixed signals. ' +
-        'Odds efficiency suggests partial mispricing.';
+      return isBrightData
+        ? 'Moderate evidence found via Bright Data. Multiple sources suggest a directional bias, but some counter-signals remain.'
+        : 'Moderate alignment between AI reasoning and market data. ' +
+          'Venice LLM identifies a directional bias but SynthData ML shows mixed signals. ' +
+          'Odds efficiency suggests partial mispricing.';
     case 'LOW':
-      return 'Weak or conflicting signals across data sources. ' +
-        'Either market is highly efficient (no clear edge) or AI models lack sufficient ' +
-        'training data for this specific scenario. Low-conviction signals are candid about uncertainty.';
+      return isBrightData
+        ? 'Scant evidence found via real-time search. Market appears efficient or information is too fragmented for a high-conviction forecast.'
+        : 'Weak or conflicting signals across data sources. ' +
+          'Either market is highly efficient (no clear edge) or AI models lack sufficient ' +
+          'training data for this specific scenario. Low-conviction signals are candid about uncertainty.';
     default:
       return 'Confidence derived from ensemble signal strength across multiple model outputs.';
   }

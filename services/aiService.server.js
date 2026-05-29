@@ -1389,6 +1389,14 @@ Output ONLY valid JSON:
                   message: `Performing deep research on top source: ${results[0].title}...`,
                   index: i,
                   total: orderedMarkets.length,
+                  data: {
+                    sources: results.slice(0, 5).map(r => ({
+                      title: r.title,
+                      url: r.link,
+                      snippet: r.snippet,
+                      source: 'Bright Data SERP'
+                    }))
+                  }
                 };
                 
                 deepResearchData = await brightDataService.scrapeWithBrowser(topUrl);
@@ -1401,6 +1409,13 @@ Output ONLY valid JSON:
                     message: `Extracted ${deepResearchData.length} chars of evidence. Finalizing forecast...`,
                     index: i,
                     total: orderedMarkets.length,
+                    data: {
+                      deepResearch: {
+                        title: results[0].title,
+                        url: results[0].link,
+                        length: deepResearchData.length
+                      }
+                    }
                   };
                 }
               } else {
@@ -1411,6 +1426,14 @@ Output ONLY valid JSON:
                   message: `Gathered ${results.length} sources. Synthesizing evidence...`,
                   index: i,
                   total: orderedMarkets.length,
+                  data: {
+                    sources: results.slice(0, 5).map(r => ({
+                      title: r.title,
+                      url: r.link,
+                      snippet: r.snippet,
+                      source: 'Bright Data SERP'
+                    }))
+                  }
                 };
               }
             }
