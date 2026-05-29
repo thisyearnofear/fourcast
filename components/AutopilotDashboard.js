@@ -175,9 +175,16 @@ export function AutopilotDashboard({ isNight = false }) {
           <h2 className={`text-xl font-medium ${textColor}`}>
             🤖 {BRAND.labs.autopilot.title}
           </h2>
-          <p className={`text-xs ${subtleText} mt-1`}>
-            {BRAND.labs.autopilot.description}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className={`text-xs ${subtleText}`}>
+              {BRAND.labs.autopilot.description}
+            </p>
+            <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
+              isNight ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-cyan-100 text-cyan-700 border border-cyan-200'
+            }`}>
+              Powered by Bright Data
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {/* Config Toggle */}

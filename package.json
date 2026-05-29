@@ -49,6 +49,7 @@
     "next": "16.2.6",
     "openai": "^6.9.0",
     "postprocessing": "^6.37.7",
+    "puppeteer-core": "^24.43.1",
     "react": "^19",
     "react-dom": "^19",
     "recharts": "^3.8.1",

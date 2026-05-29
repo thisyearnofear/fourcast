@@ -12,6 +12,7 @@ import { VenueExtractor } from "./venueExtractor.js";
 import { arbitrageService } from "./arbitrageService.js";
 import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution } from "./db.js";
 import { synthService } from "./synthService.js";
+import { brightDataService } from "./brightDataService.js";
 import { analyzePathDependentMarket, detectPathDependentMarket } from "./pathDependentService.js";
 import { calculateKellySizing } from "../utils/kellySizing.js";
 
@@ -1353,15 +1354,70 @@ Output ONLY valid JSON:
           keyFactors = [...keyFactors, ...parsed.key_factors];
         }
       } else {
-        // Fallback: pure LLM forecast (non-price markets or SynthData unavailable)
+        // Fallback: intelligent forecast using Bright Data SERP API
         yield {
           step: "forecast",
           status: "running",
           market: { title: market.title, marketID: market.marketID },
-          message: `Generating AI forecast with web search...`,
+          message: `Deep scanning with Bright Data SERP API...`,
           index: i,
           total: orderedMarkets.length,
         };
+
+        let intelligenceContext = "";
+        let deepResearchData = "";
+        try {
+          if (brightDataService.isAvailable()) {
+            const searchQuery = `${market.title} status resolution news evidence`;
+            const searchData = await brightDataService.search(searchQuery);
+            const results = searchData.organic_results || [];
+            
+            intelligenceContext = results.slice(0, 5).map((r, idx) => 
+              `[Source ${idx + 1}]: ${r.title}\nURL: ${r.link}\nSnippet: ${r.snippet}`
+            ).join('\n\n');
+            
+            if (intelligenceContext) {
+              forecastSource = "brightdata+llm";
+              
+              // DEEP RESEARCH: Scrape the top result if Scraping Browser is configured
+              if (results.length > 0 && brightDataService.sbrEnabled) {
+                const topUrl = results[0].link;
+                yield {
+                  step: "forecast",
+                  status: "running",
+                  market: { title: market.title, marketID: market.marketID },
+                  message: `Performing deep research on top source: ${results[0].title}...`,
+                  index: i,
+                  total: orderedMarkets.length,
+                };
+                
+                deepResearchData = await brightDataService.scrapeWithBrowser(topUrl);
+                if (deepResearchData) {
+                  forecastSource = "brightdata+research";
+                  yield {
+                    step: "forecast",
+                    status: "running",
+                    market: { title: market.title, marketID: market.marketID },
+                    message: `Extracted ${deepResearchData.length} chars of evidence. Finalizing forecast...`,
+                    index: i,
+                    total: orderedMarkets.length,
+                  };
+                }
+              } else {
+                yield {
+                  step: "forecast",
+                  status: "running",
+                  market: { title: market.title, marketID: market.marketID },
+                  message: `Gathered ${results.length} sources. Synthesizing evidence...`,
+                  index: i,
+                  total: orderedMarkets.length,
+                };
+              }
+            }
+          }
+        } catch (searchErr) {
+          console.warn("Bright Data research failed, falling back to basic LLM search:", searchErr.message);
+        }
 
         const response = await client.chat.completions.create({
           model: "llama-3.3-70b",
@@ -1370,12 +1426,14 @@ Output ONLY valid JSON:
               role: "system",
               content: `You are a Superforecaster tasked with estimating probabilities for prediction market outcomes.
 
-Use this systematic process:
-1. Break down the question into sub-components
+${intelligenceContext ? "You have been provided with real-time search intelligence from Bright Data." : "Use your internal knowledge and logic to estimate the probability."}
+${deepResearchData ? "Additionally, deep research has been performed on the primary source to extract detailed evidence." : ""}
+
+Process:
+1. Analyze provided evidence (if any)
 2. Consider base rates and reference classes
-3. Identify key factors that could shift the probability
-4. Think about what information would change your mind
-5. Synthesize into a final probability estimate
+3. Identify asymmetric information or market mispricing
+4. Synthesize into a final probability estimate
 
 You MUST respond with ONLY valid JSON, no other text.`,
             },
@@ -1385,13 +1443,17 @@ You MUST respond with ONLY valid JSON, no other text.`,
 Current market odds: YES ${yesPrice}, NO ${noPrice}
 Description: ${market.description || "N/A"}
 
+${intelligenceContext ? `BRIGHT DATA SEARCH INTELLIGENCE:\n${intelligenceContext}` : ""}
+
+${deepResearchData ? `DEEP RESEARCH EVIDENCE (Extracted from top source):\n${deepResearchData}` : ""}
+
 Output ONLY valid JSON:
 { "probability": 0.XX, "reasoning": "...", "key_factors": ["..."], "confidence": "HIGH|MEDIUM|LOW" }`,
             },
           ],
           temperature: 0.3,
-          max_tokens: 1000,
-          venice_parameters: { enable_web_search: "auto" },
+          max_tokens: 1500,
+          venice_parameters: intelligenceContext ? {} : { enable_web_search: "auto" },
         });
 
         let content = response.choices[0].message.content.trim();
