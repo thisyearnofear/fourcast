@@ -1366,19 +1366,43 @@ Output ONLY valid JSON:
 
         let intelligenceContext = "";
         let deepResearchData = "";
+        let brightDataSources = [];
+        let brightDataDeepResearch = null;
         try {
           if (brightDataService.isAvailable()) {
             const searchQuery = `${market.title} status resolution news evidence`;
             const searchData = await brightDataService.search(searchQuery);
-            const results = searchData.organic_results || [];
-            
-            intelligenceContext = results.slice(0, 5).map((r, idx) => 
-              `[Source ${idx + 1}]: ${r.title}\nURL: ${r.link}\nSnippet: ${r.snippet}`
+            // Bright Data SERP API returns { organic: [...] } with fields:
+            // link, source, title, description, rank
+            const results = searchData.organic || [];
+
+            if (searchData.error) {
+              yield {
+                step: "forecast",
+                status: "running",
+                market: { title: market.title, marketID: market.marketID },
+                message: `Bright Data SERP error (${searchData.error.status}), using LLM knowledge...`,
+                index: i,
+                total: orderedMarkets.length,
+                data: { brightDataError: searchData.error.message }
+              };
+            }
+
+            intelligenceContext = results.slice(0, 5).map((r, idx) =>
+              `[Source ${idx + 1}]: ${r.title}\nURL: ${r.link}\nSnippet: ${r.description}`
             ).join('\n\n');
-            
+
+            brightDataSources = results.slice(0, 5).map(r => ({
+              title: r.title,
+              url: r.link,
+              snippet: r.description,
+              source: r.source || 'Bright Data SERP',
+              rank: r.rank,
+            }));
+
             if (intelligenceContext) {
               forecastSource = "brightdata+llm";
-              
+
               // DEEP RESEARCH: Scrape the top result if Scraping Browser is configured
               if (results.length > 0 && brightDataService.sbrEnabled) {
                 const topUrl = results[0].link;
@@ -1386,60 +1410,57 @@ Output ONLY valid JSON:
                   step: "forecast",
                   status: "running",
                   market: { title: market.title, marketID: market.marketID },
-                  message: `Performing deep research on top source: ${results[0].title}...`,
+                  message: `Deep research via Scraping Browser: ${results[0].title}...`,
                   index: i,
                   total: orderedMarkets.length,
-                  data: {
-                    sources: results.slice(0, 5).map(r => ({
-                      title: r.title,
-                      url: r.link,
-                      snippet: r.snippet,
-                      source: 'Bright Data SERP'
-                    }))
-                  }
                 };
-                
-                deepResearchData = await brightDataService.scrapeWithBrowser(topUrl);
-                if (deepResearchData) {
+
+                const scraped = await brightDataService.scrapeWithBrowser(topUrl);
+                if (scraped && scraped.text) {
                   forecastSource = "brightdata+research";
+                  deepResearchData = scraped.text;
+                  brightDataDeepResearch = {
+                    title: scraped.title || results[0].title,
+                    url: scraped.url,
+                    charCount: scraped.charCount,
+                    sentenceCount: scraped.sentenceCount,
+                  };
                   yield {
                     step: "forecast",
                     status: "running",
                     market: { title: market.title, marketID: market.marketID },
-                    message: `Extracted ${deepResearchData.length} chars of evidence. Finalizing forecast...`,
+                    message: `Extracted ${scraped.sentenceCount} evidence sentences (${scraped.charCount.toLocaleString()} chars). Synthesizing...`,
                     index: i,
                     total: orderedMarkets.length,
-                    data: {
-                      deepResearch: {
-                        title: results[0].title,
-                        url: results[0].link,
-                        length: deepResearchData.length
-                      }
-                    }
                   };
                 }
-              } else {
-                yield {
-                  step: "forecast",
-                  status: "running",
-                  market: { title: market.title, marketID: market.marketID },
-                  message: `Gathered ${results.length} sources. Synthesizing evidence...`,
-                  index: i,
-                  total: orderedMarkets.length,
-                  data: {
-                    sources: results.slice(0, 5).map(r => ({
-                      title: r.title,
-                      url: r.link,
-                      snippet: r.snippet,
-                      source: 'Bright Data SERP'
-                    }))
-                  }
-                };
               }
+
+              // Emit confirmed sources AFTER research completes (not during)
+              yield {
+                step: "forecast",
+                status: "running",
+                market: { title: market.title, marketID: market.marketID },
+                message: `${forecastSource === "brightdata+research" ? "Deep research complete" : "Gathered ${results.length} sources"}. Synthesizing with AI...`,
+                index: i,
+                total: orderedMarkets.length,
+                data: {
+                  sources: brightDataSources,
+                  ...(brightDataDeepResearch ? { deepResearch: brightDataDeepResearch } : {}),
+                },
+              };
             }
           }
         } catch (searchErr) {
           console.warn("Bright Data research failed, falling back to basic LLM search:", searchErr.message);
+          yield {
+            step: "forecast",
+            status: "running",
+            market: { title: market.title, marketID: market.marketID },
+            message: `Bright Data error, using LLM knowledge...`,
+            index: i,
+            total: orderedMarkets.length,
+          };
         }
 
         const response = await client.chat.completions.create({
@@ -1449,8 +1470,8 @@ Output ONLY valid JSON:
               role: "system",
               content: `You are a Superforecaster tasked with estimating probabilities for prediction market outcomes.
 
-${intelligenceContext ? "You have been provided with real-time search intelligence from Bright Data." : "Use your internal knowledge and logic to estimate the probability."}
-${deepResearchData ? "Additionally, deep research has been performed on the primary source to extract detailed evidence." : ""}
+${intelligenceContext ? "You have been provided with real-time search intelligence gathered via Bright Data SERP API and Scraping Browser." : "Use your internal knowledge and logic to estimate the probability."}
+${deepResearchData ? "Additionally, deep research was performed via Bright Data Scraping Browser on the primary source to extract detailed evidence." : ""}
 
 Process:
 1. Analyze provided evidence (if any)
@@ -1468,7 +1489,7 @@ Description: ${market.description || "N/A"}
 
 ${intelligenceContext ? `BRIGHT DATA SEARCH INTELLIGENCE:\n${intelligenceContext}` : ""}
 
-${deepResearchData ? `DEEP RESEARCH EVIDENCE (Extracted from top source):\n${deepResearchData}` : ""}
+${deepResearchData ? `DEEP RESEARCH EVIDENCE (Extracted from top source via Scraping Browser):\n${deepResearchData}` : ""}
 
 Output ONLY valid JSON:
 { "probability": 0.XX, "reasoning": "...", "key_factors": ["..."], "confidence": "HIGH|MEDIUM|LOW" }`,
@@ -1517,6 +1538,15 @@ Output ONLY valid JSON:
         percentiles: synthForecast.percentiles,
         polymarketEdge: synthForecast.polymarketEdge,
       } : null,
+      // Bright Data provenance: sources and deep research details
+      brightData: brightDataSources.length > 0 ? {
+        sources: brightDataSources,
+        deepResearch: brightDataDeepResearch,
+        productsUsed: {
+          serp: true,
+          scrapingBrowser: forecastSource === 'brightdata+research',
+        },
+      } : null,
     };
     forecasts.push(forecast);
 
@@ -1532,6 +1562,9 @@ Output ONLY valid JSON:
       confidence,
       reasoning,
       keyFactors,
+      source: forecastSource,
+      brightDataSources: brightDataSources.length > 0 ? JSON.stringify(brightDataSources) : null,
+      brightDataDeepResearch: brightDataDeepResearch ? JSON.stringify(brightDataDeepResearch) : null,
       timestamp: Math.floor(loopTimestamp / 1000),
     });
 

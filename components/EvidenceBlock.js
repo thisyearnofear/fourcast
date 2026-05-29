@@ -208,6 +208,66 @@ export default function EvidenceBlock({
             </div>
           )}
 
+          {/* Bright Data Sources: actual search results used in forecasting */}
+          {signal.brightData?.sources?.length > 0 && (
+            <div>
+              <p className={`text-[10px] ${labelColor} uppercase tracking-wider mb-2 font-medium`}>
+                Bright Data Sources Referenced
+              </p>
+              <div className="space-y-1.5">
+                {signal.brightData.sources.map((src, idx) => (
+                  <a
+                    key={idx}
+                    href={src.url || src.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`block text-xs px-3 py-2 rounded-lg transition-opacity hover:opacity-100 ${
+                      isNight ? 'bg-white/[0.04] opacity-80' : 'bg-black/[0.04] opacity-90'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`flex-shrink-0 px-1 rounded text-[8px] font-mono ${
+                        isNight ? 'bg-cyan-500/10 text-cyan-400/60' : 'bg-cyan-100 text-cyan-600/60'
+                      }`}>
+                        {src.rank || idx + 1}
+                      </span>
+                      <span className={`${textColor} font-medium truncate`}>{src.title}</span>
+                      {src.source && (
+                        <span className={`text-[9px] flex-shrink-0 ${isNight ? 'text-white/30' : 'text-black/30'}`}>
+                          {src.source}
+                        </span>
+                      )}
+                    </div>
+                    {src.snippet && (
+                      <p className={`text-[10px] mt-1 pl-5 ${isNight ? 'text-white/40' : 'text-black/40'} line-clamp-2`}>
+                        {src.snippet}
+                      </p>
+                    )}
+                  </a>
+                ))}
+              </div>
+              {signal.brightData.deepResearch && (
+                <div className={`mt-2 px-3 py-2 rounded-lg text-[10px] ${
+                  isNight ? 'bg-cyan-500/5 border border-cyan-500/10 text-cyan-300/70' : 'bg-cyan-50 border border-cyan-200 text-cyan-700'
+                }`}>
+                  <span className="font-medium">Deep Research:</span>
+                  {' '}Scraped {signal.brightData.deepResearch.charCount?.toLocaleString()} chars
+                  {signal.brightData.deepResearch.sentenceCount
+                    ? ` (${signal.brightData.deepResearch.sentenceCount} evidence sentences)`
+                    : ''} via Scraping Browser from{' '}
+                  <a
+                    href={signal.brightData.deepResearch.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    {signal.brightData.deepResearch.title || 'source'}
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
 
         </div>
       )}

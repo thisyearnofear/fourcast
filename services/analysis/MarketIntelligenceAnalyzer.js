@@ -5,15 +5,23 @@ import OpenAI from 'openai';
 /**
  * MarketIntelligenceAnalyzer - Uses Bright Data to gather deep "ground truth"
  * for high-conviction forecasting.
+ *
+ * Integration points:
+ *  - SERP API: real-time search intelligence with structured organic results
+ *  - Scraping Browser: JS-rendered deep research on top sources
+ *  - Web Unlocker: fallback for pages that block standard scraping
+ *
+ * Used by aiService.server.js for non-SynthData markets that benefit from
+ * web intelligence (politics, current events, non-asset markets).
  */
 export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
   constructor() {
     super({
       name: 'MarketIntelligenceAnalyzer',
-      version: '1.0.0',
+      version: '2.0.0',
       model: 'llama-3.3-70b'
     });
-    
+
     this.openai = new OpenAI({
       apiKey: process.env.VENICE_API_KEY,
       baseURL: "https://api.venice.ai/api/v1",
@@ -21,11 +29,13 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
   }
 
   /**
-   * Enrich context with Bright Data search results and scraping
+   * Enrich context with Bright Data search results and optional deep research.
+   * Uses SERP API for structured search, Scraping Browser for JS-rendered pages,
+   * and Web Unlocker as fallback for bot-protected sites.
    */
   async enrichContext(context) {
     if (!brightDataService.isAvailable()) {
-      return context;
+      return { ...context, intelligenceData: null };
     }
 
     const query = `${context.title} ${context.description || ''} status resolution data`;
@@ -33,43 +43,95 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
 
     try {
       const searchData = await brightDataService.search(query);
-      
-      // Extract organic results
-      const organicResults = searchData.organic_results || [];
-      const topResults = organicResults.slice(0, 5).map(r => ({
+
+      // Bright Data SERP API returns { organic: [...] } with:
+      // link, source, display_link, title, description, rank
+      const results = searchData.organic || [];
+
+      const topResults = results.slice(0, 5).map(r => ({
         title: r.title,
         link: r.link,
-        snippet: r.snippet
+        snippet: r.description, // Bright Data uses "description", not "snippet"
+        source: r.source,
+        rank: r.rank,
       }));
 
-      // Enhancement: If we have a very relevant looking link, we could scrape it
-      // For this hackathon demo, we'll focus on the search snippets first
-      
+      let deepResearch = null;
+
+      // Attempt deep research on the top result if Scraping Browser is available
+      if (topResults.length > 0 && brightDataService.sbrEnabled) {
+        const topUrl = topResults[0].link;
+        console.log(`[MarketIntelligence] Deep research via Scraping Browser: ${topUrl}`);
+
+        const scraped = await brightDataService.scrapeWithBrowser(topUrl);
+        if (scraped && scraped.text) {
+          deepResearch = {
+            title: scraped.title,
+            url: scraped.url,
+            charCount: scraped.charCount,
+            sentenceCount: scraped.sentenceCount,
+            text: scraped.text,
+          };
+        }
+      }
+
+      // Fallback: try Web Unlocker if Scraping Browser failed or isn't configured
+      if (!deepResearch && topResults.length > 0 && brightDataService.unlockerEnabled) {
+        const topUrl = topResults[0].link;
+        console.log(`[MarketIntelligence] Web Unlocker fallback: ${topUrl}`);
+
+        const unlocked = await brightDataService.fetchWithUnlocker(topUrl, { data_format: 'markdown' });
+        if (unlocked && unlocked.content) {
+          deepResearch = {
+            title: topResults[0].title,
+            url: unlocked.url,
+            charCount: unlocked.content.length,
+            sentenceCount: null,
+            text: unlocked.content.substring(0, 6000),
+          };
+        }
+      }
+
       return {
         ...context,
         intelligenceData: {
           query,
           results: topResults,
-          source: 'Bright Data SERP API'
+          resultCount: results.length,
+          deepResearch,
+          source: deepResearch ? 'brightdata+research' : 'brightdata+llm',
+          error: searchData.error || null,
+          productsUsed: {
+            serp: true,
+            scrapingBrowser: !!deepResearch && brightDataService.sbrEnabled,
+            webUnlocker: !!deepResearch && !brightDataService.sbrEnabled && brightDataService.unlockerEnabled,
+          },
         }
       };
     } catch (error) {
       console.error('[MarketIntelligence] Search failed:', error.message);
-      return context;
+      return { ...context, intelligenceData: null };
     }
   }
 
   /**
-   * Construct prompt using search intelligence
+   * Construct prompt using search intelligence and deep research evidence
    */
   constructPrompt(context) {
     const { title, intelligenceData, currentOdds } = context;
-    
+
     let intelligenceContext = "No external intelligence gathered.";
+    let deepResearchContext = "";
+
     if (intelligenceData && intelligenceData.results.length > 0) {
-      intelligenceContext = intelligenceData.results.map((r, i) => 
-        `[${i+1}] ${r.title}\nURL: ${r.link}\nSnippet: ${r.snippet}`
+      intelligenceContext = intelligenceData.results.map((r, i) =>
+        `[${i+1}] ${r.title}\nSource: ${r.source || 'Unknown'}\nURL: ${r.link}\nSnippet: ${r.snippet}`
       ).join('\n\n');
+    }
+
+    if (intelligenceData?.deepResearch?.text) {
+      const dr = intelligenceData.deepResearch;
+      deepResearchContext = `\n\nDEEP RESEARCH (via ${dr.sentenceCount ? 'Scraping Browser' : 'Web Unlocker'}):\nSource: ${dr.title}\nURL: ${dr.url}\nExtracted ${dr.charCount.toLocaleString()} chars:\n${dr.text}`;
     }
 
     return `
@@ -80,8 +142,9 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
       DESCRIPTION: ${context.description || 'N/A'}
       CURRENT ODDS: Yes ${currentOdds?.yes || 0.5} | No ${currentOdds?.no || 0.5}
 
-      SEARCH INTELLIGENCE (via Bright Data):
+      SEARCH INTELLIGENCE (via Bright Data SERP API):
       ${intelligenceContext}
+      ${deepResearchContext}
 
       TASK:
       1. Analyze the search results for evidence supporting a YES or NO outcome.
@@ -89,11 +152,8 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
       3. Evaluate the credibility of the sources.
       4. Estimate the "True Probability" based on this intelligence.
 
-      Provide:
-      - Digest: Summary of findings (max 250 chars)
-      - Confidence: HIGH/MEDIUM/LOW
-      - Odds Efficiency: EFFICIENT/INEFFICIENT
-      - Probability Estimate (0.0 - 1.0)
+      Respond in JSON format:
+      { "probability": 0.XX, "reasoning": "...", "key_factors": ["..."], "confidence": "HIGH|MEDIUM|LOW" }
     `;
   }
 
@@ -106,13 +166,13 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
     }
 
     const prompt = this.constructPrompt(enrichedContext);
-    
+
     try {
       const response = await this.openai.chat.completions.create({
         model: this.model,
         messages: [
-          { role: "system", content: "You are a professional superforecaster." },
-          { role: "user", content: prompt + "\n\nRespond in JSON format: { \"probability\": 0.XX, \"reasoning\": \"...\", \"key_factors\": [] }" }
+          { role: "system", content: "You are a professional superforecaster with access to real-time web intelligence." },
+          { role: "user", content: prompt }
         ],
         temperature: 0.2,
         response_format: { type: "json_object" }
@@ -122,7 +182,8 @@ export class MarketIntelligenceAnalyzer extends EdgeAnalyzer {
       return {
         probability: parsed.probability,
         reasoning: parsed.reasoning,
-        keyFactors: parsed.key_factors || []
+        keyFactors: parsed.key_factors || [],
+        confidence: parsed.confidence || 'MEDIUM',
       };
     } catch (error) {
       console.error('[MarketIntelligence] LLM forecast failed:', error.message);

@@ -24,6 +24,10 @@ export function AutopilotDashboard({ isNight = false }) {
   });
   const liveFeedRef = useRef(null);
 
+  // Track whether Bright Data was actually used during this run
+  const [brightDataActive, setBrightDataActive] = useState(false);
+  const [brightDataProducts, setBrightDataProducts] = useState({ serp: false, scrapingBrowser: false, webUnlocker: false });
+
   const textColor = isNight ? 'text-white' : 'text-slate-900';
   const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
   const mutedBg = isNight ? 'bg-white/5' : 'bg-black/5';
@@ -63,6 +67,8 @@ export function AutopilotDashboard({ isNight = false }) {
     setAgentRunning(true);
     setLiveSteps([]);
     setError(null);
+    setBrightDataActive(false);
+    setBrightDataProducts({ serp: false, scrapingBrowser: false, webUnlocker: false });
 
     const abortController = new AbortController();
     abortRef.current = abortController;
@@ -107,6 +113,18 @@ export function AutopilotDashboard({ isNight = false }) {
                 ? next.slice(next.length - MAX_LIVE_STEPS)
                 : next;
             });
+
+            // Detect Bright Data usage from step data
+            if (update.data?.sources?.length > 0) {
+              setBrightDataActive(true);
+              setBrightDataProducts(prev => ({ ...prev, serp: true }));
+            }
+            if (update.data?.deepResearch) {
+              setBrightDataProducts(prev => ({ ...prev, scrapingBrowser: true }));
+            }
+            if (update.data?.brightDataError) {
+              setBrightDataActive(true); // Shows we tried, even if it failed
+            }
 
             // Auto-refresh execution history when agent completes
             if (update.step === 'execute' && update.status === 'complete') {
@@ -179,11 +197,17 @@ export function AutopilotDashboard({ isNight = false }) {
             <p className={`text-xs ${subtleText}`}>
               {BRAND.labs.autopilot.description}
             </p>
-            <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
-              isNight ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-cyan-100 text-cyan-700 border border-cyan-200'
-            }`}>
-              Powered by Bright Data
-            </span>
+            {(brightDataActive || !agentRunning) && brightDataActive && (
+              <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
+                isNight ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-cyan-100 text-cyan-700 border border-cyan-200'
+              }`}>
+                {brightDataProducts.scrapingBrowser
+                  ? 'Bright Data: SERP + Deep Research'
+                  : brightDataProducts.serp
+                    ? 'Bright Data: SERP Intelligence'
+                    : 'Powered by Bright Data'}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -450,6 +474,15 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
     }
   }
 
+  // Extract domain from URL for cleaner display
+  const getDomain = (url) => {
+    try {
+      return new URL(url).hostname.replace('www.', '');
+    } catch {
+      return '';
+    }
+  };
+
   return (
     <div className={`flex items-start gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors ${color}`}>
       <span className="flex-shrink-0 w-4 text-center leading-4">{icon}</span>
@@ -462,7 +495,7 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
             </span>
           )}
           <span className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'} truncate`}>
-            {isComplete ? 'complete' : isRunning ? 'running…' : isSkipped ? 'skipped' : message || ''}
+            {isComplete ? 'complete' : isRunning ? 'running...' : isSkipped ? 'skipped' : message || ''}
           </span>
         </div>
         {marketTitle && (
@@ -475,27 +508,62 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
             {dataSummary}
           </div>
         )}
+        {/* Bright Data error indicator */}
+        {data?.brightDataError && (
+          <div className={`mt-1.5 p-1.5 rounded border text-[9px] ${
+            isNight ? 'bg-amber-500/10 border-amber-500/20 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}>
+            <span className="font-bold">BRIGHT DATA:</span> {data.brightDataError}
+          </div>
+        )}
+        {/* Bright Data SERP sources with domain and rank */}
         {data?.sources && (
           <div className="mt-2 space-y-1">
             {data.sources.map((src, idx) => (
-              <a 
+              <a
                 key={idx}
                 href={src.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`block text-[9px] truncate hover:underline ${isNight ? 'text-cyan-300/60' : 'text-cyan-700/60'}`}
+                className={`flex items-center gap-1.5 text-[9px] truncate hover:underline ${
+                  isNight ? 'text-cyan-300/70' : 'text-cyan-700/70'
+                }`}
               >
-                🔗 {src.title}
+                <span className={`flex-shrink-0 px-1 rounded text-[8px] font-mono ${
+                  isNight ? 'bg-cyan-500/10 text-cyan-400/50' : 'bg-cyan-100 text-cyan-600/50'
+                }`}>
+                  {src.rank || idx + 1}
+                </span>
+                <span className="opacity-50">{getDomain(src.url)}</span>
+                <span className="truncate">{src.title}</span>
               </a>
             ))}
           </div>
         )}
+        {/* Deep research indicator with structured info */}
         {data?.deepResearch && (
           <div className={`mt-2 p-1.5 rounded border text-[9px] ${
             isNight ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-200' : 'bg-cyan-50 border-cyan-100 text-cyan-800'
           }`}>
-            <span className="font-bold">DEEP RESEARCH:</span> Scraped {data.deepResearch.length.toLocaleString()} chars from 
-            <span className="ml-1 opacity-70 italic">{data.deepResearch.title}</span>
+            <span className="font-bold">DEEP RESEARCH:</span>
+            <span className="ml-1">
+              {data.deepResearch.sentenceCount
+                ? `${data.deepResearch.sentenceCount} evidence sentences from`
+                : `Scraped ${(data.deepResearch.charCount || data.deepResearch.length || 0).toLocaleString()} chars from`}
+            </span>
+            <a
+              href={data.deepResearch.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-1 opacity-70 italic hover:underline"
+            >
+              {data.deepResearch.title || getDomain(data.deepResearch.url)}
+            </a>
+            {data.deepResearch.charCount && (
+              <span className={`ml-1 ${isNight ? 'text-cyan-300/40' : 'text-cyan-600/40'}`}>
+                ({data.deepResearch.charCount.toLocaleString()} chars total)
+              </span>
+            )}
           </div>
         )}
       </div>
