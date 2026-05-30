@@ -19,6 +19,7 @@ import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOption
 import AnalysisConfigModal from "@/components/AnalysisConfigModal";
 import PricingOverlay from "@/components/PricingOverlay";
 import NarrativeSteps from "@/components/NarrativeSteps";
+import PageNav, { SecondaryNav } from "@/app/components/PageNav";
 import { SportsTabContent, DiscoveryTabContent } from "./components";
 
 export default function MarketsPage() {
