@@ -42,7 +42,11 @@ export default function MarketsPage() {
     const shareId = params.get('share_id');
     const searchQuery = params.get('q');
 
-    if (category) {
+    if (searchQuery) {
+      setDiscoveryFilters(prev => ({ ...prev, category: 'all', searchText: searchQuery, minVolume: '0' }));
+      setDiscoveryDateRange('later');
+      setActiveTab('discovery');
+    } else if (category) {
       const categoryMap = {
         crypto: 'Crypto',
         sports: 'Sports',
@@ -275,6 +279,7 @@ export default function MarketsPage() {
           weatherData: null,
           dateRange: discoveryDateRange,
           excludeFutures: !discoveryFilters.includeFutures,
+          searchText: discoveryFilters.searchText || null,
         };
 
       console.log("[Markets Page] Fetching markets with request:", requestBody);
