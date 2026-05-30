@@ -1,14 +1,16 @@
-# 🔮 Fourcast: Arc-Native Prediction Market Intelligence Agent
+# 🔮 Fourcast: AI Prediction Market Intelligence with Live Web Data
 
-**AI agent for Polymarket & Kalshi — edge detection, Kelly sizing, USDC settlement on Arc, cross-platform arbitrage.**
+**AI agent for Polymarket & Kalshi — real-time web intelligence via Bright Data, edge detection, Kelly sizing, USDC settlement on Arc.**
 
 ![Status](https://img.shields.io/badge/Status-Live-green)
 ![Settlement](https://img.shields.io/badge/Settlement-Arc%20%C2%B7%20USDC-indigo)
-![Hackathon](https://img.shields.io/badge/Agora-RFB%2002%20%C2%B7%2005%20%C2%B7%2006-purple)
+![Bright Data](https://img.shields.io/badge/Bright%20Data-SERP%20%2B%20Scraping%20Browser%20%2B%20Web%20Unlocker-cyan)
+![Hackathon](https://img.shields.io/badge/Web%20Data%20UNLOCKED-Bright%20Data%20Hackathon-blue)
 
 ## 🎯 What We Do
 
-Fourcast is an intelligence agent for prediction markets. It helps traders and autonomous workflows:
+Fourcast is an intelligence agent for prediction markets that uses **live web data** to find mispriced markets. It helps traders and autonomous workflows:
+- **Real-time web intelligence** - Bright Data SERP API, Scraping Browser, and Web Unlocker for live evidence gathering
 - **AI-powered analysis** - Venice AI (Llama 3.3 70B) with 200+ ML models across crypto, sports, politics & more
 - **Multi-platform trading** - Polymarket & Kalshi integration with live odds
 - **On-chain signals** - USDC settlement on Arc (Circle L1); legacy Movement/Aptos testnet
@@ -19,9 +21,10 @@ Fourcast is an intelligence agent for prediction markets. It helps traders and a
 ## 🚀 Features
 
 ### For Traders
-- **Live Market Analysis** - AI-generated predictions with confidence scores (HIGH/MEDIUM/LOW)
+- **Live Web Intelligence** - Bright Data SERP API gathers real-time search results for each market; Scraping Browser extracts evidence from JS-rendered pages; Web Unlocker bypasses bot-protected sites
+- **Deep Research Pipeline** - For high-conviction markets, the agent scrapes the top source via Scraping Browser, extracts informative sentences, and synthesizes evidence with the LLM
+- **Live Market Analysis** - AI-generated predictions with confidence scores (HIGH/MEDIUM/LOW) and clickable source provenance
 - **ML-Backed Forecasts** - SynthData integration for crypto/equity price predictions (BTC, ETH, SOL, SPY, NVDA, etc.)
-- **Sports & Events Intelligence** - Weather-aware analysis for sports and event markets
 - **Cross-Platform Arbitrage** - Find mispriced odds between Polymarket and Kalshi
 - **Direct Trading** - Place orders on Polymarket/Kalshi from the interface
 
@@ -45,22 +48,24 @@ graph LR
     A[Polymarket/Kalshi] -->|Live Odds| B(AI Analysis Engine)
     C[Weather API] -->|Real-time Data| B
     D[SynthData] -->|ML Forecasts| B
-    B -->|Signals| E[SQLite Database]
-    B -->|Publish| F[Arc · USDC Settlement]
-    E --> G[Frontend Dashboard]
-    F -->|Verify| G
-    G -->|Trade| A
+    E[Bright Data] -->|SERP + Scraping Browser| B
+    B -->|Signals| F[SQLite Database]
+    B -->|Publish| G[Arc · USDC Settlement]
+    F --> H[Frontend Dashboard]
+    G -->|Verify| H
+    H -->|Trade| A
 ```
 
 ### Tech Stack
 - **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
 - **Backend**: Node.js, SQLite (Turso), Redis
 - **AI**: Venice AI (Llama 3.3 70B) with Edge Search
+- **Web Intelligence**: Bright Data (SERP API, Scraping Browser, Web Unlocker)
 - **Blockchains**: 
   - **Arc (Circle L1)** — primary settlement, USDC subscriptions, signals (integrating)
   - Polygon — Polymarket/Kalshi execution
   - Movement/Aptos — legacy testnet signals
-- **Data Sources**: Polymarket, Kalshi, Open-Meteo, SynthData
+- **Data Sources**: Polymarket, Kalshi, Open-Meteo, SynthData, Bright Data SERP
 
 ---
 
@@ -78,9 +83,17 @@ The pre-commit hook will install automatically to protect against committing sec
 
 ### 2. Environment Setup
 
-Copy `.env.local.example` to `.env.local`:
+Copy `.env.example` to `.env.local`:
 
 ```bash
+# Required: Bright Data (web intelligence)
+BRIGHT_DATA_API_KEY=your_api_key
+BRIGHT_DATA_SERP_ZONE=your_serp_zone
+
+# Optional: Bright Data deep research
+BRIGHT_DATA_SBR_AUTH=brd-customer-xxx-zone-yyy:password
+BRIGHT_DATA_UNLOCKER_ZONE=your_unlocker_zone
+
 # Required: AI & Weather
 VENICE_API_KEY=your_venice_api_key
 NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key
@@ -96,6 +109,8 @@ POLYMARKET_PRIVATE_KEY=your_private_key
 # Optional: Kalshi Trading
 KALSHI_API_KEY=your_api_key
 ```
+
+Get Bright Data keys at [brightdata.com](https://brightdata.com) -- hackathon participants get $250 in credits with promo code `unlocked`.
 
 See [Setup Guide](./docs/SETUP.md) for complete configuration.
 
