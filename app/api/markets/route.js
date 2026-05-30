@@ -131,6 +131,15 @@ export async function POST(request) {
     // 3. Merge Results
     let marketsList = [...(polymarketResults.markets || []), ...kalshiMarkets];
 
+    // Apply text search filter across all results
+    if (filters.searchText && String(filters.searchText).trim().length > 0) {
+      const words = String(filters.searchText).toLowerCase().trim().split(/\s+/).filter(w => w.length > 2);
+      marketsList = marketsList.filter(m => {
+        const corpus = [(m.title || ''), (m.description || ''), (m.tags || []).join(' ')].join(' ').toLowerCase();
+        return words.some(w => corpus.includes(w));
+      });
+    }
+
     // Sort by volume (descending) to mix them
     marketsList.sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0));
 

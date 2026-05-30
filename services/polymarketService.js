@@ -1364,14 +1364,17 @@ class PolymarketService {
         console.debug(`  MaxDays filter (${filters.maxDaysToResolution}d): ${beforeDaysCount} → ${filtered.length}`);
       }
 
-      // FILTER 5: Free-text search across title/description/tags
+      // FILTER 5: Free-text search across title/description/tags (word-level matching)
       if (filters.searchText && String(filters.searchText).trim().length > 0) {
         const q = String(filters.searchText).toLowerCase().trim();
+        const words = q.split(/\s+/).filter(w => w.length > 2);
         filtered = filtered.filter(m => {
-          const title = (m.title || '').toLowerCase();
-          const desc = (m.description || '').toLowerCase();
-          const tags = (m.tags || []).map(t => typeof t === 'string' ? t.toLowerCase() : (t?.label || '').toLowerCase()).join(' ');
-          return title.includes(q) || desc.includes(q) || tags.includes(q);
+          const corpus = [
+            (m.title || ''),
+            (m.description || ''),
+            (m.tags || []).map(t => typeof t === 'string' ? t : (t?.label || '')).join(' ')
+          ].join(' ').toLowerCase();
+          return words.some(w => corpus.includes(w));
         });
       }
 
