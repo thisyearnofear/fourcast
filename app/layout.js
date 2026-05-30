@@ -13,11 +13,30 @@ export const revalidate = 0;
 
 // Metadata moved to generateMetadata to avoid build-time evaluation issues
 export async function generateMetadata() {
+  const host = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
+  const landingOgImage = `${host}/api/og?type=landing`;
+
   return {
     title: BRAND.metadata.title,
     description: BRAND.metadata.description,
     openGraph: {
-      images: [`${process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app'}/logo.png`],
+      title: BRAND.metadata.title,
+      description: BRAND.metadata.description,
+      type: 'website',
+      images: [
+        {
+          url: landingOgImage,
+          width: 1200,
+          height: 630,
+          alt: 'Fourcast edge scanner preview',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: BRAND.metadata.title,
+      description: BRAND.metadata.description,
+      images: [landingOgImage],
     },
   };
 }

@@ -6,11 +6,178 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
 
+  if (type === "landing") {
+    return renderLandingOG();
+  }
+
   if (type === "signal") {
     return renderSignalOG(searchParams);
   }
 
   return renderWeatherOG(searchParams);
+}
+
+/**
+ * OG card for the Fourcast landing page
+ */
+function renderLandingOG() {
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          backgroundColor: "#080a0d",
+          color: "white",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          position: "relative",
+          overflow: "hidden",
+          padding: "54px",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(circle at 30% 0%, rgba(16,185,129,0.32), transparent 34%), linear-gradient(135deg, rgba(255,255,255,0.08), transparent 30%, rgba(245,158,11,0.12) 78%, transparent)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        />
+
+        <div style={{ display: "flex", width: "100%", gap: "42px", position: "relative", zIndex: 1 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "42px" }}>
+                <div
+                  style={{
+                    height: "42px",
+                    width: "42px",
+                    borderRadius: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(255,255,255,0.1)",
+                    border: "1px solid rgba(255,255,255,0.16)",
+                    fontSize: "22px",
+                  }}
+                >
+                  🔮
+                </div>
+                <div style={{ fontSize: "24px", fontWeight: 700 }}>Fourcast</div>
+              </div>
+              <div style={{ fontSize: "64px", fontWeight: 760, lineHeight: 0.95, letterSpacing: "-0.04em" }}>
+                Find the market edge before it disappears.
+              </div>
+              <div style={{ marginTop: "26px", fontSize: "24px", lineHeight: 1.35, color: "rgba(255,255,255,0.66)", maxWidth: "620px" }}>
+                Prediction market intelligence for Polymarket, Kalshi, Arc signals, and autonomous execution.
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "14px", color: "rgba(255,255,255,0.52)", fontSize: "18px" }}>
+              <span>Search</span>
+              <span>→</span>
+              <span>Analyze</span>
+              <span>→</span>
+              <span>Publish on Arc</span>
+              <span>→</span>
+              <span>Get Scored</span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              width: "430px",
+              borderRadius: "26px",
+              border: "1px solid rgba(255,255,255,0.14)",
+              background: "rgba(13,18,22,0.92)",
+              boxShadow: "0 30px 80px rgba(0,0,0,0.42)",
+              padding: "22px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "18px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ color: "#a7f3d0", fontSize: "13px", fontWeight: 800, letterSpacing: "0.18em" }}>
+                  LIVE EDGE SCANNER
+                </div>
+                <div style={{ marginTop: "8px", fontSize: "21px", fontWeight: 650, lineHeight: 1.18 }}>
+                  Bitcoin $120K market
+                </div>
+              </div>
+              <div
+                style={{
+                  borderRadius: "999px",
+                  padding: "8px 12px",
+                  background: "rgba(16,185,129,0.14)",
+                  border: "1px solid rgba(110,231,183,0.3)",
+                  color: "#d1fae5",
+                  fontSize: "13px",
+                  fontWeight: 800,
+                }}
+              >
+                HIGH · BUY YES
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              {[
+                ["Market", "58%"],
+                ["AI fair", "72.0%"],
+                ["Edge", "+14.0%"],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  style={{
+                    flex: 1,
+                    borderRadius: "16px",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.055)",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ color: "rgba(255,255,255,0.42)", fontSize: "12px", textTransform: "uppercase" }}>{label}</div>
+                  <div style={{ marginTop: "10px", fontSize: "29px", fontWeight: 760, color: label === "Edge" ? "#a7f3d0" : "white" }}>
+                    {value}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ borderRadius: "16px", background: "rgba(0,0,0,0.26)", border: "1px solid rgba(255,255,255,0.1)", padding: "18px" }}>
+              {["ETF inflows · Reuters", "Institutional bid · CoinDesk", "Macro setup · FT"].map((item, index) => (
+                <div key={item} style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: index === 0 ? 0 : "14px" }}>
+                  <div style={{ height: "9px", width: "9px", borderRadius: "99px", background: ["#22d3ee", "#34d399", "#fcd34d"][index] }} />
+                  <div style={{ fontSize: "17px", color: "rgba(255,255,255,0.78)" }}>{item}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ borderRadius: "16px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(252,211,77,0.26)", padding: "18px" }}>
+              <div style={{ fontSize: "17px", color: "#fef3c7", fontWeight: 700 }}>Ready to publish on Arc</div>
+              <div style={{ marginTop: "6px", fontSize: "14px", color: "rgba(254,243,199,0.62)" }}>
+                USDC signal receipt · Brier scoring · Kelly sizing
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+    {
+      width: 1200,
+      height: 630,
+    }
+  );
 }
 
 /**

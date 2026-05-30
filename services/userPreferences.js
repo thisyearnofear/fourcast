@@ -175,14 +175,17 @@ export class UserPreferences {
   }
 
   static getUserLocation() {
+    if (typeof window === 'undefined') return null;
     return localStorage.getItem(this.KEYS.LOCATION);
   }
 
   static getLocationMode() {
+    if (typeof window === 'undefined') return "random";
     return localStorage.getItem(this.KEYS.LOCATION_MODE) || "random";
   }
 
   static setUserLocation(city, mode) {
+    if (typeof window === 'undefined') return;
     localStorage.setItem(this.KEYS.LOCATION, city);
     localStorage.setItem(this.KEYS.LOCATION_MODE, mode);
   }

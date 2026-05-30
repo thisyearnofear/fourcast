@@ -12,6 +12,36 @@ export const runtime = 'nodejs';
 
 const DEMO_DELAY_MS = 800; // Pause between steps for visual effect
 
+const DEMO_MARKET_SUMMARY = {
+  market: {
+    title: 'Will Bitcoin exceed $120K by June 30?',
+    marketID: 'demo-btc-120k',
+    platform: 'Polymarket',
+    currentProbability: 0.58,
+    fairProbability: 0.72,
+    edge: 0.14,
+    direction: 'BUY YES',
+    confidence: 'HIGH',
+    source: 'brightdata+research',
+  },
+  venues: [
+    { name: 'Polymarket', price: 0.58, depth: '$1.2M', status: 'primary fill' },
+    { name: 'Kalshi', price: 0.62, depth: '$640K', status: 'cross-check' },
+  ],
+  evidence: [
+    { label: 'ETF inflows', value: 'record $2.4B weekly flow', source: 'Reuters' },
+    { label: 'Institutional demand', value: 'spot bid holding above $110K', source: 'CoinDesk' },
+    { label: 'Macro setup', value: 'rate-cut signal supporting risk assets', source: 'Financial Times' },
+  ],
+  stats: [
+    { value: '24', label: 'markets scanned' },
+    { value: '5', label: 'candidates found' },
+    { value: '1', label: 'trade ready' },
+  ],
+  productsUsed: ['SERP API', 'Scraping Browser', 'AI synthesis'],
+  updatedAt: 'demo',
+};
+
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -242,6 +272,14 @@ export async function POST() {
     headers: {
       'Content-Type': 'application/x-ndjson',
       'Cache-Control': 'no-store',
+    },
+  });
+}
+
+export async function GET() {
+  return Response.json(DEMO_MARKET_SUMMARY, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
     },
   });
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NarrativeSteps from '@/components/NarrativeSteps';
 import { BRAND } from '@/constants/brand';
@@ -20,35 +20,80 @@ const NAV_LINKS = [
   { label: 'Labs', href: '/labs' },
 ];
 
-const EDGE_SUMMARY = [
-  { label: 'Market', value: '42%', caption: 'Polymarket ask' },
-  { label: 'ML fair', value: '58.4%', caption: 'Synth + weather + news' },
-  { label: 'Edge', value: '+16.4%', caption: 'after venue fees' },
-];
+const FALLBACK_DEMO = {
+  market: {
+    title: 'Will Bitcoin exceed $120K by June 30?',
+    platform: 'Polymarket',
+    currentProbability: 0.58,
+    fairProbability: 0.72,
+    edge: 0.14,
+    direction: 'BUY YES',
+    confidence: 'HIGH',
+  },
+  venues: [
+    { name: 'Polymarket', price: 0.58, depth: '$1.2M', status: 'primary fill' },
+    { name: 'Kalshi', price: 0.62, depth: '$640K', status: 'cross-check' },
+  ],
+  evidence: [
+    { label: 'ETF inflows', value: 'record $2.4B weekly flow', source: 'Reuters' },
+    { label: 'Institutional demand', value: 'spot bid holding above $110K', source: 'CoinDesk' },
+    { label: 'Macro setup', value: 'rate-cut signal supporting risk assets', source: 'Financial Times' },
+  ],
+  stats: [
+    { value: '24', label: 'markets scanned' },
+    { value: '5', label: 'candidates found' },
+    { value: '1', label: 'trade ready' },
+  ],
+};
 
-const SIGNALS = [
-  { label: 'Weather signal', value: 'storm band weakening', accent: 'bg-cyan-400' },
-  { label: 'Liquidity', value: '$1.8M across venues', accent: 'bg-emerald-400' },
-  { label: 'Resolution risk', value: 'source verified', accent: 'bg-amber-300' },
-];
+const EVIDENCE_ACCENTS = ['bg-cyan-400', 'bg-emerald-400', 'bg-amber-300'];
 
-const VENUES = [
-  { name: 'Polymarket', price: '42c', depth: '$880K', status: 'tradable' },
-  { name: 'Kalshi', price: '47c', depth: '$940K', status: 'arb watch' },
-];
+function formatPercent(value, digits = 0) {
+  if (typeof value !== 'number') return '—';
+  return `${(value * 100).toFixed(digits)}%`;
+}
 
-const LOOP_STATS = [
-  { value: '4', label: 'venues + feeds' },
-  { value: '$0.01', label: 'Arc USDC publish' },
-  { value: 'Kelly', label: 'sizing ready' },
-];
+function formatEdge(value) {
+  if (typeof value !== 'number') return '—';
+  return `${value > 0 ? '+' : ''}${(value * 100).toFixed(1)}%`;
+}
+
+function formatPrice(value) {
+  if (typeof value === 'number') return `${Math.round(value * 100)}c`;
+  return value || '—';
+}
 
 export default function SearchLanding() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
+  const [demo, setDemo] = useState(FALLBACK_DEMO);
 
   const featuredSearch = useMemo(() => QUICK_SEARCHES[0], []);
+  const edgeSummary = useMemo(() => ([
+    { label: 'Market', value: formatPercent(demo.market?.currentProbability), caption: `${demo.market?.platform || 'Market'} ask` },
+    { label: 'AI fair', value: formatPercent(demo.market?.fairProbability, 1), caption: 'SERP + research + AI' },
+    { label: 'Edge', value: formatEdge(demo.market?.edge), caption: demo.market?.direction || 'recommendation ready' },
+  ]), [demo]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/agent/demo')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.market) {
+          setDemo(data);
+        }
+      })
+      .catch(() => {
+        // Keep the bundled demo fallback if the endpoint is unavailable.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSearch = (q) => {
     const searchQuery = q || query.trim();
@@ -163,7 +208,7 @@ export default function SearchLanding() {
             </div>
 
             <div className="mt-7 grid max-w-xl grid-cols-3 gap-3">
-              {LOOP_STATS.map((stat) => (
+              {demo.stats.map((stat) => (
                 <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.05] p-3">
                   <div className="text-lg font-semibold text-white">{stat.value}</div>
                   <div className="mt-1 text-[11px] leading-4 text-white/[0.45]">{stat.label}</div>
@@ -177,15 +222,15 @@ export default function SearchLanding() {
               <div className="flex items-center justify-between border-b border-white/10 px-2 pb-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">Live edge scanner</p>
-                  <h2 className="mt-1 text-lg font-medium text-white">Miami rain market · 24h resolution</h2>
+                  <h2 className="mt-1 text-lg font-medium text-white">{demo.market.title}</h2>
                 </div>
                 <div className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-100">
-                  +EV
+                  {demo.market.confidence} · {demo.market.direction}
                 </div>
               </div>
 
               <div className="grid gap-3 py-3 sm:grid-cols-3">
-                {EDGE_SUMMARY.map((item) => (
+                {edgeSummary.map((item) => (
                   <div key={item.label} className="rounded-xl border border-white/10 bg-white/[0.055] p-4">
                     <div className="text-xs uppercase tracking-[0.16em] text-white/[0.38]">{item.label}</div>
                     <div className={`mt-2 text-3xl font-semibold ${item.label === 'Edge' ? 'text-emerald-200' : 'text-white'}`}>
@@ -203,12 +248,12 @@ export default function SearchLanding() {
                     <span className="text-xs text-white/[0.38]">3 sources verified</span>
                   </div>
                   <div className="space-y-3">
-                    {SIGNALS.map((signal) => (
+                    {demo.evidence.map((signal, index) => (
                       <div key={signal.label} className="flex items-start gap-3">
-                        <span className={`mt-1.5 h-2 w-2 rounded-full ${signal.accent}`} />
+                        <span className={`mt-1.5 h-2 w-2 rounded-full ${EVIDENCE_ACCENTS[index % EVIDENCE_ACCENTS.length]}`} />
                         <div>
                           <div className="text-sm text-white/[0.86]">{signal.label}</div>
-                          <div className="text-xs leading-5 text-white/[0.45]">{signal.value}</div>
+                          <div className="text-xs leading-5 text-white/[0.45]">{signal.value} · {signal.source}</div>
                         </div>
                       </div>
                     ))}
@@ -218,14 +263,14 @@ export default function SearchLanding() {
                 <section className="rounded-xl border border-white/10 bg-black/25 p-4">
                   <h3 className="mb-4 text-sm font-semibold text-white">Venue comparison</h3>
                   <div className="space-y-3">
-                    {VENUES.map((venue) => (
+                    {demo.venues.map((venue) => (
                       <div key={venue.name} className="grid grid-cols-[1fr_auto] gap-2 rounded-lg bg-white/[0.045] p-3">
                         <div>
                           <div className="text-sm font-medium text-white">{venue.name}</div>
                           <div className="mt-1 text-xs text-white/[0.42]">{venue.depth} depth</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm font-semibold text-white">{venue.price}</div>
+                          <div className="text-sm font-semibold text-white">{formatPrice(venue.price)}</div>
                           <div className="mt-1 text-xs text-amber-100/70">{venue.status}</div>
                         </div>
                       </div>
