@@ -216,21 +216,11 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
   }, [onSetExitPortalFunction]);
   
   const getTimeOfDay = () => {
-    if (!weatherData?.location?.localtime) return 'day';
-    const localTime = weatherData.location.localtime;
-    const currentHour = new Date(localTime).getHours();
-    
-    if (currentHour >= 19 || currentHour <= 6) return 'night';
-    if (currentHour >= 6 && currentHour < 8) return 'dawn';
-    if (currentHour >= 17 && currentHour < 19) return 'dusk';
-    return 'day';
+    return 'night';
   };
 
   const isNightTime = () => {
-    if (!weatherData?.location?.localtime) return false;
-    const localTime = weatherData.location.localtime;
-    const currentHour = new Date(localTime).getHours();
-    return currentHour >= 19 || currentHour <= 6;
+    return true;
   };
 
   // Calculate sun position based on time and location

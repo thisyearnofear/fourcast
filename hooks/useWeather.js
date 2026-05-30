@@ -7,10 +7,7 @@ export function useWeather() {
   const [weatherData, setWeatherData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentLocationName, setCurrentLocationName] = useState('');
-  const [isNight, setIsNight] = useState(() => {
-    const hour = new Date().getHours();
-    return hour >= 19 || hour <= 6;
-  });
+  const [isNight] = useState(true);
 
   const loadWeather = async () => {
     setIsLoading(true);
@@ -36,20 +33,12 @@ export function useWeather() {
       const data = await weatherService.getCurrentWeather(location);
       setWeatherData(data);
       setCurrentLocationName(`${data.location.name}, ${data.location.region}`);
-      if (data?.location?.localtime) {
-        const hour = new Date(data.location.localtime).getHours();
-        setIsNight(hour >= 19 || hour <= 6);
-      }
     } catch {
       try {
         const fallbackCity = weatherService.getRandomCity();
         const data = await weatherService.getCurrentWeather(fallbackCity);
         setWeatherData(data);
         setCurrentLocationName(`${data.location.name}, ${data.location.region}`);
-        if (data?.location?.localtime) {
-          const hour = new Date(data.location.localtime).getHours();
-          setIsNight(hour >= 19 || hour <= 6);
-        }
       } catch {
         try {
           const data = await weatherService.getCurrentWeather('Nairobi');

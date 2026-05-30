@@ -47,10 +47,7 @@ export default function SignalsPage() {
     const [weatherData, setWeatherData] = useState(null);
     const [isLoadingWeather, setIsLoadingWeather] = useState(true);
     const { isHUDVisible } = useHUDStore();
-    const [isNight, setIsNight] = useState(() => {
-        const hour = new Date().getHours();
-        return hour >= 19 || hour <= 6;
-    });
+    const isNight = true;
 
     // Track record state (Brier scores, calibration)
     const [agentTrackStats, setAgentTrackStats] = useState(null);
