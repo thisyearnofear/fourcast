@@ -226,6 +226,25 @@ export async function POST(request) {
       }, { status: 429 });
     }
 
+    // Bright Data intelligence enrichment (SERP API + Scraping Browser)
+    let brightDataIntel = null;
+    if (webSearchEnabled) {
+      try {
+        const { MarketIntelligenceAnalyzer } = await import('@/services/analysis/MarketIntelligenceAnalyzer.js');
+        const intelligenceAnalyzer = new MarketIntelligenceAnalyzer();
+        const enriched = await intelligenceAnalyzer.enrichContext({
+          title: title || eventType,
+          description: title || eventType,
+          currentOdds,
+        });
+        if (enriched.intelligenceData && enriched.intelligenceData.results.length > 0) {
+          brightDataIntel = enriched.intelligenceData;
+        }
+      } catch (err) {
+        console.warn('[Analyze] Bright Data enrichment failed:', err.message);
+      }
+    }
+
     // ENHANCED: Perform AI analysis with Redis caching and roadmap alignment
     const analysis = await analyzeWeatherImpactServer({
       eventType,
@@ -240,6 +259,7 @@ export async function POST(request) {
       mode,
       analysisTypes, // ← Finance analysis types (fundamental, technical, sentiment)
       includeThinking: true, // ← Enable deep reasoning for visualizer
+      brightDataContext: brightDataIntel, // ← Bright Data web intelligence
     });
 
     // Format weather conditions for display
@@ -267,10 +287,22 @@ export async function POST(request) {
       chain_recommendation: analysis.chain_recommendation || 'BOTH',
       weather_conditions: weatherConditions,
       cached: analysis.cached || false,
-      source: analysis.source || 'unknown',
+      source: brightDataIntel ? 'brightdata+ai' : (analysis.source || 'unknown'),
+      forecastSource: brightDataIntel ? 'brightdata+research' : analysis.source,
       citations: analysis.citations || [],
       limitations: analysis.limitations || null,
-      web_search: mode === 'deep',
+      web_search: !!brightDataIntel || mode === 'deep',
+      brightData: brightDataIntel ? {
+        resultsCount: brightDataIntel.results.length,
+        sources: brightDataIntel.results.map(r => ({ title: r.title, source: r.source, link: r.link })),
+        deepResearch: brightDataIntel.deepResearch ? {
+          title: brightDataIntel.deepResearch.title,
+          url: brightDataIntel.deepResearch.url,
+          charCount: brightDataIntel.deepResearch.charCount,
+          product: brightDataIntel.deepResearchProduct,
+        } : null,
+        productsUsed: brightDataIntel.productsUsed,
+      } : null,
       // ENHANCED: Include SynthData for finance markets
       synthData: analysis.synthData || null,
       // ENHANCED: Include analysis types used for display badges

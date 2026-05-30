@@ -480,6 +480,7 @@ export async function analyzeWeatherImpactServer(params) {
     mode = "basic",
     analysisTypes = [], // Finance analysis types: fundamental, technical, sentiment
     includeThinking = false,
+    brightDataContext = null, // Bright Data web intelligence from MarketIntelligenceAnalyzer
   } = params;
 
   // Auto-detect event type from title if not provided
@@ -569,6 +570,25 @@ ${edgeInfo}
       } catch (err) {
         console.warn(`SynthData fetch failed for single-market analysis:`, err.message);
       }
+    }
+
+    // Build Bright Data intelligence context for the LLM prompt
+    let brightDataContextStr = null;
+    if (brightDataContext && brightDataContext.results.length > 0) {
+      const sources = brightDataContext.results.map((r, i) =>
+        `[${i + 1}] ${r.title}\nSource: ${r.source || 'Unknown'}\nURL: ${r.link}\nSnippet: ${r.snippet}`
+      ).join('\n\n');
+
+      const deepPart = brightDataContext.deepResearch?.text
+        ? `\n\nDEEP RESEARCH (${brightDataContext.deepResearch.charCount?.toLocaleString()} chars via ${brightDataContext.deepResearchProduct || 'Scraping Browser'}):\n${brightDataContext.deepResearch.text.substring(0, 4000)}`
+        : '';
+
+      brightDataContextStr = `
+🌐 BRIGHT DATA WEB INTELLIGENCE (live search results):
+${sources}
+${deepPart}
+
+Use this live web intelligence as the PRIMARY source for your analysis. These are real-time search results gathered moments ago.`;
     }
 
     const deriveProvider = (id) => {
@@ -810,10 +830,10 @@ ${edgeInfo}
           eventDate,
           isFuturesBet,
           analysisTypes, // Finance/stock analysis types
-          synthContext, // Include SynthData context for finance markets
+          synthContext: [synthContext, brightDataContextStr].filter(Boolean).join('\n\n') || null,
         },
         {
-          webSearch: true,
+          webSearch: !brightDataContext, // Skip Venice web search if Bright Data already provided intelligence
           showThinking: false,
           includeThinking: includeThinking,
         }
