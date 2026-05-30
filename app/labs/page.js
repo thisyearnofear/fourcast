@@ -112,8 +112,8 @@ export default function LabsPage() {
                   Execution &amp; monetization
                 </h3>
                 <p className={`text-xs ${textColor} opacity-60 leading-relaxed`}>
-                  Autopilot runs the agent loop with real order execution (RFB 05). Builder Program
-                  attributes fills for USDC builder fees (RFB 06). Weather, Telegram, and 3D are supporting tools.
+                  Autopilot runs the agent loop with real order execution. Builder Program
+                  attributes fills for USDC builder fees. Weather, Telegram, and 3D are supporting tools.
                 </p>
               </div>
             </div>

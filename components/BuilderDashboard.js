@@ -27,7 +27,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
     return (
       <div className={`rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
         <div className="flex items-center gap-4 text-xs">
-          <span className={subtleText}>Builder (RFB 06)</span>
+          <span className={subtleText}>Builder</span>
           <span className={textColor}>
             24h <strong>{formatVolume(stats?.dailyVolume?.volume)}</strong>
           </span>

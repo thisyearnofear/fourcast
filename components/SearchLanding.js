@@ -7,10 +7,10 @@ import NarrativeSteps from '@/components/NarrativeSteps';
 import { BRAND } from '@/constants/brand';
 
 const QUICK_SEARCHES = [
-  { label: 'BTC $100k', query: 'Bitcoin $100k June 2026', tone: 'Crypto' },
-  { label: 'Chiefs title', query: 'Chiefs Super Bowl', tone: 'Sports' },
-  { label: 'Fed cut', query: 'Fed interest rate cut 2026', tone: 'Macro' },
-  { label: 'Miami rain', query: 'rain in Miami tomorrow', tone: 'Weather' },
+  { label: 'BTC $150k', query: 'Bitcoin $150k August 2026', tone: 'Crypto' },
+  { label: 'Fed July cut', query: 'Fed interest rate cut July 2026', tone: 'Macro' },
+  { label: 'SpaceX Mars', query: 'SpaceX Starship Mars cargo 2026', tone: 'Space' },
+  { label: 'NVIDIA $200', query: 'NVIDIA stock $200 by September 2026', tone: 'Equities' },
 ];
 
 const NAV_LINKS = [
@@ -22,22 +22,22 @@ const NAV_LINKS = [
 
 const FALLBACK_DEMO = {
   market: {
-    title: 'Will Bitcoin exceed $120K by June 30?',
+    title: 'Will Bitcoin exceed $150K by August 2026?',
     platform: 'Polymarket',
-    currentProbability: 0.58,
-    fairProbability: 0.72,
-    edge: 0.14,
+    currentProbability: 0.42,
+    fairProbability: 0.58,
+    edge: 0.16,
     direction: 'BUY YES',
     confidence: 'HIGH',
   },
   venues: [
-    { name: 'Polymarket', price: 0.58, depth: '$1.2M', status: 'primary fill' },
-    { name: 'Kalshi', price: 0.62, depth: '$640K', status: 'cross-check' },
+    { name: 'Polymarket', price: 0.42, depth: '$1.8M', status: 'primary fill' },
+    { name: 'Kalshi', price: 0.46, depth: '$920K', status: 'cross-check' },
   ],
   evidence: [
-    { label: 'ETF inflows', value: 'record $2.4B weekly flow', source: 'Reuters' },
-    { label: 'Institutional demand', value: 'spot bid holding above $110K', source: 'CoinDesk' },
-    { label: 'Macro setup', value: 'rate-cut signal supporting risk assets', source: 'Financial Times' },
+    { label: 'ETF inflows', value: 'record $3.1B weekly flow', source: 'Reuters via SERP API' },
+    { label: 'Institutional demand', value: 'spot bid above $130K', source: 'CoinDesk via Scraping Browser' },
+    { label: 'Macro setup', value: 'rate-cut cycle boosting risk assets', source: 'FT via Web Unlocker' },
   ],
   stats: [
     { value: '24', label: 'markets scanned' },
@@ -72,7 +72,7 @@ export default function SearchLanding() {
   const featuredSearch = useMemo(() => QUICK_SEARCHES[0], []);
   const edgeSummary = useMemo(() => ([
     { label: 'Market', value: formatPercent(demo.market?.currentProbability), caption: `${demo.market?.platform || 'Market'} ask` },
-    { label: 'AI fair', value: formatPercent(demo.market?.fairProbability, 1), caption: 'SERP + research + AI' },
+    { label: 'AI fair', value: formatPercent(demo.market?.fairProbability, 1), caption: 'Bright Data + AI synthesis' },
     { label: 'Edge', value: formatEdge(demo.market?.edge), caption: demo.market?.direction || 'recommendation ready' },
   ]), [demo]);
 
@@ -148,16 +148,16 @@ export default function SearchLanding() {
 
         <section className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(480px,1.05fr)] lg:py-10">
           <div className="max-w-2xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1.5 text-xs font-medium text-amber-100">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-              Arc-native prediction market intelligence
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-xs font-medium text-cyan-100">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 animate-pulse" />
+              Powered by Bright Data &middot; SERP API &middot; Scraping Browser &middot; Web Unlocker
             </div>
 
             <h1 className="text-5xl font-semibold leading-[0.96] tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Find the market edge before it disappears.
+              Live web data. AI agent. Market edge.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-white/[0.62] sm:text-lg">
-              Fourcast scans Polymarket and Kalshi, prices the fair probability with AI evidence, then turns the call into a USDC-verifiable signal on Arc.
+              Fourcast scrapes the live web with Bright Data, synthesizes intelligence with AI, and detects mispriced prediction markets across Polymarket and Kalshi — before anyone else.
             </p>
 
             <div className="mt-7 w-full max-w-2xl">
@@ -279,19 +279,31 @@ export default function SearchLanding() {
                 </section>
               </div>
 
-              <div className="mt-3 grid gap-3 rounded-xl border border-amber-300/20 bg-amber-300/10 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-                <div>
-                  <div className="text-sm font-semibold text-amber-50">Ready to publish on Arc</div>
-                  <p className="mt-1 text-xs leading-5 text-amber-50/[0.58]">
-                    Signal receipt, Brier scoring, USDC settlement, and optional Kelly-sized execution.
-                  </p>
+              <div className="mt-3 rounded-xl border border-cyan-300/20 bg-cyan-300/[0.06] p-4">
+                <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/70">Bright Data Pipeline</div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="rounded-lg bg-white/[0.04] p-2.5 text-center">
+                    <div className="text-sm font-medium text-white">SERP API</div>
+                    <div className="mt-1 text-[10px] text-white/40">Structured search results</div>
+                  </div>
+                  <div className="rounded-lg bg-white/[0.04] p-2.5 text-center">
+                    <div className="text-sm font-medium text-white">Scraping Browser</div>
+                    <div className="mt-1 text-[10px] text-white/40">JS-rendered deep research</div>
+                  </div>
+                  <div className="rounded-lg bg-white/[0.04] p-2.5 text-center">
+                    <div className="text-sm font-medium text-white">Web Unlocker</div>
+                    <div className="mt-1 text-[10px] text-white/40">Bot detection bypass</div>
+                  </div>
                 </div>
-                <Link
-                  href="/signals"
-                  className="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-200 px-4 text-sm font-semibold text-slate-950 transition hover:bg-amber-100"
-                >
-                  View signals
-                </Link>
+                <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-cyan-200/50">
+                  <span>Live web data</span>
+                  <span>→</span>
+                  <span>AI synthesis</span>
+                  <span>→</span>
+                  <span>Edge detection</span>
+                  <span>→</span>
+                  <span>Execution</span>
+                </div>
               </div>
             </div>
           </div>
@@ -299,7 +311,7 @@ export default function SearchLanding() {
 
         <footer className="flex flex-col gap-2 border-t border-white/10 py-4 text-xs text-white/[0.35] sm:flex-row sm:items-center sm:justify-between">
           <span>{BRAND.footerStrip}</span>
-          <span>{BRAND.hackathon.label} · {BRAND.hackathon.rfbs}</span>
+          <span>{BRAND.hackathon.label} · {BRAND.hackathon.track}</span>
         </footer>
       </div>
     </main>

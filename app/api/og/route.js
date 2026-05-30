@@ -76,20 +76,20 @@ function renderLandingOG() {
                 <div style={{ fontSize: "24px", fontWeight: 700 }}>Fourcast</div>
               </div>
               <div style={{ fontSize: "64px", fontWeight: 760, lineHeight: 0.95, letterSpacing: "-0.04em" }}>
-                Find the market edge before it disappears.
+                Live web data. AI agent. Market edge.
               </div>
               <div style={{ marginTop: "26px", fontSize: "24px", lineHeight: 1.35, color: "rgba(255,255,255,0.66)", maxWidth: "620px" }}>
-                Prediction market intelligence for Polymarket, Kalshi, Arc signals, and autonomous execution.
+                AI agent using Bright Data to scrape live evidence, synthesize intelligence, and detect mispriced prediction markets.
               </div>
             </div>
             <div style={{ display: "flex", gap: "14px", color: "rgba(255,255,255,0.52)", fontSize: "18px" }}>
-              <span>Search</span>
+              <span>SERP API</span>
               <span>→</span>
-              <span>Analyze</span>
+              <span>Scraping Browser</span>
               <span>→</span>
-              <span>Publish on Arc</span>
+              <span>AI Synthesis</span>
               <span>→</span>
-              <span>Get Scored</span>
+              <span>Edge Detection</span>
             </div>
           </div>
 
@@ -112,7 +112,7 @@ function renderLandingOG() {
                   LIVE EDGE SCANNER
                 </div>
                 <div style={{ marginTop: "8px", fontSize: "21px", fontWeight: 650, lineHeight: 1.18 }}>
-                  Bitcoin $120K market
+                  Bitcoin $150K market
                 </div>
               </div>
               <div
@@ -132,9 +132,9 @@ function renderLandingOG() {
 
             <div style={{ display: "flex", gap: "12px" }}>
               {[
-                ["Market", "58%"],
-                ["AI fair", "72.0%"],
-                ["Edge", "+14.0%"],
+                ["Market", "42%"],
+                ["AI fair", "58.0%"],
+                ["Edge", "+16.0%"],
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -155,7 +155,7 @@ function renderLandingOG() {
             </div>
 
             <div style={{ borderRadius: "16px", background: "rgba(0,0,0,0.26)", border: "1px solid rgba(255,255,255,0.1)", padding: "18px" }}>
-              {["ETF inflows · Reuters", "Institutional bid · CoinDesk", "Macro setup · FT"].map((item, index) => (
+              {["ETF inflows · SERP API", "Institutional bid · Scraping Browser", "Macro setup · Web Unlocker"].map((item, index) => (
                 <div key={item} style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: index === 0 ? 0 : "14px" }}>
                   <div style={{ height: "9px", width: "9px", borderRadius: "99px", background: ["#22d3ee", "#34d399", "#fcd34d"][index] }} />
                   <div style={{ fontSize: "17px", color: "rgba(255,255,255,0.78)" }}>{item}</div>
@@ -163,10 +163,10 @@ function renderLandingOG() {
               ))}
             </div>
 
-            <div style={{ borderRadius: "16px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(252,211,77,0.26)", padding: "18px" }}>
-              <div style={{ fontSize: "17px", color: "#fef3c7", fontWeight: 700 }}>Ready to publish on Arc</div>
-              <div style={{ marginTop: "6px", fontSize: "14px", color: "rgba(254,243,199,0.62)" }}>
-                USDC signal receipt · Brier scoring · Kelly sizing
+            <div style={{ borderRadius: "16px", background: "rgba(6,182,212,0.12)", border: "1px solid rgba(103,232,249,0.26)", padding: "18px" }}>
+              <div style={{ fontSize: "17px", color: "#cffafe", fontWeight: 700 }}>Powered by Bright Data</div>
+              <div style={{ marginTop: "6px", fontSize: "14px", color: "rgba(207,250,254,0.62)" }}>
+                SERP API · Scraping Browser · Web Unlocker · MCP Server
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 /**
  * Fourcast brand & product narrative — single source of truth.
- * Agora Agents Hackathon: RFB 02 (primary), 05, 06.
- * Settlement story: Arc · USDC · Circle tools.
+ * Bright Data Web Data UNLOCKED Hackathon — Track 2: Finance & Market Intelligence.
+ * Core story: live web data → AI agent → mispriced markets.
  */
 
 export const BRAND = {
@@ -9,44 +9,44 @@ export const BRAND = {
   emoji: '🔮',
 
   /** One line — hero, OG, pitch */
-  tagline: 'Arc-native prediction market intelligence',
+  tagline: 'AI agent powered by live web data for prediction market intelligence',
 
   /** Supporting line — subheads, metadata */
   subhead:
-    'Scan Polymarket & Kalshi · detect edge · publish USDC-verified signals on Arc · execute cross-venue arbitrage',
+    'Bright Data SERP + Scraping Browser + Web Unlocker → AI synthesis → edge detection across Polymarket & Kalshi',
 
   /** Footer / trust strip */
-  footerStrip: 'Settled on Arc · USDC · Polymarket & Kalshi',
+  footerStrip: 'Powered by Bright Data · SERP API · Scraping Browser · Web Unlocker',
 
   /** Demo CTA */
-  demoTitle: 'Try a Demo — No Wallet Needed',
+  demoTitle: 'Try a Demo — See Live Web Intelligence',
   demoSubcopy:
-    'Full AI analysis with provenance. Zero setup — see how the agent finds edge.',
+    'Watch the AI agent scrape, analyze, and detect market edges in real-time. Zero setup required.',
 
   /** Product loop (NarrativeSteps) */
   loop: {
-    search: { label: 'Search', short: 'Search', icon: '🔮' },
-    analyze: { label: 'Analyze', short: 'Analyze', icon: '📊' },
-    publish: { label: 'Publish on Arc', short: 'Publish', icon: '🌀' },
-    scored: { label: 'Get Scored', short: 'Score', icon: '📡' },
+    search: { label: 'Scrape', short: 'Scrape', icon: '🌐' },
+    analyze: { label: 'Analyze', short: 'Analyze', icon: '🧠' },
+    publish: { label: 'Detect Edge', short: 'Edge', icon: '📊' },
+    scored: { label: 'Execute', short: 'Trade', icon: '⚡' },
   },
 
   /** Page subtitles */
   pages: {
-    markets: 'Find +EV edge across Polymarket & Kalshi — ML forecasts, weather, and AI reasoning',
+    markets: 'Live web intelligence across Polymarket & Kalshi — Bright Data SERP, ML forecasts, and AI reasoning',
     signals:
-      'Verifiable track records · USDC tips on Arc · leaderboards & cross-platform arbitrage',
+      'Verifiable track records · evidence provenance · leaderboards & cross-platform arbitrage',
     agent:
-      'Intelligence agent — autonomous scan, Kelly-sized recommendations, optional Autopilot execution',
-    positions: 'Your calls, win rate, Brier score, and on-chain reputation',
+      'Autonomous AI agent — web scraping, edge detection, Kelly-sized recommendations',
+    positions: 'Your calls, win rate, Brier score, and reputation',
     labs: 'Execution layer — Autopilot, builder monetization, and integrations',
   },
 
   /** Nav tooltips (PageNav) */
   nav: {
-    markets: 'Edge detection · RFB 02',
-    signals: 'Social signals · RFB 06',
-    agent: 'Agent loop · RFB 02 & 05',
+    markets: 'Web intelligence + edge detection',
+    signals: 'Verified predictions',
+    agent: 'Autonomous agent loop',
     positions: 'Track record',
     labs: 'Autopilot & builder tools',
   },
@@ -81,25 +81,25 @@ export const BRAND = {
     autopilot: {
       title: 'Autopilot',
       description:
-        'Autonomous execution with Kelly Criterion sizing — the agent acts on recommendations (RFB 05).',
+        'Autonomous execution with Kelly Criterion sizing — the agent acts on Bright Data-powered recommendations.',
       status: 'core',
     },
     builder: {
       description:
-        'Polymarket Builder Program — earn USDC per fill from attributed orders (RFB 06).',
+        'Polymarket Builder Program — earn USDC per fill from attributed orders.',
     },
   },
 
   /** Hackathon — subtle, optional in UI */
   hackathon: {
-    label: 'Agora Agents · Circle Arc',
-    rfbs: 'RFB 02 · 05 · 06',
+    label: 'Bright Data · Web Data UNLOCKED',
+    track: 'Track 2: Finance & Market Intelligence',
   },
 
   metadata: {
-    title: 'Fourcast — Arc-Native Prediction Market Intelligence Agent',
+    title: 'Fourcast — AI Agent Powered by Live Web Data for Market Intelligence',
     description:
-      'AI agent for Polymarket & Kalshi: edge detection, Kelly sizing, USDC signals on Arc, cross-platform arbitrage. Built for the Agora Agents Hackathon.',
+      'AI agent using Bright Data SERP API, Scraping Browser & Web Unlocker to detect mispriced prediction markets. Real-time web scraping → AI synthesis → edge detection across Polymarket & Kalshi.',
   },
 };
 
@@ -108,39 +108,39 @@ export const ONBOARDING_COPY = [
     id: 'welcome',
     title: 'Welcome to Fourcast',
     description:
-      'An Arc-native intelligence agent for prediction markets. Search any market, get AI-backed edge, publish verifiable signals in USDC.',
+      'An AI agent that uses Bright Data to scrape the live web, synthesize intelligence, and detect mispriced prediction markets before anyone else.',
     icon: '🔮',
     target: null,
   },
   {
     id: 'markets',
-    title: 'Find Edge',
+    title: 'Live Web Intelligence',
     description:
-      'Polymarket and Kalshi in one view. ML forecasts, weather, and reasoning traces — sized for +EV opportunities.',
-    icon: '📊',
+      'SERP API fetches structured search results. Scraping Browser renders JS-heavy pages. Web Unlocker bypasses bot detection. All in real-time.',
+    icon: '🌐',
     target: '[data-onboard="markets"]',
   },
   {
     id: 'publish',
-    title: 'Publish on Arc',
+    title: 'AI Synthesis & Edge Detection',
     description:
-      'Record predictions on Arc with USDC-denominated settlement. Build a Brier-scored track record others can trust.',
-    icon: '🌀',
+      'AI reasons over live web evidence to produce fair probabilities. Detects mispricing across Polymarket and Kalshi with full source provenance.',
+    icon: '🧠',
     target: '[data-onboard="publish"]',
   },
   {
     id: 'agent',
-    title: 'Intelligence Agent',
+    title: 'Autonomous Agent',
     description:
-      'Let the agent scan markets, filter candidates, and surface Kelly-sized recommendations — optional Autopilot execution in Labs.',
+      'The agent autonomously scans markets, scrapes evidence, detects edges, and recommends Kelly-sized positions — end-to-end with Bright Data.',
     icon: '🤖',
     target: '[data-onboard="agent"]',
   },
   {
     id: 'positions',
-    title: 'Track Record',
-    description: 'Win rate, Brier score, positions, and reputation — the scoreboard for your calls.',
-    icon: '💼',
+    title: 'Track Record & MCP',
+    description: 'Verifiable track records, Brier scores, and an MCP Server so any AI agent can query Fourcast\'s intelligence pipeline.',
+    icon: '⚡',
     target: '[data-onboard="positions"]',
   },
 ];
