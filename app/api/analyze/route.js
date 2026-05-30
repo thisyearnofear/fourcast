@@ -5,6 +5,7 @@ import { kalshiService } from '@/services/kalshiService';
 
 // Simple API auth for bot/external access
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 const BOT_API_SECRET = process.env.BOT_API_SECRET || '';
 

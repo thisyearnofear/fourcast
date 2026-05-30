@@ -114,9 +114,17 @@ class BrightDataService {
         }
       );
 
-      const data = response.data;
+      let data = response.data;
 
-      // Bright Data SERP API returns { organic: [...], knowledge: {...}, ... }
+      // Bright Data wraps responses in {status_code, headers, body} — unwrap if needed
+      if (data.body && !data.organic) {
+        try {
+          data = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+        } catch {
+          console.warn('[BrightData] Failed to parse SERP body, using raw response');
+        }
+      }
+
       if (!data.organic) {
         data.organic = [];
       }
@@ -171,7 +179,7 @@ class BrightDataService {
 
       browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
       const page = await browser.newPage();
-      page.setDefaultNavigationTimeout(120_000); // 2 min for CAPTCHA solving
+      page.setDefaultNavigationTimeout(30_000); // 30s — fits within Vercel 60s function limit
 
       await page.goto(url, { waitUntil: 'domcontentloaded' });
 

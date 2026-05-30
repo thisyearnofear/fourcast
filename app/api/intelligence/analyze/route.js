@@ -8,6 +8,7 @@
 
 // Must be declared before the re-export for Next.js to pick it up
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export {
   POST,

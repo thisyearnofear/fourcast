@@ -1863,38 +1863,38 @@ export function LoadingAnalysisState({ isNight, textColor }) {
 
   const steps = [
     {
-      icon: "🔍",
-      text: "Verifying event location",
-      sub: "Cross-referencing official schedules via web search",
+      icon: "🌐",
+      text: "Searching live web via Bright Data",
+      sub: "SERP API fetching structured search results",
     },
     {
-      icon: "🌤️",
-      text: "Fetching live weather data",
-      sub: "Retrieving real-time conditions and forecasts",
+      icon: "🔬",
+      text: "Deep research on top sources",
+      sub: "Scraping Browser rendering JS-heavy pages",
+    },
+    {
+      icon: "🧠",
+      text: "AI synthesizing evidence",
+      sub: "Reasoning over web intelligence to estimate probability",
     },
     {
       icon: "📊",
-      text: "Analyzing market efficiency",
-      sub: "Comparing weather impact vs current odds",
-    },
-    {
-      icon: "🤖",
-      text: "Generating AI insights",
-      sub: "Synthesizing comprehensive recommendation",
+      text: "Detecting market edge",
+      sub: "Comparing AI fair value against current market odds",
     },
   ];
 
   useEffect(() => {
     const stepInterval = setInterval(() => {
       setStep((prev) => (prev + 1) % steps.length);
-    }, 2500);
+    }, 4000);
 
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) return 0;
+        if (prev >= 95) return 95; // Hold at 95% until response arrives
         return prev + 1;
       });
-    }, 100);
+    }, 180);
 
     return () => {
       clearInterval(stepInterval);
