@@ -22,7 +22,6 @@ export function AutopilotDashboard({ isNight = false }) {
     minVolume: 10000,
     riskTolerance: 0.5,
   });
-  const [demoMode, setDemoMode] = useState(false);
   const liveFeedRef = useRef(null);
 
   // Track whether Bright Data was actually used during this run
@@ -86,7 +85,7 @@ export function AutopilotDashboard({ isNight = false }) {
     abortRef.current = abortController;
 
     try {
-      const response = await fetch(demoMode ? '/api/agent/demo' : '/api/agent', {
+      const response = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -249,23 +248,6 @@ export function AutopilotDashboard({ isNight = false }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* Demo Mode Toggle */}
-          <button
-            onClick={() => setDemoMode(!demoMode)}
-            className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-              demoMode
-                ? isNight
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                  : 'bg-amber-100 text-amber-700 border-amber-200'
-                : isNight
-                  ? 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
-                  : 'bg-black/5 hover:bg-black/10 text-black/70 border-black/10'
-            }`}
-            aria-label="Toggle demo mode"
-            title={demoMode ? 'Demo mode ON (pre-recorded data)' : 'Demo mode OFF (live agent)'}
-          >
-            {demoMode ? '🎬 Demo' : 'Demo'}
-          </button>
           {/* Config Toggle */}
           <button
             onClick={() => setShowConfig(!showConfig)}
@@ -437,8 +419,13 @@ export function AutopilotDashboard({ isNight = false }) {
           <div className="text-4xl mb-3 opacity-40">🤖</div>
           <p className={`text-sm ${textColor} opacity-70 mb-1`}>No autopilot trades yet</p>
           <p className={`text-xs ${subtleText}`}>
-            Click <strong>Run Agent</strong> above to scan markets and execute trades automatically
+            Click <strong>Run Agent</strong> to scan markets and execute trades automatically
           </p>
+          {bdStatus && !bdStatus.available && (
+            <p className={`text-[10px] mt-2 ${isNight ? 'text-cyan-300/50' : 'text-cyan-600/50'}`}>
+              Add Bright Data keys to enable real-time web intelligence for deeper analysis
+            </p>
+          )}
         </div>
       )}
 

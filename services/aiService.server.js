@@ -1363,7 +1363,9 @@ Output ONLY valid JSON:
           step: "forecast",
           status: "running",
           market: { title: market.title, marketID: market.marketID },
-          message: `Deep scanning with Bright Data intelligence...`,
+          message: brightDataService.isAvailable()
+            ? `Deep scanning with Bright Data intelligence...`
+            : `Analyzing market with AI reasoning...`,
           index: i,
           total: orderedMarkets.length,
         };
@@ -1380,6 +1382,21 @@ Output ONLY valid JSON:
           });
 
           const intel = enriched.intelligenceData;
+
+          if (!intel || intel.results.length === 0) {
+            // No Bright Data configured or no results returned
+            yield {
+              step: "forecast",
+              status: "running",
+              market: { title: market.title, marketID: market.marketID },
+              message: intel?.error
+                ? `Bright Data SERP error (${intel.error.status}), using LLM knowledge...`
+                : `Bright Data not configured, using LLM reasoning with Venice web search...`,
+              index: i,
+              total: orderedMarkets.length,
+              data: intel?.error ? { brightDataError: intel.error.message } : {},
+            };
+          }
 
           if (intel?.error) {
             yield {
