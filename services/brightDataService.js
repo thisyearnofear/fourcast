@@ -8,6 +8,9 @@ const MAX_CACHE_ENTRIES = 200;
  * Bright Data Service
  * Provides access to Bright Data SERP API, Scraping Browser, and Web Unlocker.
  *
+ * When BRIGHT_DATA_PROXY_URL is set, routes requests through a dedicated proxy
+ * server (no timeout constraints). Falls back to direct API calls otherwise.
+ *
  * Products used:
  *  - SERP API: structured search results from Google (organic, knowledge, PAA)
  *  - Scraping Browser: JS-rendered page scraping with CAPTCHA solving
@@ -21,8 +24,12 @@ class BrightDataService {
     this.sbrWsEndpoint = process.env.BRIGHT_DATA_SBR_WS_ENDPOINT;
     this.sbrAuth = process.env.BRIGHT_DATA_SBR_AUTH;
 
-    this.enabled = !!(this.apiKey && this.serpZone);
-    this.sbrEnabled = !!(this.sbrWsEndpoint || this.sbrAuth);
+    this.proxyUrl = process.env.BRIGHT_DATA_PROXY_URL; // e.g. https://fourcast.persidian.com
+    this.proxySecret = process.env.BRIGHT_DATA_PROXY_SECRET;
+    this.proxyEnabled = !!(this.proxyUrl && this.proxySecret);
+
+    this.enabled = this.proxyEnabled || !!(this.apiKey && this.serpZone);
+    this.sbrEnabled = this.proxyEnabled || !!(this.sbrWsEndpoint || this.sbrAuth);
     this.unlockerEnabled = !!(this.apiKey && this.unlockerZone);
 
     /** @type {Map<string, {data: any, ts: number}>} */
@@ -39,6 +46,7 @@ class BrightDataService {
       serp: this.enabled,
       scrapingBrowser: this.sbrEnabled,
       webUnlocker: this.unlockerEnabled,
+      proxy: this.proxyEnabled,
     };
   }
 
@@ -98,30 +106,46 @@ class BrightDataService {
       const gl = options.gl || 'us';
       const hl = options.hl || 'en';
 
-      const response = await axios.post(
-        'https://api.brightdata.com/request',
-        {
-          zone: this.serpZone,
-          url: `https://www.google.com/search?q=${encodeURIComponent(query)}&gl=${gl}&hl=${hl}`,
-          format: 'json',
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
+      let data;
+
+      if (this.proxyEnabled) {
+        const response = await axios.post(
+          `${this.proxyUrl}/brightdata/search`,
+          { query, gl, hl },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'x-proxy-secret': this.proxySecret,
+            },
+            timeout: 45000,
+          }
+        );
+        data = response.data;
+      } else {
+        const response = await axios.post(
+          'https://api.brightdata.com/request',
+          {
+            zone: this.serpZone,
+            url: `https://www.google.com/search?q=${encodeURIComponent(query)}&gl=${gl}&hl=${hl}`,
+            format: 'json',
           },
-          timeout: 30000,
-        }
-      );
+          {
+            headers: {
+              Authorization: `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: 30000,
+          }
+        );
+        data = response.data;
 
-      let data = response.data;
-
-      // Bright Data wraps responses in {status_code, headers, body} — unwrap if needed
-      if (data.body && !data.organic) {
-        try {
-          data = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-        } catch {
-          console.warn('[BrightData] Failed to parse SERP body, using raw response');
+        // Bright Data wraps responses in {status_code, headers, body} — unwrap if needed
+        if (data.body && !data.organic) {
+          try {
+            data = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+          } catch {
+            console.warn('[BrightData] Failed to parse SERP body, using raw response');
+          }
         }
       }
 
@@ -172,6 +196,34 @@ class BrightDataService {
     const cached = this._getCached(cacheKey);
     if (cached) return cached;
 
+    // Route through proxy if available (avoids Vercel timeout)
+    if (this.proxyEnabled) {
+      try {
+        console.log(`[BrightData] Scraping Browser via proxy for: ${url}`);
+        const response = await axios.post(
+          `${this.proxyUrl}/brightdata/scrape`,
+          { url },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'x-proxy-secret': this.proxySecret,
+            },
+            timeout: 55000,
+          }
+        );
+        const structured = response.data;
+        if (structured && structured.charCount > 0) {
+          this._setCache(cacheKey, structured);
+          console.log(`[BrightData] Proxy scraped ${structured.charCount} chars, ${structured.sentenceCount} sentences from: ${url}`);
+          return structured;
+        }
+        return null;
+      } catch (error) {
+        console.error(`[BrightData] Proxy scrape failed for ${url}:`, error.response?.data || error.message);
+        return null;
+      }
+    }
+
     let browser;
     try {
       const endpoint = this.sbrWsEndpoint || `wss://${this.sbrAuth}@brd.superproxy.io:9222`;
@@ -179,25 +231,21 @@ class BrightDataService {
 
       browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
       const page = await browser.newPage();
-      page.setDefaultNavigationTimeout(30_000); // 30s — fits within Vercel 60s function limit
+      page.setDefaultNavigationTimeout(30_000);
 
       await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-      // Brief pause for JS-rendered content
       await new Promise((r) => setTimeout(r, 2000));
 
       const result = await page.evaluate(() => {
-        // Remove noise elements
         document.querySelectorAll('script, style, noscript, nav, footer, header').forEach((el) => el.remove());
 
-        // Prefer article/main content, fall back to body
         const article = document.querySelector('article, main, [role="main"], .content, .article-body');
         const target = article || document.body;
 
         const title = document.title || '';
         const text = target.innerText || '';
 
-        // Split into sentences for structured extraction
         const sentences = text
           .split(/[.!?\n]+/)
           .map((s) => s.trim())
@@ -206,7 +254,6 @@ class BrightDataService {
         return { title, fullText: text, sentences };
       });
 
-      // Filter to informative sentences (contain numbers, dates, or key analytical terms)
       const informative = result.sentences
         .filter((s) =>
           /\d/.test(s) ||
