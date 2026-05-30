@@ -1,22 +1,46 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NarrativeSteps from '@/components/NarrativeSteps';
 import { BRAND } from '@/constants/brand';
 
 const QUICK_SEARCHES = [
-  { label: 'BTC $100k', query: 'Bitcoin $100k June 2026', featured: true },
-  { label: 'Chiefs Super Bowl', query: 'Chiefs Super Bowl' },
-  { label: 'Fed Rate Cut', query: 'Fed interest rate cut 2026' },
-  { label: 'Rain in Miami', query: 'rain in Miami tomorrow' },
+  { label: 'BTC $100k', query: 'Bitcoin $100k June 2026', tone: 'Crypto' },
+  { label: 'Chiefs title', query: 'Chiefs Super Bowl', tone: 'Sports' },
+  { label: 'Fed cut', query: 'Fed interest rate cut 2026', tone: 'Macro' },
+  { label: 'Miami rain', query: 'rain in Miami tomorrow', tone: 'Weather' },
 ];
 
-const CATEGORIES = [
-  { id: 'Crypto', icon: '₿', gradient: 'from-purple-600 to-pink-500' },
-  { id: 'Sports', icon: '⚽', gradient: 'from-emerald-600 to-teal-500' },
-  { id: 'Politics', icon: '🏛', gradient: 'from-indigo-600 to-blue-500' },
-  { id: 'Weather', icon: '🌤', gradient: 'from-sky-600 to-cyan-500' },
+const NAV_LINKS = [
+  { label: 'Markets', href: '/markets' },
+  { label: 'Signals', href: '/signals' },
+  { label: 'Agent', href: '/agent' },
+  { label: 'Labs', href: '/labs' },
+];
+
+const EDGE_SUMMARY = [
+  { label: 'Market', value: '42%', caption: 'Polymarket ask' },
+  { label: 'ML fair', value: '58.4%', caption: 'Synth + weather + news' },
+  { label: 'Edge', value: '+16.4%', caption: 'after venue fees' },
+];
+
+const SIGNALS = [
+  { label: 'Weather signal', value: 'storm band weakening', accent: 'bg-cyan-400' },
+  { label: 'Liquidity', value: '$1.8M across venues', accent: 'bg-emerald-400' },
+  { label: 'Resolution risk', value: 'source verified', accent: 'bg-amber-300' },
+];
+
+const VENUES = [
+  { name: 'Polymarket', price: '42c', depth: '$880K', status: 'tradable' },
+  { name: 'Kalshi', price: '47c', depth: '$940K', status: 'arb watch' },
+];
+
+const LOOP_STATS = [
+  { value: '4', label: 'venues + feeds' },
+  { value: '$0.01', label: 'Arc USDC publish' },
+  { value: 'Kelly', label: 'sizing ready' },
 ];
 
 export default function SearchLanding() {
@@ -24,157 +48,215 @@ export default function SearchLanding() {
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
 
+  const featuredSearch = useMemo(() => QUICK_SEARCHES[0], []);
+
   const handleSearch = (q) => {
     const searchQuery = q || query.trim();
     if (!searchQuery) return;
     router.push(`/markets?q=${encodeURIComponent(searchQuery)}`);
   };
 
-  const handleCategoryClick = (cat) => {
-    router.push(`/markets?category=${cat.id}`);
-  };
-
   return (
-    <div className="fixed inset-0 overflow-hidden" style={{ background: '#0a0a0f' }}>
-      {/* Animated gradient background — light, no WebGL */}
-      <div className="absolute inset-0 opacity-40">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900/30 via-transparent to-pink-900/30" />
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-float-delayed" />
-      </div>
+    <main className="min-h-screen overflow-x-hidden bg-[#080a0d] text-white">
+      <div
+        className="absolute inset-0 pointer-events-none opacity-80"
+        style={{
+          background:
+            'radial-gradient(circle at 50% 0%, rgba(23, 118, 105, 0.28), transparent 34%), linear-gradient(135deg, rgba(255,255,255,0.08), transparent 26%, rgba(245,158,11,0.08) 70%, transparent)',
+        }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.07]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px)',
+          backgroundSize: '44px 44px',
+        }}
+      />
 
-      {/* Decorative grid */}
-      <div className="absolute inset-0 opacity-[0.03]"
-        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
-        {/* Logo / Title */}
-        <div className="mb-8 text-center">
-          <div className="text-5xl mb-4">{BRAND.emoji}</div>
-          <h1 className="text-3xl font-light text-white/90 tracking-tight">
-            {BRAND.name}
-          </h1>
-          <p className="text-sm text-white/50 mt-2 font-light max-w-md mx-auto leading-relaxed">
-            {BRAND.tagline}
-          </p>
-          <p className="text-[11px] text-white/25 mt-1.5 font-light max-w-lg mx-auto">
-            {BRAND.subhead}
-          </p>
-        </div>
-
-        {/* Search Bar */}
-        <div className={`w-full max-w-xl transition-all duration-300 ${focused ? 'scale-105' : ''}`}>
-          <div className={`
-            flex items-center gap-3 px-5 py-3.5 rounded-2xl border transition-all duration-300 backdrop-blur-md
-            ${focused
-              ? 'bg-white/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
-              : 'bg-white/5 border-white/10 hover:bg-white/8'
-            }
-          `}>
-            <span className="text-lg text-white/30">🔮</span>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Type a prediction to analyze..."
-              className="flex-1 bg-transparent text-white/80 text-base placeholder-white/25 font-light outline-none"
-              autoFocus
-            />
-            <button
-              onClick={() => handleSearch()}
-              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium hover:opacity-90 transition-all disabled:opacity-30"
-              disabled={!query.trim()}
-            >
-              Analyze →
-            </button>
-          </div>
-        </div>
-
-        {/* Try Demo — one-click, no wallet needed */}
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => handleSearch((QUICK_SEARCHES.find(q => q.featured) || QUICK_SEARCHES[0]).query)}
-            className="group relative inline-flex items-center gap-3 px-6 py-3 rounded-2xl 
-              bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium
-              hover:from-purple-500 hover:to-pink-500 hover:scale-105 
-              transition-all duration-300 shadow-lg shadow-purple-500/25
-              active:scale-95"
-          >
-            <span className="relative">
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-ping" />
-              <span className="text-lg">🎯</span>
+      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
+        <header className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/25 px-3 py-2.5 backdrop-blur-xl">
+          <Link href="/" className="flex items-center gap-2 text-sm font-medium tracking-wide text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-base">
+              {BRAND.emoji}
             </span>
-            {BRAND.demoTitle}
-            <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
-          </button>
-          <p className="text-xs text-white/25 mt-3 font-light max-w-sm mx-auto">
-            {BRAND.demoSubcopy}
-          </p>
-        </div>
-
-        {/* Narrative indicator — step 1: Search */}
-        <div className="mt-8 mb-6">
-          <NarrativeSteps currentStep="search" isNight={false} />
-        </div>
-
-        {/* Quick Search Pills */}
-        <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-xl">
-          {QUICK_SEARCHES.map((item) => (
-            <button
-              key={item.query}
-              onClick={() => handleSearch(item.query)}
-              className="px-3.5 py-1.5 rounded-full text-xs text-white/50 bg-white/5 border border-white/5 
-                hover:bg-white/10 hover:text-white/70 hover:border-white/10 transition-all backdrop-blur-sm"
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Category Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10 w-full max-w-xl">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => handleCategoryClick(cat)}
-              className="group relative p-4 rounded-2xl border border-white/5 bg-white/5 
-                hover:bg-white/10 hover:border-white/10 transition-all text-center backdrop-blur-sm"
-            >
-              <div className={`text-2xl mb-1.5 bg-gradient-to-br ${cat.gradient} w-10 h-10 rounded-xl 
-                flex items-center justify-center mx-auto text-white shadow-lg`}>
-                {cat.icon}
-              </div>
-              <div className="text-xs text-white/60 font-medium">{cat.id}</div>
-            </button>
-          ))}
-        </div>
-
-        {/* Telegram Reference */}
-        <div className="mt-10 text-center">
-          <a
-            href="https://t.me/fourcasterbot"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs text-white/30 
-              bg-white/5 border border-white/5 hover:text-white/50 hover:bg-white/10 transition-all backdrop-blur-sm"
+            <span>{BRAND.name}</span>
+          </Link>
+          <nav className="hidden items-center gap-1 sm:flex" aria-label="Primary navigation">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-lg px-3 py-2 text-xs font-medium text-white/[0.55] transition hover:bg-white/10 hover:text-white"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <button
+            onClick={() => handleSearch(featuredSearch.query)}
+            className="rounded-lg border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-300/20"
           >
-            <span>💬</span>
-            Or try @fourcasterbot on Telegram
-          </a>
-        </div>
+            Try demo
+          </button>
+        </header>
 
-        {/* Footer */}
-        <div className="mt-8 text-[10px] text-white/20 font-light tracking-wider uppercase">
-          {BRAND.footerStrip}
-        </div>
-        <div className="mt-1 text-[9px] text-white/15 font-light">
-          {BRAND.hackathon.label} · {BRAND.hackathon.rfbs}
-        </div>
+        <section className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(480px,1.05fr)] lg:py-10">
+          <div className="max-w-2xl">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1.5 text-xs font-medium text-amber-100">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
+              Arc-native prediction market intelligence
+            </div>
+
+            <h1 className="text-5xl font-semibold leading-[0.96] tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Find the market edge before it disappears.
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-7 text-white/[0.62] sm:text-lg">
+              Fourcast scans Polymarket and Kalshi, prices the fair probability with AI evidence, then turns the call into a USDC-verifiable signal on Arc.
+            </p>
+
+            <div className="mt-7 w-full max-w-2xl">
+              <div
+                className={`grid gap-2 rounded-2xl border p-2 shadow-2xl shadow-black/40 transition sm:grid-cols-[1fr_auto] ${
+                  focused
+                    ? 'border-emerald-300/[0.55] bg-white/[0.12]'
+                    : 'border-white/[0.12] bg-white/[0.07]'
+                }`}
+              >
+                <label className="flex min-h-12 items-center gap-3 rounded-xl bg-black/25 px-4">
+                  <span className="text-white/[0.35]">Search</span>
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder="Will Bitcoin trade above $100k by June?"
+                    className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/[0.28]"
+                    autoFocus
+                  />
+                </label>
+                <button
+                  onClick={() => handleSearch()}
+                  disabled={!query.trim()}
+                  className="min-h-12 rounded-xl bg-white px-5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/[0.35]"
+                >
+                  Analyze
+                </button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {QUICK_SEARCHES.map((item) => (
+                  <button
+                    key={item.query}
+                    onClick={() => handleSearch(item.query)}
+                    className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60 transition hover:border-white/25 hover:text-white"
+                  >
+                    <span className="text-white/[0.35]">{item.tone}</span> · {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-7">
+              <NarrativeSteps currentStep="search" isNight className="max-w-full overflow-x-auto pb-1" />
+            </div>
+
+            <div className="mt-7 grid max-w-xl grid-cols-3 gap-3">
+              {LOOP_STATS.map((stat) => (
+                <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.05] p-3">
+                  <div className="text-lg font-semibold text-white">{stat.value}</div>
+                  <div className="mt-1 text-[11px] leading-4 text-white/[0.45]">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="rounded-2xl border border-white/[0.12] bg-[#0d1216]/90 p-3 shadow-2xl shadow-black/50 backdrop-blur-xl">
+              <div className="flex items-center justify-between border-b border-white/10 px-2 pb-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">Live edge scanner</p>
+                  <h2 className="mt-1 text-lg font-medium text-white">Miami rain market · 24h resolution</h2>
+                </div>
+                <div className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-100">
+                  +EV
+                </div>
+              </div>
+
+              <div className="grid gap-3 py-3 sm:grid-cols-3">
+                {EDGE_SUMMARY.map((item) => (
+                  <div key={item.label} className="rounded-xl border border-white/10 bg-white/[0.055] p-4">
+                    <div className="text-xs uppercase tracking-[0.16em] text-white/[0.38]">{item.label}</div>
+                    <div className={`mt-2 text-3xl font-semibold ${item.label === 'Edge' ? 'text-emerald-200' : 'text-white'}`}>
+                      {item.value}
+                    </div>
+                    <div className="mt-1 min-h-8 text-xs leading-4 text-white/[0.42]">{item.caption}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-3 lg:grid-cols-[1fr_0.82fr]">
+                <section className="rounded-xl border border-white/10 bg-black/25 p-4">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-white">Evidence stack</h3>
+                    <span className="text-xs text-white/[0.38]">3 sources verified</span>
+                  </div>
+                  <div className="space-y-3">
+                    {SIGNALS.map((signal) => (
+                      <div key={signal.label} className="flex items-start gap-3">
+                        <span className={`mt-1.5 h-2 w-2 rounded-full ${signal.accent}`} />
+                        <div>
+                          <div className="text-sm text-white/[0.86]">{signal.label}</div>
+                          <div className="text-xs leading-5 text-white/[0.45]">{signal.value}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="rounded-xl border border-white/10 bg-black/25 p-4">
+                  <h3 className="mb-4 text-sm font-semibold text-white">Venue comparison</h3>
+                  <div className="space-y-3">
+                    {VENUES.map((venue) => (
+                      <div key={venue.name} className="grid grid-cols-[1fr_auto] gap-2 rounded-lg bg-white/[0.045] p-3">
+                        <div>
+                          <div className="text-sm font-medium text-white">{venue.name}</div>
+                          <div className="mt-1 text-xs text-white/[0.42]">{venue.depth} depth</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold text-white">{venue.price}</div>
+                          <div className="mt-1 text-xs text-amber-100/70">{venue.status}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <div className="mt-3 grid gap-3 rounded-xl border border-amber-300/20 bg-amber-300/10 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <div className="text-sm font-semibold text-amber-50">Ready to publish on Arc</div>
+                  <p className="mt-1 text-xs leading-5 text-amber-50/[0.58]">
+                    Signal receipt, Brier scoring, USDC settlement, and optional Kelly-sized execution.
+                  </p>
+                </div>
+                <Link
+                  href="/signals"
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-200 px-4 text-sm font-semibold text-slate-950 transition hover:bg-amber-100"
+                >
+                  View signals
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer className="flex flex-col gap-2 border-t border-white/10 py-4 text-xs text-white/[0.35] sm:flex-row sm:items-center sm:justify-between">
+          <span>{BRAND.footerStrip}</span>
+          <span>{BRAND.hackathon.label} · {BRAND.hackathon.rfbs}</span>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 }
