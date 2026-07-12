@@ -59,7 +59,14 @@ Use Next.js route groups or re-exports so URLs change once with a redirect map i
 
 ### P1.2 — services/ layering
 
-Current `services/` has 25+ flat files. Reorganize:
+**Progress:** God-file decomposition complete (Jul 2026). The two largest files have been split:
+
+- `polymarketService.js` (2,706 lines) → 5 modules: `polymarketCache`, `polymarketHelpers`, `polymarketDiscovery`, `polymarketTrading`, + facade (40 lines)
+- `aiService.server.js` (1,781 lines) → 5 modules: `aiVeniceClient`, `aiEventMetadata`, `aiWeatherAnalysis`, `aiAgentLoop`, `aiStatus`, + facade (19 lines)
+
+Both facades preserve the exact import interface — zero consumer changes needed. All sub-modules pass esbuild syntax validation. The largest file is now 1,218 lines (down from 2,706).
+
+**Remaining:** The full `services/` directory still has 25+ flat files. The proposed sub-directory structure (`providers/`, `domain/`, `chain/`, `infra/`) is the next step:
 ```
 services/
   providers/    # polymarket, kalshi, venice, synth, openMeteo, neynar  (pure I/O)
@@ -84,7 +91,7 @@ Each provider exposes a typed client with: timeout, retry, cache key, error type
 ### P1.5 — Consolidate ethers → viem (remove ethers)
 
 - **Status:** Deferred (both actively used; migration requires full test suite verification).
-- **ethers** is used in 6 files: `services/chainConfig.js` (`JsonRpcProvider`, `Wallet`), `services/polymarketService.js` (`Wallet` for order signing), `app/api/predictions/route.js`, `app/api/predictions/health/route.js` (`JsonRpcProvider`, contract reads), `app/api/wallet/route.js`, `scripts/create-farcaster-account.js`.
+- **ethers** is used in 6 files: `services/chainConfig.js` (`JsonRpcProvider`, `Wallet`), `services/polymarketTrading.js` (`Wallet` for order signing — was `polymarketService.js` before decomposition), `app/api/predictions/route.js`, `app/api/predictions/health/route.js` (`JsonRpcProvider`, contract reads), `app/api/wallet/route.js`, `scripts/create-farcaster-account.js`.
 - **viem** is used in 8 files: `services/arcPublisher.js` (`parseUnits`), `app/api/analyze/route.js` (`createPublicClient`), `components/CctpTransfer.js` (`parseUnits`), `hooks/useOrderSigning.js` (`parseUnits`), `hooks/useSubscription.js` (`parseUnits`), deploy scripts (`createWalletClient`, `privateKeyToAccount`), `onchain/config.ts` (`defineChain`).
 - **Migration plan:** Replace `ethers.JsonRpcProvider` → `createPublicClient({ transport: http(url) })`; `ethers.Wallet` → `privateKeyToAccount(pk)` + `createWalletClient`; contract reads → viem `readContract`. Do one file at a time with tests green after each.
 - **Risk:** Polymarket order signing depends on `Wallet` for EIP-712 signing; verify signature compatibility before merging.

@@ -2,13 +2,22 @@
 
 ## Overview
 
-Fourcast is an **Arc-native prediction market intelligence agent** that combines AI analysis, Polymarket/Kalshi venue data, and USDC settlement on Circle Arc to help traders and autonomous workflows find and act on market inefficiencies.
+Fourcast is an **AI agent that finds mispriced prediction markets with auditable live-web evidence**. It combines Bright Data web scraping, AI analysis (Venice AI), Polymarket/Kalshi venue data, and USDC settlement on Circle Arc to help traders and autonomous workflows find and act on market inefficiencies.
 
 ## Core Components
 
-### 1. AI Analysis Engine (`services/aiService.server.js`)
+### 1. AI Analysis Engine (`services/aiService.server.js` → facade)
 
-The AI engine generates predictions using Venice AI (Llama 3.3 70B) with multiple data sources:
+The AI engine generates predictions using Venice AI (Llama 3.3 70B) with multiple data sources. The former 1,781-line god-file has been decomposed into focused modules:
+
+| Module | Lines | Responsibility |
+|--------|-------|----------------|
+| `aiVeniceClient.js` | 340 | Venice AI API client + shared constants (`WEATHER_SENSITIVE_CATEGORIES`, `isWeatherSensitiveCategory`, `detectEventTypeFromTitle`) + `callVeniceAI` |
+| `aiEventMetadata.js` | 121 | Event location verification + metadata extraction via Venice AI |
+| `aiWeatherAnalysis.js` | 539 | Single-market weather impact analysis (`analyzeWeatherImpactServer`) |
+| `aiAgentLoop.js` | 799 | Autonomous agent loop — async generator (`runAgentLoop`) |
+| `aiStatus.js` | 24 | AI service status/availability (`getAIStatus`) |
+| `aiService.server.js` | 19 | Facade — re-exports the 3 public functions for backward compatibility |
 
 ```javascript
 // Core analysis flow
@@ -34,7 +43,18 @@ The AI engine generates predictions using Venice AI (Llama 3.3 70B) with multipl
 
 ### 2. Market Data Services
 
-#### Polymarket Service (`services/polymarketService.js`)
+#### Polymarket Service (`services/polymarketService.js` → facade)
+
+The former 2,706-line god-file has been decomposed into focused modules:
+
+| Module | Lines | Responsibility |
+|--------|-------|----------------|
+| `polymarketCache.js` | 80 | Shared cache state (Maps, durations, URLs) + cache methods |
+| `polymarketHelpers.js` | 910 | Pure utility functions: location/metadata extraction, weather edge & efficiency assessment, order book enrichment, depth calculation, tag normalization |
+| `polymarketDiscovery.js` | 1,218 | Market discovery: sports metadata, category tags, market search, catalog building, weather-sensitive market ranking |
+| `polymarketTrading.js` | 322 | Trading: market validation, enriched details, price history, order building/validation, server-side execution |
+| `polymarketService.js` | 40 | Facade — re-exports all 32 methods as a backward-compatible singleton |
+
 - Live odds fetching from `gamma-api.polymarket.com`
 - Order signing and placement via CLOB
 - Market catalog caching (30min)
