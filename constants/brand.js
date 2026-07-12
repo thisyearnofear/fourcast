@@ -53,19 +53,17 @@ export const BRAND = {
 
   /** Wallet explainer — show everywhere users connect */
   walletExplainer: {
-    headline: 'Fourcast uses three layers:',
+    headline: 'Fourcast uses two layers:',
     layers: [
       { icon: '🌀', name: 'Arc', detail: 'USDC settlement — subscriptions, signals, tips (~$0.01/tx)' },
       { icon: '📊', name: 'EVM (Polygon)', detail: 'Polymarket & Kalshi order placement' },
-      { icon: '💎', name: 'Movement / Aptos', detail: 'Legacy testnet signal records (optional)' },
     ],
-    cta: 'Connect any EVM wallet — switch to Arc testnet for settlement.',
+    cta: 'Connect an EVM wallet — Arc settlement is handled automatically.',
   },
 
   publish: {
     arcPreferred: { chain: 'Arc (USDC)', gas: '~$0.01 USDC' },
-    legacy: { chain: 'Movement / Aptos', gas: '~0.001 APT' },
-    footnote: 'Arc is primary settlement. Legacy chains remain for existing testnet signals.',
+    footnote: 'All settlement happens on Arc. EVM wallets are used for venue order placement.',
   },
 
   agent: {

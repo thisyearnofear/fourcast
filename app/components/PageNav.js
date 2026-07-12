@@ -28,7 +28,7 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
     : "bg-black/20 border-black/30";
 
   // Primary navigation structure
-  // Core loop: Search → Analyze → Publish/Trade → Track
+  // Core loop: Scrape → Analyze → Detect Edge → Execute (matches BRAND.loop)
   // Everything experimental moves to /labs
   const primaryNav = [
     { 
@@ -68,6 +68,12 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
       href: "/labs",
       icon: "🧪",
       description: BRAND.nav.labs
+    },
+    {
+      name: "Alerts",
+      href: "/notifications",
+      icon: "🔔",
+      description: "Notifications from analysts you follow"
     },
   ];
 

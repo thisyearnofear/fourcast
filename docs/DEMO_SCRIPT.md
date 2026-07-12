@@ -4,7 +4,7 @@ Use this order so judges see **agency → Arc → traction** in under three minu
 
 ## Opening (15s)
 
-> "Fourcast is an **Arc-native prediction market intelligence agent**. It scans Polymarket and Kalshi, finds +EV edge with AI and ML, publishes verifiable signals settled in USDC on Arc, and executes cross-venue arbitrage when the spread clears fees. We're built for Agora RFB 02, 05, and 06."
+> "Fourcast is an **AI agent that finds mispriced prediction markets with auditable live-web evidence**. It uses Bright Data to scrape live web sources, synthesizes fair probabilities with AI, detects edge against Polymarket & Kalshi odds, publishes verifiable signals settled in USDC on Arc, and executes cross-venue arbitrage when the spread clears fees. We're built for Agora RFB 02, 05, and 06."
 
 **Show:** Home (`/`) — tagline, narrative steps, footer (Arc · USDC).
 

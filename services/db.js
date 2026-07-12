@@ -470,7 +470,7 @@ export async function saveSignal(signal) {
         (signal.author_address && typeof signal.author_address === 'string') ? signal.author_address.toLowerCase() : null,
         signal.tx_hash,
         signal.timestamp,
-        signal.chain_origin || 'APTOS'
+        signal.chain_origin || 'ARC'
       ]
     );
     return { success: true };

@@ -41,6 +41,8 @@ export function SportsTabContent({
   setSelectedArbitrage,
   agentBrierScore,
   calibrationScore,
+  visibleMarketCount,
+  onSignalCountFetched,
 }) {
   const dateRangeLabels = {
     today: "Today",
@@ -181,7 +183,7 @@ export function SportsTabContent({
       )}
 
       {/* Markets List */}
-      {isLoading && (
+      {isLoading || !markets ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className={`glass-subtle rounded-3xl p-5 ${isNight ? 'border-white/10' : 'border-black/10'}`}>
@@ -196,9 +198,7 @@ export function SportsTabContent({
             </div>
           ))}
         </div>
-      )}
-
-      {error && (
+      ) : error ? (
         <EmptyMarketState
           category={filters.eventType}
           message={error}
@@ -206,22 +206,26 @@ export function SportsTabContent({
             setFilters(prev => ({ ...prev, eventType: cat }));
           }}
         />
-      )}
-
-      {!isLoading && !error && markets && markets.length > 0 && (
+      ) : markets.length === 0 ? (
+        <EmptyMarketState
+          category={filters.eventType}
+          message="No markets match the current filters."
+          onSwitchCategory={(cat) => {
+            setFilters(prev => ({ ...prev, eventType: cat }));
+          }}
+        />
+      ) : (
         <div className="space-y-4">
           {markets.map((market, index) => (
-            <MarketCard
+            <StaggeredMarketCard
               key={market.marketID || market.id || index}
               market={market}
+              index={index}
               onAnalyze={onAnalyze}
               isNight={isNight}
               textColor={textColor}
               cardBgColor={cardBgColor}
-              isExpanded={
-                expandedMarketId ===
-                (market.marketID || market.id || market.tokenID)
-              }
+              isExpanded={expandedMarketId === (market.marketID || market.id || market.tokenID)}
               expandedMarketId={expandedMarketId}
               setExpandedMarketId={setExpandedMarketId}
               analysis={analysis}
@@ -237,6 +241,7 @@ export function SportsTabContent({
               setSelectedArbitrage={setSelectedArbitrage}
               agentBrierScore={agentBrierScore}
               calibrationScore={calibrationScore}
+              visibleCount={visibleMarketCount}
             />
           ))}
         </div>
@@ -379,7 +384,7 @@ export function ChainActionWidget({
         </div>
 
         {shouldPublish && (
-          // Prefer Movement if available (better monetization), else Aptos
+          // Chain selection for publishing (Arc preferred, Movement/Aptos legacy)
           chains.movement.connected ? renderChainAction(
             CHAINS.MOVEMENT,
             chains.movement,
@@ -460,6 +465,7 @@ export function DiscoveryTabContent({
   setSelectedArbitrage,
   agentBrierScore,
   calibrationScore,
+  visibleMarketCount,
 }) {
   const [showArbitrage, setShowArbitrage] = useState(false);
 
@@ -727,7 +733,7 @@ export function DiscoveryTabContent({
         })()}
 
       {/* Markets List */}
-      {isLoading && (
+      {isLoading || !markets ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className={`glass-subtle rounded-3xl p-5 ${isNight ? 'border-white/10' : 'border-black/10'}`}>
@@ -742,9 +748,7 @@ export function DiscoveryTabContent({
             </div>
           ))}
         </div>
-      )}
-
-      {error && (
+      ) : error ? (
         <EmptyMarketState
           category={filters.category}
           message={error}
@@ -752,40 +756,44 @@ export function DiscoveryTabContent({
             setFilters(prev => ({ ...prev, category: cat }));
           }}
         />
-      )}
-
-      {!isLoading &&
-        !error &&
-        markets &&
-        markets.length > 0 &&
+      ) : markets.length === 0 ? (
+        <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 text-center`}>
+          <p className={`${textColor} opacity-90`}>
+            No markets match your filters. Try broadening your options.
+          </p>
+        </div>
+      ) : (
         (() => {
-          // Apply client-side filters
-          let filteredMarkets =
-            filters.platform === "all"
-              ? markets
-              : markets.filter(
-                (m) => (m.platform || "polymarket") === filters.platform
-              );
-
-          // Category filter for Path Analysis (special client-side flag)
-          if (filters.category === "Path") {
-            filteredMarkets = filteredMarkets.filter(m => m.isPathDependent);
+          let filteredMarkets = markets;
+          if (filters.platform !== 'all') {
+            filteredMarkets = markets.filter((m) => (m.platform || 'polymarket') === filters.platform);
+          }
+          if (filters.category === 'Path') {
+            filteredMarkets = filteredMarkets.filter((m) => m.isPathDependent);
           }
 
-          return filteredMarkets.length > 0 ? (
+          if (filteredMarkets.length === 0) {
+            return (
+              <div className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 text-center`}>
+                <p className={`${textColor} opacity-90`}>
+                  No {filters.platform === 'kalshi' ? 'Kalshi' : 'Polymarket'} markets found. Try selecting "All Platforms" or adjusting other filters.
+                </p>
+              </div>
+            );
+          }
+
+          return (
             <div className="space-y-4">
               {filteredMarkets.map((market, index) => (
-                <MarketCard
+                <StaggeredMarketCard
                   key={market.marketID || market.id || index}
                   market={market}
+                  index={index}
                   onAnalyze={onAnalyze}
                   isNight={isNight}
                   textColor={textColor}
                   cardBgColor={cardBgColor}
-                  isExpanded={
-                    expandedMarketId ===
-                    (market.marketID || market.id || market.tokenID)
-                  }
+                  isExpanded={expandedMarketId === (market.marketID || market.id || market.tokenID)}
                   expandedMarketId={expandedMarketId}
                   setExpandedMarketId={setExpandedMarketId}
                   analysis={analysis}
@@ -801,26 +809,50 @@ export function DiscoveryTabContent({
                   setSelectedArbitrage={setSelectedArbitrage}
                   agentBrierScore={agentBrierScore}
                   calibrationScore={calibrationScore}
+                  visibleCount={visibleMarketCount}
                 />
               ))}
             </div>
-          ) : (
-            <div
-              className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6 text-center`}
-            >
-              <p className={`${textColor} opacity-90`}>
-                No {filters.platform === "kalshi" ? "Kalshi" : "Polymarket"}{" "}
-                markets found. Try selecting "All Platforms" or adjusting other
-                filters.
-              </p>
-            </div>
           );
-        })()}
+        })()
+      )}
     </div>
   );
 }
 
 // Shared Market Card Component
+
+/**
+ * StaggeredMarketCard — wraps MarketCard with a staggered reveal animation.
+ *
+ * Used by SportsTabContent and DiscoveryTabContent. The parent page tracks a
+ * `visibleCount` via the useStaggeredAnimation hook and passes it down along
+ * with each card's `index`. Cards remain hidden (opacity-0, translated down)
+ * until the stagger timer reveals them, then fade/slide into place.
+ *
+ * If `visibleCount` is omitted the card renders immediately (graceful fallback).
+ */
+export function StaggeredMarketCard({
+  index = 0,
+  visibleCount = Infinity,
+  ...marketCardProps
+}) {
+  const isVisible = index < visibleCount;
+
+  return (
+    <div
+      className={`transition-all duration-500 ease-out ${
+        isVisible
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-4 pointer-events-none"
+      }`}
+      aria-hidden={!isVisible}
+    >
+      <MarketCard {...marketCardProps} />
+    </div>
+  );
+}
+
 export function MarketCard({
   market,
   onAnalyze,
@@ -1608,7 +1640,7 @@ export function MarketCard({
                     Connect wallet to start your track record
                   </p>
                   <p className={`text-xs ${textColor} opacity-70 font-light`}>
-                    Connect wallet — Arc (USDC) or legacy Aptos/Movement to publish
+                    Connect wallet — Arc (USDC) to publish
                     and start building a verifiable prediction history
                   </p>
                 </div>

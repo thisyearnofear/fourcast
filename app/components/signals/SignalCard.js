@@ -1,14 +1,17 @@
 import { useState } from 'react';
+import { useAccount } from 'wagmi';
 import { ChainNetworkBadge, ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
 import { generateXUrl, generateFarcasterUrl, generateSignalUrl, copySignalLink } from '@/utils/shareSignal';
 import EvidenceBlock from '@/components/EvidenceBlock';
 import ReputationBadge from '@/components/ReputationBadge';
+import FollowButton from '@/components/FollowButton';
 import TippingModal from './TippingModal';
 
 export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip, userStats, onExpand }) {
     const [shareOpen, setShareOpen] = useState(false);
     const [tipModalOpen, setTipModalOpen] = useState(false);
     const [copied, setCopied] = useState(false);
+    const { address } = useAccount();
 
     const handleToggle = () => {
         onToggle();
@@ -79,8 +82,12 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                     </div>
 
                     <div className="flex items-center gap-2 ml-auto">
+                        {/* Follow analyst — converts one-shot share virality into compounding retention */}
+                        <span onClick={(e) => e.stopPropagation()}>
+                            <FollowButton authorAddress={signal.author_address} currentAddress={address} />
+                        </span>
                         {/* Tip Button - Visible for Movement signals */}
-                        {onTip && (signal.chain_origin === 'MOVEMENT' || signal.tipping_enabled) && (
+                        {onTip && (signal.chain_origin === 'ARC' || signal.chain_origin === 'MOVEMENT' || signal.tipping_enabled) && (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();

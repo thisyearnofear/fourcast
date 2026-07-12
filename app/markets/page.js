@@ -7,6 +7,7 @@ import { useChainConnections } from "@/hooks/useChainConnections";
 import useHUDStore from "@/hooks/useHUDStore";
 import useFilterStore from "@/hooks/useFilterStore";
 import { useWeather } from "@/hooks/useWeather";
+import { useStaggeredAnimation } from "@/hooks/useStaggeredAnimation";
 import Scene3D from "@/components/Scene3D";
 import { useGlobalToast } from "@/components/ToastProvider";
 import PublishConfirmModal from "@/components/PublishConfirmModal";
@@ -87,16 +88,10 @@ export default function MarketsPage() {
     setUrlParamsRead(true);
   }, [urlParamsRead]);
 
-  // Safety check: ensure all required values exist
-  if (!chains) {
-    console.error('[Markets Page] ChainConnections initialization failed:', {
-      chains: !!chains,
-      canPerform: !!canPerform,
-      canPublish: typeof canPublish,
-      chainConnections
-    });
-    return <div>Loading wallet connections...</div>;
-  }
+  // NOTE: The chains-loading guard was previously an early return placed here,
+  // BETWEEN hook calls. That violated React's Rules of Hooks (hook count changed
+  // between renders when `chains` became available, crashing the page). The guard
+  // has been moved to AFTER all hooks — see below, just before the main return.
   // console.log('[Markets Page] ChainConnections initialized successfully');
 
   const {
@@ -123,6 +118,14 @@ export default function MarketsPage() {
   const [markets, setMarkets] = useState(null);
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [isLoadingMarkets, setIsLoadingMarkets] = useState(false);
+
+  // Staggered list reveal count (rendered item count across tabs)
+  const [visibleMarketCount, setVisibleMarketCount] = useState(0);
+  const { visibleCount: staggeredCount } = useStaggeredAnimation(
+    Array.isArray(markets) ? markets.length : 0,
+    45,
+    setVisibleMarketCount
+  );
 
   // Shared analysis deep-link: auto-analyze specific market by share_id
   useEffect(() => {
@@ -228,6 +231,7 @@ export default function MarketsPage() {
 
   const fetchMarkets = async () => {
     setIsLoadingMarkets(true);
+    setMarkets(null);
     setError(null);
 
     try {
@@ -503,11 +507,11 @@ export default function MarketsPage() {
   const handlePublishSignal = useCallback(async () => {
     if (!selectedMarket || !analysis) return;
 
-    // Check if can publish to any chain (Aptos or Movement)
+    // Check if can publish
     if (!canPublish) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       addToast(
-        "Connect a wallet — Arc testnet for USDC settlement, or Aptos/Movement for legacy testnet signals",
+        "Connect a wallet — Arc testnet for USDC settlement",
         "warning",
         5000
       );
@@ -609,6 +613,24 @@ export default function MarketsPage() {
   const cardBgColor = isNight
     ? "bg-slate-900/60 border-white/20"
     : "bg-white/60 border-black/20";
+
+  // Safety check: render a loading state if chain connections aren't ready yet.
+  // This guard is intentionally placed AFTER all hooks (the last hook is the
+  // useCallback above) so that the hook call order/count stays consistent across
+  // every render, complying with React's Rules of Hooks.
+  if (!chains) {
+    console.error('[Markets Page] ChainConnections initialization failed:', {
+      chains: !!chains,
+      canPerform: !!canPerform,
+      canPublish: typeof canPublish,
+      chainConnections
+    });
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className={textColor}>Loading wallet connections…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative">
@@ -753,6 +775,7 @@ export default function MarketsPage() {
               setSelectedArbitrage={setSelectedArbitrage}
               agentBrierScore={agentBrierScore}
               calibrationScore={calibrationScore}
+              visibleMarketCount={visibleMarketCount}
             />
           )}
 
@@ -786,6 +809,7 @@ export default function MarketsPage() {
               setSelectedArbitrage={setSelectedArbitrage}
               agentBrierScore={agentBrierScore}
               calibrationScore={calibrationScore}
+              visibleMarketCount={visibleMarketCount}
             />
           )}
         </main>

@@ -1,6 +1,7 @@
 import { getSignalById } from '@/services/db.js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import SignalCTA from '@/components/SignalCTA';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -154,6 +155,13 @@ export default async function SignalPage({ params }) {
             </div>
           )}
         </div>
+
+        {/* Conversion CTA — stops the share loop from dead-ending */}
+        <SignalCTA
+          signalId={signal.id}
+          marketTitle={signal.market_title}
+          authorAddress={signal.author_address}
+        />
 
         {/* Footer */}
         <p className="text-xs text-slate-600 text-center mt-8">

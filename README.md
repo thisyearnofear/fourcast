@@ -193,7 +193,7 @@ graph LR
 - **AI**: Venice AI (Llama 3.3 70B, Qwen3-235B)
 - **Backend**: Node.js, SQLite/Turso, Redis
 - **Markets**: Polymarket CLOB, Kalshi API
-- **Settlement**: Arc (Circle L1) for USDC, Movement/Aptos legacy
+- **Settlement**: Arc (Circle L1) for USDC
 
 ---
 

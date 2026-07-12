@@ -14,20 +14,20 @@
 
 | Layer | Message |
 |-------|---------|
-| **One-liner** | Arc-native prediction market intelligence agent |
-| **Subhead** | Scan Polymarket & Kalshi · detect edge · publish on Arc · cross-venue arb |
+| **One-liner** | AI agent that finds mispriced prediction markets with auditable live-web evidence |
+| **Subhead** | Bright Data SERP + Scraping Browser + Web Unlocker → AI synthesis → edge detection across Polymarket & Kalshi · Arc settlement |
 | **Primary RFB** | 02 Prediction Market Trader Intelligence |
 | **Secondary** | 05 Cross-Platform Arbitrage · 06 Social Trading / builder fees |
-| **Settlement story** | Arc first; Polygon for venue orders; Movement/Aptos = legacy testnet |
-| **Product loop** | Search → Analyze → Publish on Arc → Get Scored |
+| **Settlement story** | Arc for settlement; Polygon for venue orders |
+| **Product loop** | Scrape → Analyze → Detect Edge → Execute |
 
-Judges should never see "multi-chain" as the lead — **Arc is settlement**, other chains are **venues or legacy**.
+Judges should never see "multi-chain" as the lead — **the AI agent is the product**, Arc is **settlement plumbing**, EVM chains are **venues**.
 
 ---
 
 ## Why Fourcast Fits
 
-Fourcast is an **Arc-native prediction market intelligence agent** that already solves the hackathon's core challenge: AI agents that trade, invest, and interface with markets — with USDC settlement on Circle Arc.
+Fourcast is an **AI agent that finds mispriced prediction markets with auditable live-web evidence**. It uses Bright Data to scrape live web sources, synthesizes fair probabilities with AI, detects edge against Polymarket & Kalshi odds, publishes verifiable signals settled in USDC on Arc, and executes cross-venue arbitrage when the spread clears fees. We're built for Agora RFB 02, 05, and 06.
 
 Our existing features map directly to hackathon RFBs:
 
@@ -61,7 +61,7 @@ Our existing features map directly to hackathon RFBs:
 
 ### Before (Current)
 ```
-Fourcast → Movement/Aptos (signals, APT tipping)
+Fourcast → Arc (signals, USDC settlement, tipping)
          → BNB/Polygon/Arbitrum (trading contracts)
          → Polymarket/Kalshi (live odds)
 ```

@@ -81,6 +81,14 @@ Each provider exposes a typed client with: timeout, retry, cache key, error type
 - Update `README.md` badges to reflect reality.
 - Reason: an architecture that maintains three half-finished EVM integrations cannot be 9/10.
 
+### P1.5 — Consolidate ethers → viem (remove ethers)
+
+- **Status:** Deferred (both actively used; migration requires full test suite verification).
+- **ethers** is used in 6 files: `services/chainConfig.js` (`JsonRpcProvider`, `Wallet`), `services/polymarketService.js` (`Wallet` for order signing), `app/api/predictions/route.js`, `app/api/predictions/health/route.js` (`JsonRpcProvider`, contract reads), `app/api/wallet/route.js`, `scripts/create-farcaster-account.js`.
+- **viem** is used in 8 files: `services/arcPublisher.js` (`parseUnits`), `app/api/analyze/route.js` (`createPublicClient`), `components/CctpTransfer.js` (`parseUnits`), `hooks/useOrderSigning.js` (`parseUnits`), `hooks/useSubscription.js` (`parseUnits`), deploy scripts (`createWalletClient`, `privateKeyToAccount`), `onchain/config.ts` (`defineChain`).
+- **Migration plan:** Replace `ethers.JsonRpcProvider` → `createPublicClient({ transport: http(url) })`; `ethers.Wallet` → `privateKeyToAccount(pk)` + `createWalletClient`; contract reads → viem `readContract`. Do one file at a time with tests green after each.
+- **Risk:** Polymarket order signing depends on `Wallet` for EIP-712 signing; verify signature compatibility before merging.
+
 **Exit criteria:** API tree fits on one screen; every external call goes through a provider client; one EVM chain documented as GA.
 
 ---

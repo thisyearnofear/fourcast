@@ -147,3 +147,4 @@ bin/
 
 # Deploy artifacts
 .prediction-receipt-address
+.env*

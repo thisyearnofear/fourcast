@@ -460,10 +460,11 @@ async function handleFollowUpKalshi(chatId, messageId, query) {
 
 async function handleFollowUpAlert(chatId, query) {
   return sendMessage(chatId, [
-    `🔮 *Edge Alerts*`, ``,
-    `I'll notify you when I detect edges for "${query}".`,
-    `*Coming soon:* Set minimum edge %, get push notifications.`,
-    `For now, use /edge to check manually.`,
+    `🔮 *Alerts & Follow*`, ``,
+    `Follow analysts on Fourcast to get notified when they publish new signals.`,
+    `Connect your wallet at ${APP_URL}/signals → click Follow on any analyst.`,
+    ``,
+    `*Edge alerts:* Use /edge to check markets manually — automated edge alerts coming soon.`,
   ].join('\n'), { reply_markup: backToAnalysisKeyboard(query) });
 }
 

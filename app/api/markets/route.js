@@ -107,17 +107,21 @@ export async function POST(request) {
         // Apply enhanced filtering to Kalshi markets with adaptive thresholds
         kalshiMarkets = kMarkets.filter(m => {
           const vol = parseFloat(m.volume24h || 0);
-          // Enhanced logic: More aggressive discovery for Kalshi
-          // Lower the barrier for discovery while maintaining quality
-          const minContracts = Math.max(3, minVolume / 1000); // Much lower threshold
-          const hasLiquidity = (m.liquidity || 0) > 1000; // Alternative quality signal
-          const isActiveMarket = vol > 0 || hasLiquidity; // At least some activity
-          
-          // For 'all' category or when Kalshi is specifically selected, be more inclusive
+          const hasLiquidity = (m.liquidity || 0) > 1000;
+
+          // If volume is missing (stub from events endpoint), allow through for discovery.
+          // We can't filter what we can't measure.
+          if (!m.volume24h && !m.liquidity) {
+            return true;
+          }
+
+          const minContracts = Math.max(3, minVolume / 1000);
+          const isActiveMarket = vol > 0 || hasLiquidity;
+
           if (eventType === 'all' || filters.platform === 'kalshi') {
             return isActiveMarket;
           }
-          
+
           return vol >= minContracts || hasLiquidity;
         });
 
