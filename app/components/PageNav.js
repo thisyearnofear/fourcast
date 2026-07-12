@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BRAND } from "@/constants/brand";
+import ThemeToggle from "@/components/ThemeToggle";
 
 /**
  * Primary Navigation Component
@@ -118,9 +119,9 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
             <span className="text-[11px]">{item.name}</span>
           </Link>
         ))}
+        {/* Theme toggle */}
+        <ThemeToggle isNight={isNight} className={isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} />
       </div>
-
-      {/* Mobile Navigation - Icon + label */}
       <div className="flex sm:hidden items-center gap-1">
         {primaryNav.map((item) => (
           <Link
@@ -151,6 +152,8 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
           <span className="text-base leading-none">🧪</span>
           <span className={`text-[8px] mt-0.5 font-medium ${textColor} leading-none`}>Labs</span>
         </Link>
+        {/* Theme toggle on mobile */}
+        <ThemeToggle isNight={isNight} className={isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} />
       </div>
     </nav>
   );

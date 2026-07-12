@@ -132,7 +132,7 @@ export default function SearchLanding() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-lg px-3 py-2 text-xs font-medium text-white/[0.55] transition hover:bg-white/10 hover:text-white"
+                className="rounded-lg px-3 py-2 text-xs font-medium text-white/[0.65] transition hover:bg-white/10 hover:text-white"
               >
                 {link.label}
               </Link>
@@ -156,7 +156,7 @@ export default function SearchLanding() {
             <h1 className="text-5xl font-semibold leading-[0.96] tracking-tight text-white sm:text-6xl lg:text-7xl">
               Live web data. AI agent. Market edge.
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-white/[0.62] sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-7 text-white/[0.72] sm:text-lg">
               Fourcast scrapes the live web with Bright Data, synthesizes intelligence with AI, and detects mispriced prediction markets across Polymarket and Kalshi — before anyone else.
             </p>
 
@@ -169,7 +169,7 @@ export default function SearchLanding() {
                 }`}
               >
                 <label className="flex min-h-12 items-center gap-3 rounded-xl bg-black/25 px-4">
-                  <span className="text-white/[0.35]">Search</span>
+                  <span className="text-white/[0.50]">Search</span>
                   <input
                     type="text"
                     value={query}
@@ -178,14 +178,14 @@ export default function SearchLanding() {
                     onBlur={() => setFocused(false)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Will Bitcoin trade above $100k by June?"
-                    className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/[0.28]"
+                    className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/[0.45]"
                     autoFocus
                   />
                 </label>
                 <button
                   onClick={() => handleSearch()}
                   disabled={!query.trim()}
-                  className="min-h-12 rounded-xl bg-white px-5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/[0.35]"
+                  className="min-h-12 rounded-xl bg-white px-5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/[0.50]"
                 >
                   Analyze
                 </button>
@@ -197,7 +197,7 @@ export default function SearchLanding() {
                     onClick={() => handleSearch(item.query)}
                     className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60 transition hover:border-white/25 hover:text-white"
                   >
-                    <span className="text-white/[0.35]">{item.tone}</span> · {item.label}
+                    <span className="text-white/[0.50]">{item.tone}</span> · {item.label}
                   </button>
                 ))}
               </div>
@@ -211,7 +211,7 @@ export default function SearchLanding() {
               {demo.stats.map((stat) => (
                 <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.05] p-3">
                   <div className="text-lg font-semibold text-white">{stat.value}</div>
-                  <div className="mt-1 text-[11px] leading-4 text-white/[0.45]">{stat.label}</div>
+                  <div className="mt-1 text-[11px] leading-4 text-white/[0.55]">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -232,11 +232,11 @@ export default function SearchLanding() {
               <div className="grid gap-3 py-3 sm:grid-cols-3">
                 {edgeSummary.map((item) => (
                   <div key={item.label} className="rounded-xl border border-white/10 bg-white/[0.055] p-4">
-                    <div className="text-xs uppercase tracking-[0.16em] text-white/[0.38]">{item.label}</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-white/[0.55]">{item.label}</div>
                     <div className={`mt-2 text-3xl font-semibold ${item.label === 'Edge' ? 'text-emerald-200' : 'text-white'}`}>
                       {item.value}
                     </div>
-                    <div className="mt-1 min-h-8 text-xs leading-4 text-white/[0.42]">{item.caption}</div>
+                    <div className="mt-1 min-h-8 text-xs leading-4 text-white/[0.55]">{item.caption}</div>
                   </div>
                 ))}
               </div>
@@ -245,7 +245,7 @@ export default function SearchLanding() {
                 <section className="rounded-xl border border-white/10 bg-black/25 p-4">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold text-white">Evidence stack</h3>
-                    <span className="text-xs text-white/[0.38]">3 sources verified</span>
+                    <span className="text-xs text-white/[0.55]">3 sources verified</span>
                   </div>
                   <div className="space-y-3">
                     {demo.evidence.map((signal, index) => (
@@ -253,7 +253,7 @@ export default function SearchLanding() {
                         <span className={`mt-1.5 h-2 w-2 rounded-full ${EVIDENCE_ACCENTS[index % EVIDENCE_ACCENTS.length]}`} />
                         <div>
                           <div className="text-sm text-white/[0.86]">{signal.label}</div>
-                          <div className="text-xs leading-5 text-white/[0.45]">{signal.value} · {signal.source}</div>
+                          <div className="text-xs leading-5 text-white/[0.55]">{signal.value} · {signal.source}</div>
                         </div>
                       </div>
                     ))}
@@ -267,7 +267,7 @@ export default function SearchLanding() {
                       <div key={venue.name} className="grid grid-cols-[1fr_auto] gap-2 rounded-lg bg-white/[0.045] p-3">
                         <div>
                           <div className="text-sm font-medium text-white">{venue.name}</div>
-                          <div className="mt-1 text-xs text-white/[0.42]">{venue.depth} depth</div>
+                          <div className="mt-1 text-xs text-white/[0.55]">{venue.depth} depth</div>
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-semibold text-white">{formatPrice(venue.price)}</div>
@@ -309,7 +309,7 @@ export default function SearchLanding() {
           </div>
         </section>
 
-        <footer className="flex flex-col gap-2 border-t border-white/10 py-4 text-xs text-white/[0.35] sm:flex-row sm:items-center sm:justify-between">
+        <footer className="flex flex-col gap-2 border-t border-white/10 py-4 text-xs text-white/[0.50] sm:flex-row sm:items-center sm:justify-between">
           <span>{BRAND.footerStrip}</span>
           <span>{BRAND.hackathon.label} · {BRAND.hackathon.track}</span>
         </footer>

@@ -7,6 +7,7 @@ import { useChainConnections } from '@/hooks/useChainConnections';
 import useHUDStore from '@/hooks/useHUDStore';
 import useFilterStore from '@/hooks/useFilterStore';
 import { useWeather } from '@/hooks/useWeather';
+import { useTheme } from '@/hooks/useTheme';
 import { useGlobalToast } from '@/components/ToastProvider';
 import PageNav, { SecondaryNav } from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
@@ -47,7 +48,7 @@ export default function SignalsPage() {
     const [weatherData, setWeatherData] = useState(null);
     const [isLoadingWeather, setIsLoadingWeather] = useState(true);
     const { isHUDVisible } = useHUDStore();
-    const isNight = true;
+    const { isNight } = useTheme();
 
     // Track record state (Brier scores, calibration)
     const [agentTrackStats, setAgentTrackStats] = useState(null);

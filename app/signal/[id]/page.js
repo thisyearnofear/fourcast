@@ -65,6 +65,9 @@ export default async function SignalPage({ params }) {
     LOW: 'text-orange-300 bg-orange-900/40 border-orange-600/30',
   };
   const confidenceClass = confidenceColors[signal.confidence] || confidenceColors.LOW;
+  // Icons ensure confidence is not color-only — accessible to colorblind users
+  const confidenceIcons = { HIGH: '✅', MEDIUM: '⚠️', LOW: '❌' };
+  const confidenceIcon = confidenceIcons[signal.confidence] || '❓';
 
   const efficiencyColors = {
     EFFICIENT: 'text-green-300 bg-green-900/30',
@@ -122,6 +125,7 @@ export default async function SignalPage({ params }) {
             <span
               className={`text-xs px-3 py-1.5 rounded-full border font-medium ${confidenceClass}`}
             >
+              <span aria-hidden="true">{confidenceIcon}</span>{' '}
               {signal.confidence || 'LOW'} Confidence
             </span>
             {signal.odds_efficiency && (

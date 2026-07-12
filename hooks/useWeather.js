@@ -2,12 +2,13 @@
 import { useState, useEffect } from 'react';
 import { weatherService } from '@/services/weatherService';
 import { UserPreferences } from '@/services/userPreferences';
+import { useTheme } from '@/hooks/useTheme';
 
 export function useWeather() {
   const [weatherData, setWeatherData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentLocationName, setCurrentLocationName] = useState('');
-  const [isNight] = useState(true);
+  const { isNight } = useTheme();
 
   const loadWeather = async () => {
     setIsLoading(true);

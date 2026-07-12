@@ -30,9 +30,17 @@ export function ConfidenceBadge({ confidence, isNight }) {
         LOW: isNight ? 'bg-red-500/20 text-red-300 border-red-500/30' : 'bg-red-400/20 text-red-800 border-red-400/30',
         default: isNight ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-gray-400/20 text-gray-800 border-gray-400/30'
     };
+    // Icons ensure confidence is not color-only — accessible to colorblind users
+    const iconMap = {
+        HIGH: '✅',
+        MEDIUM: '⚠️',
+        LOW: '❌',
+        default: '❓'
+    };
 
     return (
         <span className={`${baseClass} ${colorMap[confidence] || colorMap.default}`}>
+            <span aria-hidden="true">{iconMap[confidence] || iconMap.default}</span>{' '}
             {confidence || 'UNKNOWN'}
         </span>
     );
