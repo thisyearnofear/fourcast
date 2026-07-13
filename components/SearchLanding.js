@@ -5,19 +5,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NarrativeSteps from '@/components/NarrativeSteps';
 import { BRAND } from '@/constants/brand';
+import PageNav, { HomeLink } from '@/app/components/PageNav';
 
 const QUICK_SEARCHES = [
   { label: 'BTC $150k', query: 'Bitcoin $150k August 2026', tone: 'Crypto' },
   { label: 'Fed July cut', query: 'Fed interest rate cut July 2026', tone: 'Macro' },
   { label: 'SpaceX Mars', query: 'SpaceX Starship Mars cargo 2026', tone: 'Space' },
   { label: 'NVIDIA $200', query: 'NVIDIA stock $200 by September 2026', tone: 'Equities' },
-];
-
-const NAV_LINKS = [
-  { label: 'Markets', href: '/markets' },
-  { label: 'Signals', href: '/signals' },
-  { label: 'Agent', href: '/agent' },
-  { label: 'Labs', href: '/labs' },
 ];
 
 const FALLBACK_DEMO = {
@@ -102,7 +96,7 @@ export default function SearchLanding() {
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#080a0d] text-white">
+    <main className="min-h-screen overflow-x-hidden bg-[var(--app-bg)] text-white">
       <div
         className="absolute inset-0 pointer-events-none opacity-80"
         style={{
@@ -121,23 +115,10 @@ export default function SearchLanding() {
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/25 px-3 py-2.5 backdrop-blur-xl">
-          <Link href="/" className="flex items-center gap-2 text-sm font-medium tracking-wide text-white">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-base">
-              {BRAND.emoji}
-            </span>
-            <span>{BRAND.name}</span>
-          </Link>
-          <nav className="hidden items-center gap-1 sm:flex" aria-label="Primary navigation">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-lg px-3 py-2 text-xs font-medium text-white/[0.65] transition hover:bg-white/10 hover:text-white"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <HomeLink />
+          <div className="hidden sm:block">
+            <PageNav />
+          </div>
           <button
             onClick={() => handleSearch(featuredSearch.query)}
             className="rounded-lg border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-300/20"

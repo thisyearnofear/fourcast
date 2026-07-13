@@ -2,13 +2,17 @@
 import { useState, useEffect } from 'react';
 import { weatherService } from '@/services/weatherService';
 import { UserPreferences } from '@/services/userPreferences';
-import { useTheme } from '@/hooks/useTheme';
+
+// The app is dark-first: isNight is a constant. Kept in the return shape so
+// the many `isNight ?` style ternaries keep resolving to their dark branch
+// without prop-drilling a theme system. (The /labs/weather scene computes its
+// own day/night from local time — that's scene lighting, not UI theme.)
+const isNight = true;
 
 export function useWeather() {
   const [weatherData, setWeatherData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentLocationName, setCurrentLocationName] = useState('');
-  const { isNight } = useTheme();
 
   const loadWeather = async () => {
     setIsLoading(true);

@@ -3,207 +3,190 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BRAND } from "@/constants/brand";
-import ThemeToggle from "@/components/ThemeToggle";
+import WalletConnect from "@/app/components/WalletConnect";
 
 /**
- * Primary Navigation Component
- * 
- * Architecture:
- * - Brand (Home) always visible
- * - Primary nav: Markets, Signals
- * - Mobile: Bottom tab bar style
- * - Desktop: Horizontal nav with active state
- * 
- * Props:
- * - currentPage: string - for backward compatibility
- * - isNight: boolean - theme
- * - secondaryNav: array - optional secondary navigation items
+ * Navigation + AppShell — the single source of truth for the app chrome.
+ *
+ * Design language mirrors the landing page (the highest-spec surface):
+ * floating glass header card, slate/white-alpha text, emerald accents,
+ * flat --app-bg backdrop. Dark-first: there is no light theme.
+ *
+ * Core loop: Search → Analyze → Publish/Trade → Track (matches BRAND.loop)
  */
-export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
+
+const PRIMARY_NAV = [
+  { name: "Markets", href: "/markets", icon: "📊", description: BRAND.nav.markets, onboardId: "markets" },
+  { name: "Signals", href: "/signals", icon: "📡", description: BRAND.nav.signals, onboardId: "publish" },
+  { name: "Agent", href: "/agent", icon: "🤖", description: BRAND.nav.agent, onboardId: "agent" },
+  { name: "Positions", href: "/positions", icon: "💼", description: BRAND.nav.positions, onboardId: "positions" },
+];
+
+const SECONDARY_NAV = [
+  { name: "Labs", href: "/labs", icon: "🧪", description: BRAND.nav.labs },
+  { name: "Alerts", href: "/notifications", icon: "🔔", description: "Notifications from analysts you follow" },
+];
+
+function useIsActive() {
   const pathname = usePathname();
-  
-  const textColor = isNight ? "text-white" : "text-black";
-  const glassClass = isNight ? "glass-subtle" : "glass-subtle-light";
-  const activeBgClass = isNight
-    ? "bg-white/20 border-white/30"
-    : "bg-black/20 border-black/30";
+  return (href) => (href === "/" ? pathname === "/" : pathname?.startsWith(href));
+}
 
-  // Primary navigation structure
-  // Core loop: Search → Analyze → Publish/Trade → Track (matches BRAND.loop)
-  // Everything experimental moves to /labs
-  const primaryNav = [
-    { 
-      name: "Markets", 
-      href: "/markets", 
-      icon: "📊",
-      description: BRAND.nav.markets,
-      onboardId: "markets"
-    },
-    { 
-      name: "Signals", 
-      href: "/signals", 
-      icon: "📡",
-      description: BRAND.nav.signals,
-      onboardId: "publish"
-    },
-    { 
-      name: "Agent", 
-      href: "/agent", 
-      icon: "🤖",
-      description: BRAND.nav.agent,
-      onboardId: "agent"
-    },
-    { 
-      name: "Positions", 
-      href: "/positions", 
-      icon: "💼",
-      description: BRAND.nav.positions,
-      onboardId: "positions"
-    },
-  ];
-
-  // Labs link — shown as a secondary accessory in the nav bar
-  const labsNav = [
-    {
-      name: "Labs",
-      href: "/labs",
-      icon: "🧪",
-      description: BRAND.nav.labs
-    },
-    {
-      name: "Alerts",
-      href: "/notifications",
-      icon: "🔔",
-      description: "Notifications from analysts you follow"
-    },
-  ];
-
-  // Determine active page
-  const isActive = (href) => {
-    if (href === "/") return pathname === "/";
-    return pathname?.startsWith(href);
-  };
+/**
+ * Primary navigation links. Used by AppShell and the landing header so the
+ * link set can never drift between surfaces.
+ */
+export default function PageNav() {
+  const isActive = useIsActive();
 
   return (
-    <nav className="flex items-center gap-2">
-      {/* Desktop Navigation */}
-      <div className="hidden sm:flex items-center gap-2">
-        {primaryNav.map((item) => (
+    <nav className="flex items-center gap-1" aria-label="Primary navigation">
+      {/* Desktop */}
+      <div className="hidden sm:flex items-center gap-1">
+        {PRIMARY_NAV.map((item) => (
           <Link
             key={item.name}
             href={item.href}
             data-onboard={item.onboardId}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+            title={item.description}
+            className={`rounded-lg px-3 py-2 text-xs font-medium transition no-underline ${
               isActive(item.href)
-                ? `${activeBgClass} ${textColor}`
-                : `${glassClass} ${textColor} opacity-70 hover:opacity-100 hover:scale-[1.02]`
+                ? "bg-white/10 text-white"
+                : "text-white/[0.65] hover:bg-white/10 hover:text-white"
             }`}
           >
-            <span>{item.icon}</span>
-            <span>{item.name}</span>
+            {item.name}
           </Link>
         ))}
-        {/* Divider */}
-        <span className={`w-px h-5 ${isNight ? 'bg-white/10' : 'bg-black/10'} mx-1`} />
-        {labsNav.map((item) => (
+        <span className="mx-1 h-4 w-px bg-white/10" />
+        {SECONDARY_NAV.map((item) => (
           <Link
             key={item.name}
             href={item.href}
-            className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-light transition-all ${
+            title={item.description}
+            className={`rounded-lg px-2.5 py-2 text-xs transition no-underline ${
               isActive(item.href)
-                ? `${activeBgClass} ${textColor}`
-                : `${glassClass} ${textColor} opacity-40 hover:opacity-80 hover:scale-[1.02]`
+                ? "bg-white/10 text-white"
+                : "text-white/[0.45] hover:bg-white/10 hover:text-white/80"
             }`}
           >
-            <span>{item.icon}</span>
-            <span className="text-[11px]">{item.name}</span>
+            <span aria-hidden="true" className="mr-1">{item.icon}</span>
+            {item.name}
           </Link>
         ))}
-        {/* Theme toggle */}
-        <ThemeToggle className={isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} />
       </div>
-      <div className="flex sm:hidden items-center gap-1">
-        {primaryNav.map((item) => (
+
+      {/* Mobile: icon tabs */}
+      <div className="flex sm:hidden items-center gap-0.5">
+        {[...PRIMARY_NAV, ...SECONDARY_NAV].map((item) => (
           <Link
             key={item.name}
             href={item.href}
-            data-onboard={item.onboardId}
-            className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-all ${
-              isActive(item.href)
-                ? `${activeBgClass}`
-                : `${glassClass} opacity-70`
-            }`}
             aria-label={item.name}
+            className={`flex h-11 w-11 flex-col items-center justify-center rounded-lg transition no-underline ${
+              isActive(item.href) ? "bg-white/10" : "opacity-60 hover:opacity-100"
+            }`}
           >
             <span className="text-base leading-none">{item.icon}</span>
-            <span className={`text-[8px] mt-0.5 font-medium ${textColor} leading-none`}>{item.name}</span>
+            <span className="mt-0.5 text-[8px] font-medium leading-none text-white">{item.name}</span>
           </Link>
         ))}
-        {/* Labs icon on mobile */}
-        <Link
-          href="/labs"
-          className={`flex flex-col items-center justify-center w-11 h-12 rounded-lg transition-all ${
-            isActive('/labs')
-              ? `${activeBgClass}`
-              : `${glassClass} opacity-50`
-          }`}
-          aria-label="Labs"
-        >
-          <span className="text-base leading-none">🧪</span>
-          <span className={`text-[8px] mt-0.5 font-medium ${textColor} leading-none`}>Labs</span>
-        </Link>
-        {/* Theme toggle on mobile */}
-        <ThemeToggle className={isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} />
       </div>
     </nav>
   );
 }
 
 /**
- * Secondary Navigation Component
- * For page-specific tab navigation (used within pages)
+ * Brand link for headers.
  */
-export function SecondaryNav({ items, activeItem, onChange, isNight }) {
-  const textColor = isNight ? "text-white" : "text-black";
-  const glassClass = isNight ? "glass-subtle" : "glass-subtle-light";
-
+export function HomeLink({ showLabel = true }) {
   return (
-    <div className={`inline-flex rounded-2xl p-1 ${glassClass}`}>
-      {items.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onChange(item.id)}
-          className={`px-4 py-2 rounded-xl text-sm font-light transition-all ${
-            activeItem === item.id
-              ? isNight
-                ? "bg-purple-500/30 text-white border border-purple-400/40"
-                : "bg-purple-400/30 text-black border border-purple-500/40"
-              : `${textColor} opacity-60 hover:opacity-100`
-          }`}
-        >
-          {item.icon && <span className="mr-1.5">{item.icon}</span>}
-          {item.label}
-        </button>
-      ))}
+    <Link
+      href="/"
+      className="flex items-center gap-2 text-sm font-medium tracking-wide text-white no-underline"
+    >
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-base">
+        {BRAND.emoji}
+      </span>
+      {showLabel && <span className="hidden sm:inline">{BRAND.name}</span>}
+    </Link>
+  );
+}
+
+/**
+ * AppShell — the one page chrome every route uses (except the landing hero,
+ * which shares HomeLink/PageNav but owns its own layout).
+ *
+ * Replaces the six hand-rolled per-page headers.
+ *
+ * @param {string}  title     - Page heading
+ * @param {string}  subtitle  - One-line description under the heading
+ * @param {node}    actions   - Right side of the title row (buttons, badges)
+ * @param {node}    subheader - Below the title row (tabs, breadcrumbs)
+ * @param {string}  maxWidth  - Tailwind max-w class for header + content
+ * @param {boolean} wallet    - Render WalletConnect in the header (default true)
+ */
+export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-w-7xl", wallet = true, children }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-[var(--app-bg)] text-white">
+      {/* Header always spans the full app width so nav never cramps on
+          narrow-content pages; only <main> respects maxWidth. */}
+      <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6">
+        <header className="sticky top-4 z-50 flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/25 px-3 py-2.5 backdrop-blur-xl">
+          <HomeLink />
+          <div className="flex items-center gap-2">
+            <PageNav />
+            {wallet && <WalletConnect isNight={true} />}
+          </div>
+        </header>
+      </div>
+
+      <div className={`${maxWidth} mx-auto w-full px-4 sm:px-6`}>
+        {(title || subtitle || actions || subheader) && (
+          <div className="pt-8 pb-2">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                {title && (
+                  <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{title}</h1>
+                )}
+                {subtitle && (
+                  <p className="mt-2 max-w-xl text-sm font-light leading-6 text-white/[0.55]">{subtitle}</p>
+                )}
+              </div>
+              {actions && <div className="flex items-center gap-2">{actions}</div>}
+            </div>
+            {subheader && <div className="mt-4">{subheader}</div>}
+          </div>
+        )}
+      </div>
+
+      <main className={`${maxWidth} mx-auto w-full flex-1 px-4 py-8 sm:px-6`}>
+        {children}
+      </main>
     </div>
   );
 }
 
 /**
- * Home Link Component
- * Brand link for header
+ * Secondary Navigation — page-level tab switcher.
  */
-export function HomeLink({ isNight, showLabel = false }) {
-  const textColor = isNight ? "text-white" : "text-black";
-  
+export function SecondaryNav({ items, activeItem, onChange }) {
   return (
-    <Link
-      href="/"
-      data-onboard="weather"
-      className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all hover:opacity-80 ${textColor}`}
-    >
-      <span className="text-xl">🔮</span>
-      {showLabel && <span className="text-sm font-light">Fourcast</span>}
-    </Link>
+    <div className="inline-flex rounded-xl border border-white/10 bg-black/25 p-1 backdrop-blur-xl">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => onChange(item.id)}
+          className={`rounded-lg px-4 py-2 text-xs font-medium transition ${
+            activeItem === item.id
+              ? "bg-emerald-300/10 text-emerald-100 border border-emerald-300/30"
+              : "border border-transparent text-white/[0.55] hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          {item.icon && <span className="mr-1.5" aria-hidden="true">{item.icon}</span>}
+          {item.label}
+        </button>
+      ))}
+    </div>
   );
 }

@@ -4,8 +4,6 @@ import Link from 'next/link';
 import HUDToggle from '@/components/HUDToggle';
 import LocationSettingsButton from '@/components/LocationSettingsButton';
 import HUDFooterWrapper from '@/components/HUDFooterWrapper';
-import { WeatherProvider } from '@/components/WeatherProvider';
-import RouteScene3D from '@/components/RouteScene3D';
 import { BRAND } from '@/constants/brand';
 
 // Force all pages to be dynamic to avoid SSR/static generation issues with wallet libraries
@@ -43,25 +41,12 @@ export async function generateMetadata() {
   };
 }
 
-// Runs before first paint: mirrors useTheme's rules (dark/light/auto by hour)
-// onto <html> so browser chrome, scrollbars, and the pre-hydration background
-// match the user's saved theme instead of flashing dark-then-light.
-const themeInitScript = `(function(){try{var t=localStorage.getItem('fourcast_theme')||'auto';var night=t==='dark'||(t==='auto'&&(new Date().getHours()<6||new Date().getHours()>=18));var d=document.documentElement;d.dataset.theme=night?'dark':'light';d.style.colorScheme=night?'dark':'light';}catch(e){}})()`;
-
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
+    <html lang="en" data-theme="dark" style={{ colorScheme: 'dark' }}>
       <body suppressHydrationWarning>
         <Providers>
-          <WeatherProvider>
-            <div className="fixed inset-0 z-0">
-              <RouteScene3D />
-            </div>
-            {children}
-          </WeatherProvider>
+          {children}
           <HUDToggle />
           <LocationSettingsButton />
           <HUDFooterWrapper>

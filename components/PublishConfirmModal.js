@@ -53,17 +53,12 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
 
           <div className={`flex items-center justify-between rounded-xl p-3 border ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
             <div className="text-[10px] uppercase tracking-wider opacity-40">Settlement</div>
-            <div className={`text-xs font-medium ${onArc ? (isNight ? 'text-indigo-300' : 'text-indigo-700') : (isNight ? 'text-white/80' : 'text-black/80')}`}>
+            <div className={`text-xs font-medium ${isNight ? 'text-indigo-300' : 'text-indigo-700'}`}>
               {chainLabel}
             </div>
             <div className="text-[10px] uppercase tracking-wider opacity-40">Fee</div>
             <div className={`text-xs font-medium ${isNight ? 'text-white/80' : 'text-black/80'}`}>{gasLabel}</div>
           </div>
-          {!onArc && (
-            <p className={`text-[10px] ${isNight ? 'text-amber-400/60' : 'text-amber-700/70'}`}>
-              {BRAND.publish.footnote}
-            </p>
-          )}
         </div>
 
         <div className="flex gap-3">

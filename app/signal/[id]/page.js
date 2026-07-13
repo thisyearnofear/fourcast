@@ -2,6 +2,7 @@ import { getSignalById } from '@/services/db.js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import SignalCTA from '@/components/SignalCTA';
+import { AppShell } from '@/app/components/PageNav';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -88,8 +89,8 @@ export default async function SignalPage({ params }) {
     : null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
-      <main className="max-w-[640px] mx-auto px-5 py-12">
+    <AppShell maxWidth="max-w-[720px]" wallet={false}>
+      <div>
         {/* Breadcrumb */}
         <Link
           href="/signals"
@@ -166,7 +167,7 @@ export default async function SignalPage({ params }) {
           authorAddress={signal.author_address}
         />
 
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

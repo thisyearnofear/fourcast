@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import WalletConnect from "@/app/components/WalletConnect";
 import { useSignalPublisher } from "@/hooks/useSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
-import useHUDStore from "@/hooks/useHUDStore";
 import useFilterStore from "@/hooks/useFilterStore";
 import { useWeather } from "@/hooks/useWeather";
 import { useStaggeredAnimation } from "@/app/hooks/useStaggeredAnimation";
@@ -19,7 +17,7 @@ import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOption
 import AnalysisConfigModal from "@/components/AnalysisConfigModal";
 import PricingOverlay from "@/components/PricingOverlay";
 import NarrativeSteps from "@/components/NarrativeSteps";
-import PageNav, { SecondaryNav } from "@/app/components/PageNav";
+import { AppShell, SecondaryNav } from "@/app/components/PageNav";
 import { SportsTabContent, DiscoveryTabContent } from "./components";
 
 export default function MarketsPage() {
@@ -110,7 +108,6 @@ export default function MarketsPage() {
 
   // Weather state (for UI theming and discovery mode)
   const { weatherData, isNight } = useWeather();
-  const { isHUDVisible } = useHUDStore();
 
   // Market state (shared across tabs)
   const [markets, setMarkets] = useState(null);
@@ -611,7 +608,52 @@ export default function MarketsPage() {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <AppShell
+      title="Markets"
+      subtitle={activeTab === "sports"
+        ? "Sports predictions with weather-aware analysis"
+        : BRAND.pages.markets}
+      actions={
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center sm:flex">
+            <label className="mr-2 text-xs text-white/[0.55]">Analysis Mode</label>
+            <select
+              value={analysisMode}
+              onChange={(e) => setAnalysisMode(e.target.value)}
+              className="rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-white"
+            >
+              <option value="basic">Basic (Free)</option>
+              <option value="deep">Deep (Research)</option>
+            </select>
+          </div>
+          {/* Analysis Factor Toggles - Compact inline mode */}
+          <div className="hidden items-center lg:flex">
+            <AnalysisOptions
+              marketType={selectedMarket?.eventType || activeTab === 'sports' ? 'sports' : 'crypto'}
+              compact={true}
+            />
+          </div>
+          {canPublish && (
+            <span className="rounded-lg border border-white/10 bg-white/10 px-2 py-1 text-[10px] text-white/80">
+              My signals: {mySignalCount ?? "—"}
+            </span>
+          )}
+        </div>
+      }
+      subheader={
+        <div className="space-y-3">
+          <NarrativeSteps currentStep="analyze" isNight={true} />
+          <SecondaryNav
+            items={[
+              { id: "sports", label: "Sports & Events", icon: "🏆" },
+              { id: "discovery", label: "Crypto, Finance & More", icon: "📈" },
+            ]}
+            activeItem={activeTab}
+            onChange={setActiveTab}
+          />
+        </div>
+      }
+    >
       {/* Analysis Config Modal */}
       <AnalysisConfigModal
         isOpen={showConfigModal}
@@ -622,85 +664,7 @@ export default function MarketsPage() {
         defaultOptions={analysisOptions}
       />
 
-      {/* Scrollable Content */}
-      <div className={`relative z-20 flex flex-col min-h-screen overflow-y-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        {/* Header */}
-        <header
-          className={`sticky top-0 z-50 border-b ${cardBgColor} backdrop-blur-md`}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
-            <div>
-              <div>
-              <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
-                Markets
-              </h1>
-              <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                {activeTab === "sports"
-                  ? "Sports predictions with weather-aware analysis"
-                  : BRAND.pages.markets}
-              </p>
-              {/* Narrative step — step 2 & 3: Analyze → Publish/Trade */}
-              <NarrativeSteps currentStep="analyze" isNight={isNight} className="mt-3" />
-            </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <PageNav currentPage="Markets" isNight={isNight} />
-              <div className="hidden sm:flex items-center ml-2">
-                <label className={`${textColor} text-xs opacity-70 mr-2`}>
-                  Analysis Mode
-                </label>
-                <select
-                  value={analysisMode}
-                  onChange={(e) => setAnalysisMode(e.target.value)}
-                  className={`px-3 py-1.5 text-xs rounded-lg border ${isNight
-                    ? "bg-white/10 border-white/20 text-white"
-                    : "bg-black/10 border-black/20 text-black"
-                    }`}
-                >
-                  <option value="basic">Basic (Free)</option>
-                  <option value="deep">Deep (Research)</option>
-                </select>
-              </div>
-              {/* Analysis Factor Toggles - Compact inline mode */}
-              <div className="hidden lg:flex items-center">
-                <AnalysisOptions
-                  marketType={selectedMarket?.eventType || activeTab === 'sports' ? 'sports' : 'crypto'}
-                  compact={true}
-                  className="ml-2"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <WalletConnect isNight={isNight} />
-                {canPublish && (
-                  <span
-                    className={`px-2 py-1 rounded-lg text-[10px] border ${isNight
-                      ? "bg-white/10 border-white/20 text-white/80"
-                      : "bg-black/10 border-black/20 text-black/70"
-                      }`}
-                  >
-                    My signals: {mySignalCount ?? "—"}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Tab Switcher */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-4">
-            <SecondaryNav
-              items={[
-                { id: "sports", label: "Sports & Events", icon: "🏆" },
-                { id: "discovery", label: "Crypto, Finance & More", icon: "📈" },
-              ]}
-              activeItem={activeTab}
-              onChange={setActiveTab}
-              isNight={isNight}
-            />
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
+      <div>
           {/* Active Chain Indicators */}
           <div className="mb-6 space-y-6">
             {/* Live Edge Scanner - Discovery Hook */}
@@ -781,7 +745,6 @@ export default function MarketsPage() {
               visibleMarketCount={visibleMarketCount}
             />
           )}
-        </main>
       </div>
 
       {/* Modal Layers */}
@@ -844,6 +807,6 @@ export default function MarketsPage() {
           />
         )
       }
-    </div >
+    </AppShell>
   );
 }

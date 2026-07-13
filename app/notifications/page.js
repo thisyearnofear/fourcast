@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import Link from 'next/link';
-import PageNav from '@/app/components/PageNav';
+import { AppShell } from '@/app/components/PageNav';
 import TelegramLinkButton from '@/components/TelegramLinkButton';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
 
@@ -125,44 +125,41 @@ export default function NotificationsPage() {
   // No wallet connected
   if (!address) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white">
-        <PageNav />
-        <main className="max-w-[640px] mx-auto px-5 py-20 text-center">
+      <AppShell title="Notifications" maxWidth="max-w-[720px]">
+        <div className="py-16 text-center">
           <div className="text-5xl mb-4">🔔</div>
-          <h1 className="text-xl font-light text-slate-200 mb-3">Notifications</h1>
-          <p className="text-sm text-slate-500 mb-8">
+          <p className="text-sm text-white/[0.55] mb-8">
             Connect your wallet to see notifications when analysts you follow publish new signals.
           </p>
-          <Link href="/markets" className="inline-block text-sm font-medium px-5 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 transition-opacity no-underline">
+          <Link href="/markets" className="inline-block rounded-lg border border-emerald-300/30 bg-emerald-300/10 px-5 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/20 no-underline">
             🔗 Connect wallet →
           </Link>
-        </main>
-      </div>
+        </div>
+      </AppShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
-      <PageNav />
-      <main className="max-w-[640px] mx-auto px-5 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-light text-slate-100">Notifications</h1>
-            {unreadCount > 0 && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium">
+    <AppShell
+      title="Notifications"
+      subtitle="New signals from analysts you follow"
+      maxWidth="max-w-[720px]"
+      actions={
+        <div className="flex items-center gap-4">
+          {unreadCount > 0 && (
+            <>
+              <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-2 py-0.5 text-xs font-medium text-emerald-100">
                 {unreadCount} new
               </span>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            {unreadCount > 0 && (
-              <button onClick={handleMarkAllRead} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              <button onClick={handleMarkAllRead} className="text-xs text-white/[0.45] transition hover:text-white/80">
                 Mark all read
               </button>
-            )}
-            {!needsAuth && <TelegramLinkButton address={address} />}
-          </div>
+            </>
+          )}
+          {!needsAuth && <TelegramLinkButton address={address} />}
         </div>
+      }
+    >
 
         {needsAuth && !isLoading && (
           <div className="text-center py-16">
@@ -232,8 +229,7 @@ export default function NotificationsPage() {
             })}
           </div>
         )}
-      </main>
-    </div>
+    </AppShell>
   );
 }
 

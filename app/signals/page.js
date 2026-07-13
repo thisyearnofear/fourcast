@@ -1,14 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import UnifiedConnect from '@/components/UnifiedConnect';
 import { useSignalPublisher } from '@/hooks/useSignalPublisher';
 import { useChainConnections } from '@/hooks/useChainConnections';
-import useHUDStore from '@/hooks/useHUDStore';
 import useFilterStore from '@/hooks/useFilterStore';
-import { useTheme } from '@/hooks/useTheme';
 import { useGlobalToast } from '@/components/ToastProvider';
-import PageNav, { SecondaryNav } from '@/app/components/PageNav';
+import { AppShell, SecondaryNav } from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
 import SignalFilters from '@/app/components/signals/SignalFilters';
 import SignalCard from '@/app/components/signals/SignalCard';
@@ -42,8 +39,7 @@ export default function SignalsPage() {
     const setSortBy = (s) => filterStore.setSignalsSortBy(s);
 
     // Weather for theming
-    const { isHUDVisible } = useHUDStore();
-    const { isNight } = useTheme();
+    const isNight = true; // dark-first
 
     // Track record state (Brier scores, calibration)
     const [agentTrackStats, setAgentTrackStats] = useState(null);
@@ -201,48 +197,26 @@ export default function SignalsPage() {
     };
 
     return (
-        <div className="min-h-screen relative">
-            {/* Scrollable Content */}
-            <div className={`relative z-20 flex flex-col min-h-screen overflow-y-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                {/* Header */}
-                <header className={`sticky top-0 z-50 border-b glass-subtle`}>
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
-          <div>
-                            <h1 className={`text-3xl font-thin ${textColor} tracking-wide`}>
-                                Signals
-                            </h1>
-                            <p className={`text-sm ${textColor} opacity-60 mt-2 font-light`}>
-                                {BRAND.pages.signals}
-                            </p>
-                            {/* Narrative step — step 4: Get Scored */}
-                            <NarrativeSteps currentStep="scored" isNight={isNight} className="mt-3" />
-                        </div>
-                        <div className="flex items-center space-x-3">
-                            <PageNav currentPage="Signals" isNight={isNight} />
-                            <div className="flex items-center space-x-2">
-                                <UnifiedConnect isNight={isNight} variant="header" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Tab Switcher */}
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-4">
-                        <SecondaryNav
-                            items={[
-                                { id: 'feed', label: 'Signal Feed', icon: '📡' },
-                                { id: 'defi', label: 'DeFi Arbs', icon: '💱' },
-                                ...(connected ? [{ id: 'my-signals', label: 'My Track Record', icon: '🎯' }] : []),
-                                { id: 'leaderboard', label: 'Top Analysts', icon: '🏆' },
-                            ]}
-                            activeItem={activeTab}
-                            onChange={setActiveTab}
-                            isNight={isNight}
-                        />
-                    </div>
-                </header>
-
-                {/* Main Content */}
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
+        <AppShell
+            title="Signals"
+            subtitle={BRAND.pages.signals}
+            subheader={
+                <div className="space-y-3">
+                    <NarrativeSteps currentStep="scored" isNight={true} />
+                    <SecondaryNav
+                        items={[
+                            { id: 'feed', label: 'Signal Feed', icon: '📡' },
+                            { id: 'defi', label: 'DeFi Arbs', icon: '💱' },
+                            ...(connected ? [{ id: 'my-signals', label: 'My Track Record', icon: '🎯' }] : []),
+                            { id: 'leaderboard', label: 'Top Analysts', icon: '🏆' },
+                        ]}
+                        activeItem={activeTab}
+                        onChange={setActiveTab}
+                    />
+                </div>
+            }
+        >
+            <>
                     {/* EVM Network Selector (Trading chains) */}
                     {chains?.evm?.connected && (
                         <div className="mb-6">
@@ -394,15 +368,14 @@ export default function SignalsPage() {
                             )}
                         </>
                     )}
-                </main>
-            </div>
+            </>
 
             <ProfileDrawer
                 isOpen={!!selectedProfile}
                 onClose={() => setSelectedProfile(null)}
                 address={selectedProfile}
-                isNight={isNight}
+                isNight={true}
             />
-        </div>
+        </AppShell>
     );
 }
