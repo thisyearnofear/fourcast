@@ -22,6 +22,7 @@ import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution, getAutopilo
 import {
   buildTradedTodaySet,
   computeSpentToday,
+  countedStatuses,
   shouldSkipDedup,
   shouldSkipCap,
   formatDryRunMessage,
@@ -757,8 +758,11 @@ Output ONLY valid JSON:
       console.warn("Autopilot: failed to load execution history:", err.message);
     }
 
-    const tradedToday = buildTradedTodaySet(todayExecutions);
-    let spentToday = computeSpentToday(todayExecutions);
+    // In dry-run mode, prior DRY_RUN rows count too — so a rehearsal
+    // exercises the same dedup/cap rails that live trading will hit.
+    const statuses = countedStatuses(dryRun);
+    const tradedToday = buildTradedTodaySet(todayExecutions, statuses);
+    let spentToday = computeSpentToday(todayExecutions, statuses);
 
     for (const rec of recommendations) {
       if (!rec.actionable || rec.sizePct <= 0) continue;

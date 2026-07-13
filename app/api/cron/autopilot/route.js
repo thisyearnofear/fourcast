@@ -1,7 +1,20 @@
 import { getAutopilotSchedule, recordAutopilotRun } from '@/services/db';
 import { getDefaultAutopilotConfig, runAutopilotOnce } from '@/services/scheduler';
+import { sendTelegramMessage } from '@/services/telegramLinkService';
 
 export const runtime = 'nodejs';
+
+// Cron failures are otherwise invisible — push them to the operator's chat.
+// No-ops when TELEGRAM_ADMIN_CHAT_ID or TELEGRAM_BOT_TOKEN is unset.
+async function alertAdmin(text) {
+  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+  if (!chatId) return;
+  try {
+    await sendTelegramMessage(chatId, `🚨 *Autopilot cron*\n${text}`);
+  } catch (err) {
+    console.error('Cron autopilot: admin alert failed:', err.message);
+  }
+}
 
 /**
  * GET /api/cron/autopilot
@@ -75,6 +88,7 @@ export async function GET(request) {
     });
 
     if (!result.success) {
+      await alertAdmin(`Run failed: ${result.error || 'unknown error'}`);
       return Response.json(
         { success: false, error: result.error },
         { status: 500 }
@@ -92,6 +106,7 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('Cron autopilot error:', error);
+    await alertAdmin(`Route error: ${error.message}`);
     return Response.json(
       { success: false, error: error.message },
       { status: 500 }

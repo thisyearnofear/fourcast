@@ -12,17 +12,26 @@ export function getExecutionStatus(execution) {
   return 'FAILED';
 }
 
-export function buildTradedTodaySet(executions) {
+/**
+ * Statuses that count toward dedup/cap. Live mode counts only real trades;
+ * dry-run mode ALSO counts prior DRY_RUN rows so a rehearsal exercises the
+ * same rails (skip-repeat, cap-out) that live trading will hit.
+ */
+export function countedStatuses(dryRun) {
+  return dryRun ? ['SUCCESS', 'DRY_RUN'] : ['SUCCESS'];
+}
+
+export function buildTradedTodaySet(executions, statuses = ['SUCCESS']) {
   return new Set(
     executions
-      .filter((e) => e.execution_status === 'SUCCESS')
+      .filter((e) => statuses.includes(e.execution_status))
       .map((e) => e.market_id)
   );
 }
 
-export function computeSpentToday(executions) {
+export function computeSpentToday(executions, statuses = ['SUCCESS']) {
   return executions
-    .filter((e) => e.execution_status === 'SUCCESS')
+    .filter((e) => statuses.includes(e.execution_status))
     .reduce((sum, e) => sum + (e.size_pct || 0), 0);
 }
 

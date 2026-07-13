@@ -6,6 +6,7 @@ import {
   shouldSkipDedup,
   shouldSkipCap,
   formatDryRunMessage,
+  countedStatuses,
 } from '../services/autopilotSafety.js';
 
 describe('autopilotSafety', () => {
@@ -103,6 +104,31 @@ describe('autopilotSafety', () => {
     it('rounds to one decimal place', () => {
       const rec = { direction: 'SELL', sizePct: 0.12345 };
       expect(formatDryRunMessage(rec)).toBe('DRY RUN: would execute SELL 12.3%');
+    });
+  });
+
+  describe('countedStatuses (dry-run rehearsal)', () => {
+    const executions = [
+      { market_id: 'live-1', execution_status: 'SUCCESS', size_pct: 0.1 },
+      { market_id: 'dry-1', execution_status: 'DRY_RUN', size_pct: 0.2 },
+      { market_id: 'fail-1', execution_status: 'FAILED', size_pct: 0.3 },
+    ];
+
+    it('live mode counts only SUCCESS', () => {
+      const statuses = countedStatuses(false);
+      const traded = buildTradedTodaySet(executions, statuses);
+      expect(traded.has('live-1')).toBe(true);
+      expect(traded.has('dry-1')).toBe(false);
+      expect(computeSpentToday(executions, statuses)).toBeCloseTo(0.1);
+    });
+
+    it('dry-run mode also counts DRY_RUN rows so the rails rehearse', () => {
+      const statuses = countedStatuses(true);
+      const traded = buildTradedTodaySet(executions, statuses);
+      expect(traded.has('live-1')).toBe(true);
+      expect(traded.has('dry-1')).toBe(true);
+      expect(traded.has('fail-1')).toBe(false);
+      expect(computeSpentToday(executions, statuses)).toBeCloseTo(0.3);
     });
   });
 });
