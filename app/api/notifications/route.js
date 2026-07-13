@@ -4,10 +4,12 @@ import {
   markAsRead,
   markAllAsRead,
 } from '@/services/notificationService.js';
+import { requireWalletAuth } from '@/services/walletAuth.js';
 
 export const runtime = 'nodejs';
 
-// GET — list notifications or unread count
+// GET — list notifications or unread count (requires wallet-signature auth
+// for the requested address — notifications are private to their owner)
 //   ?address=0x...              → list notifications (newest first)
 //   ?address=0x...&type=unread  → just the unread count
 export async function GET(request) {
@@ -25,6 +27,9 @@ export async function GET(request) {
       );
     }
 
+    const denied = await requireWalletAuth(request, address);
+    if (denied) return denied;
+
     if (type === 'unread') {
       const result = await getUnreadCount(address);
       return Response.json(result);
@@ -38,25 +43,36 @@ export async function GET(request) {
   }
 }
 
-// PATCH — mark notification(s) as read
-//   { id: "..." }             → mark one as read
-//   { address: "...", all: true } → mark all as read
+// PATCH — mark notification(s) as read (auth required; single-id marking is
+// scoped to the authenticated owner so users can't touch others' rows)
+//   { address: "...", id: "..." }     → mark one as read
+//   { address: "...", all: true }     → mark all as read
 export async function PATCH(request) {
   try {
     const body = await request.json();
 
-    if (body.all && body.address) {
+    if (!body.address) {
+      return Response.json(
+        { success: false, error: 'address is required' },
+        { status: 400 }
+      );
+    }
+
+    const denied = await requireWalletAuth(request, body.address);
+    if (denied) return denied;
+
+    if (body.all) {
       const result = await markAllAsRead(body.address);
       return Response.json(result);
     }
 
     if (body.id) {
-      const result = await markAsRead(body.id);
+      const result = await markAsRead(body.id, body.address);
       return Response.json(result);
     }
 
     return Response.json(
-      { success: false, error: 'Provide { id } or { address, all: true }' },
+      { success: false, error: 'Provide { address, id } or { address, all: true }' },
       { status: 400 }
     );
   } catch (error) {

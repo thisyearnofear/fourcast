@@ -1,8 +1,9 @@
 import { followUser, unfollowUser, isFollowing, getFollowers, getFollowing, getFollowerCount } from '@/services/followService.js';
+import { requireWalletAuth } from '@/services/walletAuth.js';
 
 export const runtime = 'nodejs';
 
-// POST — follow an analyst
+// POST — follow an analyst (requires wallet-signature auth as the follower)
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -15,6 +16,9 @@ export async function POST(request) {
       );
     }
 
+    const denied = await requireWalletAuth(request, followerAddress);
+    if (denied) return denied;
+
     const result = await followUser(followerAddress, followingAddress);
     if (!result.success) {
       return Response.json(result, { status: 400 });
@@ -26,7 +30,7 @@ export async function POST(request) {
   }
 }
 
-// DELETE — unfollow an analyst
+// DELETE — unfollow an analyst (requires wallet-signature auth as the follower)
 export async function DELETE(request) {
   try {
     const body = await request.json();
@@ -38,6 +42,9 @@ export async function DELETE(request) {
         { status: 400 }
       );
     }
+
+    const denied = await requireWalletAuth(request, followerAddress);
+    if (denied) return denied;
 
     const result = await unfollowUser(followerAddress, followingAddress);
     if (!result.success) {

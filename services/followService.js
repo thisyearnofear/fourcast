@@ -152,14 +152,15 @@ export async function getFollowerCount(address) {
  * Get the list of addresses that an analyst's followers should be notified.
  * Returns array of follower addresses (lowercase).
  */
-export async function getFollowerAddresses(address) {
+export async function getFollowerAddresses(address, limit = 500) {
   const addr = address?.toLowerCase();
   if (!addr) return [];
 
   try {
     const rows = await query(
-      `SELECT follower_address FROM follows WHERE following_address = ?`,
-      [addr]
+      `SELECT follower_address FROM follows WHERE following_address = ?
+       ORDER BY created_at ASC LIMIT ?`,
+      [addr, limit]
     );
     return rows.map(r => r.follower_address);
   } catch (error) {

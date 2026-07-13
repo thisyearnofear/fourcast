@@ -303,7 +303,24 @@ function mainMenuKeyboard() {
 // Command Handlers
 // ============================================================================
 
-async function handleStart(chatId, userName) {
+async function handleStart(chatId, userName, payload) {
+  // Deep-link payload from the site: /start <one-time link code> binds this
+  // chat to the user's wallet for follower notifications.
+  if (payload) {
+    const { consumeLinkCode } = await import('./telegramLinkService.js');
+    const result = await consumeLinkCode(payload.trim(), chatId);
+    if (result.success) {
+      const short = `${result.walletAddress.slice(0, 6)}…${result.walletAddress.slice(-4)}`;
+      return sendMessage(chatId, [
+        `🔔 *Linked!* This chat is now connected to \`${short}\`.`,
+        ``,
+        `You'll get a message here whenever an analyst you follow publishes a signal.`,
+        `Manage follows on the [Signals page](${APP_URL}/signals).`,
+      ].join('\n'));
+    }
+    return sendMessage(chatId, `⚠️ ${result.error}\n\nGenerate a fresh link from [your notifications page](${APP_URL}/notifications).`);
+  }
+
   const greeting = userName ? `Hey ${userName}! ` : '';
   const msg = [
     `🔮 *Fourcast* — AI Prediction Intelligence`,
@@ -524,7 +541,7 @@ export async function handleTelegramUpdate(update) {
 
   switch (command) {
     case '/start':
-      return handleStart(chatId, userName);
+      return handleStart(chatId, userName, args);
     case '/edge':
       return handleEdge(chatId, args, userName);
     case '/top':

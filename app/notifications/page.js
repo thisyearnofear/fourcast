@@ -4,30 +4,41 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import Link from 'next/link';
 import PageNav from '@/app/components/PageNav';
+import TelegramLinkButton from '@/components/TelegramLinkButton';
+import { useWalletAuth } from '@/hooks/useWalletAuth';
 
 export default function NotificationsPage() {
   const { address } = useAccount();
+  const { getAuthHeaders, getCachedAuthHeaders } = useWalletAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [needsAuth, setNeedsAuth] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchNotifications = useCallback(async () => {
-    if (!address) {
+  const fetchNotifications = useCallback(async (authHeaders) => {
+    if (!address || !authHeaders) {
       setIsLoading(false);
       return;
     }
 
     try {
       const [notifRes, unreadRes] = await Promise.all([
-        fetch(`/api/notifications?address=${encodeURIComponent(address)}&limit=50`),
-        fetch(`/api/notifications?address=${encodeURIComponent(address)}&type=unread`),
+        fetch(`/api/notifications?address=${encodeURIComponent(address)}&limit=50`, { headers: authHeaders }),
+        fetch(`/api/notifications?address=${encodeURIComponent(address)}&type=unread`, { headers: authHeaders }),
       ]);
       const notifData = await notifRes.json();
       const unreadData = await unreadRes.json();
 
+      if (notifRes.status === 401 || unreadRes.status === 401) {
+        // Stale/invalid token — ask the user to re-verify
+        setNeedsAuth(true);
+        return;
+      }
+
       if (notifData.success) {
         setNotifications(notifData.notifications || []);
+        setNeedsAuth(false);
       } else {
         setError(notifData.error || 'Failed to load notifications');
       }
@@ -42,16 +53,42 @@ export default function NotificationsPage() {
     }
   }, [address]);
 
+  // On mount: fetch with the cached auth token if one exists; otherwise show
+  // the one-time "verify wallet" button instead of auto-prompting a signature.
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    if (!address) {
+      setIsLoading(false);
+      return;
+    }
+    const cached = getCachedAuthHeaders(address);
+    if (cached) {
+      fetchNotifications(cached);
+    } else {
+      setNeedsAuth(true);
+      setIsLoading(false);
+    }
+  }, [address, getCachedAuthHeaders, fetchNotifications]);
+
+  const handleVerify = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const headers = await getAuthHeaders(address);
+      setNeedsAuth(false);
+      await fetchNotifications(headers);
+    } catch {
+      // Signature rejected
+      setIsLoading(false);
+    }
+  }, [address, getAuthHeaders, fetchNotifications]);
 
   const handleMarkAllRead = useCallback(async () => {
     if (!address) return;
     try {
+      const authHeaders = await getAuthHeaders(address);
       await fetch('/api/notifications', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ address, all: true }),
       });
       setNotifications(prev => prev.map(n => ({ ...n, read: 1 })));
@@ -59,7 +96,7 @@ export default function NotificationsPage() {
     } catch (err) {
       console.error('Failed to mark all as read:', err);
     }
-  }, [address]);
+  }, [address, getAuthHeaders]);
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
@@ -117,12 +154,29 @@ export default function NotificationsPage() {
               </span>
             )}
           </div>
-          {unreadCount > 0 && (
-            <button onClick={handleMarkAllRead} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
-              Mark all read
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            {unreadCount > 0 && (
+              <button onClick={handleMarkAllRead} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                Mark all read
+              </button>
+            )}
+            {!needsAuth && <TelegramLinkButton address={address} />}
+          </div>
         </div>
+
+        {needsAuth && !isLoading && (
+          <div className="text-center py-16">
+            <div className="text-4xl mb-4">🔐</div>
+            <p className="text-sm text-slate-400 mb-2">Notifications are private to your wallet.</p>
+            <p className="text-xs text-slate-600 mb-6">Sign a one-time message to prove ownership — no transaction, no gas.</p>
+            <button
+              onClick={handleVerify}
+              className="text-sm font-medium px-5 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 transition-opacity"
+            >
+              ✍️ Verify wallet to view
+            </button>
+          </div>
+        )}
 
         {isLoading && (
           <div className="space-y-3">
@@ -139,7 +193,7 @@ export default function NotificationsPage() {
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-sm text-red-300">{error}</div>
         )}
 
-        {!isLoading && !error && notifications.length === 0 && (
+        {!isLoading && !needsAuth && !error && notifications.length === 0 && (
           <div className="text-center py-16">
             <div className="text-4xl mb-4 opacity-40">🔔</div>
             <p className="text-sm text-slate-500 mb-2">No notifications yet</p>
@@ -148,7 +202,7 @@ export default function NotificationsPage() {
           </div>
         )}
 
-        {!isLoading && !error && notifications.length > 0 && (
+        {!isLoading && !needsAuth && !error && notifications.length > 0 && (
           <div className="space-y-2">
             {notifications.map(notif => {
               const data = parseData(notif.data_json);

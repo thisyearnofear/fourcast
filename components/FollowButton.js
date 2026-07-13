@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useWalletAuth } from '@/hooks/useWalletAuth';
 
 /**
  * FollowButton — toggle follow/unfollow for an analyst.
@@ -17,6 +18,7 @@ export default function FollowButton({ authorAddress, currentAddress }) {
   const [followerCount, setFollowerCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [checked, setChecked] = useState(false);
+  const { getAuthHeaders } = useWalletAuth();
 
   const author = authorAddress?.toLowerCase();
   const me = currentAddress?.toLowerCase();
@@ -65,10 +67,12 @@ export default function FollowButton({ authorAddress, currentAddress }) {
     setLoading(true);
 
     try {
+      // First follow prompts a one-time wallet signature; cached afterwards
+      const authHeaders = await getAuthHeaders(currentAddress);
       const method = following ? 'DELETE' : 'POST';
       const res = await fetch('/api/follow', {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           followerAddress: me,
           followingAddress: author,
@@ -81,11 +85,11 @@ export default function FollowButton({ authorAddress, currentAddress }) {
         setFollowerCount(prev => following ? Math.max(0, prev - 1) : prev + 1);
       }
     } catch (err) {
-      // Silently fail — user can retry
+      // Signature rejected or network error — user can retry
     } finally {
       setLoading(false);
     }
-  }, [following, me, author, isSelf, loading]);
+  }, [following, me, author, isSelf, loading, currentAddress, getAuthHeaders]);
 
   // Don't render a follow button for your own profile
   if (isSelf) {
