@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
-import Scene3D from '@/components/Scene3D';
 import useHUDStore from '@/hooks/useHUDStore';
 import { useWeather } from '@/hooks/useWeather';
 import dynamic from 'next/dynamic';
@@ -62,7 +61,7 @@ const LAB_FEATURES = [
 ];
 
 export default function LabsPage() {
-  const { weatherData, isLoading: isLoadingWeather, isNight } = useWeather();
+  const { isNight } = useWeather();
   const { isHUDVisible } = useHUDStore();
 
   const textColor = isNight ? 'text-white' : 'text-black';
@@ -72,15 +71,6 @@ export default function LabsPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* 3D Scene Background */}
-      <div className="fixed inset-0 z-0">
-        <Scene3D
-          weatherData={weatherData}
-          isLoading={isLoadingWeather}
-          quality="ambient"
-        />
-      </div>
-
       {/* Content */}
       <div className={`relative z-20 flex flex-col min-h-screen overflow-y-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {/* Header */}

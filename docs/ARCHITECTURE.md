@@ -280,6 +280,20 @@ The agent scans markets, filters candidates, generates forecasts, detects arbitr
 5. **Arbitrage**: Detect cross-platform price discrepancies
 6. **Autopilot Execution**: (Optional) Programmatically sign and submit trades using a server-side private key with Polymarket Builder attribution headers
 
+### Autopilot Scheduler & Safety Rails
+
+Vercel Cron fires `/api/cron/autopilot` hourly (`vercel.json`). Each tick passes through a gauntlet of gates before any trade:
+
+1. **Auth**: `Authorization: Bearer $CRON_SECRET` required; unset secret = always 401 (fails closed).
+2. **Enabled flag**: persisted in the `autopilot_schedule` table (single row, admin-gated writes via `/api/agent/schedule` + `ADMIN_SECRET`). This is the kill switch.
+3. **Interval gate**: `intervalMinutes` is the *minimum gap* between runs, enforced against `last_run_at` — which is recorded *before* the run so overlapping invocations can't race past the gate.
+4. **Key check**: `POLYMARKET_PRIVATE_KEY` must be present.
+5. **Dry-run** (default ON): recommendations are logged with `execution_status = 'DRY_RUN'` — no orders placed. Live trading is explicit opt-in.
+6. **Per-market dedup**: markets with a `SUCCESS` execution in the last 24h are skipped.
+7. **Daily spend cap**: the loop stops once the sum of executed `size_pct` would exceed `daily_cap_pct` (default 0.5).
+
+Pure predicates live in `services/autopilotSafety.js` (unit-tested in `tests/autopilotSafety.test.js`); the non-streaming runner is `services/scheduler.js`. Note: dry-run executions are tagged `DRY_RUN` and intentionally do **not** count toward dedup or the cap — dry-run history therefore repeats markets across ticks and does not rehearse the rails.
+
 ### Track Record Infrastructure
 
 **Key Functions:**

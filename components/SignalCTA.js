@@ -14,11 +14,10 @@ import FollowButton from './FollowButton';
  *   2. "Share this signal"     — copies the page URL to clipboard
  *   3. FollowButton            — follow the analyst (requires wallet)
  *
- * @param {string} signalId      - The signal's ID (for share URL).
  * @param {string} marketTitle   - Market question (used as search query).
  * @param {string|null} authorAddress - The analyst's wallet address.
  */
-export default function SignalCTA({ signalId, marketTitle, authorAddress }) {
+export default function SignalCTA({ marketTitle, authorAddress }) {
   const { address } = useAccount();
   const [copied, setCopied] = useState(false);
 

@@ -178,7 +178,7 @@ export default function SearchLanding() {
                     onBlur={() => setFocused(false)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Will Bitcoin trade above $100k by June?"
-                    className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/[0.45]"
+                    className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/[0.58]"
                     autoFocus
                   />
                 </label>
@@ -284,18 +284,18 @@ export default function SearchLanding() {
                 <div className="grid gap-2 sm:grid-cols-3">
                   <div className="rounded-lg bg-white/[0.04] p-2.5 text-center">
                     <div className="text-sm font-medium text-white">SERP API</div>
-                    <div className="mt-1 text-[10px] text-white/40">Structured search results</div>
+                    <div className="mt-1 text-[10px] text-white/60">Structured search results</div>
                   </div>
                   <div className="rounded-lg bg-white/[0.04] p-2.5 text-center">
                     <div className="text-sm font-medium text-white">Scraping Browser</div>
-                    <div className="mt-1 text-[10px] text-white/40">JS-rendered deep research</div>
+                    <div className="mt-1 text-[10px] text-white/60">JS-rendered deep research</div>
                   </div>
                   <div className="rounded-lg bg-white/[0.04] p-2.5 text-center">
                     <div className="text-sm font-medium text-white">Web Unlocker</div>
-                    <div className="mt-1 text-[10px] text-white/40">Bot detection bypass</div>
+                    <div className="mt-1 text-[10px] text-white/60">Bot detection bypass</div>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-cyan-200/50">
+                <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-cyan-200/70">
                   <span>Live web data</span>
                   <span>→</span>
                   <span>AI synthesis</span>
@@ -308,11 +308,6 @@ export default function SearchLanding() {
             </div>
           </div>
         </section>
-
-        <footer className="flex flex-col gap-2 border-t border-white/10 py-4 text-xs text-white/[0.50] sm:flex-row sm:items-center sm:justify-between">
-          <span>{BRAND.footerStrip}</span>
-          <span>{BRAND.hackathon.label} · {BRAND.hackathon.track}</span>
-        </footer>
       </div>
     </main>
   );

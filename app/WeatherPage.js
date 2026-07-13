@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Scene3D from '@/components/Scene3D';
 import LocationSelector from '@/components/LocationSelector';
 import UnifiedConnect from '@/components/UnifiedConnect';
 import useHUDStore from '@/hooks/useHUDStore';
@@ -16,9 +15,6 @@ export default function WeatherPage() {
   const { isHUDVisible } = useHUDStore();
   const [error, setError] = useState(null);
   const [currentLocationName, setCurrentLocationName] = useState('');
-  const [isPortalMode, setIsPortalMode] = useState(false);
-  const [exitPortalFunction, setExitPortalFunction] = useState(null);
-  const [portalWeatherData, setPortalWeatherData] = useState(null);
   const [errorSearchQuery, setErrorSearchQuery] = useState('');
   
   const [showCelebration, setShowCelebration] = useState(false);
@@ -79,10 +75,6 @@ export default function WeatherPage() {
     return currentHour >= 19 || currentHour <= 6;
   };
 
-  const handlePortalWeatherDataChange = (data) => {
-    setPortalWeatherData(data);
-  };
-
   const handleErrorSearch = async (e) => {
     e.preventDefault();
     if (errorSearchQuery.trim()) {
@@ -103,17 +95,11 @@ export default function WeatherPage() {
     setShowCelebration(true);
   };
 
-  // Use portal weather data when in portal mode, otherwise use main weather data
-  const displayWeatherData = useMemo(() =>
-    (isPortalMode && portalWeatherData ? portalWeatherData : weatherData),
-    [isPortalMode, portalWeatherData, weatherData]
-  );
-
   // Memoized calculated values
   const isNight = useMemo(() => isNightTime(), [weatherData?.location?.localtime]);
   const textColor = useMemo(() =>
-    (isPortalMode || !isNight) ? 'text-black' : 'text-white',
-    [isPortalMode, isNight]
+    isNight ? 'text-white' : 'text-black',
+    [isNight]
   );
 
   // Show hero/onboarding on first visit
@@ -128,18 +114,7 @@ export default function WeatherPage() {
   };
 
   return (
-    <div className="w-screen h-screen min-h-dvh relative flex flex-col">
-      {/* 3D Scene fills entire viewport - base layer */}
-      <div className="absolute inset-0 z-0">
-        <Scene3D
-          weatherData={weatherData}
-          isLoading={isLoading}
-          onPortalModeChange={setIsPortalMode}
-          onSetExitPortalFunction={setExitPortalFunction}
-          onPortalWeatherDataChange={handlePortalWeatherDataChange}
-        />
-      </div>
-
+    <div className="w-screen h-screen min-h-dvh relative flex flex-col bg-black">
       {/* Hero Overlay - First Visit */}
       {showHero && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
@@ -253,81 +228,36 @@ export default function WeatherPage() {
         {/* Header */}
         {weatherData && !isLoading && (
           <header className="flex justify-between items-start pointer-events-auto">
-            {isPortalMode ? (
-              <>
-                {/* Portal Mode Header */}
-                <div className={`flex-1 ${textColor}`}>
-                  <button
-                    onClick={() => exitPortalFunction?.()}
-                    className={`flex items-center space-x-2 px-2 sm:px-4 py-2 ${textColor} opacity-80 hover:opacity-100 transition-opacity`}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                    <span className="text-xs sm:text-sm font-light">Back</span>
-                  </button>
+            <div className={`flex-1 ${textColor} flex items-center gap-4`}>
+              <div>
+                <div className="text-base sm:text-lg font-light tracking-wide opacity-95">
+                  {weatherData.location.name}
+                  {weatherData.rateLimited && (
+                    <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">
+                      DEMO
+                    </span>
+                  )}
                 </div>
-                {/* ... existing portal mode title ... */}
-                <div className={`text-right ${textColor}`}>
-                  <div className="text-base sm:text-lg font-light tracking-wide opacity-95">
-                    {displayWeatherData.location.name}
-                    {displayWeatherData.rateLimited && (
-                      <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">
-                        DEMO
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs sm:text-sm opacity-60 tracking-wide">
-                    {displayWeatherData.location.region}
-                  </div>
+                <div className="text-xs sm:text-sm opacity-60 tracking-wide">
+                  {weatherData.location.region}
                 </div>
-              </>
-            ) : (
-              /* Normal Mode Header */
-              <>
-                <div className={`flex-1 ${textColor} flex items-center gap-4`}>
-                  <div>
-                    <div className="text-base sm:text-lg font-light tracking-wide opacity-95">
-                      {displayWeatherData.location.name}
-                      {displayWeatherData.rateLimited && (
-                        <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">
-                          DEMO
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs sm:text-sm opacity-60 tracking-wide">
-                      {displayWeatherData.location.region}
-                    </div>
-                  </div>
+              </div>
+            </div>
 
-                </div>
-
-                <div className="flex items-center space-x-2 sm:space-x-4">
-                  <LocationSelector
-                    onLocationChange={handleLocationChange}
-                    currentLocation={currentLocationName}
-                    isLoading={isLoading}
-                    isNight={isNight}
-                  />
-                  <UnifiedConnect isNight={isNight} variant="header" />
-                </div>
-              </>
-            )}
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <LocationSelector
+                onLocationChange={handleLocationChange}
+                currentLocation={currentLocationName}
+                isLoading={isLoading}
+                isNight={isNight}
+              />
+              <UnifiedConnect isNight={isNight} variant="header" />
+            </div>
           </header>
         )}
 
         {/* Portal Coach Mark — anchored near the portals at the bottom */}
-        {!isPortalMode && !isLoading && weatherData && (
+        {!isLoading && weatherData && (
           <div className="absolute bottom-28 sm:bottom-32 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none portal-coach-mark">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${isNight ? 'glass-subtle' : 'glass-subtle-light'} ${isNight ? 'text-white/60' : 'text-black/40'}`}>
               <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -400,7 +330,7 @@ export default function WeatherPage() {
 
         {/* Bottom Content */}
         {weatherData && !isLoading && (
-          <footer
+          <section
             className={`flex justify-between items-end ${textColor}`}
             style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
           >
@@ -408,7 +338,7 @@ export default function WeatherPage() {
             <div className="flex items-end space-x-2 sm:space-x-4">
               <div className="flex items-baseline">
                 <span className="text-5xl sm:text-6xl font-thin leading-none">
-                  {Math.round(displayWeatherData.current.temp_f)}
+                  {Math.round(weatherData.current.temp_f)}
                 </span>
                 <span className="text-xl sm:text-2xl font-thin opacity-75">
                   °
@@ -416,12 +346,12 @@ export default function WeatherPage() {
               </div>
               <div className="pb-1 sm:pb-2">
                 <div className="text-xs sm:text-sm font-light opacity-80 capitalize mb-1">
-                  {displayWeatherData.current.condition.text}
+                  {weatherData.current.condition.text}
                 </div>
                 <div className="text-xs opacity-60 space-y-0.5">
                   <div>
-                    H: {Math.round(displayWeatherData.current.temp_f + 5)}° L:{" "}
-                    {Math.round(displayWeatherData.current.temp_f - 10)}°
+                    H: {Math.round(weatherData.current.temp_f + 5)}° L:{" "}
+                    {Math.round(weatherData.current.temp_f - 10)}°
                   </div>
                 </div>
               </div>
@@ -433,29 +363,29 @@ export default function WeatherPage() {
               <div className="flex items-center justify-end space-x-2">
                 <span className="opacity-60">HUMIDITY</span>
                 <span className="font-light">
-                  {displayWeatherData.current.humidity}%
+                  {weatherData.current.humidity}%
                 </span>
               </div>
               <div className="flex items-center justify-end space-x-2">
                 <span className="opacity-60">WIND</span>
                 <span className="font-light">
-                  {Math.round(displayWeatherData.current.wind_mph)} mph
+                  {Math.round(weatherData.current.wind_mph)} mph
                 </span>
               </div>
               <div className="flex items-center justify-end space-x-2">
                 <span className="opacity-60">FEELS</span>
                 <span className="font-light">
-                  {Math.round(displayWeatherData.current.feelslike_f)}°
+                  {Math.round(weatherData.current.feelslike_f)}°
                 </span>
               </div>
               <div className="flex items-center justify-end space-x-2">
                 <span className="opacity-60">VISIBILITY</span>
                 <span className="font-light">
-                  {Math.round(displayWeatherData.current.vis_miles)} mi
+                  {Math.round(weatherData.current.vis_miles)} mi
                 </span>
               </div>
             </div>
-          </footer>
+          </section>
         )}
       </div>
 

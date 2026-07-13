@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import InfoTip from './InfoTip';
 
 /**
  * Personal Stats Dashboard
@@ -179,9 +180,7 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
         <div className="space-y-4 mt-8">
           <h4 className={`text-sm font-medium ${textColor} uppercase tracking-wider opacity-70`}>Agent Intelligence Trust</h4>
           <div className="grid grid-cols-2 gap-4">
-            <div title="Measures how well the AI's probability estimates match outcomes. A score of 0 is perfect.">
-              <StatCard label="Avg Brier Score" value={trustMetrics.avg_brier.toFixed(3)} subtext="Lower is better (0=perfect)" isNight={isNight} />
-            </div>
+            <StatCard label="Avg Brier Score" value={trustMetrics.avg_brier.toFixed(3)} subtext="Lower is better (0=perfect)" isNight={isNight} info="brier" />
             <StatCard label="Hit Rate" value={`${Math.round((trustMetrics.hits / trustMetrics.total_forecasts) * 100)}%`} subtext={`${trustMetrics.hits} hits / ${trustMetrics.total_forecasts} total`} isNight={isNight} />
           </div>
         </div>
@@ -190,11 +189,14 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
   );
 }
 
-function StatCard({ label, value, subtext, isNight }) {
+function StatCard({ label, value, subtext, isNight, info }) {
   const textColor = isNight ? 'text-white' : 'text-black';
   return (
     <div className={`${isNight ? 'glass-input' : 'glass-input-light'} rounded-lg p-3 text-center`}>
-      <p className={`text-xs ${textColor} opacity-60 mb-1`}>{label}</p>
+      <p className={`text-xs ${textColor} opacity-60 mb-1`}>
+        {label}
+        {info && <InfoTip term={info} isNight={isNight} className="ml-1" />}
+      </p>
       <p className={`text-2xl font-light ${textColor} mb-1`}>{value}</p>
       <p className={`text-xs ${textColor} opacity-50`}>{subtext}</p>
     </div>

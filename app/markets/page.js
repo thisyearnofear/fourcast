@@ -7,8 +7,7 @@ import { useChainConnections } from "@/hooks/useChainConnections";
 import useHUDStore from "@/hooks/useHUDStore";
 import useFilterStore from "@/hooks/useFilterStore";
 import { useWeather } from "@/hooks/useWeather";
-import { useStaggeredAnimation } from "@/hooks/useStaggeredAnimation";
-import Scene3D from "@/components/Scene3D";
+import { useStaggeredAnimation } from "@/app/hooks/useStaggeredAnimation";
 import { useGlobalToast } from "@/components/ToastProvider";
 import PublishConfirmModal from "@/components/PublishConfirmModal";
 import { OrderSigningPanel } from "@/components/OrderSigningPanel";
@@ -111,7 +110,7 @@ export default function MarketsPage() {
   const setActiveTab = (tab) => filterStore.setMarketsActiveTab(tab);
 
   // Weather state (for UI theming and discovery mode)
-  const { weatherData, isLoading: isLoadingWeather, currentLocationName, isNight } = useWeather();
+  const { weatherData, isNight } = useWeather();
   const { isHUDVisible } = useHUDStore();
 
   // Market state (shared across tabs)
@@ -286,15 +285,11 @@ export default function MarketsPage() {
           searchText: discoveryFilters.searchText || null,
         };
 
-      console.log("[Markets Page] Fetching markets with request:", requestBody);
-
       const response = await fetch("/api/markets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
       });
-
-      console.log("[Markets Page] Response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -303,19 +298,12 @@ export default function MarketsPage() {
       }
 
       const result = await response.json();
-      console.log("[Markets Page] Result:", result);
 
       if (result.success) {
         if (Array.isArray(result.markets) && result.markets.length > 0) {
-          console.log(
-            "[Markets Page] Success! Got",
-            result.markets.length,
-            "markets"
-          );
           setMarkets(result.markets);
           setSelectedMarket(result.markets[0]);
         } else {
-          console.log("[Markets Page] Empty markets array");
           setMarkets([]);
           setError(
             result.message || "No markets found. Try adjusting filters."
@@ -634,15 +622,6 @@ export default function MarketsPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* 3D Scene Background */}
-      <div className="fixed inset-0 z-0">
-        <Scene3D
-          weatherData={weatherData}
-          isLoading={isLoadingWeather}
-          quality="ambient"
-        />
-      </div>
-
       {/* Analysis Config Modal */}
       <AnalysisConfigModal
         isOpen={showConfigModal}

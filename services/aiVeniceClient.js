@@ -2,6 +2,12 @@
  * Venice AI client core module.
  * Contains the callVeniceAI function and shared weather-sensitivity helpers.
  */
+// Server-only guard: this module reads secret env vars (VENICE_API_KEY et al).
+// The .server filename convention was lost in the god-file split — enforce it here.
+if (typeof window !== 'undefined') {
+  throw new Error('aiVeniceClient is server-only and must not be imported from client components');
+}
+
 
 import OpenAI from "openai";
 import { LocationValidator } from "./locationValidator.js";

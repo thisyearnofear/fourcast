@@ -23,12 +23,13 @@ export const BRAND = {
   demoSubcopy:
     'Watch the AI agent scrape, analyze, and detect market edges in real-time. Zero setup required.',
 
-  /** Product loop (NarrativeSteps) */
+  /** Product loop (NarrativeSteps) — the user journey, one name everywhere:
+   *  Search → Analyze → Publish/Trade → Track */
   loop: {
-    search: { label: 'Scrape', short: 'Scrape', icon: '🌐' },
+    search: { label: 'Search', short: 'Search', icon: '🔍' },
     analyze: { label: 'Analyze', short: 'Analyze', icon: '🧠' },
-    publish: { label: 'Detect Edge', short: 'Edge', icon: '📊' },
-    scored: { label: 'Execute', short: 'Trade', icon: '⚡' },
+    publish: { label: 'Publish / Trade', short: 'Publish', icon: '📤' },
+    scored: { label: 'Track Record', short: 'Track', icon: '🏆' },
   },
 
   /** Page subtitles */

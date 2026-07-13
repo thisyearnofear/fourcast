@@ -2,6 +2,12 @@
  * Event metadata extraction and location verification via Venice AI.
  * These functions create their own OpenAI client instances and use web search.
  */
+// Server-only guard: this module reads secret env vars (VENICE_API_KEY et al).
+// The .server filename convention was lost in the god-file split — enforce it here.
+if (typeof window !== 'undefined') {
+  throw new Error('aiEventMetadata is server-only and must not be imported from client components');
+}
+
 
 import OpenAI from "openai";
 

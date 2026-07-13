@@ -38,8 +38,18 @@ export function ConfidenceBadge({ confidence, isNight }) {
         default: '❓'
     };
 
+    // Plain-language hint for first-time users (matches GLOSSARY.confidence)
+    const hintMap = {
+        HIGH: 'High confidence — multiple strong sources agree',
+        MEDIUM: 'Medium confidence — decent evidence, some uncertainty',
+        LOW: 'Low confidence — thin or conflicting evidence',
+    };
+
     return (
-        <span className={`${baseClass} ${colorMap[confidence] || colorMap.default}`}>
+        <span
+            className={`${baseClass} ${colorMap[confidence] || colorMap.default}`}
+            title={hintMap[confidence] || 'Evidence strength behind this call'}
+        >
             <span aria-hidden="true">{iconMap[confidence] || iconMap.default}</span>{' '}
             {confidence || 'UNKNOWN'}
         </span>

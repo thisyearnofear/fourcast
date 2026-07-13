@@ -78,19 +78,17 @@ export function useTheme() {
   }, []);
 
   // Quick toggle: dark → light → auto → dark
+  // Reads the current value from state via a ref-free pattern: setTheme handles
+  // persistence + broadcast, so the updater stays pure.
   const toggle = useCallback(() => {
-    setThemeState(prev => {
-      const order = ['dark', 'light', 'auto'];
-      const idx = order.indexOf(prev);
-      const next = order[(idx + 1) % order.length];
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('fourcast_theme', next);
-        // Notify other useTheme instances in the same tab
-        window.dispatchEvent(new CustomEvent('fourcast-theme-change', { detail: next }));
-      }
-      return next;
-    });
-  }, []);
+    const order = ['dark', 'light', 'auto'];
+    const current = typeof window !== 'undefined'
+      ? localStorage.getItem('fourcast_theme') || 'auto'
+      : 'auto';
+    const idx = order.indexOf(current);
+    const next = order[(idx + 1) % order.length];
+    setTheme(next);
+  }, [setTheme]);
 
   return { theme, isNight, setTheme, toggle };
 }

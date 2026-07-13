@@ -29,7 +29,7 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
     : "bg-black/20 border-black/30";
 
   // Primary navigation structure
-  // Core loop: Scrape → Analyze → Detect Edge → Execute (matches BRAND.loop)
+  // Core loop: Search → Analyze → Publish/Trade → Track (matches BRAND.loop)
   // Everything experimental moves to /labs
   const primaryNav = [
     { 
@@ -120,7 +120,7 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
           </Link>
         ))}
         {/* Theme toggle */}
-        <ThemeToggle isNight={isNight} className={isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} />
+        <ThemeToggle className={isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} />
       </div>
       <div className="flex sm:hidden items-center gap-1">
         {primaryNav.map((item) => (
@@ -153,7 +153,7 @@ export default function PageNav({ currentPage, isNight, secondaryNav = [] }) {
           <span className={`text-[8px] mt-0.5 font-medium ${textColor} leading-none`}>Labs</span>
         </Link>
         {/* Theme toggle on mobile */}
-        <ThemeToggle isNight={isNight} className={isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} />
+        <ThemeToggle className={isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} />
       </div>
     </nav>
   );

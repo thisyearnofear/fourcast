@@ -6,12 +6,10 @@ import { useSignalPublisher } from '@/hooks/useSignalPublisher';
 import { useChainConnections } from '@/hooks/useChainConnections';
 import useHUDStore from '@/hooks/useHUDStore';
 import useFilterStore from '@/hooks/useFilterStore';
-import { useWeather } from '@/hooks/useWeather';
 import { useTheme } from '@/hooks/useTheme';
 import { useGlobalToast } from '@/components/ToastProvider';
 import PageNav, { SecondaryNav } from '@/app/components/PageNav';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
-import Scene3D from '@/components/Scene3D';
 import SignalFilters from '@/app/components/signals/SignalFilters';
 import SignalCard from '@/app/components/signals/SignalCard';
 import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
@@ -45,8 +43,6 @@ export default function SignalsPage() {
     const setSortBy = (s) => filterStore.setSignalsSortBy(s);
 
     // Weather for theming
-    const [weatherData, setWeatherData] = useState(null);
-    const [isLoadingWeather, setIsLoadingWeather] = useState(true);
     const { isHUDVisible } = useHUDStore();
     const { isNight } = useTheme();
 
@@ -207,15 +203,6 @@ export default function SignalsPage() {
 
     return (
         <div className="min-h-screen relative">
-            {/* 3D Scene Background */}
-            <div className="fixed inset-0 z-0">
-                <Scene3D
-                    weatherData={weatherData}
-                    isLoading={isLoadingWeather}
-                    quality="ambient"
-                />
-            </div>
-
             {/* Scrollable Content */}
             <div className={`relative z-20 flex flex-col min-h-screen overflow-y-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 {/* Header */}

@@ -148,3 +148,6 @@ bin/
 # Deploy artifacts
 .prediction-receipt-address
 .env*
+
+# Agent tool scratch space
+.kimchi/

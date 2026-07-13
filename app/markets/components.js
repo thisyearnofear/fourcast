@@ -8,6 +8,7 @@ import { getRecommendationExplanation } from "@/utils/chainUtils";
 import EmptyMarketState from "@/components/EmptyMarketState";
 import BottomSheet from "@/components/BottomSheet";
 import EvidenceBlock from "@/components/EvidenceBlock";
+import InfoTip from "@/components/InfoTip";
 
 // Sports Tab Component - Date-First Design
 export function SportsTabContent({
@@ -1284,6 +1285,7 @@ export function MarketCard({
                         <h5 className={`text-sm font-medium ${textColor}`}>
                           Edge Analysis
                         </h5>
+                        <InfoTip term="edge" isNight={isNight} />
                       </div>
                       <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter ${
                         Math.abs(analysis.synthData.polymarketEdge.edge) > 0.05

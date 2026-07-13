@@ -9,9 +9,7 @@ import { useTheme } from '@/hooks/useTheme';
  * Renders as a small icon button that cycles: 🌙 dark → ☀️ light → 🔄 auto.
  * The current state is shown via the icon and a tooltip.
  */
-export default function ThemeToggle({ isNight, className = '' }) {
-  // Use the passed isNight prop if available (from parent's useWeather),
-  // otherwise manage our own theme state.
+export default function ThemeToggle({ className = '' }) {
   const { theme, toggle } = useTheme();
   const [mounted, setMounted] = useState(false);
 

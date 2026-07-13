@@ -2,6 +2,12 @@
  * Weather impact analysis module.
  * Contains analyzeWeatherImpactServer - the main single-market analysis function.
  */
+// Server-only guard: this module reads secret env vars (VENICE_API_KEY et al).
+// The .server filename convention was lost in the god-file split — enforce it here.
+if (typeof window !== 'undefined') {
+  throw new Error('aiWeatherAnalysis is server-only and must not be imported from client components');
+}
+
 
 import { getRedisClient } from "./redisService.js";
 import { LocationValidator } from "./locationValidator.js";

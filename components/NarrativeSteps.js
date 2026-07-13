@@ -4,7 +4,7 @@
  * NarrativeSteps — The "One Loop" breadcrumb
  * 
  * Visually frames where the user is in the core narrative:
- *   Search → Analyze → Publish/Trade → Get Scored
+ *   Search → Analyze → Publish/Trade → Track
  *
  * Props:
  *   currentStep: 'search' | 'analyze' | 'publish' | 'scored'

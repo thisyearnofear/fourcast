@@ -162,15 +162,10 @@ export default async function SignalPage({ params }) {
 
         {/* Conversion CTA — stops the share loop from dead-ending */}
         <SignalCTA
-          signalId={signal.id}
           marketTitle={signal.market_title}
           authorAddress={signal.author_address}
         />
 
-        {/* Footer */}
-        <p className="text-xs text-slate-600 text-center mt-8">
-          Powered by Fourcast — prediction intelligence with AI, ML, and weather data.
-        </p>
       </main>
     </div>
   );

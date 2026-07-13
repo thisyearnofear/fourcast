@@ -128,6 +128,14 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
   const [portalMode, setPortalMode] = React.useState(false);
   const [portalWeatherData, setPortalWeatherData] = React.useState(null);
   const { isHUDVisible } = useHUDStore();
+
+  // Respect prefers-reduced-motion: render a static gradient instead of WebGL.
+  // This kills the WebGL context on every route for users who don't want motion,
+  // eliminates ConnectKit/WebGL conflicts, and saves battery on mobile.
+  const prefersReducedMotion = React.useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
   
   // Mobile detection for 'auto' quality mode
   const isMobile = React.useMemo(() => {
@@ -313,6 +321,28 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
       </Text>
     );
   };
+
+  if (prefersReducedMotion) {
+    // Static gradient fallback — no WebGL context, no Three.js, no GPU work.
+    // Color adapts to weather condition like the WebGL version does.
+    const bgColor = weatherData?.current?.condition?.text?.toLowerCase().includes('rain')
+      ? 'linear-gradient(180deg, #1a2332 0%, #0d1216 100%)'
+      : weatherData?.current?.condition?.text?.toLowerCase().includes('cloud')
+      ? 'linear-gradient(180deg, #1e2a3a 0%, #0d1216 100%)'
+      : 'linear-gradient(180deg, #0a1428 0%, #060810 100%)';
+
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100vh',
+          position: 'relative',
+          background: bgColor,
+        }}
+        aria-hidden="true"
+      />
+    );
+  }
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
