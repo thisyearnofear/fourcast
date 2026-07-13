@@ -3,6 +3,12 @@
  * Contains runAgentLoop - the async generator that discovers, filters,
  * forecasts, and detects edge across prediction markets.
  */
+// Server-only guard: this module reads secret env vars (VENICE_API_KEY et al).
+// The .server filename convention was lost in the god-file split — enforce it here.
+if (typeof window !== 'undefined') {
+  throw new Error('aiAgentLoop is server-only and must not be imported from client components');
+}
+
 
 import OpenAI from "openai";
 import { getRedisClient } from "./redisService.js";
@@ -12,7 +18,14 @@ import { synthService } from "./synthService.js";
 import { brightDataService } from "./brightDataService.js";
 import { MarketIntelligenceAnalyzer } from "./analysis/MarketIntelligenceAnalyzer.js";
 import { arbitrageService } from "./arbitrageService.js";
-import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution } from "./db.js";
+import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution, getAutopilotExecutionsSince } from "./db.js";
+import {
+  buildTradedTodaySet,
+  computeSpentToday,
+  shouldSkipDedup,
+  shouldSkipCap,
+  formatDryRunMessage,
+} from "./autopilotSafety.js";
 import { analyzePathDependentMarket, detectPathDependentMarket } from "./pathDependentService.js";
 import { calculateKellySizing } from "../utils/kellySizing.js";
 
@@ -731,9 +744,77 @@ Output ONLY valid JSON:
 
     const privateKey = process.env.POLYMARKET_PRIVATE_KEY;
     const executedTrades = [];
+    const dryRun = config.dryRun === true;
+    const dailyCapPct = typeof config.dailyCapPct === "number" ? config.dailyCapPct : 0.5;
+
+    // Load last 24h of executions for per-market dedup and daily spend cap
+    const nowSec = Math.floor(Date.now() / 1000);
+    let todayExecutions = [];
+    try {
+      const execHistory = await getAutopilotExecutionsSince(nowSec - 24 * 3600, 200);
+      todayExecutions = execHistory.success ? execHistory.executions : [];
+    } catch (err) {
+      console.warn("Autopilot: failed to load execution history:", err.message);
+    }
+
+    const tradedToday = buildTradedTodaySet(todayExecutions);
+    let spentToday = computeSpentToday(todayExecutions);
 
     for (const rec of recommendations) {
       if (!rec.actionable || rec.sizePct <= 0) continue;
+
+      // Per-market 24h deduplication
+      if (shouldSkipDedup(rec, tradedToday)) {
+        yield {
+          step: "execute",
+          status: "skipped",
+          market: { title: rec.title, marketID: rec.marketID },
+          message: "Already traded this market in last 24h",
+        };
+        continue;
+      }
+
+      // Daily spend cap guard
+      if (shouldSkipCap(rec, spentToday, dailyCapPct)) {
+        yield {
+          step: "execute",
+          status: "skipped",
+          market: { title: rec.title, marketID: rec.marketID },
+          message: "Daily cap reached",
+        };
+        break;
+      }
+
+      if (dryRun) {
+        yield {
+          step: "execute",
+          status: "running",
+          market: { title: rec.title, marketID: rec.marketID },
+          message: formatDryRunMessage(rec),
+        };
+
+        const execResult = {
+          success: true,
+          dryRun: true,
+          sizePct: rec.sizePct,
+          kellyPct: rec.kellyPct,
+          direction: rec.direction,
+        };
+
+        executedTrades.push({ ...rec, execution: execResult });
+        tradedToday.add(rec.marketID);
+        spentToday += rec.sizePct;
+
+        try {
+          await updateForecastExecution(
+            `forecast-${rec.marketID}-${loopTimestamp}`,
+            execResult
+          );
+        } catch (dbErr) {
+          console.warn("Autopilot: DB save failed:", dbErr.message);
+        }
+        continue;
+      }
 
       yield {
         step: "execute",
@@ -765,6 +846,8 @@ Output ONLY valid JSON:
 
         if (result.success) {
           console.log(`✅ Autopilot: Executed ${rec.direction} on ${rec.title}`);
+          tradedToday.add(rec.marketID);
+          spentToday += rec.sizePct;
         } else {
           console.warn(`⚠️ Autopilot: Failed ${rec.direction} on ${rec.title}: ${result.error}`);
         }
@@ -792,6 +875,7 @@ Output ONLY valid JSON:
       data: {
         executed: executedTrades.filter(t => t.execution?.success).length,
         failed: executedTrades.filter(t => !t.execution?.success).length,
+        dryRun,
         trades: executedTrades,
       },
     };

@@ -39,16 +39,17 @@ export const arbitrageService = {
 
         for (const pm of polymarketMarkets) {
             for (const km of kalshiMarkets) {
-                const similarity = this.calculateTitleSimilarity(pm.title, km.title);
+                const jaccard = this.calculateTitleSimilarity(pm.title, km.title);
+                const dice = this.diceCoefficient(pm.title, km.title);
 
-                if (similarity > 0.6) { // 60% similarity threshold
+                if (dice >= 0.45 && jaccard >= 0.35) {
                     const arb = this.calculateArbitrage(pm, km);
 
                     if (arb.hasPriceDiff) {
                         similarities.push({
                             polymarket: pm,
                             kalshi: km,
-                            similarity: (similarity * 100).toFixed(0),
+                            similarity: (jaccard * 100).toFixed(0),
                             arbitrage: arb
                         });
                     }
@@ -60,6 +61,40 @@ export const arbitrageService = {
         return similarities.sort((a, b) =>
             parseFloat(b.arbitrage.priceDiff) - parseFloat(a.arbitrage.priceDiff)
         );
+    },
+
+    /**
+     * Calculate Dice coefficient using character bigrams
+     */
+    diceCoefficient(title1, title2) {
+        const normalize = (str) => {
+            return String(str)
+                .toLowerCase()
+                .replace(/[^\w\s]/g, '') // Remove punctuation
+                .replace(/\s+/g, ' ')    // Collapse whitespace
+                .trim();
+        };
+
+        const s1 = normalize(title1);
+        const s2 = normalize(title2);
+
+        if (!s1 && !s2) return 1.0;
+        if (!s1 || !s2) return 0.0;
+
+        const bigrams = (str) => {
+            const set = new Set();
+            for (let i = 0; i < str.length - 1; i++) {
+                set.add(str.slice(i, i + 2));
+            }
+            return set;
+        };
+
+        const a = bigrams(s1);
+        const b = bigrams(s2);
+
+        const intersection = new Set([...a].filter(x => b.has(x)));
+
+        return (2 * intersection.size) / (a.size + b.size);
     },
 
     /**

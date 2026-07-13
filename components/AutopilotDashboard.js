@@ -22,6 +22,15 @@ export function AutopilotDashboard({ isNight = false }) {
     minVolume: 10000,
     riskTolerance: 0.5,
   });
+
+  // Scheduled autopilot state
+  const [schedule, setSchedule] = useState(null);
+  const [scheduleLoading, setScheduleLoading] = useState(true);
+  const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [scheduleError, setScheduleError] = useState(null);
+  const [adminSecret, setAdminSecret] = useState('');
+  const [secretPrompted, setSecretPrompted] = useState(false);
+
   const liveFeedRef = useRef(null);
 
   // Track whether Bright Data was actually used during this run
@@ -57,6 +66,38 @@ export function AutopilotDashboard({ isNight = false }) {
   useEffect(() => {
     fetchExecutions();
   }, [fetchExecutions]);
+
+  // Fetch persisted autopilot schedule on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchSchedule() {
+      setScheduleLoading(true);
+      setScheduleError(null);
+      try {
+        const res = await fetch('/api/agent/schedule');
+        const data = await res.json();
+        if (!cancelled) {
+          if (data.success) {
+            setSchedule(data.schedule);
+          } else {
+            setScheduleError(data.error || 'Failed to fetch schedule');
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setScheduleError(err.message);
+        }
+      } finally {
+        if (!cancelled) {
+          setScheduleLoading(false);
+        }
+      }
+    }
+
+    fetchSchedule();
+    return () => { cancelled = true; };
+  }, []);
 
   // Fetch Bright Data connection status on mount
   useEffect(() => {
@@ -197,6 +238,98 @@ export function AutopilotDashboard({ isNight = false }) {
   const visibleExecutions = executions.slice(0, visibleCount);
   const hasMore = visibleCount < executions.length;
 
+  // Prompt for admin secret once per session when changing schedule
+  const promptForSecret = useCallback(() => {
+    if (secretPrompted) return adminSecret || null;
+    if (typeof window === 'undefined') return null;
+    const provided = window.prompt('Enter admin secret to update schedule:');
+    setSecretPrompted(true);
+    if (provided === null || provided.trim() === '') {
+      setScheduleError('Admin secret required to change schedule.');
+      return null;
+    }
+    setAdminSecret(provided.trim());
+    setScheduleError(null);
+    return provided.trim();
+  }, [adminSecret, secretPrompted]);
+
+  // Update schedule on the server
+  const saveSchedule = useCallback(async (next) => {
+    setScheduleSaving(true);
+    setScheduleError(null);
+
+    const secret = promptForSecret();
+    if (secret === null) {
+      setScheduleSaving(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/agent/schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-secret': secret,
+        },
+        body: JSON.stringify(next),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setSchedule(data.schedule);
+      } else {
+        setScheduleError(data.error || 'Failed to update schedule');
+      }
+    } catch (err) {
+      setScheduleError(err.message);
+    } finally {
+      setScheduleSaving(false);
+    }
+  }, [promptForSecret]);
+
+  const handleToggleSchedule = useCallback(() => {
+    if (!schedule || scheduleSaving) return;
+    saveSchedule({
+      enabled: !schedule.enabled,
+      intervalMinutes: schedule.intervalMinutes,
+      dryRun: schedule.dryRun,
+      dailyCapPct: schedule.dailyCapPct,
+    });
+  }, [schedule, scheduleSaving, saveSchedule]);
+
+  const handleIntervalChange = useCallback((e) => {
+    if (!schedule || scheduleSaving) return;
+    const intervalMinutes = parseInt(e.target.value, 10);
+    saveSchedule({
+      enabled: schedule.enabled,
+      intervalMinutes,
+      dryRun: schedule.dryRun,
+      dailyCapPct: schedule.dailyCapPct,
+    });
+  }, [schedule, scheduleSaving, saveSchedule]);
+
+  const handleDryRunToggle = useCallback(() => {
+    if (!schedule || scheduleSaving) return;
+    saveSchedule({
+      enabled: schedule.enabled,
+      intervalMinutes: schedule.intervalMinutes,
+      dryRun: !schedule.dryRun,
+      dailyCapPct: schedule.dailyCapPct,
+    });
+  }, [schedule, scheduleSaving, saveSchedule]);
+
+  const handleDailyCapChange = useCallback((e) => {
+    if (!schedule || scheduleSaving) return;
+    const value = parseFloat(e.target.value);
+    if (Number.isNaN(value)) return;
+    saveSchedule({
+      enabled: schedule.enabled,
+      intervalMinutes: schedule.intervalMinutes,
+      dryRun: schedule.dryRun,
+      dailyCapPct: Math.max(0.1, Math.min(1, value)),
+    });
+  }, [schedule, scheduleSaving, saveSchedule]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -246,6 +379,35 @@ export function AutopilotDashboard({ isNight = false }) {
               </span>
             </div>
           )}
+
+          {/* Schedule status */}
+          {!scheduleLoading && schedule && (
+            <div className={`flex flex-wrap items-center gap-3 mt-1.5 text-[10px] ${subtleText}`}>
+              <span className="font-medium uppercase tracking-wider">Schedule:</span>
+              <span className={schedule.enabled ? 'text-emerald-500' : 'text-slate-400'}>
+                {schedule.enabled
+                  ? `Runs every ${schedule.intervalMinutes} minutes via Vercel Cron`
+                  : 'Scheduled autopilot is disabled'}
+              </span>
+              {schedule.dryRun && (
+                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
+                  isNight ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-amber-100 text-amber-700 border border-amber-200'
+                }`}>
+                  Dry Run
+                </span>
+              )}
+              {schedule.enabled && schedule.lastRunAt && (
+                <span className={isNight ? 'text-white/40' : 'text-black/40'}>
+                  Last run: {formatRelativeTime(schedule.lastRunAt)}
+                </span>
+              )}
+              {schedule.enabled && schedule.lastRunAt && (
+                <span className={isNight ? 'text-white/40' : 'text-black/40'}>
+                  Next eligible run: {formatRelativeTime(schedule.lastRunAt + schedule.intervalMinutes * 60)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {/* Config Toggle */}
@@ -260,6 +422,28 @@ export function AutopilotDashboard({ isNight = false }) {
           >
             ⚙
           </button>
+          {/* Schedule Toggle */}
+          <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+            isNight
+              ? 'bg-white/5 hover:bg-white/10 border-white/10'
+              : 'bg-black/5 hover:bg-black/10 border-black/10'
+          } ${scheduleLoading || scheduleSaving ? 'opacity-60' : ''}`}>
+            <span className={subtleText}>Schedule</span>
+            <button
+              onClick={handleToggleSchedule}
+              disabled={scheduleLoading || scheduleSaving || !schedule}
+              className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+                schedule?.enabled ? 'bg-emerald-500' : isNight ? 'bg-white/20' : 'bg-black/20'
+              } disabled:cursor-not-allowed`}
+              aria-label="Toggle scheduled autopilot"
+            >
+              <span
+                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                  schedule?.enabled ? 'translate-x-3.5' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
           {/* Refresh */}
           <button
             onClick={fetchExecutions}
@@ -293,6 +477,77 @@ export function AutopilotDashboard({ isNight = false }) {
           )}
         </div>
       </div>
+
+      {/* Schedule Panel */}
+      {schedule && (
+        <div className={`glass-subtle rounded-xl p-4 space-y-3 border ${isNight ? 'border-emerald-500/20' : 'border-emerald-200'}`}>
+          <div className="flex items-center justify-between">
+            <h3 className={`text-xs font-medium ${textColor}`}>Scheduled Autopilot</h3>
+            {scheduleSaving && (
+              <span className={`text-[10px] ${subtleText}`}>Saving…</span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={`text-[10px] ${subtleText} block mb-1`}>Run Interval</label>
+              <select
+                value={schedule.intervalMinutes}
+                onChange={handleIntervalChange}
+                disabled={scheduleSaving}
+                className={`w-full px-2 py-1.5 rounded-lg text-xs border ${
+                  isNight ? 'bg-white/5 border-white/10 text-white' : 'bg-black/5 border-black/10 text-black'
+                } disabled:opacity-50`}
+              >
+                <option value={15}>Every 15 minutes</option>
+                <option value={30}>Every 30 minutes</option>
+                <option value={60}>Every 60 minutes</option>
+                <option value={120}>Every 2 hours</option>
+              </select>
+            </div>
+            <div>
+              <label className={`text-[10px] ${subtleText} block mb-1`}>Daily Spend Cap (% of bankroll)</label>
+              <input
+                type="number"
+                min={0.1}
+                max={1}
+                step={0.1}
+                value={schedule.dailyCapPct}
+                onChange={handleDailyCapChange}
+                disabled={scheduleSaving}
+                className={`w-full px-2 py-1.5 rounded-lg text-xs border ${
+                  isNight ? 'bg-white/5 border-white/10 text-white' : 'bg-black/5 border-black/10 text-black'
+                } disabled:opacity-50`}
+              />
+              <p className={`text-[10px] ${subtleText} mt-1`}>
+                Max {(schedule.dailyCapPct * 100).toFixed(0)}% of bankroll per day
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 pt-2 border-t border-white/10">
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] ${subtleText}`}>Dry Run</span>
+              <button
+                onClick={handleDryRunToggle}
+                disabled={scheduleSaving}
+                className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+                  schedule.dryRun ? 'bg-amber-500' : isNight ? 'bg-white/20' : 'bg-black/20'
+                } disabled:cursor-not-allowed`}
+                aria-label="Toggle dry run mode"
+              >
+                <span
+                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                    schedule.dryRun ? 'translate-x-3.5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+            <p className={`text-[10px] ${subtleText}`}>
+              Vercel Cron fires hourly; interval is the minimum gap between runs.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Config Panel */}
       {showConfig && (
@@ -393,6 +648,15 @@ export function AutopilotDashboard({ isNight = false }) {
         <StatCard label="Failed" value={failedTrades} isNight={isNight} accent={false} />
       </div>
 
+      {/* Schedule Error */}
+      {scheduleError && (
+        <div className={`text-xs p-3 rounded-lg ${
+          isNight ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-100 text-amber-700'
+        }`}>
+          Schedule: {scheduleError}
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <div className={`text-xs p-3 rounded-lg ${
@@ -461,6 +725,18 @@ export function AutopilotDashboard({ isNight = false }) {
       )}
     </div>
   );
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────
+function formatRelativeTime(unixSeconds) {
+  const seconds = Date.now() / 1000 - unixSeconds;
+  const abs = Math.abs(seconds);
+  const suffix = seconds < 0 ? 'from now' : 'ago';
+
+  if (abs < 60) return `just ${suffix === 'ago' ? 'now' : suffix}`;
+  if (abs < 3600) return `${Math.round(abs / 60)} min ${suffix}`;
+  if (abs < 86400) return `${Math.round(abs / 3600)} hr ${suffix}`;
+  return `${Math.round(abs / 86400)} days ${suffix}`;
 }
 
 // ── Live Step Component ─────────────────────────────────────────────────

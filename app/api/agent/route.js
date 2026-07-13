@@ -35,6 +35,7 @@ export async function POST(request) {
       minVolume = 10000,
       maxDaysOut = 30,
       riskTolerance = 0.5,
+      autopilot = false,
     } = body;
 
     const clientId = getClientIdentifier(request);
@@ -56,6 +57,7 @@ export async function POST(request) {
               minVolume,
               maxDaysOut,
               riskTolerance: Math.max(0, Math.min(1, riskTolerance)),
+              autopilot, // ← was missing: pass through to agent loop for execution
             });
 
             let marketsScanned = 0;

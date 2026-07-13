@@ -94,6 +94,46 @@ describe('arbitrageService.calculateTitleSimilarity', () => {
   });
 });
 
+describe('arbitrageService.diceCoefficient', () => {
+  it('returns 1.0 for identical titles', () => {
+    const title = 'Will Bitcoin hit $100k by December 2025?';
+    expect(arbitrageService.diceCoefficient(title, title)).toBe(1.0);
+  });
+
+  it('returns a high score for titles with a typo', () => {
+    const t1 = 'Will Bitcoin hit $100k?';
+    const t2 = 'Will Bitcion hit $100k?';
+    expect(arbitrageService.diceCoefficient(t1, t2)).toBeGreaterThan(0.6);
+  });
+
+  it('returns a low score for unrelated titles', () => {
+    const t1 = 'Will it rain in Chicago tomorrow?';
+    const t2 = 'Bitcoin price prediction 2025';
+    expect(arbitrageService.diceCoefficient(t1, t2)).toBeLessThan(0.3);
+  });
+
+  it('returns 0.0 when one or both titles are empty', () => {
+    expect(arbitrageService.diceCoefficient('', 'something')).toBe(0.0);
+    expect(arbitrageService.diceCoefficient('something', '')).toBe(0.0);
+    expect(arbitrageService.diceCoefficient('', '')).toBe(1.0);
+  });
+
+  it('is case-insensitive and ignores punctuation', () => {
+    const t1 = 'WILL THE EAGLES WIN THE SUPER BOWL?';
+    const t2 = 'will the eagles win the super bowl';
+    expect(arbitrageService.diceCoefficient(t1, t2)).toBe(1.0);
+  });
+
+  it('catches rephrasings that pure Jaccard similarity misses', () => {
+    const t1 = 'Will the Fed cut rates March 2025?';
+    const t2 = 'Will the Federal Reserve cut interest rates by March 2025?';
+    const dice = arbitrageService.diceCoefficient(t1, t2);
+    const jaccard = arbitrageService.calculateTitleSimilarity(t1, t2);
+    expect(dice).toBeGreaterThan(jaccard);
+    expect(dice).toBeGreaterThan(0.45);
+  });
+});
+
 describe('arbitrageService.findSimilarMarkets', () => {
   const makeMarket = (title, odds, platform) => ({
     title,
@@ -117,6 +157,18 @@ describe('arbitrageService.findSimilarMarkets', () => {
       makeMarket('Will it rain in Chicago?', 0.50, 'polymarket'),
       makeMarket('Bitcoin price prediction 2025', 0.50, 'kalshi'),
     ];
+    const result = arbitrageService.findSimilarMarkets(markets);
+    expect(result).toEqual([]);
+  });
+
+  it('requires both Dice >= 0.45 and Jaccard >= 0.35 to match', () => {
+    // High Dice but low Jaccard due to a typo and number reformatting
+    const markets = [
+      makeMarket('Bitcoin hits 100k', 0.40, 'polymarket'),
+      makeMarket('Bitcion hits 100000', 0.65, 'kalshi'),
+    ];
+    expect(arbitrageService.diceCoefficient('Bitcoin hits 100k', 'Bitcion hits 100000')).toBeGreaterThan(0.45);
+    expect(arbitrageService.calculateTitleSimilarity('Bitcoin hits 100k', 'Bitcion hits 100000')).toBeLessThan(0.35);
     const result = arbitrageService.findSimilarMarkets(markets);
     expect(result).toEqual([]);
   });

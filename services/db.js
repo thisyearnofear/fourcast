@@ -10,6 +10,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import { getExecutionStatus } from './autopilotSafety.js';
 
 let db;
 let isTurso = false;
@@ -24,8 +25,8 @@ if (process.env.TURSO_CONNECTION_URL && process.env.TURSO_AUTH_TOKEN) {
   isTurso = true;
   console.log('Using Turso database');
 } else {
-  // Development: Use local SQLite
-  const dbPath = path.join(process.cwd(), 'fourcast.db');
+  // Development: Use local SQLite (DATABASE_PATH lets tests point at a temp file)
+  const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'fourcast.db');
   db = new Database(dbPath);
 
   // Enable WAL mode for better concurrency
@@ -714,7 +715,7 @@ export async function updateForecastExecution(forecastId, execution) {
            direction = ?
        WHERE id = ?`,
       [
-        execution.success ? 'SUCCESS' : 'FAILED',
+        getExecutionStatus(execution),
         execution.orderID || execution.error || '',
         execution.sizePct || null,
         execution.kellyPct || null,
@@ -744,6 +745,125 @@ export async function getAutopilotExecutions(limit = 20) {
     return { success: true, executions: rows };
   } catch (error) {
     console.error('Failed to get autopilot executions:', error);
+    return { success: false, error: error.message, executions: [] };
+  }
+}
+
+/**
+ * Get persisted autopilot schedule (enabled flag + interval + safety columns)
+ */
+export async function getAutopilotSchedule() {
+  try {
+    const rows = await query(
+      `SELECT enabled, interval_minutes, updated_at, dry_run, last_run_at, daily_cap_pct
+       FROM autopilot_schedule WHERE id = 1 LIMIT 1`
+    );
+
+    const row = rows[0] || {
+      enabled: 0,
+      interval_minutes: 60,
+      updated_at: 0,
+      dry_run: 1,
+      last_run_at: null,
+      daily_cap_pct: 0.5,
+    };
+
+    return {
+      success: true,
+      schedule: {
+        enabled: row.enabled === 1 || row.enabled === true,
+        intervalMinutes: row.interval_minutes,
+        updatedAt: row.updated_at,
+        dryRun: row.dry_run === 1 || row.dry_run === true,
+        lastRunAt: row.last_run_at,
+        dailyCapPct: row.daily_cap_pct,
+      },
+    };
+  } catch (error) {
+    console.error('Failed to get autopilot schedule:', error);
+    return { success: false, error: error.message, schedule: null };
+  }
+}
+
+/**
+ * Persist autopilot schedule (enabled flag + interval + safety columns)
+ *
+ * Backward-compatible: old 2-arg callers (enabled, intervalMinutes) still work.
+ */
+export async function setAutopilotSchedule(enabled, intervalMinutes, dryRun, dailyCapPct) {
+  try {
+    const updatedAt = Math.floor(Date.now() / 1000);
+
+    // Resolve defaults for backward compatibility
+    const dryRunValue = dryRun === undefined ? true : !!dryRun;
+    const dailyCapPctValue = dailyCapPct === undefined ? 0.5 : Math.max(0, Math.min(1, Number(dailyCapPct)));
+
+    await execute(
+      `INSERT INTO autopilot_schedule (id, enabled, interval_minutes, updated_at, dry_run, daily_cap_pct)
+       VALUES (1, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         enabled = excluded.enabled,
+         interval_minutes = excluded.interval_minutes,
+         updated_at = excluded.updated_at,
+         dry_run = excluded.dry_run,
+         daily_cap_pct = excluded.daily_cap_pct`,
+      [
+        enabled ? 1 : 0,
+        intervalMinutes,
+        updatedAt,
+        dryRunValue ? 1 : 0,
+        dailyCapPctValue,
+      ]
+    );
+
+    return {
+      success: true,
+      schedule: {
+        enabled: enabled === true,
+        intervalMinutes,
+        updatedAt,
+        dryRun: dryRunValue,
+        dailyCapPct: dailyCapPctValue,
+      },
+    };
+  } catch (error) {
+    console.error('Failed to set autopilot schedule:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Record the most recent autopilot run timestamp.
+ */
+export async function recordAutopilotRun(timestamp) {
+  try {
+    await execute(
+      `UPDATE autopilot_schedule SET last_run_at = ? WHERE id = 1`,
+      [timestamp]
+    );
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to record autopilot run:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get autopilot executions since a given unix timestamp.
+ */
+export async function getAutopilotExecutionsSince(unixSeconds, limit = 200) {
+  try {
+    const rows = await query(
+      `SELECT * FROM agent_forecasts
+       WHERE autopilot_executed = 1
+         AND timestamp >= ?
+       ORDER BY timestamp DESC
+       LIMIT ?`,
+      [unixSeconds, limit]
+    );
+    return { success: true, executions: rows };
+  } catch (error) {
+    console.error('Failed to get autopilot executions since:', error);
     return { success: false, error: error.message, executions: [] };
   }
 }
