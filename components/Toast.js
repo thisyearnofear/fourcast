@@ -67,32 +67,24 @@ function Toast({ toast, onRemove, isNight }) {
   const getColors = (type, isNight) => {
     const colorMap = {
       success: {
-        bg: isNight
-          ? "bg-green-500/20 border-green-400/30"
-          : "bg-green-400/20 border-green-500/30",
-        text: isNight ? "text-green-200" : "text-green-800",
-        link: isNight ? "text-green-300 hover:text-green-100" : "text-green-900 hover:text-green-700",
+        bg: "bg-green-500/20 border-green-400/30",
+        text: "text-green-200",
+        link: "text-green-300 hover:text-green-100",
       },
       error: {
-        bg: isNight
-          ? "bg-red-500/20 border-red-400/30"
-          : "bg-red-400/20 border-red-500/30",
-        text: isNight ? "text-red-200" : "text-red-800",
-        link: isNight ? "text-red-300 hover:text-red-100" : "text-red-900 hover:text-red-700",
+        bg: "bg-red-500/20 border-red-400/30",
+        text: "text-red-200",
+        link: "text-red-300 hover:text-red-100",
       },
       warning: {
-        bg: isNight
-          ? "bg-yellow-500/20 border-yellow-400/30"
-          : "bg-yellow-400/20 border-yellow-500/30",
-        text: isNight ? "text-yellow-200" : "text-yellow-800",
-        link: isNight ? "text-yellow-300 hover:text-yellow-100" : "text-yellow-900 hover:text-yellow-700",
+        bg: "bg-yellow-500/20 border-yellow-400/30",
+        text: "text-yellow-200",
+        link: "text-yellow-300 hover:text-yellow-100",
       },
       info: {
-        bg: isNight
-          ? "bg-blue-500/20 border-blue-400/30"
-          : "bg-blue-400/20 border-blue-500/30",
-        text: isNight ? "text-blue-200" : "text-blue-800",
-        link: isNight ? "text-blue-300 hover:text-blue-100" : "text-blue-900 hover:text-blue-700",
+        bg: "bg-blue-500/20 border-blue-400/30",
+        text: "text-blue-200",
+        link: "text-blue-300 hover:text-blue-100",
       },
     };
     return colorMap[type] || colorMap.info;

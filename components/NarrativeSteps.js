@@ -23,18 +23,12 @@ export default function NarrativeSteps({ currentStep, isNight = false, className
 
   const currentIdx = steps.findIndex(s => s.id === currentStep);
 
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const activeBg = isNight
-    ? 'bg-purple-500/20 border-purple-400/40 text-purple-200'
-    : 'bg-purple-400/20 border-purple-500/40 text-purple-800';
-  const inactiveBg = isNight
-    ? 'bg-white/5 border-white/10 text-white/40'
-    : 'bg-black/5 border-black/10 text-black/40';
-  const doneBg = isNight
-    ? 'bg-emerald-500/15 border-emerald-400/25 text-emerald-300'
-    : 'bg-emerald-400/15 border-emerald-500/25 text-emerald-700';
-  const lineColor = isNight ? 'bg-white/10' : 'bg-black/10';
-  const doneLineColor = isNight ? 'bg-emerald-500/30' : 'bg-emerald-500/20';
+  const textColor = 'text-white';
+  const activeBg = 'bg-purple-500/20 border-purple-400/40 text-purple-200';
+  const inactiveBg = 'bg-white/5 border-white/10 text-white/40';
+  const doneBg = 'bg-emerald-500/15 border-emerald-400/25 text-emerald-300';
+  const lineColor = 'bg-white/10';
+  const doneLineColor = 'bg-emerald-500/30';
 
   return (
     <div className={`flex items-center gap-0 ${className}`} aria-label="Navigation steps">

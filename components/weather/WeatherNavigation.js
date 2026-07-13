@@ -1,12 +1,10 @@
 'use client';
 
 export default function WeatherNavigation({ isNight }) {
-  const bgColor = isNight
-    ? 'bg-white/10 border-white/20 hover:bg-white/15'
-    : 'bg-white/20 border-white/30 hover:bg-white/25';
+  const bgColor = 'bg-white/10 border-white/20 hover:bg-white/15';
   
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const hoverBg = isNight ? 'hover:bg-white/20' : 'hover:bg-black/20';
+  const textColor = 'text-white';
+  const hoverBg = 'hover:bg-white/20';
 
   return (
     <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
@@ -22,7 +20,7 @@ export default function WeatherNavigation({ isNight }) {
             <span className="text-xs sm:text-sm font-light hidden xs:inline">Markets</span>
           </button>
 
-          <div className={`w-px h-4 ${isNight ? 'bg-white/20' : 'bg-black/20'}`}></div>
+          <div className={`w-px h-4 bg-white/20`}></div>
 
           <button
             onClick={() => window.location.href = '/signals'}

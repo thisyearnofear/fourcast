@@ -28,19 +28,19 @@ export default function PortfolioCard({ isNight = false }) {
   // Show placeholder when no data available
   if (!loading && !stats) {
     return (
-      <div className={`rounded-2xl border p-4 text-center mb-4 ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
-        <p className={`text-sm ${isNight ? 'text-white/40' : 'text-black/40'}`}>No portfolio data yet</p>
-        <p className={`text-xs mt-1 ${isNight ? 'text-white/25' : 'text-black/25'}`}>
+      <div className={`rounded-2xl border p-4 text-center mb-4 bg-white/5 border-white/10`}>
+        <p className={`text-sm text-white/40`}>No portfolio data yet</p>
+        <p className={`text-xs mt-1 text-white/25`}>
           Connect wallet and publish signals to build your portfolio
         </p>
       </div>
     );
   }
 
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const mutedColor = isNight ? 'text-white/50' : 'text-black/50';
-  const cardBg = isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10';
-  const glassClass = isNight ? 'glass-subtle' : 'glass-subtle-light';
+  const textColor = 'text-white';
+  const mutedColor = 'text-white/50';
+  const cardBg = 'bg-white/5 border-white/10';
+  const glassClass = 'glass-subtle';
 
   // Loading skeleton
   if (loading) {
@@ -48,7 +48,7 @@ export default function PortfolioCard({ isNight = false }) {
       <div className={`rounded-2xl border ${cardBg} p-4 mb-4 animate-pulse`}>
         <div className="flex items-center gap-4">
           {[0, 1, 2].map(i => (
-            <div key={i} className={`h-10 w-20 rounded-lg ${isNight ? 'bg-white/10' : 'bg-black/10'}`} />
+            <div key={i} className={`h-10 w-20 rounded-lg bg-white/10`} />
           ))}
         </div>
       </div>
@@ -100,10 +100,7 @@ export default function PortfolioCard({ isNight = false }) {
         <button
           onClick={() => router.push('/signals')}
           className={`text-xs font-medium px-3 py-1.5 rounded-full transition-all whitespace-nowrap
-            ${isNight
-              ? 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
-              : 'bg-black/10 hover:bg-black/20 text-black/70 hover:text-black'
-            }`}
+            bg-white/10 hover:bg-white/20 text-white/70 hover:text-white`}
         >
           Full stats →
         </button>

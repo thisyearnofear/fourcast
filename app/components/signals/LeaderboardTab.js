@@ -28,7 +28,6 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
                 <div className={`${textColor} opacity-60`}>Stats</div>
                 <div className={`${textColor} opacity-60`}>Earnings</div>
             </div>
-
             {/* Leaderboard Cards */}
             <div className="grid grid-cols-1 gap-4">
                 {leaderboard.map((user, index) => {
@@ -44,7 +43,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
                             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
                                 {/* Rank */}
                                 <div className="flex items-center gap-3">
-                                    <div className={`text-2xl font-thin ${index < 3 ? (isNight ? 'text-yellow-400' : 'text-yellow-600') : 'opacity-40'}`}>
+                                    <div className={`text-2xl font-thin ${index < 3 ? ('text-yellow-400') : 'opacity-40'}`}>
                                         #{index + 1}
                                     </div>
                                 </div>
@@ -66,10 +65,10 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
 
                                 {/* Stats */}
                                 <div className="space-y-1">
-                                    <span className={`text-xs px-2 py-0.5 rounded-full border block w-fit ${isNight ? 'bg-white/10 border-white/20' : 'bg-black/10 border-black/20'} opacity-70`}>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full border block w-fit bg-white/10 border-white/20 opacity-70`}>
                                         {user.total_predictions} Signals
                                     </span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full border block w-fit ${isNight ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-green-400/20 text-green-800 border-green-400/30'}`}>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full border block w-fit bg-green-500/20 text-green-300 border-green-500/30`}>
                                         {(user.win_rate * 100).toFixed(1)}% Win
                                     </span>
                                 </div>
@@ -77,7 +76,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
                                 {/* Earnings */}
                                 <div className="text-right sm:text-right">
                                     <div className={`text-xs ${textColor} opacity-60 mb-1`}>Tips Earned</div>
-                                    <div className={`text-xl font-light ${isNight ? 'text-blue-300' : 'text-blue-700'}`}>
+                                    <div className={`text-xl font-light text-blue-300`}>
                                         {earnings > 0 ? `${earnings}  APT` : '—'}
                                     </div>
                                 </div>

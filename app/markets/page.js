@@ -584,10 +584,8 @@ export default function MarketsPage() {
     }
   }, [selectedMarket, analysis, canPublish, chains, weatherData, addToast, publishSignal, publishChain, publishError]);
 
-  const textColor = isNight ? "text-white" : "text-black";
-  const cardBgColor = isNight
-    ? "bg-slate-900/60 border-white/20"
-    : "bg-white/60 border-black/20";
+  const textColor = "text-white";
+  const cardBgColor = "bg-slate-900/60 border-white/20";
 
   // Safety check: render a loading state if chain connections aren't ready yet.
   // This guard is intentionally placed AFTER all hooks (the last hook is the

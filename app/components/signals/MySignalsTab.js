@@ -7,7 +7,7 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <div className={`w-6 h-6 border-2 ${isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'} rounded-full animate-spin`}></div>
+                <div className={`w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin`}></div>
                 <span className={`ml-3 ${textColor} opacity-70`}>Loading your signals...</span>
             </div>
         );
@@ -48,11 +48,11 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                             <div className={`text-xs ${textColor} opacity-60`}>Total Published</div>
                         </div>
                         <div className={`glass-subtle rounded-2xl p-4`}>
-                            <div className={`text-3xl font-light ${isNight ? 'text-green-400' : 'text-green-600'} mb-1`}>{won}</div>
+                            <div className={`text-3xl font-light text-green-400 mb-1`}>{won}</div>
                             <div className={`text-xs ${textColor} opacity-60`}>Won</div>
                         </div>
                         <div className={`glass-subtle rounded-2xl p-4`}>
-                            <div className={`text-3xl font-light ${isNight ? 'text-red-400' : 'text-red-600'} mb-1`}>{lost}</div>
+                            <div className={`text-3xl font-light text-red-400 mb-1`}>{lost}</div>
                             <div className={`text-xs ${textColor} opacity-60`}>Lost</div>
                         </div>
                         <div className={`glass-subtle rounded-2xl p-4`}>
@@ -67,13 +67,13 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                             <div className="flex items-end gap-4">
                                 <div>
                                     <div className={`text-xs ${textColor} opacity-60 mb-2 uppercase tracking-wider`}>Win Rate</div>
-                                    <div className={`text-4xl font-light ${isNight ? 'text-green-400' : 'text-green-600'}`}>
+                                    <div className={`text-4xl font-light text-green-400`}>
                                         {winRate}%
                                     </div>
                                 </div>
-                                <div className={`flex-1 h-2 rounded-full ${isNight ? 'bg-white/10' : 'bg-black/10'}`}>
+                                <div className={`flex-1 h-2 rounded-full bg-white/10`}>
                                     <div
-                                        className={`h-full rounded-full ${isNight ? 'bg-green-500' : 'bg-green-600'}`}
+                                        className={`h-full rounded-full bg-green-500`}
                                         style={{ width: `${parseFloat(winRate)}%` }}
                                     ></div>
                                 </div>
@@ -82,7 +82,6 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                     )}
                 </>
             )}
-
             {/* Market Insights Timeline */}
             {userAddress && (
                 <div className="space-y-4">
@@ -93,16 +92,15 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                     />
                 </div>
             )}
-
             {/* Signals List */}
             <div className="space-y-4">
                 {signals.map((signal) => {
                     const isExpanded = expandedSignalId === signal.id;
                     const statusColor = signal.outcome === 'YES' || signal.outcome === 'CORRECT'
-                        ? (isNight ? 'text-green-400' : 'text-green-600')
+                        ? ('text-green-400')
                         : signal.outcome === 'NO' || signal.outcome === 'INCORRECT'
-                            ? (isNight ? 'text-red-400' : 'text-red-600')
-                            : (isNight ? 'text-yellow-400' : 'text-yellow-600');
+                            ? ('text-red-400')
+                            : ('text-yellow-400');
 
                     return (
                         <div

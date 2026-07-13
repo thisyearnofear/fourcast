@@ -277,7 +277,7 @@ function renderSignalOG(searchParams) {
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#0a0a0f",
+          backgroundColor: "#080a0d",
           color: "white",
           fontFamily: "system-ui, -apple-system, sans-serif",
           position: "relative",

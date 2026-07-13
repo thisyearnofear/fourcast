@@ -30,9 +30,9 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
     if (!isOpen) return null;
 
     // Glass CSS classes (DRY)
-    const textColor = isNight ? 'text-white' : 'text-black';
-    const glassPanel = isNight ? 'glass-heavy bg-slate-900/95' : 'glass-heavy-light bg-white/95';
-    const borderColor = isNight ? 'border-white/10' : 'border-black/10';
+    const textColor = 'text-white';
+    const glassPanel = 'glass-heavy bg-slate-900/95';
+    const borderColor = 'border-white/10';
 
     return (
         <div className="fixed inset-0 z-[100] flex justify-end">
@@ -41,7 +41,6 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
                 className="absolute inset-0 bg-black/20 backdrop-blur-sm"
                 onClick={onClose}
             />
-
             {/* Drawer */}
             <div className={`relative w-full max-w-md h-full ${glassPanel} border-l shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto`}>
                 <div className="p-6">
@@ -70,7 +69,7 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
                         <div className="space-y-8">
                             {/* Stats Grid */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className={`p-4 rounded-2xl border ${borderColor} ${isNight ? 'bg-white/5' : 'bg-black/5'}`}>
+                                <div className={`p-4 rounded-2xl border ${borderColor} bg-white/5`}>
                                     <div className={`text-xs ${textColor} opacity-60 mb-1`}>Win Rate</div>
                                     <div className={`text-2xl font-light ${textColor}`}>
                                         {profile.stats.win_count + profile.stats.loss_count > 0
@@ -78,7 +77,7 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
                                             : 0}%
                                     </div>
                                 </div>
-                                <div className={`p-4 rounded-2xl border ${borderColor} ${isNight ? 'bg-white/5' : 'bg-black/5'}`}>
+                                <div className={`p-4 rounded-2xl border ${borderColor} bg-white/5`}>
                                     <div className={`text-xs ${textColor} opacity-60 mb-1`}>Signals</div>
                                     <div className={`text-2xl font-light ${textColor}`}>
                                         {profile.stats.total_predictions}
@@ -92,7 +91,7 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
                                 <div className="space-y-3">
                                     {profile.recent_predictions.length > 0 ? (
                                         profile.recent_predictions.map((pred, i) => (
-                                            <div key={i} className={`p-4 rounded-xl border ${borderColor} ${isNight ? 'bg-white/5' : 'bg-black/5'}`}>
+                                            <div key={i} className={`p-4 rounded-xl border ${borderColor} bg-white/5`}>
                                                 <div className={`text-sm ${textColor} mb-1`}>
                                                     {pred.market_title || 'Unknown Market'}
                                                 </div>

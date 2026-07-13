@@ -16,48 +16,48 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative max-w-md w-full rounded-2xl p-6 border backdrop-blur-xl ${isNight ? 'bg-black/60 border-white/10' : 'bg-white/80 border-black/10'}`}>
-        <h3 className={`text-lg font-light mb-4 ${isNight ? 'text-white' : 'text-black'}`}>
+      <div className={`relative max-w-md w-full rounded-2xl p-6 border backdrop-blur-xl bg-black/60 border-white/10`}>
+        <h3 className={`text-lg font-light mb-4 text-white`}>
           Record Your Prediction
         </h3>
 
         <div className="space-y-3 mb-6">
-          <div className={`rounded-xl p-3 border ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
+          <div className={`rounded-xl p-3 border bg-white/5 border-white/10`}>
             <div className="text-[10px] uppercase tracking-wider opacity-40 mb-1">Market</div>
-            <div className={`text-sm font-medium ${isNight ? 'text-white' : 'text-black'}`}>
+            <div className={`text-sm font-medium text-white`}>
               {market?.title || market?.question || 'Unknown'}
             </div>
           </div>
 
           <div className="flex gap-3">
-            <div className={`flex-1 rounded-xl p-3 border ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
+            <div className={`flex-1 rounded-xl p-3 border bg-white/5 border-white/10`}>
               <div className="text-[10px] uppercase tracking-wider opacity-40 mb-1">Your Call</div>
-              <div className={`text-sm font-medium ${isNight ? 'text-green-300' : 'text-green-700'}`}>
+              <div className={`text-sm font-medium text-green-300`}>
                 {recommendation}
               </div>
             </div>
-            <div className={`flex-1 rounded-xl p-3 border ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
+            <div className={`flex-1 rounded-xl p-3 border bg-white/5 border-white/10`}>
               <div className="text-[10px] uppercase tracking-wider opacity-40 mb-1">Confidence</div>
-              <div className={`text-sm font-medium ${isNight ? 'text-purple-300' : 'text-purple-700'}`}>
+              <div className={`text-sm font-medium text-purple-300`}>
                 {confidence}
               </div>
             </div>
           </div>
 
-          <div className={`rounded-xl p-3 border ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
+          <div className={`rounded-xl p-3 border bg-white/5 border-white/10`}>
             <div className="text-[10px] uppercase tracking-wider opacity-40 mb-1">AI Reasoning</div>
-            <div className={`text-xs leading-relaxed ${isNight ? 'text-white/60' : 'text-black/60'}`}>
+            <div className={`text-xs leading-relaxed text-white/60`}>
               {reasoningPreview}
             </div>
           </div>
 
-          <div className={`flex items-center justify-between rounded-xl p-3 border ${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
+          <div className={`flex items-center justify-between rounded-xl p-3 border bg-white/5 border-white/10`}>
             <div className="text-[10px] uppercase tracking-wider opacity-40">Settlement</div>
-            <div className={`text-xs font-medium ${isNight ? 'text-indigo-300' : 'text-indigo-700'}`}>
+            <div className={`text-xs font-medium text-indigo-300`}>
               {chainLabel}
             </div>
             <div className="text-[10px] uppercase tracking-wider opacity-40">Fee</div>
-            <div className={`text-xs font-medium ${isNight ? 'text-white/80' : 'text-black/80'}`}>{gasLabel}</div>
+            <div className={`text-xs font-medium text-white/80`}>{gasLabel}</div>
           </div>
         </div>
 
@@ -65,7 +65,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
           <button
             onClick={onClose}
             disabled={isPublishing}
-            className={`flex-1 px-4 py-2.5 rounded-xl border text-sm transition-all ${isNight ? 'border-white/10 text-white/50 hover:text-white/70' : 'border-black/10 text-black/50 hover:text-black/70'} disabled:opacity-30`}
+            className={`flex-1 px-4 py-2.5 rounded-xl border text-sm transition-all border-white/10 text-white/50 hover:text-white/70 disabled:opacity-30`}
           >
             Cancel
           </button>
@@ -78,7 +78,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
           </button>
         </div>
 
-        <p className={`text-[10px] text-center mt-4 ${isNight ? 'text-white/25' : 'text-black/25'}`}>
+        <p className={`text-[10px] text-center mt-4 text-white/25`}>
           This action is on-chain and cannot be undone.
         </p>
       </div>

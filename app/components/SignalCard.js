@@ -12,9 +12,7 @@ export default function SignalCard({ signal, isNight = false }) {
   const domainName = isWeather ? 'Weather' : (isMobility ? 'Mobility' : 'General');
 
   // Dynamic Styles
-  const glassClass = isNight
-    ? 'glass-subtle bg-slate-900/60 text-white'
-    : 'glass-subtle-light bg-white/60 text-black';
+  const glassClass = 'glass-subtle bg-slate-900/60 text-white';
 
   const badgeStyle = isWeather
     ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
@@ -46,10 +44,8 @@ export default function SignalCard({ signal, isNight = false }) {
           </div>
         </div>
       </div>
-
       {/* Market Title */}
       <h3 className="text-lg font-light leading-snug mb-2">{signal.market_title}</h3>
-
       {/* Venue/Location */}
       <div className="flex items-center space-x-1 text-xs opacity-60 mb-4">
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,19 +56,17 @@ export default function SignalCard({ signal, isNight = false }) {
         <span>•</span>
         <span>{timeAgo(signal.timestamp)}</span>
       </div>
-
       {/* AI Analysis Digest */}
-      <div className={`p-3 rounded-xl text-sm leading-relaxed border ${isNight ? 'bg-black/20 border-white/10' : 'bg-white/40 border-black/10'}`}>
+      <div className={`p-3 rounded-xl text-sm leading-relaxed border bg-black/20 border-white/10`}>
         <span className="opacity-70">Analysis: </span>
         <span className="font-medium opacity-90">{signal.ai_digest}</span>
       </div>
-
       {/* Action Footer */}
       <div className="mt-4 flex justify-between items-center">
         <div className="text-xs opacity-50 font-mono">
           ID: {typeof signal.event_id === 'string' ? signal.event_id.slice(0, 8) : String(signal.event_id || '').slice(0, 8)}...
         </div>
-        <button className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${isNight ? 'hover:bg-white/10' : 'hover:bg-black/5'}`}>
+        <button className={`text-xs px-3 py-1.5 rounded-lg transition-colors hover:bg-white/10`}>
           View On-Chain ↗
         </button>
       </div>

@@ -40,10 +40,10 @@ export function AutopilotDashboard({ isNight = false }) {
   // Bright Data connection status (fetched once on mount)
   const [bdStatus, setBdStatus] = useState(null);
 
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
-  const mutedBg = isNight ? 'bg-white/5' : 'bg-black/5';
-  const cardBg = isNight ? 'bg-slate-900/60' : 'bg-white/60';
+  const textColor = 'text-white';
+  const subtleText = 'text-white/60';
+  const mutedBg = 'bg-white/5';
+  const cardBg = 'bg-slate-900/60';
 
   const fetchExecutions = useCallback(async () => {
     setLoading(true);
@@ -353,9 +353,7 @@ export function AutopilotDashboard({ isNight = false }) {
               {BRAND.labs.autopilot.description}
             </p>
             {(brightDataActive || !agentRunning) && brightDataActive && (
-              <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
-                isNight ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-cyan-100 text-cyan-700 border border-cyan-200'
-              }`}>
+              <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30`}>
                 {brightDataProducts.scrapingBrowser
                   ? 'Bright Data: SERP + Deep Research'
                   : brightDataProducts.serp
@@ -390,19 +388,17 @@ export function AutopilotDashboard({ isNight = false }) {
                   : 'Scheduled autopilot is disabled'}
               </span>
               {schedule.dryRun && (
-                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
-                  isNight ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-amber-100 text-amber-700 border border-amber-200'
-                }`}>
+                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30`}>
                   Dry Run
                 </span>
               )}
               {schedule.enabled && schedule.lastRunAt && (
-                <span className={isNight ? 'text-white/40' : 'text-black/40'}>
+                <span className='text-white/40'>
                   Last run: {formatRelativeTime(schedule.lastRunAt)}
                 </span>
               )}
               {schedule.enabled && schedule.lastRunAt && (
-                <span className={isNight ? 'text-white/40' : 'text-black/40'}>
+                <span className='text-white/40'>
                   Next eligible run: {formatRelativeTime(schedule.lastRunAt + schedule.intervalMinutes * 60)}
                 </span>
               )}
@@ -413,27 +409,19 @@ export function AutopilotDashboard({ isNight = false }) {
           {/* Config Toggle */}
           <button
             onClick={() => setShowConfig(!showConfig)}
-            className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-              isNight
-                ? 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
-                : 'bg-black/5 hover:bg-black/10 text-black/70 border-black/10'
-            }`}
+            className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border bg-white/5 hover:bg-white/10 text-white/70 border-white/10`}
             aria-label="Toggle agent config"
           >
             ⚙
           </button>
           {/* Schedule Toggle */}
-          <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-            isNight
-              ? 'bg-white/5 hover:bg-white/10 border-white/10'
-              : 'bg-black/5 hover:bg-black/10 border-black/10'
-          } ${scheduleLoading || scheduleSaving ? 'opacity-60' : ''}`}>
+          <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-all border bg-white/5 hover:bg-white/10 border-white/10 ${scheduleLoading || scheduleSaving ? 'opacity-60' : ''}`}>
             <span className={subtleText}>Schedule</span>
             <button
               onClick={handleToggleSchedule}
               disabled={scheduleLoading || scheduleSaving || !schedule}
               className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
-                schedule?.enabled ? 'bg-emerald-500' : isNight ? 'bg-white/20' : 'bg-black/20'
+                schedule?.enabled ? 'bg-emerald-500' : 'bg-white/20'
               } disabled:cursor-not-allowed`}
               aria-label="Toggle scheduled autopilot"
             >
@@ -448,11 +436,7 @@ export function AutopilotDashboard({ isNight = false }) {
           <button
             onClick={fetchExecutions}
             disabled={loading || agentRunning}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-              isNight
-                ? 'bg-white/10 hover:bg-white/20 text-white border-white/20'
-                : 'bg-black/10 hover:bg-black/20 text-black border-black/20'
-            } disabled:opacity-40`}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border bg-white/10 hover:bg-white/20 text-white border-white/20 disabled:opacity-40`}
             aria-label="Refresh execution history"
           >
             {loading ? '⟳' : '↻'}
@@ -477,10 +461,9 @@ export function AutopilotDashboard({ isNight = false }) {
           )}
         </div>
       </div>
-
       {/* Schedule Panel */}
       {schedule && (
-        <div className={`glass-subtle rounded-xl p-4 space-y-3 border ${isNight ? 'border-emerald-500/20' : 'border-emerald-200'}`}>
+        <div className={`glass-subtle rounded-xl p-4 space-y-3 border border-emerald-500/20`}>
           <div className="flex items-center justify-between">
             <h3 className={`text-xs font-medium ${textColor}`}>Scheduled Autopilot</h3>
             {scheduleSaving && (
@@ -494,9 +477,7 @@ export function AutopilotDashboard({ isNight = false }) {
                 value={schedule.intervalMinutes}
                 onChange={handleIntervalChange}
                 disabled={scheduleSaving}
-                className={`w-full px-2 py-1.5 rounded-lg text-xs border ${
-                  isNight ? 'bg-white/5 border-white/10 text-white' : 'bg-black/5 border-black/10 text-black'
-                } disabled:opacity-50`}
+                className={`w-full px-2 py-1.5 rounded-lg text-xs border bg-white/5 border-white/10 text-white disabled:opacity-50`}
               >
                 <option value={15}>Every 15 minutes</option>
                 <option value={30}>Every 30 minutes</option>
@@ -514,9 +495,7 @@ export function AutopilotDashboard({ isNight = false }) {
                 value={schedule.dailyCapPct}
                 onChange={handleDailyCapChange}
                 disabled={scheduleSaving}
-                className={`w-full px-2 py-1.5 rounded-lg text-xs border ${
-                  isNight ? 'bg-white/5 border-white/10 text-white' : 'bg-black/5 border-black/10 text-black'
-                } disabled:opacity-50`}
+                className={`w-full px-2 py-1.5 rounded-lg text-xs border bg-white/5 border-white/10 text-white disabled:opacity-50`}
               />
               <p className={`text-[10px] ${subtleText} mt-1`}>
                 Max {(schedule.dailyCapPct * 100).toFixed(0)}% of bankroll per day
@@ -531,7 +510,7 @@ export function AutopilotDashboard({ isNight = false }) {
                 onClick={handleDryRunToggle}
                 disabled={scheduleSaving}
                 className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
-                  schedule.dryRun ? 'bg-amber-500' : isNight ? 'bg-white/20' : 'bg-black/20'
+                  schedule.dryRun ? 'bg-amber-500' : 'bg-white/20'
                 } disabled:cursor-not-allowed`}
                 aria-label="Toggle dry run mode"
               >
@@ -548,10 +527,9 @@ export function AutopilotDashboard({ isNight = false }) {
           </div>
         </div>
       )}
-
       {/* Config Panel */}
       {showConfig && (
-        <div className={`glass-subtle rounded-xl p-4 space-y-3 border ${isNight ? 'border-cyan-500/20' : 'border-cyan-200'}`}>
+        <div className={`glass-subtle rounded-xl p-4 space-y-3 border border-cyan-500/20`}>
           <div className="flex items-center justify-between">
             <h3 className={`text-xs font-medium ${textColor}`}>Agent Configuration</h3>
             <button
@@ -570,9 +548,7 @@ export function AutopilotDashboard({ isNight = false }) {
                 max={10}
                 value={agentConfig.maxMarkets}
                 onChange={e => setAgentConfig(prev => ({ ...prev, maxMarkets: parseInt(e.target.value) || 5 }))}
-                className={`w-full px-2 py-1.5 rounded-lg text-xs border ${
-                  isNight ? 'bg-white/5 border-white/10 text-white' : 'bg-black/5 border-black/10 text-black'
-                }`}
+                className={`w-full px-2 py-1.5 rounded-lg text-xs border bg-white/5 border-white/10 text-white`}
               />
             </div>
             <div>
@@ -583,9 +559,7 @@ export function AutopilotDashboard({ isNight = false }) {
                 step={1000}
                 value={agentConfig.minVolume}
                 onChange={e => setAgentConfig(prev => ({ ...prev, minVolume: parseInt(e.target.value) || 10000 }))}
-                className={`w-full px-2 py-1.5 rounded-lg text-xs border ${
-                  isNight ? 'bg-white/5 border-white/10 text-white' : 'bg-black/5 border-black/10 text-black'
-                }`}
+                className={`w-full px-2 py-1.5 rounded-lg text-xs border bg-white/5 border-white/10 text-white`}
               />
             </div>
             <div>
@@ -606,12 +580,11 @@ export function AutopilotDashboard({ isNight = false }) {
           </div>
         </div>
       )}
-
       {/* Live Progress Feed */}
       {liveSteps.length > 0 && (
-        <div className={`glass-subtle rounded-xl border ${isNight ? 'border-cyan-500/20' : 'border-cyan-200'} overflow-hidden`}>
+        <div className={`glass-subtle rounded-xl border border-cyan-500/20 overflow-hidden`}>
           {/* Progress header */}
-          <div className={`flex items-center justify-between px-4 py-2.5 border-b ${isNight ? 'border-white/10' : 'border-black/10'}`}>
+          <div className={`flex items-center justify-between px-4 py-2.5 border-b border-white/10`}>
             <div className="flex items-center gap-2">
               {agentRunning && (
                 <span className="relative flex h-2 w-2">
@@ -639,7 +612,6 @@ export function AutopilotDashboard({ isNight = false }) {
           </div>
         </div>
       )}
-
       {/* Summary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard label="Total Trades" value={totalTrades} isNight={isNight} />
@@ -647,52 +619,41 @@ export function AutopilotDashboard({ isNight = false }) {
         <StatCard label="Avg Size" value={`${avgSizePct}%`} isNight={isNight} />
         <StatCard label="Failed" value={failedTrades} isNight={isNight} accent={false} />
       </div>
-
       {/* Schedule Error */}
       {scheduleError && (
-        <div className={`text-xs p-3 rounded-lg ${
-          isNight ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-100 text-amber-700'
-        }`}>
+        <div className={`text-xs p-3 rounded-lg bg-amber-500/10 text-amber-300`}>
           Schedule: {scheduleError}
         </div>
       )}
-
       {/* Error */}
       {error && (
-        <div className={`text-xs p-3 rounded-lg ${
-          isNight ? 'bg-red-500/10 text-red-300' : 'bg-red-100 text-red-700'
-        }`}>
+        <div className={`text-xs p-3 rounded-lg bg-red-500/10 text-red-300`}>
           {error}
         </div>
       )}
-
       {/* Loading */}
       {loading && (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className={`h-24 rounded-xl ${isNight ? 'skeleton' : 'skeleton-light'}`} />
+            <div key={i} className={`h-24 rounded-xl skeleton`} />
           ))}
         </div>
       )}
-
       {/* Empty State */}
       {!loading && !error && executions.length === 0 && (
-        <div className={`text-center py-12 px-4 rounded-xl border ${
-          isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/20'
-        }`}>
+        <div className={`text-center py-12 px-4 rounded-xl border bg-white/5 border-white/10`}>
           <div className="text-4xl mb-3 opacity-40">🤖</div>
           <p className={`text-sm ${textColor} opacity-70 mb-1`}>No autopilot trades yet</p>
           <p className={`text-xs ${subtleText}`}>
             Click <strong>Run Agent</strong> to scan markets and execute trades automatically
           </p>
           {bdStatus && !bdStatus.available && (
-            <p className={`text-[10px] mt-2 ${isNight ? 'text-cyan-300/50' : 'text-cyan-600/50'}`}>
+            <p className={`text-[10px] mt-2 text-cyan-300/50`}>
               Add Bright Data keys to enable real-time web intelligence for deeper analysis
             </p>
           )}
         </div>
       )}
-
       {/* Execution Cards */}
       {!loading && visibleExecutions.length > 0 && (
         <div className="space-y-3">
@@ -712,11 +673,7 @@ export function AutopilotDashboard({ isNight = false }) {
           {hasMore && (
             <button
               onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
-              className={`w-full py-2.5 rounded-lg text-sm font-medium transition-all border ${
-                isNight
-                  ? 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
-                  : 'bg-black/5 hover:bg-black/10 text-black/70 border-black/10'
-              }`}
+              className={`w-full py-2.5 rounded-lg text-sm font-medium transition-all border bg-white/5 hover:bg-white/10 text-white/70 border-white/10`}
             >
               Show More ({executions.length - visibleCount} remaining)
             </button>
@@ -752,19 +709,19 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
   let icon, color;
   if (isFailed) {
     icon = '❌';
-    color = isNight ? 'text-red-300 border-red-500/30 bg-red-500/10' : 'text-red-700 bg-red-50 border-red-200';
+    color = 'text-red-300 border-red-500/30 bg-red-500/10';
   } else if (isComplete) {
     icon = '✅';
-    color = isNight ? 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' : 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    color = 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10';
   } else if (isSkipped) {
     icon = '⏭';
-    color = isNight ? 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10' : 'text-yellow-700 bg-yellow-50 border-yellow-200';
+    color = 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10';
   } else if (isRunning) {
     icon = '⟳';
-    color = isNight ? 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10' : 'text-cyan-700 bg-cyan-50 border-cyan-200';
+    color = 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10';
   } else {
     icon = '•';
-    color = isNight ? 'text-white/50 border-white/10 bg-white/5' : 'text-black/50 border-black/10 bg-black/5';
+    color = 'text-white/50 border-white/10 bg-white/5';
   }
 
   // Step label
@@ -808,29 +765,27 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
         <div className="flex items-center gap-2">
           <span className={`font-medium ${textColor} text-[11px]`}>{stepLabel}</span>
           {progressInfo && (
-            <span className={`text-[10px] font-mono ${isNight ? 'text-white/40' : 'text-black/40'}`}>
+            <span className={`text-[10px] font-mono text-white/40`}>
               [{progressInfo}]
             </span>
           )}
-          <span className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'} truncate`}>
+          <span className={`text-[10px] text-white/40 truncate`}>
             {isComplete ? 'complete' : isRunning ? 'running...' : isSkipped ? 'skipped' : message || ''}
           </span>
         </div>
         {marketTitle && (
-          <div className={`text-[10px] mt-0.5 truncate ${isNight ? 'text-white/50' : 'text-black/50'}`}>
+          <div className={`text-[10px] mt-0.5 truncate text-white/50`}>
             {marketTitle}
           </div>
         )}
         {dataSummary && (
-          <div className={`text-[10px] mt-0.5 font-mono ${isNight ? 'text-white/40' : 'text-black/40'}`}>
+          <div className={`text-[10px] mt-0.5 font-mono text-white/40`}>
             {dataSummary}
           </div>
         )}
         {/* Bright Data error indicator */}
         {data?.brightDataError && (
-          <div className={`mt-1.5 p-1.5 rounded border text-[9px] ${
-            isNight ? 'bg-amber-500/10 border-amber-500/20 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-800'
-          }`}>
+          <div className={`mt-1.5 p-1.5 rounded border text-[9px] bg-amber-500/10 border-amber-500/20 text-amber-200`}>
             <span className="font-bold">BRIGHT DATA:</span> {data.brightDataError}
           </div>
         )}
@@ -843,13 +798,9 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
                 href={src.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`flex items-center gap-1.5 text-[9px] truncate hover:underline ${
-                  isNight ? 'text-cyan-300/70' : 'text-cyan-700/70'
-                }`}
+                className={`flex items-center gap-1.5 text-[9px] truncate hover:underline text-cyan-300/70`}
               >
-                <span className={`flex-shrink-0 px-1 rounded text-[8px] font-mono ${
-                  isNight ? 'bg-cyan-500/10 text-cyan-400/50' : 'bg-cyan-100 text-cyan-600/50'
-                }`}>
+                <span className={`flex-shrink-0 px-1 rounded text-[8px] font-mono bg-cyan-500/10 text-cyan-400/50`}>
                   {src.rank || idx + 1}
                 </span>
                 <span className="opacity-50">{getDomain(src.url)}</span>
@@ -860,9 +811,7 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
         )}
         {/* Deep research indicator with structured info */}
         {data?.deepResearch && (
-          <div className={`mt-2 p-1.5 rounded border text-[9px] ${
-            isNight ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-200' : 'bg-cyan-50 border-cyan-100 text-cyan-800'
-          }`}>
+          <div className={`mt-2 p-1.5 rounded border text-[9px] bg-cyan-500/10 border-cyan-500/20 text-cyan-200`}>
             <span className="font-bold">DEEP RESEARCH:</span>
             <span className="ml-1">
               {data.deepResearch.sentenceCount
@@ -878,12 +827,12 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
               {data.deepResearch.title || getDomain(data.deepResearch.url)}
             </a>
             {data.deepResearch.charCount && (
-              <span className={`ml-1 ${isNight ? 'text-cyan-300/40' : 'text-cyan-600/40'}`}>
+              <span className={`ml-1 text-cyan-300/40`}>
                 ({data.deepResearch.charCount.toLocaleString()} chars total)
               </span>
             )}
             {data.deepResearch.product && (
-              <span className={`ml-1 ${isNight ? 'text-cyan-300/40' : 'text-cyan-600/40'}`}>
+              <span className={`ml-1 text-cyan-300/40`}>
                 via {data.deepResearch.product}
               </span>
             )}
@@ -891,7 +840,7 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
         )}
         {/* Research Transparency: show products used */}
         {data?.productsUsed && data?.sources && (
-          <div className={`mt-1.5 flex items-center gap-2 text-[8px] ${isNight ? 'text-white/30' : 'text-black/30'}`}>
+          <div className={`mt-1.5 flex items-center gap-2 text-[8px] text-white/30`}>
             <span>Products:</span>
             {data.productsUsed.serp && <span className="px-1 rounded bg-emerald-500/10 text-emerald-500">SERP</span>}
             {data.productsUsed.scrapingBrowser && <span className="px-1 rounded bg-emerald-500/10 text-emerald-500">Scraping Browser</span>}
@@ -905,11 +854,11 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
 }
 
 function StatCard({ label, value, isNight, accent = true }) {
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
+  const textColor = 'text-white';
+  const subtleText = 'text-white/60';
   const accentColor = accent
-    ? isNight ? 'text-green-300' : 'text-green-700'
-    : isNight ? 'text-red-300' : 'text-red-700';
+    ? 'text-green-300'
+    : 'text-red-300';
 
   return (
     <div className={`glass-subtle rounded-xl p-3 ${typeof value === 'string' && value.includes('%') && parseInt(value) > 0 && accent ? 'border-green-500/20' : ''}`}>
@@ -926,16 +875,16 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
   const isFailed = exec.execution_status === 'FAILED';
   const statusIcon = isSuccess ? '✅' : isFailed ? '❌' : '⏳';
   const statusColor = isSuccess
-    ? isNight ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-green-100 text-green-800 border-green-200'
+    ? 'bg-green-500/20 text-green-300 border-green-500/30'
     : isFailed
-      ? isNight ? 'bg-red-500/20 text-red-300 border-red-500/30' : 'bg-red-100 text-red-800 border-red-200'
-      : isNight ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' : 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      ? 'bg-red-500/20 text-red-300 border-red-500/30'
+      : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
 
   const direction = exec.direction || '—';
   const isYes = direction === 'BUY YES';
   const directionColor = isYes
-    ? isNight ? 'text-green-300' : 'text-green-700'
-    : isNight ? 'text-red-300' : 'text-red-700';
+    ? 'text-green-300'
+    : 'text-red-300';
 
   const timestamp = exec.timestamp
     ? new Date(exec.timestamp * 1000).toLocaleString()
@@ -948,7 +897,7 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
 
   return (
     <div className={`glass-subtle rounded-xl p-4 transition-all hover:scale-[1.005] ${
-      isSuccess ? (isNight ? 'border-green-500/20' : 'border-green-200') : ''
+      isSuccess ? ('border-green-500/20') : ''
     }`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -965,7 +914,6 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
           {statusIcon} {exec.execution_status || 'PENDING'}
         </div>
       </div>
-
       {/* Metrics Grid */}
       <div className="grid grid-cols-4 gap-2 text-xs">
         <div>
@@ -985,7 +933,6 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
           <div className={`font-medium ${textColor} mt-0.5`}>{kellyPct}</div>
         </div>
       </div>
-
       {/* Second Row */}
       <div className="grid grid-cols-4 gap-2 text-xs mt-2 pt-2 border-t border-white/10">
         <div>
@@ -1005,16 +952,13 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
           <div className={`font-medium ${textColor} mt-0.5 text-[10px]`}>{timestamp}</div>
         </div>
       </div>
-
       {/* Execution Response (expandable) */}
       {exec.execution_response && (
         <details className="mt-2">
           <summary className={`text-[10px] ${subtleText} cursor-pointer hover:opacity-80 transition-opacity`}>
             Response Details
           </summary>
-          <pre className={`mt-1 p-2 rounded-lg text-[10px] font-mono overflow-x-auto ${
-            isNight ? 'bg-white/5 text-white/50' : 'bg-black/5 text-black/50'
-          }`}>
+          <pre className={`mt-1 p-2 rounded-lg text-[10px] font-mono overflow-x-auto bg-white/5 text-white/50`}>
             {exec.execution_response}
           </pre>
         </details>

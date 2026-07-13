@@ -38,17 +38,17 @@ const WeatherVisualization = ({ weatherData, isLoading, portalMode = false, rain
       if (partlyCloudy) {
         return (
           <>
-            {isNight ? <Moon /> : <Sun />}
+            {<Moon />}
             <Clouds intensity={0.5} speed={0.1} isPartlyCloudy={true} portalMode={portalMode} />
           </>
         );
       }
-      return isNight ? <Moon /> : <Sun />;
+      return <Moon />;
     } else if (weatherType === 'cloudy') {
       if (partlyCloudy) {
         return (
           <>
-            {isNight ? <Moon /> : <Sun />}
+            {<Moon />}
             <Clouds intensity={0.6} speed={0.1} isPartlyCloudy={true} portalMode={portalMode} />
           </>
         );
@@ -78,12 +78,12 @@ const WeatherVisualization = ({ weatherData, isLoading, portalMode = false, rain
       if (partlyCloudy) {
         return (
           <>
-            {isNight ? <Moon /> : <Sun />}
+            {<Moon />}
             <Clouds intensity={0.5} speed={0.1} isPartlyCloudy={true} portalMode={portalMode} />
           </>
         );
       }
-      return isNight ? <Moon /> : <Sun />;
+      return <Moon />;
     }
   };
 
@@ -93,12 +93,11 @@ const WeatherVisualization = ({ weatherData, isLoading, portalMode = false, rain
       position={portalMode ? [0, -1.8, 0] : [0, 0, 0]}
     >
       {renderWeatherEffect()}
-      
       {!portalMode && (
         <Text
           position={[0, 2, 0]}
           fontSize={0.5}
-          color={isNight ? "#FFFFFF" : "#333333"}
+          color="#FFFFFF"
           anchorX="center"
           anchorY="middle"
         >

@@ -35,12 +35,12 @@ export default function ReputationBadge({
   // Color the win rate text
   const winRateColor =
     winRate >= 75
-      ? isNight ? 'text-green-400' : 'text-green-600'
+      ? 'text-green-400'
       : winRate >= 55
-      ? isNight ? 'text-blue-400' : 'text-blue-600'
+      ? 'text-blue-400'
       : winRate >= 40
-      ? isNight ? 'text-yellow-400' : 'text-yellow-600'
-      : isNight ? 'text-red-400' : 'text-red-600';
+      ? 'text-yellow-400'
+      : 'text-red-400';
 
   if (variant === 'compact') {
     return (
@@ -51,24 +51,24 @@ export default function ReputationBadge({
         </span>
         {/* Calibration score */}
         {stats.calibrationScore != null && (
-          <span className={isNight ? 'text-white/50' : 'text-black/50'}>
+          <span className='text-white/50'>
             <span className={`font-medium ${
               stats.calibrationScore >= 70
-                ? isNight ? 'text-green-400' : 'text-green-600'
+                ? 'text-green-400'
                 : stats.calibrationScore >= 50
-                ? isNight ? 'text-yellow-400' : 'text-yellow-600'
-                : isNight ? 'text-red-400' : 'text-red-600'
+                ? 'text-yellow-400'
+                : 'text-red-400'
             }`}>{Math.round(stats.calibrationScore)}% cal</span>
           </span>
         )}
         {/* Brier score */}
         {stats.agentBrierScore != null && (
-          <span className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'}`}>
+          <span className={`text-[10px] text-white/40`}>
             B={stats.agentBrierScore.toFixed(3)}
           </span>
         )}
         {totalPredictions > 0 && (
-          <span className={isNight ? 'text-white/40' : 'text-black/40'}>
+          <span className='text-white/40'>
             · {totalPredictions} pred
           </span>
         )}
@@ -77,10 +77,10 @@ export default function ReputationBadge({
   }
 
   // Full variant — used in profile sidebar or dedicated reputation card
-  const border = isNight ? 'border-white/10' : 'border-black/10';
-  const bg = isNight ? 'bg-white/[0.04]' : 'bg-black/[0.04]';
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const muted = isNight ? 'text-white/50' : 'text-black/50';
+  const border = 'border-white/10';
+  const bg = 'bg-white/[0.04]';
+  const textColor = 'text-white';
+  const muted = 'text-white/50';
 
   return (
     <div className={`rounded-xl ${bg} border ${border} p-4 space-y-3 ${className}`}>
@@ -100,7 +100,6 @@ export default function ReputationBadge({
           </div>
         )}
       </div>
-
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-3">
         <div className="text-center">
@@ -118,14 +117,12 @@ export default function ReputationBadge({
           <p className={`text-[10px] ${muted}`}>Total</p>
         </div>
       </div>
-
       {/* Win streak */}
       {stats.streak > 0 && (
-        <div className={`text-center text-xs ${isNight ? 'text-green-400/80' : 'text-green-600/80'}`}>
+        <div className={`text-center text-xs text-green-400/80`}>
           🔥 {stats.streak}-prediction winning streak
         </div>
       )}
-
       {/* Calibration */}
       {stats.calibrationScore != null && (
         <div className="flex items-center justify-between text-xs">

@@ -26,9 +26,9 @@ export default function WalletConnect({ isNight = false }) {
   const { disconnect: disconnectEvm } = useDisconnect();
 
   // Styling - Glass CSS classes (DRY)
-  const glassBtn = isNight ? 'glass-subtle' : 'glass-subtle-light';
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const dropdownGlass = isNight ? 'glass-heavy bg-slate-900/95' : 'glass-heavy-light bg-white/95';
+  const glassBtn = 'glass-subtle';
+  const textColor = 'text-white';
+  const dropdownGlass = 'glass-heavy bg-slate-900/95';
 
   // Check if any wallet is connected using unified state
   const isAnyConnected = chains?.evm?.connected || chains?.arc?.connected;
@@ -84,7 +84,7 @@ export default function WalletConnect({ isNight = false }) {
               disconnectEvm();
               setShowDropdown(false);
             }}
-            className={`text-xs px-2 py-1 rounded-lg transition-all ${isNight ? 'hover:bg-white/10' : 'hover:bg-black/10'} ${textColor} opacity-60 hover:opacity-100`}
+            className={`text-xs px-2 py-1 rounded-lg transition-all hover:bg-white/10 ${textColor} opacity-60 hover:opacity-100`}
           >
             Disconnect
           </button>
@@ -125,18 +125,17 @@ export default function WalletConnect({ isNight = false }) {
           'Connect Wallet'
         )}
       </button>
-
       {/* Dropdown */}
       {showDropdown && (
         <div className={`absolute right-0 mt-2 w-80 rounded-xl ${dropdownGlass} p-4 z-50 shadow-xl`}>
           {/* Header */}
-          <div className={`text-xs font-medium ${isNight ? 'text-white/60' : 'text-black/60'} uppercase tracking-wide mb-2`}>
+          <div className={`text-xs font-medium text-white/60 uppercase tracking-wide mb-2`}>
             Wallet Networks
           </div>
 
           {/* Helper Text - Explains why different networks */}
           {!isAnyConnected && (
-            <p className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'} mb-4 leading-relaxed`}>
+            <p className={`text-xs text-white/40 mb-4 leading-relaxed`}>
               {BRAND.walletExplainer.headline}{' '}
               {BRAND.walletExplainer.layers.map((l) => l.name).join(' · ')}.
             </p>
@@ -147,18 +146,14 @@ export default function WalletConnect({ isNight = false }) {
               type="button"
               onClick={() => switchToArc()}
               disabled={chains.evm?.isSwitching}
-              className={`w-full mb-4 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                isNight
-                  ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 hover:bg-indigo-500/30'
-                  : 'bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100'
-              }`}
+              className={`w-full mb-4 px-3 py-2 rounded-lg text-xs font-medium transition-all bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 hover:bg-indigo-500/30`}
             >
               🌀 Switch to Arc testnet (USDC settlement)
             </button>
           )}
 
           {chains?.arc?.connected && (
-            <p className={`text-[10px] mb-3 ${isNight ? 'text-indigo-300/70' : 'text-indigo-700/80'}`}>
+            <p className={`text-[10px] mb-3 text-indigo-300/70`}>
               ✓ Arc testnet — ready to publish signals in USDC
             </p>
           )}
@@ -176,10 +171,10 @@ export default function WalletConnect({ isNight = false }) {
                 <span>{CHAINS.EVM.icon}</span>
                 {CHAINS.EVM.display}
               </div>
-              <p className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'} mb-3`}>
+              <p className={`text-[10px] text-white/40 mb-3`}>
                 Connect EVM wallet, then switch to Arc or Polygon via network picker
               </p>
-              <ConnectKitButton mode={isNight ? "dark" : "light"} />
+              <ConnectKitButton mode="dark" />
             </div>
           )}
 
@@ -187,15 +182,15 @@ export default function WalletConnect({ isNight = false }) {
             <button
               type="button"
               onClick={() => switchToEvmNetwork('polygon')}
-              className={`mb-4 w-full text-[10px] underline ${isNight ? 'text-white/40' : 'text-black/40'}`}
+              className={`mb-4 w-full text-[10px] underline text-white/40`}
             >
               Use Polygon for trading instead
             </button>
           )}
 
           {/* Footer Info - Chain Purposes */}
-          <div className={`mt-4 pt-4 border-t ${isNight ? 'border-white/10' : 'border-black/10'} space-y-1.5`}>
-            <div className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'}`}>
+          <div className={`mt-4 pt-4 border-t border-white/10 space-y-1.5`}>
+            <div className={`text-xs text-white/40`}>
               <p className="flex items-center gap-1.5">
                 <span>{CHAINS.ARC.icon}</span>
                 <span>{CHAINS.ARC.purpose}</span>

@@ -51,7 +51,7 @@ export default function RootLayout({ children }) {
           <LocationSettingsButton />
           <HUDFooterWrapper>
           {/* Global Footer */}
-          <footer className="w-full border-t border-white/[0.04] bg-[#0a0a0f] py-6 px-5">
+          <footer className="w-full border-t border-white/[0.04] bg-[var(--app-bg)] py-6 px-5">
             <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4 flex-wrap justify-center">
                 <Link href="/markets" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">Markets</Link>

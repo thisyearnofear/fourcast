@@ -54,35 +54,32 @@ export default function DeFiArbitrageTab({
             disabled={isLoading}
             className={`px-6 py-2 rounded-lg text-sm font-light transition-all ${isLoading
                 ? `${textColor} opacity-50 cursor-not-allowed`
-                : `${isNight ? 'bg-blue-500/30 hover:bg-blue-500/50 text-white' : 'bg-blue-400/30 hover:bg-blue-400/50 text-black'}`
+                : `bg-blue-500/30 hover:bg-blue-500/50 text-white`
               }`}
           >
             {isLoading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </div>
-
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center py-12">
-          <div className={`w-6 h-6 border-2 ${isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'} rounded-full animate-spin`}></div>
+          <div className={`w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin`}></div>
           <span className={`ml-3 ${textColor} opacity-70`}>Loading arbitrage opportunities...</span>
         </div>
       )}
-
       {/* Error State */}
       {error && !isLoading && (
         <div className={`glass-subtle rounded-3xl p-6 text-center`}>
           <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
           <button
             onClick={refresh}
-            className={`px-4 py-2 rounded-lg text-sm font-light ${isNight ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-black/20 hover:bg-black/30 text-black'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-light bg-white/20 hover:bg-white/30 text-white`}
           >
             Try Again
           </button>
         </div>
       )}
-
       {/* Empty State */}
       {!isLoading && !error && opportunities.length === 0 && (
         <div className={`glass-subtle rounded-3xl p-12 text-center`}>
@@ -93,7 +90,6 @@ export default function DeFiArbitrageTab({
           </p>
         </div>
       )}
-
       {/* Opportunities Grid */}
       {!isLoading && !error && opportunities.length > 0 && (
         <div className="space-y-4">
@@ -123,8 +119,8 @@ export default function DeFiArbitrageTab({
                     )}
                   </div>
                   <span className={`text-xl font-light px-3 py-1 rounded-lg ${opp.arbitrage.spread_percent > 15
-                      ? isNight ? 'bg-green-500/20 text-green-300' : 'bg-green-400/20 text-green-700'
-                      : isNight ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-400/20 text-blue-700'
+                      ? 'bg-green-500/20 text-green-300'
+                      : 'bg-blue-500/20 text-blue-300'
                     }`}>
                     {opp.arbitrage.spread_percent.toFixed(1)}%
                   </span>
@@ -132,7 +128,7 @@ export default function DeFiArbitrageTab({
 
                 {/* Quick Preview */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className={`${isNight ? 'bg-white/5' : 'bg-black/5'} rounded p-2`}>
+                  <div className={`bg-white/5 rounded p-2`}>
                     <span className={`${textColor} opacity-60`}>Buy on</span>
                     <div className={`${textColor} font-light capitalize`}>
                       {opp.arbitrage.buy_platform}
@@ -141,7 +137,7 @@ export default function DeFiArbitrageTab({
                       @ {(opp.arbitrage.buy_odds * 100).toFixed(1)}%
                     </div>
                   </div>
-                  <div className={`${isNight ? 'bg-white/5' : 'bg-black/5'} rounded p-2`}>
+                  <div className={`bg-white/5 rounded p-2`}>
                     <span className={`${textColor} opacity-60`}>Sell on</span>
                     <div className={`${textColor} font-light capitalize`}>
                       {opp.arbitrage.sell_platform}
@@ -155,7 +151,7 @@ export default function DeFiArbitrageTab({
 
               {/* Expandable Details */}
               {expandedOppId === opp.signal_id && (
-                <div className={`${isNight ? 'bg-white/5' : 'bg-black/5'} border-t ${isNight ? 'border-white/10' : 'border-black/10'} p-4 space-y-4`}>
+                <div className={`bg-white/5 border-t border-white/10 p-4 space-y-4`}>
                   {/* DeFi Metrics */}
                   <div>
                     <h4 className={`text-sm font-light ${textColor} mb-3 opacity-80`}>
@@ -195,7 +191,7 @@ export default function DeFiArbitrageTab({
                       📊 Platform Details
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className={`${isNight ? 'bg-blue-500/10' : 'bg-blue-400/10'} border ${isNight ? 'border-blue-500/20' : 'border-blue-400/20'} rounded p-3`}>
+                      <div className={`bg-blue-500/10 border border-blue-500/20 rounded p-3`}>
                         <h5 className={`text-xs font-light ${textColor} mb-2 uppercase opacity-70`}>
                           Polymarket
                         </h5>
@@ -206,7 +202,7 @@ export default function DeFiArbitrageTab({
                           Vol: ${(opp.polymarket.volume_24h / 1000).toFixed(1)}k
                         </div>
                       </div>
-                      <div className={`${isNight ? 'bg-emerald-500/10' : 'bg-emerald-400/10'} border ${isNight ? 'border-emerald-500/20' : 'border-emerald-400/20'} rounded p-3`}>
+                      <div className={`bg-emerald-500/10 border border-emerald-500/20 rounded p-3`}>
                         <h5 className={`text-xs font-light ${textColor} mb-2 uppercase opacity-70`}>
                           Kalshi
                         </h5>
@@ -243,10 +239,7 @@ export default function DeFiArbitrageTab({
                       href={`https://polymarket.com/market/${opp.polymarket.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all ${isNight
-                          ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300'
-                          : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-700'
-                        }`}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all bg-blue-500/20 hover:bg-blue-500/30 text-blue-300`}
                     >
                       View on Polymarket ↗
                     </a>
@@ -261,10 +254,7 @@ export default function DeFiArbitrageTab({
                         odds_yes: opp.kalshi.odds_yes,
                         odds_no: 1 - opp.kalshi.odds_yes
                       })}
-                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all ${isNight
-                          ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300'
-                          : 'bg-emerald-400/20 hover:bg-emerald-400/30 text-emerald-700'
-                        }`}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300`}
                     >
                       Trade on Kalshi 📊
                     </button>
@@ -275,7 +265,6 @@ export default function DeFiArbitrageTab({
           ))}
         </div>
       )}
-
       {/* Kalshi Order Panel */}
       {selectedKalshiMarket && (
         <KalshiOrderPanel
@@ -284,7 +273,6 @@ export default function DeFiArbitrageTab({
           onClose={() => setSelectedKalshiMarket(null)}
         />
       )}
-
       {/* Arbitrage Executor */}
       {selectedArbitrageOpp && (
         <ArbitrageExecutor

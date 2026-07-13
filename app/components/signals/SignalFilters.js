@@ -8,10 +8,9 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
                     value={filters.searchText}
                     onChange={(e) => setFilters(prev => ({ ...prev, searchText: e.target.value }))}
                     placeholder="🔍 Search signals by market or analysis..."
-                    className={`w-full px-4 py-3 text-sm rounded-lg border ${isNight ? 'bg-white/10 border-white/20 text-white placeholder-white/40' : 'bg-black/10 border-black/20 text-black placeholder-black/40'}`}
+                    className={`w-full px-4 py-3 text-sm rounded-lg border bg-white/10 border-white/20 text-white placeholder-white/40`}
                 />
             </div>
-
             {/* Filters & Sort */}
             <div className={`glass-subtle rounded-3xl p-6 mb-8`}>
                 <div className="flex justify-between items-center mb-4">
@@ -22,7 +21,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
                                 key={sort}
                                 onClick={() => setSortBy(sort)}
                                 className={`px-3 py-1.5 text-xs rounded-lg transition-all capitalize ${sortBy === sort
-                                    ? (isNight ? 'bg-blue-500/30 text-white border border-blue-400/40' : 'bg-blue-400/30 text-black border border-blue-500/40')
+                                    ? ('bg-blue-500/30 text-white border border-blue-400/40')
                                     : `${textColor} opacity-60 hover:opacity-100`}`}
                             >
                                 {sort}
@@ -38,7 +37,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
                             value={filters.eventId}
                             onChange={(e) => setFilters(prev => ({ ...prev, eventId: e.target.value }))}
                             placeholder="Filter by event..."
-                            className={`w-full px-3 py-2 text-sm rounded-lg border ${isNight ? 'bg-white/10 border-white/20 text-white placeholder-white/50' : 'bg-black/10 border-black/20 text-black placeholder-black/50'}`}
+                            className={`w-full px-3 py-2 text-sm rounded-lg border bg-white/10 border-white/20 text-white placeholder-white/50`}
                         />
                     </div>
 
@@ -47,7 +46,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
                         <select
                             value={filters.confidence}
                             onChange={(e) => setFilters(prev => ({ ...prev, confidence: e.target.value }))}
-                            className={`w-full px-3 py-2 text-sm rounded-lg border ${isNight ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'}`}
+                            className={`w-full px-3 py-2 text-sm rounded-lg border bg-white/10 border-white/20 text-white`}
                         >
                             <option value="all">All Confidence</option>
                             <option value="HIGH">High</option>
@@ -61,7 +60,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
                         <select
                             value={filters.oddsEfficiency}
                             onChange={(e) => setFilters(prev => ({ ...prev, oddsEfficiency: e.target.value }))}
-                            className={`w-full px-3 py-2 text-sm rounded-lg border ${isNight ? 'bg-white/10 border-white/20 text-white' : 'bg-black/10 border-black/20 text-black'}`}
+                            className={`w-full px-3 py-2 text-sm rounded-lg border bg-white/10 border-white/20 text-white`}
                         >
                             <option value="all">All Efficiency</option>
                             <option value="INEFFICIENT">Inefficient</option>
@@ -76,7 +75,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
                             value={filters.author}
                             onChange={(e) => setFilters(prev => ({ ...prev, author: e.target.value }))}
                             placeholder="Filter by author..."
-                            className={`w-full px-3 py-2 text-sm rounded-lg border ${isNight ? 'bg-white/10 border-white/20 text-white placeholder-white/50' : 'bg-black/10 border-black/20 text-black placeholder-black/50'}`}
+                            className={`w-full px-3 py-2 text-sm rounded-lg border bg-white/10 border-white/20 text-white placeholder-white/50`}
                         />
                     </div>
                 </div>

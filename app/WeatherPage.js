@@ -98,7 +98,7 @@ export default function WeatherPage() {
   // Memoized calculated values
   const isNight = useMemo(() => isNightTime(), [weatherData?.location?.localtime]);
   const textColor = useMemo(() =>
-    isNight ? 'text-white' : 'text-black',
+    'text-white',
     [isNight]
   );
 
@@ -214,14 +214,12 @@ export default function WeatherPage() {
           </div>
         </div>
       )}
-
       {/* Celebration Overlay */}
       <WinCelebration 
         isOpen={showCelebration}
         signal={winningSignal}
         onClose={() => setShowCelebration(false)}
       />
-
       {/* UI Container */}
       <div className="relative z-10 flex flex-col flex-grow p-4 sm:p-6 pointer-events-none">
         
@@ -259,7 +257,7 @@ export default function WeatherPage() {
         {/* Portal Coach Mark — anchored near the portals at the bottom */}
         {!isLoading && weatherData && (
           <div className="absolute bottom-28 sm:bottom-32 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none portal-coach-mark">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${isNight ? 'glass-subtle' : 'glass-subtle-light'} ${isNight ? 'text-white/60' : 'text-black/40'}`}>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full glass-subtle text-white/60`}>
               <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
               </svg>
@@ -283,17 +281,11 @@ export default function WeatherPage() {
         {/* Centered Floating Navigation - Icons on mobile, full labels on desktop */}
         {weatherData && !isLoading && (
           <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <div className={`backdrop-blur-md border rounded-full px-2 sm:px-6 py-2 sm:py-3 transition-all duration-300 ${isNight
-                ? 'bg-white/10 border-white/20 hover:bg-white/15'
-                : 'bg-white/20 border-white/30 hover:bg-white/25'
-              }`}>
+            <div className={`backdrop-blur-md border rounded-full px-2 sm:px-6 py-2 sm:py-3 transition-all duration-300 bg-white/10 border-white/20 hover:bg-white/15`}>
               <div className="flex items-center space-x-1 sm:space-x-6">
                 <button
                   onClick={() => router.push('/markets')}
-                  className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full transition-all hover:scale-105 ${isNight
-                      ? 'text-white hover:bg-white/15'
-                      : 'text-black hover:bg-black/10'
-                    }`}
+                  className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full transition-all hover:scale-105 text-white hover:bg-white/15`}
                   title="Markets - Browse & trade predictions"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,18 +293,15 @@ export default function WeatherPage() {
                   </svg>
                   <div className="hidden sm:flex flex-col items-start">
                     <span className="text-sm font-medium leading-tight">Markets</span>
-                    <span className={`text-[10px] leading-tight ${isNight ? 'text-white/50' : 'text-black/40'}`}>Browse & trade predictions</span>
+                    <span className={`text-[10px] leading-tight text-white/50`}>Browse & trade predictions</span>
                   </div>
                 </button>
 
-                <div className={`w-px h-6 sm:h-8 ${isNight ? 'bg-white/15' : 'bg-black/15'}`}></div>
+                <div className={`w-px h-6 sm:h-8 bg-white/15`}></div>
 
                 <button
                   onClick={() => router.push('/signals')}
-                  className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full transition-all hover:scale-105 ${isNight
-                      ? 'text-white hover:bg-white/15'
-                      : 'text-black hover:bg-black/10'
-                    }`}
+                  className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full transition-all hover:scale-105 text-white hover:bg-white/15`}
                   title="Signals - Predictions & track records"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,7 +309,7 @@ export default function WeatherPage() {
                   </svg>
                   <div className="hidden sm:flex flex-col items-start">
                     <span className="text-sm font-medium leading-tight">Signals</span>
-                    <span className={`text-[10px] leading-tight ${isNight ? 'text-white/50' : 'text-black/40'}`}>Predictions & track records</span>
+                    <span className={`text-[10px] leading-tight text-white/50`}>Predictions & track records</span>
                   </div>
                 </button>
               </div>
@@ -388,9 +377,6 @@ export default function WeatherPage() {
           </section>
         )}
       </div>
-
-
-
       {/* Loading and Error Modals */}
       {isLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-50">
@@ -398,7 +384,6 @@ export default function WeatherPage() {
           <p className="text-lg font-light">Loading weather data...</p>
         </div>
       )}
-
       {error && (
         <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-lg z-50">
           <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 max-w-sm mx-4 text-center border border-white/20">

@@ -14,9 +14,9 @@ export function ArbitrageExecutionPanel({ opportunity, onClose, isNight }) {
   const [kalshiStatus, setKalshiStatus] = useState('pending');
 
   const { polymarket, kalshi, arbitrage } = opportunity;
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const cardBg = isNight ? 'bg-slate-800' : 'bg-white';
-  const borderColor = isNight ? 'border-white/10' : 'border-black/10';
+  const textColor = 'text-white';
+  const cardBg = 'bg-slate-800';
+  const borderColor = 'border-white/10';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-black/40">

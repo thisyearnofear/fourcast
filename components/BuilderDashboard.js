@@ -19,13 +19,13 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
   const { stats, loading, error, isConfigured, relayerConfig, refresh } = useBuilder();
   const [refreshing, setRefreshing] = useState(false);
 
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
+  const textColor = 'text-white';
+  const subtleText = 'text-white/60';
 
   if (variant === 'compact') {
     if (!isConfigured) return null;
     return (
-      <div className={`rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
+      <div className={`rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 glass-subtle`}>
         <div className="flex items-center gap-4 text-xs">
           <span className={subtleText}>Builder</span>
           <span className={textColor}>
@@ -40,7 +40,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
         </div>
         <a
           href="/labs/builder"
-          className={`text-xs no-underline ${isNight ? 'text-indigo-300 hover:text-indigo-200' : 'text-indigo-600 hover:text-indigo-800'}`}
+          className={`text-xs no-underline text-indigo-300 hover:text-indigo-200`}
         >
           Details →
         </a>
@@ -50,11 +50,11 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
 
   if (!isConfigured) {
     return (
-      <div className={`rounded-2xl p-6 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
-        <h3 className={`font-medium mb-3 ${isNight ? 'text-white' : 'text-slate-900'}`}>
+      <div className={`rounded-2xl p-6 glass-subtle`}>
+        <h3 className={`font-medium mb-3 text-white`}>
           Builder Program
         </h3>
-        <p className={`text-sm ${isNight ? 'text-white/60' : 'text-slate-600'}`}>
+        <p className={`text-sm text-white/60`}>
           Configure builder credentials in your environment to get started
         </p>
       </div>
@@ -68,7 +68,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
   };
 
   return (
-    <div className={`rounded-2xl p-6 ${isNight ? 'glass-subtle' : 'glass-subtle-light'} space-y-4`}>
+    <div className={`rounded-2xl p-6 glass-subtle space-y-4`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -81,9 +81,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
           className={`p-2 rounded-lg transition-all ${
             refreshing
               ? 'opacity-50 cursor-not-allowed'
-              : isNight
-                ? 'hover:bg-white/10'
-                : 'hover:bg-white/50'
+              : 'hover:bg-white/10'
           }`}
         >
           <svg
@@ -98,9 +96,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
         {onClose && (
           <button
             onClick={onClose}
-            className={`p-2 rounded-lg transition-all ${
-              isNight ? 'hover:bg-white/10' : 'hover:bg-white/50'
-            }`}
+            className={`p-2 rounded-lg transition-all hover:bg-white/10`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -108,19 +104,15 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
           </button>
         )}
       </div>
-
       {error && (
-        <div className={`text-xs p-3 rounded-lg ${
-          isNight ? 'bg-red-500/10 text-red-300' : 'bg-red-100 text-red-700'
-        }`}>
+        <div className={`text-xs p-3 rounded-lg bg-red-500/10 text-red-300`}>
           {error}
         </div>
       )}
-
       {loading ? (
         <div className="space-y-3 animate-pulse">
-          <div className={`h-4 rounded ${isNight ? 'bg-white/10' : 'bg-white/50'}`} />
-          <div className={`h-4 rounded ${isNight ? 'bg-white/10' : 'bg-white/50'}`} />
+          <div className={`h-4 rounded bg-white/10`} />
+          <div className={`h-4 rounded bg-white/10`} />
         </div>
       ) : stats && !stats.error ? (
         <>
@@ -145,18 +137,16 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
 
           {/* Features */}
           {relayerConfig?.gasless && (
-            <div className={`border rounded-xl p-4 ${
-              isNight ? 'border-green-400/30 bg-green-500/10' : 'border-green-200 bg-green-50'
-            }`}>
+            <div className={`border rounded-xl p-4 border-green-400/30 bg-green-500/10`}>
               <div className="flex gap-2 mb-2">
-                <svg className={`w-5 h-5 ${isNight ? 'text-green-400' : 'text-green-600'}`} fill="currentColor" viewBox="0 0 20 20">
+                <svg className={`w-5 h-5 text-green-400`} fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <h4 className={`font-medium text-sm ${isNight ? 'text-green-200' : 'text-green-900'}`}>
+                <h4 className={`font-medium text-sm text-green-200`}>
                   Gasless Trading Active
                 </h4>
               </div>
-              <ul className={`text-xs space-y-1 ${isNight ? 'text-green-300/70' : 'text-green-700/70'}`}>
+              <ul className={`text-xs space-y-1 text-green-300/70`}>
                 <li>✓ Free wallet deployment</li>
                 <li>✓ Free token approvals</li>
                 <li>✓ Free order execution</li>
@@ -169,11 +159,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
             href="https://builders.polymarket.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className={`block w-full py-2 px-3 rounded-lg font-medium text-center text-sm transition-all ${
-              isNight
-                ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-200'
-                : 'bg-blue-100 hover:bg-blue-200 text-blue-900'
-            }`}
+            className={`block w-full py-2 px-3 rounded-lg font-medium text-center text-sm transition-all bg-blue-500/20 hover:bg-blue-500/30 text-blue-200`}
           >
             View Full Leaderboard →
           </a>
@@ -185,11 +171,11 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
 
 function MetricCard({ label, value, isNight }) {
   return (
-    <div className={`rounded-lg p-3 text-center ${isNight ? 'glass-input' : 'glass-input-light'}`}>
-      <div className={`text-xs font-light ${isNight ? 'text-white/60' : 'text-slate-600'}`}>
+    <div className={`rounded-lg p-3 text-center glass-input`}>
+      <div className={`text-xs font-light text-white/60`}>
         {label}
       </div>
-      <div className={`text-lg font-medium mt-1 ${isNight ? 'text-white' : 'text-slate-900'}`}>
+      <div className={`text-lg font-medium mt-1 text-white`}>
         {value}
       </div>
     </div>

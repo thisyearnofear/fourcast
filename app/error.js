@@ -9,7 +9,7 @@ export default function Error({ error, reset }) {
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center px-5">
+    <div className="min-h-screen bg-[var(--app-bg)] text-white flex items-center justify-center px-5">
       <main className="max-w-md w-full text-center">
         <div className="text-5xl mb-6">⚠️</div>
         <h2 className="text-xl font-light text-slate-200 mb-3">
@@ -21,13 +21,13 @@ export default function Error({ error, reset }) {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => reset()}
-            className="text-sm font-medium px-5 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 transition-opacity"
+            className="text-sm font-semibold px-5 py-3 rounded-lg border border-emerald-300/30 bg-emerald-300/10 text-emerald-100 hover:bg-emerald-300/20 transition"
           >
             Try again
           </button>
           <Link
             href="/"
-            className="text-sm font-medium px-5 py-3 rounded-xl bg-white/[0.04] text-slate-300 border border-white/[0.08] hover:bg-white/[0.08] transition-colors no-underline"
+            className="text-sm font-medium px-5 py-3 rounded-lg bg-white/[0.04] text-slate-300 border border-white/[0.08] hover:bg-white/[0.08] transition-colors no-underline"
           >
             Go home
           </Link>

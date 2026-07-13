@@ -68,7 +68,7 @@ export default function ReasoningVisualizer({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
-      <div className="absolute inset-0 bg-[#0a0a0f]/60 backdrop-blur-md" />
+      <div className="absolute inset-0 bg-[#080a0d]/60 backdrop-blur-md" />
       
       <motion.div 
         initial={{ opacity: 0, scale: 0.9, y: 20 }}

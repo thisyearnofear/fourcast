@@ -19,10 +19,10 @@ export function AgentDashboard({ isNight = false }) {
   const [maxMarkets, setMaxMarkets] = useState(5);
   const [riskTolerance, setRiskTolerance] = useState(0.5);
 
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
+  const textColor = 'text-white';
+  const subtleText = 'text-white/60';
   // Using glass-subtle CSS class instead of inline cardBg
-  const inputBg = isNight ? 'bg-white/10 border-white/20 text-white' : 'bg-white/60 border-white/40 text-slate-900';
+  const inputBg = 'bg-white/10 border-white/20 text-white';
 
   const handleRun = () => {
     run({
@@ -63,7 +63,6 @@ export function AgentDashboard({ isNight = false }) {
           {isRunning ? 'RUNNING' : 'IDLE'}
         </div>
       </div>
-
       {/* Controls */}
       {!isRunning && recommendations.length === 0 && (
         <div className="space-y-3">
@@ -122,7 +121,6 @@ export function AgentDashboard({ isNight = false }) {
           </div>
         </div>
       )}
-
       {/* Run / Stop button with ARIA labels */}
       <button
         onClick={isRunning ? stop : handleRun}
@@ -130,30 +128,24 @@ export function AgentDashboard({ isNight = false }) {
         aria-busy={isRunning}
         className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all ${
           isRunning
-            ? isNight ? 'bg-red-500/20 hover:bg-red-500/30 text-red-200' : 'bg-red-100 hover:bg-red-200 text-red-900'
-            : isNight ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-200' : 'bg-blue-100 hover:bg-blue-200 text-blue-900'
+            ? 'bg-red-500/20 hover:bg-red-500/30 text-red-200'
+            : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-200'
         }`}
       >
         {isRunning ? '⏹ Stop Agent' : `▶ ${BRAND.agent.runCta}`}
       </button>
-
       {/* Error */}
       {error && (
-        <div className={`text-xs p-3 rounded-lg ${
-          isNight ? 'bg-red-500/10 text-red-300' : 'bg-red-100 text-red-700'
-        }`}>
+        <div className={`text-xs p-3 rounded-lg bg-red-500/10 text-red-300`}>
           {error}
         </div>
       )}
-
       {/* Live Progress */}
       {isRunning && currentStep && (
         <div className="space-y-3" role="status" aria-live="polite" aria-label="Agent progress">
           {/* Progress bar */}
           <div 
-            className={`h-1 rounded-full overflow-hidden ${
-              isNight ? 'bg-white/10' : 'bg-black/10'
-            }`}
+            className={`h-1 rounded-full overflow-hidden bg-white/10`}
             role="progressbar"
             aria-valuenow={
               currentStep.step === 'discover' ? 25 :
@@ -165,9 +157,7 @@ export function AgentDashboard({ isNight = false }) {
             aria-valuemax={100}
           >
             <div 
-              className={`h-full transition-all duration-500 ease-out ${
-                isNight ? 'bg-blue-400' : 'bg-blue-600'
-              }`}
+              className={`h-full transition-all duration-500 ease-out bg-blue-400`}
               style={{
                 width: `${
                   currentStep.step === 'discover' ? '25%' :
@@ -187,18 +177,14 @@ export function AgentDashboard({ isNight = false }) {
           </div>
         </div>
       )}
-
       {/* Recommendations with Empty State */}
       {!isRunning && recommendations.length === 0 && steps.length > 0 && (
-        <div className={`text-center py-8 px-4 rounded-xl border ${
-          isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/20'
-        }`}>
+        <div className={`text-center py-8 px-4 rounded-xl border bg-white/5 border-white/10`}>
           <div className="text-4xl mb-3 opacity-40">🔍</div>
           <p className={`text-sm ${textColor} opacity-70 mb-1`}>No actionable opportunities found</p>
           <p className={`text-xs ${subtleText}`}>Try adjusting your risk tolerance or category filters</p>
         </div>
       )}
-      
       {recommendations.length > 0 && (
         <div className="space-y-3">
           <h4 className={`text-sm font-medium ${textColor}`}>
@@ -218,7 +204,6 @@ export function AgentDashboard({ isNight = false }) {
           ))}
         </div>
       )}
-
       {/* Arbitrage Opportunities */}
       {steps.find(s => s.step === 'filter' && s.data?.arbitrageCount > 0) && (
         <div className="space-y-2 mt-4">
@@ -226,18 +211,15 @@ export function AgentDashboard({ isNight = false }) {
             🔄 Arbitrage Detected ({steps.find(s => s.step === 'filter')?.data?.arbitrageCount || 0})
           </h4>
           {steps.find(s => s.step === 'filter')?.data?.topArbitrage?.map((arb, i) => (
-            <div key={i} className={`text-xs p-2 rounded-lg border ${
-              isNight ? 'bg-purple-500/10 border-purple-400/30 text-purple-200' : 'bg-purple-50 border-purple-200 text-purple-900'
-            }`}>
+            <div key={i} className={`text-xs p-2 rounded-lg border bg-purple-500/10 border-purple-400/30 text-purple-200`}>
               <div className="font-medium">{arb.polymarket.title}</div>
-              <div className={`${isNight ? 'text-purple-300/70' : 'text-purple-700/70'} mt-1`}>
+              <div className={`text-purple-300/70 mt-1`}>
                 {arb.arbitrage.priceDiff}% spread · {arb.similarity}% match
               </div>
             </div>
           ))}
         </div>
       )}
-
       <BuilderDashboard isNight={isNight} variant="compact" />
     </div>
   );
@@ -277,9 +259,9 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
     subMessage = current.message;
   }
 
-  const subtleText = isNight ? 'text-white/40' : 'text-slate-400';
-  const activeText = isNight ? 'text-blue-300' : 'text-blue-600';
-  const completeText = isNight ? 'text-green-300' : 'text-green-600';
+  const subtleText = 'text-white/40';
+  const activeText = 'text-blue-300';
+  const completeText = 'text-green-300';
 
   return (
     <div className="space-y-1 transition-all duration-300">
@@ -294,7 +276,7 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
       </div>
       {subMessage && (
         <div 
-          className={`ml-6 text-xs ${isNight ? 'text-white/50' : 'text-slate-500'}`}
+          className={`ml-6 text-xs text-white/50`}
           style={{ 
             animation: 'fadeInUp 0.3s ease-out',
             opacity: 1
@@ -318,19 +300,19 @@ function RecommendationCard({ rec, isNight }) {
   return (
     <div className={`border rounded-xl p-4 ${
       isActionable
-        ? isNight ? `border-${edgeColor}-400/30 bg-${edgeColor}-500/10` : `border-${edgeColor}-200 bg-${edgeColor}-50`
-        : isNight ? 'border-white/10 bg-white/5' : 'border-white/20 bg-white/10'
+        ? `border-${edgeColor}-400/30 bg-${edgeColor}-500/10`
+        : 'border-white/10 bg-white/5'
     }`}>
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-1.5">
-          <h5 className={`text-sm font-medium leading-tight ${isNight ? 'text-white' : 'text-slate-900'}`}>
+          <h5 className={`text-sm font-medium leading-tight text-white`}>
             {rec.title}
           </h5>
           {isSynthBacked && (
             <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
               isPathDependent
-                ? isNight ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-700'
-                : isNight ? 'bg-cyan-500/20 text-cyan-300' : 'bg-cyan-100 text-cyan-700'
+                ? 'bg-purple-500/20 text-purple-300'
+                : 'bg-cyan-500/20 text-cyan-300'
             }`} title={isPathDependent ? 'Path-dependent ML analysis' : 'Backed by 200+ ML models via SynthData'}>
               {isPathDependent ? '🎯 PATH' : '🤖 ML'}
             </span>
@@ -338,18 +320,15 @@ function RecommendationCard({ rec, isNight }) {
         </div>
         <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium ${
           isActionable
-            ? isNight ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-800'
-            : isNight ? 'bg-white/10 text-white/50' : 'bg-slate-100 text-slate-500'
+            ? 'bg-green-500/20 text-green-300'
+            : 'bg-white/10 text-white/50'
         }`}>
           {rec.direction}
         </span>
       </div>
-
       {/* SynthData details if available */}
       {isSynthBacked && rec.synthData && (
-        <div className={`text-xs mb-2 px-2 py-1.5 rounded ${
-          isNight ? 'bg-purple-500/10 text-purple-200' : 'bg-purple-50 text-purple-800'
-        }`}>
+        <div className={`text-xs mb-2 px-2 py-1.5 rounded bg-purple-500/10 text-purple-200`}>
           {rec.synthData.asset && (
             <div className="flex items-center justify-between">
               <span className="opacity-70">{rec.synthData.asset}</span>
@@ -364,93 +343,79 @@ function RecommendationCard({ rec, isNight }) {
           )}
         </div>
       )}
-
       {hasCalibrationWarning && (
-        <div className={`text-xs px-2 py-1 rounded mb-2 ${
-          isNight ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-800'
-        }`}>
+        <div className={`text-xs px-2 py-1 rounded mb-2 bg-orange-500/20 text-orange-300`}>
           ⚠️ {rec.calibrationWarning}
         </div>
       )}
-
       {/* Reputation spine - calibration + Brier when available */}
       {hasReputation && (
-        <div className={`flex items-center gap-3 text-xs mb-2 px-2 py-1.5 rounded-lg ${
-          isNight ? 'bg-white/[0.03]' : 'bg-black/[0.03]'
-        }`}>
+        <div className={`flex items-center gap-3 text-xs mb-2 px-2 py-1.5 rounded-lg bg-white/[0.03]`}>
           {rec.calibrationScore != null && (
-            <span className={isNight ? 'text-white/60' : 'text-black/60'}>
+            <span className='text-white/60'>
               Cal: <strong className={
                 rec.calibrationScore >= 70
-                  ? isNight ? 'text-green-400' : 'text-green-600'
+                  ? 'text-green-400'
                   : rec.calibrationScore >= 50
-                  ? isNight ? 'text-yellow-400' : 'text-yellow-600'
-                  : isNight ? 'text-red-400' : 'text-red-600'
+                  ? 'text-yellow-400'
+                  : 'text-red-400'
               }>{Math.round(rec.calibrationScore)}%</strong>
             </span>
           )}
           {rec.agentBrierScore != null && (
-            <span className={isNight ? 'text-white/60' : 'text-black/60'}>
+            <span className='text-white/60'>
               Brier: <strong className={
                 rec.agentBrierScore < 0.15
-                  ? isNight ? 'text-green-400' : 'text-green-600'
+                  ? 'text-green-400'
                   : rec.agentBrierScore < 0.25
-                  ? isNight ? 'text-yellow-400' : 'text-yellow-600'
-                  : isNight ? 'text-red-400' : 'text-red-600'
+                  ? 'text-yellow-400'
+                  : 'text-red-400'
               }>{rec.agentBrierScore.toFixed(3)}</strong>
             </span>
           )}
         </div>
       )}
-
       <div className="grid grid-cols-3 gap-2 text-xs">
         <div>
-          <span className={isNight ? 'text-white/50' : 'text-slate-500'}>
+          <span className='text-white/50'>
             {isSynthBacked ? 'ML Prob' : 'AI Prob'}
           </span>
-          <div className={`font-medium ${isNight ? 'text-white' : 'text-slate-900'}`}>
+          <div className={`font-medium text-white`}>
             {(rec.aiProbability * 100).toFixed(1)}%
           </div>
         </div>
         <div>
-          <span className={isNight ? 'text-white/50' : 'text-slate-500'}>Market</span>
-          <div className={`font-medium ${isNight ? 'text-white' : 'text-slate-900'}`}>
+          <span className='text-white/50'>Market</span>
+          <div className={`font-medium text-white`}>
             {(rec.marketOdds * 100).toFixed(1)}%
           </div>
         </div>
         <div>
-          <span className={isNight ? 'text-white/50' : 'text-slate-500'}>Edge</span>
+          <span className='text-white/50'>Edge</span>
           <div className={`font-medium ${
             rec.edge > 0
-              ? isNight ? 'text-green-300' : 'text-green-700'
-              : isNight ? 'text-red-300' : 'text-red-700'
+              ? 'text-green-300'
+              : 'text-red-300'
           }`}>
             {rec.edge > 0 ? '+' : ''}{(rec.edge * 100).toFixed(1)}%
           </div>
         </div>
       </div>
-
       {isSynthBacked && rec.synthData?.currentPrice && (
-        <div className={`mt-2 pt-2 border-t text-xs grid grid-cols-2 gap-1 ${
-          isNight ? 'border-white/10 text-white/50' : 'border-white/20 text-slate-500'
-        }`}>
+        <div className={`mt-2 pt-2 border-t text-xs grid grid-cols-2 gap-1 border-white/10 text-white/50`}>
           <span>{rec.synthData.asset} ${rec.synthData.currentPrice.toLocaleString()}</span>
           {rec.synthData.percentiles?.p5 && rec.synthData.percentiles?.p95 && (
             <span>Range: ${rec.synthData.percentiles.p5.toLocaleString()}–${rec.synthData.percentiles.p95.toLocaleString()}</span>
           )}
         </div>
       )}
-
       {isActionable && rec.sizePct > 0 && (
-        <div className={`mt-2 pt-2 border-t text-xs ${
-          isNight ? 'border-white/10 text-white/60' : 'border-white/20 text-slate-600'
-        }`}>
+        <div className={`mt-2 pt-2 border-t text-xs border-white/10 text-white/60`}>
           Suggested size: {(rec.sizePct * 100).toFixed(0)}% of portfolio · {rec.platform}
         </div>
       )}
-
       {rec.reasoning && (
-        <p className={`mt-2 text-xs leading-relaxed ${isNight ? 'text-white/50' : 'text-slate-500'}`}>
+        <p className={`mt-2 text-xs leading-relaxed text-white/50`}>
           {rec.reasoning.length > 200 ? rec.reasoning.slice(0, 200) + '…' : rec.reasoning}
         </p>
       )}

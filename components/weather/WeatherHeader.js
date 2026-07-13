@@ -82,11 +82,9 @@ export default function WeatherHeader({
         <ConnectKitButton
           mode="dark"
           customTheme={{
-            "--ck-accent-color": isNight ? "#3b82f6" : "#1e293b",
+            "--ck-accent-color": "#3b82f6",
             "--ck-accent-text": "#ffffff",
-            "--ck-primary-button-background": isNight
-              ? "rgba(255,255,255,0.2)"
-              : "#1f2937",
+            "--ck-primary-button-background": "rgba(255,255,255,0.2)",
           }}
         />
       </div>

@@ -51,9 +51,9 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
     fetchHistory();
   }, [displayAddress]);
 
-  const bgColor = isNight ? 'bg-white/5' : 'bg-black/5';
-  const borderColor = isNight ? 'border-white/10' : 'border-black/10';
-  const textColor = isNight ? 'text-white' : 'text-black';
+  const bgColor = 'bg-white/5';
+  const borderColor = 'border-white/10';
+  const textColor = 'text-white';
 
   const filteredHistory = history.filter(pred => {
     if (filter === 'wins') return pred.outcome === 'WIN';
@@ -87,12 +87,8 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-full text-sm font-light whitespace-nowrap transition-all ${
               filter === f
-                ? isNight
-                  ? 'bg-blue-500/30 border-blue-400 text-blue-100'
-                  : 'bg-blue-400/30 border-blue-500 text-blue-900'
-                : isNight
-                ? 'glass-subtle text-white/70 hover:bg-white/10'
-                : 'glass-subtle-light text-black/70 hover:bg-black/10'
+                ? 'bg-blue-500/30 border-blue-400 text-blue-100'
+                : 'glass-subtle text-white/70 hover:bg-white/10'
             } border`}
           >
             {f === 'all' && `All (${history.length})`}
@@ -102,7 +98,6 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
           </button>
         ))}
       </div>
-
       {/* Timeline */}
       <div className="space-y-4">
         {filteredHistory.map((prediction, idx) => (
@@ -121,19 +116,19 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
  * Individual prediction card in timeline
  */
 function PredictionCard({ prediction, isNight }) {
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const bgColor = isNight ? 'bg-white/5' : 'bg-black/5';
-  const borderColor = isNight ? 'border-white/10' : 'border-black/10';
+  const textColor = 'text-white';
+  const bgColor = 'bg-white/5';
+  const borderColor = 'border-white/10';
 
   const isWin = prediction.outcome === 'WIN';
   const isPending = prediction.outcome === 'PENDING';
   const isLoss = prediction.outcome === 'LOSS';
 
   const cardBg = isWin
-    ? isNight ? 'bg-green-500/10 border-green-400/30' : 'bg-green-400/10 border-green-500/30'
+    ? 'bg-green-500/10 border-green-400/30'
     : isLoss
-    ? isNight ? 'bg-red-500/10 border-red-400/30' : 'bg-red-400/10 border-red-500/30'
-    : isNight ? 'bg-yellow-500/10 border-yellow-400/30' : 'bg-yellow-400/10 border-yellow-500/30';
+    ? 'bg-red-500/10 border-red-400/30'
+    : 'bg-yellow-500/10 border-yellow-400/30';
 
   const statusEmoji = isWin ? '✓' : isLoss ? '✗' : '⏳';
   const statusText = isWin ? 'You were right!' : isLoss ? 'Incorrect, but data-driven' : 'Waiting for resolution';
@@ -170,7 +165,6 @@ function PredictionCard({ prediction, isNight }) {
           </p>
         </div>
       </div>
-
       {/* Prediction Details */}
       <div className="flex items-center gap-4">
         <div className={`px-3 py-1 rounded-full text-xs font-light ${
@@ -188,16 +182,14 @@ function PredictionCard({ prediction, isNight }) {
           </p>
         )}
       </div>
-
       {/* Reasoning */}
       {prediction.reasoning && (
-        <div className={`${isNight ? 'bg-white/5' : 'bg-black/5'} rounded p-3`}>
+        <div className={`bg-white/5 rounded p-3`}>
           <p className={`text-xs ${textColor} opacity-75 font-light leading-relaxed`}>
             {prediction.reasoning}
           </p>
         </div>
       )}
-
       {/* Status Message */}
       <div className={`text-sm font-light ${textColor}`}>
         {isWin && (
@@ -210,14 +202,9 @@ function PredictionCard({ prediction, isNight }) {
           <p>⏳ {statusText} Check back when the market resolves.</p>
         )}
       </div>
-
       {/* Share Button (if resolved win) */}
       {isWin && (
-        <button className={`text-xs font-light px-3 py-1.5 rounded-lg transition-all ${
-          isNight
-            ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-400/30'
-            : 'bg-blue-400/20 hover:bg-blue-400/30 text-blue-900 border border-blue-500/30'
-        }`}>
+        <button className={`text-xs font-light px-3 py-1.5 rounded-lg transition-all bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-400/30`}>
           🔗 Share this win
         </button>
       )}

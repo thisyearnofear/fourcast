@@ -80,7 +80,7 @@ export default function StatusPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-slate-100 flex flex-col items-center px-5 py-10 pb-16">
+    <main className="min-h-screen bg-[var(--app-bg)] text-slate-100 flex flex-col items-center px-5 py-10 pb-16">
       {/* Header */}
       <div className="w-full max-w-[640px] mb-12">
         <div className="flex items-center gap-2.5 mb-2">

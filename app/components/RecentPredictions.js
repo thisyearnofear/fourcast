@@ -38,11 +38,11 @@ export default function RecentPredictions({ chainId = 56, isNight = false }) {
     return true;
   });
 
-  const textColor = isNight ? 'text-white' : 'text-black';
+  const textColor = 'text-white';
   const tabClass = (active) => `
     text-xs px-3 py-1 rounded-full transition-all 
     ${active 
-      ? (isNight ? 'bg-white text-black font-medium' : 'bg-black text-white font-medium') 
+      ? ('bg-white text-black font-medium') 
       : 'opacity-60 hover:opacity-100'}
   `;
 

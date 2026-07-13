@@ -15,9 +15,9 @@ export function PositionsDashboard({ isNight = false }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [closingId, setClosingId] = useState(null);
 
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
-  const cardBg = isNight ? 'bg-slate-900/60' : 'bg-white/60';
+  const textColor = 'text-white';
+  const subtleText = 'text-white/60';
+  const cardBg = 'bg-slate-900/60';
 
   const fetchPositions = useCallback(async () => {
     if (!walletAddress) return;
@@ -103,17 +103,12 @@ export function PositionsDashboard({ isNight = false }) {
         <button
           onClick={fetchPositions}
           disabled={loading}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-            isNight
-              ? 'bg-white/10 hover:bg-white/20 text-white border-white/20'
-              : 'bg-black/10 hover:bg-black/20 text-black border-black/20'
-          } disabled:opacity-40`}
+          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border bg-white/10 hover:bg-white/20 text-white border-white/20 disabled:opacity-40`}
           aria-label="Refresh positions"
         >
           {loading ? '⟳' : '↻'}
         </button>
       </div>
-
       {/* Summary Cards */}
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -128,20 +123,15 @@ export function PositionsDashboard({ isNight = false }) {
           />
         </div>
       )}
-
       {/* Filter Tabs */}
-      <div className={`inline-flex rounded-xl p-1 ${
-        isNight ? 'bg-white/5' : 'bg-black/5'
-      }`}>
+      <div className={`inline-flex rounded-xl p-1 bg-white/5`}>
         {filters.map((f) => (
           <button
             key={f}
             onClick={() => setSelectedFilter(f)}
             className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
               selectedFilter === f
-                ? isNight
-                  ? 'bg-white/20 text-white border border-white/20'
-                  : 'bg-black/20 text-black border border-black/20'
+                ? 'bg-white/20 text-white border border-white/20'
                 : `${subtleText} hover:opacity-80`
             }`}
           >
@@ -149,21 +139,15 @@ export function PositionsDashboard({ isNight = false }) {
           </button>
         ))}
       </div>
-
       {/* Error */}
       {error && (
-        <div className={`text-xs p-3 rounded-lg ${
-          isNight ? 'bg-red-500/10 text-red-300' : 'bg-red-100 text-red-700'
-        }`}>
+        <div className={`text-xs p-3 rounded-lg bg-red-500/10 text-red-300`}>
           {error}
         </div>
       )}
-
       {/* No Wallet Connected */}
       {!walletAddress && !loading && (
-        <div className={`text-center py-12 px-4 rounded-xl border ${
-          isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/20'
-        }`}>
+        <div className={`text-center py-12 px-4 rounded-xl border bg-white/5 border-white/10`}>
           <div className="text-4xl mb-3 opacity-40">🔌</div>
           <p className={`text-sm ${textColor} opacity-70 mb-1`}>Connect your wallet</p>
           <p className={`text-xs ${subtleText}`}>
@@ -171,21 +155,17 @@ export function PositionsDashboard({ isNight = false }) {
           </p>
         </div>
       )}
-
       {/* Loading */}
       {loading && walletAddress && (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className={`h-28 rounded-xl ${isNight ? 'skeleton' : 'skeleton-light'}`} />
+            <div key={i} className={`h-28 rounded-xl skeleton`} />
           ))}
         </div>
       )}
-
       {/* Empty State */}
       {!loading && !error && walletAddress && positions.length === 0 && (
-        <div className={`text-center py-12 px-4 rounded-xl border ${
-          isNight ? 'bg-white/5 border-white/10' : 'bg-white/30 border-white/20'
-        }`}>
+        <div className={`text-center py-12 px-4 rounded-xl border bg-white/5 border-white/10`}>
           <div className="text-4xl mb-3 opacity-40">💼</div>
           <p className={`text-sm ${textColor} opacity-70 mb-1`}>No {selectedFilter !== 'all' ? selectedFilter.toLowerCase() + ' ' : ''}positions yet</p>
           <p className={`text-xs ${subtleText}`}>
@@ -195,7 +175,6 @@ export function PositionsDashboard({ isNight = false }) {
           </p>
         </div>
       )}
-
       {/* Position Cards */}
       {!loading && visiblePositions.length > 0 && (
         <div className="space-y-3">
@@ -217,11 +196,7 @@ export function PositionsDashboard({ isNight = false }) {
           {hasMore && (
             <button
               onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
-              className={`w-full py-2.5 rounded-lg text-sm font-medium transition-all border ${
-                isNight
-                  ? 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
-                  : 'bg-black/5 hover:bg-black/10 text-black/70 border-black/10'
-              }`}
+              className={`w-full py-2.5 rounded-lg text-sm font-medium transition-all border bg-white/5 hover:bg-white/10 text-white/70 border-white/10`}
             >
               Show More ({positions.length - visibleCount} remaining)
             </button>
@@ -233,11 +208,11 @@ export function PositionsDashboard({ isNight = false }) {
 }
 
 function StatCard({ label, value, isNight, accent = true }) {
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
+  const textColor = 'text-white';
+  const subtleText = 'text-white/60';
   const accentColor = accent
-    ? isNight ? 'text-green-300' : 'text-green-700'
-    : isNight ? 'text-red-300' : 'text-red-700';
+    ? 'text-green-300'
+    : 'text-red-300';
 
   // P&L values get colored accent (green for profit, red for loss)
   const isPnl = label === 'P&L';
@@ -272,18 +247,18 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
     ? `${position.realized_pnl > 0 ? '+' : ''}${position.realized_pnl.toFixed(2)}` : '—';
 
   const sideColor = position.side === 'BUY YES'
-    ? isNight ? 'text-green-300' : 'text-green-700'
+    ? 'text-green-300'
     : position.side === 'BUY NO'
-      ? isNight ? 'text-red-300' : 'text-red-700'
+      ? 'text-red-300'
       : textColor;
 
   return (
     <div className={`glass-subtle rounded-xl p-4 transition-all hover:scale-[1.005] ${
       isOpen
-        ? isNight ? 'border-cyan-500/20' : 'border-cyan-200'
+        ? 'border-cyan-500/20'
         : isProfitable
-          ? isNight ? 'border-green-500/20' : 'border-green-200'
-          : isNight ? 'border-red-500/20' : 'border-red-200'
+          ? 'border-green-500/20'
+          : 'border-red-500/20'
     }`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -298,15 +273,14 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
         </div>
         <div className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
           isOpen
-            ? isNight ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' : 'bg-cyan-100 text-cyan-800 border-cyan-200'
+            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
             : isProfitable
-              ? isNight ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-green-100 text-green-800 border-green-200'
-              : isNight ? 'bg-red-500/20 text-red-300 border-red-500/30' : 'bg-red-100 text-red-800 border-red-200'
+              ? 'bg-green-500/20 text-green-300 border-green-500/30'
+              : 'bg-red-500/20 text-red-300 border-red-500/30'
         }`}>
           {isOpen ? '🟢 OPEN' : isProfitable ? '✅ PROFIT' : '❌ LOSS'}
         </div>
       </div>
-
       {/* Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
         <div>
@@ -326,7 +300,6 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
           <div className={`font-medium ${textColor} mt-0.5`}>${totalValue}</div>
         </div>
       </div>
-
       {/* P&L & Close */}
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
         <div>
@@ -348,11 +321,7 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
             <button
               onClick={onClose}
               disabled={closing}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border ${
-                isNight
-                  ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30'
-                  : 'bg-red-100 hover:bg-red-200 text-red-700 border-red-200'
-              } disabled:opacity-40`}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30 disabled:opacity-40`}
             >
               {closing ? '⟳' : 'Close'}
             </button>

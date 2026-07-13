@@ -31,8 +31,8 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
   // Don't show pricing overlay if payment system isn't configured
   if (!isOpen || !isConfigured) return null;
 
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const mutedColor = isNight ? 'text-white/50' : 'text-black/50';
+  const textColor = 'text-white';
+  const mutedColor = 'text-white/50';
 
   const activePlan = PLANS.find(p => p.id === selectedPlan);
   const isProcessing = txState.status !== 'idle' && txState.status !== 'success' && txState.status !== 'error';
@@ -56,13 +56,11 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
       onClick={onClose}
     >
       <div
-        className={`relative w-full max-w-3xl rounded-3xl overflow-hidden ${
-          isNight ? 'bg-slate-900 border border-white/10' : 'bg-white border border-black/10'
-        } shadow-2xl`}
+        className={`relative w-full max-w-3xl rounded-3xl overflow-hidden bg-slate-900 border border-white/10 shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`px-6 pt-8 pb-6 text-center border-b ${isNight ? 'border-white/10' : 'border-black/10'}`}>
+        <div className={`px-6 pt-8 pb-6 text-center border-b border-white/10`}>
           <div className="text-4xl mb-3">🔮</div>
           <h2 className={`text-2xl font-semibold ${textColor} mb-2`}>
             Unlock Your Full Edge
@@ -92,12 +90,8 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
                 disabled={plan.disabled || isProcessing}
                 className={`relative flex flex-col p-5 rounded-2xl text-left transition-all border ${
                   isProPlan
-                    ? isNight
-                      ? 'bg-purple-500/10 border-purple-500/40 ring-1 ring-purple-500/30'
-                      : 'bg-purple-50 border-purple-300 ring-1 ring-purple-200'
-                    : isNight
-                      ? 'bg-white/5 border-white/10 hover:border-white/20'
-                      : 'bg-black/5 border-black/10 hover:border-black/20'
+                    ? 'bg-purple-500/10 border-purple-500/40 ring-1 ring-purple-500/30'
+                    : 'bg-white/5 border-white/10 hover:border-white/20'
                 } ${plan.disabled ? 'opacity-60 cursor-default' : 'cursor-pointer'}`}
               >
                 {isProPlan && (
@@ -106,7 +100,6 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
                     Most Popular
                   </div>
                 )}
-
                 <div className="mb-3">
                   <h3 className={`text-lg font-semibold ${textColor}`}>{plan.name}</h3>
                   <div className="flex items-baseline gap-1 mt-1">
@@ -115,29 +108,25 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
                   </div>
                   <p className={`text-xs ${mutedColor} mt-1`}>{plan.description}</p>
                 </div>
-
                 <ul className="flex-1 space-y-2 mb-4">
                   {plan.features.map((f, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
                       <span className={`mt-0.5 ${plan.disabled ? 'text-gray-400' : 'text-green-400'}`}>
                         {plan.disabled ? '○' : '✓'}
                       </span>
-                      <span className={`${plan.disabled ? mutedColor : ''} ${isNight ? 'text-white/80' : 'text-black/80'}`}>
+                      <span className={`${plan.disabled ? mutedColor : ''} text-white/80`}>
                         {f}
                       </span>
                     </li>
                   ))}
                 </ul>
-
                 <div
                   className={`w-full py-2.5 rounded-xl text-sm font-medium text-center transition-all ${
                     plan.disabled
-                      ? isNight ? 'bg-white/10 text-white/40' : 'bg-black/10 text-black/40'
+                      ? 'bg-white/10 text-white/40'
                       : isSelected
                         ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                        : isNight
-                          ? 'bg-white/10 text-white/70 hover:bg-white/20'
-                          : 'bg-black/10 text-black/70 hover:bg-black/20'
+                        : 'bg-white/10 text-white/70 hover:bg-white/20'
                   }`}
                 >
                   {plan.cta}
@@ -177,9 +166,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
         <div className={`flex items-center justify-center gap-4 px-6 pb-6`}>
           <button
             onClick={() => { onClose(); resetTx(); }}
-            className={`text-sm font-medium px-4 py-2 rounded-xl transition-all ${
-              isNight ? 'text-white/60 hover:text-white/80' : 'text-black/60 hover:text-black/80'
-            }`}
+            className={`text-sm font-medium px-4 py-2 rounded-xl transition-all text-white/60 hover:text-white/80`}
           >
             {txState.status === 'success' ? 'Close' : 'Maybe later'}
           </button>

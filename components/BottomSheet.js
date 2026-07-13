@@ -57,7 +57,7 @@ export default function BottomSheet({
 
   if (!isOpen) return null;
 
-  const glassPanel = isNight ? 'glass-heavy' : 'glass-heavy-light';
+  const glassPanel = 'glass-heavy';
 
   return (
     <div 
@@ -66,7 +66,6 @@ export default function BottomSheet({
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" />
-      
       {/* Sheet/Modal */}
       <div 
         className={`
@@ -81,19 +80,19 @@ export default function BottomSheet({
         {/* Handle bar (mobile) */}
         {showHandle && (
           <div className="flex justify-center pt-3 pb-2 sm:hidden">
-            <div className={`w-12 h-1.5 rounded-full ${isNight ? 'bg-white/30' : 'bg-black/30'}`} />
+            <div className={`w-12 h-1.5 rounded-full bg-white/30`} />
           </div>
         )}
         
         {/* Header */}
         {title && (
-          <div className={`flex items-center justify-between px-6 py-4 border-b ${isNight ? 'border-white/10' : 'border-black/10'}`}>
-            <h2 className={`text-lg font-medium ${isNight ? 'text-white' : 'text-slate-900'}`}>
+          <div className={`flex items-center justify-between px-6 py-4 border-b border-white/10`}>
+            <h2 className={`text-lg font-medium text-white`}>
               {title}
             </h2>
             <button
               onClick={onClose}
-              className={`p-2 rounded-full transition-colors ${isNight ? 'hover:bg-white/10 text-white/60 hover:text-white' : 'hover:bg-black/10 text-black/60 hover:text-black'}`}
+              className={`p-2 rounded-full transition-colors hover:bg-white/10 text-white/60 hover:text-white`}
               aria-label="Close"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

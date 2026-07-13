@@ -18,11 +18,11 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
     const [orderResult, setOrderResult] = useState(null);
 
     // Glass CSS classes (DRY)
-    const glassPanel = isNight ? 'glass-heavy' : 'glass-heavy-light';
-    const textColor = isNight ? 'text-white' : 'text-black';
-    const borderColor = isNight ? 'border-white/10' : 'border-black/10';
-    const glassInput = isNight ? 'glass-input' : 'glass-input-light';
-    const inputBg = isNight ? 'bg-white/5' : 'bg-black/5';
+    const glassPanel = 'glass-heavy';
+    const textColor = 'text-white';
+    const borderColor = 'border-white/10';
+    const glassInput = 'glass-input';
+    const inputBg = 'bg-white/5';
 
     const yesOdds = market.currentOdds?.yes || market.odds_yes || 0.5;
     const noOdds = 1 - yesOdds;
@@ -147,9 +147,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
                         <button
                             onClick={() => setOrderType('limit')}
                             className={`px-4 py-3 rounded-xl transition-all border ${orderType === 'limit'
-                                    ? isNight
-                                        ? 'bg-blue-500/30 border-blue-400 text-blue-100'
-                                        : 'bg-blue-400/30 border-blue-500 text-blue-900'
+                                    ? 'bg-blue-500/30 border-blue-400 text-blue-100'
                                     : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
                                 }`}
                         >
@@ -158,9 +156,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
                         <button
                             onClick={() => setOrderType('market')}
                             className={`px-4 py-3 rounded-xl transition-all border ${orderType === 'market'
-                                    ? isNight
-                                        ? 'bg-blue-500/30 border-blue-400 text-blue-100'
-                                        : 'bg-blue-400/30 border-blue-500 text-blue-900'
+                                    ? 'bg-blue-500/30 border-blue-400 text-blue-100'
                                     : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
                                 }`}
                         >
@@ -197,7 +193,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
                 )}
 
                 {/* Order Summary */}
-                <div className={`${isNight ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-4 space-y-2`}>
+                <div className={`bg-white/5 rounded-xl p-4 space-y-2`}>
                     <div className="flex justify-between text-sm">
                         <span className={`${textColor} opacity-70`}>Estimated Cost</span>
                         <span className={`font-light ${textColor}`}>${(estimatedCost / 100).toFixed(2)}</span>
@@ -227,10 +223,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
                     <button
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all border ${isNight
-                                ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white/70'
-                                : 'bg-black/5 hover:bg-black/10 border-black/10 text-black/70'
-                            } disabled:opacity-50`}
+                        className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all border bg-white/5 hover:bg-white/10 border-white/10 text-white/70 disabled:opacity-50`}
                     >
                         Cancel
                     </button>
@@ -238,10 +231,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
                 <button
                     onClick={handleSubmitOrder}
                     disabled={isSubmitting || (balance !== null && estimatedCost > balance)}
-                    className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all border ${isNight
-                            ? 'bg-emerald-500/30 hover:bg-emerald-500/40 border-emerald-400/30 text-emerald-200'
-                            : 'bg-emerald-400/30 hover:bg-emerald-400/40 border-emerald-500/30 text-emerald-900'
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all border bg-emerald-500/30 hover:bg-emerald-500/40 border-emerald-400/30 text-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                     {isSubmitting ? (
                         <span className="flex items-center justify-center gap-2">

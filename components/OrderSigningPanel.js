@@ -166,9 +166,9 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
   };
 
   // Glass CSS classes (DRY)
-  const glassPanel = isNight ? 'glass-heavy' : 'glass-heavy-light';
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const borderColor = isNight ? 'border-white/10' : 'border-black/10';
+  const glassPanel = 'glass-heavy';
+  const textColor = 'text-white';
+  const borderColor = 'border-white/10';
 
   const content = (
     <div
@@ -201,7 +201,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
         <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar">
           {/* Chain & Balance Status Card */}
           {isConnected && (
-            <div className={`${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'} border rounded-xl p-4`}>
+            <div className={`bg-white/5 border-white/10 border rounded-xl p-4`}>
               <div className="space-y-2">
                 {isCorrectChain ? (
                   <>
@@ -222,16 +222,13 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                   <>
                     <div className="flex items-center justify-between">
                       <span className={`text-xs ${textColor} opacity-70`}>Network</span>
-                      <span className={`text-xs ${isNight ? 'text-amber-400' : 'text-amber-600'}`}>
+                      <span className={`text-xs text-amber-400`}>
                         {chain?.name || 'Unknown'}
                       </span>
                     </div>
                     <button
                       onClick={() => switchChain?.({ chainId: POLYGON_CHAIN_ID })}
-                      className={`w-full py-2 rounded-lg font-light text-xs transition-all border mt-2 ${isNight
-                          ? 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-300'
-                          : 'bg-amber-400/20 hover:bg-amber-400/30 border-amber-500/30 text-amber-800'
-                        }`}
+                      className={`w-full py-2 rounded-lg font-light text-xs transition-all border mt-2 bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-300`}
                     >
                       Switch to {POLYGON_CHAIN_NAME}
                     </button>
@@ -243,7 +240,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
 
           {/* Connection Required */}
           {!isConnected && (
-            <div className={`${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'} border rounded-xl p-4 text-center`}>
+            <div className={`bg-white/5 border-white/10 border rounded-xl p-4 text-center`}>
               <p className={`text-xs ${textColor} opacity-70 mb-3`}>
                 Connect wallet to trade
               </p>
@@ -255,17 +252,13 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
           {kellyResult && (
             <div className={`rounded-xl border overflow-hidden transition-all ${
               kellyResult.actionable
-                ? isNight
-                  ? 'bg-gradient-to-br from-purple-900/40 via-blue-900/20 to-emerald-900/30 border-purple-500/30 shadow-lg shadow-purple-500/10'
-                  : 'bg-gradient-to-br from-purple-100/80 via-blue-50/60 to-emerald-100/70 border-purple-400/40 shadow-md shadow-purple-500/10'
-                : isNight
-                  ? 'bg-white/5 border-white/10'
-                  : 'bg-black/5 border-black/10'
+                ? 'bg-gradient-to-br from-purple-900/40 via-blue-900/20 to-emerald-900/30 border-purple-500/30 shadow-lg shadow-purple-500/10'
+                : 'bg-white/5 border-white/10'
             }`}>
               {/* Header */}
               <div className={`flex items-center gap-2 px-3 py-2 border-b ${
                 kellyResult.actionable
-                  ? isNight ? 'border-purple-500/20' : 'border-purple-400/20'
+                  ? 'border-purple-500/20'
                   : borderColor
               }`}>
                 <span className="text-sm">🧮</span>
@@ -275,8 +268,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                 {kellyResult.actionable && (
                   <span className={`ml-auto px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
                     analysis?.source?.includes('synthdata')
-                      ? isNight ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-400/30 text-purple-800'
-                      : isNight ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-400/30 text-blue-800'
+                      ? 'bg-purple-500/30 text-purple-300'
+                      : 'bg-blue-500/30 text-blue-300'
                   }`}>
                     {analysis?.source?.includes('synthdata') ? 'ML ENSEMBLE' : 'AI'}
                   </span>
@@ -292,15 +285,15 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                           kellyResult.direction === 'BUY YES'
-                            ? isNight ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-green-400/20 text-green-800 border border-green-500/30'
-                            : isNight ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-red-400/20 text-red-800 border border-red-500/30'
+                            ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                            : 'bg-red-500/20 text-red-300 border border-red-500/30'
                         }`}>
                           {kellyResult.direction === 'BUY YES' ? '▲ BUY YES' : '▼ BUY NO'}
                         </span>
                         <span className={`text-lg font-bold ${
                           kellyResult.edge > 0
-                            ? isNight ? 'text-emerald-400' : 'text-emerald-600'
-                            : isNight ? 'text-red-400' : 'text-red-600'
+                            ? 'text-emerald-400'
+                            : 'text-red-400'
                         }`}>
                           {(kellyResult.edge * 100).toFixed(1)}%
                         </span>
@@ -308,7 +301,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                       </div>
 
                       {/* Kelly fraction badge */}
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${isNight ? 'bg-white/5 text-white/50' : 'bg-black/5 text-black/50'}`}>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/50`}>
                         k = {kellyResult.kellyPct.toFixed(2)}
                       </span>
                     </div>
@@ -331,12 +324,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                         disabled={userBalance <= 0}
                         className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-all border ${
                           userBalance > 0
-                            ? isNight
-                              ? 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-400/30 text-purple-200 hover:scale-105'
-                              : 'bg-purple-400/20 hover:bg-purple-400/30 border-purple-500/30 text-purple-800 hover:scale-105'
-                            : isNight
-                              ? 'bg-gray-500/20 border-gray-400/20 text-gray-400 cursor-not-allowed'
-                              : 'bg-gray-400/20 border-gray-500/20 text-gray-500 cursor-not-allowed'
+                            ? 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-400/30 text-purple-200 hover:scale-105'
+                            : 'bg-gray-500/20 border-gray-400/20 text-gray-400 cursor-not-allowed'
                         }`}
                       >
                         Apply ✓
@@ -347,10 +336,10 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                     <div className="flex items-center gap-3 text-[10px]">
                       <span className={`px-1.5 py-0.5 rounded ${
                         (analysis?.assessment?.confidence || 'LOW') === 'HIGH'
-                          ? isNight ? 'bg-green-500/20 text-green-300' : 'bg-green-400/20 text-green-800'
+                          ? 'bg-green-500/20 text-green-300'
                           : (analysis?.assessment?.confidence || 'LOW') === 'MEDIUM'
-                            ? isNight ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-400/20 text-yellow-800'
-                            : isNight ? 'bg-red-500/20 text-red-300' : 'bg-red-400/20 text-red-800'
+                            ? 'bg-yellow-500/20 text-yellow-300'
+                            : 'bg-red-500/20 text-red-300'
                       }`}>
                         {analysis?.assessment?.confidence || 'LOW'}
                       </span>
@@ -387,12 +376,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                   key={s}
                   onClick={() => setSide(s)}
                   className={`flex-1 py-2 rounded-lg font-light text-sm transition-all border ${side === s
-                      ? isNight
-                        ? 'bg-blue-500/40 border-blue-400 text-blue-100'
-                        : 'bg-blue-400/40 border-blue-500 text-blue-900'
-                      : isNight
-                        ? 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                        : 'bg-black/5 border-black/10 text-black/70 hover:bg-black/10'
+                      ? 'bg-blue-500/40 border-blue-400 text-blue-100'
+                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                     }`}
                 >
                   {s}
@@ -434,7 +419,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
 
           {/* Cost Estimate */}
           {estimatedCost > 0 && (
-            <div className={`${isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'} border rounded-lg p-3`}>
+            <div className={`bg-white/5 border-white/10 border rounded-lg p-3`}>
               <div className="flex justify-between items-center">
                 <span className={`text-sm ${textColor} opacity-70`}>Estimated Cost</span>
                 <span className={`text-lg font-light ${textColor}`}>
@@ -449,9 +434,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
                   </div>
                   <button
                     onClick={() => window.open('https://app.uniswap.org/swap?outputCurrency=0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', '_blank')}
-                    className={`w-full py-2 rounded-lg font-light text-xs transition-all border ${isNight 
-                      ? 'bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 text-blue-300'
-                      : 'bg-blue-400/20 hover:bg-blue-400/30 border-blue-500/30 text-blue-900'}`}
+                    className={`w-full py-2 rounded-lg font-light text-xs transition-all border bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 text-blue-300`}
                   >
                     Quick Swap ETH to USDC ↗
                   </button>
@@ -462,7 +445,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
 
           {/* Error Display */}
           {error && (
-            <div className={`${isNight ? 'bg-red-500/20 border-red-400/30' : 'bg-red-400/20 border-red-500/30'} border rounded-lg p-3`}>
+            <div className={`bg-red-500/20 border-red-400/30 border rounded-lg p-3`}>
               <p className={`text-sm ${textColor} text-red-400`}>{error}</p>
             </div>
           )}
@@ -472,10 +455,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
             {!embedded && (
               <button
                 onClick={onClose}
-                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${isNight
-                    ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white/70'
-                    : 'bg-black/5 hover:bg-black/10 border-black/10 text-black/70'
-                  }`}
+                className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border bg-white/5 hover:bg-white/10 border-white/10 text-white/70`}
               >
                 Cancel
               </button>
@@ -484,12 +464,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
               onClick={() => setStep('review')}
               disabled={!isConnected || !isCorrectChain || !size || !price || estimatedCost > userBalance}
               className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${isConnected && isCorrectChain && size && price && estimatedCost <= userBalance
-                  ? isNight
-                    ? 'bg-blue-500/30 hover:bg-blue-500/40 border-blue-400/30 text-blue-200'
-                    : 'bg-blue-400/30 hover:bg-blue-400/40 border-blue-500/30 text-blue-900'
-                  : isNight
-                    ? 'bg-gray-500/20 border-gray-400/20 text-gray-400'
-                    : 'bg-gray-400/20 border-gray-500/20 text-gray-600'
+                  ? 'bg-blue-500/30 hover:bg-blue-500/40 border-blue-400/30 text-blue-200'
+                  : 'bg-gray-500/20 border-gray-400/20 text-gray-400'
                 }`}
               title={
                 !isConnected
@@ -512,7 +488,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
       {/* Review Step */}
       {step === 'review' && (
         <div className="space-y-4 flex-1 flex flex-col">
-          <div className={`${isNight ? 'bg-white/5' : 'bg-black/5'} rounded-lg p-4 space-y-3`}>
+          <div className={`bg-white/5 rounded-lg p-4 space-y-3`}>
             <OrderReviewRow label="Prediction" value={side} textColor={textColor} />
             <OrderReviewRow label="Price" value={`$${price}`} textColor={textColor} />
             <OrderReviewRow label="Size" value={`${size} shares`} textColor={textColor} />
@@ -528,19 +504,13 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
           <div className="flex gap-3 pt-4 mt-auto">
             <button
               onClick={() => setStep('input')}
-              className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${isNight
-                  ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white/70'
-                  : 'bg-black/5 hover:bg-black/10 border-black/10 text-black/70'
-                }`}
+              className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border bg-white/5 hover:bg-white/10 border-white/10 text-white/70`}
             >
               Back
             </button>
             <button
               onClick={handleSubmitOrder}
-              className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border ${isNight
-                  ? 'bg-green-500/30 hover:bg-green-500/40 border-green-400/30 text-green-200'
-                  : 'bg-green-400/30 hover:bg-green-400/40 border-green-500/30 text-green-900'
-                }`}
+              className={`flex-1 py-3 rounded-lg font-light text-sm transition-all border bg-green-500/30 hover:bg-green-500/40 border-green-400/30 text-green-200`}
             >
               Sign & Submit
             </button>
@@ -573,7 +543,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
             <span className="text-5xl">✓</span>
           </div>
           <p className={`text-lg ${textColor} font-light`}>Order Submitted</p>
-          <div className={`${isNight ? 'bg-green-500/20 border-green-400/30' : 'bg-green-400/20 border-green-500/30'} border rounded-lg p-3`}>
+          <div className={`bg-green-500/20 border-green-400/30 border rounded-lg p-3`}>
             <p className={`text-sm font-light ${textColor}`}>
               Order ID: {success.orderID}
             </p>

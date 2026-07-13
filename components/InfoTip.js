@@ -79,11 +79,7 @@ export default function InfoTip({ term, title, body, isNight = true, className =
         aria-expanded={open}
         aria-controls={id}
         aria-label={`What is ${tipTitle}?`}
-        className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] leading-none border transition-colors align-middle ${
-          isNight
-            ? 'border-white/25 text-white/60 hover:text-white hover:border-white/50'
-            : 'border-black/25 text-black/60 hover:text-black hover:border-black/50'
-        }`}
+        className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] leading-none border transition-colors align-middle border-white/25 text-white/60 hover:text-white hover:border-white/50`}
       >
         ?
       </button>
@@ -91,14 +87,10 @@ export default function InfoTip({ term, title, body, isNight = true, className =
         <span
           id={id}
           role="tooltip"
-          className={`absolute z-50 left-1/2 -translate-x-1/2 top-6 w-60 rounded-xl border p-3 text-left shadow-xl ${
-            isNight
-              ? 'bg-slate-900/95 border-white/15 text-white'
-              : 'bg-white/95 border-black/15 text-black'
-          }`}
+          className={`absolute z-50 left-1/2 -translate-x-1/2 top-6 w-60 rounded-xl border p-3 text-left shadow-xl bg-slate-900/95 border-white/15 text-white`}
         >
           <span className="block text-xs font-semibold mb-1">{tipTitle}</span>
-          <span className={`block text-[11px] leading-relaxed font-light ${isNight ? 'text-white/80' : 'text-black/80'}`}>
+          <span className={`block text-[11px] leading-relaxed font-light text-white/80`}>
             {tipBody}
           </span>
         </span>

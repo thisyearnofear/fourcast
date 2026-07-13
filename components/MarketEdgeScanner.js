@@ -37,7 +37,7 @@ export function MarketEdgeScanner({
 
   if (edgeMarkets.length === 0) {
     return (
-      <div className={`glass-subtle rounded-2xl p-4 text-center ${isNight ? 'text-white/40' : 'text-black/40'}`}>
+      <div className={`glass-subtle rounded-2xl p-4 text-center text-white/40`}>
         <span className="text-sm font-light">No edge opportunities detected yet</span>
       </div>
     );
@@ -62,19 +62,15 @@ export function MarketEdgeScanner({
     }
   }
 
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
-  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
+  const textColor = 'text-white';
+  const subtleText = 'text-white/60';
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-5 border-2 ${
-      isNight 
-        ? 'glass-subtle border-purple-500/30' 
-        : 'glass-subtle-light border-purple-400/30 shadow-lg shadow-purple-500/5'
-    }`}>
+    <div className={`relative overflow-hidden rounded-2xl p-5 border-2 glass-subtle border-purple-500/30`}>
       {/* Scanner Header */}
       <div className="flex items-center gap-3 mb-4">
         <div className="flex h-2 w-2 rounded-full bg-purple-500 animate-ping" />
-        <h3 className={`text-xs font-bold uppercase tracking-[0.2em] ${isNight ? 'text-purple-400' : 'text-purple-600'}`}>
+        <h3 className={`text-xs font-bold uppercase tracking-[0.2em] text-purple-400`}>
           Live Edge Scanner
         </h3>
 
@@ -98,14 +94,11 @@ export function MarketEdgeScanner({
           ))}
         </div>
       </div>
-
       {/* Market Content */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter ${
-              isNight ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-700'
-            }`}>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter bg-purple-500/20 text-purple-300`}>
               {currentMarket.detectedAsset || 'Asset'} Coverage
             </span>
             <span className={`text-[10px] ${subtleText}`}>
@@ -129,7 +122,7 @@ export function MarketEdgeScanner({
             </div>
             
             <div className="flex flex-col items-center justify-center">
-              <div className={`h-8 w-px ${isNight ? 'bg-white/10' : 'bg-black/10'}`} />
+              <div className={`h-8 w-px bg-white/10`} />
               {edge !== null ? (
                 <div className={`text-[10px] font-bold py-1 ${edge > 0 ? 'text-green-500' : 'text-red-500'}`}>
                   {edge > 0 ? '▲' : '▼'} {Math.abs(edge * 100).toFixed(0)}%
@@ -137,12 +130,12 @@ export function MarketEdgeScanner({
               ) : (
                 <span className="text-xs py-1">vs</span>
               )}
-              <div className={`h-8 w-px ${isNight ? 'bg-white/10' : 'bg-black/10'}`} />
+              <div className={`h-8 w-px bg-white/10`} />
             </div>
 
             <div className="flex flex-col">
-              <span className={`text-[10px] uppercase tracking-wider ${isNight ? 'text-purple-400' : 'text-purple-600'} font-bold`}>ML Fair</span>
-              <span className={`text-xl font-bold ${isNight ? 'text-purple-300' : 'text-purple-700'}`}>
+              <span className={`text-[10px] uppercase tracking-wider text-purple-400 font-bold`}>ML Fair</span>
+              <span className={`text-xl font-bold text-purple-300`}>
                 {mlFairOdds !== null ? (
                   `${(mlFairOdds * 100).toFixed(1)}%`
                 ) : (
@@ -154,17 +147,12 @@ export function MarketEdgeScanner({
 
           <button
             onClick={() => onAnalyze(currentMarket, 'basic')}
-            className={`px-6 py-3 rounded-xl text-sm font-medium transition-all hover:scale-105 active:scale-95 ${
-              isNight
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
-                : 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
-            }`}
+            className={`px-6 py-3 rounded-xl text-sm font-medium transition-all hover:scale-105 active:scale-95 bg-purple-600 text-white shadow-lg shadow-purple-600/20`}
           >
             {edge !== null ? 'View Analysis' : 'Reveal Edge'}
           </button>
         </div>
       </div>
-      
       {/* Scanner Background Decoration */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/5 rounded-full -ml-12 -mb-12 blur-2xl pointer-events-none" />

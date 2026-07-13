@@ -5,28 +5,24 @@
  * Shows what Synth provides without creating a separate page
  */
 export function SynthShowcase({ isNight = false }) {
-  const textColor = isNight ? 'text-white' : 'text-slate-900';
+  const textColor = 'text-white';
   // Using glass-subtle CSS class instead of inline styles
-  const subtleText = isNight ? 'text-white/60' : 'text-slate-600';
+  const subtleText = 'text-white/60';
 
   return (
-    <div className={`rounded-2xl p-6 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
+    <div className={`rounded-2xl p-6 glass-subtle`}>
       <div className="flex items-center gap-2 mb-4">
         <span className="text-2xl">🤖</span>
         <h3 className={`font-medium text-lg ${textColor}`}>
           Powered by SynthData
         </h3>
-        <span className={`ml-auto px-2 py-1 rounded text-[10px] font-medium ${
-          isNight ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-700'
-        }`}>
+        <span className={`ml-auto px-2 py-1 rounded text-[10px] font-medium bg-purple-500/20 text-purple-300`}>
           200+ ML MODELS
         </span>
       </div>
-
       <p className={`text-sm ${subtleText} mb-4`}>
         Quantitative forecasts from Bittensor Subnet 50's decentralized ML ensemble
       </p>
-
       <div className="space-y-3 text-sm">
         <div className="flex items-start gap-2">
           <span className={`${textColor} opacity-60`}>•</span>
@@ -57,12 +53,9 @@ export function SynthShowcase({ isNight = false }) {
           </div>
         </div>
       </div>
-
-      <div className={`mt-4 pt-4 border-t ${isNight ? 'border-white/10' : 'border-black/10'}`}>
+      <div className={`mt-4 pt-4 border-t border-white/10`}>
         <p className={`text-xs ${subtleText}`}>
-          Look for the <span className={`px-1.5 py-0.5 rounded font-medium ${
-            isNight ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-400/20 text-purple-700'
-          }`}>🤖 ML</span> badge on markets to see SynthData-backed analysis
+          Look for the <span className={`px-1.5 py-0.5 rounded font-medium bg-purple-500/20 text-purple-300`}>🤖 ML</span> badge on markets to see SynthData-backed analysis
         </p>
       </div>
     </div>

@@ -182,9 +182,9 @@ export default function SignalsPage() {
         return grouped;
     }, [filteredSignals]);
 
-    const textColor = isNight ? 'text-white' : 'text-black';
+    const textColor = 'text-white';
     const bgColor = 'bg-black';
-    const cardBgColor = isNight ? 'bg-slate-900/60 border-white/20' : 'bg-white/60 border-black/20';
+    const cardBgColor = 'bg-slate-900/60 border-white/20';
 
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return 'Unknown';
@@ -285,7 +285,7 @@ export default function SignalsPage() {
                             {/* Loading State */}
                             {isLoading && (
                                 <div className="flex items-center justify-center py-12">
-                                    <div className={`w-6 h-6 border-2 ${isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'} rounded-full animate-spin`}></div>
+                                    <div className={`w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin`}></div>
                                     <span className={`ml-3 ${textColor} opacity-70`}>Loading signals...</span>
                                 </div>
                             )}
@@ -296,7 +296,7 @@ export default function SignalsPage() {
                                     <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
                                     <button
                                         onClick={fetchSignals}
-                                        className={`px-4 py-2 rounded-lg text-sm font-light ${isNight ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-black/20 hover:bg-black/30 text-black'}`}
+                                        className={`px-4 py-2 rounded-lg text-sm font-light bg-white/20 hover:bg-white/30 text-white`}
                                     >
                                         Try Again
                                     </button>
@@ -350,7 +350,7 @@ export default function SignalsPage() {
                                                 ))}
                                             </div>
 
-                                            <div className={`mt-4 pt-4 border-t ${isNight ? 'border-white/10' : 'border-black/10'}`}>
+                                            <div className={`mt-4 pt-4 border-t border-white/10`}>
                                                 <div className="flex flex-wrap items-center gap-4 text-xs">
                                                     <span className={`${textColor} opacity-60`}>
                                         {eventSignals.length} prediction{eventSignals.length !== 1 ? 's' : ''} published
@@ -369,7 +369,6 @@ export default function SignalsPage() {
                         </>
                     )}
             </>
-
             <ProfileDrawer
                 isOpen={!!selectedProfile}
                 onClose={() => setSelectedProfile(null)}

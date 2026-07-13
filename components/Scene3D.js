@@ -312,13 +312,12 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
       <Text
         position={textPosition}
         fontSize={0.2 * textScale}
-        color={isNight ? "#FFFFFF" : "#333333"}
+        color="#FFFFFF"
         anchorX="center"
         anchorY="middle"
         letterSpacing={0.7}
-      >
-        THREE DAY FORECAST
-      </Text>
+      >THREE DAY FORECAST
+              </Text>
     );
   };
 
@@ -359,7 +358,7 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
         <Suspense fallback={null}>
           {/* Scene background - Sky handles day/dawn/dusk, black background for night */}
           {portalMode && <SceneBackground key={`bg-${timeOfDay}-${portalMode}`} backgroundColor={getBackgroundColor()} />}
-          {!portalMode && isNight && <SceneBackground key={`bg-night`} backgroundColor={'#000000'} />}
+          {!portalMode && isNight && <SceneBackground key={`bg-night`} backgroundColor='#000000' />}
           
           {/* Sky with dynamic sun position - only for non-night times */}
           {timeOfDay !== 'night' && (
@@ -470,7 +469,7 @@ const Scene3D = ({ weatherData, isLoading, onPortalModeChange, onSetExitPortalFu
           ) : (
             <>
               {/* Fullscreen Portal Content with Day Sky */}
-              <SceneBackground backgroundColor={'#0D7FDB'} />
+              <SceneBackground backgroundColor='#0D7FDB' />
               <Sky
                 sunPosition={[100, 20, 100]}
                 inclination={0.9}

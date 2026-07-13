@@ -95,19 +95,18 @@ export default function CctpTransfer({ isNight = false }) {
     }
   };
 
-  const textColor = isNight ? 'text-white' : 'text-black';
-  const mutedColor = isNight ? 'text-white/50' : 'text-black/50';
-  const cardBg = isNight ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10';
+  const textColor = 'text-white';
+  const mutedColor = 'text-white/50';
+  const cardBg = 'bg-white/5 border-white/10';
 
   return (
-    <div className={`rounded-2xl border ${cardBg} p-5 ${isNight ? 'glass-subtle' : 'glass-subtle-light'}`}>
+    <div className={`rounded-2xl border ${cardBg} p-5 glass-subtle`}>
       <h3 className={`text-sm font-medium ${textColor} mb-1 flex items-center gap-2`}>
         <span>🌀</span> Cross-Chain USDC
       </h3>
       <p className={`text-xs ${mutedColor} mb-4`}>
         Move USDC between Arc and Polygon for Polymarket orders via Circle CCTP.
       </p>
-
       {/* Direction toggle */}
       <div className="flex gap-2 mb-4">
         <button
@@ -115,7 +114,7 @@ export default function CctpTransfer({ isNight = false }) {
           className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
             direction === 'arc-to-polygon'
               ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-              : isNight ? 'bg-white/5 text-white/50 border border-white/10' : 'bg-black/5 text-black/50 border border-black/10'
+              : 'bg-white/5 text-white/50 border border-white/10'
           }`}
         >
           Arc → Polygon
@@ -125,13 +124,12 @@ export default function CctpTransfer({ isNight = false }) {
           className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
             direction === 'polygon-to-arc'
               ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-              : isNight ? 'bg-white/5 text-white/50 border border-white/10' : 'bg-black/5 text-black/50 border border-black/10'
+              : 'bg-white/5 text-white/50 border border-white/10'
           }`}
         >
           Polygon → Arc
         </button>
       </div>
-
       {/* Amount input */}
       <div className="flex items-center gap-3 mb-4">
         <input
@@ -140,14 +138,11 @@ export default function CctpTransfer({ isNight = false }) {
           onChange={(e) => setAmount(e.target.value)}
           min="1"
           step="1"
-          className={`flex-1 px-3 py-2 rounded-lg text-sm font-mono bg-transparent border ${
-            isNight ? 'border-white/10 text-white' : 'border-black/10 text-black'
-          } focus:outline-none focus:border-purple-500/50`}
+          className={`flex-1 px-3 py-2 rounded-lg text-sm font-mono bg-transparent border border-white/10 text-white focus:outline-none focus:border-purple-500/50`}
           placeholder="Amount (USDC)"
         />
         <span className={`text-sm ${mutedColor}`}>USDC</span>
       </div>
-
       {/* Network indicator */}
       <div className={`flex items-center gap-2 mb-4 text-xs ${mutedColor}`}>
         <span className={`w-2 h-2 rounded-full ${canTransfer ? 'bg-green-400' : 'bg-gray-500'}`} />
@@ -159,7 +154,6 @@ export default function CctpTransfer({ isNight = false }) {
               : `Ready on ${isOnArc ? 'Arc' : 'Polygon'}`}
         </span>
       </div>
-
       {/* Transfer button */}
       <button
         onClick={handleTransfer}
@@ -169,7 +163,7 @@ export default function CctpTransfer({ isNight = false }) {
             ? 'bg-green-500/20 text-green-400 cursor-default'
             : canTransfer
               ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90'
-              : isNight ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-black/10 text-black/30 cursor-not-allowed'
+              : 'bg-white/10 text-white/30 cursor-not-allowed'
         }`}
       >
         {txState.status === 'success'
@@ -182,14 +176,12 @@ export default function CctpTransfer({ isNight = false }) {
                 ? `❌ ${txState.error?.slice(0, 40) || 'Failed'}`
                 : `Send ${amount || '0'} USDC ${direction === 'arc-to-polygon' ? '→ Polygon' : '→ Arc'}`}
       </button>
-
       {/* Setup note */}
       {!process.env.NEXT_PUBLIC_CCTP_ENABLED && (
         <p className={`text-xs ${mutedColor} mt-3 text-center`}>
           ⚙️ CCTP not configured — add Circle API key and contract addresses to .env.local
         </p>
       )}
-
       {/* Docs link */}
       <a
         href="https://developers.circle.com/cctp"

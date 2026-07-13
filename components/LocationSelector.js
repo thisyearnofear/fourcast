@@ -45,16 +45,16 @@ const LocationSelector = ({ onLocationChange, currentLocation, isLoading, isNigh
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search..."
-            className={`${isNight ? 'glass-input' : 'glass-input-light'} ${isNight ? 'text-white placeholder-white/40' : 'text-black placeholder-black/40'} text-sm md:text-base font-light focus:outline-none w-32 md:w-48 tracking-wide`}
+            className={`glass-input text-white placeholder-white/40 text-sm md:text-base font-light focus:outline-none w-32 md:w-48 tracking-wide`}
             disabled={isLoading || isSearching}
           />
           <button 
             type="submit" 
-            className={`p-1 ${isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} transition-colors disabled:opacity-40`}
+            className={`p-1 text-white/60 hover:text-white transition-colors disabled:opacity-40`}
             disabled={!searchQuery.trim() || isLoading || isSearching}
           >
             {isSearching && !isLoading ? (
-              <div className={`w-3 h-3 border ${isNight ? 'border-white/30 border-t-white' : 'border-black/30 border-t-black'} rounded-full animate-spin`}></div>
+              <div className={`w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin`}></div>
             ) : (
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -63,10 +63,9 @@ const LocationSelector = ({ onLocationChange, currentLocation, isLoading, isNigh
           </button>
         </div>
       </form>
-      
       <button 
         onClick={handleCurrentLocation}
-        className={`px-2 py-1 ${isNight ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} text-xs md:text-sm transition-colors disabled:opacity-40 flex items-center space-x-1`}
+        className={`px-2 py-1 text-white/60 hover:text-white text-xs md:text-sm transition-colors disabled:opacity-40 flex items-center space-x-1`}
         disabled={isLoading || isSearching}
       >
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

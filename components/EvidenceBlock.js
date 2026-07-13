@@ -34,10 +34,10 @@ export default function EvidenceBlock({
   const [sourcesExpanded, setSourcesExpanded] = useState(false);
   const [trackRecordOpen, setTrackRecordOpen] = useState(false);
 
-  const bg = isNight ? 'bg-white/[0.03]' : 'bg-black/[0.03]';
-  const border = isNight ? 'border-white/[0.06]' : 'border-black/[0.06]';
-  const muted = isNight ? 'opacity-50' : 'opacity-60';
-  const labelColor = isNight ? 'text-white/60' : 'text-black/60';
+  const bg = 'bg-white/[0.03]';
+  const border = 'border-white/[0.06]';
+  const muted = 'opacity-50';
+  const labelColor = 'text-white/60';
 
   // --- Derive sources from signal metadata ---
   const derivedSources = sources || buildSources(signal);
@@ -52,7 +52,7 @@ export default function EvidenceBlock({
     <div className={`rounded-xl ${bg} border ${border} overflow-hidden transition-all ${className}`}>
       {/* Reputation Spine — always visible */}
       {(calibrationScore != null || agentBrierScore != null) && (
-        <div className={`px-4 pt-3 pb-2 ${isNight ? 'bg-white/[0.02]' : 'bg-black/[0.02]'}`}>
+        <div className={`px-4 pt-3 pb-2 bg-white/[0.02]`}>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {/* Calibration gauge */}
             {calibrationScore != null && (
@@ -99,18 +99,14 @@ export default function EvidenceBlock({
                 e.stopPropagation();
                 setTrackRecordOpen(!trackRecordOpen);
               }}
-              className={`ml-auto text-[10px] font-medium tracking-wider px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
-                isNight
-                  ? 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-300'
-                  : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-700'
-              }`}
+              className={`ml-auto text-[10px] font-medium tracking-wider px-2.5 py-1 rounded-lg transition-all whitespace-nowrap bg-blue-500/10 hover:bg-blue-500/20 text-blue-300`}
             >
               How has Fourcast done? →
             </button>
           </div>
           {/* Track record dropdown inline */}
           {trackRecordOpen && (
-            <div className={`mt-2 text-xs ${isNight ? 'bg-white/[0.04]' : 'bg-black/[0.04]'} rounded-lg p-3 space-y-2`}>
+            <div className={`mt-2 text-xs bg-white/[0.04] rounded-lg p-3 space-y-2`}>
               <p className={`${textColor} ${muted}`}>
                 Fourcast&apos;s agent uses ensemble AI (Venice LLM + SynthData ML) to generate predictions.
                 Performance is tracked retroactively via Brier scores and calibration metrics on resolved markets.
@@ -118,9 +114,7 @@ export default function EvidenceBlock({
               <a
                 href="/signals?tab=leaderboard"
                 onClick={(e) => e.stopPropagation()}
-                className={`inline-flex items-center gap-1 font-medium ${
-                  isNight ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-600'
-                } transition-colors`}
+                className={`inline-flex items-center gap-1 font-medium text-blue-300 hover:text-blue-200 transition-colors`}
               >
                 View full track record →
               </a>
@@ -128,12 +122,11 @@ export default function EvidenceBlock({
           )}
         </div>
       )}
-
       {/* Evidence Header (collapsible) */}
       <button
         onClick={() => setSourcesExpanded(!sourcesExpanded)}
         className={`w-full flex items-center justify-between px-4 py-3 text-xs font-medium ${labelColor} uppercase tracking-wider hover:opacity-80 transition-opacity ${
-          sourcesExpanded ? '' : isNight ? 'border-t border-white/[0.04]' : 'border-t border-black/[0.04]'
+          sourcesExpanded ? '' : 'border-t border-white/[0.04]'
         }`}
       >
         <span className="flex items-center gap-2">
@@ -144,7 +137,6 @@ export default function EvidenceBlock({
           ▼
         </span>
       </button>
-
       {sourcesExpanded && (
         <div className="px-4 pb-4 space-y-4">
           {/* Data Sources */}
@@ -157,7 +149,7 @@ export default function EvidenceBlock({
                 {derivedSources.map((source, idx) => (
                   <div
                     key={idx}
-                    className={`flex items-center justify-between text-xs px-3 py-2 rounded-lg ${isNight ? 'bg-white/[0.04]' : 'bg-black/[0.04]'}`}
+                    className={`flex items-center justify-between text-xs px-3 py-2 rounded-lg bg-white/[0.04]`}
                   >
                     <div className="flex items-center gap-2">
                       <span>{source.icon}</span>
@@ -165,12 +157,12 @@ export default function EvidenceBlock({
                     </div>
                     <div className="flex items-center gap-3">
                       {source.subtype && (
-                        <span className={`text-[10px] ${isNight ? 'text-white/30' : 'text-black/30'}`}>
+                        <span className={`text-[10px] text-white/30`}>
                           {source.subtype}
                         </span>
                       )}
                       {source.timestamp && (
-                        <span className={`text-[10px] ${isNight ? 'text-white/30' : 'text-black/30'}`}>
+                        <span className={`text-[10px] text-white/30`}>
                           {formatRelativeTime(source.timestamp)}
                         </span>
                       )}
@@ -186,7 +178,7 @@ export default function EvidenceBlock({
             <p className={`text-[10px] ${labelColor} uppercase tracking-wider mb-2 font-medium`}>
               Confidence Methodology
             </p>
-            <div className={`text-xs ${textColor} ${isNight ? 'opacity-80' : 'opacity-90'} leading-relaxed px-3 py-2 rounded-lg ${isNight ? 'bg-white/[0.04]' : 'bg-black/[0.04]'}`}>
+            <div className={`text-xs ${textColor} opacity-80 leading-relaxed px-3 py-2 rounded-lg bg-white/[0.04]`}>
               {confidenceMethod}
             </div>
           </div>
@@ -200,8 +192,8 @@ export default function EvidenceBlock({
               <div className="space-y-1">
                 {derivedCounterSignals.map((counter, idx) => (
                   <div key={idx} className="flex items-start gap-2 text-xs">
-                    <span className={`${isNight ? 'text-amber-400/70' : 'text-amber-600/70'} mt-0.5`}>⚡</span>
-                    <span className={`${textColor} ${isNight ? 'opacity-70' : 'opacity-80'}`}>{counter}</span>
+                    <span className={`text-amber-400/70 mt-0.5`}>⚡</span>
+                    <span className={`${textColor} opacity-70`}>{counter}</span>
                   </div>
                 ))}
               </div>
@@ -221,25 +213,21 @@ export default function EvidenceBlock({
                     href={src.url || src.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`block text-xs px-3 py-2 rounded-lg transition-opacity hover:opacity-100 ${
-                      isNight ? 'bg-white/[0.04] opacity-80' : 'bg-black/[0.04] opacity-90'
-                    }`}
+                    className={`block text-xs px-3 py-2 rounded-lg transition-opacity hover:opacity-100 bg-white/[0.04] opacity-80`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className={`flex-shrink-0 px-1 rounded text-[8px] font-mono ${
-                        isNight ? 'bg-cyan-500/10 text-cyan-400/60' : 'bg-cyan-100 text-cyan-600/60'
-                      }`}>
+                      <span className={`flex-shrink-0 px-1 rounded text-[8px] font-mono bg-cyan-500/10 text-cyan-400/60`}>
                         {src.rank || idx + 1}
                       </span>
                       <span className={`${textColor} font-medium truncate`}>{src.title}</span>
                       {src.source && (
-                        <span className={`text-[9px] flex-shrink-0 ${isNight ? 'text-white/30' : 'text-black/30'}`}>
+                        <span className={`text-[9px] flex-shrink-0 text-white/30`}>
                           {src.source}
                         </span>
                       )}
                     </div>
                     {src.snippet && (
-                      <p className={`text-[10px] mt-1 pl-5 ${isNight ? 'text-white/40' : 'text-black/40'} line-clamp-2`}>
+                      <p className={`text-[10px] mt-1 pl-5 text-white/40 line-clamp-2`}>
                         {src.snippet}
                       </p>
                     )}
@@ -247,9 +235,7 @@ export default function EvidenceBlock({
                 ))}
               </div>
               {signal.brightData.deepResearch && (
-                <div className={`mt-2 px-3 py-2 rounded-lg text-[10px] ${
-                  isNight ? 'bg-cyan-500/5 border border-cyan-500/10 text-cyan-300/70' : 'bg-cyan-50 border border-cyan-200 text-cyan-700'
-                }`}>
+                <div className={`mt-2 px-3 py-2 rounded-lg text-[10px] bg-cyan-500/5 border border-cyan-500/10 text-cyan-300/70`}>
                   <span className="font-medium">Deep Research:</span>
                   {' '}Scraped {signal.brightData.deepResearch.charCount?.toLocaleString()} chars
                   {signal.brightData.deepResearch.sentenceCount

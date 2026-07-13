@@ -11,9 +11,9 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
     const { setAuth } = useKalshiAuth();
 
     // Glass CSS classes (DRY)
-    const glassPanel = isNight ? 'glass-heavy' : 'glass-heavy-light';
-    const glassInput = isNight ? 'glass-input' : 'glass-input-light';
-    const textColor = isNight ? 'text-white' : 'text-black';
+    const glassPanel = 'glass-heavy';
+    const glassInput = 'glass-input';
+    const textColor = 'text-white';
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -97,7 +97,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
                     </div>
 
                     {error && (
-                        <div className={`text-red-400 text-sm ${isNight ? 'bg-red-500/20' : 'bg-red-400/20'} border ${isNight ? 'border-red-400/30' : 'border-red-500/30'} px-4 py-3 rounded-xl`}>
+                        <div className={`text-red-400 text-sm bg-red-500/20 border border-red-400/30 px-4 py-3 rounded-xl`}>
                             {error}
                         </div>
                     )}
@@ -107,20 +107,14 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
                             type="button"
                             onClick={onClose}
                             disabled={isLoading}
-                            className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all border ${isNight
-                                    ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white/70'
-                                    : 'bg-black/5 hover:bg-black/10 border-black/10 text-black/70'
-                                } disabled:opacity-50`}
+                            className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all border bg-white/5 hover:bg-white/10 border-white/10 text-white/70 disabled:opacity-50`}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all border ${isNight
-                                    ? 'bg-emerald-500/30 hover:bg-emerald-500/40 border-emerald-400/30 text-emerald-200'
-                                    : 'bg-emerald-400/30 hover:bg-emerald-400/40 border-emerald-500/30 text-emerald-900'
-                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            className={`flex-1 px-4 py-3 rounded-lg font-light text-sm transition-all border bg-emerald-500/30 hover:bg-emerald-500/40 border-emerald-400/30 text-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
                             {isLoading ? (
                                 <span className="flex items-center justify-center gap-2">
