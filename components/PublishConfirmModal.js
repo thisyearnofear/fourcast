@@ -1,13 +1,11 @@
 'use client';
 
-import { useChainConnections } from '@/hooks/useChainConnections';
 import { BRAND } from '@/constants/brand';
 
 export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market, analysis, isNight, isPublishing }) {
-  const { chains } = useChainConnections();
-  const onArc = chains?.arc?.connected;
-  const chainLabel = onArc ? BRAND.publish.arcPreferred.chain : BRAND.publish.legacy.chain;
-  const gasLabel = onArc ? BRAND.publish.arcPreferred.gas : BRAND.publish.legacy.gas;
+  // Arc is the only publish chain
+  const chainLabel = BRAND.publish.arcPreferred.chain;
+  const gasLabel = BRAND.publish.arcPreferred.gas;
   if (!isOpen) return null;
 
   const recommendation = analysis?.recommended_action || analysis?.assessment?.direction || 'Neutral';
