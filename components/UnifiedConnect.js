@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useAccount, useDisconnect, useConnect } from 'wagmi';
 import { useChainConnections } from '@/hooks/useChainConnections';
 import { BRAND } from '@/constants/brand';
@@ -9,8 +8,6 @@ import { BRAND } from '@/constants/brand';
 const CHAIN_META = {
   arc: { label: 'Arc (USDC)', icon: '🌀', color: '#6366f1' },
   evm: { label: 'EVM (Trading)', icon: '📊', color: '#2563eb' },
-  aptos: { label: 'Aptos (Signals)', icon: '📡', color: '#a855f7' },
-  movement: { label: 'Movement (Signals)', icon: '💎', color: '#d97706' },
 };
 
 export default function UnifiedConnect({ isNight = false, variant = 'header' }) {
@@ -21,7 +18,6 @@ export default function UnifiedConnect({ isNight = false, variant = 'header' }) 
   const { isConnected: evmConnected, address: evmAddress } = useAccount();
   const { connect: evmConnect, connectors } = useConnect();
   const { disconnect: evmDisconnect } = useDisconnect();
-  const { connected: aptosConnected, account: aptosAccount, wallets, connect: aptosConnect, disconnect: aptosDisconnect } = useWallet();
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -145,7 +141,6 @@ export default function UnifiedConnect({ isNight = false, variant = 'header' }) 
             <button
               onClick={() => {
                 evmDisconnect();
-                aptosDisconnect();
                 setShowDetails(false);
               }}
               className={`text-xs ${isNight ? 'text-red-400/70 hover:text-red-400' : 'text-red-600/70 hover:text-red-600'}`}

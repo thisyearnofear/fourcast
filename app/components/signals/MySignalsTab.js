@@ -149,7 +149,9 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                                         <div className={`text-xs ${textColor} opacity-60`}>
                                             <span className="font-medium">On-chain:</span>{' '}
                                             <a
-                                                href={`https://explorer.aptoslabs.com/txn/${signal.tx_hash}?network=testnet`}
+                                                href={signal.chain_origin === 'ARC'
+                                                    ? `https://arc-explorer.thecanteenapp.com/tx/${signal.tx_hash}`
+                                                    : `https://explorer.aptoslabs.com/txn/${signal.tx_hash}?network=testnet`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="hover:opacity-100 underline"

@@ -5,11 +5,9 @@ import { generateXUrl, generateFarcasterUrl, generateSignalUrl, copySignalLink }
 import EvidenceBlock from '@/components/EvidenceBlock';
 import ReputationBadge from '@/components/ReputationBadge';
 import FollowButton from '@/components/FollowButton';
-import TippingModal from './TippingModal';
 
-export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, onTip, userStats, onExpand }) {
+export default function SignalCard({ signal, index, isExpanded, onToggle, formatTimestamp, isNight, textColor, onProfileClick, userStats, onExpand }) {
     const [shareOpen, setShareOpen] = useState(false);
-    const [tipModalOpen, setTipModalOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const { address } = useAccount();
 
@@ -86,23 +84,6 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                         <span onClick={(e) => e.stopPropagation()}>
                             <FollowButton authorAddress={signal.author_address} currentAddress={address} />
                         </span>
-                        {/* Tip Button - Visible for Movement signals */}
-                        {onTip && (signal.chain_origin === 'ARC' || signal.chain_origin === 'MOVEMENT' || signal.tipping_enabled) && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setTipModalOpen(true);
-                                }}
-                                className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${isNight
-                                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30'
-                                    : 'bg-amber-600/10 hover:bg-amber-600/20 text-amber-700 border border-amber-600/20'
-                                    }`}
-                            >
-                                <span>💰</span>
-                                <span>Tip</span>
-                            </button>
-                        )}
-
                         {isExpanded && (
                             /* Share Button */
                             <button
@@ -171,14 +152,6 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                     </button>
                 </div>
             )}
-
-            <TippingModal
-                isOpen={tipModalOpen}
-                onClose={() => setTipModalOpen(false)}
-                onTip={onTip}
-                recipientAddress={signal.author_address}
-                isNight={isNight}
-            />
         </div>
     );
 }

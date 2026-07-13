@@ -104,7 +104,7 @@ The former 2,706-line god-file has been decomposed into focused modules:
          │             │
          ▼             │
 ┌─────────────────┐    │
-│ Movement/Aptos  │────┘
+│ Arc (USDC)      │────┘
 │ (On-chain       │    (async publish,
 │  signals)       │     verification)
 └────────┬────────┘
@@ -182,12 +182,12 @@ CREATE TABLE signals (
 - **Circle Tools**: CCTP, Gateway, Wallets, Paymaster, USYC, App Kit
 - **Status**: Arc publish routing is wired in the app; contract deployment/env config still required for live publishing
 
-### Movement/Aptos (Signal Layer — Legacy)
-- **Purpose**: Publish verifiable prediction signals
-- **Network**: Movement testnet (Bardock, Chain ID 250)
-- **Contract**: `signal_registry.move`, `signal_marketplace.move`
-- **Features**: Signal publishing, tipping, reputation tracking
-- **Status**: Being superseded by Arc integration
+### Movement/Aptos — RETIRED (2026-07)
+The legacy Move-based signal layer (Movement Bardock, `signal_registry.move`)
+has been removed from the codebase. Historical signals rows still carry
+`chain_origin = 'APTOS'/'MOVEMENT'` and render with legacy display badges;
+their tx hashes deep-link to the Aptos explorer. No new functionality may
+target these chains.
 
 ### EVM Chains (Trading Layer)
 - **Supported**: BNB, Polygon, Arbitrum
@@ -233,32 +233,28 @@ CREATE TABLE signals (
 
 ### Chain Connection Flow
 ```javascript
-// useChainConnections hook manages multi-chain state
+// useChainConnections hook manages chain state (one EVM wallet, two surfaces)
 {
   chains: {
-    arc: { connected, walletAddress, chainId: 5042002, balance },  // NEW
-    aptos: { connected, walletAddress, network },
-    evm: { connected, chainId, balance }
+    arc: { connected, address, chainId: 5042002 },   // settlement
+    evm: { connected, address, chainId }             // Polygon trading
   },
-  canPerform: { arc: boolean, aptos: boolean, evm: boolean },
-  canPublish: boolean  // Arc or Aptos
+  canPerform: (chainId, action) => boolean,
+  canPublish: boolean  // Arc connected + correct network
 }
 ```
 
 ## On-Chain Signal Structure
 
-### Move Struct (Signal Registry)
-```move
-struct Signal {
-    event_id: String,           // Market/event identifier
-    domain_hash: String,        // Hash of domain-specific data
-    ai_digest: String,          // Human-readable AI reasoning (max 512 bytes)
-    confidence: String,         // HIGH/MEDIUM/LOW
-    venue: String,              // Event location (max 128 bytes)
-    timestamp: u64,             // Unix timestamp
-    analyst: address,           // Publisher wallet
-    total_tips: u64             // Accumulated tips in octas
-}
+### Signal Fields (PredictionReceipt on Arc)
+```
+event_id      — market/event identifier
+domain_hash   — hash of domain-specific data
+ai_digest     — human-readable AI reasoning (max 512 bytes)
+confidence    — HIGH/MEDIUM/LOW
+venue         — event location (max 128 bytes)
+timestamp     — unix timestamp
+analyst       — publisher wallet
 ```
 
 ### String Length Limits

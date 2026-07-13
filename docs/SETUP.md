@@ -1,5 +1,10 @@
 # Setup Guide
 
+> **Note (2026-07):** The Movement/Aptos stack described in parts of this
+> document has been **retired** — Arc (USDC) is the only settlement layer and
+> Polygon the trading venue layer. Aptos/Movement instructions below are
+> historical; see docs/ARCHITECTURE.md ("Movement/Aptos — RETIRED").
+
 ## Prerequisites
 - Node.js 20+
 - npm or yarn

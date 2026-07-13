@@ -40,7 +40,7 @@ fi
 
 # 3. Check for blockchain config files
 echo "Checking for blockchain config files..."
-BLOCKCHAIN_FILES=$(git diff --cached --name-only | grep -E '^\.aptos/|^\.movement/|movement-key\.txt|config\.yaml$' || true)
+BLOCKCHAIN_FILES=$(git diff --cached --name-only | grep -E 'config\.yaml$' || true)
 if [ ! -z "$BLOCKCHAIN_FILES" ]; then
     echo -e "${RED}❌ Cannot commit blockchain config files!${NC}"
     echo "The following files should not be committed:"

@@ -47,15 +47,16 @@ export const CHAINS = {
     capabilities: ['Place market orders', 'Participate in trading'],
     disabled: ['Publish signals', 'Receive tips']
   },
+  // APTOS/MOVEMENT are display-only legacy constants: the chain stacks were
+  // retired, but historical signals rows carry chain_origin = 'APTOS'/'MOVEMENT'
+  // and their badges must still render. Do not wire new functionality to these.
   APTOS: {
     id: 'aptos',
     name: 'Aptos',
-    display: 'Signals (Aptos)',
+    display: 'Signals (Aptos · legacy)',
     icon: '📡',
     color: 'purple',
-    purpose: 'Publish signals',
-    capabilities: ['Publish signals', 'Build track record'],
-    disabled: ['Receive tips']
+    legacy: true
   },
   MOVEMENT: {
     id: 'movement',
@@ -63,10 +64,7 @@ export const CHAINS = {
     display: 'Signals (Movement · legacy)',
     icon: '💎',
     color: 'amber',
-    purpose: 'Legacy testnet signals & APT tips',
-    capabilities: ['Publish signals', 'Build track record', 'Receive tips'],
-    disabled: [],
-    moduleAddress: '0x25789991c3c0238539509fee5ff4e3789cfcd84763e3d1c3d625947b04c1fb8c'
+    legacy: true
   },
   ARC: {
     id: 'arc',
@@ -124,64 +122,3 @@ export const EVM_NETWORKS = {
   }
 };
 
-// Aptos Networks
-export const APTOS_NETWORKS = {
-  MAINNET: {
-    id: 'aptos-mainnet',
-    name: 'Aptos Mainnet',
-    display: 'Aptos Mainnet',
-    rpcUrl: 'https://fullnode.mainnet.aptoslabs.com/v1',
-    isDefault: true
-  },
-  TESTNET: {
-    id: 'aptos-testnet',
-    name: 'Aptos Testnet',
-    display: 'Aptos Testnet',
-    rpcUrl: 'https://fullnode.testnet.aptoslabs.com/v1',
-    isDefault: false
-  }
-};
-
-// Movement Networks
-export const MOVEMENT_NETWORKS = {
-  MAINNET: {
-    id: 'movement-mainnet',
-    name: 'Movement Mainnet',
-    display: 'Movement Mainnet',
-    rpcUrl: 'https://mainnet.movement.network/v1',
-    chainId: 250, // Movement Bardock testnet (update when mainnet launches)
-    isDefault: true
-  },
-  TESTNET: {
-    id: 'movement-testnet',
-    name: 'Movement Testnet',
-    display: 'Movement Testnet (Bardock)',
-    rpcUrl: 'https://testnet.movementnetwork.xyz/v1',
-    chainId: 250,
-    isDefault: false
-  }
-};
-
-// Network Switching Configs (for wallet adapter changeNetwork calls)
-export const NETWORK_SWITCH_CONFIGS = {
-  'aptos-mainnet': {
-    name: 'mainnet',
-    chainId: 1,
-    url: 'https://fullnode.mainnet.aptoslabs.com/v1'
-  },
-  'aptos-testnet': {
-    name: 'testnet',
-    chainId: 2,
-    url: 'https://fullnode.testnet.aptoslabs.com/v1'
-  },
-  'movement-mainnet': {
-    name: 'custom',
-    chainId: 250,
-    url: 'https://mainnet.movement.network/v1'
-  },
-  'movement-testnet': {
-    name: 'custom',
-    chainId: 250,
-    url: 'https://testnet.movementnetwork.xyz/v1'
-  }
-};

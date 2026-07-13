@@ -2,22 +2,26 @@ import { calculateSignalQuality, getQualityColor, getQualityBgColor, getQualityL
 import { CHAINS } from '@/constants/appConstants';
 
 export function ChainNetworkBadge({ signal, isNight }) {
-    // Explicit chain origin detection (with fallback to tipping flag)
-    let chain = CHAINS.APTOS;
-
-    if (signal.chain_origin === 'MOVEMENT' || signal.has_tipping_enabled || signal.tipping_enabled) {
-        chain = CHAINS.MOVEMENT;
-    }
+    // Keyed off chain_origin. ARC is the live publish chain; APTOS/MOVEMENT
+    // are legacy display-only (historical rows still carry those origins).
+    const originMap = {
+        ARC: CHAINS.ARC,
+        APTOS: CHAINS.APTOS,
+        MOVEMENT: CHAINS.MOVEMENT,
+    };
+    const chain = originMap[signal.chain_origin] || CHAINS.ARC;
 
     const colorMap = {
         purple: isNight ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-purple-400/20 text-purple-800 border-purple-400/30',
-        amber: isNight ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-amber-400/20 text-amber-800 border-amber-400/30'
+        amber: isNight ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-amber-400/20 text-amber-800 border-amber-400/30',
+        indigo: isNight ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-indigo-400/20 text-indigo-800 border-indigo-400/30',
+        blue: isNight ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 'bg-blue-400/20 text-blue-800 border-blue-400/30'
     };
 
     return (
-        <span className={`px-3 py-1 rounded-full text-xs font-light border ${colorMap[chain.color]}`}>
+        <span className={`px-3 py-1 rounded-full text-xs font-light border ${colorMap[chain.color] || colorMap.indigo}`}>
             {chain.icon} {chain.name}
-            {chain.id === 'movement' && <span className="ml-1 text-amber-300">✨</span>}
+            {chain.legacy && <span className="ml-1 opacity-60">(legacy)</span>}
         </span>
     );
 }

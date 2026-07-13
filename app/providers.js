@@ -2,7 +2,6 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
-import { AptosProvider } from './providers/AptosProvider';
 import { ToastProvider } from '@/components/ToastProvider';
 import WalletLayer from './WalletLayer';
 
@@ -13,9 +12,7 @@ export function Providers({ children }) {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <WalletLayer>
-          <AptosProvider>
-            {children}
-          </AptosProvider>
+          {children}
         </WalletLayer>
       </ToastProvider>
     </QueryClientProvider>

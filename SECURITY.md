@@ -5,16 +5,14 @@
 ### What NOT to commit
 
 - `.env` — local environment variables (contains API keys, private keys)
-- `movement-key.txt` — Movement/Aptos private key
 - `*.key` — any private key files
-- `.movement/` — Movement CLI data directory
 
 All of the above are listed in `.gitignore` and verified as untracked via
 `git ls-files`. **Never** remove these entries from `.gitignore`.
 
 ### If secrets were exposed in the working tree
 
-If `.env` or `movement-key.txt` were ever shared, copied to an unsecured
+If `.env` was ever shared, copied to an unsecured
 location, or visible in a screen-share:
 
 1. **Rotate immediately** — generate new API keys (Bright Data, Venice AI,

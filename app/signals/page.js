@@ -15,13 +15,12 @@ import SignalCard from '@/app/components/signals/SignalCard';
 import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
 import MySignalsTab from '@/app/components/signals/MySignalsTab';
 import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
-import { ActiveChainIndicator } from '@/components/ActiveChainIndicator';
 import { ChainSelector } from '@/components/ChainSelector';
 import NarrativeSteps from '@/components/NarrativeSteps';
 import { BRAND } from '@/constants/brand';
 
 export default function SignalsPage() {
-    const { connected: aptosConnected, walletAddress, tipSignal } = useSignalPublisher();
+    const { connected, walletAddress } = useSignalPublisher();
     const { chains } = useChainConnections();
     const { addToast } = useGlobalToast();
 
@@ -232,7 +231,7 @@ export default function SignalsPage() {
                             items={[
                                 { id: 'feed', label: 'Signal Feed', icon: '📡' },
                                 { id: 'defi', label: 'DeFi Arbs', icon: '💱' },
-                                ...(aptosConnected ? [{ id: 'my-signals', label: 'My Track Record', icon: '🎯' }] : []),
+                                ...(connected ? [{ id: 'my-signals', label: 'My Track Record', icon: '🎯' }] : []),
                                 { id: 'leaderboard', label: 'Top Analysts', icon: '🏆' },
                             ]}
                             activeItem={activeTab}
@@ -244,18 +243,10 @@ export default function SignalsPage() {
 
                 {/* Main Content */}
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
-                    {/* Active Chain Indicators */}
-                    {(aptosConnected || chains?.evm?.connected) && (
-                        <div className="mb-6 space-y-3">
-                            {/* Signal Chain Indicator (Aptos/Movement) */}
-                            {aptosConnected && (
-                                <ActiveChainIndicator variant="full" isNight={isNight} />
-                            )}
-
-                            {/* EVM Network Selector (Trading chains) */}
-                            {chains?.evm?.connected && (
-                                <ChainSelector compact={true} isNight={isNight} />
-                            )}
+                    {/* EVM Network Selector (Trading chains) */}
+                    {chains?.evm?.connected && (
+                        <div className="mb-6">
+                            <ChainSelector compact={true} isNight={isNight} />
                         </div>
                     )}
 
@@ -376,24 +367,6 @@ export default function SignalsPage() {
                                                         textColor={textColor}
                                                         onProfileClick={handleProfileClick}
                                                         userStats={userStatsCache[signal.author_address] || null}
-                                                        onTip={async (amount) => {
-                                                            try {
-                                                                if (!aptosConnected) {
-                                                                    addToast("Please connect your wallet to tip!", "warning");
-                                                                    return;
-                                                                }
-                                                                const tx = await tipSignal(signal.author_address, signal.signal_id || index, amount);
-                                                                addToast("Tip sent successfully!", "success");
-                                                            } catch (e) {
-                                                                console.error(e);
-                                                                const msg = e.message || "Failed to send tip";
-                                                                if (msg.includes("cannot tip your own signal") || msg.includes("E_CANNOT_TIP_SELF")) {
-                                                                    addToast("You cannot tip your own signal 🚫", "info");
-                                                                } else {
-                                                                    addToast(msg, "error");
-                                                                }
-                                                            }
-                                                        }}
                                                         onExpand={() => {
                                                             if (!userStatsCache[signal.author_address]) {
                                                                 getUserStats(signal.author_address);

@@ -121,8 +121,6 @@ cd fourcast
 npm install
 ```
 
-> **Dependency note:** `got` and `@telegram-apps/bridge` look unused in first-party code but are **peer dependencies** of the Aptos stack (`@aptos-labs/aptos-client`, `@aptos-connect/web-transport`). Because this repo pins `legacy-peer-deps=true` (see `.npmrc`), npm will not auto-install them — removing them from `package.json` breaks `npm run build`. Do not "clean them up."
-
 Tests are hermetic: `npm test` scrubs `TURSO_*` credentials and runs against a throwaway temp SQLite file (see `tests/setup.js`), so the suite can never touch the remote database or your local `fourcast.db`.
 
 ### 2. Configure Bright Data

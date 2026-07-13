@@ -499,6 +499,23 @@ export async function getLatestSignals(limit = 20) {
 }
 
 /**
+ * Count signals published by an author (case-insensitive address match)
+ */
+export async function getSignalCountByAuthor(authorAddress) {
+  const addr = authorAddress?.toLowerCase();
+  if (!addr) return { success: true, count: 0 };
+  try {
+    const rows = await query(
+      `SELECT COUNT(*) as count FROM signals WHERE LOWER(author_address) = ?`,
+      [addr]
+    );
+    return { success: true, count: rows[0]?.count || 0 };
+  } catch (error) {
+    return { success: false, error: error.message, count: 0 };
+  }
+}
+
+/**
  * Get signals by event
  */
 export async function getSignalsByEvent(eventId, limit = 50) {

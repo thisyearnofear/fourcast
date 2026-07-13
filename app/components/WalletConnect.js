@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useAccount, useDisconnect } from 'wagmi';
 import { ConnectKitButton } from 'connectkit';
 import { CHAINS } from '@/constants/appConstants';
@@ -10,13 +9,11 @@ import { useChainConnections } from '@/hooks/useChainConnections';
 
 /**
  * Unified Wallet Connect Component
- * Single source of truth for multi-chain wallet connections
- * 
- * DESIGN PRINCIPLES:
- * - One button for all chains
- * - Clear visual distinction between connected chains
- * - Dropdown shows all connection options
- * - No duplicate button labels
+ * Single source of truth for wallet connections
+ *
+ * One EVM wallet covers both surfaces:
+ * - Arc: USDC settlement (signals, subscriptions)
+ * - Polygon: Polymarket/Kalshi order placement
  */
 export default function WalletConnect({ isNight = false }) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -25,11 +22,8 @@ export default function WalletConnect({ isNight = false }) {
   const { chains, switchToArc, switchToEvmNetwork } = useChainConnections();
 
   // EVM (Trading)
-  const { address: evmAddress, isConnected: evmConnected } = useAccount();
+  const { address: evmAddress } = useAccount();
   const { disconnect: disconnectEvm } = useDisconnect();
-
-  // Aptos/Movement (Signals) - raw wallet adapter for connection actions
-  const { connected: aptosWalletConnected, account: aptosAccount, wallets, connect, disconnect } = useWallet();
 
   // Styling - Glass CSS classes (DRY)
   const glassBtn = isNight ? 'glass-subtle' : 'glass-subtle-light';
@@ -37,10 +31,8 @@ export default function WalletConnect({ isNight = false }) {
   const dropdownGlass = isNight ? 'glass-heavy bg-slate-900/95' : 'glass-heavy-light bg-white/95';
 
   // Check if any wallet is connected using unified state
-  const isAnyConnected =
-    chains?.evm?.connected || chains?.arc?.connected || chains?.aptos?.connected || chains?.movement?.connected;
+  const isAnyConnected = chains?.evm?.connected || chains?.arc?.connected;
 
-  // Format address display
   // Format address display
   const formatAddress = (address) => {
     if (!address) return '';
@@ -52,8 +44,6 @@ export default function WalletConnect({ isNight = false }) {
       return '';
     }
   };
-
-  const evmDisplay = evmAddress ? formatAddress(evmAddress) : null;
 
   // Safety check - don't render if chains not initialized
   if (!chains) {
@@ -91,12 +81,7 @@ export default function WalletConnect({ isNight = false }) {
           <span className={`text-sm ${textColor}`}>{address}</span>
           <button
             onClick={() => {
-              if (chain.id === 'evm') {
-                disconnectEvm();
-              } else {
-                // For Aptos/Movement, use the raw wallet adapter disconnect
-                disconnect();
-              }
+              disconnectEvm();
               setShowDropdown(false);
             }}
             className={`text-xs px-2 py-1 rounded-lg transition-all ${isNight ? 'hover:bg-white/10' : 'hover:bg-black/10'} ${textColor} opacity-60 hover:opacity-100`}
@@ -105,7 +90,7 @@ export default function WalletConnect({ isNight = false }) {
           </button>
         </div>
         <div className="space-y-1 text-xs opacity-60">
-          {chain.capabilities.map(cap => (
+          {(chain.capabilities || []).map(cap => (
             <div key={cap} className="flex items-center gap-2">
               <span className="text-green-400">✓</span> {cap}
             </div>
@@ -134,16 +119,6 @@ export default function WalletConnect({ isNight = false }) {
                   {CHAINS.EVM.icon} {formatAddress(chains.evm.address)}
                 </span>
               )}
-              {chains?.aptos?.connected && (
-                <span className={`px-2 py-0.5 rounded-full text-xs border ${getChainColorClasses(CHAINS.APTOS)}`}>
-                  {CHAINS.APTOS.icon} {formatAddress(chains.aptos.address)}
-                </span>
-              )}
-              {chains?.movement?.connected && (
-                <span className={`px-2 py-0.5 rounded-full text-xs border ${getChainColorClasses(CHAINS.MOVEMENT)}`}>
-                  {CHAINS.MOVEMENT.icon} {formatAddress(chains.movement.address)}
-                </span>
-              )}
             </div>
           </div>
         ) : (
@@ -158,8 +133,8 @@ export default function WalletConnect({ isNight = false }) {
           <div className={`text-xs font-medium ${isNight ? 'text-white/60' : 'text-black/60'} uppercase tracking-wide mb-2`}>
             Wallet Networks
           </div>
-          
-          {/* Helper Text - Explains why different chains */}
+
+          {/* Helper Text - Explains why different networks */}
           {!isAnyConnected && (
             <p className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'} mb-4 leading-relaxed`}>
               {BRAND.walletExplainer.headline}{' '}
@@ -192,13 +167,11 @@ export default function WalletConnect({ isNight = false }) {
           <div className="mb-4">
             {renderChainSection(CHAINS.ARC, chains?.arc)}
             {chains?.evm?.connected && !chains?.arc?.connected && renderChainSection(CHAINS.EVM, chains.evm)}
-            {renderChainSection(CHAINS.APTOS, chains?.aptos)}
-            {renderChainSection(CHAINS.MOVEMENT, chains?.movement)}
           </div>
 
           {/* EVM Connect Section */}
           {!chains?.evm?.connected && (
-            <div className="mb-4 pb-4 border-b border-white/10">
+            <div className="mb-4">
               <div className={`text-xs font-medium ${textColor} mb-1 flex items-center gap-2`}>
                 <span>{CHAINS.EVM.icon}</span>
                 {CHAINS.EVM.display}
@@ -207,77 +180,17 @@ export default function WalletConnect({ isNight = false }) {
                 Connect EVM wallet, then switch to Arc or Polygon via network picker
               </p>
               <ConnectKitButton mode={isNight ? "dark" : "light"} />
-              {chains?.evm?.connected && !chains?.arc?.connected && (
-                <button
-                  type="button"
-                  onClick={() => switchToEvmNetwork('polygon')}
-                  className={`mt-2 w-full text-[10px] underline ${isNight ? 'text-white/40' : 'text-black/40'}`}
-                >
-                  Use Polygon for trading instead
-                </button>
-              )}
             </div>
           )}
 
-          {/* Aptos/Movement Connect Section */}
-          {!aptosWalletConnected && (
-            <div className="mb-4">
-              <div className={`text-xs font-medium ${textColor} mb-1`}>
-                Legacy signal networks (optional)
-              </div>
-              <p className={`text-[10px] ${isNight ? 'text-white/40' : 'text-black/40'} mb-3`}>
-                {BRAND.publish.footnote}
-              </p>
-
-              {/* Side-by-side chain info */}
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className={`p-2 rounded-lg border ${isNight ? 'border-purple-500/20 bg-purple-500/5' : 'border-purple-400/20 bg-purple-400/5'}`}>
-                  <div className="flex items-center gap-1 mb-1">
-                    <span className="text-sm">{CHAINS.APTOS.icon}</span>
-                    <span className={`text-xs font-medium ${textColor}`}>{CHAINS.APTOS.name}</span>
-                  </div>
-                  <div className={`text-xs ${isNight ? 'text-white/50' : 'text-black/50'} space-y-0.5`}>
-                    {CHAINS.APTOS.capabilities.map((cap, idx) => (
-                      <div key={idx}>✓ {cap}</div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={`p-2 rounded-lg border ${isNight ? 'border-amber-500/20 bg-amber-500/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
-                  <div className="flex items-center gap-1 mb-1">
-                    <span className="text-sm">{CHAINS.MOVEMENT.icon}</span>
-                    <span className={`text-xs font-medium ${textColor}`}>{CHAINS.MOVEMENT.name}</span>
-                  </div>
-                  <div className={`text-xs ${isNight ? 'text-white/50' : 'text-black/50'} space-y-0.5`}>
-                    {CHAINS.MOVEMENT.capabilities.map((cap, idx) => (
-                      <div key={idx}>✓ {cap}</div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                {wallets.map((wallet) => (
-                  <button
-                    key={wallet.name}
-                    onClick={async () => {
-                      try {
-                        await connect(wallet.name);
-                        setShowDropdown(false);
-                      } catch (e) {
-                        console.error('Wallet connection failed:', e);
-                      }
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm ${textColor} transition-all ${isNight ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
-                  >
-                    {wallet.name}
-                  </button>
-                ))}
-              </div>
-              <div className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'} mt-2`}>
-                Network detected automatically from environment config
-              </div>
-            </div>
+          {chains?.evm?.connected && !chains?.arc?.connected && (
+            <button
+              type="button"
+              onClick={() => switchToEvmNetwork('polygon')}
+              className={`mb-4 w-full text-[10px] underline ${isNight ? 'text-white/40' : 'text-black/40'}`}
+            >
+              Use Polygon for trading instead
+            </button>
           )}
 
           {/* Footer Info - Chain Purposes */}
@@ -290,17 +203,6 @@ export default function WalletConnect({ isNight = false }) {
               <p className="flex items-center gap-1.5 mt-1">
                 <span>{CHAINS.EVM.icon}</span>
                 <span>{CHAINS.EVM.purpose}</span>
-              </p>
-            </div>
-            <div className={`text-xs ${isNight ? 'text-white/40' : 'text-black/40'}`}>
-              <p className="mb-1 font-medium">Legacy signal networks:</p>
-              <p className="flex items-center gap-1.5 ml-2">
-                <span>{CHAINS.APTOS.icon}</span>
-                <span>{CHAINS.APTOS.purpose}</span>
-              </p>
-              <p className="flex items-center gap-1.5 ml-2">
-                <span>{CHAINS.MOVEMENT.icon}</span>
-                <span>{CHAINS.MOVEMENT.purpose}</span>
               </p>
             </div>
           </div>

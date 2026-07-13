@@ -2,86 +2,39 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { CHAINS, EVM_NETWORKS, APTOS_NETWORKS, MOVEMENT_NETWORKS, NETWORK_SWITCH_CONFIGS } from '@/constants/appConstants';
+import { CHAINS, EVM_NETWORKS } from '@/constants/appConstants';
 import { ARC_CHAIN_ID } from '@/constants/evmContracts';
 
 /**
  * Unified Chain Connection State Management
- * 
- * Single source of truth for all wallet connections across EVM, Aptos, and Movement.
- * Consolidates wagmi (EVM) and Aptos wallet adapter into one coherent interface.
- * 
- * Product Design:
- * - Movement is explicitly separate from Aptos (not just a flag on Aptos connection)
- * - Each chain has own connection state, address, and capabilities
- * - canPerform(chainId, action) provides semantic clarity vs raw booleans
- * - Safe to check capabilities without touching component props
- * 
+ *
+ * Single source of truth for wallet connections. One EVM wallet (wagmi)
+ * covers both surfaces:
+ * - Polygon: Polymarket/Kalshi order placement ('evm')
+ * - Arc: USDC settlement — signal publishing, subscriptions ('arc')
+ *
  * Usage:
  *   const { chains, canPerform } = useChainConnections();
- *   
- *   if (chains.movement.connected) { ... }
- *   if (canPerform('movement', 'publish_and_monetize')) { ... }
- *   chains.evm.address // Polygon address
+ *   if (chains.arc.connected) { ... }
+ *   if (canPerform('arc', 'publish')) { ... }
  */
 export function useChainConnections() {
   // EVM connections via wagmi (Polygon mainnet for USDC trading)
   const { address: evmAddress, isConnected: evmConnected, chain: currentEvmChain } = useAccount();
   const { switchChain: evmSwitchChain, isPending: isEvmSwitching } = useSwitchChain();
 
-  // Aptos/Movement connections via wallet adapter
-  const {
-    account: aptosAccount,
-    connected: aptosWalletConnected,
-    wallet: connectedWallet,
-    network: aptosNetwork,
-    changeNetwork: aptosChangeNetwork,  // ✅ Get network switching function
-  } = useWallet();
-
-  // Track preferred networks (user's explicit choice)
+  // Track preferred network (user's explicit choice)
   const [preferredEvmNetwork, setPreferredEvmNetwork] = useState('polygon');
-  const [preferredAptosNetwork, setPreferredAptosNetwork] = useState('aptos-mainnet');
-  const [preferredMovementNetwork, setPreferredMovementNetwork] = useState('movement-mainnet');
-  const [preferredArcNetwork, setPreferredArcNetwork] = useState('arc');
-
-  /**
-   * Determine if connected wallet is Movement or standard Aptos
-   * NOW BASED ON ACTUAL CONNECTED NETWORK (not environment variables)
-   */
-  const isMovementWallet = useMemo(() => {
-    if (!aptosWalletConnected || !aptosNetwork) return false;
-    
-    // Check ACTUAL connected network from wallet
-    const chainId = aptosNetwork?.chainId;
-    const networkUrl = aptosNetwork?.url || '';
-    
-    // Movement Bardock has chainId 250
-    // Also check URL as fallback for custom networks
-    return chainId === 250 || networkUrl.includes('movement');
-  }, [aptosWalletConnected, aptosNetwork]);
 
   /**
    * Get current EVM network details
    */
   const currentEvmNetwork = useMemo(() => {
     if (!currentEvmChain) return EVM_NETWORKS.POLYGON; // Default
-    
+
     const networkId = currentEvmChain.id;
     return Object.values(EVM_NETWORKS).find(n => n.chainId === networkId) || EVM_NETWORKS.POLYGON;
   }, [currentEvmChain]);
-
-  /**
-   * Get current Aptos/Movement network
-   */
-  const currentAptosNetwork = useMemo(() => {
-    if (!aptosNetwork) return APTOS_NETWORKS.MAINNET;
-    
-    // Aptos network comes as an object with name/chainId
-    const networkName = aptosNetwork.name?.toLowerCase() || '';
-    if (networkName.includes('testnet')) return APTOS_NETWORKS.TESTNET;
-    return APTOS_NETWORKS.MAINNET;
-  }, [aptosNetwork]);
 
   /**
    * Unified chain connection state with network tracking
@@ -101,44 +54,26 @@ export function useChainConnections() {
       },
       arc: {
         id: 'arc',
-        connected: evmConnected && currentEvmChain?.id === 5042002,
+        connected: evmConnected && currentEvmChain?.id === ARC_CHAIN_ID,
         address: evmAddress || null,
         chainName: 'Arc',
         currentNetwork: currentEvmNetwork?.id === 'arc' ? currentEvmNetwork : EVM_NETWORKS.ARC,
         availableNetworks: [EVM_NETWORKS.ARC],
-        isCorrectNetwork: currentEvmChain?.id === 5042002,
+        isCorrectNetwork: currentEvmChain?.id === ARC_CHAIN_ID,
         isSwitching: isEvmSwitching,
       },
-      aptos: {
-        id: 'aptos',
-        connected: aptosWalletConnected && !isMovementWallet,
-        address: aptosAccount?.address || null,
-        chainName: 'Aptos',
-        currentNetwork: currentAptosNetwork,
-        availableNetworks: Object.values(APTOS_NETWORKS),
-        isCorrectNetwork: true, // Aptos doesn't need chain validation like EVM
-      },
-      movement: {
-        id: 'movement',
-        connected: aptosWalletConnected && isMovementWallet,
-        address: aptosAccount?.address || null,
-        chainName: 'Movement',
-        currentNetwork: { id: 'movement-mainnet', name: 'Movement Mainnet', display: 'Movement Mainnet' },
-        availableNetworks: Object.values(MOVEMENT_NETWORKS),
-        isCorrectNetwork: true,
-      },
     }),
-    [evmConnected, evmAddress, aptosWalletConnected, isMovementWallet, aptosAccount?.address, currentEvmNetwork, currentAptosNetwork, isEvmSwitching, currentEvmChain]
+    [evmConnected, evmAddress, currentEvmNetwork, isEvmSwitching, currentEvmChain]
   );
 
   /**
    * Check if user can perform an action on a specific chain
    * Centralizes all capability logic
-   * 
+   *
    * Actions:
-   * - 'trade': Place market orders (EVM only)
-   * - 'publish': Publish signals (Aptos + Movement + Arc)
-   * - 'publish_and_monetize': Publish + receive tips (Movement + Arc)
+   * - 'trade': Place market orders (EVM)
+   * - 'publish': Publish signals (Arc)
+   * - 'publish_and_monetize': Publish + receive tips (Arc)
    * - 'settle': Arc-native USDC settlement
    */
   const canPerform = useCallback((chainId, action) => {
@@ -150,13 +85,9 @@ export function useChainConnections() {
         case 'trade':
           return chainId === 'evm' || chainId === 'arc';
         case 'publish':
-          if (chainId === 'arc') return chain.isCorrectNetwork;
-          return chainId === 'aptos' || chainId === 'movement';
         case 'publish_and_monetize':
-          if (chainId === 'arc') return chain.isCorrectNetwork;
-          return chainId === 'movement';
         case 'settle':
-          return chainId === 'arc';
+          return chainId === 'arc' && chain.isCorrectNetwork;
         default:
           return false;
       }
@@ -175,14 +106,13 @@ export function useChainConnections() {
   );
 
   /**
-   * Check if ANY signal-publishing chain is connected (Aptos or Movement)
-   * Useful for "can you publish at all?" checks
+   * Check if the signal-publishing chain (Arc) is connected.
    * Always returns a boolean, never undefined
    */
   const canPublish = useMemo(
     () => {
       try {
-        return canPerform('aptos', 'publish') || canPerform('movement', 'publish') || canPerform('arc', 'publish');
+        return canPerform('arc', 'publish');
       } catch (error) {
         console.warn('Error calculating canPublish:', error);
         return false;
@@ -191,12 +121,9 @@ export function useChainConnections() {
     [canPerform]
   );
 
-  /** Preferred publish target: Arc first, then legacy Move chains */
+  /** Publish target: Arc or nothing */
   const resolvePublishChain = useCallback(() => {
-    if (canPerform('arc', 'publish')) return 'arc';
-    if (canPerform('movement', 'publish')) return 'movement';
-    if (canPerform('aptos', 'publish')) return 'aptos';
-    return null;
+    return canPerform('arc', 'publish') ? 'arc' : null;
   }, [canPerform]);
 
   /**
@@ -207,7 +134,7 @@ export function useChainConnections() {
     try {
       const network = Object.values(EVM_NETWORKS).find(n => n.id === networkId);
       if (!network || !evmSwitchChain) return false;
-      
+
       evmSwitchChain({ chainId: network.chainId });
       setPreferredEvmNetwork(networkId);
       return true;
@@ -220,64 +147,12 @@ export function useChainConnections() {
   const switchToArc = useCallback(() => switchToEvmNetwork('arc'), [switchToEvmNetwork]);
 
   /**
-   * Switch to Aptos network (mainnet or testnet)
-   * Uses wallet adapter's built-in changeNetwork function
-   */
-  const switchToAptosNetwork = useCallback(async (networkId = 'aptos-mainnet') => {
-    if (!aptosWalletConnected || !aptosChangeNetwork) {
-      console.warn('Aptos wallet not connected or changeNetwork not available');
-      return false;
-    }
-
-    try {
-      const config = NETWORK_SWITCH_CONFIGS[networkId];
-      if (!config) {
-        console.error('Unknown network:', networkId);
-        return false;
-      }
-
-      await aptosChangeNetwork(config);
-      setPreferredAptosNetwork(networkId);
-      return true;
-    } catch (error) {
-      console.error('Failed to switch Aptos network:', error);
-      return false;
-    }
-  }, [aptosWalletConnected, aptosChangeNetwork]);
-
-  /**
-   * Switch to Movement network (mainnet or testnet)
-   * Uses wallet adapter's built-in changeNetwork function
-   */
-  const switchToMovementNetwork = useCallback(async (networkId = 'movement-testnet') => {
-    if (!aptosWalletConnected || !aptosChangeNetwork) {
-      console.warn('Aptos wallet not connected or changeNetwork not available');
-      return false;
-    }
-
-    try {
-      const config = NETWORK_SWITCH_CONFIGS[networkId];
-      if (!config) {
-        console.error('Unknown network:', networkId);
-        return false;
-      }
-
-      await aptosChangeNetwork(config);
-      setPreferredMovementNetwork(networkId);
-      return true;
-    } catch (error) {
-      console.error('Failed to switch Movement network:', error);
-      return false;
-    }
-  }, [aptosWalletConnected, aptosChangeNetwork]);
-
-  /**
    * Get guidance for chain action (what's needed, what to do)
    * Returns { canAct, needsSwitch, targetChain, guidance }
    */
   const getActionGuidance = useCallback((chainId, action) => {
     const chain = chains[chainId];
-    
+
     if (!chain?.connected) {
       return {
         canAct: false,
@@ -322,17 +197,14 @@ export function useChainConnections() {
     connectedChains,
     canPublish,
     resolvePublishChain,
-    
+
     // Network switching
     switchToEvmNetwork,
     switchToArc,
-    switchToAptosNetwork,
-    switchToMovementNetwork,
     getActionGuidance,
     arcChainId: ARC_CHAIN_ID,
 
     // Legacy compat
     isConnected: evmConnected,
-    aptosConnected: aptosWalletConnected,
   };
 }

@@ -16,12 +16,10 @@ export function isValidEmail(email) {
  * @returns {boolean} True if valid wallet address
  */
 export function isValidWalletAddress(address) {
-  // Basic Ethereum address validation
+  // Ethereum/EVM address validation (Arc + Polygon)
   const ethRegex = /^0x[a-fA-F0-9]{40}$/;
-  // Basic Aptos address validation
-  const aptosRegex = /^0x[a-fA-F0-9]{1,64}$/;
-  
-  return ethRegex.test(address) || aptosRegex.test(address);
+
+  return ethRegex.test(address);
 }
 
 /**

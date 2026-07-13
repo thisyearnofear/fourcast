@@ -96,10 +96,9 @@ export default function MarketsPage() {
   const {
     publishSignal,
     publishChain,
-    getMySignalCount,
     isPublishing,
     publishError,
-    connected: aptosConnected,
+    connected: publisherConnected,
     walletAddress,
   } = useSignalPublisher();
   const { addToast, removeToast } = useGlobalToast();
@@ -219,14 +218,15 @@ export default function MarketsPage() {
   ]);
 
   useEffect(() => {
-    if (canPublish) {
-      getMySignalCount()
-        .then(setMySignalCount)
+    if (canPublish && walletAddress) {
+      fetch(`/api/signals?author=${encodeURIComponent(walletAddress)}&countOnly=1`)
+        .then((r) => r.json())
+        .then((d) => setMySignalCount(d.count ?? null))
         .catch(() => { });
     } else {
       setMySignalCount(null);
     }
-  }, [canPublish, getMySignalCount]);
+  }, [canPublish, walletAddress]);
 
   const fetchMarkets = async () => {
     setIsLoadingMarkets(true);
@@ -507,12 +507,9 @@ export default function MarketsPage() {
     }
 
     try {
-      // 1. Save to SQLite first (fast feedback)
-      const targetChain = publishChain || (chains.movement.connected ? 'movement' : 'aptos');
-      const rawAddress =
-        targetChain === 'arc'
-          ? chains.arc?.address || chains.evm?.address
-          : chains[targetChain]?.address;
+      // 1. Save to SQLite first (fast feedback). Arc is the only publish chain.
+      const targetChain = publishChain || 'arc';
+      const rawAddress = chains.arc?.address || chains.evm?.address;
       const authorAddress = typeof rawAddress === 'string' ? rawAddress : String(rawAddress || '');
 
       const response = await fetch("/api/signals", {
@@ -563,13 +560,6 @@ export default function MarketsPage() {
             chain_origin: settledChain?.toUpperCase(),
           }),
         });
-        if (settledChain !== 'arc') {
-          try {
-            const c = await getMySignalCount();
-            setMySignalCount(c);
-          } catch { /* ignore */ }
-        }
-
         const explorer =
           settledChain === 'arc'
             ? `https://arc-explorer.thecanteenapp.com/tx/${txHash}`
@@ -595,7 +585,7 @@ export default function MarketsPage() {
       console.error("Failed to publish signal:", err);
       addToast("Failed to record prediction", "error", 5000);
     }
-  }, [selectedMarket, analysis, canPublish, chains, weatherData, addToast, publishSignal, publishChain, publishError, getMySignalCount]);
+  }, [selectedMarket, analysis, canPublish, chains, weatherData, addToast, publishSignal, publishChain, publishError]);
 
   const textColor = isNight ? "text-white" : "text-black";
   const cardBgColor = isNight

@@ -2,8 +2,8 @@
  * EdgeAnalyzer - Generic Analysis Pattern
  * 
  * Abstract base class and standard implementation for domain-specific analysis.
- * This pattern ensures all domains (Weather, Sentiment, Mobility, On-chain)
- * produce consistent, verifiable signals for the Movement network.
+ * This pattern ensures all domains (Weather, Sentiment, Mobility)
+ * produce consistent, verifiable signals.
  */
 
 export class EdgeAnalyzer {

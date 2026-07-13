@@ -1,4 +1,4 @@
-import { saveSignal, getLatestSignals, updateSignalTxHash } from '@/services/db.js'
+import { saveSignal, getLatestSignals, updateSignalTxHash, getSignalCountByAuthor } from '@/services/db.js'
 import { notifyFollowers } from '@/services/notificationService.js'
 import { createHash } from 'crypto'
 
@@ -87,6 +87,11 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
+    const author = searchParams.get('author')
+    if (author && searchParams.get('countOnly')) {
+      const countRes = await getSignalCountByAuthor(author)
+      return Response.json({ success: countRes.success, count: countRes.count })
+    }
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const res = await getLatestSignals(limit)
     if (!res.success) {
