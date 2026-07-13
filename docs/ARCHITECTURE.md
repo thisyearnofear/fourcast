@@ -278,7 +278,7 @@ The agent scans markets, filters candidates, generates forecasts, detects arbitr
 
 ### Autopilot Scheduler & Safety Rails
 
-Vercel Cron fires `/api/cron/autopilot` hourly (`vercel.json`). Each tick passes through a gauntlet of gates before any trade:
+Vercel Cron fires `/api/cron/autopilot` once daily at 12:00 UTC (`vercel.json` — Vercel Hobby allows only daily crons; raise the frequency after upgrading to Pro). Each tick passes through a gauntlet of gates before any trade:
 
 1. **Auth**: `Authorization: Bearer $CRON_SECRET` required; unset secret = always 401 (fails closed).
 2. **Enabled flag**: persisted in the `autopilot_schedule` table (single row, admin-gated writes via `/api/agent/schedule` + `ADMIN_SECRET`). This is the kill switch.

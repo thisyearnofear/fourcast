@@ -543,7 +543,7 @@ export function AutopilotDashboard({ isNight = false }) {
               </button>
             </div>
             <p className={`text-[10px] ${subtleText}`}>
-              Vercel Cron fires hourly; interval is the minimum gap between runs.
+              Vercel Cron fires once daily (Hobby plan limit); interval is the minimum gap between runs.
             </p>
           </div>
         </div>
