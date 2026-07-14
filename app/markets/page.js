@@ -1,24 +1,82 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useSignalPublisher } from "@/hooks/useSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
 import useFilterStore from "@/hooks/useFilterStore";
 import { useWeather } from "@/hooks/useWeather";
 import { useStaggeredAnimation } from "@/app/hooks/useStaggeredAnimation";
 import { useGlobalToast } from "@/components/ToastProvider";
-import PublishConfirmModal from "@/components/PublishConfirmModal";
-import { OrderSigningPanel } from "@/components/OrderSigningPanel";
-import KalshiOrderPanel from "@/components/KalshiOrderPanel";
-import { MarketEdgeScanner } from "@/components/MarketEdgeScanner";
 import { BRAND } from "@/constants/brand";
-import { ArbitrageExecutionPanel } from "@/components/ArbitrageExecutionPanel";
 import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
-import AnalysisConfigModal from "@/components/AnalysisConfigModal";
-import PricingOverlay from "@/components/PricingOverlay";
 import FirstRunBanner from "@/components/FirstRunBanner";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
-import { SportsTabContent, DiscoveryTabContent } from "./components";
+
+function PanelSkeleton({ className = "h-28" }) {
+  return (
+    <div
+      className={`animate-pulse rounded-2xl border border-white/10 bg-white/[0.04] ${className}`}
+      aria-hidden
+    />
+  );
+}
+
+const MarketEdgeScanner = dynamic(
+  () =>
+    import("@/components/MarketEdgeScanner").then((m) => ({
+      default: m.MarketEdgeScanner,
+    })),
+  { loading: () => <PanelSkeleton className="h-36" />, ssr: false }
+);
+
+const SportsTabContent = dynamic(
+  () =>
+    import("./SportsTab").then((m) => ({ default: m.SportsTabContent })),
+  { loading: () => <PanelSkeleton className="h-64" /> }
+);
+
+const DiscoveryTabContent = dynamic(
+  () =>
+    import("./DiscoveryTab").then((m) => ({ default: m.DiscoveryTabContent })),
+  { loading: () => <PanelSkeleton className="h-64" /> }
+);
+
+const AnalysisConfigModal = dynamic(
+  () => import("@/components/AnalysisConfigModal"),
+  { ssr: false }
+);
+
+const PricingOverlay = dynamic(
+  () => import("@/components/PricingOverlay"),
+  { ssr: false }
+);
+
+const PublishConfirmModal = dynamic(
+  () => import("@/components/PublishConfirmModal"),
+  { ssr: false }
+);
+
+const OrderSigningPanel = dynamic(
+  () =>
+    import("@/components/OrderSigningPanel").then((m) => ({
+      default: m.OrderSigningPanel,
+    })),
+  { ssr: false }
+);
+
+const KalshiOrderPanel = dynamic(
+  () => import("@/components/KalshiOrderPanel"),
+  { ssr: false }
+);
+
+const ArbitrageExecutionPanel = dynamic(
+  () =>
+    import("@/components/ArbitrageExecutionPanel").then((m) => ({
+      default: m.ArbitrageExecutionPanel,
+    })),
+  { ssr: false }
+);
 
 export default function MarketsPage() {
   // Unified chain connection state - single source of truth
