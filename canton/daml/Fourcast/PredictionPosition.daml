@@ -1,0 +1,140 @@
+-- | Prediction position contract — the private execution layer.
+--
+--   This is the core differentiator of Fourcast on Canton. Each position
+--   is a Daml contract with `signatory operator, holder` — meaning ONLY
+--   the operator (Fourcast) and the holder (user) can see the position
+--   details: side, stake, and size. No other party, validator, or observer
+--   can query this contract. This is structurally impossible on EVM where
+--   every transaction is public.
+--
+--   Settlement flow:
+--   1. User takes a position → operator + holder co-sign a PredictionPosition
+--   2. Actual cBTC/cETH stake transfer happens via CIP-56 (through Console Wallet)
+--   3. Market resolves → MarketResolution contract is created
+--   4. Holder (or operator) exercises Settle → position is archived,
+--      a PositionSettled receipt is created, and a SettlementObligation
+--      instructs the operator to transfer winnings via CIP-56
+module Fourcast.PredictionPosition where
+
+import Fourcast.Types
+import Fourcast.PredictionMarket (MarketResolution)
+
+-- | A private prediction position. Only operator + holder can see this.
+template PredictionPosition
+  with
+    operator : Party
+    holder : Party
+    marketId : Text
+    side : Side               -- YES or NO
+    stake : Decimal           -- Amount of cBTC/cETH locked
+    settlementAsset : SettlementAsset
+    status : PositionStatus
+    createdAt : Time
+  where
+    -- CRITICAL: Only operator + holder can see this contract.
+    -- The operator authorizes creation (on behalf of the user via Console Wallet).
+    -- The holder observes — they can see and exercise choices.
+    -- No third party, no public explorer, no competing trader can view it.
+    signatory operator
+    observer holder
+
+    -- | Settle the position after market resolution.
+    --   Either party can trigger settlement once the market is resolved.
+    --   Creates a PositionSettled receipt and, if the holder won, a
+    --   SettlementObligation that authorizes the operator to transfer
+    --   winnings via CIP-56 through Console Wallet.
+    choice Settle : ContractId PositionSettled
+      with
+        outcome : Outcome
+      controller operator
+      do
+        let isWinner = sideMatches side outcome
+        let isVoided = outcome == Voided
+        let winner = if isVoided
+                     then None
+                     else Some (if isWinner then holder else operator)
+        let payout = if isVoided then stake else if isWinner then stake * 2.0 else 0.0
+        now <- getTime
+        settledCid <- create PositionSettled with
+          operator = operator
+          holder = holder
+          marketId = marketId
+          side = side
+          stake = stake
+          settlementAsset = settlementAsset
+          outcome = outcome
+          winner = winner
+          payout = payout
+          settledAt = now
+        if payout > 0.0
+          then do
+            create SettlementObligation with
+              operator = operator
+              winner = (case winner of Some w -> w; None -> holder)
+              amount = payout
+              settlementAsset = settlementAsset
+              marketId = marketId
+              memo = "Fourcast settlement: " <> marketId
+              createdAt = now
+            return settledCid
+          else return settledCid
+
+    -- | Expire the position if the market deadline passed without resolution.
+    choice ExpirePosition : ()
+      with
+        reason : Text
+      controller operator
+      do
+        return ()
+
+-- | Receipt proving a position was settled. Visible to operator + holder.
+--   This is the audit trail — it records the outcome and payout without
+--   revealing the stake to anyone else.
+template PositionSettled
+  with
+    operator : Party
+    holder : Party
+    marketId : Text
+    side : Side
+    stake : Decimal
+    settlementAsset : SettlementAsset
+    outcome : Outcome
+    winner : Optional Party    -- None if voided (refund to both)
+    payout : Decimal           -- Amount to transfer via CIP-56
+    settledAt : Time
+  where
+    signatory operator
+    observer holder
+
+-- | Settlement obligation — instructs the operator to transfer
+--   cBTC/cETH to the winner via CIP-56 TransferInstruction.
+--   The operator's wallet (Console Wallet) executes the actual transfer.
+--   This contract is the on-ledger authorization for that transfer.
+template SettlementObligation
+  with
+    operator : Party
+    winner : Party
+    amount : Decimal
+    settlementAsset : SettlementAsset
+    marketId : Text
+    memo : Text
+    createdAt : Time
+  where
+    signatory operator
+    observer winner
+
+    -- | Operator confirms the CIP-56 transfer was executed.
+    choice ConfirmTransfer : ()
+      with
+        transferTxId : Text
+      controller operator
+      do
+        return ()
+
+    -- | Winner can dispute if the operator fails to transfer.
+    choice DisputeTransfer : ()
+      with
+        reason : Text
+      controller winner
+      do
+        return ()

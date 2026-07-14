@@ -6,6 +6,7 @@ import { ConnectKitButton } from 'connectkit';
 import { CHAINS } from '@/constants/appConstants';
 import { BRAND } from '@/constants/brand';
 import { useChainConnections } from '@/hooks/useChainConnections';
+import { useCantonWalletContext } from '@/app/CantonWalletLayer';
 
 /**
  * Unified Wallet Connect Component
@@ -25,13 +26,16 @@ export default function WalletConnect({ isNight = false }) {
   const { address: evmAddress } = useAccount();
   const { disconnect: disconnectEvm } = useDisconnect();
 
+  // Canton (private settlement)
+  const canton = useCantonWalletContext();
+
   // Styling - Glass CSS classes (DRY)
   const glassBtn = 'glass-subtle';
   const textColor = 'text-white';
   const dropdownGlass = 'glass-heavy bg-slate-900/95';
 
   // Check if any wallet is connected using unified state
-  const isAnyConnected = chains?.evm?.connected || chains?.arc?.connected;
+  const isAnyConnected = chains?.evm?.connected || chains?.arc?.connected || canton?.connected;
 
   // Format address display
   const formatAddress = (address) => {
@@ -119,6 +123,11 @@ export default function WalletConnect({ isNight = false }) {
                   {CHAINS.EVM.icon} {formatAddress(chains.evm.address)}
                 </span>
               )}
+              {canton?.connected && (
+                <span className="px-2 py-0.5 rounded-full text-xs border bg-teal-500/30 text-teal-200 border-teal-500/50">
+                  ◈ Canton
+                </span>
+              )}
             </div>
           </div>
         ) : (
@@ -188,12 +197,74 @@ export default function WalletConnect({ isNight = false }) {
             </button>
           )}
 
+          {/* Canton (Private Settlement) Section */}
+          <div className="mb-4 pt-4 border-t border-white/10">
+            <div className={`text-xs font-medium ${textColor} mb-1 flex items-center gap-2`}>
+              <span>◈</span>
+              Canton (Private Settlement)
+            </div>
+            {canton?.connected ? (
+              <>
+                <p className={`text-[10px] text-teal-300/70 mb-2`}>
+                  ✓ Console Wallet connected — cBTC/cETH private positions active
+                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-sm ${textColor}`}>
+                    {canton.account?.partyName || formatAddress(canton.account?.partyId)}
+                  </span>
+                  <button
+                    onClick={() => { canton.disconnect(); setShowDropdown(false); }}
+                    className={`text-xs px-2 py-1 rounded-lg transition-all hover:bg-white/10 ${textColor} opacity-60 hover:opacity-100`}
+                  >
+                    Disconnect
+                  </button>
+                </div>
+                {canton.network && (
+                  <p className="text-[10px] text-white/40 mb-2">
+                    Network: {canton.network.name || canton.network.id || 'Canton'}
+                  </p>
+                )}
+                <button
+                  onClick={() => canton.refreshBalances()}
+                  className="text-[10px] underline text-teal-300/60 hover:text-teal-300"
+                >
+                  Refresh cBTC/cETH balances
+                </button>
+              </>
+            ) : (
+              <>
+                <p className={`text-[10px] text-white/40 mb-3`}>
+                  Private settlement with cBTC/cETH — position sizes hidden from all third parties via Daml smart contracts
+                </p>
+                <button
+                  type="button"
+                  onClick={() => canton.connect({ name: 'Fourcast' })}
+                  disabled={canton?.connecting || canton?.extensionAvailable === false}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-medium transition-all bg-teal-500/20 text-teal-200 border border-teal-400/30 hover:bg-teal-500/30 disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                  {canton?.connecting
+                    ? 'Connecting...'
+                    : canton?.extensionAvailable === false
+                      ? 'Install Console Wallet extension'
+                      : 'Connect Console Wallet'}
+                </button>
+                {canton?.error && (
+                  <p className="text-[10px] text-red-400/70 mt-2">{canton.error}</p>
+                )}
+              </>
+            )}
+          </div>
+
           {/* Footer Info - Chain Purposes */}
           <div className={`mt-4 pt-4 border-t border-white/10 space-y-1.5`}>
             <div className={`text-xs text-white/40`}>
               <p className="flex items-center gap-1.5">
                 <span>{CHAINS.ARC.icon}</span>
                 <span>{CHAINS.ARC.purpose}</span>
+              </p>
+              <p className="flex items-center gap-1.5 mt-1">
+                <span>◈</span>
+                <span>Canton — private cBTC/cETH settlement with hidden position sizes</span>
               </p>
               <p className="flex items-center gap-1.5 mt-1">
                 <span>{CHAINS.EVM.icon}</span>

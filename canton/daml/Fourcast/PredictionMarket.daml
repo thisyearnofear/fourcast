@@ -1,0 +1,97 @@
+-- | Prediction market contract — created by the Fourcast operator.
+--   This contract is visible to anyone who needs to discover and
+--   trade on the market. Individual positions are NOT visible here;
+--   they live in PredictionPosition contracts with restricted visibility.
+module Fourcast.PredictionMarket where
+
+import Fourcast.Types
+
+-- | A prediction market on Canton. Created by the operator (Fourcast).
+--   Signatory is the operator only — they authorize creation and resolution.
+--   Observers are anyone the operator shares the market with (all potential traders).
+template PredictionMarket
+  with
+    operator : Party
+    marketId : Text           -- External reference to the Fourcast app market
+    question : Text           -- The prediction question
+    settlementAsset : SettlementAsset  -- CBTC or CETH for payouts
+    createdAt : Time
+    deadline : Time           -- Market closes / resolves by this time
+  where
+    signatory operator
+    observer operator
+
+    -- | Operator resolves the market with an outcome.
+    --   This archives the market and creates a MarketResolution
+    --   that position holders can observe to settle their positions.
+    choice ResolveMarket : ContractId MarketResolution
+      with
+        outcome : Outcome
+      controller operator
+      do
+        now <- getTime
+        create MarketResolution with
+          operator = operator
+          marketId = marketId
+          outcome = outcome
+          resolvedAt = now
+
+    -- | Operator voids the market (refund scenario).
+    choice VoidMarket : ContractId MarketResolution
+      with
+        reason : Text
+      controller operator
+      do
+        now <- getTime
+        create MarketResolution with
+          operator = operator
+          marketId = marketId
+          outcome = Voided
+          resolvedAt = now
+
+-- | Proof of market resolution. Visible to all parties who hold positions
+--   on this market (they are added as observers when positions are settled).
+template MarketResolution
+  with
+    operator : Party
+    marketId : Text
+    outcome : Outcome
+    resolvedAt : Time
+  where
+    signatory operator
+    observer operator
+
+-- | Proposal for a new market — sent by a user to the operator.
+--   The operator can accept (creating a PredictionMarket) or reject.
+template MarketProposal
+  with
+    proposer : Party
+    operator : Party
+    question : Text
+    settlementAsset : SettlementAsset
+    deadline : Time
+    proposedAt : Time
+  where
+    signatory proposer, operator
+    observer proposer
+
+    choice AcceptProposal : ContractId PredictionMarket
+      with
+        marketId : Text
+      controller operator
+      do
+        now <- getTime
+        create PredictionMarket with
+          operator = operator
+          marketId = marketId
+          question = question
+          settlementAsset = settlementAsset
+          createdAt = now
+          deadline = deadline
+
+    choice RejectProposal : ()
+      with
+        reason : Text
+      controller operator
+      do
+        return ()

@@ -52,17 +52,19 @@ export const BRAND = {
 
   /** Wallet explainer — show everywhere users connect */
   walletExplainer: {
-    headline: 'Fourcast uses two layers:',
+    headline: 'Fourcast uses three layers:',
     layers: [
-      { icon: '◆', name: 'Arc', detail: 'USDC settlement — subscriptions, signals, tips (~$0.01/tx)' },
-      { icon: 'Ξ', name: 'EVM (Polygon)', detail: 'Polymarket & Kalshi order placement' },
+      { icon: '◆', name: 'Arc', detail: 'Public reputation — USDC settlement for signals, subscriptions, tips (~$0.01/tx)' },
+      { icon: '◈', name: 'Canton', detail: 'Private settlement — cBTC/cETH positions with hidden sizes via Daml smart contracts' },
+      { icon: 'Ξ', name: 'EVM (Polygon)', detail: 'Venue execution — Polymarket & Kalshi order placement' },
     ],
-    cta: 'Connect an EVM wallet — Arc settlement is handled automatically.',
+    cta: 'Connect an EVM wallet for Arc + venues. Connect Console Wallet for private Canton settlement.',
   },
 
   publish: {
     arcPreferred: { chain: 'Arc (USDC)', gas: '~$0.01 USDC' },
-    footnote: 'All settlement happens on Arc. EVM wallets are used for venue order placement.',
+    cantonPrivate: { chain: 'Canton (cBTC/cETH)', gas: 'sub-cent', privacy: 'Position sizes hidden from all third parties' },
+    footnote: 'Arc publishes public reputation receipts. Canton creates private positions with hidden sizes. EVM wallets handle venue order placement.',
   },
 
   agent: {

@@ -1,17 +1,30 @@
 'use client';
 
+import { useState } from 'react';
 import { BRAND } from '@/constants/brand';
+import { useCantonWalletContext } from '@/app/CantonWalletLayer';
 
 export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market, analysis, isNight, isPublishing }) {
-  // Arc is the only publish chain
-  const chainLabel = BRAND.publish.arcPreferred.chain;
-  const gasLabel = BRAND.publish.arcPreferred.gas;
+  const canton = useCantonWalletContext();
+  const [settlementLayer, setSettlementLayer] = useState('arc'); // 'arc' | 'canton'
+
   if (!isOpen) return null;
+
+  const chainLabel = settlementLayer === 'canton'
+    ? BRAND.publish.cantonPrivate.chain
+    : BRAND.publish.arcPreferred.chain;
+  const gasLabel = settlementLayer === 'canton'
+    ? BRAND.publish.cantonPrivate.gas
+    : BRAND.publish.arcPreferred.gas;
 
   const recommendation = analysis?.recommended_action || analysis?.assessment?.direction || 'Neutral';
   const confidence = analysis?.assessment?.confidence || 'Unknown';
   const reasoning = analysis?.reasoning || analysis?.analysis || '';
   const reasoningPreview = reasoning.length > 120 ? reasoning.slice(0, 120) + '...' : reasoning;
+
+  const handleConfirm = () => {
+    onConfirm(settlementLayer);
+  };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -51,9 +64,49 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
             </div>
           </div>
 
+          {/* Settlement Layer Selector */}
+          <div className={`rounded-xl p-3 border bg-white/5 border-white/10`}>
+            <div className="text-[10px] uppercase tracking-wider opacity-40 mb-2">Settlement Layer</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setSettlementLayer('arc')}
+                className={`rounded-lg p-2.5 text-left transition-all border ${
+                  settlementLayer === 'arc'
+                    ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-200'
+                    : 'bg-white/5 border-white/10 text-white/50 hover:text-white/70'
+                }`}
+              >
+                <div className="text-xs font-medium flex items-center gap-1.5">
+                  <span>◆</span> Arc (Public)
+                </div>
+                <div className="text-[10px] opacity-60 mt-1">
+                  USDC · public reputation receipt
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettlementLayer('canton')}
+                disabled={!canton?.connected}
+                className={`rounded-lg p-2.5 text-left transition-all border disabled:opacity-30 disabled:cursor-not-allowed ${
+                  settlementLayer === 'canton'
+                    ? 'bg-teal-500/20 border-teal-400/50 text-teal-200'
+                    : 'bg-white/5 border-white/10 text-white/50 hover:text-white/70'
+                }`}
+              >
+                <div className="text-xs font-medium flex items-center gap-1.5">
+                  <span>◈</span> Canton (Private)
+                </div>
+                <div className="text-[10px] opacity-60 mt-1">
+                  {canton?.connected ? 'cBTC/cETH · hidden sizes' : 'Connect Console Wallet first'}
+                </div>
+              </button>
+            </div>
+          </div>
+
           <div className={`flex items-center justify-between rounded-xl p-3 border bg-white/5 border-white/10`}>
-            <div className="text-[10px] uppercase tracking-wider opacity-40">Settlement</div>
-            <div className={`text-xs font-medium text-indigo-300`}>
+            <div className="text-[10px] uppercase tracking-wider opacity-40">Chain</div>
+            <div className={`text-xs font-medium ${settlementLayer === 'canton' ? 'text-teal-300' : 'text-indigo-300'}`}>
               {chainLabel}
             </div>
             <div className="text-[10px] uppercase tracking-wider opacity-40">Fee</div>
@@ -70,16 +123,26 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
             Cancel
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             disabled={isPublishing}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 text-purple-200 text-sm font-medium hover:from-purple-500/30 hover:to-pink-500/30 transition-all disabled:opacity-50"
+            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
+              settlementLayer === 'canton'
+                ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border border-teal-400/30 text-teal-200 hover:from-teal-500/30 hover:to-cyan-500/30'
+                : 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 text-purple-200 hover:from-purple-500/30 hover:to-pink-500/30'
+            }`}
           >
-            {isPublishing ? 'Confirming...' : 'Confirm & Publish'}
+            {isPublishing
+              ? 'Confirming...'
+              : settlementLayer === 'canton'
+                ? 'Settle Privately on Canton'
+                : 'Confirm & Publish on Arc'}
           </button>
         </div>
 
         <p className={`text-[10px] text-center mt-4 text-white/25`}>
-          This action is on-chain and cannot be undone.
+          {settlementLayer === 'canton'
+            ? 'Private Daml transaction — position size visible only to you and the operator.'
+            : 'This action is on-chain and cannot be undone.'}
         </p>
       </div>
     </div>

@@ -24,6 +24,7 @@
     "check:bundles": "node scripts/check-bundle-size.js"
   },
   "dependencies": {
+    "@console-wallet/dapp-sdk": "^2.2.5",
     "@libsql/client": "^0.15.15",
     "@neynar/nodejs-sdk": "^2.0.0",
     "@noble/curves": "^2.0.1",

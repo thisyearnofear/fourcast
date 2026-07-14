@@ -1,0 +1,11 @@
+sdk-version: 2.10.4
+name: canton
+version: 1.0.0
+source: daml/Main.daml
+parties:
+- Alice
+- Bob
+dependencies:
+- daml-prim
+- daml-stdlib
+- daml-script

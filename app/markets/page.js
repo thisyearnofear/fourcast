@@ -549,9 +549,74 @@ export default function MarketsPage() {
     }
   };
 
-  const handlePublishSignal = useCallback(async () => {
+  const handlePublishSignal = useCallback(async (settlementLayer = 'arc') => {
     if (!selectedMarket || !analysis) return;
 
+    // Canton path: private settlement via Console Wallet
+    if (settlementLayer === 'canton') {
+      try {
+        // Save signal to DB with Canton origin
+        const response = await fetch("/api/signals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            market: selectedMarket,
+            analysis,
+            weather: weatherData,
+            authorAddress: null, // Canton uses partyId, not EVM address
+            publishChain: 'canton',
+            chainOrigin: 'CANTON',
+          }),
+        });
+        const result = await response.json();
+        if (!result.success) {
+          addToast(`Failed to save signal: ${result.error}`, "error", 5000);
+          return;
+        }
+
+        // Submit Daml command via Console Wallet (client-side)
+        const { publishPositionOnCanton } = await import('@/services/cantonPublisher');
+        const operatorPartyId = process.env.NEXT_PUBLIC_CANTON_OPERATOR_PARTY_ID || '';
+        if (!operatorPartyId) {
+          addToast('Canton operator not configured. Set NEXT_PUBLIC_CANTON_OPERATOR_PARTY_ID.', 'error', 5000);
+          return;
+        }
+
+        // Get Canton wallet from context — use the hook imported at top
+        // The canton wallet context is accessed via the CantonWalletLayer provider
+        // We need to use the window.__cantonWallet or a ref passed down.
+        // For now, we dispatch a custom event that the CantonWalletLayer handles.
+        const cantonEvent = new CustomEvent('canton:publishPosition', {
+          detail: {
+            signalData: {
+              event_id: selectedMarket.marketID || selectedMarket.id,
+              market_title: selectedMarket.title || selectedMarket.question,
+              recommended_action: analysis.recommended_action || analysis.assessment?.direction,
+              confidence: analysis.assessment?.confidence,
+              stake: analysis.stake || analysis.position_size || '0',
+              settlement_asset: 'CBTC',
+            },
+            signalId: result.id,
+            operatorPartyId,
+          },
+        });
+        window.dispatchEvent(cantonEvent);
+
+        addToast(
+          'Canton position submitted — check Console Wallet to approve',
+          'success',
+          5000,
+          '/signals',
+          'View Track Record'
+        );
+      } catch (err) {
+        console.error('Canton publish failed:', err);
+        addToast(`Canton publish failed: ${err.message}`, 'error', 5000);
+      }
+      return;
+    }
+
+    // Arc path (default): public reputation receipt via EVM wallet
     // Check if can publish
     if (!canPublish) {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -835,9 +900,9 @@ export default function MarketsPage() {
       <PublishConfirmModal
         isOpen={showPublishConfirm}
         onClose={() => setShowPublishConfirm(false)}
-        onConfirm={() => {
+        onConfirm={(settlementLayer) => {
           setShowPublishConfirm(false);
-          handlePublishSignal();
+          handlePublishSignal(settlementLayer);
         }}
         market={selectedMarket}
         analysis={analysis}

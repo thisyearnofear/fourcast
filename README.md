@@ -227,6 +227,46 @@ Fourcast demonstrates exactly what becomes possible when AI agents have unrestri
 
 **Bright Data products used**: SERP API, Scraping Browser, Web Unlocker, MCP Server (4/7 products)
 
+### Canton Network — Private Settlement Layer
+
+**Prediction markets with hidden position sizes on Canton.**
+
+Fourcast uses a three-layer settlement architecture:
+
+| Layer | Chain | Asset | Purpose |
+|-------|-------|-------|---------|
+| **Arc** | Arc testnet | USDC | Public reputation receipts — signals, subscriptions, tips |
+| **Canton** | Canton Network | cBTC / cETH | Private settlement — position sizes hidden from all third parties |
+| **EVM** | Polygon | MATIC / USDC | Venue execution — Polymarket & Kalshi order placement |
+
+Canton Network is purpose-built for regulated finance with private multi-party settlement. Fourcast runs prediction markets using **cBTC** and **cETH** as settlement assets, with position sizes and pricing hidden per-party via Daml smart contracts.
+
+**Implementation:**
+- `canton/daml/` — Daml smart contracts (PredictionMarket, PredictionPosition, PositionSettled, SettlementObligation)
+- `hooks/useCantonWallet.js` — Console Wallet SDK hook (connect, balances, submit commands)
+- `app/CantonWalletLayer.js` — React context provider (parallel to Wagmi WalletLayer)
+- `services/cantonPublisher.js` — Daml command submission service
+- `app/api/canton/` — API routes (balance, settle, positions)
+- `components/PublishConfirmModal.js` — Settlement layer selector (Arc vs Canton)
+
+**Daml contracts:**
+- `PredictionMarket` — public market definition (operator, question, asset, deadline)
+- `PredictionPosition` — private position (operator signatory, holder observer — only they see the stake)
+- `PositionSettled` — settlement receipt with payout calculation
+- `SettlementObligation` — CIP-56 transfer instruction for cBTC/cETH payout
+
+**Build & test:**
+```bash
+cd canton
+daml build                                    # Compile DAR
+daml script --dar .daml/dist/canton-1.0.0.dar \
+  --script-name Main:main --ide-ledger --static-time  # Run lifecycle test
+```
+
+The test scenario verifies: market creation → Alice takes YES (500 cBTC) → Bob takes NO (300 cBTC) → operator resolves YES → Alice settles (wins 1000 cBTC) → Bob settles (loses, 0 payout).
+
+See [`docs/CANTON.md`](./docs/CANTON.md) for full context, resources, and bounty details.
+
 ---
 
 ## License

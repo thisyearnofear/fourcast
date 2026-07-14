@@ -1,0 +1,37 @@
+-- | Shared types for Fourcast prediction market contracts on Canton.
+--   The privacy model is the core differentiator: position sizes and
+--   stakes are visible only to the operator and the holder, never to
+--   the public. This is enforced by Daml's signatory/observer system.
+module Fourcast.Types where
+
+-- | Which side of a binary prediction market a position backs.
+data Side = Yes | No
+  deriving (Eq, Show)
+
+-- | Settlement asset on Canton — both are CIP-56 compliant tokens.
+data SettlementAsset = CBTC | CETH
+  deriving (Eq, Show)
+
+-- | Lifecycle status of a prediction position.
+data PositionStatus = Open | Settled | Expired
+  deriving (Eq, Show)
+
+-- | Outcome of a resolved market.
+data Outcome = ResolvedYes | ResolvedNo | Voided
+  deriving (Eq, Show)
+
+-- | Convert a Side to Text for external serialization.
+sideToText : Side -> Text
+sideToText Yes = "YES"
+sideToText No = "NO"
+
+-- | Convert a SettlementAsset to Text.
+assetToText : SettlementAsset -> Text
+assetToText CBTC = "CBTC"
+assetToText CETH = "CETH"
+
+-- | Check if a side matches a resolved outcome.
+sideMatches : Side -> Outcome -> Bool
+sideMatches Yes ResolvedYes = True
+sideMatches No ResolvedNo = True
+sideMatches _ _ = False

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { ToastProvider } from '@/components/ToastProvider';
 import WalletLayer from './WalletLayer';
+import { CantonWalletProvider } from './CantonWalletLayer';
 
 /** Routes that need wagmi/ConnectKit. Landing stays wallet-free for first paint. */
 const WALLET_PREFIXES = [
@@ -36,7 +37,11 @@ export function Providers({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        {withWallet ? <WalletLayer>{children}</WalletLayer> : children}
+        {withWallet ? (
+          <WalletLayer>
+            <CantonWalletProvider>{children}</CantonWalletProvider>
+          </WalletLayer>
+        ) : children}
       </ToastProvider>
     </QueryClientProvider>
   );

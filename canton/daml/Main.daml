@@ -1,0 +1,88 @@
+-- | Fourcast Canton contracts — main module with Daml Script test.
+--   The script demonstrates the full lifecycle:
+--   1. Operator creates a prediction market (public, visible to all)
+--   2. Operator creates Alice's YES position (private — only operator + Alice)
+--   3. Operator creates Bob's NO position (private — only operator + Bob)
+--   4. Operator resolves the market (YES wins)
+--   5. Operator settles Alice's winning position (1000 cBTC payout)
+--   6. Operator settles Bob's losing position (0 payout)
+module Main where
+
+import Daml.Script
+import Fourcast.Types
+import Fourcast.PredictionMarket
+import Fourcast.PredictionPosition
+
+-- | Test script: full prediction market lifecycle on Canton.
+--   Run with: daml script --dar canton.dar --script Main:main
+main : Script ()
+main = do
+  operator <- allocateParty "FourcastOperator"
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+  now <- getTime
+
+  -- 1. Operator creates a prediction market (cBTC settlement)
+  marketCid <- submit operator (createCmd PredictionMarket with
+    operator = operator
+    marketId = "market-001"
+    question = "Will BTC exceed $150K by end of 2026?"
+    settlementAsset = CBTC
+    createdAt = now
+    deadline = now)
+
+  -- 2. Alice takes a YES position — 500 cBTC stake
+  --   ONLY operator and Alice can see this contract.
+  --   Operator creates on behalf of Alice (consent captured via Console Wallet in prod).
+  alicePositionCid <- submit operator (createCmd PredictionPosition with
+    operator = operator
+    holder = alice
+    marketId = "market-001"
+    side = Yes
+    stake = 500.0
+    settlementAsset = CBTC
+    status = Open
+    createdAt = now)
+
+  -- 3. Bob takes a NO position — 300 cBTC stake
+  --   ONLY operator and Bob can see this contract.
+  bobPositionCid <- submit operator (createCmd PredictionPosition with
+    operator = operator
+    holder = bob
+    marketId = "market-001"
+    side = No
+    stake = 300.0
+    settlementAsset = CBTC
+    status = Open
+    createdAt = now)
+
+  -- 4. Operator resolves the market — YES wins
+  resolutionCid <- submit operator (exerciseCmd marketCid ResolveMarket with
+    outcome = ResolvedYes)
+
+  -- 5. Operator settles Alice's winning position
+  aliceSettledCid <- submit operator (exerciseCmd alicePositionCid Settle with
+    outcome = ResolvedYes)
+
+  -- 6. Operator settles Bob's losing position
+  bobSettledCid <- submit operator (exerciseCmd bobPositionCid Settle with
+    outcome = ResolvedYes)
+
+  -- Verify via query
+  aliceResults <- query @PositionSettled alice
+  case aliceResults of
+    [(cid, settled)] -> do
+      if settled.winner == Some alice && settled.payout == 1000.0
+        then return ()
+        else error "Alice settlement verification failed"
+    _ -> error "Expected exactly one settled position for Alice"
+
+  bobResults <- query @PositionSettled bob
+  case bobResults of
+    [(cid, settled)] -> do
+      if settled.winner == Some operator && settled.payout == 0.0
+        then return ()
+        else error "Bob settlement verification failed"
+    _ -> error "Expected exactly one settled position for Bob"
+
+  return ()
