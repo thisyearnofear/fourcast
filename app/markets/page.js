@@ -16,7 +16,7 @@ import { ArbitrageExecutionPanel } from "@/components/ArbitrageExecutionPanel";
 import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
 import AnalysisConfigModal from "@/components/AnalysisConfigModal";
 import PricingOverlay from "@/components/PricingOverlay";
-import NarrativeSteps from "@/components/NarrativeSteps";
+import FirstRunBanner from "@/components/FirstRunBanner";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
 import { SportsTabContent, DiscoveryTabContent } from "./components";
 
@@ -31,6 +31,7 @@ export default function MarketsPage() {
 
   // Read URL search params for pre-filtering from carousel landing
   const [urlParamsRead, setUrlParamsRead] = useState(false);
+  const [landingQuery, setLandingQuery] = useState('');
 
   useEffect(() => {
     if (typeof window === 'undefined' || urlParamsRead) return;
@@ -41,6 +42,7 @@ export default function MarketsPage() {
     const searchQuery = params.get('q');
 
     if (searchQuery) {
+      setLandingQuery(searchQuery);
       setDiscoveryFilters(prev => ({ ...prev, category: 'all', searchText: searchQuery, minVolume: '0' }));
       setDiscoveryDateRange('later');
       setActiveTab('discovery');
@@ -639,17 +641,14 @@ export default function MarketsPage() {
         </div>
       }
       subheader={
-        <div className="space-y-3">
-          <NarrativeSteps currentStep="analyze" isNight={true} />
-          <SecondaryNav
-            items={[
-              { id: "sports", label: "Sports & Events", icon: "🏆" },
-              { id: "discovery", label: "Crypto, Finance & More", icon: "📈" },
-            ]}
-            activeItem={activeTab}
-            onChange={setActiveTab}
-          />
-        </div>
+        <SecondaryNav
+          items={[
+            { id: "sports", label: "Sports & Events", icon: "🏆" },
+            { id: "discovery", label: "Crypto, Finance & More", icon: "📈" },
+          ]}
+          activeItem={activeTab}
+          onChange={setActiveTab}
+        />
       }
     >
       {/* Analysis Config Modal */}
@@ -663,6 +662,8 @@ export default function MarketsPage() {
       />
 
       <div>
+          <FirstRunBanner searchQuery={landingQuery} />
+
           {/* Active Chain Indicators */}
           <div className="mb-6 space-y-6">
             {/* Live Edge Scanner - Discovery Hook */}

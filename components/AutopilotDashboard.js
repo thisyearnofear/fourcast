@@ -362,19 +362,25 @@ export function AutopilotDashboard({ isNight = false }) {
               </span>
             )}
           </div>
-          {/* Bright Data connection status */}
+          {/* Optional web-intel status */}
           {bdStatus && (
-            <div className={`flex items-center gap-3 mt-1.5 text-[10px] ${subtleText}`}>
-              <span className="font-medium uppercase tracking-wider">Bright Data:</span>
-              <span className={bdStatus.products?.serp ? 'text-emerald-500' : 'text-red-400'}>
-                {bdStatus.products?.serp ? 'SERP connected' : 'SERP not configured'}
-              </span>
-              <span className={bdStatus.products?.scrapingBrowser ? 'text-emerald-500' : 'text-slate-400'}>
-                {bdStatus.products?.scrapingBrowser ? 'Scraping Browser connected' : 'Scraping Browser off'}
-              </span>
-              <span className={bdStatus.products?.webUnlocker ? 'text-emerald-500' : 'text-slate-400'}>
-                {bdStatus.products?.webUnlocker ? 'Web Unlocker connected' : 'Web Unlocker off'}
-              </span>
+            <div className={`flex flex-wrap items-center gap-3 mt-1.5 text-[10px] ${subtleText}`}>
+              <span className="font-medium uppercase tracking-wider">Deep web scrape:</span>
+              {bdStatus.available ? (
+                <>
+                  <span className="text-emerald-500">online</span>
+                  {bdStatus.products?.serp && <span className="text-emerald-500/80">SERP</span>}
+                  {bdStatus.products?.scrapingBrowser && <span className="text-emerald-500/80">Browser</span>}
+                </>
+              ) : (
+                <span className="text-white/45">
+                  {bdStatus.products?.forceDisabled
+                    ? 'disabled'
+                    : bdStatus.products?.degraded
+                      ? 'temporarily offline — AI analysis continues'
+                      : 'optional / not configured — AI analysis continues'}
+                </span>
+              )}
             </div>
           )}
 
@@ -648,8 +654,8 @@ export function AutopilotDashboard({ isNight = false }) {
             Click <strong>Run Agent</strong> to scan markets and execute trades automatically
           </p>
           {bdStatus && !bdStatus.available && (
-            <p className={`text-[10px] mt-2 text-cyan-300/50`}>
-              Add Bright Data keys to enable real-time web intelligence for deeper analysis
+            <p className={`text-[10px] mt-2 text-white/35`}>
+              Deep web scrape is optional — agent runs on AI + market data without it
             </p>
           )}
         </div>

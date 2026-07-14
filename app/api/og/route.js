@@ -71,25 +71,28 @@ function renderLandingOG() {
                     fontSize: "22px",
                   }}
                 >
-                  🔮
+                  ◆
                 </div>
                 <div style={{ fontSize: "24px", fontWeight: 700 }}>Fourcast</div>
               </div>
               <div style={{ fontSize: "64px", fontWeight: 760, lineHeight: 0.95, letterSpacing: "-0.04em" }}>
-                Live web data. AI agent. Market edge.
+                Fourcast
+              </div>
+              <div style={{ marginTop: "18px", fontSize: "28px", fontWeight: 500, lineHeight: 1.25, color: "rgba(255,255,255,0.72)", maxWidth: "520px" }}>
+                Find mispriced prediction markets before the crowd
               </div>
               <div style={{ marginTop: "26px", fontSize: "24px", lineHeight: 1.35, color: "rgba(255,255,255,0.66)", maxWidth: "620px" }}>
-                AI agent using Bright Data to scrape live evidence, synthesize intelligence, and detect mispriced prediction markets.
+                AI fair odds vs live Polymarket and Kalshi prices — publish a trackable call.
               </div>
             </div>
             <div style={{ display: "flex", gap: "14px", color: "rgba(255,255,255,0.52)", fontSize: "18px" }}>
-              <span>SERP API</span>
+              <span>Search</span>
               <span>→</span>
-              <span>Scraping Browser</span>
+              <span>Analyze</span>
               <span>→</span>
-              <span>AI Synthesis</span>
+              <span>Publish</span>
               <span>→</span>
-              <span>Edge Detection</span>
+              <span>Track</span>
             </div>
           </div>
 
@@ -164,7 +167,7 @@ function renderLandingOG() {
             </div>
 
             <div style={{ borderRadius: "16px", background: "rgba(6,182,212,0.12)", border: "1px solid rgba(103,232,249,0.26)", padding: "18px" }}>
-              <div style={{ fontSize: "17px", color: "#cffafe", fontWeight: 700 }}>Powered by Bright Data</div>
+              <div style={{ fontSize: "17px", color: "#cffafe", fontWeight: 700 }}>AI edge detection</div>
               <div style={{ marginTop: "6px", fontSize: "14px", color: "rgba(207,250,254,0.62)" }}>
                 SERP API · Scraping Browser · Web Unlocker · MCP Server
               </div>

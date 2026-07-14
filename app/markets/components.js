@@ -9,6 +9,7 @@ import EmptyMarketState from "@/components/EmptyMarketState";
 import BottomSheet from "@/components/BottomSheet";
 import EvidenceBlock from "@/components/EvidenceBlock";
 import InfoTip from "@/components/InfoTip";
+import { useBrightDataStatus } from "@/hooks/useBrightDataStatus";
 
 // Sports Tab Component - Date-First Design
 export function SportsTabContent({
@@ -1698,32 +1699,58 @@ export function MarketCard({
 }
 
 // Dynamic Loading State Component
-export function LoadingAnalysisState({ isNight, textColor }) {
+// Dynamic Loading State Component
+export function LoadingAnalysisState({ isNight, textColor, webIntelAvailable = false }) {
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
+  const webIntel = useBrightDataStatus();
+  const useWeb = webIntelAvailable || webIntel.available;
 
-  const steps = [
-    {
-      icon: "🌐",
-      text: "Searching live web via Bright Data",
-      sub: "SERP API fetching structured search results",
-    },
-    {
-      icon: "🔬",
-      text: "Deep research on top sources",
-      sub: "Scraping Browser rendering JS-heavy pages",
-    },
-    {
-      icon: "🧠",
-      text: "AI synthesizing evidence",
-      sub: "Reasoning over web intelligence to estimate probability",
-    },
-    {
-      icon: "📊",
-      text: "Detecting market edge",
-      sub: "Comparing AI fair value against current market odds",
-    },
-  ];
+  const steps = useWeb
+    ? [
+        {
+          icon: "◆",
+          text: "Searching live web sources",
+          sub: "Optional deep scrape enrichment",
+        },
+        {
+          icon: "◎",
+          text: "Reading top sources",
+          sub: "Pulling evidence for this market",
+        },
+        {
+          icon: "◇",
+          text: "AI synthesizing evidence",
+          sub: "Estimating a fair probability",
+        },
+        {
+          icon: "▣",
+          text: "Detecting market edge",
+          sub: "Comparing fair value to live odds",
+        },
+      ]
+    : [
+        {
+          icon: "◇",
+          text: "Reading market context",
+          sub: "Odds, volume, and related history",
+        },
+        {
+          icon: "◎",
+          text: "AI estimating fair odds",
+          sub: "Reasoning over available intelligence",
+        },
+        {
+          icon: "▣",
+          text: "Detecting market edge",
+          sub: "Fair value vs current market price",
+        },
+        {
+          icon: "→",
+          text: "Sizing the call",
+          sub: "Direction, confidence, and risk cues",
+        },
+      ];
 
   useEffect(() => {
     const stepInterval = setInterval(() => {
@@ -1732,7 +1759,7 @@ export function LoadingAnalysisState({ isNight, textColor }) {
 
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 95) return 95; // Hold at 95% until response arrives
+        if (prev >= 95) return 95;
         return prev + 1;
       });
     }, 180);
@@ -1741,7 +1768,7 @@ export function LoadingAnalysisState({ isNight, textColor }) {
       clearInterval(stepInterval);
       clearInterval(progressInterval);
     };
-  }, []);
+  }, [steps.length]);
 
   return (
     <div 

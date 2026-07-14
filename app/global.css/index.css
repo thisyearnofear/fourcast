@@ -1,8 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --app-bg: #07090c;
+  --ink: #f2f7f4;
+  --muted: rgba(242, 247, 244, 0.55);
+  --accent: #34d399;
+  --accent-dim: rgba(52, 211, 153, 0.14);
+  --surface: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.1);
+}
 
 /* Tailwind doesn't include gradient-radial by default */
 @layer utilities {
@@ -11,7 +19,7 @@
   }
 }
 
-/* Landing page animations */
+/* Landing / edge motion */
 @keyframes float {
   0%, 100% { transform: translate(0, 0); }
   50% { transform: translate(30px, -30px); }
@@ -24,9 +32,25 @@
   0%, 100% { opacity: 0.3; }
   50% { opacity: 0.5; }
 }
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes edgeReveal {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes edgeCellIn {
+  from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
 .animate-float { animation: float 8s ease-in-out infinite; }
 .animate-float-delayed { animation: float-delayed 10s ease-in-out infinite; }
 .animate-pulse-slow { animation: pulse-slow 6s ease-in-out infinite; }
+.animate-page-enter { animation: pageEnter 0.28s ease-out both; }
+.edge-reveal { animation: edgeReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.edge-cell { animation: edgeCellIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
 * {
   margin: 0;
@@ -35,16 +59,15 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--app-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  /* Dynamic viewport height for mobile */
   overflow: auto;
 }
 
@@ -137,19 +160,19 @@ html {
     @apply bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30;
   }
 
-  /* Gradient button (for Analyze/Premium actions) */
+  /* Primary / premium actions — emerald, not purple */
   .btn-gradient {
     @apply btn-base btn-md;
-    @apply bg-gradient-to-r from-purple-500/20 to-pink-500/20;
-    @apply hover:from-purple-500/30 hover:to-pink-500/30;
-    @apply text-purple-200 border-purple-400/30;
+    @apply bg-gradient-to-r from-emerald-500/20 to-teal-500/20;
+    @apply hover:from-emerald-500/30 hover:to-teal-500/30;
+    @apply text-emerald-100 border-emerald-400/30;
   }
 
   .btn-gradient-light {
     @apply btn-base btn-md;
-    @apply bg-gradient-to-r from-purple-400/20 to-pink-400/20;
-    @apply hover:from-purple-400/30 hover:to-pink-400/30;
-    @apply text-purple-800 border-purple-500/30;
+    @apply bg-gradient-to-r from-emerald-400/20 to-teal-400/20;
+    @apply hover:from-emerald-400/30 hover:to-teal-400/30;
+    @apply text-emerald-900 border-emerald-500/30;
   }
 
   /* Tab button */
@@ -308,16 +331,9 @@ html {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: var(--font-mono), ui-monospace, Menlo, Monaco, Consolas, monospace;
 }
 
-
-/* Design System Tokens */
-:root {
-  /* Single background token for every surface (landing, shell, error pages) */
-  --app-bg: #080a0d;
-}
 
 /* Stage */
 

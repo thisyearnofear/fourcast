@@ -1,51 +1,49 @@
 /**
  * Fourcast brand & product narrative — single source of truth.
- * Bright Data Web Data UNLOCKED Hackathon — Track 2: Finance & Market Intelligence.
- * Core story: live web data → AI agent → mispriced markets.
+ * Core story: ask a market question → AI finds edge → publish / trade → track.
+ * Bright Data scrape enrichment is optional when credits/keys are available.
  */
 
 export const BRAND = {
   name: 'Fourcast',
-  emoji: '🔮',
+  /** Wordmark-only identity preferred in UI; emoji kept for OG/legacy */
+  emoji: '◆',
 
   /** One line — hero, OG, pitch */
-  tagline: 'AI agent powered by live web data for prediction market intelligence',
+  tagline: 'Find mispriced prediction markets before the crowd',
 
   /** Supporting line — subheads, metadata */
   subhead:
-    'Bright Data SERP + Scraping Browser + Web Unlocker → AI synthesis → edge detection across Polymarket & Kalshi',
+    'AI estimates fair odds across Polymarket & Kalshi, surfaces the edge, and lets you publish a trackable call.',
 
   /** Footer / trust strip */
-  footerStrip: 'Powered by Bright Data · SERP API · Scraping Browser · Web Unlocker',
+  footerStrip: 'Polymarket · Kalshi · AI edge detection',
 
   /** Demo CTA */
-  demoTitle: 'Try a Demo — See Live Web Intelligence',
+  demoTitle: 'See an edge in under a minute',
   demoSubcopy:
-    'Watch the AI agent scrape, analyze, and detect market edges in real-time. Zero setup required.',
+    'Search a market question, run analysis, and get a fair probability vs live odds — no wallet required to start.',
 
-  /** Product loop (NarrativeSteps) — the user journey, one name everywhere:
-   *  Search → Analyze → Publish/Trade → Track */
+  /** Product loop (NarrativeSteps) */
   loop: {
-    search: { label: 'Search', short: 'Search', icon: '🔍' },
-    analyze: { label: 'Analyze', short: 'Analyze', icon: '🧠' },
-    publish: { label: 'Publish / Trade', short: 'Publish', icon: '📤' },
-    scored: { label: 'Track Record', short: 'Track', icon: '🏆' },
+    search: { label: 'Search', short: 'Search', icon: '1' },
+    analyze: { label: 'Analyze', short: 'Analyze', icon: '2' },
+    publish: { label: 'Publish / Trade', short: 'Publish', icon: '3' },
+    scored: { label: 'Track Record', short: 'Track', icon: '4' },
   },
 
   /** Page subtitles */
   pages: {
-    markets: 'Live web intelligence across Polymarket & Kalshi — Bright Data SERP, ML forecasts, and AI reasoning',
-    signals:
-      'Verifiable track records · evidence provenance · leaderboards & cross-platform arbitrage',
-    agent:
-      'Autonomous AI agent — web scraping, edge detection, Kelly-sized recommendations',
+    markets: 'Browse live markets, run AI analysis, and catch mispricing',
+    signals: 'Verifiable calls · provenance · leaderboards · cross-venue arb',
+    agent: 'Autonomous scan → edge detection → Kelly-sized recommendations',
     positions: 'Your calls, win rate, Brier score, and reputation',
-    labs: 'Execution layer — Autopilot, builder monetization, and integrations',
+    labs: 'Execution layer — Autopilot, builder monetization, Telegram',
   },
 
   /** Nav tooltips (PageNav) */
   nav: {
-    markets: 'Web intelligence + edge detection',
+    markets: 'Browse & analyze markets',
     signals: 'Verified predictions',
     agent: 'Autonomous agent loop',
     positions: 'Track record',
@@ -56,8 +54,8 @@ export const BRAND = {
   walletExplainer: {
     headline: 'Fourcast uses two layers:',
     layers: [
-      { icon: '🌀', name: 'Arc', detail: 'USDC settlement — subscriptions, signals, tips (~$0.01/tx)' },
-      { icon: '📊', name: 'EVM (Polygon)', detail: 'Polymarket & Kalshi order placement' },
+      { icon: '◆', name: 'Arc', detail: 'USDC settlement — subscriptions, signals, tips (~$0.01/tx)' },
+      { icon: 'Ξ', name: 'EVM (Polygon)', detail: 'Polymarket & Kalshi order placement' },
     ],
     cta: 'Connect an EVM wallet — Arc settlement is handled automatically.',
   },
@@ -80,13 +78,21 @@ export const BRAND = {
     autopilot: {
       title: 'Autopilot',
       description:
-        'Autonomous execution with Kelly Criterion sizing — the agent acts on Bright Data-powered recommendations.',
+        'Autonomous execution with Kelly Criterion sizing on AI recommendations.',
       status: 'core',
     },
     builder: {
       description:
         'Polymarket Builder Program — earn USDC per fill from attributed orders.',
     },
+  },
+
+  /** Optional enrichment — never required for core product */
+  webIntel: {
+    label: 'Deep web scrape',
+    shortLabel: 'Web scrape',
+    optionalNote: 'Optional enrichment when available — analysis works without it.',
+    unavailableNote: 'Deep web scrape is offline. Analysis uses AI + market data.',
   },
 
   /** Hackathon — subtle, optional in UI */
@@ -96,9 +102,9 @@ export const BRAND = {
   },
 
   metadata: {
-    title: 'Fourcast — AI Agent Powered by Live Web Data for Market Intelligence',
+    title: 'Fourcast — AI edge detection for prediction markets',
     description:
-      'AI agent using Bright Data SERP API, Scraping Browser & Web Unlocker to detect mispriced prediction markets. Real-time web scraping → AI synthesis → edge detection across Polymarket & Kalshi.',
+      'Fourcast estimates fair odds on Polymarket and Kalshi, surfaces mispricing, and lets you publish trackable signals. Start with a search — wallet optional.',
   },
 };
 
@@ -107,39 +113,40 @@ export const ONBOARDING_COPY = [
     id: 'welcome',
     title: 'Welcome to Fourcast',
     description:
-      'An AI agent that uses Bright Data to scrape the live web, synthesize intelligence, and detect mispriced prediction markets before anyone else.',
-    icon: '🔮',
+      'Search a prediction market question. AI estimates fair odds, compares them to live prices, and shows you the edge.',
+    icon: '1',
     target: null,
   },
   {
     id: 'markets',
-    title: 'Live Web Intelligence',
+    title: 'Find a market',
     description:
-      'SERP API fetches structured search results. Scraping Browser renders JS-heavy pages. Web Unlocker bypasses bot detection. All in real-time.',
-    icon: '🌐',
+      'Browse Polymarket and Kalshi in one place. Filter by topic or paste a question from the home search.',
+    icon: '2',
     target: '[data-onboard="markets"]',
   },
   {
     id: 'publish',
-    title: 'AI Synthesis & Edge Detection',
+    title: 'Analyze, then share',
     description:
-      'AI reasons over live web evidence to produce fair probabilities. Detects mispricing across Polymarket and Kalshi with full source provenance.',
-    icon: '🧠',
+      'Run analysis to get a fair probability and recommendation. Publish a signal or share the card — build a public track record.',
+    icon: '3',
     target: '[data-onboard="publish"]',
   },
   {
     id: 'agent',
-    title: 'Autonomous Agent',
+    title: 'Let the agent scan',
     description:
-      'The agent autonomously scans markets, scrapes evidence, detects edges, and recommends Kelly-sized positions — end-to-end with Bright Data.',
-    icon: '🤖',
+      'The agent can scan markets, score edges, and recommend Kelly-sized positions when you are ready to automate.',
+    icon: '4',
     target: '[data-onboard="agent"]',
   },
   {
     id: 'positions',
-    title: 'Track Record & MCP',
-    description: 'Verifiable track records, Brier scores, and an MCP Server so any AI agent can query Fourcast\'s intelligence pipeline.',
-    icon: '⚡',
+    title: 'Track what matters',
+    description:
+      'Win rate, Brier score, and reputation compound when your calls resolve. Follow analysts whose edge you trust.',
+    icon: '5',
     target: '[data-onboard="positions"]',
   },
 ];

@@ -1,17 +1,31 @@
 import './global.css/index.css';
 import { Providers } from './providers';
 import Link from 'next/link';
-import HUDToggle from '@/components/HUDToggle';
-import LocationSettingsButton from '@/components/LocationSettingsButton';
-import HUDFooterWrapper from '@/components/HUDFooterWrapper';
+import { Syne, DM_Sans, JetBrains_Mono } from 'next/font/google';
+import ConditionalChrome from '@/components/ConditionalChrome';
 import { BRAND } from '@/constants/brand';
 
-// Force all pages to be dynamic to avoid SSR/static generation issues with wallet libraries
-export const dynamic = 'force-dynamic';
-export const dynamicParams = true;
-export const revalidate = 0;
+const display = Syne({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['500', '600', '700', '800'],
+  display: 'swap',
+});
 
-// Metadata moved to generateMetadata to avoid build-time evaluation issues
+const sans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+});
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  weight: ['400', '500'],
+  display: 'swap',
+});
+
 export async function generateMetadata() {
   const host = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
   const landingOgImage = `${host}/api/og?type=landing`;
@@ -43,14 +57,16 @@ export async function generateMetadata() {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" data-theme="dark" style={{ colorScheme: 'dark' }}>
-      <body suppressHydrationWarning>
+    <html
+      lang="en"
+      data-theme="dark"
+      style={{ colorScheme: 'dark' }}
+      className={`${display.variable} ${sans.variable} ${mono.variable}`}
+    >
+      <body suppressHydrationWarning className="font-sans antialiased">
         <Providers>
           {children}
-          <HUDToggle />
-          <LocationSettingsButton />
-          <HUDFooterWrapper>
-          {/* Global Footer */}
+          <ConditionalChrome />
           <footer className="w-full border-t border-white/[0.04] bg-[var(--app-bg)] py-6 px-5">
             <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4 flex-wrap justify-center">
@@ -62,9 +78,9 @@ export default function RootLayout({ children }) {
                 <span className="text-slate-700 text-[10px]">·</span>
                 <Link href="/positions" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">Positions</Link>
                 <span className="text-slate-700 text-[10px]">·</span>
-                <Link href="/labs" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">🧪 Labs</Link>
+                <Link href="/labs" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">Labs</Link>
                 <span className="text-slate-700 text-[10px]">·</span>
-                <Link href="/status" className="text-[12px] text-slate-400 hover:text-slate-200 transition-colors no-underline font-medium">🩺 Status</Link>
+                <Link href="/status" className="text-[12px] text-slate-400 hover:text-slate-200 transition-colors no-underline font-medium">Status</Link>
               </div>
               <div className="text-[11px] text-slate-600 font-light text-center sm:text-right">
                 {BRAND.name} · {new Date().getFullYear()}
@@ -73,7 +89,6 @@ export default function RootLayout({ children }) {
               </div>
             </div>
           </footer>
-          </HUDFooterWrapper>
         </Providers>
       </body>
     </html>

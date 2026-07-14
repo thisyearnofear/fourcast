@@ -81,32 +81,29 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                         <span onClick={(e) => e.stopPropagation()}>
                             <FollowButton authorAddress={signal.author_address} currentAddress={address} />
                         </span>
-                        {isExpanded && (
-                            /* Share Button */
-                            (<button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShareOpen(!shareOpen);
-                                }}
-                                className={`text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30`}
-                            >
-                                <span>🔗</span>
-                                <span>Share</span>
-                            </button>)
-                        )}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShareOpen(!shareOpen);
+                            }}
+                            className="text-xs px-3 py-1.5 rounded-full transition-all flex items-center gap-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border border-emerald-400/30"
+                        >
+                            Share
+                        </button>
                     </div>
                 </div>
             )}
-            {/* Share Menu */}
-            {isExpanded && shareOpen && (
-                <div className={`mt-4 flex flex-col gap-2 p-3 rounded-lg bg-white/5 border border-white/10`}>
-                    {/* First row: Social links */}
+            {/* Share Menu — available without expanding provenance */}
+            {shareOpen && (
+                <div
+                    className={`mt-4 flex flex-col gap-2 p-3 rounded-lg bg-white/5 border border-white/10`}
+                    onClick={(e) => e.stopPropagation()}
+                >
                     <div className="flex gap-2">
                         <a
                             href={generateXUrl(signal, userStats)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
                             className={`flex-1 text-xs px-3 py-2 rounded transition-all text-center bg-black/40 hover:bg-black/60 text-white border border-white/20`}
                         >
                             𝕏 Share
@@ -115,24 +112,20 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                             href={generateFarcasterUrl(signal, userStats)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className={`flex-1 text-xs px-3 py-2 rounded transition-all text-center bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/30`}
+                            className={`flex-1 text-xs px-3 py-2 rounded transition-all text-center bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-100 border border-emerald-400/30`}
                         >
-                            ⛵ Warpcast
+                            Warpcast
                         </a>
                     </div>
-                    {/* Second row: Copy link (enables OG card previews on social platforms) */}
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
+                        onClick={() => {
                             copySignalLink(signal);
                             setCopied(true);
                             setTimeout(() => setCopied(false), 2000);
                         }}
-                        className={`w-full text-xs px-3 py-2 rounded transition-all text-center flex items-center justify-center gap-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20`}
+                        className={`w-full text-xs px-3 py-2 rounded transition-all text-center flex items-center justify-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 border border-emerald-500/20`}
                     >
-                        <span>🌐</span>
-                        <span>{copied ? '✓ Copied!' : 'Copy Signal Link (OG Preview)'}</span>
+                        <span>{copied ? 'Copied' : 'Copy signal link'}</span>
                     </button>
                 </div>
             )}

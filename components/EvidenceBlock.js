@@ -204,7 +204,7 @@ export default function EvidenceBlock({
           {signal.brightData?.sources?.length > 0 && (
             <div>
               <p className={`text-[10px] ${labelColor} uppercase tracking-wider mb-2 font-medium`}>
-                Bright Data Sources Referenced
+                Live web sources referenced
               </p>
               <div className="space-y-1.5">
                 {signal.brightData.sources.map((src, idx) => (
@@ -240,7 +240,7 @@ export default function EvidenceBlock({
                   {' '}Scraped {signal.brightData.deepResearch.charCount?.toLocaleString()} chars
                   {signal.brightData.deepResearch.sentenceCount
                     ? ` (${signal.brightData.deepResearch.sentenceCount} evidence sentences)`
-                    : ''} via {signal.brightData.deepResearch.product || 'Bright Data'} from{' '}
+                    : ''} via {signal.brightData.deepResearch.product || 'web scrape'} from{' '}
                   <a
                     href={signal.brightData.deepResearch.url}
                     target="_blank"
@@ -274,12 +274,12 @@ function buildSources(signal) {
 
     if (signal.source === 'brightdata+llm') {
       icon = '🔍';
-      label = 'Bright Data Intelligence';
+      label = 'Web intelligence';
       subtype = 'SERP Search-Enhanced';
     } else if (signal.source === 'brightdata+research') {
       const product = signal.brightData?.deepResearch?.product;
       icon = '🔬';
-      label = 'Bright Data Deep Research';
+      label = 'Deep web research';
       subtype = product === 'Web Unlocker'
         ? 'Web Unlocker-Verified'
         : 'Scraping Browser-Verified';
@@ -384,7 +384,7 @@ function getConfidenceMethod(signal) {
   switch (signal.confidence) {
     case 'HIGH':
       return isBrightData
-        ? `High conviction derived from real-time market intelligence via Bright Data. ` +
+        ? `High conviction derived from real-time market intelligence from live web sources. ` +
           `Cross-referenced ${signal.brightData?.sources?.length || 'multiple'} live web sources via SERP API` +
           (signal.source === 'brightdata+research'
             ? `. Deep research via ${bdProduct} extracted ${signal.brightData?.deepResearch?.sentenceCount || 'detailed'} evidence sentences from the primary source, confirming directional bias.`
@@ -396,7 +396,7 @@ function getConfidenceMethod(signal) {
             : '');
     case 'MEDIUM':
       return isBrightData
-        ? `Moderate evidence found via Bright Data real-time web intelligence. ` +
+        ? `Moderate evidence found from live web intelligence. ` +
           `SERP API returned ${signal.brightData?.sources?.length || 'several'} relevant sources suggesting a directional bias, but some counter-signals remain.` +
           (signal.source === 'brightdata+research'
             ? ` Deep research via ${bdProduct} provided additional context but mixed signals persist.`
@@ -406,7 +406,7 @@ function getConfidenceMethod(signal) {
           'Odds efficiency suggests partial mispricing.';
     case 'LOW':
       return isBrightData
-        ? `Scant evidence found via Bright Data real-time search. Market appears efficient or information is too fragmented for high-conviction forecasting.` +
+        ? `Scant evidence found from live web search. Market appears efficient or information is too fragmented for high-conviction forecasting.` +
           (signal.brightData?.sources?.length
             ? ` Only ${signal.brightData.sources.length} source(s) returned relevant results.`
             : '')

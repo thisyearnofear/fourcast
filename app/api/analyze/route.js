@@ -72,7 +72,7 @@ export async function POST(request) {
       includeWeather = true,
       includeSynthData = true,
       includeFutures = false,
-      webSearchEnabled = true,
+      webSearchEnabled = false,
       analysisTypes = []
     } = body;
 
@@ -226,22 +226,27 @@ export async function POST(request) {
       }, { status: 429 });
     }
 
-    // Bright Data intelligence enrichment (SERP API + Scraping Browser)
+    // Optional Bright Data enrichment (skipped when disabled/credits exhausted)
     let brightDataIntel = null;
     if (webSearchEnabled) {
       try {
-        const { MarketIntelligenceAnalyzer } = await import('@/services/analysis/MarketIntelligenceAnalyzer.js');
-        const intelligenceAnalyzer = new MarketIntelligenceAnalyzer();
-        const enriched = await intelligenceAnalyzer.enrichContext({
-          title: title || eventType,
-          description: title || eventType,
-          currentOdds,
-        });
-        if (enriched.intelligenceData && enriched.intelligenceData.results.length > 0) {
-          brightDataIntel = enriched.intelligenceData;
+        const { brightDataService } = await import('@/services/brightDataService.js');
+        if (!brightDataService.isAvailable()) {
+          console.warn('[Analyze] Deep web scrape unavailable — continuing with AI-only analysis');
+        } else {
+          const { MarketIntelligenceAnalyzer } = await import('@/services/analysis/MarketIntelligenceAnalyzer.js');
+          const intelligenceAnalyzer = new MarketIntelligenceAnalyzer();
+          const enriched = await intelligenceAnalyzer.enrichContext({
+            title: title || eventType,
+            description: title || eventType,
+            currentOdds,
+          });
+          if (enriched.intelligenceData && enriched.intelligenceData.results.length > 0) {
+            brightDataIntel = enriched.intelligenceData;
+          }
         }
       } catch (err) {
-        console.warn('[Analyze] Bright Data enrichment failed:', err.message);
+        console.warn('[Analyze] Web scrape enrichment failed:', err.message);
       }
     }
 

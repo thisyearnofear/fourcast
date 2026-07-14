@@ -24,7 +24,7 @@ export default function NarrativeSteps({ currentStep, isNight = false, className
   const currentIdx = steps.findIndex(s => s.id === currentStep);
 
   const textColor = 'text-white';
-  const activeBg = 'bg-purple-500/20 border-purple-400/40 text-purple-200';
+  const activeBg = 'bg-emerald-500/20 border-emerald-400/40 text-emerald-100';
   const inactiveBg = 'bg-white/5 border-white/10 text-white/40';
   const doneBg = 'bg-emerald-500/15 border-emerald-400/25 text-emerald-300';
   const lineColor = 'bg-white/10';
@@ -44,13 +44,13 @@ export default function NarrativeSteps({ currentStep, isNight = false, className
                 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium
                 border transition-all whitespace-nowrap
                 ${isCurrent ? activeBg : isDone ? doneBg : inactiveBg}
-                ${isCurrent ? 'shadow-sm shadow-purple-500/15' : ''}
+                ${isCurrent ? 'shadow-sm shadow-emerald-500/15' : ''}
               `}
             >
-              <span className={`${isCurrent ? '' : 'opacity-70'}`}>{step.icon}</span>
+              <span className={`font-mono text-[10px] ${isCurrent ? '' : 'opacity-70'}`}>{step.icon}</span>
               <span>{isCurrent ? step.label : step.short}</span>
               {isCurrent && (
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse ml-0.5" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
               )}
             </div>
 

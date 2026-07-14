@@ -16,6 +16,20 @@ const MAX_CACHE_ENTRIES = 200;
  *  - Scraping Browser: JS-rendered page scraping with CAPTCHA solving
  *  - Web Unlocker: HTTP-based bot-detection bypass for static pages
  */
+const DEGRADED_TTL_MS = 15 * 60 * 1000; // skip live BD calls for 15m after credit/auth failures
+
+function envFlagDisabled(value) {
+  if (value == null || value === '') return false;
+  const normalized = String(value).trim().toLowerCase();
+  return normalized === 'false' || normalized === '0' || normalized === 'off' || normalized === 'no';
+}
+
+function looksLikeCreditOrAuthFailure(status, detail) {
+  if ([401, 402, 403].includes(status)) return true;
+  const text = typeof detail === 'string' ? detail : JSON.stringify(detail || '');
+  return /credit|payment|quota|balance|unauthorized|forbidden|plan|limit exceeded/i.test(text);
+}
+
 class BrightDataService {
   constructor() {
     this.apiKey = process.env.BRIGHT_DATA_API_KEY;
@@ -28,9 +42,17 @@ class BrightDataService {
     this.proxySecret = process.env.BRIGHT_DATA_PROXY_SECRET;
     this.proxyEnabled = !!(this.proxyUrl && this.proxySecret);
 
-    this.enabled = this.proxyEnabled || !!(this.apiKey && this.serpZone);
-    this.sbrEnabled = this.proxyEnabled || !!(this.sbrWsEndpoint || this.sbrAuth);
-    this.unlockerEnabled = !!(this.apiKey && this.unlockerZone);
+    // Explicit kill-switch — BD is optional enrichment, not required for analysis.
+    this.forceDisabled = envFlagDisabled(process.env.BRIGHT_DATA_ENABLED);
+
+    const configured = !this.forceDisabled;
+    this.enabled = configured && (this.proxyEnabled || !!(this.apiKey && this.serpZone));
+    this.sbrEnabled = configured && (this.proxyEnabled || !!(this.sbrWsEndpoint || this.sbrAuth));
+    this.unlockerEnabled = configured && !!(this.apiKey && this.unlockerZone);
+
+    this._degraded = false;
+    this._degradedUntil = 0;
+    this._lastError = null;
 
     /** @type {Map<string, {data: any, ts: number}>} */
     this._cache = new Map();
@@ -38,15 +60,47 @@ class BrightDataService {
 
   // -- Status --
 
+  isDegraded() {
+    if (!this._degraded) return false;
+    if (Date.now() >= this._degradedUntil) {
+      this._degraded = false;
+      this._lastError = null;
+      return false;
+    }
+    return true;
+  }
+
+  _markDegraded(status, detail) {
+    if (!looksLikeCreditOrAuthFailure(status, detail)) return;
+    this._degraded = true;
+    this._degradedUntil = Date.now() + DEGRADED_TTL_MS;
+    this._lastError = {
+      status: status || 'unknown',
+      message: typeof detail === 'string' ? detail.substring(0, 200) : 'Bright Data unavailable',
+      at: new Date().toISOString(),
+    };
+    console.warn('[BrightData] Marked degraded — analysis will continue without scrape enrichment.');
+  }
+
   /**
    * Returns which Bright Data products are configured and available.
    */
   getStatus() {
+    const degraded = this.isDegraded();
     return {
-      serp: this.enabled,
-      scrapingBrowser: this.sbrEnabled,
-      webUnlocker: this.unlockerEnabled,
+      serp: this.enabled && !degraded,
+      scrapingBrowser: this.sbrEnabled && !degraded,
+      webUnlocker: this.unlockerEnabled && !degraded,
       proxy: this.proxyEnabled,
+      configured: {
+        serp: this.proxyEnabled || !!(this.apiKey && this.serpZone),
+        scrapingBrowser: this.proxyEnabled || !!(this.sbrWsEndpoint || this.sbrAuth),
+        webUnlocker: !!(this.apiKey && this.unlockerZone),
+      },
+      forceDisabled: this.forceDisabled,
+      degraded,
+      lastError: this._lastError,
+      optional: true,
     };
   }
 
@@ -86,9 +140,15 @@ class BrightDataService {
    * @returns {Promise<{organic: Array, knowledge?: object, people_also_ask?: Array, general?: object}>}
    */
   async search(query, options = {}) {
-    if (!this.enabled) {
-      console.warn('[BrightData] SERP API not configured (missing BRIGHT_DATA_API_KEY or BRIGHT_DATA_SERP_ZONE).');
-      return { organic: [] };
+    if (!this.enabled || this.isDegraded()) {
+      if (this.forceDisabled) {
+        console.warn('[BrightData] Disabled via BRIGHT_DATA_ENABLED — skipping SERP.');
+      } else if (this.isDegraded()) {
+        console.warn('[BrightData] Degraded — skipping SERP (using AI-only fallback).');
+      } else {
+        console.warn('[BrightData] SERP API not configured (missing BRIGHT_DATA_API_KEY or BRIGHT_DATA_SERP_ZONE).');
+      }
+      return { organic: [], skipped: true };
     }
 
     const useCache = options.useCache !== false;
@@ -98,7 +158,7 @@ class BrightDataService {
       const cached = this._getCached(cacheKey);
       if (cached) {
         console.log(`[BrightData] SERP cache hit for: "${query.substring(0, 60)}..."`);
-        return cached;
+        return { ...cached, fromCache: true };
       }
     }
 
@@ -166,6 +226,7 @@ class BrightDataService {
       const status = error.response?.status;
       const detail = error.response?.data || error.message;
       console.error(`[BrightData] SERP API failed (status=${status}):`, detail);
+      this._markDegraded(status, detail);
 
       return {
         organic: [],
@@ -187,8 +248,10 @@ class BrightDataService {
    * @returns {Promise<{text: string, title: string, url: string, charCount: number, sentenceCount: number} | null>}
    */
   async scrapeWithBrowser(url) {
-    if (!this.sbrEnabled) {
-      console.warn('[BrightData] Scraping Browser not configured (missing SBR_WS_ENDPOINT or SBR_AUTH).');
+    if (!this.sbrEnabled || this.isDegraded()) {
+      if (!this.sbrEnabled) {
+        console.warn('[BrightData] Scraping Browser not configured (missing SBR_WS_ENDPOINT or SBR_AUTH).');
+      }
       return null;
     }
 
@@ -294,8 +357,10 @@ class BrightDataService {
    * @returns {Promise<{content: string, url: string} | null>}
    */
   async fetchWithUnlocker(url, options = {}) {
-    if (!this.unlockerEnabled) {
-      console.warn('[BrightData] Web Unlocker not configured (missing BRIGHT_DATA_UNLOCKER_ZONE).');
+    if (!this.unlockerEnabled || this.isDegraded()) {
+      if (!this.unlockerEnabled) {
+        console.warn('[BrightData] Web Unlocker not configured (missing BRIGHT_DATA_UNLOCKER_ZONE).');
+      }
       return null;
     }
 
@@ -341,10 +406,25 @@ class BrightDataService {
   // -- Convenience --
 
   /**
-   * Check if any Bright Data product is available.
+   * Check if any Bright Data product is usable right now.
+   * Config alone is not enough — kill-switch and credit degradation count.
    */
   isAvailable() {
+    if (this.forceDisabled || this.isDegraded()) return false;
     return this.enabled || this.sbrEnabled || this.unlockerEnabled;
+  }
+
+  /**
+   * Keys/proxy are present (useful for "optional enrichment available" UI).
+   */
+  isConfigured() {
+    if (this.forceDisabled) return false;
+    return (
+      this.proxyEnabled ||
+      !!(this.apiKey && this.serpZone) ||
+      !!(this.sbrWsEndpoint || this.sbrAuth) ||
+      !!(this.apiKey && this.unlockerZone)
+    );
   }
 
   /**

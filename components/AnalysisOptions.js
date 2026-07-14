@@ -41,7 +41,8 @@ export default function AnalysisOptions({
       includeWeather: isWeatherMarket,
       includeSynthData: isSynthMarket,
       includeFutures: false,
-      webSearchEnabled: true,
+      // Deep scrape is optional enrichment — off by default (credits/keys may be unavailable)
+      webSearchEnabled: false,
       // Finance-specific analysis types
       analysisTypes: isFinanceMarket ? ['fundamental', 'sentiment'] : [],
     };
@@ -259,8 +260,8 @@ export default function AnalysisOptions({
           
           <div className="mt-2 pt-2 border-t border-white/10 space-y-2">
             <ToggleRow
-              label="Web search grounding"
-              description="Verify facts with live search"
+              label="Deep web scrape"
+              description="Optional enrichment when available — analysis works without it"
               isActive={options.webSearchEnabled}
               onClick={() => toggleOption('webSearchEnabled')}
             />
@@ -340,7 +341,7 @@ export function useAnalysisOptions(marketType = 'unknown') {
         includeWeather: false,
         includeSynthData: false,
         includeFutures: false,
-        webSearchEnabled: true,
+        webSearchEnabled: false,
       };
     }
     
@@ -355,7 +356,7 @@ export function useAnalysisOptions(marketType = 'unknown') {
       includeWeather: false,
       includeSynthData: false,
       includeFutures: false,
-      webSearchEnabled: true,
+      webSearchEnabled: false,
     };
   });
   

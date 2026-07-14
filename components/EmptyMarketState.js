@@ -18,12 +18,14 @@ const CATEGORY_ICONS = {
 
 export default function EmptyMarketState({ category, onSwitchCategory, message }) {
   const router = useRouter();
-  const suggestions = CATEGORY_SUGGESTIONS[category] || ['Sports', 'Politics', 'Weather'];
+  const suggestions = (CATEGORY_SUGGESTIONS[category] || ['Sports', 'Politics', 'Crypto']).filter(
+    (c) => c !== 'Weather'
+  );
 
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="text-5xl mb-4 opacity-60">
-        {CATEGORY_ICONS[category] || '📊'}
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] font-display text-xl text-emerald-300/80">
+        {CATEGORY_ICONS[category] || '◆'}
       </div>
       <h3 className="text-lg font-medium text-white/70 mb-2">
         No {category || 'active'} markets right now
@@ -55,14 +57,14 @@ export default function EmptyMarketState({ category, onSwitchCategory, message }
       <button
         onClick={() => {
           if (onSwitchCategory) {
-            onSwitchCategory('Crypto');
+            onSwitchCategory('all');
           } else {
-            router.push('/weather');
+            router.push('/markets');
           }
         }}
         className="text-xs text-white/30 hover:text-white/50 underline underline-offset-2 transition-colors"
       >
-        Check weather predictions instead
+        Clear filters and browse all markets
       </button>
     </div>
   );

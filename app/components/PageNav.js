@@ -16,15 +16,15 @@ import WalletConnect from "@/app/components/WalletConnect";
  */
 
 const PRIMARY_NAV = [
-  { name: "Markets", href: "/markets", icon: "📊", description: BRAND.nav.markets, onboardId: "markets" },
-  { name: "Signals", href: "/signals", icon: "📡", description: BRAND.nav.signals, onboardId: "publish" },
-  { name: "Agent", href: "/agent", icon: "🤖", description: BRAND.nav.agent, onboardId: "agent" },
-  { name: "Positions", href: "/positions", icon: "💼", description: BRAND.nav.positions, onboardId: "positions" },
+  { name: "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
+  { name: "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
+  { name: "Agent", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
+  { name: "Positions", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
 ];
 
 const SECONDARY_NAV = [
-  { name: "Labs", href: "/labs", icon: "🧪", description: BRAND.nav.labs },
-  { name: "Alerts", href: "/notifications", icon: "🔔", description: "Notifications from analysts you follow" },
+  { name: "Labs", href: "/labs", description: BRAND.nav.labs },
+  { name: "Alerts", href: "/notifications", description: "Notifications from analysts you follow" },
 ];
 
 function useIsActive() {
@@ -70,25 +70,23 @@ export default function PageNav() {
                 : "text-white/[0.45] hover:bg-white/10 hover:text-white/80"
             }`}
           >
-            <span aria-hidden="true" className="mr-1">{item.icon}</span>
             {item.name}
           </Link>
         ))}
       </div>
 
-      {/* Mobile: icon tabs */}
+      {/* Mobile: compact labels */}
       <div className="flex sm:hidden items-center gap-0.5">
         {[...PRIMARY_NAV, ...SECONDARY_NAV].map((item) => (
           <Link
             key={item.name}
             href={item.href}
             aria-label={item.name}
-            className={`flex h-11 w-11 flex-col items-center justify-center rounded-lg transition no-underline ${
+            className={`flex h-11 min-w-[2.75rem] flex-col items-center justify-center rounded-lg px-1 transition no-underline ${
               isActive(item.href) ? "bg-white/10" : "opacity-60 hover:opacity-100"
             }`}
           >
-            <span className="text-base leading-none">{item.icon}</span>
-            <span className="mt-0.5 text-[8px] font-medium leading-none text-white">{item.name}</span>
+            <span className="text-[9px] font-medium leading-none text-white">{item.name}</span>
           </Link>
         ))}
       </div>
@@ -103,12 +101,14 @@ export function HomeLink({ showLabel = true }) {
   return (
     <Link
       href="/"
-      className="flex items-center gap-2 text-sm font-medium tracking-wide text-white no-underline"
+      className="flex items-center gap-2.5 text-sm font-semibold tracking-wide text-white no-underline"
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-base">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-400/25 bg-emerald-400/10 font-display text-sm text-emerald-300">
         {BRAND.emoji}
       </span>
-      {showLabel && <span className="hidden sm:inline">{BRAND.name}</span>}
+      {showLabel && (
+        <span className="font-display hidden text-base tracking-tight sm:inline">{BRAND.name}</span>
+      )}
     </Link>
   );
 }
