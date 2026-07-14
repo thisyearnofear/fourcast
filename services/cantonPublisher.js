@@ -105,13 +105,16 @@ export async function publishPositionOnCanton({ cantonWallet, signalData, operat
  * @param {object} opts
  * @param {object} opts.cantonWallet  The Canton wallet context value
  * @param {string} opts.positionContractId  The contract ID of the PredictionPosition
- * @param {string} opts.outcome  The resolution outcome: 'ResolvedYes' | 'ResolvedNo' | 'Voided'
+ * @param {string} opts.resolutionContractId  The contract ID of the MarketResolution
  * @param {boolean} [opts.wait]  If true, wait for finalization
  * @returns {Promise<object>} Transaction result
  */
-export async function settlePositionOnCanton({ cantonWallet, positionContractId, outcome, wait = true }) {
+export async function settlePositionOnCanton({ cantonWallet, positionContractId, resolutionContractId, wait = true }) {
   if (!cantonWallet?.connected || !cantonWallet?.account?.partyId) {
     throw new Error('Connect a Canton wallet (Console Wallet) first');
+  }
+  if (!resolutionContractId) {
+    throw new Error('MarketResolution contract ID is required — cannot settle without proof of resolution');
   }
 
   const exerciseCommand = {
@@ -119,7 +122,7 @@ export async function settlePositionOnCanton({ cantonWallet, positionContractId,
     templateId: templateId('PredictionPosition'),
     contractId: positionContractId,
     choice: 'Settle',
-    argument: { outcome },
+    argument: { resolutionCid: resolutionContractId },
   };
 
   return cantonWallet.submitCommands({

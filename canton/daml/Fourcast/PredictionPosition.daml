@@ -39,15 +39,20 @@ template PredictionPosition
     observer holder
 
     -- | Settle the position after market resolution.
-    --   Either party can trigger settlement once the market is resolved.
+    --   The caller must provide the contract ID of the MarketResolution
+    --   contract. The choice fetches it to verify the outcome — this
+    --   prevents any party from settling with a fabricated outcome.
     --   Creates a PositionSettled receipt and, if the holder won, a
     --   SettlementObligation that authorizes the operator to transfer
     --   winnings via CIP-56 through Console Wallet.
     choice Settle : ContractId PositionSettled
       with
-        outcome : Outcome
+        resolutionCid : ContractId MarketResolution
       controller operator
       do
+        resolution <- fetch resolutionCid
+        assert (resolution.marketId == marketId)
+        let outcome = resolution.outcome
         let isWinner = sideMatches side outcome
         let isVoided = outcome == Voided
         let winner = if isVoided

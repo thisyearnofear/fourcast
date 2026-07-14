@@ -61,12 +61,14 @@ main = do
     outcome = ResolvedYes)
 
   -- 5. Operator settles Alice's winning position
+  --   The Settle choice fetches MarketResolution by contract ID to verify
+  --   the outcome — no fabricated outcomes possible.
   aliceSettledCid <- submit operator (exerciseCmd alicePositionCid Settle with
-    outcome = ResolvedYes)
+    resolutionCid = resolutionCid)
 
   -- 6. Operator settles Bob's losing position
   bobSettledCid <- submit operator (exerciseCmd bobPositionCid Settle with
-    outcome = ResolvedYes)
+    resolutionCid = resolutionCid)
 
   -- Verify via query
   aliceResults <- query @PositionSettled alice

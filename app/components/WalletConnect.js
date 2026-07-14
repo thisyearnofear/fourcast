@@ -206,7 +206,7 @@ export default function WalletConnect({ isNight = false }) {
             {canton?.connected ? (
               <>
                 <p className={`text-[10px] text-teal-300/70 mb-2`}>
-                  ✓ Console Wallet connected — cBTC/cETH private positions active
+                  ✓ {canton.mode === 'wallet-sdk' ? 'Wallet SDK' : 'Console Wallet'} connected — cBTC/cETH private positions active
                 </p>
                 <div className="flex items-center justify-between mb-2">
                   <span className={`text-sm ${textColor}`}>
@@ -239,14 +239,16 @@ export default function WalletConnect({ isNight = false }) {
                 <button
                   type="button"
                   onClick={() => canton.connect({ name: 'Fourcast' })}
-                  disabled={canton?.connecting || canton?.extensionAvailable === false}
+                  disabled={canton?.connecting || (canton?.mode === 'console-wallet' && canton?.extensionAvailable === false)}
                   className={`w-full px-3 py-2 rounded-lg text-xs font-medium transition-all bg-teal-500/20 text-teal-200 border border-teal-400/30 hover:bg-teal-500/30 disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   {canton?.connecting
                     ? 'Connecting...'
-                    : canton?.extensionAvailable === false
-                      ? 'Install Console Wallet extension'
-                      : 'Connect Console Wallet'}
+                    : canton?.mode === 'wallet-sdk'
+                      ? 'Connect to Canton Node'
+                      : canton?.extensionAvailable === false
+                        ? 'Install Console Wallet extension'
+                        : 'Connect Console Wallet'}
                 </button>
                 {canton?.error && (
                   <p className="text-[10px] text-red-400/70 mt-2">{canton.error}</p>

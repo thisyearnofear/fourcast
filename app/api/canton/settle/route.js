@@ -11,13 +11,16 @@
  * 3. Returns the Daml command payload for the client to submit
  *
  * The client then calls cantonWallet.submitCommands() with the payload.
+ *
+ * The Settle choice fetches MarketResolution by contract ID to verify
+ * the outcome — no fabricated outcomes are possible.
  */
 export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { signalId, positionContractId, outcome, operatorPartyId, holderPartyId } = body;
+    const { signalId, positionContractId, resolutionContractId, operatorPartyId, holderPartyId } = body;
 
     if (!positionContractId) {
       return Response.json(
@@ -26,9 +29,9 @@ export async function POST(request) {
       );
     }
 
-    if (!outcome || !['ResolvedYes', 'ResolvedNo', 'Voided'].includes(outcome)) {
+    if (!resolutionContractId) {
       return Response.json(
-        { success: false, error: 'outcome must be ResolvedYes, ResolvedNo, or Voided' },
+        { success: false, error: 'resolutionContractId is required — cannot settle without proof of resolution' },
         { status: 400 }
       );
     }
@@ -48,7 +51,7 @@ export async function POST(request) {
       templateId,
       contractId: positionContractId,
       choice: 'Settle',
-      argument: { outcome },
+      argument: { resolutionCid: resolutionContractId },
     };
 
     return Response.json({
@@ -56,7 +59,7 @@ export async function POST(request) {
       settlement: {
         signalId,
         positionContractId,
-        outcome,
+        resolutionContractId,
         chainOrigin: 'CANTON',
         command,
         // The client should call:

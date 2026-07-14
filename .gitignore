@@ -151,3 +151,9 @@ bin/
 
 # Agent tool scratch space
 .kimchi/
+
+# ============================================
+# Daml / Canton build artifacts
+# ============================================
+canton/.daml/
+canton/dist/
