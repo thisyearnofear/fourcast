@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
+import { Briefcase, Wallet } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
@@ -93,8 +94,9 @@ export function PositionsDashboard({ isNight = false }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className={`text-xl font-medium ${textColor}`}>
-            💼 Positions
+          <h2 className={`flex items-center gap-2 text-xl font-medium ${textColor}`}>
+            <Briefcase className="h-5 w-5 text-emerald-300" />
+            Positions
           </h2>
           <p className={`text-xs ${subtleText} mt-1`}>
             Manage your open and closed trading positions
@@ -148,7 +150,9 @@ export function PositionsDashboard({ isNight = false }) {
       {/* No Wallet Connected */}
       {!walletAddress && !loading && (
         <div className={`text-center py-12 px-4 rounded-xl border bg-white/5 border-white/10`}>
-          <div className="text-4xl mb-3 opacity-40">🔌</div>
+          <div className="flex justify-center mb-3 opacity-40">
+            <Wallet className="h-10 w-10 text-white/60" />
+          </div>
           <p className={`text-sm ${textColor} opacity-70 mb-1`}>Connect your wallet</p>
           <p className={`text-xs ${subtleText}`}>
             Connect your wallet to view and manage your trading positions
@@ -166,7 +170,9 @@ export function PositionsDashboard({ isNight = false }) {
       {/* Empty State */}
       {!loading && !error && walletAddress && positions.length === 0 && (
         <div className={`text-center py-12 px-4 rounded-xl border bg-white/5 border-white/10`}>
-          <div className="text-4xl mb-3 opacity-40">💼</div>
+          <div className="flex justify-center mb-3 opacity-40">
+            <Briefcase className="h-10 w-10 text-white/60" />
+          </div>
           <p className={`text-sm ${textColor} opacity-70 mb-1`}>No {selectedFilter !== 'all' ? selectedFilter.toLowerCase() + ' ' : ''}positions yet</p>
           <p className={`text-xs ${subtleText}`}>
             {selectedFilter === 'OPEN'

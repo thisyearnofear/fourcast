@@ -12,14 +12,12 @@ export function ChainNetworkBadge({ signal, isNight }) {
     const chain = originMap[signal.chain_origin] || CHAINS.ARC;
 
     const colorMap = {
-        purple: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-        amber: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-        indigo: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
-        blue: 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+        emerald: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+        slate: 'bg-slate-500/20 text-slate-300 border-slate-500/30',
     };
 
     return (
-        <span className={`px-3 py-1 rounded-full text-xs font-light border ${colorMap[chain.color] || colorMap.indigo}`}>
+        <span className={`px-3 py-1 rounded-full text-xs font-light border ${colorMap[chain.color] || colorMap.emerald}`}>
             {chain.icon} {chain.name}
             {chain.legacy && <span className="ml-1 opacity-60">(legacy)</span>}
         </span>
@@ -29,10 +27,10 @@ export function ChainNetworkBadge({ signal, isNight }) {
 export function ConfidenceBadge({ confidence, isNight }) {
     const baseClass = 'px-3 py-1 rounded-full text-xs font-light border';
     const colorMap = {
-        HIGH: 'bg-green-500/20 text-green-300 border-green-500/30',
-        MEDIUM: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+        HIGH: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+        MEDIUM: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
         LOW: 'bg-red-500/20 text-red-300 border-red-500/30',
-        default: 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+        default: 'bg-slate-500/20 text-slate-300 border-slate-500/30'
     };
     // Icons ensure confidence is not color-only — accessible to colorblind users
     const iconMap = {
@@ -71,8 +69,8 @@ export function QualityBadge({ signal, isNight }) {
 
 export function EfficiencyBadge({ efficiency, isNight }) {
     const colorMap = {
-        INEFFICIENT: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-        EFFICIENT: 'bg-green-500/20 text-green-300 border-green-500/30'
+        INEFFICIENT: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+        EFFICIENT: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
     };
 
     return (
@@ -84,7 +82,7 @@ export function EfficiencyBadge({ efficiency, isNight }) {
 
 export function OnChainBadge({ txHash, isNight }) {
     return (
-        <span className={`px-3 py-1 rounded-full text-xs font-light border bg-purple-500/20 text-purple-300 border-purple-500/30`}>On-chain: {typeof txHash === 'string' ? txHash.substring(0, 8) : ''}...
+        <span className={`px-3 py-1 rounded-full text-xs font-light border bg-emerald-500/20 text-emerald-300 border-emerald-500/30`}>On-chain: {typeof txHash === 'string' ? txHash.substring(0, 8) : ''}...
                     </span>
     );
 }

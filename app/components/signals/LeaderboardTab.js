@@ -1,7 +1,7 @@
 function getTierInfo(winRate) {
-    if (winRate >= 0.85) return { name: 'Sage', emoji: '👑', color: 'from-yellow-500 to-orange-500' };
-    if (winRate >= 0.75) return { name: 'Elite Analyst', emoji: '🌟', color: 'from-blue-500 to-cyan-500' };
-    if (winRate >= 0.60) return { name: 'Forecaster', emoji: '🎯', color: 'from-green-500 to-emerald-500' };
+    if (winRate >= 0.85) return { name: 'Sage', emoji: '👑', color: 'from-amber-500 to-emerald-500' };
+    if (winRate >= 0.75) return { name: 'Elite Analyst', emoji: '🌟', color: 'from-emerald-500 to-teal-500' };
+    if (winRate >= 0.60) return { name: 'Forecaster', emoji: '🎯', color: 'from-emerald-500 to-emerald-600' };
     if (winRate >= 0.50) return { name: 'Predictor', emoji: '📊', color: 'from-slate-500 to-gray-500' };
     return { name: 'Novice', emoji: '🌱', color: 'from-slate-400 to-gray-400' };
 }
@@ -43,7 +43,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
                             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
                                 {/* Rank */}
                                 <div className="flex items-center gap-3">
-                                    <div className={`text-2xl font-thin ${index < 3 ? ('text-yellow-400') : 'opacity-40'}`}>
+                                    <div className={`text-2xl font-thin ${index < 3 ? ('text-amber-400') : 'opacity-40'}`}>
                                         #{index + 1}
                                     </div>
                                 </div>
@@ -76,7 +76,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
                                 {/* Earnings */}
                                 <div className="text-right sm:text-right">
                                     <div className={`text-xs ${textColor} opacity-60 mb-1`}>Tips Earned</div>
-                                    <div className={`text-xl font-light text-blue-300`}>
+                                    <div className={`text-xl font-light text-emerald-300`}>
                                         {earnings > 0 ? `${earnings}  APT` : '—'}
                                     </div>
                                 </div>

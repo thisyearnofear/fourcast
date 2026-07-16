@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Bot, Play } from 'lucide-react';
 import { useAgentLoop } from '@/hooks/useAgentLoop';
 import { BRAND } from '@/constants/brand';
 import { BuilderDashboard } from '@/components/BuilderDashboard';
@@ -44,8 +45,9 @@ export function AgentDashboard({ isNight = false }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className={`font-medium text-base sm:text-lg ${textColor}`}>
-            🤖 {BRAND.agent.title}
+          <h3 className={`flex items-center gap-2 font-medium text-base sm:text-lg ${textColor}`}>
+            <Bot className="h-5 w-5 text-emerald-300" />
+            {BRAND.agent.title}
           </h3>
           <p className={`text-xs ${subtleText} mt-1`}>
             {BRAND.agent.subtitle}
@@ -112,7 +114,7 @@ export function AgentDashboard({ isNight = false }) {
               aria-valuemin={10}
               aria-valuemax={100}
               aria-valuenow={riskTolerance * 100}
-              className="w-full accent-blue-500"
+              className="w-full accent-emerald-500"
             />
             <div className={`flex justify-between text-xs ${subtleText}`}>
               <span>Conservative</span>
@@ -126,13 +128,18 @@ export function AgentDashboard({ isNight = false }) {
         onClick={isRunning ? stop : handleRun}
         aria-label={isRunning ? 'Stop agent execution' : 'Run agent to scan markets'}
         aria-busy={isRunning}
-        className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all ${
+        className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-all ${
           isRunning
             ? 'bg-red-500/20 hover:bg-red-500/30 text-red-200'
-            : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-200'
+            : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200'
         }`}
       >
-        {isRunning ? '⏹ Stop Agent' : `▶ ${BRAND.agent.runCta}`}
+        {isRunning ? 'Stop Agent' : (
+          <>
+            <Play className="h-4 w-4" />
+            {BRAND.agent.runCta}
+          </>
+        )}
       </button>
       {/* Error */}
       {error && (

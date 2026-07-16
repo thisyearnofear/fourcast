@@ -63,9 +63,9 @@ export function SportsTabContent({
             }
             className={`flex-1 px-3 py-2 text-sm rounded-lg border bg-white/10 border-white/20 text-white`}
           >
-            <option value="Soccer">⚽ Soccer</option>
-            <option value="NFL">🏈 NFL</option>
-            <option value="F1">🏎️ Formula 1</option>
+            <option value="Soccer">Soccer</option>
+            <option value="NFL">NFL</option>
+            <option value="F1">Formula 1</option>
             <option value="all">All Sports</option>
           </select>
         </div>
@@ -81,7 +81,7 @@ export function SportsTabContent({
                 key={key}
                 onClick={() => setDateRange(key)}
                 className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${dateRange === key
-                  ? "bg-blue-500/30 text-white border-blue-400/40"
+                  ? "bg-emerald-500/30 text-white border-emerald-400/40"
                   : "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
                   }`}
               >

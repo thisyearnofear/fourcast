@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from "react";
+import { Zap } from "lucide-react";
 import { arbitrageService } from "@/services/arbitrageService";
 import EmptyMarketState from "@/components/EmptyMarketState";
 import { StaggeredMarketCard } from "./MarketCardShared";
@@ -63,13 +64,13 @@ export function DiscoveryTabContent({
             className={`flex-1 px-3 py-2 text-sm rounded-lg border bg-white/10 border-white/20 text-white`}
           >
             <option value="all">All Categories</option>
-            <option value="Sports">⚽ Sports</option>
-            <option value="Politics">🏛️ Politics</option>
-            <option value="Economics">📊 Economics</option>
-            <option value="Weather">🌤️ Weather</option>
-            <option value="Entertainment">🎬 Entertainment</option>
-            <option value="Crypto">₿ Crypto</option>
-            <option value="Path">🔗 Path Analysis</option>
+            <option value="Sports">Sports</option>
+            <option value="Politics">Politics</option>
+            <option value="Economics">Economics</option>
+            <option value="Weather">Weather</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Crypto">Crypto</option>
+            <option value="Path">Path Analysis</option>
           </select>
         </div>
 
@@ -102,7 +103,7 @@ export function DiscoveryTabContent({
                 key={key}
                 onClick={() => setDateRange(key)}
                 className={`px-3 py-1.5 text-xs rounded-lg border transition-all font-light ${dateRange === key
-                  ? "bg-blue-500/30 text-white border-blue-400/40"
+                  ? "bg-emerald-500/30 text-white border-emerald-400/40"
                   : "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
                   }`}
               >
@@ -185,7 +186,7 @@ export function DiscoveryTabContent({
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">⚡</span>
+                    <Zap className="h-5 w-5 text-amber-300" />
                     <div>
                       <h3 className={`text-sm font-medium ${textColor}`}>
                         {opportunities.count} Arbitrage Opportunit
@@ -199,7 +200,7 @@ export function DiscoveryTabContent({
                   <button
                     onClick={() => setShowArbitrage(!showArbitrage)}
                     className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${showArbitrage
-                      ? "bg-blue-500/30 text-white border-blue-400/40"
+                      ? "bg-emerald-500/30 text-white border-emerald-400/40"
                       : "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
                       }`}
                   >

@@ -7,12 +7,12 @@ import { BuilderDashboard } from '@/components/BuilderDashboard';
 export default function LabsBuilderPage() {
   return (
     <AppShell
-      title="🧪 Builder"
+      title="Builder"
       subtitle="Experimental — Polymarket Builder Program volume tracking & gasless trading"
       maxWidth="max-w-4xl"
     >
       <div className="mx-auto max-w-md">
-        <BuilderDashboard isNight={true} />
+        <BuilderDashboard />
       </div>
     </AppShell>
   );

@@ -14,8 +14,8 @@ const useFilterStore = create(
         bestEdgesOnly: true,
       },
       discoveryFilters: {
-        category: 'Crypto',
-        minVolume: '50000',
+        category: 'all',
+        minVolume: '10000',
         confidence: 'all',
         includeFutures: false,
         platform: 'all',

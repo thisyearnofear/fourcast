@@ -20,7 +20,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
 
     return (
         <div
-            className={`border-l-2 pl-4 pb-4 cursor-pointer transition-all border-blue-500/30 hover:border-blue-500/60`}
+            className={`border-l-2 pl-4 pb-4 cursor-pointer transition-all border-emerald-500/30 hover:border-emerald-500/60`}
             onClick={handleToggle}
         >
             <div className="flex flex-wrap items-center gap-2 mb-2">

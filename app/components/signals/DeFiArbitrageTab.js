@@ -54,7 +54,7 @@ export default function DeFiArbitrageTab({
             disabled={isLoading}
             className={`px-6 py-2 rounded-lg text-sm font-light transition-all ${isLoading
                 ? `${textColor} opacity-50 cursor-not-allowed`
-                : `bg-blue-500/30 hover:bg-blue-500/50 text-white`
+                : `bg-emerald-500/30 hover:bg-emerald-500/50 text-white`
               }`}
           >
             {isLoading ? 'Refreshing...' : 'Refresh'}
@@ -119,8 +119,8 @@ export default function DeFiArbitrageTab({
                     )}
                   </div>
                   <span className={`text-xl font-light px-3 py-1 rounded-lg ${opp.arbitrage.spread_percent > 15
-                      ? 'bg-green-500/20 text-green-300'
-                      : 'bg-blue-500/20 text-blue-300'
+                      ? 'bg-emerald-500/20 text-emerald-300'
+                      : 'bg-emerald-500/15 text-emerald-200'
                     }`}>
                     {opp.arbitrage.spread_percent.toFixed(1)}%
                   </span>
@@ -178,7 +178,7 @@ export default function DeFiArbitrageTab({
                       </div>
                       <div>
                         <span className={`${textColor} opacity-60`}>Flash Loan Ready</span>
-                        <div className={`font-light text-sm ${opp.defi_metrics.flash_loan_suitable ? 'text-green-400' : 'text-orange-400'}`}>
+                        <div className={`font-light text-sm ${opp.defi_metrics.flash_loan_suitable ? 'text-emerald-400' : 'text-amber-400'}`}>
                           {opp.defi_metrics.flash_loan_suitable ? '✅ Yes' : '⚠️ Limited'}
                         </div>
                       </div>
@@ -191,7 +191,7 @@ export default function DeFiArbitrageTab({
                       📊 Platform Details
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className={`bg-blue-500/10 border border-blue-500/20 rounded p-3`}>
+                      <div className={`bg-emerald-500/10 border border-emerald-500/20 rounded p-3`}>
                         <h5 className={`text-xs font-light ${textColor} mb-2 uppercase opacity-70`}>
                           Polymarket
                         </h5>
@@ -231,7 +231,7 @@ export default function DeFiArbitrageTab({
                     <button
                       onClick={() => setSelectedArbitrageOpp(opp)}
                       className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold text-center transition-all shadow-sm
-                        bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90`}
+                        bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90`}
                     >
                       ⚡ Execute Arbitrage
                     </button>
@@ -239,7 +239,7 @@ export default function DeFiArbitrageTab({
                       href={`https://polymarket.com/market/${opp.polymarket.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all bg-blue-500/20 hover:bg-blue-500/30 text-blue-300`}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-light text-center transition-all bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200`}
                     >
                       View on Polymarket ↗
                     </a>

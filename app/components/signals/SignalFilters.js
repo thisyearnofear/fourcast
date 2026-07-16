@@ -7,7 +7,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
                     type="text"
                     value={filters.searchText}
                     onChange={(e) => setFilters(prev => ({ ...prev, searchText: e.target.value }))}
-                    placeholder="🔍 Search signals by market or analysis..."
+                    placeholder="Search signals by market or analysis..."
                     className={`w-full px-4 py-3 text-sm rounded-lg border bg-white/10 border-white/20 text-white placeholder-white/40`}
                 />
             </div>
@@ -21,7 +21,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
                                 key={sort}
                                 onClick={() => setSortBy(sort)}
                                 className={`px-3 py-1.5 text-xs rounded-lg transition-all capitalize ${sortBy === sort
-                                    ? ('bg-blue-500/30 text-white border border-blue-400/40')
+                                    ? ('bg-emerald-500/30 text-white border border-emerald-400/40')
                                     : `${textColor} opacity-60 hover:opacity-100`}`}
                             >
                                 {sort}

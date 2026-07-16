@@ -55,7 +55,7 @@ export const CHAINS = {
     name: 'Aptos',
     display: 'Signals (Aptos · legacy)',
     icon: '📡',
-    color: 'purple',
+    color: 'slate',
     legacy: true
   },
   MOVEMENT: {
@@ -63,7 +63,7 @@ export const CHAINS = {
     name: 'Movement',
     display: 'Signals (Movement · legacy)',
     icon: '💎',
-    color: 'amber',
+    color: 'slate',
     legacy: true
   },
   ARC: {
@@ -71,7 +71,7 @@ export const CHAINS = {
     name: 'Arc',
     display: 'Settlement (Arc · USDC)',
     icon: '🌀',
-    color: 'indigo',
+    color: 'emerald',
     purpose: 'Primary settlement — signals, subs, tips in USDC',
     capabilities: ['USDC subscriptions', 'Sub-second finality', 'USDC tipping (rolling out)', 'Paymaster gas in USDC'],
     disabled: []

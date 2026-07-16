@@ -136,7 +136,7 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
           <HomeLink />
           <div className="flex items-center gap-2">
             <PageNav />
-            {wallet && <WalletConnect isNight={true} />}
+            {wallet && <WalletConnect />}
           </div>
         </header>
       </div>

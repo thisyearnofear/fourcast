@@ -97,10 +97,10 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                 {signals.map((signal) => {
                     const isExpanded = expandedSignalId === signal.id;
                     const statusColor = signal.outcome === 'YES' || signal.outcome === 'CORRECT'
-                        ? ('text-green-400')
+                        ? ('text-emerald-400')
                         : signal.outcome === 'NO' || signal.outcome === 'INCORRECT'
                             ? ('text-red-400')
-                            : ('text-yellow-400');
+                            : ('text-amber-400');
 
                     return (
                         <div

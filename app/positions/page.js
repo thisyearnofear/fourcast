@@ -12,9 +12,9 @@ export default function PositionsPage() {
       title="Positions"
       subtitle={BRAND.pages.positions}
       maxWidth="max-w-4xl"
-      subheader={<NarrativeSteps currentStep="scored" isNight={true} />}
+      subheader={<NarrativeSteps currentStep="scored" />}
     >
-      <PositionsDashboard isNight={true} />
+      <PositionsDashboard />
     </AppShell>
   );
 }

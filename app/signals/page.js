@@ -38,9 +38,6 @@ export default function SignalsPage() {
     const sortBy = filterStore.signalsSortBy;
     const setSortBy = (s) => filterStore.setSignalsSortBy(s);
 
-    // Weather for theming
-    const isNight = true; // dark-first
-
     // Track record state (Brier scores, calibration)
     const [agentTrackStats, setAgentTrackStats] = useState(null);
 
@@ -202,7 +199,7 @@ export default function SignalsPage() {
             subtitle={BRAND.pages.signals}
             subheader={
                 <div className="space-y-3">
-                    <NarrativeSteps currentStep="scored" isNight={true} />
+                    <NarrativeSteps currentStep="scored" />
                     <SecondaryNav
                         items={[
                             { id: 'feed', label: 'Signal Feed', icon: '📡' },
@@ -220,20 +217,18 @@ export default function SignalsPage() {
                     {/* EVM Network Selector (Trading chains) */}
                     {chains?.evm?.connected && (
                         <div className="mb-6">
-                            <ChainSelector compact={true} isNight={isNight} />
+                            <ChainSelector compact={true} />
                         </div>
                     )}
 
                     {activeTab === 'defi' ? (
                         <DeFiArbitrageTab
-                            isNight={isNight}
                             textColor={textColor}
                             cardBgColor={cardBgColor}
                         />
                     ) : activeTab === 'leaderboard' ? (
                         <LeaderboardTab
                             leaderboard={leaderboard}
-                            isNight={isNight}
                             textColor={textColor}
                             cardBgColor={cardBgColor}
                             onProfileClick={handleProfileClick}
@@ -242,7 +237,6 @@ export default function SignalsPage() {
                         <MySignalsTab
                             signals={signals.filter(s => s.author_address === walletAddress)}
                             isLoading={isLoading}
-                            isNight={isNight}
                             textColor={textColor}
                             cardBgColor={cardBgColor}
                             expandedSignalId={expandedSignalId}
@@ -259,7 +253,6 @@ export default function SignalsPage() {
                                 setFilters={setFilters}
                                 sortBy={sortBy}
                                 setSortBy={setSortBy}
-                                isNight={isNight}
                                 textColor={textColor}
                                 cardBgColor={cardBgColor}
                             />
@@ -337,7 +330,6 @@ export default function SignalsPage() {
                                                         isExpanded={expandedSignalId === signal.id}
                                                         onToggle={() => setExpandedSignalId(expandedSignalId === signal.id ? null : signal.id)}
                                                         formatTimestamp={formatTimestamp}
-                                                        isNight={isNight}
                                                         textColor={textColor}
                                                         onProfileClick={handleProfileClick}
                                                         userStats={userStatsCache[signal.author_address] || null}
@@ -373,7 +365,6 @@ export default function SignalsPage() {
                 isOpen={!!selectedProfile}
                 onClose={() => setSelectedProfile(null)}
                 address={selectedProfile}
-                isNight={true}
             />
         </AppShell>
     );
