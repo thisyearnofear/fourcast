@@ -88,7 +88,7 @@ export default function WaveGridBackground() {
 
         // Fade opacity with distance from center
         const distFromCenter = Math.abs(t - 0.5) * 2; // 0 at center, 1 at edges
-        const alpha = 0.04 + (1 - distFromCenter) * 0.03;
+        const alpha = 0.08 + (1 - distFromCenter) * 0.05;
         ctx.strokeStyle = `rgba(${EMERALD.r}, ${EMERALD.g}, ${EMERALD.b}, ${alpha})`;
         ctx.stroke();
       }
@@ -107,7 +107,7 @@ export default function WaveGridBackground() {
         const finalY = y + waveY;
 
         // Line width tapers with distance
-        const lineAlpha = 0.025 + tPerspective * 0.04;
+        const lineAlpha = 0.05 + tPerspective * 0.06;
         const halfWidth = gridWidth * (0.06 + (1 - tPerspective) * 0.44);
 
         ctx.beginPath();
@@ -122,8 +122,8 @@ export default function WaveGridBackground() {
         centerX, horizonY, 0,
         centerX, horizonY, width * 0.45
       );
-      glowGradient.addColorStop(0, `rgba(${EMERALD.r}, ${EMERALD.g}, ${EMERALD.b}, 0.02)`);
-      glowGradient.addColorStop(0.5, `rgba(${EMERALD.r}, ${EMERALD.g}, ${EMERALD.b}, 0.006)`);
+      glowGradient.addColorStop(0, `rgba(${EMERALD.r}, ${EMERALD.g}, ${EMERALD.b}, 0.04)`);
+      glowGradient.addColorStop(0.5, `rgba(${EMERALD.r}, ${EMERALD.g}, ${EMERALD.b}, 0.012)`);
       glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = glowGradient;
       ctx.fillRect(0, 0, width, height);

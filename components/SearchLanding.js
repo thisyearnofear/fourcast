@@ -45,7 +45,7 @@ export default function SearchLanding() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[var(--app-bg)] text-[var(--ink)]">
+    <main className="relative min-h-screen overflow-x-hidden text-[var(--ink)]">
       {/* Atmospheric plane — edge glow, not flat black */}
       <div
         className="pointer-events-none absolute inset-0"

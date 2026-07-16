@@ -128,7 +128,7 @@ export function HomeLink({ showLabel = true }) {
  */
 export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-w-7xl", wallet = true, children }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--app-bg)] text-white">
+    <div className="flex min-h-screen flex-col text-white">
       {/* Header always spans the full app width so nav never cramps on
           narrow-content pages; only <main> respects maxWidth. */}
       <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6">
