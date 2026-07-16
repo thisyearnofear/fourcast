@@ -61,7 +61,7 @@
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
   color: var(--ink);
-  background: var(--app-bg);
+  background: transparent; /* let WaveGridBackground canvas show through */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
@@ -69,6 +69,8 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   overflow: auto;
+  position: relative;
+  z-index: 1; /* above the fixed canvas (z-0) */
 }
 
 /* Mobile viewport fixes */
@@ -76,6 +78,7 @@ html {
   height: 100%;
   height: 100dvh;
   /* Dynamic viewport height for mobile */
+  background: var(--app-bg); /* fallback behind canvas */
 }
 
 #root {

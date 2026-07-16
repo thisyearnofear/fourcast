@@ -3,6 +3,7 @@ import { Providers } from './providers';
 import Link from 'next/link';
 import { Syne, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import ConditionalChrome from '@/components/ConditionalChrome';
+import WaveGridBackground from '@/components/WaveGridBackground';
 import { BRAND } from '@/constants/brand';
 
 const display = Syne({
@@ -64,6 +65,7 @@ export default function RootLayout({ children }) {
       className={`${display.variable} ${sans.variable} ${mono.variable}`}
     >
       <body suppressHydrationWarning className="font-sans antialiased">
+        <WaveGridBackground />
         <Providers>
           {children}
           <ConditionalChrome />
