@@ -123,7 +123,7 @@ export default function WalletConnect({ isNight = false }) {
                   {CHAINS.EVM.icon} {formatAddress(chains.evm.address)}
                 </span>
               )}
-              {canton?.connected && (
+              {canton?.cantonEnabled && canton?.connected && (
                 <span className="px-2 py-0.5 rounded-full text-xs border bg-teal-500/30 text-teal-200 border-teal-500/50">
                   ◈ Canton
                 </span>
@@ -197,7 +197,8 @@ export default function WalletConnect({ isNight = false }) {
             </button>
           )}
 
-          {/* Canton (Private Settlement) Section */}
+          {/* Canton (Private Settlement) Section — hidden until enabled */}
+          {canton?.cantonEnabled && (
           <div className="mb-4 pt-4 border-t border-white/10">
             <div className={`text-xs font-medium ${textColor} mb-1 flex items-center gap-2`}>
               <span>◈</span>
@@ -256,6 +257,7 @@ export default function WalletConnect({ isNight = false }) {
               </>
             )}
           </div>
+          )}
 
           {/* Footer Info - Chain Purposes */}
           <div className={`mt-4 pt-4 border-t border-white/10 space-y-1.5`}>
@@ -264,10 +266,12 @@ export default function WalletConnect({ isNight = false }) {
                 <span>{CHAINS.ARC.icon}</span>
                 <span>{CHAINS.ARC.purpose}</span>
               </p>
+              {canton?.cantonEnabled && (
               <p className="flex items-center gap-1.5 mt-1">
                 <span>◈</span>
                 <span>Canton — private cBTC/cETH settlement with hidden position sizes</span>
               </p>
+              )}
               <p className="flex items-center gap-1.5 mt-1">
                 <span>{CHAINS.EVM.icon}</span>
                 <span>{CHAINS.EVM.purpose}</span>

@@ -38,6 +38,11 @@ const WALLET_SDK_CONFIG = {
 
 const USE_WALLET_SDK = Boolean(WALLET_SDK_CONFIG.ledgerUrl);
 
+// Feature flag: Canton UI is hidden until a working connection path exists.
+// Set NEXT_PUBLIC_CANTON_ENABLED=true once Console Wallet access is approved
+// or Wallet SDK credentials are provisioned.
+const CANTON_ENABLED = process.env.NEXT_PUBLIC_CANTON_ENABLED === 'true';
+
 export function CantonWalletProvider({ children }) {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -375,6 +380,7 @@ export function CantonWalletProvider({ children }) {
     extensionAvailable,
     error,
     mode,  // 'console-wallet' | 'wallet-sdk'
+    cantonEnabled: CANTON_ENABLED,
     // Actions
     connect,
     disconnect,

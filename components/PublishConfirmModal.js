@@ -67,7 +67,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
           {/* Settlement Layer Selector */}
           <div className={`rounded-xl p-3 border bg-white/5 border-white/10`}>
             <div className="text-[10px] uppercase tracking-wider opacity-40 mb-2">Settlement Layer</div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid ${canton?.cantonEnabled ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
               <button
                 type="button"
                 onClick={() => setSettlementLayer('arc')}
@@ -84,6 +84,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
                   USDC · public reputation receipt
                 </div>
               </button>
+              {canton?.cantonEnabled && (
               <button
                 type="button"
                 onClick={() => setSettlementLayer('canton')}
@@ -101,6 +102,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
                   {canton?.connected ? 'cBTC/cETH · hidden sizes' : 'Connect Console Wallet first'}
                 </div>
               </button>
+              )}
             </div>
           </div>
 
