@@ -164,17 +164,24 @@ export function CantonWalletProvider({ children }) {
 
     try {
       if (USE_WALLET_SDK) {
-        // Wallet SDK mode: allocate a new party or use existing
+        // Wallet SDK mode: allocate a new party or use a pre-allocated one
         const sdk = walletSdkRef.current;
         if (!sdk) throw new Error('Wallet SDK not initialized');
 
-        const key = sdk.keys.generate();
-        const party = await sdk.party.external.allocate(key, {
-          partyHint: opts.partyHint || 'fourcast-user',
-        });
+        if (opts.partyId) {
+          // Use a pre-allocated party (e.g. FourcastOperator)
+          setAccount({ partyId: opts.partyId, partyName: opts.partyHint || opts.partyId });
+          setConnected(true);
+        } else {
+          // Allocate a new external party for end-users (the holder)
+          const key = sdk.keys.generate();
+          const party = await sdk.party.external.allocate(key, {
+            partyHint: opts.partyHint || 'fourcast-user',
+          });
 
-        setAccount({ partyId: party, partyName: party });
-        setConnected(true);
+          setAccount({ partyId: party, partyName: party });
+          setConnected(true);
+        }
       } else {
         // Console Wallet mode: connect via extension
         const sdk = consoleSdkRef.current;

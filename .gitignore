@@ -157,3 +157,4 @@ bin/
 # ============================================
 canton/.daml/
 canton/dist/
+docs/OPS.md

@@ -24,6 +24,7 @@
     "check:bundles": "node scripts/check-bundle-size.js"
   },
   "dependencies": {
+    "@canton-network/dapp-sdk": "^1.4.0",
     "@canton-network/wallet-sdk": "^1.4.0",
     "@console-wallet/dapp-sdk": "^2.2.5",
     "@libsql/client": "^0.15.15",

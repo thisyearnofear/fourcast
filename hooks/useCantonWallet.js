@@ -69,9 +69,15 @@ export function useCantonWallet() {
           } : undefined,
         });
         sdkRef.current = sdk;
-        const key = sdk.keys.generate();
-        const party = await sdk.party.external.allocate(key, { partyHint: opts.partyHint || 'fourcast-user' });
-        setAccount({ partyId: party, partyName: party });
+        if (opts.partyId) {
+          // Use a pre-allocated party (e.g. FourcastOperator)
+          setAccount({ partyId: opts.partyId, partyName: opts.partyHint || opts.partyId });
+        } else {
+          // Allocate a new external party for end-users (the holder)
+          const key = sdk.keys.generate();
+          const party = await sdk.party.external.allocate(key, { partyHint: opts.partyHint || 'fourcast-user' });
+          setAccount({ partyId: party, partyName: party });
+        }
         setConnected(true);
       } else {
         const sdk = sdkRef.current;
