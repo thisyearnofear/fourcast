@@ -1,43 +1,69 @@
 /**
  * GET /api/canton/positions
  *
- * Returns Canton position query configuration.
- * Actual position queries are client-side via Console Wallet SDK
- * (the extension queries the Canton participant node for the user's
- * private contract state).
+ * Returns open positions and settled positions from the Canton ledger.
+ * All queries are server-side via the direct JSON Ledger API.
  *
- * This endpoint provides template IDs for the client to filter by.
+ * Query params:
+ *   ?type=open      — open PredictionPosition contracts (default)
+ *   ?type=settled   — PositionSettled contracts
+ *   ?type=obligations — pending SettlementObligation contracts
+ *   ?type=resolutions — MarketResolution contracts
  */
 export const runtime = 'nodejs';
 
-export async function GET() {
-  const darPackageId = process.env.NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID || '';
-  const operatorPartyId = process.env.CANTON_OPERATOR_PARTY_ID || '';
-  const network = process.env.NEXT_PUBLIC_CANTON_NETWORK || 'localnet';
+import {
+  getOpenPositions,
+  getSettledPositions,
+  getPendingObligations,
+  getMarketResolutions,
+  isCantonConfigured,
+} from '@/services/cantonLedgerClient';
 
-  const templateIds = darPackageId
-    ? {
-        predictionPosition: `${darPackageId}:Fourcast.PredictionPosition:PredictionPosition`,
-        positionSettled: `${darPackageId}:Fourcast.PredictionPosition:PositionSettled`,
-        settlementObligation: `${darPackageId}:Fourcast.PredictionPosition:SettlementObligation`,
-        predictionMarket: `${darPackageId}:Fourcast.PredictionMarket:PredictionMarket`,
-        marketResolution: `${darPackageId}:Fourcast.PredictionMarket:MarketResolution`,
-      }
-    : {};
+export async function GET(request) {
+  try {
+    if (!isCantonConfigured()) {
+      return Response.json({
+        success: false,
+        error: 'Canton ledger not configured',
+        positions: [],
+      }, { status: 503 });
+    }
 
-  return Response.json({
-    success: true,
-    canton: {
-      operatorPartyId,
-      network,
-      templateIds,
-      // Client should call:
-      //   cantonWallet.queryContracts([templateIds.predictionPosition])
-      //   cantonWallet.queryContracts([templateIds.positionSettled])
-      queryMethod: 'client-side',
-    },
-    timestamp: new Date().toISOString(),
-  });
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type') || 'open';
+
+    let results;
+    switch (type) {
+      case 'settled':
+        results = await getSettledPositions();
+        break;
+      case 'obligations':
+        results = await getPendingObligations();
+        break;
+      case 'resolutions':
+        results = await getMarketResolutions();
+        break;
+      case 'open':
+      default:
+        results = await getOpenPositions();
+        break;
+    }
+
+    return Response.json({
+      success: true,
+      type,
+      positions: results,
+      count: results.length,
+    });
+  } catch (error) {
+    console.error('Canton positions GET error:', error);
+    return Response.json({
+      success: false,
+      error: error.message,
+      positions: [],
+    }, { status: 500 });
+  }
 }
 
 export async function OPTIONS() {

@@ -15,20 +15,18 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 1. **Select a signal** on the markets page (e.g. "Will BTC exceed $150K by end of 2026?").
 2. **Click publish** → settlement-layer modal appears.
 3. **Select Canton** (private settlement).
-4. **Connect Canton wallet** — Console Wallet extension or Wallet SDK (NaaS).
-5. **Confirm position** — `cantonPublisher` builds the Daml `PredictionPosition` create command, wallet signs, command submits to Canton Devnet.
+4. **Confirm position** — the app calls `/api/canton/markets` (POST), which submits a Daml `CreateCommand` to Canton Devnet via the server-side ledger client.
 
 **Say:** "This position is now on-ledger. The stake, the side, the entry — visible only to the operator and this holder. No other party, no tracker, no explorer can see it."
 
-**Show:** Holder's view — `queryContracts` returns the full position (side: YES, stake: 500 cBTC, marketId, status: Open).
+**Show:** Holder's view — `/api/canton/positions` returns the full position (side: YES, stake: 500 cBTC, marketId, status: Open).
 
 ---
 
 ## Act 2 — The absence · 45s
 
 1. **Switch to a second browser** (or incognito) — a competing trader, a tracker bot, any non-signatory.
-2. **Connect a different Canton wallet** (different party).
-3. **Query the same ledger** for `PredictionPosition` contracts on the same market.
+2. **Query the same ledger** for `PredictionPosition` contracts on the same market — from a party that is not a signatory.
 
 **Show:** Empty result set. The position does not exist from this party's view.
 
@@ -68,15 +66,15 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 - [x] DAR built and uploaded to NODERS Devnet (package ID confirmed)
 - [x] `NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID` set in `.env.local.example`
 - [x] `CANTON_OPERATOR_PARTY_ID` set — `FourcastOperator::122003aa7c...`
-- [x] Frontend wired to Console Wallet SDK (default mode, no credentials needed)
-- [x] Daml commands formatted to JSON Ledger API spec
-- [x] Market + position lifecycle functions implemented
-- [ ] Console Wallet extension installed and configured to NODERS validator
-- [ ] Operator logged in via Keycloak (your NODERS account)
-- [ ] CC funded via wallet tap
+- [x] Server-side direct ledger API access (OIDC password grant)
+- [x] Daml commands formatted to JSON Ledger API spec (`CreateCommand` / `ExerciseCommand` with `choiceArgument`)
+- [x] Contract queries use `eventFormat` + `activeAtOffset` + `#canton:` package name format
+- [x] Market + position lifecycle functions implemented (`services/cantonLedgerClient.js`)
+- [x] API routes: `/api/canton/markets`, `/api/canton/markets/resolve`, `/api/canton/positions`, `/api/canton/settle`
+- [x] End-to-end verified on Devnet: create market → query → resolve → query resolutions
+- [ ] CC funded via NODERS wallet tap
 - [ ] cBTC funded via https://cbtc-faucet.bitsafe.finance/
-- [ ] Two browser profiles ready (holder + observer) for Act 2
-- [ ] End-to-end test: create market → take position → resolve → settle → payout
+- [ ] Two-view privacy test (holder sees position, observer sees empty result set)
 - [ ] Deployed URL loads (not localhost)
 - [ ] Venice API key for live AI analysis
 - [ ] Form: GitHub URL, video link, demo URL
@@ -85,5 +83,7 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 
 All UI strings: `constants/brand.js`
 Daml contracts: `canton/daml/Fourcast/`
-Settlement publisher: `services/cantonPublisher.js`
+Server-side ledger client: `services/cantonLedgerClient.js`
+Legacy publisher (reference): `services/cantonPublisher.js`
+Wallet context: `app/CantonWalletLayer.js`
 Wallet hook: `hooks/useCantonWallet.js`

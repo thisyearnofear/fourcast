@@ -1,17 +1,15 @@
 /**
- * POST /api/canton/settle
+ * POST /api/canton/markets/resolve
  *
- * Settles a prediction position on Canton (operator action).
- * Exercises the Settle choice on the PredictionPosition contract,
- * referencing the MarketResolution contract as proof of outcome.
+ * Resolves a prediction market on Canton (operator action).
+ * Exercises the ResolveMarket choice on the PredictionMarket contract.
  *
- * Body: { positionContractId, resolutionContractId }
- *
- * All operations are server-side via the direct JSON Ledger API.
+ * Body: { marketContractId, outcome }
+ *   outcome: 'ResolvedYes' | 'ResolvedNo' | 'Voided'
  */
 export const runtime = 'nodejs';
 
-import { settlePosition, isCantonConfigured } from '@/services/cantonLedgerClient';
+import { resolveMarket, isCantonConfigured } from '@/services/cantonLedgerClient';
 
 export async function POST(request) {
   try {
@@ -23,34 +21,33 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { positionContractId, resolutionContractId } = body;
+    const { marketContractId, outcome } = body;
 
-    if (!positionContractId) {
+    if (!marketContractId) {
       return Response.json({
         success: false,
-        error: 'positionContractId is required',
+        error: 'marketContractId is required',
       }, { status: 400 });
     }
 
-    if (!resolutionContractId) {
+    if (!outcome) {
       return Response.json({
         success: false,
-        error: 'resolutionContractId is required — cannot settle without proof of resolution',
+        error: 'outcome is required (ResolvedYes, ResolvedNo, or Voided)',
       }, { status: 400 });
     }
 
-    const result = await settlePosition(positionContractId, resolutionContractId);
+    const result = await resolveMarket(marketContractId, outcome);
     return Response.json({
       success: true,
-      settlement: {
-        positionContractId,
-        resolutionContractId,
-        chainOrigin: 'CANTON',
+      resolution: {
+        marketContractId,
+        outcome,
         ...result,
       },
     });
   } catch (error) {
-    console.error('Canton settle API error:', error);
+    console.error('Canton resolve error:', error);
     return Response.json({
       success: false,
       error: error.message,

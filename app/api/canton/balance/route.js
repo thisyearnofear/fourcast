@@ -1,41 +1,36 @@
 /**
  * GET /api/canton/balance
  *
- * Returns Canton balance configuration and operator info.
- * Actual balance fetching is client-side via Console Wallet SDK
- * (the extension communicates with the Canton participant node).
+ * Returns Canton ledger status and operator info.
+ * The operator's balance (CC, cBTC) is managed via the NODERS wallet UI
+ * at wallet.validator.hackcanton-01.devnet.naas.noders.services.
  *
- * This endpoint provides:
- * - Operator party ID (for position creation)
- * - DAR package ID (for template IDs)
- * - Network info (devnet/localnet/mainnet)
+ * This endpoint reports ledger connectivity and operator party info.
  */
 export const runtime = 'nodejs';
 
+import { isCantonConfigured, OPERATOR_PARTY_ID, PACKAGE_ID } from '@/services/cantonLedgerClient';
+
 export async function GET() {
-  const operatorPartyId = process.env.CANTON_OPERATOR_PARTY_ID || '';
-  const darPackageId = process.env.NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID || '';
-  const network = process.env.NEXT_PUBLIC_CANTON_NETWORK || 'localnet';
-  const participantUrl = process.env.CANTON_PARTICIPANT_URL || '';
-  const jsonApiUrl = process.env.CANTON_JSON_API_URL || '';
+  const configured = isCantonConfigured();
+  const network = process.env.NEXT_PUBLIC_CANTON_NETWORK || 'devnet';
 
   return Response.json({
     success: true,
     canton: {
-      operatorPartyId,
-      darPackageId,
+      configured,
+      operatorPartyId: OPERATOR_PARTY_ID,
+      darPackageId: PACKAGE_ID,
       network,
-      participantUrl: participantUrl || undefined,
-      jsonApiUrl: jsonApiUrl || undefined,
-      // Assets supported for private settlement
       assets: [
         { symbol: 'cBTC', name: 'Canton Bitcoin', standard: 'CIP-0056' },
         { symbol: 'cETH', name: 'Canton Ethereum', standard: 'CIP-0056' },
+        { symbol: 'CC', name: 'Canton Coin', standard: 'native' },
       ],
-      // Note: actual balances are fetched client-side via Console Wallet
-      // extension — the server cannot access the user's private party state.
-      balanceFetch: 'client-side',
-      balanceMethod: 'consoleWallet.getCoinsBalance({ party, network })',
+      // Operator funds the wallet via NODERS wallet UI:
+      // CC: tap in wallet.validator.hackcanton-01.devnet.naas.noders.services
+      // cBTC: https://cbtc-faucet.bitsafe.finance/
+      funding: 'manual',
     },
     timestamp: new Date().toISOString(),
   });

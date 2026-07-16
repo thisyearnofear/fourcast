@@ -58,8 +58,8 @@ Make cETH move app state: AMMs/order books/RFQs, private OTC, lending + leverage
 ### Architecture Sketch
 
 ```
-Fourcast AI → Canton Daml Contracts (market logic, settlement)
-            → Console Wallet (user signing, balance, tx review)
+Fourcast AI → Next.js API routes → Canton JSON Ledger API (v2)
+            → OIDC password grant (Keycloak) → Daml commands
             → cBTC / cETH (settlement assets)
             → Privacy model (position sizes hidden per-party)
 ```
@@ -87,6 +87,7 @@ Fourcast AI → Canton Daml Contracts (market logic, settlement)
 ### Console Wallet
 - Dashboard/signing: https://consolewallet.io/develop/ledger
 - Useful for: signing transactions, sending assets, checking balances, reviewing activity, interacting with Canton apps
+- Note: Fourcast uses server-side direct ledger API access, not the Console Wallet extension
 
 ---
 
@@ -160,25 +161,24 @@ Whales come for privacy. Settled P&L is still publishable via `PositionSettled` 
 - `FourcastOperator` party allocated: `FourcastOperator::122003aa7c491e00a453145c4d2cd3dbf5db8908b4e663c9944baed57fd66effa668`
 - NODERS NaaS validator URL: `https://wallet.validator.hackcanton-01.devnet.naas.noders.services/`
 - Keycloak OIDC: `https://keycloak.naas.noders.services/realms/noders-appsfactory`
-- Frontend wired to Console Wallet SDK (`@console-wallet/dapp-sdk` 2.2.5)
-- Daml commands formatted to JSON Ledger API spec (`CreateCommand` / `ExerciseCommand`)
-- Market lifecycle functions: `createMarketOnCanton`, `resolveMarketOnCanton`, `getOpenMarkets`
-- Position lifecycle functions: `publishPositionOnCanton`, `settlePositionOnCanton`, `getOpenPositions`
-- CIP-56 settlement transfer: `executeSettlementTransfer`, `processPendingObligations`
+- **Server-side direct ledger API access** — OIDC password grant via `web-app-ui-hackcanton-01-devnet` client
+- Daml commands formatted to JSON Ledger API spec (`CreateCommand` / `ExerciseCommand` with `choiceArgument`)
+- Contract queries use `eventFormat` + `activeAtOffset` + package name (`#canton:`) format
+- Server-side ledger client: `services/cantonLedgerClient.js` (token caching, command submission, contract queries)
+- API routes: `/api/canton/markets` (GET/POST), `/api/canton/markets/resolve` (POST), `/api/canton/positions` (GET), `/api/canton/settle` (POST), `/api/canton/balance` (GET), `/api/canton/settle-transfer` (GET)
+- Market lifecycle: `createMarket`, `resolveMarket`, `getOpenMarkets`, `getMarketResolutions`
+- Position lifecycle: `createPosition`, `settlePosition`, `getOpenPositions`, `getSettledPositions`
+- CIP-56 settlement transfer: `getPendingObligations` (transfer execution via NODERS wallet UI)
+- **Verified end-to-end on Devnet**: create market (offset 340860) → query (2 markets) → resolve (offset 340865) → MarketResolution created → resolved market archived
 
 ### Connection mode
-Console Wallet extension (default). Users install the extension, connect to the NODERS validator, and authenticate via Keycloak OIDC. No server-side client credentials needed — the extension handles auth, signing, and ledger communication.
-
-Wallet SDK direct mode (via `@canton-network/wallet-sdk` 1.4.0) is available as a fallback for server-side automation. Requires OIDC `client_credentials` from NODERS (not yet provisioned). To enable, uncomment `NEXT_PUBLIC_CANTON_LEDGER_URL` in `.env.local`.
+Server-side direct ledger API. The Next.js API routes authenticate to NODERS Keycloak via OIDC password grant and call the Canton JSON Ledger API directly. No browser extension or client-side SDK needed — all credentials stay server-side. The operator (FourcastOperator) is automatically "connected" when the server is configured.
 
 ### Pending (manual)
-- [ ] Install Console Wallet browser extension
-- [ ] Configure extension to connect to NODERS validator URL
-- [ ] Log in via Keycloak (your NODERS account)
-- [ ] Fund `FourcastOperator` with CC (tap in wallet UI)
+- [ ] Fund `FourcastOperator` with CC (tap in NODERS wallet UI)
 - [ ] Fund `FourcastOperator` with cBTC (https://cbtc-faucet.bitsafe.finance/)
-- [ ] Test: create market → take position → resolve → settle → CIP-56 transfer
 - [ ] Two-view privacy test (holder sees position, observer sees empty result set)
+- [ ] CIP-56 token transfer test (via NODERS wallet UI)
 
 ---
 

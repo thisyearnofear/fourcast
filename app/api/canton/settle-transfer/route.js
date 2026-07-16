@@ -1,65 +1,41 @@
 /**
- * POST /api/canton/settle-transfer
+ * GET /api/canton/settle-transfer
  *
- * Operator endpoint to process pending SettlementObligations.
- * Executes CIP-56 token transfers for all outstanding obligations
- * and confirms them on-ledger.
+ * Returns pending SettlementObligation contracts that need CIP-56 transfers.
+ * The operator processes these after market resolution to pay out winners.
  *
- * This is the off-chain settlement batch processor. The operator
- * calls this after market resolution to pay out winners.
- *
- * Body:
- *   { registryUrl, instrumentId? }
- *
- * The actual transfer is executed client-side via the Wallet SDK
- * (the operator's wallet must be connected). This endpoint validates
- * the request and returns the obligation list for the client to process.
+ * The actual CIP-56 token transfer is executed via the NODERS wallet UI
+ * (manual step for the hackathon demo). In production, this would be
+ * automated via the Wallet SDK token transfer API.
  */
 export const runtime = 'nodejs';
 
-export async function POST(request) {
+import { getPendingObligations, isCantonConfigured } from '@/services/cantonLedgerClient';
+
+export async function GET() {
   try {
-    const body = await request.json();
-    const { registryUrl, instrumentId } = body;
-
-    if (!registryUrl) {
-      return Response.json(
-        { success: false, error: 'registryUrl is required — the CIP-56 token registry URL' },
-        { status: 400 }
-      );
+    if (!isCantonConfigured()) {
+      return Response.json({
+        success: false,
+        error: 'Canton ledger not configured',
+        obligations: [],
+      }, { status: 503 });
     }
 
-    const darPackageId = process.env.NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID || '';
-    if (!darPackageId) {
-      return Response.json(
-        { success: false, error: 'Canton DAR package ID not configured' },
-        { status: 500 }
-      );
-    }
-
-    const obligationTemplateId = `${darPackageId}:Fourcast.PredictionPosition:SettlementObligation`;
-
+    const obligations = await getPendingObligations();
     return Response.json({
       success: true,
-      settlement: {
-        chainOrigin: 'CANTON',
-        obligationTemplateId,
-        registryUrl,
-        instrumentId: instrumentId || null,
-        // Client should:
-        //   1. cantonWallet.queryContracts([obligationTemplateId])
-        //   2. For each obligation, call executeSettlementTransfer()
-        //   3. Or call processPendingObligations() from cantonPublisher.js
-        instructions: 'process-pending-obligations',
-      },
-      timestamp: new Date().toISOString(),
+      obligations,
+      count: obligations.length,
+      instructions: 'Process each obligation via CIP-56 transfer in the NODERS wallet UI',
     });
   } catch (error) {
     console.error('Canton settle-transfer API error:', error);
-    return Response.json(
-      { success: false, error: 'Settlement transfer request failed', message: error.message },
-      { status: 500 }
-    );
+    return Response.json({
+      success: false,
+      error: error.message,
+      obligations: [],
+    }, { status: 500 });
   }
 }
 
@@ -68,7 +44,7 @@ export async function OPTIONS() {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
   });

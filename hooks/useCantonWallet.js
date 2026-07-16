@@ -1,17 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
- * useCantonWallet — React hook for Canton Network wallet integration.
+ * useCantonWallet — React hook for Canton Network integration.
  *
- * Supports two connection modes (auto-selected by env config):
- * 1. Console Wallet (extension) — @console-wallet/dapp-sdk, for end-users
- * 2. Wallet SDK (direct node) — @canton-network/wallet-sdk, for dev/remote
- *
- * This is the Canton parallel to Wagmi's useAccount/useConnect hooks.
- * Canton provides private settlement (cBTC/cETH) with Daml smart contracts,
- * complementing Arc's public reputation layer.
+ * In server-side ledger mode, all operations go through our Next.js API
+ * routes. No browser extension or client-side SDK is needed.
  *
  * For the React context version (recommended), use useCantonWalletContext()
  * from app/CantonWalletLayer.js instead.
@@ -21,142 +16,116 @@ export function useCantonWallet() {
   const [connecting, setConnecting] = useState(false);
   const [account, setAccount] = useState(null);
   const [network, setNetwork] = useState(null);
-  const [balances, setBalances] = useState(null);
-  const [extensionAvailable, setExtensionAvailable] = useState(null);
   const [error, setError] = useState(null);
-  const [mode, setMode] = useState('console-wallet');
-  const sdkRef = useRef(null);
 
-  const USE_WALLET_SDK = Boolean(process.env.NEXT_PUBLIC_CANTON_LEDGER_URL);
+  const cantonEnabled = process.env.NEXT_PUBLIC_CANTON_ENABLED === 'true';
 
   useEffect(() => {
-    setMode(USE_WALLET_SDK ? 'wallet-sdk' : 'console-wallet');
-  }, [USE_WALLET_SDK]);
-
-  // Check extension availability on mount (Console Wallet mode only)
-  useEffect(() => {
-    if (USE_WALLET_SDK || typeof window === 'undefined') return;
+    if (!cantonEnabled) return;
     let cancelled = false;
-
-    import('@console-wallet/dapp-sdk').then(({ consoleWallet }) => {
-      if (cancelled) return;
-      sdkRef.current = consoleWallet;
-      consoleWallet.checkExtensionAvailability()
-        .then((res) => { if (!cancelled) setExtensionAvailable(res?.status === 'installed'); })
-        .catch(() => { if (!cancelled) setExtensionAvailable(false); });
-    }).catch(() => { if (!cancelled) setExtensionAvailable(false); });
-
+    (async () => {
+      try {
+        const res = await fetch('/api/canton/balance');
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.success && data.canton?.configured) {
+          setConnected(true);
+          setAccount({ partyId: data.canton.operatorPartyId, partyName: 'FourcastOperator' });
+          setNetwork({ id: data.canton.network, name: `Canton ${data.canton.network}` });
+        }
+      } catch { /* server not reachable */ }
+    })();
     return () => { cancelled = true; };
-  }, [USE_WALLET_SDK]);
+  }, [cantonEnabled]);
 
-  const connect = useCallback(async (opts = {}) => {
+  const connect = useCallback(async () => {
     setConnecting(true);
     setError(null);
     try {
-      if (USE_WALLET_SDK) {
-        const { SDK } = await import('@canton-network/wallet-sdk');
-        const sdk = await SDK.create({
-          ledgerClientUrl: process.env.NEXT_PUBLIC_CANTON_LEDGER_URL,
-          auth: process.env.NEXT_PUBLIC_CANTON_AUTH_CONFIG_URL ? {
-            method: 'client_credentials',
-            configUrl: process.env.NEXT_PUBLIC_CANTON_AUTH_CONFIG_URL,
-            credentials: {
-              clientId: process.env.NEXT_PUBLIC_CANTON_AUTH_CLIENT_ID,
-              clientSecret: process.env.CANTON_AUTH_CLIENT_SECRET,
-              audience: process.env.NEXT_PUBLIC_CANTON_AUTH_AUDIENCE,
-              scope: 'openid daml_ledger_api offline_access',
-            },
-          } : undefined,
-        });
-        sdkRef.current = sdk;
-        if (opts.partyId) {
-          // Use a pre-allocated party (e.g. FourcastOperator)
-          setAccount({ partyId: opts.partyId, partyName: opts.partyHint || opts.partyId });
-        } else {
-          // Allocate a new external party for end-users (the holder)
-          const key = sdk.keys.generate();
-          const party = await sdk.party.external.allocate(key, { partyHint: opts.partyHint || 'fourcast-user' });
-          setAccount({ partyId: party, partyName: party });
-        }
+      const res = await fetch('/api/canton/balance');
+      const data = await res.json();
+      if (data.success && data.canton?.configured) {
         setConnected(true);
+        setAccount({ partyId: data.canton.operatorPartyId, partyName: 'FourcastOperator' });
+        setNetwork({ id: data.canton.network, name: `Canton ${data.canton.network}` });
       } else {
-        const sdk = sdkRef.current;
-        if (!sdk) { setError('Console Wallet SDK not loaded'); return; }
-        const res = await sdk.connect({ name: opts.name || 'Fourcast', target: opts.target || 'combined' });
-        if (res?.status === 'connected' || res === 'connected') {
-          setConnected(true);
-          setAccount(await sdk.getPrimaryAccount());
-          setNetwork(await sdk.getActiveNetwork());
-        }
+        setError(data.error || 'Canton ledger not configured');
       }
     } catch (e) {
-      setError(e?.message || 'Failed to connect to Canton wallet');
+      setError(e?.message || 'Failed to connect');
     } finally {
       setConnecting(false);
     }
-  }, [USE_WALLET_SDK]);
+  }, []);
 
   const disconnect = useCallback(async () => {
-    if (!USE_WALLET_SDK) {
-      const sdk = sdkRef.current;
-      try { await sdk?.disconnect?.(); } catch { /* ignore */ }
-    }
     setConnected(false);
     setAccount(null);
     setNetwork(null);
-    setBalances(null);
-  }, [USE_WALLET_SDK]);
-
-  const refreshBalances = useCallback(async () => {
-    if (!account?.partyId) return;
-    try {
-      if (USE_WALLET_SDK) {
-        const sdk = sdkRef.current;
-        if (!sdk?.token) return;
-        const balances = await sdk.token.holding.getHoldingBalances({ partyId: account.partyId }).catch(() => []);
-        setBalances({ coins: balances });
-      } else {
-        const sdk = sdkRef.current;
-        if (!sdk || !network) return;
-        setBalances(await sdk.getCoinsBalance({ party: account.partyId, network: network.id || network }));
-      }
-    } catch (e) {
-      setError(e?.message || 'Failed to fetch Canton balances');
-    }
-  }, [account, network, USE_WALLET_SDK]);
+  }, []);
 
   const submitCommands = useCallback(async (opts) => {
-    if (!account?.partyId) throw new Error('Canton wallet not connected');
-    if (USE_WALLET_SDK) {
-      const sdk = sdkRef.current;
-      const prepared = await sdk.ledger.prepare({
-        actAs: opts.actAs || [account.partyId],
-        readAs: opts.readAs || [],
-        commands: opts.commands,
-        commandId: opts.commandId,
+    if (!connected) throw new Error('Canton ledger not connected');
+    const cmd = opts.commands?.[0];
+    if (!cmd) throw new Error('No commands');
+
+    if (cmd.CreateCommand?.templateId?.includes('PredictionMarket')) {
+      const res = await fetch('/api/canton/markets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cmd.CreateCommand.createArguments),
       });
-      const signed = await prepared.sign();
-      return sdk.ledger.execute(signed, { userId: account.partyId, partyId: account.partyId });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      return { tx: { updateId: data.market?.updateId, completionOffset: data.market?.completionOffset } };
     }
-    const sdk = sdkRef.current;
-    const payload = { partyId: account.partyId, actAs: opts.actAs || [account.partyId], readAs: opts.readAs || [], commands: opts.commands, commandId: opts.commandId };
-    return opts.wait ? sdk.prepareExecuteAndWait(payload) : sdk.prepareExecute(payload);
-  }, [account, USE_WALLET_SDK]);
+
+    if (cmd.ExerciseCommand?.choice === 'ResolveMarket') {
+      const res = await fetch('/api/canton/markets/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          marketContractId: cmd.ExerciseCommand.contractId,
+          outcome: cmd.ExerciseCommand.argument?.outcome,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      return { tx: { updateId: data.resolution?.updateId, completionOffset: data.resolution?.completionOffset } };
+    }
+
+    if (cmd.ExerciseCommand?.choice === 'Settle') {
+      const res = await fetch('/api/canton/settle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          positionContractId: cmd.ExerciseCommand.contractId,
+          resolutionContractId: cmd.ExerciseCommand.argument?.resolutionCid,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      return { tx: { updateId: data.settlement?.updateId, completionOffset: data.settlement?.completionOffset } };
+    }
+
+    throw new Error(`Unsupported command: ${Object.keys(cmd)[0]}`);
+  }, [connected]);
 
   const queryContracts = useCallback(async (templateIds = []) => {
-    if (!account?.partyId) return [];
-    if (USE_WALLET_SDK) {
-      const sdk = sdkRef.current;
-      return sdk?.ledger?.acsReader?.read({ parties: [account.partyId], templateIds }).catch(() => []) || [];
-    }
-    const sdk = sdkRef.current;
-    if (!sdk || !network) return [];
-    const res = await sdk.getContracts({ parties: [account.partyId], templateIds, network: network.id || network });
-    return res?.contracts || res || [];
-  }, [account, network, USE_WALLET_SDK]);
+    if (!connected) return [];
+    const templateStr = templateIds.join(',');
+    let type = 'open';
+    if (templateStr.includes('PositionSettled')) type = 'settled';
+    else if (templateStr.includes('SettlementObligation')) type = 'obligations';
+    else if (templateStr.includes('MarketResolution')) type = 'resolutions';
+    const res = await fetch(`/api/canton/positions?type=${type}`);
+    const data = await res.json();
+    return data.success ? (data.positions || []) : [];
+  }, [connected]);
 
   return {
-    connected, connecting, account, network, balances, extensionAvailable, error, mode,
-    connect, disconnect, refreshBalances, submitCommands, queryContracts,
+    connected, connecting, account, network, error,
+    mode: 'server-ledger', cantonEnabled,
+    connect, disconnect, submitCommands, queryContracts,
   };
 }

@@ -113,7 +113,7 @@ export async function resolveMarketOnCanton({ cantonWallet, marketContractId, ou
       templateId: marketTemplateId('PredictionMarket'),
       contractId: marketContractId,
       choice: 'ResolveMarket',
-      argument: { outcome: validOutcome },
+      choiceArgument: { outcome: validOutcome },
     },
   };
 
@@ -220,7 +220,7 @@ export async function settlePositionOnCanton({ cantonWallet, positionContractId,
       templateId: templateId('PredictionPosition'),
       contractId: positionContractId,
       choice: 'Settle',
-      argument: { resolutionCid: resolutionContractId },
+      choiceArgument: { resolutionCid: resolutionContractId },
     },
   };
 
@@ -353,7 +353,7 @@ export async function executeSettlementTransfer({ cantonWallet, obligation, obli
       templateId: templateId('SettlementObligation'),
       contractId: obligationId,
       choice: 'ConfirmTransfer',
-      argument: { transferTxId },
+      choiceArgument: { transferTxId },
     },
   };
 
