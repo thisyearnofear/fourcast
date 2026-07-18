@@ -43,6 +43,54 @@ KALSHI_API_KEY=your_api_key
 KALSHI_SECRET_KEY=your_secret_key
 ```
 
+### TxLINE World Cup (primary sports data layer)
+
+The `/world-cup` route needs these on Vercel to run in live mode. Without
+them it falls back to cached replay mode (still renders, just no live odds or
+fixtures). All values below are placeholders — see `.env.local.example` and
+the README onboarding flow for how to obtain real values.
+
+```env
+TXLINE_API_TOKEN=<activated API token from POST /api/token/activate>
+TXLINE_GUEST_JWT=<guest JWT from POST /auth/guest/start; renewable without re-subscribing>
+TXLINE_API_ORIGIN=https://txline-dev.txodds.com   # devnet host (must match the network used for subscribe)
+TXLINE_SOLANA_NETWORK=devnet
+TXLINE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
+TXLINE_SERVICE_LEVEL=1
+TXLINE_MODE=live
+TXLINE_LAST_TX_SIG=<subscribe tx signature from the on-chain subscribe transaction>
+TXLINE_SOLANA_PUBLIC_KEY=<wallet public address; non-sensitive>
+```
+
+**`TXLINE_SOLANA_SECRET_KEY` MUST NOT be set on Vercel** — it is a signing
+key used only locally to (re-)activate the subscription. The deployed app
+only needs the activated `TXLINE_API_TOKEN` + `TXLINE_GUEST_JWT` for data
+access. The guest JWT is renewable anytime via `POST /auth/guest/start`
+without re-signing.
+
+To push these from local `.env.local` to Vercel production in one shot:
+
+```bash
+# After `vercel login` (one-time, browser-based)
+bash scripts/deploy-txline-env.sh                # production env (default)
+bash scripts/deploy-txline-env.sh --env=preview  # preview env instead
+```
+
+The script reads each var from `.env.local` and pipes it to `vercel env add`
+via stdin — values never appear in argv or stdout. It skips
+`TXLINE_SOLANA_SECRET_KEY` by design.
+
+After pushing new env vars, Vercel requires a redeploy for them to take
+effect. Autodeploy picks them up on the next push; for an immediate refresh
+without a code change, use:
+
+```bash
+npx vercel redeploy <latest-prod-url> --target production
+```
+
+See [README](../README.md) for the full TxLINE onboarding flow (wallet
+generation, on-chain subscribe + activate, snapshot script).
+
 ---
 
 ## Movement Contract Deployment
