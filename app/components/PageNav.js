@@ -17,6 +17,7 @@ import WalletConnect from "@/app/components/WalletConnect";
 
 const PRIMARY_NAV = [
   { name: "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
+  { name: "World Cup", href: "/world-cup", description: "TxLINE-verified World Cup intelligence", onboardId: "world-cup" },
   { name: "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
   { name: "Agent", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
   { name: "Positions", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },

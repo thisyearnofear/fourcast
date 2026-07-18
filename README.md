@@ -1,113 +1,119 @@
-# 🔮 Fourcast: AI Agent Powered by Live Web Data for Market Intelligence
+# Fourcast World Cup — TxLINE Intelligence Terminal
 
-**AI agent using Bright Data (SERP API + Scraping Browser + Web Unlocker) to detect mispriced prediction markets across Polymarket & Kalshi in real-time.**
+**A TxLINE-powered World Cup intelligence terminal: live consensus odds, score replay, cross-venue edge detection, and Solana-verified match receipts.**
 
-![Bright Data](https://img.shields.io/badge/Bright%20Data-SERP%20%2B%20Scraping%20Browser%20%2B%20Web%20Unlocker-cyan)
-![Hackathon](https://img.shields.io/badge/Web%20Data%20UNLOCKED-Bright%20Data%20Hackathon-blue)
-![Track](https://img.shields.io/badge/Track%202-Finance%20%26%20Market%20Intelligence-green)
-![Status](https://img.shields.io/badge/Status-Live-green)
-![MCP](https://img.shields.io/badge/MCP%20Server-Compatible-purple)
+![TxLINE](https://img.shields.io/badge/TxLINE-Primary%20Data%20Source-emerald)
+![Solana](https://img.shields.io/badge/Solana-Verified%20Receipts-purple)
+![Status](https://img.shields.io/badge/Status-Live-success)
+![Track](https://img.shields.io/badge/Track-TxODDS%20Hackathon-blue)
 
 ## The Problem
 
-Prediction markets (Polymarket, Kalshi) are frequently mispriced because participants can't access real-time web intelligence at scale. Rate limits, bot detection, JavaScript-rendered pages, and geo-blocks prevent AI agents from reasoning over live data.
+Sports applications rely on opaque feeds and trusted operators for settlement. Even when match data is "live," end users have no way to verify that the score they see is the score that actually happened — and no way to compare trusted consensus against peer-to-peer market pricing in a single view.
 
 ## The Solution
 
-Fourcast uses **Bright Data's full infrastructure stack** to unlock the web for AI-powered market intelligence:
+Fourcast uses **TxLINE as its primary sports data layer** and adds three layers on top:
 
-1. **SERP API** — Structured real-time search results for any market question
-2. **Scraping Browser** — JS-rendered deep research on high-value sources (CAPTCHAs solved automatically)
-3. **Web Unlocker** — Bot-detection bypass for paywalled/protected financial sites
-4. **MCP Server** — Exposes the full pipeline to any MCP-compatible AI agent (Claude, Cursor, LangChain)
+1. **Consensus intelligence** — normalized World Cup fixtures, live consensus odds, score/event timelines
+2. **Cross-venue edge detection** — TxLINE consensus vs Polymarket YES prices, with per-team discrepancy callouts
+3. **Verifiable resolution receipts** — every finalised match surfaces its TxLINE Merkle proof, anchored on Solana
 
-The agent scrapes live evidence → synthesizes with AI → detects market mispricing → recommends trades with Kelly Criterion sizing.
-
----
-
-## How Bright Data Powers Fourcast
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    BRIGHT DATA PIPELINE                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────┐    ┌──────────────────┐    ┌──────────────┐      │
-│  │ SERP API │───▶│ Scraping Browser  │───▶│ Web Unlocker │      │
-│  │          │    │                   │    │              │      │
-│  │ Structured│    │ JS-rendered pages │    │ Bot bypass   │      │
-│  │ search    │    │ CAPTCHA solving   │    │ Geo-unblock  │      │
-│  └────┬─────┘    └────────┬──────────┘    └──────┬───────┘      │
-│       │                   │                      │              │
-│       └───────────────────┼──────────────────────┘              │
-│                           ▼                                      │
-│              ┌────────────────────────┐                          │
-│              │   AI Synthesis Engine   │                          │
-│              │   (Venice AI / LLM)     │                          │
-│              └────────────┬───────────┘                          │
-│                           ▼                                      │
-│              ┌────────────────────────┐                          │
-│              │   Edge Detection        │                          │
-│              │   Fair probability vs   │                          │
-│              │   market price          │                          │
-│              └────────────┬───────────┘                          │
-│                           ▼                                      │
-│              ┌────────────────────────┐                          │
-│              │   Polymarket / Kalshi   │                          │
-│              │   Cross-venue execution │                          │
-│              └────────────────────────┘                          │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Bright Data Integration Details
-
-| Product | Usage | Code |
-|---------|-------|------|
-| **SERP API** | Fetches top 5 structured results for each market question | `services/brightDataService.js` |
-| **Scraping Browser** | Renders JS-heavy pages (CoinDesk, Bloomberg) via Puppeteer WebSocket | `services/brightDataService.js` |
-| **Web Unlocker** | Bypasses paywalls (WSJ, FT) when Scraping Browser unavailable | `services/brightDataService.js` |
-| **MCP Server** | Exposes tools to external AI agents via Model Context Protocol | `app/api/mcp/route.js` |
-
-### Data Flow Example
-
-1. User asks: "Will Bitcoin exceed $150K by August 2026?"
-2. **SERP API** fetches 5 structured Google results (ETF flows, analyst predictions, on-chain data)
-3. **Scraping Browser** deep-scrapes the top result (e.g., CoinDesk article — JS-rendered, 16K chars)
-4. **Web Unlocker** fetches paywalled FT article as fallback
-5. AI synthesizes 27 evidence sentences → produces fair probability (58%)
-6. Compares to Polymarket price (42%) → detects +16% edge
-7. Recommends BUY YES with Kelly-sized position
+Polymarket and Kalshi remain as secondary comparison venues. TxLINE is the source of truth for fixtures, scores, and outcomes.
 
 ---
 
-## Features
+## Architecture
 
-### Web Intelligence Pipeline
-- **Real-time SERP results** with organic listings, knowledge panels, People Also Ask
-- **Deep JS scraping** with automatic CAPTCHA solving and 2-minute timeout
-- **Bot detection bypass** for rate-limited and geo-blocked sources
-- **10-minute LRU cache** (200 entries) to minimize credit usage during demos
-- **Source provenance** — every prediction shows exactly which Bright Data product fetched each evidence piece
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                       TXLINE DATA LAYER (devnet)                     │
+│  fixtures/snapshot  ·  odds/snapshot  ·  scores/snapshot  ·  proofs  │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                 │
+                                 ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                  FOURCAST WORLD CUP INTELLIGENCE                      │
+│  services/txline/txlineService.js                                     │
+│  · normalises PascalCase schema -> unified fixture shape             │
+│  · auto-refreshes guest JWT on 401                                    │
+│  · falls back to cached replays after July 19 cutoff                 │
+└───────┬──────────────────┬──────────────────┬────────────────────────┘
+        │                  │                  │
+        ▼                  ▼                  ▼
+┌──────────────┐  ┌──────────────────┐  ┌────────────────────┐
+│ Live odds +  │  │ Cross-venue edge │  │ Verifiable receipt │
+│ score panel  │  │ (Polymarket YES) │  │ Merkle proof       │
+│              │  │                  │  │                    │
+└──────────────┘  └──────────────────┘  └─────────┬──────────┘
+                                                    │
+                                                    ▼
+                                          ┌────────────────────┐
+                                          │ Solana read-only   │
+                                          │ verification       │
+                                          │ (devnet program    │
+                                          │ 6pW64...WyP2J)     │
+                                          └────────────────────┘
+```
 
-### AI Analysis
-- **Venice AI** (Llama 3.3 70B) for fast analysis (~7.5s, ~$0.01/call)
-- **Deep mode** (Qwen3-235B) for high-conviction markets (~67s, ~$0.03/call)
-- **Confidence scoring** with HIGH/MEDIUM/LOW labels
-- **Counter-signals** — AI reports what would change its mind
+### Tech Stack
+- **Primary data**: TxLINE devnet (free World Cup tier, service level 1)
+- **Settlement/verification**: Solana devnet, TxLINE `txoracle` program
+- **Secondary enrichment**: Polymarket gamma API (cross-venue pricing), Kalshi (optional)
+- **Frontend**: Next.js 16, React 19, Tailwind CSS
+- **Runtime**: Node.js 20+, standard Next.js webpack build
 
-### Market Intelligence
-- **Polymarket + Kalshi** live odds in one view
-- **Cross-platform arbitrage** detection
-- **Kelly Criterion sizing** for optimal position sizing
-- **Autonomous agent loop** — scans, filters, forecasts, executes
+---
 
-### MCP Server (Model Context Protocol)
-- `search_web` — Query Bright Data SERP API from any AI agent
-- `scrape_page` — Scrape JS-rendered pages via Scraping Browser
-- `analyze_market` — Full intelligence pipeline in one tool call
-- `get_market_odds` — Live prediction market prices
+## TxLINE Endpoints Used
 
-Compatible with Claude, Cursor, LangChain, CrewAI, and any MCP client.
+| Endpoint | Purpose | Called by |
+|----------|---------|------------|
+| `POST /auth/guest/start` | Issue renewable guest JWT | `services/txline/txlineService.js`, `scripts/txline-subscribe-and-activate.mjs` |
+| `POST /api/token/activate` | Activate API token after on-chain subscribe | `scripts/txline-subscribe-and-activate.mjs` |
+| `GET /api/fixtures/snapshot?competitionId=72` | List World Cup fixtures | `getLiveFixtures()` |
+| `GET /api/odds/snapshot/{fixtureId}` | Consensus odds snapshot | `getLiveOdds(fixtureId)` |
+| `GET /api/scores/snapshot/{fixtureId}` | Score/event snapshot | `getLiveScores(fixtureId)` |
+| `GET /api/scores/stat-validation?fixtureId=X&seq=Y&statKeys=1,2` | Merkle proof for stats | `getMerkleProof(fixtureId, seq)` |
+
+All data requests send `Authorization: Bearer ${jwt}` and `X-Api-Token: ${apiToken}` per the [TxLINE Quickstart](https://txline.txodds.com/documentation/quickstart). The service auto-refreshes the guest JWT on 401 and retries once.
+
+---
+
+## Solana Program & Network
+
+| Field | Value |
+|-------|-------|
+| Network | Devnet |
+| Program ID | `6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J` |
+| TxL Token Mint | `4Zao8ocPhmMgq7PdsYWyxvqySMGx7xb9cMftPMkEokRG` |
+| Program name | `txoracle` (v1.5.6) |
+| Free-tier service level | 1 (sampling interval = 0 — effectively real-time on devnet) |
+| Verification instruction | `validate_stat_v2` (read-only simulation, future work) |
+
+The verification flow today:
+1. Pulls the cached Merkle proof (`eventStatRoot`, `statProofs`, `mainTreeProof`, `subTreeProof`, `statsToProve`)
+2. Checks all components are present and well-formed (32-byte hashes, proof count == stats count)
+3. Marks verdict `proof-present` when the proof is internally consistent and ready for on-chain `validate_stat_v2` simulation
+
+**Honest limitation:** the `daily_scores_merkle_roots` PDA seed pattern is not in the published IDL, so on-chain PDA comparison is currently marked SKIP. Submitting a read-only `validate_stat_v2` simulation is the natural v2 enhancement.
+
+---
+
+## Replay Mode (post-July 19 cutoff)
+
+TxLINE hackathon access ends July 19, 2026 23:59 UTC. The adapter detects this automatically and switches to **cached replay mode**, serving deterministic snapshots of completed matches so the deployed demo keeps working for judges.
+
+To snapshot a real fixture (with verifiable Merkle proof):
+
+```bash
+# After onboarding (TXLINE_API_TOKEN, TXLINE_GUEST_JWT in .env.local)
+node scripts/txline-snapshot-fixture.mjs 18175981 991
+```
+
+This writes `cache/txline/replays/18175981.json` containing the fixture, score events, and the full Merkle proof from `/api/scores/stat-validation`. The `/world-cup` UI then surfaces this fixture as `final` with a "Verify on Solana" button.
+
+The demo fixture (`18175981`, France 3-0) is a real World Cup match with a real, verifiable Merkle proof anchored on the TxLINE devnet program.
 
 ---
 
@@ -121,29 +127,30 @@ cd fourcast
 npm install
 ```
 
-Tests are hermetic: `npm test` scrubs `TURSO_*` credentials and runs against a throwaway temp SQLite file (see `tests/setup.js`), so the suite can never touch the remote database or your local `fourcast.db`.
+### 2. TxLINE onboarding (free, ~2 minutes)
 
-### 2. Configure Bright Data
-
-Get $250 in credits with promo code `unlocked` at [brightdata.com](https://brightdata.com).
+Generate a Solana keypair and run the on-chain subscribe + activate flow. Devnet SOL is required for transaction fees.
 
 ```bash
-cp .env.example .env.local
+# Generate wallet (saves secret key to .env.local, chmod 600)
+node scripts/txline-generate-wallet.mjs
+
+# Fund the printed public address with devnet SOL (https://faucet.solana.com),
+# then run subscribe + activate in one step:
+node scripts/txline-subscribe-and-activate.mjs
 ```
 
-```env
-# Required: Bright Data (web intelligence)
-BRIGHT_DATA_API_KEY=your_api_key
-BRIGHT_DATA_SERP_ZONE=your_serp_zone
+The script:
+1. Submits an on-chain `subscribe` transaction (service level 1, 4 weeks) to the TxLINE devnet program
+2. Calls `POST /auth/guest/start` for a guest JWT
+3. Signs `${txSig}::${jwt}` with the wallet keypair
+4. Calls `POST /api/token/activate` to receive the API token
+5. Saves `TXLINE_API_TOKEN`, `TXLINE_GUEST_JWT`, `TXLINE_LAST_TX_SIG` to `.env.local`
+6. Smoke-tests `/api/fixtures` and prints the response shape
 
-# Optional: Deep research (JS-rendered pages)
-BRIGHT_DATA_SBR_WS_ENDPOINT=wss://brd-customer-xxx-zone-yyy@brd.superproxy.io:9222
-
-# Optional: Bot detection bypass (paywalled sites)
-BRIGHT_DATA_UNLOCKER_ZONE=your_unlocker_zone
-
-# Required: AI
-VENICE_API_KEY=your_venice_api_key
+To renew the JWT later without re-subscribing:
+```bash
+node scripts/txline-subscribe-and-activate.mjs --reactivate-only
 ```
 
 ### 3. Run
@@ -152,50 +159,62 @@ VENICE_API_KEY=your_venice_api_key
 npm run dev
 ```
 
-Open `http://localhost:3000` — the demo works even without API keys (fallback data included).
+Open `http://localhost:3000/world-cup` — TxLINE is now the primary source for fixtures, consensus odds, and verifiable receipts.
 
-### 4. Check Bright Data Status
+### 4. Build & deploy
 
 ```bash
-curl http://localhost:3000/api/brightdata/status
+npm run build
 ```
 
-### 5. Use MCP Server
+The `/world-cup` route is statically prerendered; the API routes under `/api/worldcup/*` are server-rendered on demand. Deploy to Vercel as usual — env vars (`TXLINE_API_TOKEN`, `TXLINE_GUEST_JWT`, `TXLINE_API_ORIGIN`) propagate via the Vercel dashboard.
 
-```bash
-curl -X POST http://localhost:3000/api/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+---
+
+## Project Layout
+
+```
+services/txline/
+  txlineService.js        # Adapter: live + replay modes, auto JWT refresh
+  solanaVerify.js        # Cached Merkle proof verification
+  crossVenueEdge.js      # TxLINE consensus vs Polymarket YES prices
+
+scripts/
+  txline-generate-wallet.mjs            # Generate Solana keypair
+  txline-subscribe-and-activate.mjs     # On-chain subscribe + activate
+  txline-snapshot-fixture.mjs            # Snapshot a fixture's proof to cache
+
+app/api/worldcup/
+  fixtures/route.js              # GET /api/worldcup/fixtures
+  fixtures/[fixtureId]/route.js # GET /api/worldcup/fixtures/{id}
+  replay/route.js                # GET /api/worldcup/replay?fixtureId=X
+  edge/route.js                  # GET /api/worldcup/edge?fixtureId=X
+  verify/route.js                # GET /api/worldcup/verify?fixtureId=X
+  status/route.js                # GET /api/worldcup/status
+
+app/world-cup/
+  page.js               # Server entry, metadata
+  WorldCupClient.js     # Client UI: cards, replay viewer, verify panel, edge panel
+
+cache/txline/replays/    # Cached fixture snapshots for replay mode
+
+idl/txline/
+  txoracle.mainnet.json  # Mainnet IDL (program 9ExbZjAapQ...)
+  txoracle.devnet.json   # Devnet IDL (program 6pW64gN1s...)
 ```
 
 ---
 
-## Architecture
+## Secondary Enrichment (pre-TxLINE integrations)
 
-```mermaid
-graph LR
-    BD[Bright Data] -->|SERP API| MIA(Market Intelligence Analyzer)
-    BD -->|Scraping Browser| MIA
-    BD -->|Web Unlocker| MIA
-    PM[Polymarket] -->|Live Odds| AI(AI Analysis Engine)
-    KA[Kalshi] -->|Live Odds| AI
-    MIA -->|Web Evidence| AI
-    SD[SynthData ML] -->|Forecasts| AI
-    AI -->|Edge Detection| EX[Execution Layer]
-    AI -->|Signals| DB[(Database)]
-    EX -->|Orders| PM
-    EX -->|Orders| KA
-    MCP[MCP Server] -->|Tool Calls| MIA
-    MCP -->|Tool Calls| AI
-```
+Fourcast was originally built on Bright Data + Polymarket/Kalshi aggregation. Those integrations remain and are surfaced as secondary enrichment around the TxLINE-primary World Cup experience:
 
-### Tech Stack
-- **Web Intelligence**: Bright Data (SERP API, Scraping Browser, Web Unlocker, MCP)
-- **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
-- **AI**: Venice AI (Llama 3.3 70B, Qwen3-235B)
-- **Backend**: Node.js, SQLite/Turso, Redis
-- **Markets**: Polymarket CLOB, Kalshi API
-- **Settlement**: Arc (Circle L1) for USDC
+- **Bright Data** (SERP API, Scraping Browser, Web Unlocker) — web intelligence for the broader `/markets` discovery flow
+- **Polymarket CLOB + gamma API** — used by `/api/worldcup/edge` to compute cross-venue discrepancies against TxLINE consensus
+- **Kalshi API** — secondary sports markets (optional in the World Cup view)
+- **Venice AI** — LLM for evidence synthesis in the broader agent loop
+
+The `/markets` route and `/agent` route continue to provide the original Bright Data-powered experience. The `/world-cup` route is the TxLINE-primary surface.
 
 ---
 
@@ -203,69 +222,40 @@ graph LR
 
 | Endpoint | Purpose |
 |----------|---------|
-| `POST /api/mcp` | MCP Server — AI agent tool interface |
-| `GET /api/mcp` | MCP Server capabilities discovery |
-| `GET /api/brightdata/status` | Bright Data product availability |
-| `POST /api/intelligence/analyze` | Full analysis pipeline |
-| `GET /api/markets` | Live market discovery |
-| `POST /api/agent/demo` | Streaming demo (no keys needed) |
-| `GET /api/agent/demo` | Static demo summary |
+| `GET /api/worldcup/fixtures` | World Cup fixtures (live or cached replay) |
+| `GET /api/worldcup/fixtures/{id}` | Single fixture with odds + scores merged |
+| `GET /api/worldcup/replay?fixtureId=X` | Cached event timeline for replay viewer |
+| `GET /api/worldcup/edge?fixtureId=X` | TxLINE vs Polymarket cross-venue edge |
+| `GET /api/worldcup/verify?fixtureId=X` | Solana verification result for cached proof |
+| `GET /api/worldcup/status` | Adapter mode (live vs replay), cutoff, replay count |
 
 ---
 
-## Hackathon
+## Demo Video Outline (≈ 4 minutes)
 
-**Bright Data Web Data UNLOCKED Hackathon**  
-Track 2: Finance & Market Intelligence
+1. **0:00–0:25 — Problem.** Sports apps depend on opaque feeds; users can't verify outcomes.
+2. **0:25–0:55 — Product overview.** Show `/world-cup` populated from TxLINE fixtures and consensus odds.
+3. **0:55–1:45 — Cross-venue edge.** Pick a fixture, click "Edge vs Polymarket," show the discrepancy callout.
+4. **1:45–2:35 — Historical replay.** Replay the France 3-0 fixture, show score/event updates and probability movement.
+5. **2:35–3:25 — Verification.** Click "Verify on Solana," show the Merkle root, proof components, and verdict.
+6. **3:25–3:50 — Architecture.** TxLINE is primary; Fourcast adds interpretation and transparent verification UX.
+7. **3:50–4:10 — Feedback.** Praise the normalised schema and replay/verification support; surface onboarding friction honestly.
 
-> "Multi-source synthesis engines delivering structured company or sector intelligence objects"
+---
 
-Fourcast demonstrates exactly what becomes possible when AI agents have unrestricted access to live web data:
-- Markets that were opaque become transparent
-- Information asymmetries that took hours to find are detected in seconds
-- Evidence that was locked behind bot detection is unlocked and structured
+## TxLINE Integration Feedback
 
-**Bright Data products used**: SERP API, Scraping Browser, Web Unlocker, MCP Server (4/7 products)
+**What worked well:**
+- The normalised JSON schema across competitions is genuinely pleasant to consume — one normaliser handles fixtures, odds, and scores with no per-league special-casing.
+- The free World Cup tier activates cleanly once the on-chain `subscribe` tx confirms; no payment, no KYC.
+- Historical replay via `/scores/snapshot/{fixtureId}` returns the full event stream as an ordered array, which makes building a deterministic replay UI trivial.
+- The `stat-validation` endpoint returns a complete Merkle proof bundle (`eventStatRoot`, `statProofs`, `mainTreeProof`, `subTreeProof`, `statsToProve`) in a single call — no client-side tree walking required.
 
-### Canton Network — Private Settlement Layer
-
-**Prediction markets with hidden position sizes on Canton.**
-
-Fourcast uses a three-layer settlement architecture:
-
-| Layer | Chain | Asset | Purpose |
-|-------|-------|-------|---------|
-| **Arc** | Arc testnet | USDC | Public reputation receipts — signals, subscriptions, tips |
-| **Canton** | Canton Network | cBTC / cETH | Private settlement — position sizes hidden from all third parties |
-| **EVM** | Polygon | MATIC / USDC | Venue execution — Polymarket & Kalshi order placement |
-
-Canton Network is purpose-built for regulated finance with private multi-party settlement. Fourcast runs prediction markets using **cBTC** and **cETH** as settlement assets, with position sizes and pricing hidden per-party via Daml smart contracts.
-
-**Implementation:**
-- `canton/daml/` — Daml smart contracts (PredictionMarket, PredictionPosition, PositionSettled, SettlementObligation)
-- `hooks/useCantonWallet.js` — Console Wallet SDK hook (connect, balances, submit commands)
-- `app/CantonWalletLayer.js` — React context provider (parallel to Wagmi WalletLayer)
-- `services/cantonPublisher.js` — Daml command submission service
-- `app/api/canton/` — API routes (balance, settle, positions)
-- `components/PublishConfirmModal.js` — Settlement layer selector (Arc vs Canton)
-
-**Daml contracts:**
-- `PredictionMarket` — public market definition (operator, question, asset, deadline)
-- `PredictionPosition` — private position (operator signatory, holder observer — only they see the stake)
-- `PositionSettled` — settlement receipt with payout calculation
-- `SettlementObligation` — CIP-56 transfer instruction for cBTC/cETH payout
-
-**Build & test:**
-```bash
-cd canton
-daml build                                    # Compile DAR
-daml script --dar .daml/dist/canton-1.0.0.dar \
-  --script-name Main:main --ide-ledger --static-time  # Run lifecycle test
-```
-
-The test scenario verifies: market creation → Alice takes YES (500 cBTC) → Bob takes NO (300 cBTC) → operator resolves YES → Alice settles (wins 1000 cBTC) → Bob settles (loses, 0 payout).
-
-See [`docs/CANTON.md`](./docs/CANTON.md) for full context, resources, and bounty details.
+**Where we hit friction:**
+- The onboarding flow has six steps (wallet, SOL, on-chain subscribe, guest JWT, sign message, activate) — a one-shot CLI helper would reduce setup time from ~15 minutes to ~30 seconds.
+- The published IDL does not include the seed pattern for the `daily_scores_merkle_roots` PDA, so we could not perform full on-chain `validate_stat_v2` simulation client-side without reverse-engineering the seeds.
+- Team display names appear in `/fixtures/snapshot` but not in `/scores/snapshot/{fixtureId}` — score records only carry `Participant1Id` / `Participant2Id`. We had to cross-reference against the fixtures list (and older fixtures fall off the list, leaving team names unresolvable).
+- The free devnet tier depends on the public Solana devnet RPC for SOL, which is heavily rate-limited. A bundled devnet SOL faucet (or a one-line `requestAirdrop` helper in the SDK) would smooth the very first step.
 
 ---
 
