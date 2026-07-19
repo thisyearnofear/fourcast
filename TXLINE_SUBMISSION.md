@@ -4,18 +4,28 @@
 
 **Live demo:** [https://fourcastapp.vercel.app/world-cup](https://fourcastapp.vercel.app/world-cup)
 **Program on Solana devnet:** [`AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ`](https://explorer.solana.com/address/AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ?cluster=devnet)
-**Demo video:** [video URL — fill in after recording]
+**Demo video:** Pending final recording
+
+---
+
+## Our experience with the TxLINE API
+
+The standout feature is the Merkle proof system — being able to cryptographically verify a match outcome on Solana via a CPI call to `validate_stat` is genuinely novel. The proof structure (sub-tree + main-tree proofs with `isRightSibling` bits) maps cleanly to on-chain settlement logic, and the `view()` function let us test the CPI path without submitting transactions, which accelerated development significantly. The data model (stats keyed by participant ID and period) made it straightforward to build parametric insurance policies that auto-settle based on verified results.
+
+The main friction point was team name resolution — the API returned "Team 3095" instead of "Sweden" for a World Cup Round of 32 fixture, which we had to work around with a manual ID-to-name mapping. We also found that the CPI accounts list required careful manual assembly: the `daily_scores_roots` PDA and the `txoracle` program ID both needed to be explicitly included in our `SettlePolicy` accounts struct, and the documentation didn't make this immediately clear. Proof caching was another challenge — the proof is only available in a narrow window after the match finalizes, so we had to build a replay caching system to capture and persist the full proof data (including `statToProve`, `summary`, and both tree proofs) for later use in the demo. Once cached, though, the proof verified flawlessly on-chain.
 
 ---
 
 ## What it does
 
-Fourcast is a sports prediction platform that uses **TxLINE** as its primary data source for World Cup fixtures. The core innovation is a **custom Solana program (`match-escrow`) that performs a Cross-Program Invocation (CPI) into TxLINE's `txoracle::validate_stat` instruction** to trustlessly settle parametric sports insurance policies — no trusted oracle, no intermediary, no manual verification.
+Fourcast is a sports prediction platform that uses **TxLINE** as its primary sports data source for World Cup fixtures. When live credentials are active, the app reads TxLINE fixtures, odds, score snapshots, and Merkle proofs directly. After the hackathon data cutoff, the deployed demo switches to cached TxLINE replay snapshots so judges can still inspect the same finalised proof data and Solana verification path.
+
+The core innovation is a **custom Solana program (`match-escrow`) that performs a Cross-Program Invocation (CPI) into TxLINE's `txoracle::validate_stat` instruction** to trustlessly settle parametric sports insurance policies — no trusted oracle, no intermediary, no manual verification.
 
 ### The flow
 
 1. **Lock SOL** — A user locks SOL in a Solana program PDA, specifying a match outcome condition (e.g., "France wins")
-2. **Fetch proof** — The app fetches a TxLINE Merkle proof from `/api/scores/stat-validation` (home goals key=1, away goals key=2)
+2. **Fetch proof** — The app fetches a TxLINE Merkle proof from `/api/scores/stat-validation` in live mode, or loads the cached replay proof in demo mode (home goals key=1, away goals key=2)
 3. **Settle on-chain** — Anyone clicks "Settle on-chain". The `match-escrow` program CPI-calls `txoracle::validate_stat` with the proof
 4. **Auto-payout** — If `validate_stat` returns `true` and the condition matches, SOL transfers to the recipient. Otherwise the locker is refunded
 
@@ -62,11 +72,11 @@ Most "blockchain + sports" projects use a price-feed oracle (Chainlink, Pyth, Sw
 
 | Integration | Endpoint / Program | Description |
 |---|---|---|
-| **Primary data source** | `/api/fixtures/snapshot` | World Cup fixtures, scores, and odds |
-| **Live score streaming** | `/api/scores/snapshot/{fixtureId}` | Real-time score updates with seq numbers |
-| **Merkle proof fetch** | `/api/scores/stat-validation` | On-chain verifiable proof with `isRightSibling` bits |
+| **Primary data source** | `/api/fixtures/snapshot` | World Cup fixtures, scores, and odds in live mode |
+| **Live score streaming** | `/api/scores/snapshot/{fixtureId}` | Real-time score updates with seq numbers when live credentials are active |
+| **Merkle proof fetch** | `/api/scores/stat-validation` | On-chain verifiable proof with `isRightSibling` bits in live mode |
 | **On-chain verification (CPI)** | `txoracle::validate_stat` (Solana devnet `6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J`) | The match-escrow program CPI-calls this to verify match outcomes |
-| **Replay mode** | Cached proof fixtures | Post-deadline demo fallback using cached final-fixture proofs |
+| **Replay mode** | `data/txline-replays/18175981.json` and `cache/txline/replays/18175981.json` | Post-deadline demo fallback using cached final-fixture proofs |
 
 ---
 
@@ -116,14 +126,15 @@ This transaction:
 | `components/OnChainSettlementPanel.js` | UI: lock SOL + settle on-chain |
 | `app/world-cup/WorldCupClient.js` | Main World Cup page with settlement panel |
 | `services/txline/txlineService.js` | TxLINE API integration + proof caching |
-| `cache/txline/replays/18175981.json` | Cached proof for France 3-0 (with `isRightSibling` bits) |
+| `data/txline-replays/18175981.json` | Committed fallback proof for France 3-0 (with `isRightSibling` bits), available in deployed environments |
+| `cache/txline/replays/18175981.json` | Local replay cache generated by the snapshot script |
 
 ---
 
 ## Demo script
 
 1. **Open the app** → navigate to `/world-cup`
-2. **View the fixture card** → France vs [opponent], final score 3-0
+2. **View the fixture card** → France vs Sweden, final score 3-0
 3. **See the "On-Chain Settlement Engine" panel** → shows verified result, Merkle proof node count, txoracle PDA link
 4. **Connect Solana wallet** → click "Connect Solana Wallet" (Phantom/Solflare on devnet)
 5. **Create a policy** → choose "France wins", enter 0.1 SOL, click "Lock 0.1 SOL on France"
@@ -153,6 +164,6 @@ This transaction:
 
 1. **Real CPI into TxLINE's on-chain program** — not just reading an API; the Solana program actually calls `txoracle::validate_stat` and uses its return value to determine the payout
 2. **Trustless settlement** — no trusted oracle, no multi-sig, no manual verification. The Solana runtime enforces the outcome
-3. **Production-grade code** — the Anchor program compiles, deploys, and has been tested end-to-end on devnet with a real transaction
-4. **Clean UX** — the settlement panel is integrated directly into the fixture card, with wallet connection, policy creation, and one-click settlement
+3. **Production-grade settlement path** — the Anchor program compiles, deploys, and has been tested end-to-end on devnet with a real transaction
+4. **Clean demo UX around a real settlement path** — the settlement panel is integrated directly into the fixture card, with wallet connection, policy creation, and one-click settlement
 5. **Replay-mode fallback** — cached proofs ensure the demo works even after the hackathon deadline

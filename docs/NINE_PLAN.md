@@ -140,6 +140,8 @@ Each provider exposes a typed client with: timeout, retry, cache key, error type
 
 **Primary customer: Quant Operator. Primary loop: the Operator Autopilot loop.**
 
+**Progress (Jul 2026):** `/agent` now includes an **Autonomous Decision Ledger** backed by persisted run receipts. Each recorded run shows observed markets, qualified candidates, forecasts, cross-venue verdicts, Kelly-cleared allocations, and execution/dry-run results. Cross-venue assessment now requires contract wording and resolution compatibility, reserves 3% for fees/slippage, and reports `READY` versus `REVIEW` rather than treating every title-similar price delta as arbitrage.
+
 > "I am a Polymarket operator. The agent loop finds mispricings, sizes with Kelly, attributes every fill to my Builder, and posts the result to my on-chain Track Record — so the next round of capital can verify me in one click."
 
 That is the headline loop. Everything else is a side door:

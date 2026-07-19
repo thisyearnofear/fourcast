@@ -19,7 +19,7 @@
 | **Primary RFB** | 02 Prediction Market Trader Intelligence |
 | **Secondary** | 05 Cross-Platform Arbitrage · 06 Social Trading / builder fees |
 | **Settlement story** | Arc for settlement; Polygon for venue orders |
-| **Product loop** | Scrape → Analyze → Detect Edge → Execute |
+| **Product loop** | Observe → Verify contracts → Price risk → Allocate or pass → Record receipt |
 
 Judges should never see "multi-chain" as the lead — **the AI agent is the product**, Arc is **settlement plumbing**, EVM chains are **venues**.
 
@@ -52,7 +52,7 @@ Judges should see one loop, not three products.
 
 | Criteria | Weight | Our Strategy |
 |----------|--------|--------------|
-| Agentic Sophistication | 30% | Autonomous agent loop: scan → filter → forecast → publish → execute. AI decides which markets to analyze, what confidence to assign, when to publish signals, and when to execute arbitrage. Not AI-flavored automation — the agent makes real trading decisions. |
+| Agentic Sophistication | 30% | Autonomous agent loop: scan → verify cross-venue contract equivalence → forecast → Kelly-size → execute or decline → persist a decision receipt. The agent records evidence, risk gates, and rationale for every allocation and pass. |
 | Traction | 30% | Live product with real users. Deploy on Arc testnet, get testnet USDC flowing through signals/tips/trades. Use `arc-canteen update traction` to log progress. |
 | Circle Tool Usage | 20% | CCTP/Gateway (cross-chain USDC for multi-venue trading), Circle Wallets (agent-managed accounts), Paymaster (USDC gas), USYC (idle capital yield), App Kit (Bridge/Swap/Send in UI). |
 | Innovation | 20% | Builder code monetization (Polymarket V2), reasoning traces on-chain, Kelly Criterion sizing, cross-platform prediction market arb on Arc. |
@@ -182,7 +182,7 @@ Fourcast is an AI-powered prediction market intelligence agent that:
 2. **Detects edge** — Compares AI probability to market odds, flagging mispriced contracts (>5% edge threshold, with >30% override for suspicious opportunities)
 3. **Sizes positions** — Kelly Criterion/optimal f sizing based on edge magnitude and confidence level
 4. **Publishes on-chain signals** — Verifiable predictions settled on Arc with USDC tipping
-5. **Executes cross-platform arbitrage** — Detects price discrepancies between Polymarket and Kalshi
+5. **Assesses cross-platform opportunities** — compares Polymarket and Kalshi contracts for semantic and resolution compatibility, estimates a conservative fee/slippage reserve, then marks each pair `READY` or `REVIEW`
 6. **Tracks track record** — Brier scores, win rates, calibration curves, accuracy streaks
 7. **Monetizes via builder codes** — Polymarket V2 builder integration earns USDC per fill
 
@@ -190,14 +190,14 @@ Fourcast is an AI-powered prediction market intelligence agent that:
 - Which prediction markets have mispriced probabilities based on multi-source analysis
 - Optimal bet sizing using Kelly Criterion based on edge and confidence
 - When to hedge positions or close early for profit
-- Which cross-platform arbitrage opportunities are profitable after fees
+- Whether a cross-platform pair is contract-compatible and profitable after a conservative cost reserve
 - When to publish signals on-chain vs keep private
 - Which reasoning traces to pin on-chain for verification
 
 ### What We Build
 - Prediction market analytics with AI-driven probability estimates (already live)
 - Autonomous betting agent with Kelly Criterion position sizing (enhanced for Arc)
-- Cross-market arbitrage detection and execution (already live)
+- Cross-market contract assessment and autonomous execution posture (already live; live venue execution remains credential- and safety-gated)
 - On-chain signal publishing with USDC-denominated tipping (ported to Arc)
 - Builder code monetization through Polymarket V2 (new)
 - Reasoning trace verification on Arc (new)

@@ -914,10 +914,11 @@ export async function getAutopilotExecutionsSince(unixSeconds, limit = 200) {
  */
 export async function saveAgentRun(runData) {
   try {
+    await migrationsReady;
     await execute(
       `INSERT INTO agent_runs (
-        id, config, markets_scanned, candidates_filtered, forecasts_made, timestamp
-      ) VALUES (?, ?, ?, ?, ?, ?)`,
+        id, config, markets_scanned, candidates_filtered, forecasts_made, timestamp, run_mode, summary
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         runData.id,
         JSON.stringify(runData.config),
@@ -925,12 +926,53 @@ export async function saveAgentRun(runData) {
         runData.candidatesFiltered,
         runData.forecastsMade,
         runData.timestamp,
+        runData.runMode || 'advisory',
+        JSON.stringify(runData.summary || {}),
       ]
     );
     return { success: true };
   } catch (error) {
     console.error('Failed to save agent run:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Recent autonomous decision receipts. Summaries are parsed here so API and UI
+ * consumers cannot accidentally expose a database-encoded JSON string.
+ */
+export async function getAgentRunLedger(limit = 12) {
+  try {
+    await migrationsReady;
+    const rows = await query(
+      `SELECT id, config, markets_scanned, candidates_filtered, forecasts_made,
+              timestamp, created_at, run_mode, summary
+       FROM agent_runs
+       ORDER BY timestamp DESC
+       LIMIT ?`,
+      [limit]
+    );
+
+    return {
+      success: true,
+      runs: rows.map((row) => ({
+        ...row,
+        config: safeJsonParse(row.config, {}),
+        summary: safeJsonParse(row.summary, {}),
+      })),
+    };
+  } catch (error) {
+    console.error('Failed to get agent run ledger:', error);
+    return { success: false, error: error.message, runs: [] };
+  }
+}
+
+function safeJsonParse(value, fallback) {
+  if (!value || typeof value !== 'string') return fallback;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
   }
 }
 

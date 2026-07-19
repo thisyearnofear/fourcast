@@ -209,6 +209,25 @@ describe('arbitrageService.findSimilarMarkets', () => {
   it('handles empty market list', () => {
     expect(arbitrageService.findSimilarMarkets([])).toEqual([]);
   });
+
+  it('marks a semantically equivalent pair READY only after a cost reserve', () => {
+    const markets = [
+      { title: 'Will the Fed cut rates by Q2 2025?', resolutionDate: '2025-06-30', volume24h: 50000, currentOdds: { yes: 0.40 }, platform: 'polymarket' },
+      { title: 'Will the Federal Reserve cut interest rates by Q2 2025?', resolutionDate: '2025-06-30', volume24h: 45000, currentOdds: { yes: 0.55 }, platform: 'kalshi' },
+    ];
+    const [result] = arbitrageService.findSimilarMarkets(markets);
+    expect(result.executionReady).toBe(true);
+    expect(parseFloat(result.netSpread)).toBeCloseTo(12, 1);
+    expect(result.decision.verdict).toBe('READY');
+  });
+
+  it('rejects contracts with incompatible resolution dates', () => {
+    const markets = [
+      { title: 'Will the Fed cut rates by Q2 2025?', resolutionDate: '2025-06-30', currentOdds: { yes: 0.40 }, platform: 'polymarket' },
+      { title: 'Will the Fed cut rates by Q2 2025?', resolutionDate: '2025-12-31', currentOdds: { yes: 0.70 }, platform: 'kalshi' },
+    ];
+    expect(arbitrageService.findSimilarMarkets(markets)).toEqual([]);
+  });
 });
 
 describe('arbitrageService.detectOpportunities', () => {

@@ -4,6 +4,7 @@ import React from 'react';
 import { Bot, FlaskConical, ArrowRight } from 'lucide-react';
 import { AppShell } from '@/app/components/PageNav';
 import { AgentDashboard } from '@/components/AgentDashboard';
+import { AgentRunLedger } from '@/components/AgentRunLedger';
 import NarrativeSteps from '@/components/NarrativeSteps';
 import { BRAND } from '@/constants/brand';
 
@@ -27,6 +28,7 @@ export default function AgentPage() {
       }
     >
       <AgentDashboard />
+      <AgentRunLedger />
 
       {/* Labs CTA */}
       <div className="mt-12 text-center">
