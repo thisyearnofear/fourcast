@@ -1,10 +1,12 @@
 'use client';
 import { useState } from 'react';
 import { UserPreferences } from '@/services/userPreferences';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export default function LocationSettings({ isOpen, onClose, isNight, currentLocationName }) {
   const [mode, setMode] = useState(UserPreferences.getLocationMode());
   const [customCity, setCustomCity] = useState(UserPreferences.getUserLocation() || '');
+  const modalRef = useFocusTrap({ isOpen, onClose });
 
   const handleSave = () => {
     if (mode === 'manual' && customCity.trim()) {
@@ -30,8 +32,14 @@ export default function LocationSettings({ isOpen, onClose, isNight, currentLoca
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative max-w-md w-full rounded-2xl p-6 border border-white/10 backdrop-blur-xl bg-black/40`}>
-        <h3 className="text-lg font-light text-white mb-1">Weather Location</h3>
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="location-settings-heading"
+        className={`relative max-w-md w-full rounded-2xl p-6 border border-white/10 backdrop-blur-xl bg-black/40`}
+      >
+        <h3 id="location-settings-heading" className="text-lg font-light text-white mb-1">Weather Location</h3>
         <p className="text-xs text-white/40 mb-6">
           Current: {currentLocationName || 'Unknown'}
         </p>

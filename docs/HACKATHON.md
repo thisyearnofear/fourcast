@@ -244,7 +244,7 @@ Our multi-domain analysis (weather × sports × crypto × politics) is already a
 ## Key Resources
 
 - **ARC CLI**: `uv tool install git+https://github.com/the-canteen-dev/ARC-cli`
-- **Arc Node Docs**: https://arc-node.thecanteenapp.com/
+- **Arc Node Docs**: https://rpc.testnet.arc.network/
 - **Hackathon Page**: https://agora.thecanteenapp.com/
 - **Arc Developer Docs**: https://docs.arc.network
 - **Circle Developer Docs**: https://developers.circle.com

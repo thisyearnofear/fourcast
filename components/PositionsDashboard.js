@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { Briefcase, Wallet } from 'lucide-react';
+import { ARC_EXPLORER_TX } from '@/constants/appConstants';
 
 const PAGE_SIZE = 10;
 
@@ -322,6 +323,22 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
         </div>
 
         <div className="flex items-center gap-2">
+          {/* On-chain Arc receipt link — only for ARC-origin signals. APTOS/MOVEMENT
+              are display-only legacy chains (see constants/appConstants.js); we
+              intentionally don't link to their explorers here since positions
+              don't carry their own on-chain receipts. */}
+          {position.receipt_tx_hash && position.receipt_chain_origin === 'ARC' && (
+            <a
+              href={ARC_EXPLORER_TX(position.receipt_tx_hash)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-medium text-emerald-300/90 transition-colors hover:text-emerald-200"
+              title={`View on Arc · ${position.receipt_tx_hash}`}
+              aria-label={`View Arc receipt ${position.receipt_tx_hash}`}
+            >
+              Arc ↗
+            </a>
+          )}
           <span className={`text-[10px] ${subtleText}`}>{timestamp}</span>
           {onClose && (
             <button

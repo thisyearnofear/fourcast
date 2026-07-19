@@ -10,6 +10,7 @@ import ProfileDrawer from '@/app/components/ProfileDrawer';
 import SignalFilters from '@/app/components/signals/SignalFilters';
 import SignalCard from '@/app/components/signals/SignalCard';
 import LeaderboardTab from '@/app/components/signals/LeaderboardTab';
+import OperatorSpotlight from '@/app/components/signals/OperatorSpotlight';
 import MySignalsTab from '@/app/components/signals/MySignalsTab';
 import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ChainSelector } from '@/components/ChainSelector';
@@ -189,8 +190,11 @@ export default function SignalsPage() {
         return date.toLocaleString();
     };
 
+    // Normalize to lowercase — the DB stores addresses lowercased (see
+    // services/db.js saveSignal/openPosition) but spotlight cards may carry a
+    // checksummed variant. Cheap insurance against a 404 on the ProfileDrawer.
     const handleProfileClick = (address) => {
-        setSelectedProfile(address);
+        setSelectedProfile(typeof address === 'string' ? address.toLowerCase() : address);
     };
 
     return (
@@ -214,6 +218,25 @@ export default function SignalsPage() {
             }
         >
             <>
+                    {/* Operator Spotlight — framing line + 3-analyst proof strip.
+                        Surfaces the highest-tracked authors so first-time visitors
+                        see "this is a feed of verified operators" within 5 seconds
+                        of landing. Renders above every tab so the acquisition-loop
+                        promise isn't gated on which tab the visitor opens. */}
+                    <div className="mb-8">
+                        <p className="mb-4 max-w-2xl text-sm font-light leading-relaxed text-white/[0.55]">
+                            Browse signals from verified Quant Operators. Follow analysts whose{' '}
+                            <span className="text-emerald-300">Audited Track Record</span>{' '}
+                            matches your conviction — every fill, outcome, and Brier score lands on Arc.
+                        </p>
+                        {leaderboard.length > 0 && activeTab !== 'leaderboard' && (
+                            <OperatorSpotlight
+                                operators={leaderboard}
+                                onProfileClick={handleProfileClick}
+                            />
+                        )}
+                    </div>
+
                     {/* EVM Network Selector (Trading chains) */}
                     {chains?.evm?.connected && (
                         <div className="mb-6">

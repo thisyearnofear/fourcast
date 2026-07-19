@@ -3,10 +3,15 @@
 import { useState, useEffect } from 'react';
 import useKalshiAuth from '@/hooks/useKalshiAuth';
 import KalshiLoginModal from './KalshiLoginModal';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export default function KalshiOrderPanel({ market, isNight, onClose, embedded = false }) {
     const { token, isAuthenticated, checkAuth } = useKalshiAuth();
     const [showLogin, setShowLogin] = useState(false);
+    // Focus trap is active only when this component is the top-level modal
+    // (standalone). When embedded inside ArbitrageExecutionPanel, the parent
+    // owns the trap and ARIA so we don't compete with it.
+    const modalRef = useFocusTrap({ isOpen: !embedded, onClose });
     const [balance, setBalance] = useState(null);
     const [orderSide, setOrderSide] = useState('yes');
     const [orderType, setOrderType] = useState('limit');
@@ -82,6 +87,10 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
 
     const content = (
         <div
+            ref={!embedded ? modalRef : undefined}
+            role={!embedded ? 'dialog' : undefined}
+            aria-modal={!embedded ? 'true' : undefined}
+            aria-labelledby={!embedded ? 'kalshi-order-heading' : undefined}
             className={`${embedded ? 'h-full flex flex-col' : `${glassPanel} rounded-2xl max-w-lg w-full p-8 shadow-2xl my-8`}`}
             onClick={(e) => e.stopPropagation()}
         >
@@ -89,7 +98,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
             {!embedded && (
                 <div className="flex items-start justify-between mb-6">
                     <div className="flex-1 pr-4">
-                        <h2 className={`text-2xl font-light ${textColor} mb-1 line-clamp-2`}>
+                        <h2 id="kalshi-order-heading" className={`text-2xl font-light ${textColor} mb-1 line-clamp-2`}>
                             {market.title || market.market_title}
                         </h2>
                         <p className={`text-sm ${textColor} opacity-60`}>Kalshi Market Trading</p>

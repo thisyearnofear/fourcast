@@ -1,4 +1,5 @@
 import { ConfidenceBadge, EfficiencyBadge } from './SignalBadges';
+import { ARC_EXPLORER_TX } from '@/constants/appConstants';
 import { PersonalStatsDashboard } from '@/components/PersonalStatsDashboard';
 import { MarketInsightsTimeline } from '@/components/MarketInsightsTimeline';
 import EvidenceBlock from '@/components/EvidenceBlock';
@@ -148,7 +149,7 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
                                             <span className="font-medium">On-chain:</span>{' '}
                                             <a
                                                 href={signal.chain_origin === 'ARC'
-                                                    ? `https://arc-explorer.thecanteenapp.com/tx/${signal.tx_hash}`
+                                                    ? ARC_EXPLORER_TX(signal.tx_hash)
                                                     : `https://explorer.aptoslabs.com/txn/${signal.tx_hash}?network=testnet`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"

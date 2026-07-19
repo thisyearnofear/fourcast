@@ -33,13 +33,13 @@ const arcTestnet = {
   nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
   rpcUrls: {
     default: {
-      http: [process.env.ARC_RPC_URL || 'https://arc-node.thecanteenapp.com/'],
+      http: [process.env.ARC_RPC_URL || 'https://rpc.testnet.arc.network/'],
     },
   },
 };
 
 async function main() {
-  const rpcUrl = process.env.ARC_RPC_URL || 'https://arc-node.thecanteenapp.com/';
+  const rpcUrl = process.env.ARC_RPC_URL || 'https://rpc.testnet.arc.network/';
   const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
   const usdcAddress = process.env.NEXT_PUBLIC_USDC_TOKEN;
   const treasuryAddress = process.env.TREASURY_ADDRESS;

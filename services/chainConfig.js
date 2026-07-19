@@ -53,7 +53,7 @@ const CHAIN_CONFIGS = {
     feeBpsKey: 'PREDICTION_FEE_BPS_ARC',
     rpcUrlKey: 'ARC_RPC_URL',
     signerKeyKey: 'DEPLOYER_PRIVATE_KEY',
-    fallbackRpc: 'https://arc-node.thecanteenapp.com/',
+    fallbackRpc: 'https://rpc.testnet.arc.network/',
     usdcAddress: '0x3600000000000000000000000000000000000000',
   },
 }

@@ -116,9 +116,17 @@ export const EVM_NETWORKS = {
     name: 'Arc',
     display: 'Arc Testnet (USDC)',
     icon: '🌀',
-    rpcUrl: 'https://arc-node.thecanteenapp.com/',
-    explorerUrl: 'https://arc-explorer.thecanteenapp.com/',
+    rpcUrl: 'https://rpc.testnet.arc.network/',
+    explorerUrl: 'https://explorer.testnet.arc.network/',
     isDefault: false
   }
 };
+
+// Arc block-explorer URL helper. Strips the trailing slash from
+// EVM_NETWORKS.ARC.explorerUrl so callers don't have to remember whether the
+// constant includes one. Use this anywhere an Arc tx-hash link is built — keeps
+// the URL in one place and kills future url-drift bugs (the previous round of
+// URL swaps shipped explorer strings as raw templates in 3 places).
+export const ARC_EXPLORER_TX = (txHash) =>
+  `${EVM_NETWORKS.ARC.explorerUrl.replace(/\/$/, '')}/tx/${txHash}`;
 

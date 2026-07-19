@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 /**
  * AnalysisConfigModal
@@ -147,6 +148,7 @@ export default function AnalysisConfigModal({
     });
   };
 
+  const modalRef = useFocusTrap({ isOpen, onClose });
   if (!isOpen) return null;
 
   return (
@@ -158,12 +160,18 @@ export default function AnalysisConfigModal({
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-slate-900 border border-white/20 rounded-2xl shadow-2xl">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="analysis-config-heading"
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-slate-900 border border-white/20 rounded-2xl shadow-2xl"
+      >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-white/10 p-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-white">Configure Analysis</h2>
+              <h2 id="analysis-config-heading" className="text-xl font-semibold text-white">Configure Analysis</h2>
               <p className="text-sm text-white/50 mt-1">Select data sources and providers</p>
             </div>
             <button

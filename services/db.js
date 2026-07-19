@@ -291,11 +291,35 @@ export async function getUserPositions(userAddress, status = 'all') {
     const params = status === 'all'
       ? [userAddress.toLowerCase()]
       : [userAddress.toLowerCase(), status];
+    // LEFT-correlated subquery surfaces the most-recent on-chain signal receipt
+    // for each position so the /positions UI can render an "Arc receipt" link
+    // without forcing a schema migration. We concatenate tx_hash + chain_origin
+    // into a single 'tx|origin' value and split client-side below — one subquery
+    // per row, not two. LIMIT 1 guards against cartesian explosion if a user
+    // published multiple signals for the same market_id. TODO(v2): consider a
+    // migration to add tx_hash directly to the positions table.
     const rows = await query(
-      `SELECT * FROM positions WHERE user_address = ? ${statusFilter} ORDER BY created_at DESC`,
+      `SELECT p.*,
+         (SELECT s.tx_hash || '|' || s.chain_origin FROM signals s
+          WHERE s.event_id = p.market_id
+            AND LOWER(s.author_address) = LOWER(p.user_address)
+            AND s.tx_hash IS NOT NULL
+          ORDER BY s.timestamp DESC LIMIT 1) AS receipt
+       FROM positions p
+       WHERE p.user_address = ? ${statusFilter}
+       ORDER BY p.created_at DESC`,
       params
     );
-    return { success: true, positions: rows };
+    const positions = rows.map((p) => {
+      if (!p.receipt) return p;
+      const [txHash, chainOrigin] = String(p.receipt).split('|');
+      return {
+        ...p,
+        receipt_tx_hash: txHash || null,
+        receipt_chain_origin: chainOrigin || null,
+      };
+    });
+    return { success: true, positions };
   } catch (error) {
     return { success: false, error: error.message, positions: [] };
   }

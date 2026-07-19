@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import useKalshiAuth from '@/hooks/useKalshiAuth';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight = true }) {
     const [email, setEmail] = useState('');
@@ -9,6 +10,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const { setAuth } = useKalshiAuth();
+    const modalRef = useFocusTrap({ isOpen, onClose });
 
     // Glass CSS classes (DRY)
     const glassPanel = 'glass-heavy';
@@ -53,10 +55,16 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className={`${glassPanel} rounded-2xl max-w-md w-full p-8 shadow-2xl`}>
+            <div
+                ref={modalRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="kalshi-modal-heading"
+                className={`${glassPanel} rounded-2xl max-w-md w-full p-8 shadow-2xl`}
+            >
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h2 className={`text-2xl font-light ${textColor} mb-2`}>Connect to Kalshi</h2>
+                        <h2 id="kalshi-modal-heading" className={`text-2xl font-light ${textColor} mb-2`}>Connect to Kalshi</h2>
                         <p className={`text-sm ${textColor} opacity-70`}>
                             Log in with your Kalshi account to trade directly from Fourcast
                         </p>

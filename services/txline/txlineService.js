@@ -31,6 +31,8 @@ const API_TOKEN = process.env.TXLINE_API_TOKEN || null;
 const REPLAY_DIR =
   process.env.TXLINE_REPLAY_DIR ||
   path.join(process.cwd(), 'cache', 'txline', 'replays');
+// Fallback: data/txline-replays/ is committed to git and available on Vercel
+const REPLAY_DIR_FALLBACK = path.join(process.cwd(), 'data', 'txline-replays');
 
 // After this date live access is expected to be revoked; auto mode flips to replay
 const TXLINE_LIVE_CUTOFF = new Date('2026-07-19T23:59:59Z').getTime();
@@ -173,19 +175,25 @@ export async function getMerkleProof(fixtureId, seq, statKeys = [1, 2]) {
 /* --------------------------------- replay -------------------------------- */
 
 function replayFile(fixtureId) {
-  return path.join(REPLAY_DIR, `${fixtureId}.json`);
+  const primary = path.join(REPLAY_DIR, `${fixtureId}.json`);
+  if (fs.existsSync(primary)) return primary;
+  return path.join(REPLAY_DIR_FALLBACK, `${fixtureId}.json`);
 }
 
 export function listReplayFixtureIds() {
-  try {
-    if (!fs.existsSync(REPLAY_DIR)) return [];
-    return fs
-      .readdirSync(REPLAY_DIR)
-      .filter((f) => f.endsWith('.json'))
-      .map((f) => f.replace(/\.json$/, ''));
-  } catch {
-    return [];
+  const ids = new Set();
+  for (const dir of [REPLAY_DIR, REPLAY_DIR_FALLBACK]) {
+    try {
+      if (!fs.existsSync(dir)) continue;
+      fs.readdirSync(dir)
+        .filter((f) => f.endsWith('.json'))
+        .map((f) => f.replace(/\.json$/, ''))
+        .forEach((id) => ids.add(id));
+    } catch {
+      // ignore
+    }
   }
+  return Array.from(ids);
 }
 
 export function readReplayFixture(fixtureId) {
@@ -209,6 +217,38 @@ export function writeReplayFixture(fixtureId, payload) {
     console.error(`[txline] failed to write replay ${fixtureId}:`, err.message);
     return false;
   }
+}
+
+/**
+ * Build the proof metadata object attached to a fixture.
+ * When the full on-chain proof is available (statToProve, summary, Merkle
+ * nodes with isRightSibling), include it so the settlement UI can CPI-call
+ * txoracle::validate_stat without an extra round-trip.
+ */
+function buildProofMeta(r) {
+  const p = r.proof;
+  if (!p?.eventStatRoot) return null;
+  const meta = {
+    merkleRoot: p.eventStatRoot,
+    dailyRootPda: p.dailyRootPda || null,
+    programId: p.programId || null,
+    sequence: p.sequence ?? null,
+    statKeys: p.statKeys || [],
+    present: true,
+  };
+  // Include the full on-chain proof if available (for settlement CPI)
+  if (p.statToProve && p.summary?.updateStats) {
+    meta.statToProve = p.statToProve;
+    meta.statToProve2 = p.statToProve2 || null;
+    meta.eventStatRoot = p.eventStatRoot;
+    meta.summary = p.summary;
+    meta.statProof = p.statProof || [];
+    meta.statProof2 = p.statProof2 || [];
+    meta.subTreeProof = p.subTreeProof || [];
+    meta.mainTreeProof = p.mainTreeProof || [];
+    meta.ts = p.ts || p.summary.updateStats.minTimestamp;
+  }
+  return meta;
 }
 
 /* ------------------------------- normalize ------------------------------- */
@@ -258,6 +298,16 @@ export function normalizeFixture(f = {}) {
   const awayName = f.Participant2 || (f.away && f.away.name) || f.away_team?.name || 'TBD';
   const homeId = f.Participant1Id ?? (f.home && f.home.id) ?? null;
   const awayId = f.Participant2Id ?? (f.away && f.away.id) ?? null;
+
+  // TxLINE sometimes returns placeholder names like "Team 3095" for teams
+  // it hasn't resolved yet. Map known participant IDs to their real names.
+  const TEAM_NAME_OVERRIDES = {
+    3095: 'Sweden',
+  };
+  const resolvedHomeName =
+    (homeId && TEAM_NAME_OVERRIDES[homeId]) ? TEAM_NAME_OVERRIDES[homeId] : homeName;
+  const resolvedAwayName =
+    (awayId && TEAM_NAME_OVERRIDES[awayId]) ? TEAM_NAME_OVERRIDES[awayId] : awayName;
   const homeIsHome = f.Participant1IsHome ?? (f.home && f.home.isHome) ?? true;
   const fixtureId = f.FixtureId ?? f.fixture_id ?? f.id;
   const competition = f.Competition || f.competition || null;
@@ -279,14 +329,14 @@ export function normalizeFixture(f = {}) {
     venue: f.venue || f.Venue || null,
     home: {
       id: homeId,
-      name: homeName,
+      name: resolvedHomeName,
       code: null,
       isHome: homeIsHome,
       score: null, // populated by normalizeScoresResponse
     },
     away: {
       id: awayId,
-      name: awayName,
+      name: resolvedAwayName,
       code: null,
       isHome: !homeIsHome,
       score: null,
@@ -468,15 +518,19 @@ export async function getFixtures() {
       for (const f of fixtures) {
         if (replayIds.has(f.id)) {
           const r = readReplayFixture(f.id);
-          if (r?.proof?.eventStatRoot) {
-            f.proof = {
-              merkleRoot: r.proof.eventStatRoot,
-              dailyRootPda: r.proof.dailyRootPda || null,
-              programId: r.proof.programId || null,
-              sequence: r.proof.sequence ?? null,
-              statKeys: r.proof.statKeys || [],
-              present: true,
-            };
+          const proofMeta = r ? buildProofMeta(r) : null;
+          if (proofMeta) {
+            f.proof = proofMeta;
+            // Surface the final score from the proof so the card shows it
+            if (proofMeta.statToProve) {
+              const homeScore = Number(proofMeta.statToProve.value);
+              const awayScore = proofMeta.statToProve2 ? Number(proofMeta.statToProve2.value) : 0;
+              console.log('[txline] Setting score from proof for fixture', f.id, ':', homeScore, '-', awayScore);
+              // Replace the home/away objects to ensure the score is set
+              f.home = { ...f.home, score: homeScore };
+              f.away = { ...f.away, score: awayScore };
+              f.status = 'final';
+            }
           }
         }
       }
@@ -488,15 +542,9 @@ export async function getFixtures() {
         const r = readReplayFixture(id);
         if (!r) continue;
         const f = normalizeFixture(r.fixture || r);
-        if (r.proof?.eventStatRoot) {
-          f.proof = {
-            merkleRoot: r.proof.eventStatRoot,
-            dailyRootPda: r.proof.dailyRootPda || null,
-            programId: r.proof.programId || null,
-            sequence: r.proof.sequence ?? null,
-            statKeys: r.proof.statKeys || [],
-            present: true,
-          };
+        const proofMeta = buildProofMeta(r);
+        if (proofMeta) {
+          f.proof = proofMeta;
           const statsToProve = r.proof?.statsToProve || [];
           const statHome = statsToProve.find((s) => s.key === 1)?.value;
           const statAway = statsToProve.find((s) => s.key === 2)?.value;
@@ -518,15 +566,9 @@ export async function getFixtures() {
     .filter(Boolean)
     .map((r) => {
       const f = normalizeFixture(r.fixture || r);
-      if (r.proof?.eventStatRoot) {
-        f.proof = {
-          merkleRoot: r.proof.eventStatRoot,
-          dailyRootPda: r.proof.dailyRootPda || null,
-          programId: r.proof.programId || null,
-          sequence: r.proof.sequence ?? null,
-          statKeys: r.proof.statKeys || [],
-          present: true,
-        };
+      const proofMeta = buildProofMeta(r);
+      if (proofMeta) {
+        f.proof = proofMeta;
         // Surface the final score so the card shows it
         const statsToProve = r.proof?.statsToProve || [];
         const statHome = statsToProve.find((s) => s.key === 1)?.value;

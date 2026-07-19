@@ -2,17 +2,18 @@
  * Solana verification service for TxLINE Merkle proofs.
  *
  * Strategy: read-only verification via the public Solana JSON-RPC.
- * We do NOT build a custom Anchor program - the hackathon-winning move is to
- * (a) fetch the daily-root PDA that TxLINE anchors each day, (b) recompute the
- * Merkle root client-side from the cached proof path, and (c) compare against
- * the on-chain value. Optionally we submit a `simulateTransaction` against
- * TxLINE's `validate_stat` instruction when its IDL is available.
+ * We fetch the daily-root PDA that TxLINE anchors each day, recompute the
+ * Merkle root client-side from the cached proof path, and compare against
+ * the on-chain value. The match-escrow program (AMT4n3imwTgHEpafK...
+ * /onchain) then CPI-calls TxLINE's validate_stat for full settlement.
  *
  * Env:
  *   SOLANA_RPC_URL         - default Helius public devnet/mainnet RPC
  *   HELIUS_API_KEY         - optional, upgrades to Helius authenticated RPC
  *   TXLINE_PROGRAM_ID      - TxLINE validation program on Solana
  */
+
+import { deriveDailyScoresPda } from './settlementService.js';
 
 const DEFAULT_RPC = 'https://api.mainnet-beta.solana.com';
 
@@ -129,14 +130,15 @@ function tryReadDailyRoot(accountData) {
  *   1. inputs-present: programId, eventStatRoot, statProofs, statsToProve all populated
  *   2. proof-well-formed: each proof path is non-empty and each hash is 32 bytes
  *   3. stat-roots-present: eventStatRoot and eventStatsSubTreeRoot are 32-byte hex
- *   4. onchain-pda (best-effort): if we can derive the daily_scores_merkle_roots
- *      PDA we fetch the account and compare; otherwise mark as 'skipped'
+ *   4. stat-proof-count: each stat has a corresponding proof path
+ *   5. onchain-pda: derive the daily_scores_roots PDA, fetch on-chain, compare root
  *
  * Verdict:
- *   'verified'    — on-chain PDA fetched and matches eventStatRoot
- *   'proof-present' — all proof components complete; ready for on-chain validate_stat_v2 simulation
- *   'incomplete'  — required components missing
- *   'failed'     — components present but inconsistent
+ *   'verified'      — on-chain PDA fetched and its root matches eventStatRoot
+ *   'proof-present' — all proof components complete; PDA not checked (no timestamp)
+ *   'incomplete'    — required components missing
+ *   'onchain-mismatch' — root on chain differs from eventStatRoot
+ *   'onchain-error' — failed to fetch or decode the PDA
  */
 export async function verifyFixtureProof(proof, fixture) {
   const programId = proof.programId || process.env.TXLINE_PROGRAM_ID || null;
@@ -147,9 +149,11 @@ export async function verifyFixtureProof(proof, fixture) {
   const mainTreeProof = Array.isArray(proof.mainTreeProof) ? proof.mainTreeProof : [];
   const subTreeProof = Array.isArray(proof.subTreeProof) ? proof.subTreeProof : [];
 
+  const ts = proof.ts || proof.summary?.updateStats?.minTimestamp || null;
+
   const result = {
     programId,
-    dailyRootPda: proof.dailyRootPda || null,
+    dailyRootPda: null,
     expectedRoot,
     subTreeRoot,
     fixtureId: fixture?.id || proof.fixtureId || null,
@@ -161,11 +165,10 @@ export async function verifyFixtureProof(proof, fixture) {
     },
     checks: [],
     verdict: 'unknown',
-    explorerUrl: proof.dailyRootPda
-      ? `https://explorer.solana.com/address/${proof.dailyRootPda}`
-      : null,
+    explorerUrl: null,
     rpc: getRpcUrl().replace(/\?api-key=.*/, '?api-key=***'),
-    nextStep: 'Submit a read-only validate_stat_v2 simulation to the TxLINE program to confirm on-chain.',
+    nextStep: null,
+    onChainRoot: null,
   };
 
   // Check 1: inputs present
@@ -218,22 +221,87 @@ export async function verifyFixtureProof(proof, fixture) {
     detail: `${statsToProve.length} stats, ${statProofs.length} proof paths`,
   });
 
-  // Check 5 (best-effort): on-chain PDA. The daily_scores_merkle_roots PDA is
-  // derived from the epoch day; without the exact seed pattern in the IDL, we
-  // mark this as skipped and surface the explorer link to the program.
-  result.checks.push({
-    name: 'onchain-pda',
-    ok: null,
-    detail: 'PDA derivation requires the daily_scores_merkle_roots seed pattern (not in IDL). Use validate_stat_v2 simulation for full on-chain verification.',
-  });
+  // Check 5: on-chain PDA comparison
+  // Derive the daily_scores_roots PDA from the proof timestamp, fetch on-chain,
+  // and compare the stored root with our eventStatRoot.
+  const rootNoPrefix = rootHex;
+  if (ts) {
+    try {
+      const [dailyPda] = deriveDailyScoresPda(ts);
+      result.dailyRootPda = dailyPda.toBase58();
+      result.explorerUrl = `https://explorer.solana.com/address/${result.dailyRootPda}`;
 
-  // Final verdict: proof is complete and well-formed
+      const account = await getAccountInfoBase64(dailyPda.toBase58());
+      if (account) {
+        const decoded = tryReadDailyRoot(account.data);
+        if (decoded) {
+          result.onChainRoot = decoded.root;
+          const rootMatch = decoded.root.toLowerCase() === rootNoPrefix.toLowerCase();
+          result.checks.push({
+            name: 'onchain-pda',
+            ok: rootMatch,
+            detail: rootMatch
+              ? `On-chain root matches eventStatRoot (${rootNoPrefix.slice(0, 12)}…${rootNoPrefix.slice(-8)})`
+              : `On-chain root ${decoded.root.slice(0, 12)}…${decoded.root.slice(-8)} ≠ expected ${rootNoPrefix.slice(0, 12)}…${rootNoPrefix.slice(-8)}`,
+          });
+          if (!rootMatch) {
+            result.verdict = 'onchain-mismatch';
+            result.nextStep = 'The Merkle root stored on Solana differs from the proof. This may indicate a stale proof or a different daily root batch.';
+            return result;
+          }
+        } else {
+          result.checks.push({
+            name: 'onchain-pda',
+            ok: false,
+            detail: `PDA account found but could not decode root (data length ${account.data.length})`,
+          });
+          result.verdict = 'onchain-error';
+          result.nextStep = 'The daily_scores_roots PDA exists but its data layout may differ from expectations. Check the TxLINE IDL.';
+          return result;
+        }
+      } else {
+        result.checks.push({
+          name: 'onchain-pda',
+          ok: false,
+          detail: `PDA ${result.dailyRootPda} not found on devnet`,
+        });
+        result.verdict = 'onchain-error';
+        result.nextStep = 'The derived daily_scores_roots PDA does not exist on chain. The epoch day may be wrong, or the seed pattern has changed.';
+        return result;
+      }
+    } catch (err) {
+      result.checks.push({
+        name: 'onchain-pda',
+        ok: false,
+        detail: `RPC error fetching PDA: ${err.message}`,
+      });
+      result.verdict = 'onchain-error';
+      result.nextStep = 'Retry or check SOLANA_RPC_URL.';
+      return result;
+    }
+  } else {
+    result.checks.push({
+      name: 'onchain-pda',
+      ok: null,
+      detail: 'No timestamp in proof — skipping on-chain PDA comparison.',
+    });
+    result.nextStep = 'To enable on-chain verification the proof must include a ts or summary.updateStats.minTimestamp.';
+  }
+
+  // Final verdict
   const allOk =
     result.checks[0].ok &&
     result.checks[1].ok !== false &&
     result.checks[2].ok !== false &&
     result.checks[3].ok !== false;
-  result.verdict = allOk ? 'proof-present' : (result.verdict || 'incomplete');
+  const pdaCheck = result.checks.find((c) => c.name === 'onchain-pda');
+  if (pdaCheck && pdaCheck.ok === true) {
+    result.verdict = 'verified';
+    result.nextStep = 'On-chain Merkle root matches. The proof is cryptographically anchored on Solana.';
+  } else if (allOk) {
+    result.verdict = 'proof-present';
+    result.nextStep = result.nextStep || 'Submit a read-only validate_stat_v2 simulation to the TxLINE program for full on-chain verification.';
+  }
 
   return result;
 }

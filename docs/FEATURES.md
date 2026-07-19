@@ -298,6 +298,6 @@ Fourcast is an **Arc-native prediction market intelligence agent** in the [Agora
 ### Hackathon Resources
 - **Strategy doc**: [HACKATHON.md](./HACKATHON.md)
 - **Arc CLI**: `uv tool install git+https://github.com/the-canteen-dev/ARC-cli`
-- **Arc docs**: https://arc-node.thecanteenapp.com/
+- **Arc docs**: https://rpc.testnet.arc.network/
 - **Hackathon page**: https://agora.thecanteenapp.com/
 - **Submission form**: https://forms.gle/hFPM2t4Jt1zGfqzM7

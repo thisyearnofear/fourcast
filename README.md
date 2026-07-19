@@ -51,34 +51,34 @@ Polymarket and Kalshi remain as secondary comparison venues. TxLINE is the sourc
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                       TXLINE DATA LAYER (devnet)                     │
-│  fixtures/snapshot  ·  odds/snapshot  ·  scores/snapshot  ·  proofs  │
-└───────────────────────────────┬──────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                       TXLINE DATA LAYER (devnet)                        │
+│  fixtures/snapshot  ·  odds/snapshot  ·  scores/snapshot  ·  proofs     │
+└───────────────────────────────┬─────────────────────────────────────────┘
                                  │
                                  ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                  FOURCAST WORLD CUP INTELLIGENCE                      │
-│  services/txline/txlineService.js                                     │
-│  · normalises PascalCase schema -> unified fixture shape             │
-│  · auto-refreshes guest JWT on 401                                    │
-│  · falls back to cached replays after July 19 cutoff                 │
-└───────┬──────────────────┬──────────────────┬────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                  FOURCAST WORLD CUP INTELLIGENCE                         │
+│  services/txline/txlineService.js                                        │
+│  · normalises PascalCase schema -> unified fixture shape                │
+│  · auto-refreshes guest JWT on 401                                       │
+│  · falls back to cached replays after July 19 cutoff                    │
+└───────┬──────────────────┬──────────────────┬───────────────────────────┘
         │                  │                  │
         ▼                  ▼                  ▼
-┌──────────────┐  ┌──────────────────┐  ┌────────────────────┐
-│ Live odds +  │  │ Cross-venue edge │  │ Verifiable receipt │
-│ score panel  │  │ (Polymarket YES) │  │ Merkle proof       │
-│              │  │                  │  │                    │
-└──────────────┘  └──────────────────┘  └─────────┬──────────┘
-                                                    │
-                                                    ▼
-                                          ┌────────────────────┐
-                                          │ Solana read-only   │
-                                          │ verification       │
-                                          │ (devnet program    │
-                                          │ 6pW64...WyP2J)     │
-                                          └────────────────────┘
+┌──────────────┐  ┌──────────────────┐  ┌──────────────────────────┐
+│ Live odds +  │  │ Cross-venue edge │  │ Verifiable receipt        │
+│ score panel  │  │ (Polymarket YES) │  │ · Merkle proof integrity  │
+│              │  │                  │  │ · PDA derivation & fetch  │
+└──────────────┘  └──────────────────┘  │ · On-chain root compare   │
+                                        └───────────┬──────────────┘
+                                                     │
+                                        ┌────────────▼──────────────┐
+                                        │  Solana Match-Escrow      │
+                                        │  CPI → txoracle           │
+                                        │  validate_stat            │
+                                        │  (settlePolicy flow)      │
+                                        └───────────────────────────┘
 ```
 
 ### Tech Stack
@@ -110,18 +110,28 @@ All data requests send `Authorization: Bearer ${jwt}` and `X-Api-Token: ${apiTok
 | Field | Value |
 |-------|-------|
 | Network | Devnet |
-| Program ID | `6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J` |
+| TxORACLE Program ID | `6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J` |
+| Match-Escrow Program ID | `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ` |
 | TxL Token Mint | `4Zao8ocPhmMgq7PdsYWyxvqySMGx7xb9cMftPMkEokRG` |
-| Program name | `txoracle` (v1.5.6) |
+| TxORACLE version | `txoracle` (v1.5.6) |
 | Free-tier service level | 1 (sampling interval = 0 — effectively real-time on devnet) |
-| Verification instruction | `validate_stat_v2` (read-only simulation, future work) |
+| Settlement mechanism | CPI from match-escrow → `validate_stat` on txoracle |
 
-The verification flow today:
-1. Pulls the cached Merkle proof (`eventStatRoot`, `statProofs`, `mainTreeProof`, `subTreeProof`, `statsToProve`)
-2. Checks all components are present and well-formed (32-byte hashes, proof count == stats count)
-3. Marks verdict `proof-present` when the proof is internally consistent and ready for on-chain `validate_stat_v2` simulation
+The on-chain verification flow:
+1. **Proof verification** — `solanaVerify.js` extracts the Merkle proof (`eventStatRoot`, `statProofs`, `mainTreeProof`, `subTreeProof`, `statsToProve`) from a cached fixture replay
+2. **PDA derivation** — derives the `daily_scores_roots` PDA from the match timestamp using seeds `[b"daily_scores_roots", epoch_day as u16 LE]` (reverse-engineered from the txoracle program)
+3. **On-chain comparison** — fetches the PDA account via Solana JSON-RPC, reads the 32-byte Merkle root, and compares against `eventStatRoot`
+4. **Settlement (CPI)** — the match-escrow program (`settlementService.js`) builds and submits `settle_policy` transactions that CPI-call TxLINE's `validate_stat` to trustlessly release escrowed SOL to winners
 
-**Honest limitation:** the `daily_scores_merkle_roots` PDA seed pattern is not in the published IDL, so on-chain PDA comparison is currently marked SKIP. Submitting a read-only `validate_stat_v2` simulation is the natural v2 enhancement.
+Verdicts: `verified` (on-chain root matches), `onchain-mismatch` (root differs), `onchain-error` (PDA unreachable), `proof-present` (components valid but no timestamp for PDA derivation).
+
+### Parametric Insurance / Prop Bet Settlement
+
+The match-escrow program at `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ` implements a parametric sports insurance flow:
+- **`createPolicy`** — a user locks SOL in a policy PDA specifying `{fixtureId, minTs, paysRecipientOnHomeWin, amount}`
+- **`settlePolicy`** — a keeper bot submits the TxLINE Merkle proof; the program CPI-calls txoracle's `validate_stat`, and if the condition is met, SOL is transferred to the designated recipient; otherwise refunded to the locker
+
+The attestation won the `daily_scores_merkle_roots` seed pattern — it was not present in the published IDL at hackathon start but was obtained through program analysis. See `services/txline/settlementService.js` for the full Borsh-serialised instruction builders.
 
 ---
 
@@ -201,7 +211,8 @@ The `/world-cup` route is statically prerendered; the API routes under `/api/wor
 ```
 services/txline/
   txlineService.js        # Adapter: live + replay modes, auto JWT refresh
-  solanaVerify.js        # Cached Merkle proof verification
+  solanaVerify.js        # On-chain Merkle proof verification (PDA derivation + root comparison)
+  settlementService.js   # On-chain settlement: createPolicy + settlePolicy (CPI → validate_stat)
   crossVenueEdge.js      # TxLINE consensus vs Polymarket YES prices
 
 scripts/
@@ -278,7 +289,7 @@ The `/markets` route and `/agent` route continue to provide the original Bright 
 
 **Where we hit friction:**
 - The onboarding flow has six steps (wallet, SOL, on-chain subscribe, guest JWT, sign message, activate) — a one-shot CLI helper would reduce setup time from ~15 minutes to ~30 seconds.
-- The published IDL does not include the seed pattern for the `daily_scores_merkle_roots` PDA, so we could not perform full on-chain `validate_stat_v2` simulation client-side without reverse-engineering the seeds.
+- The published IDL does not include the seed pattern for the `daily_scores_merkle_roots` PDA. We reverse-engineered it from the deployed program — `[b"daily_scores_roots", epoch_day as u16 LE]` — but this should be documented upstream.
 - Team display names appear in `/fixtures/snapshot` but not in `/scores/snapshot/{fixtureId}` — score records only carry `Participant1Id` / `Participant2Id`. We had to cross-reference against the fixtures list (and older fixtures fall off the list, leaving team names unresolvable).
 - The free devnet tier depends on the public Solana devnet RPC for SOL, which is heavily rate-limited. A bundled devnet SOL faucet (or a one-line `requestAirdrop` helper in the SDK) would smooth the very first step.
 

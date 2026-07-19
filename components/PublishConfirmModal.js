@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { BRAND } from '@/constants/brand';
 import { useCantonWalletContext } from '@/app/CantonWalletLayer';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market, analysis, isNight, isPublishing }) {
   const canton = useCantonWalletContext();
   const [settlementLayer, setSettlementLayer] = useState('arc'); // 'arc' | 'canton'
+  const modalRef = useFocusTrap({ isOpen, onClose });
 
   if (!isOpen) return null;
 
@@ -29,8 +31,14 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative max-w-md w-full rounded-2xl p-6 border backdrop-blur-xl bg-black/60 border-white/10`}>
-        <h3 className={`text-lg font-light mb-4 text-white`}>
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="publish-modal-heading"
+        className={`relative max-w-md w-full rounded-2xl p-6 border backdrop-blur-xl bg-black/60 border-white/10`}
+      >
+        <h3 id="publish-modal-heading" className={`text-lg font-light mb-4 text-white`}>
           Record Your Prediction
         </h3>
 

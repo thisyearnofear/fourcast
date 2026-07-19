@@ -2,6 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sparkles } from 'lucide-react';
+import {
+  getProviderStatusAppearance,
+  getSummaryAppearance,
+  SUMMARY_LABEL,
+} from '@/utils/healthBadge';
 
 /**
  * Public status page showing real-time health of all external providers.
@@ -44,13 +49,7 @@ export default function StatusPage() {
   }, [fetchHealth]);
 
   const statusBadge = (status) => {
-    const colors = {
-      healthy:    { dot: 'bg-green-500', text: 'text-green-300', bg: 'bg-green-500/10' },
-      degraded:   { dot: 'bg-yellow-500', text: 'text-yellow-300', bg: 'bg-yellow-500/10' },
-      unreachable: { dot: 'bg-red-500', text: 'text-red-300', bg: 'bg-red-500/10' },
-      disabled:   { dot: 'bg-gray-500', text: 'text-gray-400', bg: 'bg-gray-500/10' },
-    };
-    const c = colors[status] || colors.disabled;
+    const c = getProviderStatusAppearance(status);
     return (
       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider ${c.bg} ${c.text}`}>
         <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
@@ -79,6 +78,10 @@ export default function StatusPage() {
     };
     return icons[key] || '🔌';
   };
+
+  // Derived — hoisted out of JSX so the render body doesn't need an IIFE.
+  const summaryAppearance = health ? getSummaryAppearance(health.summary) : null;
+  const isHealthy = health?.summary === 'all_healthy';
 
   return (
     <main className="min-h-screen bg-[var(--app-bg)] text-slate-100 flex flex-col items-center px-5 py-10 pb-16">
@@ -118,19 +121,15 @@ export default function StatusPage() {
       )}
 
       {/* Summary Bar */}
-      {health && (
+      {summaryAppearance && (
         <div
-          className={`w-full max-w-[640px] mb-8 p-4 rounded-xl border flex items-center justify-between ${
-            health.summary === 'all_healthy'
-              ? 'bg-green-500/10 border-green-500/20'
-              : 'bg-yellow-500/10 border-yellow-500/20'
-          }`}
+          className={`w-full max-w-[640px] mb-8 p-4 rounded-xl border flex items-center justify-between ${summaryAppearance.bg} ${summaryAppearance.border}`}
         >
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">{health.summary === 'all_healthy' ? '✅' : '⚠️'}</span>
+            <span className="text-xl">{isHealthy ? '✅' : '⚠️'}</span>
             <div>
               <div className="text-[13px] font-medium text-slate-200">
-                {health.summary === 'all_healthy' ? 'All Systems Operational' : 'Degraded Performance'}
+                {SUMMARY_LABEL[health.summary]}
               </div>
               <div className="text-[11px] text-slate-500 font-light mt-0.5">
                 Last checked: {formatTime(lastUpdated)} · Response: {formatLatency(health.totalLatencyMs)}

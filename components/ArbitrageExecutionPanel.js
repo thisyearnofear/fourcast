@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { OrderSigningPanel } from './OrderSigningPanel';
 import KalshiOrderPanel from './KalshiOrderPanel';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 /**
  * Arbitrage Execution Panel
@@ -12,6 +13,8 @@ export function ArbitrageExecutionPanel({ opportunity, onClose, isNight }) {
   const [step, setStep] = useState('review'); // 'review' | 'execute'
   const [polyStatus, setPolyStatus] = useState('pending'); // 'pending' | 'signed' | 'submitted' | 'failed'
   const [kalshiStatus, setKalshiStatus] = useState('pending');
+  // Component is rendered when modal is open; lifecycle = focus trap lifecycle.
+  const modalRef = useFocusTrap({ isOpen: true, onClose });
 
   const { polymarket, kalshi, arbitrage } = opportunity;
   const textColor = 'text-white';
@@ -20,14 +23,20 @@ export function ArbitrageExecutionPanel({ opportunity, onClose, isNight }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-black/40">
-      <div className={`${cardBg} w-full max-w-5xl h-[80vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border ${borderColor}`}>
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="arbitrage-execution-heading"
+        className={`${cardBg} w-full max-w-5xl h-[80vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border ${borderColor}`}
+      >
         
         {/* Header */}
         <div className="p-6 border-b border-white/10 flex justify-between items-center">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-2xl">⚡</span>
-              <h2 className={`text-xl font-medium ${textColor}`}>Arbitrage Execution</h2>
+              <h2 id="arbitrage-execution-heading" className={`text-xl font-medium ${textColor}`}>Arbitrage Execution</h2>
             </div>
             <p className={`text-sm ${textColor} opacity-60`}>
               Capture <span className="text-green-500 font-bold">{arbitrage.priceDiff}% spread</span> between markets

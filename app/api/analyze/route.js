@@ -196,7 +196,7 @@ export async function POST(request) {
         };
         const pc = createPublicClient({
           chain: arcChain,
-          transport: http(process.env.ARC_RPC_URL || 'https://arc-node.thecanteenapp.com/'),
+          transport: http(process.env.ARC_RPC_URL || 'https://rpc.testnet.arc.network/'),
         });
         const data = await pc.readContract({
           address: contractAddr,

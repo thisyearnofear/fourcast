@@ -9,6 +9,7 @@ import { useWeather } from "@/hooks/useWeather";
 import { useStaggeredAnimation } from "@/app/hooks/useStaggeredAnimation";
 import { useGlobalToast } from "@/components/ToastProvider";
 import { BRAND } from "@/constants/brand";
+import { ARC_EXPLORER_TX } from "@/constants/appConstants";
 import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
 import FirstRunBanner from "@/components/FirstRunBanner";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
@@ -684,7 +685,7 @@ export default function MarketsPage() {
         });
         const explorer =
           settledChain === 'arc'
-            ? `https://arc-explorer.thecanteenapp.com/tx/${txHash}`
+            ? ARC_EXPLORER_TX(txHash)
             : null;
 
         addToast(
@@ -764,14 +765,20 @@ export default function MarketsPage() {
         </div>
       }
       subheader={
-        <SecondaryNav
-          items={[
-            { id: "sports", label: "Sports & Events", icon: "🏆" },
-            { id: "discovery", label: "Crypto, Finance & More", icon: "📈" },
-          ]}
-          activeItem={activeTab}
-          onChange={setActiveTab}
-        />
+        <div className="space-y-2">
+          <SecondaryNav
+            items={[
+              { id: "sports", label: "Sports & Events", icon: "🏆" },
+              { id: "discovery", label: "Crypto, Finance & More", icon: "📈" },
+            ]}
+            activeItem={activeTab}
+            onChange={setActiveTab}
+          />
+          <p className="text-[11px] leading-relaxed text-white/45 max-w-2xl">
+            <span className="text-emerald-300">Sports</span> — live, fast-resolving, narrow edges ·{' '}
+            <span className="text-emerald-300">Discovery</span> — long-tail, deeper edges, longer horizons.
+          </p>
+        </div>
       }
     >
       {/* Analysis Config Modal */}

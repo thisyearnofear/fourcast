@@ -1,0 +1,16 @@
+[package]
+name = "match-escrow"
+version = "0.1.0"
+description = "TxLINE-verified parametric sports insurance — CPI into txoracle validate_stat"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "match_escrow"
+
+[features]
+default = []
+
+[dependencies]
+anchor-lang = { workspace = true }
+bytemuck = { version = "1.16", features = ["derive"] }

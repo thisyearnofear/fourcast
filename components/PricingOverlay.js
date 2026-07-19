@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useSubscription, TIERS } from '@/hooks/useSubscription';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { ARC_EXPLORER_TX } from '@/constants/appConstants';
 
 // Pricing is operator-first per docs/GO_TO_MARKET.md §3 and constants/brand.js
 // positioning. Premium ($19.99/mo) is the headline — it is the Quant-Operator
@@ -31,6 +33,7 @@ const PLANS = [
 export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
   const [selectedPlan, setSelectedPlan] = useState('premium');
   const { txState, subscribe, resetTx, subscription, isConfigured } = useSubscription();
+  const modalRef = useFocusTrap({ isOpen, onClose });
 
   // Don't show pricing overlay if payment system isn't configured
   if (!isOpen || !isConfigured) return null;
@@ -60,6 +63,10 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
       onClick={onClose}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pricing-overlay-heading"
         className={`relative w-full max-w-3xl rounded-3xl overflow-hidden bg-slate-900 border border-white/10 shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -68,7 +75,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
           <div className="mb-3 flex items-center justify-center">
             <Sparkles className="h-10 w-10 text-emerald-300" aria-hidden="true" />
           </div>
-          <h2 className={`text-2xl font-semibold ${textColor} mb-2`}>
+          <h2 id="pricing-overlay-heading" className={`text-2xl font-semibold ${textColor} mb-2`}>
             Unlock Your Autopilot
           </h2>
           <p className={`text-sm ${mutedColor} max-w-md mx-auto`}>
@@ -148,7 +155,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
             <p className="text-sm font-medium">{getTxStatusText()}</p>
             {txState.hash && (
               <a
-                href={`https://arc-explorer.thecanteenapp.com/tx/${txState.hash}`}
+                href={ARC_EXPLORER_TX(txState.hash)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`text-xs underline mt-1 inline-block ${mutedColor} hover:opacity-80`}

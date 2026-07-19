@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useAccount } from 'wagmi';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 /**
  * Unified Arbitrage Executor
@@ -19,6 +20,10 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
     { platform: '', action: '', status: 'pending', txHash: null, error: null },
   ]);
   const [overallStatus, setOverallStatus] = useState('idle'); // idle | executing | partial | success | failed
+
+  // Hook stays active for the lifetime of the rendered modal (parent controls
+  // visibility by passing / withdrawing `opportunity`).
+  const modalRef = useFocusTrap({ isOpen: !!opportunity, onClose });
 
   if (!opportunity) return null;
 
@@ -134,7 +139,12 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
       style={{ background: 'rgba(10,10,15,0.7)', backdropFilter: 'blur(6px)' }}
       onClick={onClose}
     >
-      <div className={`relative w-full max-w-2xl rounded-3xl overflow-hidden border ${cardBg} shadow-2xl`}
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="arbitrage-executor-heading"
+        className={`relative w-full max-w-2xl rounded-3xl overflow-hidden border ${cardBg} shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -143,7 +153,7 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
             <div className="flex items-center gap-3">
               <span className="text-2xl">⚡</span>
               <div>
-                <h2 className={`text-lg font-semibold ${textColor}`}>Execute Arbitrage</h2>
+                <h2 id="arbitrage-executor-heading" className={`text-lg font-semibold ${textColor}`}>Execute Arbitrage</h2>
                 <p className={`text-xs ${mutedColor} mt-0.5`}>
                   {(polymarket?.title || kalshi?.title || '').slice(0, 80)}
                 </p>

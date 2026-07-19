@@ -124,9 +124,18 @@ yarn.lock
 *.crt
 
 # ============================================
-# Binaries
+# Media & Binaries
 # ============================================
-# If you need to ignore generated binaries, add specific patterns here.
+# Generated/transient video and audio
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.wav
+*.mp3
+*.ogg
+*.flac
 
 # ============================================
 # Temporary Files

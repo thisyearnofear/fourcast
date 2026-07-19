@@ -15,6 +15,7 @@ import {
   Shield,
   Zap,
 } from 'lucide-react';
+import OnChainSettlementPanel from '@/components/OnChainSettlementPanel';
 
 /* ------------------------------- helpers -------------------------------- */
 
@@ -181,6 +182,9 @@ function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, verifi
   const implied = fixture.odds?.implied;
   const hasProof = Boolean(fixture.proof?.merkleRoot || fixture.proof?.dailyRootPda);
   const [edgeOpen, setEdgeOpen] = useState(false);
+  // Derive score from proof if the live API didn't populate it
+  const homeScore = fixture.home.score ?? fixture.proof?.statToProve?.value ?? null;
+  const awayScore = fixture.away.score ?? fixture.proof?.statToProve2?.value ?? null;
   return (
     <div className="rounded-2xl border border-white/10 bg-black/25 backdrop-blur-xl p-5 space-y-4">
       <div className="flex items-start justify-between gap-3">
@@ -202,9 +206,9 @@ function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, verifi
         <div className="text-right shrink-0">
           {fixture.status !== 'scheduled' && (
             <div className="text-2xl font-bold tracking-tight">
-              {fixture.home.score ?? 0}
+              {homeScore ?? 0}
               <span className="text-white/40 mx-1">–</span>
-              {fixture.away.score ?? 0}
+              {awayScore ?? 0}
             </div>
           )}
         </div>
@@ -281,6 +285,10 @@ function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, verifi
 
       {edgeOpen && implied && (
         <EdgePanel fixture={fixture} onToggle={() => {}} />
+      )}
+
+      {hasProof && fixture.status === 'final' && (
+        <OnChainSettlementPanel fixture={fixture} proof={fixture.proof} />
       )}
     </div>
   );

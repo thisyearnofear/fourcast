@@ -120,11 +120,11 @@ For deploying and transacting on Arc (Circle's stablecoin-native L1):
 
 ```env
 # Arc (Circle L1)
-ARC_RPC_URL=https://arc-node.thecanteenapp.com/...  # From arc-canteen login
+ARC_RPC_URL=https://rpc.testnet.arc.network/...  # From arc-canteen login
 ARC_CHAIN_ID=5042002
 ARC_PRIVATE_KEY=your_arc_deployer_private_key
 NEXT_PUBLIC_ARC_CHAIN_ID=5042002
-NEXT_PUBLIC_ARC_RPC_URL=https://arc-node.thecanteenapp.com/...
+NEXT_PUBLIC_ARC_RPC_URL=https://rpc.testnet.arc.network/...
 NEXT_PUBLIC_ARC_SIGNAL_REGISTRY=0x...  # After deployment
 NEXT_PUBLIC_ARC_PREDICTION_RECEIPT=0x...  # After deployment
 NEXT_PUBLIC_ARC_BUILDER_FEE_SPLITTER=0x...  # After deployment
@@ -189,11 +189,11 @@ Add these to your `.env.local`:
 
 ```env
 # Arc (Circle L1)
-ARC_RPC_URL=https://arc-node.thecanteenapp.com/...  # From arc-canteen login
+ARC_RPC_URL=https://rpc.testnet.arc.network/...  # From arc-canteen login
 ARC_CHAIN_ID=5042002
 ARC_PRIVATE_KEY=your_arc_deployer_private_key
 NEXT_PUBLIC_ARC_CHAIN_ID=5042002
-NEXT_PUBLIC_ARC_RPC_URL=https://arc-node.thecanteenapp.com/...
+NEXT_PUBLIC_ARC_RPC_URL=https://rpc.testnet.arc.network/...
 NEXT_PUBLIC_ARC_SIGNAL_REGISTRY=0x...  # After deployment
 NEXT_PUBLIC_ARC_PREDICTION_RECEIPT=0x...  # After deployment
 NEXT_PUBLIC_ARC_BUILDER_FEE_SPLITTER=0x...  # After deployment

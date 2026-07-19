@@ -1,10 +1,4 @@
-function getTierInfo(winRate) {
-    if (winRate >= 0.85) return { name: 'Sage', emoji: '👑', color: 'from-amber-500 to-emerald-500' };
-    if (winRate >= 0.75) return { name: 'Elite Analyst', emoji: '🌟', color: 'from-emerald-500 to-teal-500' };
-    if (winRate >= 0.60) return { name: 'Forecaster', emoji: '🎯', color: 'from-emerald-500 to-emerald-600' };
-    if (winRate >= 0.50) return { name: 'Predictor', emoji: '📊', color: 'from-slate-500 to-gray-500' };
-    return { name: 'Novice', emoji: '🌱', color: 'from-slate-400 to-gray-400' };
-}
+import { tierInfoFor, shortAddress } from '@/utils/signalTier';
 
 export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBgColor, onProfileClick }) {
     if (!leaderboard || leaderboard.length === 0) {
@@ -31,7 +25,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
             {/* Leaderboard Cards */}
             <div className="grid grid-cols-1 gap-4">
                 {leaderboard.map((user, index) => {
-                    const tier = getTierInfo(user.win_rate || 0);
+                    const tier = tierInfoFor(user.win_rate || 0);
                     const earnings = user.total_earnings || 0;
 
                     return (
@@ -57,9 +51,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
                                         </span>
                                     </div>
                                     <div className={`text-xs ${textColor} opacity-60`}>
-                                        {typeof user.user_address === 'string'
-                                            ? `${user.user_address.substring(0, 6)}...${user.user_address.substring(user.user_address.length - 4)}`
-                                            : 'Unknown'}
+                                        {shortAddress(user.user_address)}
                                     </div>
                                 </div>
 

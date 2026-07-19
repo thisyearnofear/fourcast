@@ -60,6 +60,11 @@ TXLINE_SERVICE_LEVEL=1
 TXLINE_MODE=live
 TXLINE_LAST_TX_SIG=<subscribe tx signature from the on-chain subscribe transaction>
 TXLINE_SOLANA_PUBLIC_KEY=<wallet public address; non-sensitive>
+
+# Match-escrow program for on-chain settlement (CPI → txoracle validate_stat)
+# Defaults to devnet program ID below if unset.
+NEXT_PUBLIC_MATCH_ESCROW_PROGRAM_ID=AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ
+NEXT_PUBLIC_TXORACLE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
 ```
 
 **`TXLINE_SOLANA_SECRET_KEY` MUST NOT be set on Vercel** — it is a signing

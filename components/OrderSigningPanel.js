@@ -5,6 +5,7 @@ import { useOrderSigning } from '@/hooks/useOrderSigning';
 import { ConnectKitButton } from 'connectkit';
 import { useBalance, useAccount, useSwitchChain } from 'wagmi';
 import { calculateKellySizing } from '@/utils/kellySizing';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 // Polygon Configuration
 const POLYGON_CHAIN_ID = 137;
@@ -118,6 +119,11 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
     setMounted(true);
   }, []);
 
+  // Focus trap is active only when this component is the top-level modal
+  // (standalone). When embedded inside ArbitrageExecutionPanel, the parent
+  // owns the trap and ARIA so we don't compete with it.
+  const modalRef = useFocusTrap({ isOpen: !embedded, onClose });
+
   const handleSubmitOrder = async () => {
     if (!size || !price) {
       alert('Please enter size and price');
@@ -185,13 +191,17 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
 
   const content = (
     <div
+      ref={!embedded ? modalRef : undefined}
+      role={!embedded ? 'dialog' : undefined}
+      aria-modal={!embedded ? 'true' : undefined}
+      aria-labelledby={!embedded ? 'order-signing-heading' : undefined}
       className={`${embedded ? 'h-full flex flex-col' : `${glassPanel} rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl`}`}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header (Only show close button if NOT embedded) */}
       {!embedded && (
         <div className="flex items-center justify-between mb-6">
-          <h2 className={`text-2xl font-light ${textColor}`}>Trade Order</h2>
+          <h2 id="order-signing-heading" className={`text-2xl font-light ${textColor}`}>Trade Order</h2>
           <button
             onClick={onClose}
             className={`text-2xl ${textColor} opacity-50 hover:opacity-75`}

@@ -6,7 +6,7 @@ import { ARC_CHAIN_ID } from '@/constants/evmContracts';
 const arcRpc =
   process.env.NEXT_PUBLIC_ARC_RPC_URL ||
   process.env.ARC_RPC_URL ||
-  'https://arc-node.thecanteenapp.com/';
+  'https://rpc.testnet.arc.network/';
 
 export const arcTestnet = defineChain({
   id: ARC_CHAIN_ID,
@@ -18,7 +18,7 @@ export const arcTestnet = defineChain({
   blockExplorers: {
     default: {
       name: 'Arc Explorer',
-      url: 'https://arc-explorer.thecanteenapp.com',
+      url: 'https://explorer.testnet.arc.network',
     },
   },
   testnet: true,

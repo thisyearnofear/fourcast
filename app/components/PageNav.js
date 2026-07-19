@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BRAND } from "@/constants/brand";
 import WalletConnect from "@/app/components/WalletConnect";
+import StatusBadge from "@/components/StatusBadge";
 
 /**
  * Navigation + AppShell — the single source of truth for the app chrome.
@@ -145,6 +146,7 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
           <HomeLink />
           <div className="flex items-center gap-2">
             <PageNav />
+            <StatusBadge />
             {wallet && <WalletConnect />}
           </div>
         </header>
