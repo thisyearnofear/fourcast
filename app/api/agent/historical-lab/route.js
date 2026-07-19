@@ -1,7 +1,13 @@
 import { getHistoricalLabStatus, saveHistoricalLabStatus } from '@/services/db';
+import crypto from 'node:crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// SHA-256 commitment to the private bearer token stored only on the VPS.
+// The endpoint never needs the bearer value itself (or a Vercel runtime secret)
+// to authenticate a heartbeat.
+const WORKER_TOKEN_HASH = 'ad9a9e881fb70bb56555b68a26f944876cdd3f0aa71492aff9fc6dd1807777b5';
 
 export async function GET() {
   try {
@@ -14,12 +20,11 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  // Bracket access keeps this server-only secret as a runtime lookup. This is
-  // important when a Vercel environment variable is added after an earlier
-  // cached build: the route must not compile an absent value into its bundle.
-  const expectedSecret = process.env['FOURCAST_AGENT_WEBHOOK_SECRET'];
   const receivedSecret = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-  if (!expectedSecret || !receivedSecret || receivedSecret !== expectedSecret) {
+  const receivedHash = receivedSecret
+    ? crypto.createHash('sha256').update(receivedSecret).digest('hex')
+    : null;
+  if (!receivedHash || !crypto.timingSafeEqual(Buffer.from(receivedHash), Buffer.from(WORKER_TOKEN_HASH))) {
     return Response.json({ success: false, error: 'Unauthorized worker heartbeat' }, { status: 401 });
   }
 
