@@ -7,7 +7,9 @@ export const runtime = 'nodejs';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { followerAddress, followingAddress } = body;
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const followerAddress = body.followerAddress?.toLowerCase();
+    const followingAddress = body.followingAddress?.toLowerCase();
 
     if (!followerAddress || !followingAddress) {
       return Response.json(
@@ -34,7 +36,9 @@ export async function POST(request) {
 export async function DELETE(request) {
   try {
     const body = await request.json();
-    const { followerAddress, followingAddress } = body;
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const followerAddress = body.followerAddress?.toLowerCase();
+    const followingAddress = body.followingAddress?.toLowerCase();
 
     if (!followerAddress || !followingAddress) {
       return Response.json(
@@ -65,9 +69,10 @@ export async function DELETE(request) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const follower = searchParams.get('follower');
-    const following = searchParams.get('following');
-    const address = searchParams.get('address');
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const follower = searchParams.get('follower')?.toLowerCase();
+    const following = searchParams.get('following')?.toLowerCase();
+    const address = searchParams.get('address')?.toLowerCase();
     const type = searchParams.get('type') || 'followers';
 
     // Follow-status check

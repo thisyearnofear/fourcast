@@ -15,7 +15,8 @@ export const runtime = 'nodejs';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const address = searchParams.get('address');
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const address = searchParams.get('address')?.toLowerCase();
     const type = searchParams.get('type');
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
@@ -50,24 +51,26 @@ export async function GET(request) {
 export async function PATCH(request) {
   try {
     const body = await request.json();
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const address = body.address?.toLowerCase();
 
-    if (!body.address) {
+    if (!address) {
       return Response.json(
         { success: false, error: 'address is required' },
         { status: 400 }
       );
     }
 
-    const denied = await requireWalletAuth(request, body.address);
+    const denied = await requireWalletAuth(request, address);
     if (denied) return denied;
 
     if (body.all) {
-      const result = await markAllAsRead(body.address);
+      const result = await markAllAsRead(address);
       return Response.json(result);
     }
 
     if (body.id) {
-      const result = await markAsRead(body.id, body.address);
+      const result = await markAsRead(body.id, address);
       return Response.json(result);
     }
 

@@ -8,7 +8,8 @@ export const runtime = 'nodejs';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const address = searchParams.get('address');
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const address = searchParams.get('address')?.toLowerCase();
     if (!address) {
       return Response.json({ success: false, error: 'address is required' }, { status: 400 });
     }
@@ -28,14 +29,16 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    if (!body.address) {
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const address = body.address?.toLowerCase();
+    if (!address) {
       return Response.json({ success: false, error: 'address is required' }, { status: 400 });
     }
 
-    const denied = await requireWalletAuth(request, body.address);
+    const denied = await requireWalletAuth(request, address);
     if (denied) return denied;
 
-    return Response.json(await createLinkCode(body.address));
+    return Response.json(await createLinkCode(address));
   } catch (error) {
     console.error('[API/Notifications/Telegram] POST error:', error);
     return Response.json({ success: false, error: error.message }, { status: 500 });
@@ -47,14 +50,16 @@ export async function POST(request) {
 export async function DELETE(request) {
   try {
     const body = await request.json();
-    if (!body.address) {
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const address = body.address?.toLowerCase();
+    if (!address) {
       return Response.json({ success: false, error: 'address is required' }, { status: 400 });
     }
 
-    const denied = await requireWalletAuth(request, body.address);
+    const denied = await requireWalletAuth(request, address);
     if (denied) return denied;
 
-    return Response.json(await unlinkTelegram(body.address));
+    return Response.json(await unlinkTelegram(address));
   } catch (error) {
     console.error('[API/Notifications/Telegram] DELETE error:', error);
     return Response.json({ success: false, error: error.message }, { status: 500 });

@@ -11,7 +11,9 @@ export async function POST(request) {
 
     const market = body.market
     const analysis = body.analysis
-    const authorAddress = body.authorAddress || null
+    // Canonicalize to lowercase — mirrors services/db.js on insert (saveSignal).
+    // Defense-in-depth parity with the rest of the API boundary sweep.
+    const authorAddress = body.authorAddress?.toLowerCase() || null
 
     if (!market || !analysis) {
       console.error('[API/Signals] Missing market or analysis in payload')
@@ -87,7 +89,8 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
-    const author = searchParams.get('author')
+    // Canonicalize to lowercase — mirrors services/db.js on insert (saveSignal).
+    const author = searchParams.get('author')?.toLowerCase()
     if (author && searchParams.get('countOnly')) {
       const countRes = await getSignalCountByAuthor(author)
       return Response.json({ success: countRes.success, count: countRes.count })

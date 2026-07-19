@@ -66,7 +66,9 @@ async function checkBalance(walletAddress, chainId) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { walletAddress, chainId } = body;
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const walletAddress = body.walletAddress?.toLowerCase();
+    const chainId = body.chainId;
 
     if (!walletAddress) {
       return Response.json(
@@ -136,7 +138,8 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const address = searchParams.get('address');
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const address = searchParams.get('address')?.toLowerCase();
     const chainId = Number(searchParams.get('chainId') || 56);
 
     if (!address) {

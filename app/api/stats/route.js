@@ -14,7 +14,8 @@ export const runtime = 'nodejs';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const address = searchParams.get('address');
+    // Canonicalize to lowercase — mirrors services/db.js on insert.
+    const address = searchParams.get('address')?.toLowerCase();
     const includeHistory = searchParams.get('includeHistory') === 'true';
     const includeRanking = searchParams.get('includeRanking') === 'true';
 

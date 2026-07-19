@@ -4,7 +4,8 @@ export const runtime = 'nodejs';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const address = searchParams.get('address');
+  // Canonicalize to lowercase — mirrors services/db.js on insert.
+  const address = searchParams.get('address')?.toLowerCase();
   const range = searchParams.get('range') || 'all';
   const status = searchParams.get('status') || 'all';
 
