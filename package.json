@@ -20,6 +20,8 @@
     "migrate": "node migrations/run.js",
     "migrate:status": "node migrations/run.js status",
     "migrate:new": "node migrations/run.js new",
+    "agent:live": "node scripts/fourcast-agent-worker.mjs live",
+    "agent:once": "node scripts/fourcast-agent-worker.mjs --once",
     "check:runtimes": "node scripts/check-runtimes.js",
     "check:bundles": "node scripts/check-bundle-size.js"
   },

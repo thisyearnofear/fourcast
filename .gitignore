@@ -157,6 +157,8 @@ bin/
 # Deploy artifacts
 .prediction-receipt-address
 .env*
+OPS.md
+.fourcast-agent/
 
 # Agent tool scratch space
 .kimchi/
