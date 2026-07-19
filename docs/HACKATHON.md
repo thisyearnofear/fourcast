@@ -27,22 +27,24 @@ Judges should never see "multi-chain" as the lead — **the AI agent is the prod
 
 ## Why Fourcast Fits
 
-Fourcast is an **AI agent that finds mispriced prediction markets with auditable live-web evidence**. It uses Bright Data to scrape live web sources, synthesizes fair probabilities with AI, detects edge against Polymarket & Kalshi odds, publishes verifiable signals settled in USDC on Arc, and executes cross-venue arbitrage when the spread clears fees. We're built for Agora RFB 02, 05, and 06.
+Fourcast is a **Polymarket Autopilot for serious prediction-market operators**: Bright Data-sourced live evidence, AI-synthesized fair probabilities, Kelly-sized positions, Polymarket Builder-attributed execution, and an Audited Track Record on Arc.
 
-Our existing features map directly to hackathon RFBs:
+We are built for one primary customer and one acquisition loop. Our features map to RFBs with that discipline.
 
-| RFB | Title | Fourcast Feature | Fit |
-|-----|-------|------------------|-----|
-| 01 | Perpetual Futures Trading Agent | SynthData ML forecasts, edge detection | Medium |
-| 02 | Prediction Market Trader Intelligence | AI analysis, confidence scoring, cross-platform odds, signal publishing | 🎯 BULLSEYE |
-| 03 | Prediction Market Verticals | Weather×sports, crypto, DeFi verticals | 🎯 BULLSEYE |
-| 04 | Adaptive Portfolio Manager | Multi-market signals, track record | Medium |
-| 05 | Cross-Platform Arbitrage Agent | Polymarket↔Kalshi arb detection | 🎯 HIGH |
-| 06 | Social Trading Intelligence | Signal publishing, reputation, leaderboards, tipping | 🎯 HIGH |
+| RFB | Title | Fourcast Feature | Role |
+|-----|-------|------------------|------|
+| 02 | **Prediction Market Trader Intelligence** | AI analysis, Kelly sizing, Builder-attributed execution, Audited Track Record | 🎯 **Primary — the product** |
+| 05 | **Cross-Platform Arbitrage Agent** | Polymarket↔Kalshi arb detection + unified execution | 🔧 Secondary — execution layer of the primary loop |
+| 06 | Social Trading Intelligence | Signal publishing, reputation, leaderboards, tipping, follow graph | 📣 **Acquisition loop** — used to surface operators, not as the headline product |
+| 01 | Perpetual Futures Trading Agent | SynthData ML forecasts | 🟰 Background capability |
+| 03 | Prediction Market Verticals | Weather×sports, crypto | 🟰 Vertical coverage |
+| 04 | Adaptive Portfolio Manager | Track record spine | 🔧 Cross-cutting |
 
-**Primary RFB**: 02 (Prediction Market Trader Intelligence)  
-**Secondary RFB**: 05 (Cross-Platform Arbitrage Agent)  
-**Tertiary RFB**: 06 (Social Trading Intelligence)
+**Primary RFB**: 02 (Prediction Market Trader Intelligence) — this is what we ship first.  
+**Secondary RFB**: 05 (Cross-Platform Arbitrage Agent) — the execution engine that makes RFB 02 real.  
+**Acquisition RFB**: 06 (Social Trading Intelligence) — *not* a separate product; it is the distribution loop that pulls operators in.
+
+Judges should see one loop, not three products.
 
 ---
 

@@ -1,11 +1,36 @@
-# Fourcast World Cup — TxLINE Intelligence Terminal
+# Fourcast — Polymarket Autopilot for serious prediction-market operators
 
-**A TxLINE-powered World Cup intelligence terminal: live consensus odds, score replay, cross-venue edge detection, and Solana-verified match receipts.**
+**AI-driven prediction-market Autopilot — Kelly-sized edges, Builder-attributed fills, an on-chain track record you can hand to follow-on capital.**
 
+> **Who this is for.** Polymarket / Kalshi operators running real capital who need verified attribution, not vibes. Everything in this repo is built to serve that customer. Retail can audit; we don't optimize for them.
+>
+> **How we acquire them.** The signal marketplace — every published call carries an on-chain track record, an OG share card, and a follow graph on Warpcast / X. One operator's verified fill is the next operator's concierge prospect.
+>
+> **Headline loop.** Discover mispricings → AI forecast → Kelly-sized position → Builder-attributed execution → Audited Track Record on Arc.
+
+## Surface area
+
+Fourcast has two product surfaces; both are quantized around the same operator:
+
+- `/world-cup` — the **TxLINE-powered World Cup intelligence terminal**: live consensus odds, score replay, cross-venue edge detection, and Solana-verified match receipts.
+
+![Primary Customer](https://img.shields.io/badge/Primary%20Customer-Quant%20Operator-emerald)
+![Acquisition](https://img.shields.io/badge/Acquisition-Signal%20Marketplace-emerald)
 ![TxLINE](https://img.shields.io/badge/TxLINE-Primary%20Data%20Source-emerald)
 ![Solana](https://img.shields.io/badge/Solana-Verified%20Receipts-purple)
 ![Status](https://img.shields.io/badge/Status-Live-success)
-![Track](https://img.shields.io/badge/Track-TxODDS%20Hackathon-blue)
+
+## Strategic Positioning
+
+| | |
+|---|---|
+| **Primary customer** | Quant Operator (Polymarket / Kalshi, running real capital) |
+| **Distribution** | Signal marketplace → operator followers → concierge conversion |
+| **Headline product** | Autopilot with Kelly Criterion + Polymarket Builder attribution |
+| **Second-best customer** | Signal Analyst (Reputation Climber) |
+| **Pivot trigger** | Custody / trust barrier in the concierge test — see `docs/GO_TO_MARKET.md` |
+
+See `docs/GO_TO_MARKET.md` for the 14-day concierge test that validates this positioning, and `docs/NINE_PLAN.md` P3.1 for the architectural commitment that locks it in.
 
 ## The Problem
 

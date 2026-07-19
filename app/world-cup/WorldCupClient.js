@@ -438,6 +438,8 @@ export default function WorldCupClient() {
   const [replayingId, setReplayingId] = useState(null);
   const [verifyingId, setVerifyingId] = useState(null);
   const [verifications, setVerifications] = useState({});
+  const [streamStatus, setStreamStatus] = useState('connecting'); // connecting | open | error | closed
+  const [streamBackend, setStreamBackend] = useState(null); // 'txline-sse' | 'polling'
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -463,6 +465,61 @@ export default function WorldCupClient() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // ── SSE stream subscription ────────────────────────────────────────────
+  // The /api/worldcup/stream route proxies the TxLINE live feed (or falls back
+  // to a polling loop) and emits deltas. We merge each delta into the fixtures
+  // state so the UI updates without a refresh.
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof EventSource === 'undefined') return undefined;
+    const es = new EventSource('/api/worldcup/stream');
+    setStreamStatus('connecting');
+
+    const onMeta = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data?.kind === 'stream-open') {
+          setStreamStatus('open');
+          setStreamBackend(data.backend || null);
+        } else if (data?.kind === 'stream-error') {
+          setStreamStatus('error');
+        } else if (data?.kind === 'stream-fallback') {
+          setStreamBackend('polling');
+        }
+      } catch {
+        /* ignore malformed meta */
+      }
+    };
+    const onUpdate = (e) => {
+      try {
+        const delta = JSON.parse(e.data);
+        if (!delta || !delta.fixtureId || !delta.patch) return;
+        // Skip meta-style deltas (no fixtureId) and unknown fixture ids
+        setFixtures((prev) => {
+          if (!prev.some((f) => f.id === String(delta.fixtureId))) return prev;
+          return prev.map((f) =>
+            f.id === String(delta.fixtureId) ? { ...f, ...delta.patch } : f
+          );
+        });
+      } catch {
+        /* ignore malformed update */
+      }
+    };
+    const onError = () => setStreamStatus('error');
+    const onOpen = () => setStreamStatus('open');
+
+    es.addEventListener('meta', onMeta);
+    es.addEventListener('update', onUpdate);
+    es.addEventListener('odds', onUpdate);
+    es.addEventListener('score', onUpdate);
+    es.addEventListener('error', onError);
+    es.addEventListener('open', onOpen);
+
+    return () => {
+      es.close();
+      setStreamStatus('closed');
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     if (tab === 'all') return fixtures;
@@ -506,22 +563,50 @@ export default function WorldCupClient() {
   const isReplayMode = status?.mode === 'replay';
   const cutoffPassed = status ? new Date(status.cutoff).getTime() < Date.now() : false;
 
+  const streamBadge = (() => {
+    if (streamStatus === 'connecting') {
+      return { color: 'border-white/20 bg-white/5 text-white/60', icon: Activity, label: 'Connecting\u2026' };
+    }
+    if (streamStatus === 'open') {
+      return {
+        color: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
+        icon: Zap,
+        label: streamBackend === 'txline-sse' ? 'Live SSE' : 'Live polling',
+      };
+    }
+    if (streamStatus === 'error') {
+      return { color: 'border-amber-400/30 bg-amber-500/10 text-amber-200', icon: AlertTriangle, label: 'Stream retry' };
+    }
+    return null;
+  })();
+
   return (
     <AppShell
       wallet={false}
       title="World Cup Intelligence"
       subtitle="TxLINE is the primary source for fixtures, consensus odds, and finalised match receipts. Polymarket and Kalshi are shown only as secondary comparison venues."
       actions={
-        status && (
-          <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${
-            isReplayMode
-              ? 'border-amber-400/30 bg-amber-500/10 text-amber-200'
-              : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'
-          }`}>
-            {isReplayMode ? <AlertTriangle size={12} /> : <Zap size={12} />}
-            {isReplayMode ? 'Replay mode (cached TxLINE)' : 'Live TxLINE'}
-          </div>
-        )
+        <div className="flex items-center gap-2">
+          {streamBadge && (
+            <div
+              data-testid="stream-badge"
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${streamBadge.color}`}
+            >
+              <streamBadge.icon size={12} />
+              {streamBadge.label}
+            </div>
+          )}
+          {status && (
+            <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${
+              isReplayMode
+                ? 'border-amber-400/30 bg-amber-500/10 text-amber-200'
+                : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'
+            }`}>
+              {isReplayMode ? <AlertTriangle size={12} /> : <Zap size={12} />}
+              {isReplayMode ? 'Replay mode (cached TxLINE)' : 'Live TxLINE'}
+            </div>
+          )}
+        </div>
       }
       subheader={
         <SecondaryNav

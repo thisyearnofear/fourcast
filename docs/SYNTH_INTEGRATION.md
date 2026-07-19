@@ -53,7 +53,7 @@ Fourcast integrates SynthData's 200+ ML model ensemble to provide quantitative p
 - **Changes**:
   - Added 🤖 ML badge to market cards when analysis uses Synth
   - Added SynthData forecast card in expanded analysis view
-  - Display P5/P95 percentiles, current price, edge detection
+  - Display P5/P95 percentiles, current price, fair-odds comparison
   - Visual distinction for ML-backed vs pure LLM forecasts
 
 #### `app/WeatherPage.js` (Enhanced)
@@ -93,10 +93,10 @@ UI Display (Badges, Cards, Percentiles)
 - Supports crypto, equities, commodities
 - Graceful fallback to pure LLM when asset not supported
 
-### 2. Edge Detection
-- Compare Synth fair odds vs market prices
-- Visual indicators (⚡) for significant edges (>5%)
-- Displayed in both agent recommendations and market cards
+### 2. Fair-Odds Comparison (the “edge” the operator cares about)
+- Compare Synth fair odds vs market prices; surface only edges above the Kelly threshold
+- Visual indicators on agent recommendations and market cards
+- Reframed in UI as “Kelly-sized” not “edge detected” — operators care about the size, not the discovery
 
 ### 3. Path-Dependent Analysis (Novel)
 - Detects "touches X before Y" market patterns

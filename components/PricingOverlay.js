@@ -1,31 +1,35 @@
 'use client';
 
 import { useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import { useSubscription, TIERS } from '@/hooks/useSubscription';
 
+// Pricing is operator-first per docs/GO_TO_MARKET.md §3 and constants/brand.js
+// positioning. Premium ($19.99/mo) is the headline — it is the Quant-Operator
+// tier. Pro ($9.99) sits quietly beside it for casual signal publishers.
 const PLANS = [
   {
     id: 'free', name: 'Free', price: '$0', period: 'forever',
-    description: 'Get started with basic AI analysis',
-    features: ['3 AI analyses per day', 'Basic confidence scoring', 'Market browsing & discovery', 'Public track record'],
-    cta: 'Current plan', disabled: true, popular: false,
+    description: 'Audit-only access for newcomers',
+    features: ['3 AI analyses per day', 'Public Track Record browsing', 'Signal marketplace audit', 'No Autopilot execution'],
+    cta: 'Current plan', disabled: true, popular: false, audience: 'auditor',
   },
   {
     id: 'pro', name: 'Pro', price: '$9.99', period: '/month',
-    description: 'Unlimited analysis for serious traders',
-    features: ['Unlimited AI analyses', 'Deep analysis mode (Qwen3-235B)', 'Live weather data integration', 'Web search for context', 'Cross-platform arbitrage detection', 'Priority AI processing'],
-    cta: 'Upgrade to Pro', disabled: false, popular: true, tier: TIERS.PRO,
+    description: 'For Signal Analysts who publish, not automate',
+    features: ['Unlimited AI analyses', 'Deep analysis mode (Qwen3-235B)', 'Live weather data integration', 'Web search for context', 'Publish public signals on Arc', 'Follow-graph onboarding'],
+    cta: 'Upgrade to Pro', disabled: false, popular: false, tier: TIERS.PRO, audience: 'analyst',
   },
   {
     id: 'premium', name: 'Premium', price: '$19.99', period: '/month',
-    description: 'Maximum edge for active traders',
-    features: ['Everything in Pro', 'Kelly Criterion position sizing', 'API access for developers', 'Automated arbitrage execution', 'Custom alert system', 'Dedicated support'],
-    cta: 'Go Premium', disabled: false, popular: false, tier: TIERS.PREMIUM,
+    description: 'For Quant Operators running real capital',
+    features: ['Everything in Pro', 'Kelly Criterion position sizing', 'Autopilot execution with Polymarket Builder attribution', 'Audited Track Record on Arc', 'Daily concierge Telegram report', 'API access for developer workflows'],
+    cta: 'Upgrade to Premium', disabled: false, popular: true, tier: TIERS.PREMIUM, audience: 'operator',
   },
 ];
 
 export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
-  const [selectedPlan, setSelectedPlan] = useState('pro');
+  const [selectedPlan, setSelectedPlan] = useState('premium');
   const { txState, subscribe, resetTx, subscription, isConfigured } = useSubscription();
 
   // Don't show pricing overlay if payment system isn't configured
@@ -61,9 +65,11 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
       >
         {/* Header */}
         <div className={`px-6 pt-8 pb-6 text-center border-b border-white/10`}>
-          <div className="text-4xl mb-3">🔮</div>
+          <div className="mb-3 flex items-center justify-center">
+            <Sparkles className="h-10 w-10 text-emerald-300" aria-hidden="true" />
+          </div>
           <h2 className={`text-2xl font-semibold ${textColor} mb-2`}>
-            Unlock Your Full Edge
+            Unlock Your Autopilot
           </h2>
           <p className={`text-sm ${mutedColor} max-w-md mx-auto`}>
             {subscription.active
@@ -90,14 +96,14 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
                 disabled={plan.disabled || isProcessing}
                 className={`relative flex flex-col p-5 rounded-2xl text-left transition-all border ${
                   isProPlan
-                    ? 'bg-purple-500/10 border-purple-500/40 ring-1 ring-purple-500/30'
+                    ? 'bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
                 } ${plan.disabled ? 'opacity-60 cursor-default' : 'cursor-pointer'}`}
               >
                 {isProPlan && (
                   <div className={`absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider
-                    bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg`}>
-                    Most Popular
+                    bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg`}>
+                    Operator Tier
                   </div>
                 )}
                 <div className="mb-3">
@@ -125,7 +131,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
                     plan.disabled
                       ? 'bg-white/10 text-white/40'
                       : isSelected
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
                         : 'bg-white/10 text-white/70 hover:bg-white/20'
                   }`}
                 >
@@ -177,7 +183,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
                   ? 'bg-green-500 text-white cursor-default'
                   : isProcessing
                     ? 'bg-white/20 text-white/60 cursor-wait'
-                    : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90'
               }`}
               disabled={isProcessing || txState.status === 'success'}
               onClick={() => {

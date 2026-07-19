@@ -1,14 +1,14 @@
 import React from 'react';
+import { CloudSun, Car, BarChart3 } from 'lucide-react';
 
 /**
  * SignalCard - Unified display for multi-domain signals
- * Supports Weather 🌤️ and Mobility 🚗 visualization
+ * Supports Weather, Mobility, and General market visualizations
  */
-export default function SignalCard({ signal, isNight = false }) {
+export default function SignalCard({ signal }) {
   const isWeather = signal.domain === 'weather' || signal.weather_json;
   const isMobility = signal.domain === 'mobility' || (!isWeather && signal.market_title.includes('Turnout'));
 
-  const domainIcon = isWeather ? '🌤️' : (isMobility ? '🚗' : '🔮');
   const domainName = isWeather ? 'Weather' : (isMobility ? 'Mobility' : 'General');
 
   // Dynamic Styles
@@ -34,7 +34,13 @@ export default function SignalCard({ signal, isNight = false }) {
       {/* Header: Domain + Confidence */}
       <div className="flex justify-between items-start mb-3">
         <div className={`flex items-center space-x-2 px-2 py-1 rounded-full border text-xs font-medium ${badgeStyle}`}>
-          <span>{domainIcon}</span>
+          {isWeather ? (
+            <CloudSun className="w-3 h-3" aria-hidden="true" />
+          ) : isMobility ? (
+            <Car className="w-3 h-3" aria-hidden="true" />
+          ) : (
+            <BarChart3 className="w-3 h-3" aria-hidden="true" />
+          )}
           <span>{domainName} Signal</span>
         </div>
         <div className="text-right">

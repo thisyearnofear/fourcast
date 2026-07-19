@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BRAND } from '@/constants/brand';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
+import OperatorMath from '@/components/OperatorMath';
 import { useBrightDataStatus } from '@/hooks/useBrightDataStatus';
 
 const QUICK_SEARCHES = [
@@ -213,6 +214,12 @@ export default function SearchLanding() {
             </div>
           </div>
         </section>
+
+        {/* Operator Math — compact (discovery mode) on the landing page so the
+            eyebrow pill is omitted and spacing is tighter. The full <OperatorMath />
+            variant (eyebrow + Headline pill + generous padding) is reserved for
+            /labs/autopilot where the math IS the product context. */}
+        <OperatorMath compact />
       </div>
     </main>
   );

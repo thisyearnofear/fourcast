@@ -619,6 +619,239 @@ export async function getFixtureDetail(fixtureId) {
   };
 }
 
+/* =============================== streaming =============================== */
+
+/**
+ * SSE stream support.
+ *
+ * TxLINE exposes a high-speed Server-Sent Events feed for live World Cup data;
+ * the endpoint URL is configurable via TXLINE_SSE_URL. When unset (most common
+ * in dev / replay mode), the stream falls back to a server-side polling loop
+ * that yields fixture/odds/score deltas at a fixed interval. The UI sees the
+ * same delta shape either way.
+ *
+ * Authentication: browser EventSource can't send custom headers, so the actual
+ * TxLINE SSE connection (when configured) must be proxied by an API route that
+ * adds Authorization + X-Api-Token server-side. The polling fallback doesn't
+ * need that — it reuses the existing authenticated fetch path.
+ */
+
+// Stream config — read env vars at call time (not module-load consts) so test
+// overrides and runtime config updates take effect. Mirrors how `resolveMode()`
+// already reads TXLINE_MODE dynamically.
+const DEFAULT_STREAM_POLL_MS = 30_000;
+
+export function getStreamConfig() {
+  return {
+    sseUrl: process.env.TXLINE_SSE_URL || null,
+    pollIntervalMs: Number(process.env.TXLINE_STREAM_POLL_MS) || DEFAULT_STREAM_POLL_MS,
+    mode: resolveMode(),
+  };
+}
+
+/**
+ * Format a fixture patch as an SSE-style delta envelope the UI can apply.
+ * @param {string} fixtureId
+ * @param {object} patch  - partial fixture fields to merge
+ * @param {string} [kind] - 'fixture' | 'odds' | 'score' | 'meta'
+ */
+export function toStreamDelta(fixtureId, patch, kind = 'fixture') {
+  return {
+    type: kind,
+    fixtureId: String(fixtureId ?? ''),
+    patch: patch || {},
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * Parse a raw SSE data payload (one event's `data:` lines joined) into a
+ * delta envelope. Tolerates JSON, newline-separated JSON, and plain text
+ * fallback. Returns null on empty/invalid input so the consumer can skip.
+ */
+export function parseStreamEvent(rawData) {
+  if (!rawData || typeof rawData !== 'string') return null;
+  const trimmed = rawData.trim();
+  if (!trimmed) return null;
+  // Multi-line JSON: split on newlines, take the last parseable JSON object.
+  // Only accept the `patch` (or `data`) wrapper — falling back to the whole
+  // object would mean `{...f, ...patch}` in the client overwrites `f.home`
+  // with a partial object, losing f.home.name / code / isHome.
+  const lines = trimmed.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    try {
+      const obj = JSON.parse(lines[i]);
+      if (obj && typeof obj === 'object') {
+        return {
+          type: obj.type || 'fixture',
+          fixtureId: obj.fixtureId || obj.id || null,
+          patch: obj.patch || obj.data || {},
+          timestamp: obj.timestamp || new Date().toISOString(),
+        };
+      }
+    } catch {
+      // not JSON, try next line
+    }
+  }
+  // Fall back to treating the whole blob as a plain-text update for the
+  // currently-tracked fixture (if any was hinted in a prefix like "id:1234")
+  return {
+    type: 'raw',
+    fixtureId: null,
+    patch: { raw: trimmed },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * Stream fixture updates as an async generator. Yields delta envelopes
+ * consumable by the /api/worldcup/stream SSE route.
+ *
+ * Two backends:
+ *   1. Real SSE (if TXLINE_SSE_URL is set) - opens an upstream EventSource-style
+ *      fetch, parses `data:` lines, yields parsed deltas. Uses Authorization
+ *      header (server-side only).
+ *   2. Polling fallback - every STREAM_POLL_INTERVAL_MS, re-fetches fixtures
+ *      (and per-fixture odds when status is live/scheduled), diffs against the
+ *      last seen state, yields deltas for every fixture that changed.
+ *
+ * @param {{ signal?: AbortSignal, fetchFixtures?: () => Promise<{fixtures: any[]}>, replayIntervalMs?: number }} [options]
+ *   - `fetchFixtures` is the polling-backend fixture fetcher. Defaults to the
+ *     module's `getFixtures()`; tests inject a mock to drive deterministic
+ *     scenarios without hitting TxLINE or the filesystem.
+ * @yields {{ type: string, fixtureId: string|null, patch: object, timestamp: string }}
+ */
+export async function* streamFixtureUpdates(options = {}) {
+  const { signal, fetchFixtures = getFixtures, replayIntervalMs = 1500 } = options;
+  const cfg = getStreamConfig();
+
+  // ── Backend 1: real TxLINE SSE ────────────────────────────────────────
+  if (cfg.sseUrl && cfg.mode === 'live' && API_TOKEN) {
+    try {
+      yield toStreamDelta(null, { kind: 'stream-mode', source: 'txline-sse' }, 'meta');
+      for await (const delta of consumeUpstreamSse(cfg.sseUrl, signal)) {
+        yield delta;
+      }
+      return;
+    } catch (err) {
+      // Fall through to polling backend
+      yield toStreamDelta(
+        null,
+        { kind: 'stream-fallback', source: 'polling', reason: err.message },
+        'meta'
+      );
+    }
+  }
+
+  // ── Backend 2: polling fallback (also covers replay mode) ─────────────
+  yield toStreamDelta(null, { kind: 'stream-mode', source: cfg.sseUrl ? 'txline-sse-polling' : 'polling' }, 'meta');
+
+  const seen = new Map(); // fixtureId -> last-serialized snapshot
+  let stop = false;
+  if (signal) {
+    if (signal.aborted) stop = true;
+    signal.addEventListener('abort', () => { stop = true; }, { once: true });
+  }
+
+  // Emit a startup snapshot so the client has data immediately
+  yield* emitSnapshotDiff(seen, /* force */ true, fetchFixtures);
+
+  while (!stop) {
+    try {
+      yield* emitSnapshotDiff(seen, /* force */ false, fetchFixtures);
+    } catch (err) {
+      yield toStreamDelta(null, { kind: 'error', error: err.message }, 'meta');
+    }
+    await sleep(cfg.pollIntervalMs);
+  }
+}
+
+async function* emitSnapshotDiff(seen, force, fetchFixtures = getFixtures) {
+  const { fixtures } = await fetchFixtures();
+  for (const f of fixtures) {
+    const key = f.id;
+    const prev = seen.get(key);
+    const snapshot = serializeForDiff(f);
+    if (force || prev !== snapshot) {
+      seen.set(key, snapshot);
+      yield toStreamDelta(key, f, 'fixture');
+    }
+  }
+  // Heartbeat for replay mode: also emit a meta tick so the client knows the
+  // stream is alive even when no fixtures changed.
+  yield toStreamDelta(null, { kind: 'heartbeat', ts: new Date().toISOString() }, 'meta');
+}
+
+function serializeForDiff(fixture) {
+  // Compact diff key: only the fields the UI cares about for live updates.
+  // Keep it small + order-stable so string equality works.
+  return JSON.stringify({
+    status: fixture.status,
+    score: [fixture.home?.score, fixture.away?.score],
+    odds: fixture.odds && {
+      h: fixture.odds.implied?.home,
+      d: fixture.odds.implied?.draw,
+      a: fixture.odds.implied?.away,
+    },
+    ts: fixture.updatedAt,
+  });
+}
+
+/**
+ * Read raw `data:` payloads from an upstream TxLINE SSE URL. Adds the standard
+ * Authorization + X-Api-Token headers (server-side only). The fetch reader
+ * yields text chunks; we buffer until newline, then parse each non-empty line.
+ *
+ * @param {string} url
+ * @param {AbortSignal} [signal]
+ */
+async function* consumeUpstreamSse(url, signal) {
+  const jwt = await (async () => {
+    if (cachedJwt) return cachedJwt;
+    if (API_TOKEN) await refreshGuestJwt();
+    return cachedJwt;
+  })();
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+      'X-Api-Token': API_TOKEN,
+      Accept: 'text/event-stream',
+      'User-Agent': 'fourcast-worldcup/1.0',
+    },
+    signal,
+  });
+  if (!res.ok || !res.body) {
+    throw new Error(`TxLINE SSE ${url} -> ${res.status}`);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n\n')) !== -1) {
+      const rawEvent = buf.slice(0, idx);
+      buf = buf.slice(idx + 2);
+      const dataLines = rawEvent
+        .split(/\r?\n/)
+        .filter((l) => l.startsWith('data:'))
+        .map((l) => l.slice(5).trim())
+        .join('\n');
+      if (!dataLines) continue;
+      const parsed = parseStreamEvent(dataLines);
+      if (parsed) yield parsed;
+    }
+  }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/* ============================== end streaming ============================ */
+
 const txlineService = {
   getTxlineStatus,
   getFixtures,
@@ -635,6 +868,10 @@ const txlineService = {
   normalizeFixtures,
   normalizeOddsResponse,
   normalizeScoresResponse,
+  getStreamConfig,
+  toStreamDelta,
+  parseStreamEvent,
+  streamFixtureUpdates,
 };
 
 export default txlineService;

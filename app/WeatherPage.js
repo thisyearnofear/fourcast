@@ -7,6 +7,7 @@ import UnifiedConnect from '@/components/UnifiedConnect';
 import useHUDStore from '@/hooks/useHUDStore';
 import { weatherService } from '@/services/weatherService';
 import { WinCelebration } from '@/components/WinCelebration';
+import { Sparkles } from 'lucide-react';
 
 export default function WeatherPage() {
   const router = useRouter();
@@ -120,7 +121,9 @@ export default function WeatherPage() {
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
           <div className="max-w-lg w-full backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="text-3xl">🔮</div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-400/25">
+                <Sparkles className="h-5 w-5 text-emerald-300" aria-hidden="true" />
+              </div>
               <h1 className="text-2xl font-bold text-white">Fourcast</h1>
             </div>
             

@@ -180,31 +180,40 @@ Combine ML forecasts, AI reasoning, and real-time data sources to create verifia
 
 ---
 
-## Use Cases
+## Use Cases — by customer loop
 
-### For Traders
-- Find mispriced markets using AI analysis
-- Compare odds across Polymarket and Kalshi
-- Execute arbitrage strategies
-- Track personal performance over time
+Fourcast commits to one primary customer. The other use cases exist to feed that loop.
 
-### For Analysts
-- Publish predictions with verifiable track record
-- Earn tips for high-quality signals
-- Build reputation in the community
-- Compete on leaderboards
+### 🥇 For Quant Operators (Primary — the product)
 
-### For Developers
+- Run an autonomous agent loop: discover → AI forecast → Kelly-sized positions → attributed execution
+- Compare odds across Polymarket and Kalshi with fee-aware arbitrage detection
+- Build a public **Audited Track Record** on Arc that follow-on capital can verify
+- Earn Builder attribution revenue from every Autopilot fill
+- Track Brier score, win rate, calibration, and operator-tier performance metrics
+
+### 📣 For Signal Analysts (Acquisition Layer — not the headline)
+
+- Publish predictions with verifiable on-chain track record
+- Build a follower graph — the funnel into the Operator tier
+- Earn tips and surface relevant operators to the marketplace
+- Visibility into which analysts graduate to Operator status
+
+### 🧪 For Developers
+
 - Access unified API for prediction markets
-- Build custom signal publishers
-- Integrate AI analysis into your apps
+- Build custom signal publishers (SDK ships later — gated until Operator tier is validated)
+- Integrate Fourcast analysis into apps
 - Create new domain analyzers
 
-### For Researchers
-- Study market efficiency across platforms
+### 🎓 For Researchers
+
+- Study market efficiency across platforms using the on-chain data
 - Analyze weather impacts on outcomes
 - Access historical forecast data
-- Validate AI prediction models
+- Validate AI prediction models — but only as a side effect of the Operator loop
+
+> **Who Fourcast is not for.** Casual retail looking for a free alpha feed. Retail-tier behavior (no wallet, no capital, no signal-publishing intent) is allowed under the free tier but never optimized for. The product **underserves** that use case on purpose.
 
 ---
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Sparkles } from 'lucide-react';
 
 /**
  * Public status page showing real-time health of all external providers.
@@ -84,7 +85,9 @@ export default function StatusPage() {
       {/* Header */}
       <div className="w-full max-w-[640px] mb-12">
         <div className="flex items-center gap-2.5 mb-2">
-          <span className="text-[28px] leading-none">🔮</span>
+          <span className="flex h-7 w-7 items-center justify-center text-emerald-300">
+            <Sparkles className="h-7 w-7" aria-hidden="true" />
+          </span>
           <h1 className="text-[22px] font-light tracking-tight">System Status</h1>
         </div>
         <p className="text-[13px] text-slate-400 font-light leading-relaxed">

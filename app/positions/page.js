@@ -9,7 +9,7 @@ import { BRAND } from "@/constants/brand";
 export default function PositionsPage() {
   return (
     <AppShell
-      title="Positions"
+      title={BRAND.navLabels.positions ?? 'Track Record'}
       subtitle={BRAND.pages.positions}
       maxWidth="max-w-4xl"
       subheader={<NarrativeSteps currentStep="scored" />}

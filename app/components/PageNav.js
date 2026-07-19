@@ -15,17 +15,25 @@ import WalletConnect from "@/app/components/WalletConnect";
  * Core loop: Search → Analyze → Publish/Trade → Track (matches BRAND.loop)
  */
 
+/**
+ * Primary nav. Notes:
+ *  - "Positions" was renamed "Track Record" so the primary-customer language
+ *    is visible without scrolling.
+ *  - Labels can be overridden via BRAND.navLabels in constants/brand.js.
+ */
+// BRAND.navLabels is a required top-level key (see constants/brand.js). We still
+// keep ?? fallbacks so unit tests / Storybook / partial mocks stay safe.
 const PRIMARY_NAV = [
-  { name: "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
-  { name: "World Cup", href: "/world-cup", description: "TxLINE-verified World Cup intelligence", onboardId: "world-cup" },
-  { name: "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
-  { name: "Agent", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
-  { name: "Positions", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
+  { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
+  { name: BRAND.navLabels.worldCup ?? "World Cup", href: "/world-cup", description: "TxLINE-verified World Cup intelligence", onboardId: "world-cup" },
+  { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
+  { name: BRAND.navLabels.agent ?? "Agent", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
+  { name: BRAND.navLabels.positions ?? "Track Record", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
 ];
 
 const SECONDARY_NAV = [
-  { name: "Labs", href: "/labs", description: BRAND.nav.labs },
-  { name: "Alerts", href: "/notifications", description: "Notifications from analysts you follow" },
+  { name: BRAND.navLabels.labs ?? "Labs", href: "/labs", description: BRAND.nav.labs },
+  { name: BRAND.navLabels.alerts ?? "Alerts", href: "/notifications", description: "Notifications from analysts you follow" },
 ];
 
 function useIsActive() {

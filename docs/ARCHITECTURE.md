@@ -69,7 +69,7 @@ The former 2,706-line god-file has been decomposed into focused modules:
 - ML-backed price forecasts for crypto/equities
 - Supported assets: BTC, ETH, SOL, XAU, SPY, NVDA, GOOGL, TSLA, AAPL
 - Prediction percentiles (P5/P50/P95), volatility forecasts
-- Polymarket edge detection (fair odds vs market odds)
+- Polymarket fair-odds comparison (SynthData vs market odds, used by Kelly sizing)
 
 ### 3. Weather Integration (`services/weatherService.js`)
 

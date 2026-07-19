@@ -6,7 +6,7 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 
 > "A whale can take a massive position without exposing it to the market. On Polymarket, that position is public within seconds — copied, front-run, front-paged on tracker sites. On Canton, it doesn't exist for anyone but the holder. Watch."
 
-**Show:** Markets page — AI signal with edge detection and confidence score. Settlement-layer selector visible (Arc vs Canton).
+**Show:** Markets page — AI analysis with Kelly-sized recommendation and confidence score. Settlement-layer selector visible (Arc vs Canton).
 
 ---
 

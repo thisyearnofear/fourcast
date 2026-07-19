@@ -1,45 +1,57 @@
-# Fourcast Product Strategy — Prediction Insights Marketplace
+# Insights Marketplace — The Acquisition Layer
 
-## The Core Insight
+## Position
 
-We cannot credibly claim to "provide an edge." A true edge requires:
-- A systematic, backtested strategy
-- Real-time market odds comparison (Polymarket vs Kalshi vs fair value)
-- Verifiable track record with statistical significance
+The Insights Marketplace is **not** Fourcast's primary product. It is the **distribution loop that pulls Quant Operators into the headline Autopilot product**.
 
-What we actually have is an **AI-assisted analysis pipeline** that generates informed opinions. These are useful — analysts use them to make better decisions — but they are not edges.
+We commit to that hierarchy. Social and reputation mechanics exist to feed the operator funnel, not as standalone value propositions.
 
-## The Strategic Pivot
+## Why
 
-| Before | After |
-|--------|-------|
-| "We find edges in prediction markets" | "We connect you with analysts who find edges" |
-| AI is the product | AI is the tool for analysts |
-| Prediction market intelligence | Prediction insights marketplace |
-| Users subscribe for AI analysis | Users follow analysts, tip signals, build reputation |
-| "Edge: +7.2%" | "Analysis by @trader — 73% confidence, 12-2 record" |
+The core insight from the original marketplace doc still holds:
 
-## How It Works
+> We cannot credibly claim to "provide an edge." A true edge requires:
+> - A systematic, backtested strategy
+> - Real-time market odds comparison (Polymarket vs Kalshi vs fair value)
+> - Verifiable track record with statistical significance
 
-### For Analysts (Supply Side)
-1. Publish predictions with reasoning, confidence level, and market target
-2. Attach on-chain signature (Arc) for verifiability
-3. Build a track record — Brier score, win rate, ROI — displayed on your profile
-4. Earn tips, subscribers, and reputation
-5. AI assists: market scanning, data enrichment, draft analysis
+What we actually have is an **AI-assisted analysis pipeline + Polymarket Builder attribution + an on-chain reputation record**. That combination is valuable to one customer: the **Quant Operator** who needs verified attribution, not vibes. Everyone else uses one slice.
 
-### For Followers (Demand Side)
-1. Discover analysts via leaderboard (sorted by recency, win rate, volume)
-2. Follow analysts whose style matches your strategy
-3. Get notified when they publish new signals
-4. Tip USDC to analysts whose predictions you find valuable
-5. Publish your own analysis to build your reputation
+So:
 
-### For Fourcast
-1. Surface the best analysis via Telegram bot, web app, and API
-2. Verify track records on-chain (Arc) — immutable, trustless
-3. Take a small cut on tips (e.g., 5%) for platform sustainability
-4. AI enriches but doesn't claim to be the source of the edge
+| Before (retail-friendly framing) | After (operator-first framing) |
+|---|---|
+| "We connect you with analysts who find edges" | "We turn your verified fills into an Audited Track Record that follow-on capital trusts" |
+| AI is the product | AI + Kelly + Builder attribution is the product — for the operator who deploys capital |
+| Prediction insights marketplace | **Acquisition layer** for the operator funnel |
+| Users subscribe for AI analysis | Operators monetize Autopilot fills via Builder + get scored publicly |
+| "Edge: +7.2%" | "12-win streak · 0.18 Brier · +$3,240 Builder attribution on Arc" |
+
+## How the two surfaces work together
+
+### Operator (Primary — the product)
+
+1. Concierge configures the Autopilot with their risk tolerance + market universe
+2. Agent loop runs: discover → forecast → size with Kelly → execute via Builder attribution
+3. Every fill publishes an `AuditedTrackRecord` entry on Arc: edge, size, outcome, Brier contribution
+4. Operator now has a public, verifiable track record they can show follow-on capital
+5. Followers + tips + leaderboard fuel the acquisition loop
+
+### Follower / Acquisition Layer (the marketplace)
+
+1. Discovers operators via leaderboard (sorted by recency, win rate, attribution volume, Brier score)
+2. Follows operators whose edge matches their risk tolerance
+3. Gets notified on new fills / signals / arbitrages
+4. Tips USDC to operators whose track records they trust
+5. Several of them convert to **operators themselves** — the funnel self-fills
+
+### What Fourcast owns
+
+1. The Autopilot + Builder integration (the moat — execution cost is real)
+2. The on-chain `AuditedTrackRecord` registry on Arc (the trust)
+3. The leaderboard + follow graph (the distribution)
+4. The AI analysis tooling that boosts operator success rates (the utility)
+5. Telegram bot as one surface of the loop, not the headline
 
 ## Revised Bot Messaging
 

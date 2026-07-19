@@ -43,7 +43,7 @@ export async function generateMetadata() {
           url: landingOgImage,
           width: 1200,
           height: 630,
-          alt: 'Fourcast edge scanner preview',
+          alt: 'Fourcast — Polymarket Autopilot preview',
         },
       ],
     },
@@ -80,7 +80,7 @@ export default function RootLayout({ children }) {
                 <span className="text-slate-700 text-[10px]">·</span>
                 <Link href="/agent" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">Agent</Link>
                 <span className="text-slate-700 text-[10px]">·</span>
-                <Link href="/positions" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">Positions</Link>
+                <Link href="/positions" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">{BRAND.navLabels.positions ?? 'Track Record'}</Link>
                 <span className="text-slate-700 text-[10px]">·</span>
                 <Link href="/labs" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors no-underline">Labs</Link>
                 <span className="text-slate-700 text-[10px]">·</span>

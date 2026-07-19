@@ -136,13 +136,29 @@ Each provider exposes a typed client with: timeout, retry, cache key, error type
 
 **Goal:** the product does fewer things, and each thing is undeniably better.
 
-### P3.1 — The "one loop" decision
+### P3.1 — The "one loop" decision — locked
 
-Pick one primary user loop and make it 9/10:
+**Primary customer: Quant Operator. Primary loop: the Operator Autopilot loop.**
 
-> "I search a market → I see AI + ML forecast with evidence → I publish a signal OR place a trade → I get scored."
+> "I am a Polymarket operator. The agent loop finds mispricings, sizes with Kelly, attributes every fill to my Builder, and posts the result to my on-chain Track Record — so the next round of capital can verify me in one click."
 
-Everything else (autopilot, 3D landing, deep-reasoning visualizer, Farcaster, Telegram, builder) is a side door, not part of the headline narrative.
+That is the headline loop. Everything else is a side door:
+
+| Surface | Role | Why it exists |
+|---|---|---|
+| `/autopilot` and `AutopilotDashboard` | **Headline** | This is the Operator product |
+| `/agent` and `AgentDashboard` | On-ramp + manual mode | The Operator runs this before turning on Autopilot |
+| `/markets` and `SearchLanding` | Acquisition top-of-funnel | Free tier users discover; some convert to Operators |
+| `/signals` and the insight marketplace | **Acquisition loop** | Used to surface operators to followers, not as the standalone product |
+| `/positions` (renamed "Track Record") | The reputation surface | The output every Operator shows to follow-on capital |
+| `/labs`, deep-reasoning visualizer, 3D landing, Farcaster frame, Telegram bot | Side doors | Helpful for activation but never the lead |
+
+**Non-negotiable commitments for the next 6 weeks:**
+
+1. Every UI surface should make it obvious which loop it serves. Operators see Operator framing; acquisition traffic sees marketplace framing; never blur them.
+2. The 14-day concierge test in `docs/GO_TO_MARKET.md` is the only legitimate tiebreaker. A/B tests against retail free-tier behavior do **not** count.
+3. If a feature doesn't move Operator (or Operator-acquisition) metrics in 30 days, it goes to `/labs` or dies.
+4. Builder attribution is **not** a side door. It's a revenue line for the Operator and must be visible wherever a fill happens.
 
 ### P3.2 — Information architecture rewrite
 

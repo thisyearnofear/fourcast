@@ -29,7 +29,7 @@ export default function ReasoningVisualizer({
       { label: "Accessing Venice AI Multi-Agent Mesh (Llama 3.3 70B)...", icon: "🌐" },
       { label: "Analyzing weather impact vectors and path dependency...", icon: "🌤" },
       { label: "Calculating cross-chain arbitrage edge and expected value...", icon: "⛓️" },
-      { label: "Synthesizing final predictive assessment...", icon: "🔮" }
+      { label: "Synthesizing final predictive assessment...", icon: "✅" }
     ];
   };
 
@@ -103,7 +103,7 @@ export default function ReasoningVisualizer({
               </p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-2xl animate-pulse">
-              {activeSteps[displayStep]?.icon || "🔮"}
+              {activeSteps[displayStep]?.icon || "✅"}
             </div>
           </div>
 
