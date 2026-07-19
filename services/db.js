@@ -967,6 +967,29 @@ export async function getAgentRunLedger(limit = 12) {
   }
 }
 
+/**
+ * The worker reports one compact, signed status document. Keeping only its
+ * latest state is intentional: receipts remain the immutable audit trail,
+ * while this table answers the operational question, "what is it doing now?"
+ */
+export async function saveHistoricalLabStatus(payload) {
+  await migrationsReady;
+  const updatedAt = Math.floor(Date.now() / 1000);
+  await execute(
+    `INSERT INTO historical_lab_status (id, payload, updated_at) VALUES (1, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at`,
+    [JSON.stringify(payload), updatedAt],
+  );
+  return { success: true, updatedAt };
+}
+
+export async function getHistoricalLabStatus() {
+  await migrationsReady;
+  const rows = await query('SELECT payload, updated_at FROM historical_lab_status WHERE id = 1');
+  if (!rows[0]) return { success: true, status: null };
+  return { success: true, status: safeJsonParse(rows[0].payload, null), updatedAt: rows[0].updated_at };
+}
+
 function safeJsonParse(value, fallback) {
   if (!value || typeof value !== 'string') return fallback;
   try {

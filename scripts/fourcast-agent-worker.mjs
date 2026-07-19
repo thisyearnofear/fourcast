@@ -282,6 +282,8 @@ function summarizeReceipt(receipt) {
     allocationPct: decision.allocationPct,
     receiptHash: receipt.proof.integrity.contentHash,
     reconciliationStatus: receipt.reconciliation?.status || null,
+    phase: receipt.phase || null,
+    timeline: receipt.timeline || null,
     file: receipt.file,
   };
 }
