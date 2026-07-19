@@ -1,47 +1,34 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { ToastProvider } from '@/components/ToastProvider';
 import WalletLayer from './WalletLayer';
 import { CantonWalletProvider } from './CantonWalletLayer';
 
-/** Routes that need wagmi/ConnectKit. Landing stays wallet-free for first paint. */
-const WALLET_PREFIXES = [
-  '/markets',
-  '/signals',
-  '/signal',
-  '/positions',
-  '/labs',
-  '/agent',
-  '/notifications',
-];
-
-function routeNeedsWallet(pathname) {
-  if (!pathname) return false;
-  return WALLET_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
-}
-
 /**
- * Landing skips WagmiProvider mount (faster init).
- * Wallet routes always wrap so SSR + wagmi hooks stay valid.
+ * Always mount WagmiProvider + ConnectKitProvider + CantonWalletProvider.
+ *
+ * Previously this component only wrapped children with WalletLayer on a
+ * hard-coded list of routes (`/markets`, `/signals`, …). Any page that
+ * rendered a wallet-using component (e.g. WeatherHeader's <ConnectKitButton />
+ * on the landing page, or the new `/world-cup` route) hit
+ * `WagmiProviderNotFoundError: useConfig must be used within WagmiProvider`
+ * because the provider wasn't in its tree.
+ *
+ * The "wallet-free landing for first paint" optimization was illusory anyway
+ * — WeatherHeader already shows a wallet button on the landing page. Wagmi v2
+ * and ConnectKit are SSR-safe; the perf cost of always-mounting is negligible.
  */
 export function Providers({ children }) {
-  const pathname = usePathname();
   const [queryClient] = useState(() => new QueryClient());
-  const withWallet = routeNeedsWallet(pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        {withWallet ? (
-          <WalletLayer>
-            <CantonWalletProvider>{children}</CantonWalletProvider>
-          </WalletLayer>
-        ) : children}
+        <WalletLayer>
+          <CantonWalletProvider>{children}</CantonWalletProvider>
+        </WalletLayer>
       </ToastProvider>
     </QueryClientProvider>
   );

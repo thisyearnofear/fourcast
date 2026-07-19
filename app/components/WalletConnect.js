@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 import { ConnectKitButton } from 'connectkit';
 import { CHAINS } from '@/constants/appConstants';
@@ -17,6 +17,10 @@ import { useCantonWalletContext } from '@/app/CantonWalletLayer';
  * - Polygon: Polymarket/Kalshi order placement
  */
 export default function WalletConnect({ isNight = false }) {
+  // SSR hydration guard — wagmi hooks return neutral state during SSR that
+  // doesn't match the client's resolved state. Defer JSX until after mount.
+  const [mounted, setMounted] = useState(false);
+
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Get unified chain state
@@ -28,6 +32,11 @@ export default function WalletConnect({ isNight = false }) {
 
   // Canton (private settlement)
   const canton = useCantonWalletContext();
+
+  // Mark as mounted after first client render — gates JSX output to client only.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Styling - Glass CSS classes (DRY)
   const glassBtn = 'glass-subtle';
@@ -48,6 +57,20 @@ export default function WalletConnect({ isNight = false }) {
       return '';
     }
   };
+
+  // SSR hydration guard — wagmi hooks may return values during SSR that don't
+  // match the client. Render a width-matched skeleton until mounted so the
+  // header doesn't briefly blank during hydration (matches Connect Wallet
+  // button: px-4 py-2 text-sm → ~120×36).
+  if (!mounted) {
+    // Skeleton wrapper matches the real-render `<div className="relative">`
+    // so the header alignment stays pixel-stable through hydration.
+    return (
+      <div className="relative">
+        <div className="w-[120px] h-[36px] rounded-xl bg-white/5" aria-hidden="true" />
+      </div>
+    );
+  }
 
   // Safety check - don't render if chains not initialized
   if (!chains) {

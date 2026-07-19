@@ -21,7 +21,43 @@ export default function UnifiedConnect({ isNight = false, variant = 'header' }) 
 
   useEffect(() => { setMounted(true); }, []);
 
-  if (!mounted || !chains) return null;
+  // Cache the last-known connected state so the next page load can render a
+  // smaller skeleton variant matching the connected chip (no brief shrink on
+  // hydration). No-op on the server (window undefined) and when localStorage
+  // is disabled (Safari private mode etc.).
+  useEffect(() => {
+    if (!mounted || !chains) return;
+    if (typeof window === 'undefined') return;
+    try {
+      const isConnected = Boolean(chains.evm?.connected || chains.arc?.connected);
+      window.localStorage.setItem('fourcast_last_wallet_connected', isConnected ? '1' : '0');
+    } catch {
+      // localStorage may be disabled — fall through; next load will use default skeleton.
+    }
+    // Primitive boolean deps so the effect only re-runs when the actual
+    // connection state changes, not when chains is a new object reference.
+  }, [mounted, Boolean(chains?.evm?.connected), Boolean(chains?.arc?.connected)]);
+
+  if (!mounted) {
+    // Read the cache synchronously to pick the right skeleton size. Server has
+    // no localStorage so always renders the larger (not-connected) variant;
+    // `suppressHydrationWarning` lets the client correct on first render.
+    const wasConnected = typeof window !== 'undefined'
+      && window.localStorage?.getItem('fourcast_last_wallet_connected') === '1';
+    // Skeleton wrapper matches the not-connected render wrapper
+    // (`flex items-center gap-2`) so the header alignment stays pixel-stable
+    // through hydration. The connected-state wrapper adds `relative` for the
+    // absolute-positioned dropdown, which the skeleton doesn't need.
+    return (
+      <div className="flex items-center gap-2" suppressHydrationWarning>
+        <div
+          className={`${wasConnected ? 'w-[80px] h-[30px]' : 'w-[120px] h-[36px]'} rounded-xl bg-white/5`}
+          aria-hidden="true"
+        />
+      </div>
+    );
+  }
+  if (!chains) return null;
 
   // Gather connected chains
   const connected = Object.entries(chains)

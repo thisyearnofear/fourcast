@@ -23,6 +23,10 @@ const USDC_ADDRESS = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
  * 4. Submit to server (server adds builder attribution)
  */
 export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initialSide = 'YES', embedded = false, analysis = null }) {
+  // SSR hydration guard — wagmi hooks return neutral state during SSR that
+  // doesn't match the client's resolved state. Defer JSX until after mount.
+  const [mounted, setMounted] = useState(false);
+
   // Order parameters
   const [side, setSide] = useState(initialSide);
   const [price, setPrice] = useState('0.50');
@@ -109,6 +113,11 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
     }
   }, [success, onClose, onSuccess, embedded]);
 
+  // Mark as mounted after first client render — gates JSX output to client only.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleSubmitOrder = async () => {
     if (!size || !price) {
       alert('Please enter size and price');
@@ -164,6 +173,10 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
       setStep('input'); // Reset on error
     }
   };
+
+  // SSR hydration guard — wagmi hooks may return values during SSR that don't
+  // match the client. Skip rendering until mounted (same pattern as UnifiedConnect).
+  if (!mounted) return null;
 
   // Glass CSS classes (DRY)
   const glassPanel = 'glass-heavy';
