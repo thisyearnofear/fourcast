@@ -49,14 +49,18 @@ function getClientIdentifier(request) {
          'unknown';
 }
 
-export async function POST(request) {
+export async function executeAnalysis(request, onStage = () => {}) {
   try {
+    const report = (stage, label) => {
+      try { onStage({ stage, label, at: Date.now() }); } catch { /* progress must never break analysis */ }
+    };
     // Auth check
     if (!isAuthorized(request)) {
       return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
+    report('context', 'Request admitted — reading market context');
     const { 
       eventType, 
       location, 
@@ -179,6 +183,7 @@ export async function POST(request) {
         // Continue without marketId — analysis may be less specific
       }
     }
+    report('market', 'Venue and market context resolved');
 
     // Rate limiting — skip for subscribers
     const clientId = getClientIdentifier(request);
@@ -228,6 +233,7 @@ export async function POST(request) {
 
     // Optional Bright Data enrichment (skipped when disabled/credits exhausted)
     let brightDataIntel = null;
+    report('sources', webSearchEnabled ? 'Collecting requested web evidence' : 'Checking available model inputs');
     if (webSearchEnabled) {
       try {
         const { brightDataService } = await import('@/services/brightDataService.js');
@@ -251,6 +257,7 @@ export async function POST(request) {
     }
 
     // ENHANCED: Perform AI analysis with Redis caching and roadmap alignment
+    report('forecast', 'Synthesizing evidence into a fair probability');
     const analysis = await analyzeWeatherImpactServer({
       eventType,
       location,
@@ -276,6 +283,7 @@ export async function POST(request) {
       location: location?.name || location || 'Unknown'
     };
 
+    report('complete', 'Decision record assembled');
     return Response.json({
       success: true,
       marketId: resolvedMarketId,
@@ -330,6 +338,10 @@ export async function POST(request) {
       message: error.message
     }, { status: 500 });
   }
+}
+
+export async function POST(request) {
+  return executeAnalysis(request);
 }
 
 export async function GET() {

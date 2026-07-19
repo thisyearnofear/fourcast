@@ -8,6 +8,7 @@
 - **AI-Powered Search Landing** — Instant analysis entry with "Quick Search" and category navigation
 - **Deep Reasoning Visualizer** — Real-time "thinking" overlay for AI analysis, showing provenance and provenance-backed logic
 - **Evidence-Based UI** — Explicit data provenance for AI predictions, citing data sources (SynthData, OpenMeteo, Venice AI)
+- **Operator Pulse** — Real persisted agent/autopilot activity in the landing page and app chrome: mode, latest sweep, markets scanned, fresh edges, and execution status
 
 #### Prediction Markets Distribution
 - **One-Click Prediction Deep-Linking** — Shareable, pre-analyzed market links that hydrate state automatically
@@ -38,6 +39,7 @@
 - **Confidence Scoring** - HIGH/MEDIUM/LOW with calibration
 - **Edge Detection** - Identify mispriced markets (>5% edge)
 - **Kelly Criterion Sizing** - Mathematically optimal fractional Kelly sizing calibrated to wallet balance and AI confidence levels (Pro/Premium feature)
+- **Streaming Evidence Pipeline** - `/markets` uses `/api/analyze/stream` to show request validation, market resolution, evidence collection, forecast execution, and completion from the same canonical analysis run
 
 **Supported Assets for ML Forecasts:**
 - Crypto: BTC, ETH, SOL
@@ -65,6 +67,7 @@
 - **DeFi Arbitrage Tab** - Cross-platform opportunities
 - **My Signals** - Track your published predictions
 - **Top Analysts** - Leaderboard with tier rankings
+- **Decision Records** - Signals and positions expose evidence, recorded calls, Arc receipts when available, and outcome reconciliation state
 
 ---
 

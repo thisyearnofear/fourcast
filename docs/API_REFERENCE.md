@@ -48,7 +48,45 @@ Generate AI analysis for a market.
 ```
 
 ### POST /analyze/stream
-Stream AI analysis response (SSE).
+Stream AI analysis progress and final result as newline-delimited JSON.
+
+This endpoint runs the canonical `/api/analyze` execution path once and emits truthful lifecycle events from that request. It is the default analysis endpoint for `/markets`.
+
+**Response stream events:**
+```json
+{"type":"stage","stage":"accepted","label":"Analysis accepted"}
+{"type":"stage","stage":"context","label":"Request validated"}
+{"type":"stage","stage":"market","label":"Market resolved"}
+{"type":"stage","stage":"sources","label":"Collecting evidence"}
+{"type":"stage","stage":"forecast","label":"Running forecast"}
+{"type":"stage","stage":"complete","label":"Analysis complete"}
+{"type":"complete","status":200,"result":{"success":true,"analysis":{}}}
+```
+
+Errors are emitted as `{ "type": "error", "status": number, "error": string }`.
+
+### GET /operator/pulse
+Fetch the compact operator liveness snapshot used by the app chrome.
+
+The endpoint only reports persisted agent/autopilot state. It does not fabricate live activity.
+
+**Response:**
+```json
+{
+  "success": true,
+  "pulse": {
+    "mode": "LIVE",
+    "lastRunAt": 1760000000,
+    "marketsScanned": 42,
+    "candidates": 7,
+    "forecastsMade": 5,
+    "freshEdges": 2,
+    "totalForecasts": 128,
+    "latestExecutionAt": 1760000100,
+    "latestExecutionStatus": "filled"
+  }
+}
+```
 
 ---
 

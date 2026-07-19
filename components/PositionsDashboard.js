@@ -225,7 +225,7 @@ function StatCard({ label, value, isNight, accent = true }) {
   const isPnl = label === 'P&L';
 
   return (
-    <div className={`glass-subtle rounded-xl p-3 ${isPnl && typeof value === 'number' && value > 0 ? 'border-green-500/20' : ''}`}>
+    <div className={`fc-metric p-3 ${isPnl && typeof value === 'number' && value > 0 ? 'border-green-500/20' : ''}`}>
       <div className={`text-2xl font-light ${isPnl ? accentColor : textColor}`}>
         {value}
       </div>
@@ -260,7 +260,7 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
       : textColor;
 
   return (
-    <div className={`glass-subtle rounded-xl p-4 transition-all hover:scale-[1.005] ${
+    <div className={`fc-position-record p-4 ${
       isOpen
         ? 'border-cyan-500/20'
         : isProfitable
@@ -278,14 +278,14 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
             {isOpen ? ' · Active' : ` · Closed ${timestamp}`}
           </p>
         </div>
-        <div className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+        <div className={`fc-status flex-shrink-0 px-2 py-1 ${
           isOpen
             ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
             : isProfitable
               ? 'bg-green-500/20 text-green-300 border-green-500/30'
               : 'bg-red-500/20 text-red-300 border-red-500/30'
         }`}>
-          {isOpen ? '🟢 OPEN' : isProfitable ? '✅ PROFIT' : '❌ LOSS'}
+          {isOpen ? 'OPEN' : isProfitable ? 'PROFIT' : 'LOSS'}
         </div>
       </div>
       {/* Metrics */}
@@ -350,6 +350,11 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
             </button>
           )}
         </div>
+      </div>
+      <div className="fc-decision-chain mt-3">
+        <span className="is-complete">Entry recorded</span>
+        <span className={position.receipt_tx_hash ? 'is-complete' : ''}>Arc receipt</span>
+        <span className={isOpen ? '' : 'is-complete'}>{isOpen ? 'Position open' : 'Outcome reconciled'}</span>
       </div>
     </div>
   );

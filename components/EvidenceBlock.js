@@ -49,7 +49,7 @@ export default function EvidenceBlock({
   const confidenceMethod = getConfidenceMethod(signal);
 
   return (
-    <div className={`rounded-xl ${bg} border ${border} overflow-hidden transition-all ${className}`}>
+    <div className={`fc-proof-rail ${bg} border ${border} overflow-hidden transition-all ${className}`}>
       {/* Reputation Spine — always visible */}
       {(calibrationScore != null || agentBrierScore != null) && (
         <div className={`px-4 pt-3 pb-2 bg-white/[0.02]`}>
@@ -130,7 +130,7 @@ export default function EvidenceBlock({
         }`}
       >
         <span className="flex items-center gap-2">
-          <span>🔬</span>
+          <span className="font-mono text-emerald-300">01</span>
           <span>Evidence &amp; Provenance</span>
         </span>
         <span className={`transform transition-transform duration-200 ${sourcesExpanded ? 'rotate-180' : ''}`}>

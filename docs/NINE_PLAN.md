@@ -170,11 +170,14 @@ That is the headline loop. Everything else is a side door:
 
 - Every AI prediction must show: data sources used (timestamps), confidence with method, "what would change my mind" counter-signal.
 - No probability is rendered without provenance. This is the single biggest credibility lever.
+- The analysis surface should feel like an operator instrument: live system state, staged evidence assembly, market odds, model probability, edge, and proof in one scan.
+- Avoid generic AI output framing. Loading states must map to real pipeline stages; decorative motion should never imply activity that did not happen.
 
 ### P3.4 — Reputation as the spine
 
 - Surface Brier score, calibration curve, and 30-day win rate on every analyst profile and every published signal card.
 - Add public, immutable "track record" page (already have `agent/track-record`) — link it from every AI output.
+- Signals and positions should read as decision records: evidence captured, call recorded, receipt linked when available, outcome reconciled when known.
 
 ### P3.5 — Onboarding cut
 
@@ -190,6 +193,12 @@ That is the headline loop. Everything else is a side door:
 ### P4.1 — Streaming where it matters
 
 - `analyze/stream` exists — make it the default for analysis. Show partial reasoning + provenance progressively.
+- Status: `/markets` now uses `/api/analyze/stream` as the default analysis path. The stream emits truthful lifecycle events from the canonical `/api/analyze` execution path, then returns the normal analysis payload.
+
+### P4.1a — Operator chrome and system pulse
+
+- Add a persistent operator pulse to primary chrome and the search landing. It should use real stored agent/autopilot data only: mode, last sweep, scanned markets, candidates, fresh edges, forecast count, and latest execution status.
+- Status: `/api/operator/pulse` and `OperatorPulse` now provide this compact liveness layer without fabricating activity.
 
 ### P4.2 — Three.js triage
 

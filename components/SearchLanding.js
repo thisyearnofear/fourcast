@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BRAND } from '@/constants/brand';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
 import OperatorMath from '@/components/OperatorMath';
+import OperatorPulse from '@/components/OperatorPulse';
 import { useBrightDataStatus } from '@/hooks/useBrightDataStatus';
 
 const QUICK_SEARCHES = [
@@ -47,28 +48,10 @@ export default function SearchLanding() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden text-[var(--ink)]">
-      {/* Atmospheric plane — edge glow, not flat black */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 55% at 50% -10%, rgba(52, 211, 153, 0.22), transparent 55%), radial-gradient(ellipse 50% 40% at 90% 60%, rgba(251, 191, 36, 0.06), transparent 50%), linear-gradient(180deg, #0a0f0d 0%, var(--app-bg) 45%)',
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
-        aria-hidden
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,.9) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.9) 1px, transparent 1px)',
-          backgroundSize: '56px 56px',
-          maskImage: 'linear-gradient(180deg, black 0%, transparent 70%)',
-        }}
-      />
+      <div className="market-field" aria-hidden />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-16 pt-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
+        <header className="operator-header flex items-center justify-between gap-4 px-3 py-2.5">
           <HomeLink />
           <div className="hidden sm:block">
             <PageNav />
@@ -76,20 +59,22 @@ export default function SearchLanding() {
           <button
             type="button"
             onClick={() => handleSearch(featured.query)}
-            className="rounded-lg border border-[var(--accent)]/35 bg-[var(--accent-dim)] px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/20"
+            className="fc-action fc-action--quiet px-3 py-2 text-xs"
           >
             Try demo
           </button>
         </header>
 
-        {/* Hero — brand + one promise + one CTA + one visual */}
+        <OperatorPulse className="mt-5" />
+
+        {/* Hero — one real operator promise + a decision instrument */}
         <section className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14 lg:py-14">
           <div className="max-w-xl">
-            <p className="font-display text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-300/80">
-              Prediction market intelligence
+            <p className="fc-kicker">
+              Prediction-market operator terminal
             </p>
 
-            <h1 className="font-display mt-4 text-5xl font-extrabold leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[4.25rem]">
+            <h1 className="fc-display mt-4 text-5xl font-extrabold leading-[0.9] tracking-tight text-white sm:text-6xl lg:text-[4.25rem]">
               {BRAND.name}
             </h1>
 
@@ -99,13 +84,13 @@ export default function SearchLanding() {
 
             <div className="mt-8 w-full">
               <div
-                className={`grid gap-2 rounded-2xl border p-2 transition duration-300 sm:grid-cols-[1fr_auto] ${
+                className={`fc-query grid gap-2 p-2 transition duration-300 sm:grid-cols-[1fr_auto] ${
                   focused
-                    ? 'border-emerald-300/50 bg-white/[0.1] shadow-[0_0_0_1px_rgba(52,211,153,0.15)]'
-                    : 'border-white/12 bg-white/[0.06]'
+                    ? 'is-focused'
+                    : ''
                 }`}
               >
-                <label className="flex min-h-12 items-center gap-3 rounded-xl bg-black/30 px-4">
+                <label className="flex min-h-12 items-center gap-3 px-4">
                   <span className="sr-only">Search markets</span>
                   <input
                     type="text"
@@ -123,7 +108,7 @@ export default function SearchLanding() {
                   type="button"
                   onClick={() => handleSearch()}
                   disabled={!query.trim()}
-                  className="min-h-12 rounded-xl bg-emerald-400 px-6 text-sm font-semibold text-[#04110c] transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-white/15 disabled:text-white/40"
+                  className="fc-action min-h-12 px-6 text-sm disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   Analyze
                 </button>
@@ -135,7 +120,7 @@ export default function SearchLanding() {
                     key={item.query}
                     type="button"
                     onClick={() => handleSearch(item.query)}
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/55 transition hover:border-emerald-400/30 hover:text-white"
+                    className="fc-chip px-3 py-1.5 text-xs"
                   >
                     {item.label}
                   </button>
@@ -153,21 +138,21 @@ export default function SearchLanding() {
             </p>
           </div>
 
-          {/* Living edge card — the product, not a marketing collage */}
+          {/* Decision instrument — shows the core evaluation grammar. */}
           <div className="relative">
-            <div className="absolute -inset-4 rounded-[2rem] bg-emerald-400/5 blur-2xl" aria-hidden />
-            <div className="edge-reveal relative overflow-hidden rounded-[1.35rem] border border-white/12 bg-[#0b1210]/95 p-1 shadow-2xl shadow-black/50">
-              <div className="rounded-[1.15rem] bg-gradient-to-b from-white/[0.06] to-transparent p-5 sm:p-6">
+            <div className="absolute -inset-4 bg-emerald-400/10 blur-3xl" aria-hidden />
+            <div className="fc-instrument edge-reveal relative overflow-hidden p-1 shadow-2xl shadow-black/50">
+              <div className="fc-instrument__inner p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-emerald-300/70">
-                      Edge preview
+                    <p className="fc-kicker">
+                      Decision replay · sample data
                     </p>
                     <h2 className="mt-2 max-w-sm text-lg font-semibold leading-snug text-white sm:text-xl">
                       {DEMO.title}
                     </h2>
                   </div>
-                  <span className="shrink-0 rounded-full border border-emerald-300/30 bg-emerald-400/10 px-2.5 py-1 font-mono text-[10px] font-semibold text-emerald-100">
+                  <span className="fc-status fc-status--positive shrink-0 px-2.5 py-1">
                     {DEMO.confidence}
                   </span>
                 </div>
@@ -180,7 +165,7 @@ export default function SearchLanding() {
                   ].map((cell, i) => (
                     <div
                       key={cell.label}
-                      className="edge-cell rounded-xl border border-white/10 bg-black/35 px-3 py-4"
+                      className="fc-metric edge-cell px-3 py-4"
                       style={{ animationDelay: `${120 + i * 90}ms` }}
                     >
                       <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
@@ -205,7 +190,7 @@ export default function SearchLanding() {
                   <button
                     type="button"
                     onClick={() => handleSearch(featured.query)}
-                    className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-emerald-100"
+                    className="fc-action px-3 py-2 text-xs"
                   >
                     Run this market
                   </button>

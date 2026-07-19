@@ -14,6 +14,47 @@ import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOption
 import FirstRunBanner from "@/components/FirstRunBanner";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
 
+const STAGE_INDEX = { accepted: 0, context: 0, market: 1, sources: 1, forecast: 2, complete: 3 };
+
+async function requestStreamingAnalysis(payload, onStage) {
+  const response = await fetch("/api/analyze/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.body) throw new Error('Analysis stream unavailable');
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let complete = null;
+
+  let streamDone = false;
+  while (!streamDone) {
+    const { done, value } = await reader.read();
+    streamDone = done;
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const event = JSON.parse(line);
+      if (event.type === 'stage') onStage(STAGE_INDEX[event.stage] ?? 0);
+      if (event.type === 'complete' || event.type === 'error') complete = event;
+    }
+  }
+
+  if (!complete) throw new Error('Analysis stream ended without a result');
+  if (!complete.success) {
+    const error = new Error(complete.error || 'Analysis failed');
+    error.status = complete.status;
+    throw error;
+  }
+  return complete;
+}
+
 function PanelSkeleton({ className = "h-28" }) {
   return (
     <div
@@ -201,6 +242,7 @@ export default function MarketsPage() {
   // Analysis state (shared across tabs)
   const [analysis, setAnalysis] = useState(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [analysisStage, setAnalysisStage] = useState(0);
   const [analysisMode, setAnalysisMode] = useState("basic");
   
   // Analysis config modal state
@@ -387,14 +429,12 @@ export default function MarketsPage() {
     setIsLoadingAnalysis(true);
     setError(null);
     setAnalysis(null);
+    setAnalysisStage(0);
     setSelectedMarket(market);
     setExpandedMarketId(market.marketID || market.id || market.tokenID);
 
     try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const data = await requestStreamingAnalysis({
           eventType: market.eventType || market.title || "Market",
           title: market.title || market.question,
           location: market.location || market.eventLocation || "",
@@ -414,10 +454,7 @@ export default function MarketsPage() {
           includeFutures: analysisOptions.includeFutures,
           webSearchEnabled: analysisOptions.webSearchEnabled,
           analysisTypes: analysisOptions.analysisTypes || [],
-        }),
-      });
-
-      const data = await response.json();
+        }, setAnalysisStage);
 
       if (data.success) {
         setAnalysis(data);
@@ -443,7 +480,7 @@ export default function MarketsPage() {
         }
       } else {
         // Check if rate limited (429)
-        if (response.status === 429) {
+        if (data.status === 429) {
           setShowPricing(true);
           setError("You've used your free analyses. Upgrade to Pro for unlimited AI analysis.");
         } else {
@@ -452,6 +489,7 @@ export default function MarketsPage() {
       }
     } catch (err) {
       console.error("Analysis failed:", err);
+      if (err.status === 429) setShowPricing(true);
       setError("Failed to analyze market");
     } finally {
       setIsLoadingAnalysis(false);
@@ -473,6 +511,7 @@ export default function MarketsPage() {
     setIsLoadingAnalysis(true);
     setError(null);
     setAnalysis(null);
+    setAnalysisStage(0);
     setSelectedMarket(market);
     setExpandedMarketId(market.marketID || market.id || market.tokenID);
 
@@ -508,13 +547,7 @@ export default function MarketsPage() {
         marketDataProvider: config.providers?.marketDataProvider,
       };
 
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      const data = await response.json();
+      const data = await requestStreamingAnalysis(requestBody, setAnalysisStage);
 
       if (data.success) {
         setAnalysis(data);
@@ -534,7 +567,7 @@ export default function MarketsPage() {
           );
         }
       } else {
-        if (response.status === 429) {
+        if (data.status === 429) {
           setShowPricing(true);
           setError("You've used your free analyses. Upgrade to Pro for unlimited AI analysis.");
         } else {
@@ -543,6 +576,7 @@ export default function MarketsPage() {
       }
     } catch (err) {
       console.error("Analysis failed:", err);
+      if (err.status === 429) setShowPricing(true);
       setError("Failed to analyze market");
     } finally {
       setIsLoadingAnalysis(false);
@@ -824,6 +858,7 @@ export default function MarketsPage() {
               setExpandedMarketId={setExpandedMarketId}
               analysis={analysis}
               isAnalyzing={isLoadingAnalysis}
+              analysisStage={analysisStage}
               selectedMarket={selectedMarket}
               onPublishSignal={() => setShowPublishConfirm(true)}
               analysisMode={analysisMode}
@@ -859,6 +894,7 @@ export default function MarketsPage() {
               setExpandedMarketId={setExpandedMarketId}
               analysis={analysis}
               isAnalyzing={isLoadingAnalysis}
+              analysisStage={analysisStage}
               selectedMarket={selectedMarket}
               onPublishSignal={() => setShowPublishConfirm(true)}
               fetchMarkets={fetchMarkets}

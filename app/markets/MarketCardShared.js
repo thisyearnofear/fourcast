@@ -221,6 +221,7 @@ export function MarketCard({
   setExpandedMarketId,
   analysis,
   isAnalyzing,
+  analysisStage = 0,
   selectedMarket,
   onPublishSignal,
   chains,
@@ -245,24 +246,24 @@ export function MarketCard({
     <>
       {/* Inline Card (always visible when not hidden) */}
       <div
-        className={`glass-subtle rounded-3xl transition-all duration-500 p-5 sm:p-6
+        className={`fc-market-row transition-all duration-500 p-5 sm:p-6
           ${isHidden
-            ? "opacity-0 pointer-events-none scale-95"
-            : "opacity-100 hover:scale-[1.01]"
+            ? "opacity-0 pointer-events-none translate-y-2"
+            : "opacity-100"
           }`}
       >
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 space-y-3">
             <div className="flex items-start justify-between">
               <h3
-                className={`text-lg font-light ${textColor} leading-relaxed tracking-wide mr-4`}
+                className={`fc-market-row__question text-lg font-medium ${textColor} leading-snug mr-4`}
               >
                 {market.title || market.question}
               </h3>
               {/* Platform & Date Badge */}
               <div className="flex flex-col items-end gap-1">
                 <span
-                  className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider border ${isKalshi
+                  className={`flex-shrink-0 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider border ${isKalshi
                     ? "bg-emerald-900/40 text-emerald-300 border-emerald-700/50"
                     : "bg-blue-900/40 text-blue-300 border-blue-700/50"
                     }`}
@@ -279,7 +280,7 @@ export function MarketCard({
 
             {/* Market Odds Summary - NEW: Shows odds on the card! */}
             {!isExpanded && (
-              <div className="flex items-center gap-4 py-1">
+              <div className="fc-market-row__prices flex items-center gap-2 py-3">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -291,7 +292,7 @@ export function MarketCard({
                       setShowOrderPanel(true);
                     }
                   }}
-                  className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all border hover:bg-green-500/10 border-transparent hover:border-green-500/30`}
+                  className="fc-market-price fc-market-price--yes flex items-center gap-2 px-3 py-2"
                 >
                   <span className={`text-[10px] font-medium text-green-400/70`}>YES</span>
                   <span className={`text-sm font-light ${textColor}`}>
@@ -309,7 +310,7 @@ export function MarketCard({
                       setShowOrderPanel(true);
                     }
                   }}
-                  className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all border hover:bg-red-500/10 border-transparent hover:border-red-500/30`}
+                  className="fc-market-price fc-market-price--no flex items-center gap-2 px-3 py-2"
                 >
                   <span className={`text-[10px] font-medium text-red-400/70`}>NO</span>
                   <span className={`text-sm font-light ${textColor}`}>
@@ -318,9 +319,8 @@ export function MarketCard({
                 </button>
                 {/* ML Edge Preview (if analyzed) */}
                 {isCurrentMarket && analysis?.synthData?.polymarketEdge && (
-                  <div className={`ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20`}>
-                    <span className="text-xs">⚡</span>
-                    <span className={`text-[10px] font-medium text-purple-300`}>
+                  <div className="fc-edge-readout ml-auto flex items-center gap-1.5 px-3 py-2">
+                    <span className={`text-[10px] font-mono font-bold text-emerald-200`}>
                       {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}% EDGE
                     </span>
                   </div>
@@ -487,7 +487,7 @@ export function MarketCard({
 
         {/* Dynamic Loading State in Expanded View */}
         {isExpanded && isAnalyzing && (
-          <LoadingAnalysisState isNight={isNight} textColor={textColor} />
+          <LoadingAnalysisState isNight={isNight} textColor={textColor} stage={analysisStage} />
         )}
 
         {/* Expanded Analysis View */}
@@ -1014,7 +1014,7 @@ export function MarketCard({
           </span>
 
           {/* Dynamic Loading State */}
-          {isAnalyzing && <LoadingAnalysisState isNight={isNight} textColor={textColor} />}
+          {isAnalyzing && <LoadingAnalysisState isNight={isNight} textColor={textColor} stage={analysisStage} />}
 
           {/* Analysis Content */}
           {analysis && (
@@ -1133,9 +1133,7 @@ export function MarketCard({
 
 // Dynamic Loading State Component
 // Dynamic Loading State Component
-export function LoadingAnalysisState({ isNight, textColor, webIntelAvailable = false }) {
-  const [step, setStep] = useState(0);
-  const [progress, setProgress] = useState(0);
+export function LoadingAnalysisState({ isNight, textColor, webIntelAvailable = false, stage = 0 }) {
   const webIntel = useBrightDataStatus();
   const useWeb = webIntelAvailable || webIntel.available;
 
@@ -1185,90 +1183,39 @@ export function LoadingAnalysisState({ isNight, textColor, webIntelAvailable = f
         },
       ];
 
-  useEffect(() => {
-    const stepInterval = setInterval(() => {
-      setStep((prev) => (prev + 1) % steps.length);
-    }, 4000);
-
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 95) return 95;
-        return prev + 1;
-      });
-    }, 180);
-
-    return () => {
-      clearInterval(stepInterval);
-      clearInterval(progressInterval);
-    };
-  }, [steps.length]);
+  const step = Math.min(Math.max(stage, 0), steps.length - 1);
 
   return (
     <div 
-      className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center justify-center py-12"
+      className="fc-analysis-rail mt-8 pt-8"
       role="status"
       aria-live="polite"
       aria-label="Analyzing market"
     >
-      {/* Animated Icon */}
-      <div className="relative mb-6">
-        <div
-          className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl transition-all duration-500 bg-white/10 backdrop-blur-sm`}
-        >
-          <span className="animate-bounce" aria-hidden="true">{steps[step].icon}</span>
+      <div className="fc-analysis-rail__head">
+        <div>
+          <p className="fc-kicker">Evidence pipeline</p>
+          <p className="mt-2 text-base font-medium text-white">No recommendation until the record is assembled.</p>
         </div>
-        <div
-          className={`absolute inset-0 rounded-full border-2 border-white/20`}
-          style={{
-            clipPath: `polygon(0 0, ${progress}% 0, ${progress}% 100%, 0 100%)`,
-            borderColor: "rgba(255,255,255,0.6)",
-          }}
-          aria-hidden="true"
-        ></div>
+        <span className="fc-status fc-status--positive px-2 py-1">in progress</span>
       </div>
-      {/* Step Text */}
-      <p
-        className={`${textColor} text-lg font-medium mb-2 transition-all duration-500`}
-      >
-        {steps[step].text}
-      </p>
-      <p
-        className={`text-sm ${textColor} opacity-60 font-light transition-all duration-500 text-center max-w-xs`}
-      >
-        {steps[step].sub}
-      </p>
-      {/* Progress Bar */}
-      <div
-        className={`w-64 h-1 rounded-full mt-6 bg-white/10`}
-        role="progressbar"
-        aria-valuenow={progress}
-        aria-valuemin={0}
-        aria-valuemax={100}
-      >
-        <div
-          className={`h-full rounded-full transition-all duration-100 bg-white/60`}
-          style={{ width: `${progress}%` }}
-        ></div>
-      </div>
-      {/* Step Indicators */}
-      <div className="flex gap-2 mt-6" aria-hidden="true">
-        {steps.map((s, i) => (
-          <div
-            key={i}
-            className={`flex flex-col items-center gap-1 transition-all duration-300 ${i === step ? "scale-110" : "scale-100 opacity-40"
-              }`}
-          >
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${i <= step
-                ? "bg-white/20 text-white"
-                : "bg-white/5 text-white/40"
-                }`}
-            >
-              {s.icon}
-            </div>
-          </div>
-        ))}
-      </div>
+      <ol className="fc-analysis-rail__steps">
+        {steps.map((item, index) => {
+          const complete = index < step;
+          const current = index === step;
+          return (
+            <li key={item.text} className={`${complete ? 'is-complete' : ''} ${current ? 'is-current' : ''}`}>
+              <span className="fc-analysis-rail__index">{complete ? '✓' : String(index + 1).padStart(2, '0')}</span>
+              <div>
+                <p>{item.text}</p>
+                <span>{item.sub}</span>
+              </div>
+              {current && <span className="fc-analysis-rail__active" aria-label="Current analysis stage" />}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="fc-analysis-rail__note">Fair probability, edge, and sizing appear only after this pipeline completes.</p>
     </div>
   );
 }

@@ -1,126 +1,60 @@
-import { analyzeWeatherImpactServer } from '@/services/aiService.server'
+import { executeAnalysis } from '../route.js';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
-const analysisRateLimit = new Map()
-const ANALYSIS_RATE_LIMIT = 10
-const ANALYSIS_WINDOW = 60 * 60 * 1000
+const encoder = new TextEncoder();
 
-function checkAnalysisRateLimit(identifier) {
-  const now = Date.now()
-  const userRequests = analysisRateLimit.get(identifier) || []
-  const validRequests = userRequests.filter(timestamp => now - timestamp < ANALYSIS_WINDOW)
-  if (validRequests.length >= ANALYSIS_RATE_LIMIT) return false
-  validRequests.push(now)
-  analysisRateLimit.set(identifier, validRequests)
-  return true
+function event(controller, payload) {
+  controller.enqueue(encoder.encode(`${JSON.stringify(payload)}\n`));
 }
 
-function getClientIdentifier(request) {
-  const forwarded = request.headers.get('x-forwarded-for')
-  const realIp = request.headers.get('x-real-ip')
-  const userAgent = request.headers.get('user-agent')
-  return forwarded?.split(',')[0]?.trim() || realIp?.trim() || userAgent || 'unknown'
-}
-
+/**
+ * Streams only truthful lifecycle events from the canonical analysis route.
+ * The final `complete` payload is the exact response that /api/analyze would
+ * return, so market callers do not lose any existing analysis fields.
+ */
 export async function POST(request) {
+  let body;
   try {
-    const body = await request.json()
-    const { eventType, location, weatherData, currentOdds, participants, marketID, eventDate, mode = 'deep', title } = body
-
-    if (!marketID || !title) {
-      return new Response(JSON.stringify({ success: false, error: 'Missing required fields: marketID, title' }) + '\n', {
-        status: 400,
-        headers: { 'Content-Type': 'application/x-ndjson' }
-      })
-    }
-
-    const clientId = getClientIdentifier(request)
-    const limitPerHour = mode === 'deep' ? 10 : ANALYSIS_RATE_LIMIT
-    if (!checkAnalysisRateLimit(clientId)) {
-      return new Response(JSON.stringify({ success: false, error: 'Analysis rate limit exceeded. Please try again later.' }) + '\n', {
-        status: 429,
-        headers: { 'Content-Type': 'application/x-ndjson' }
-      })
-    }
-
-    const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      start(controller) {
-        (async () => {
-          try {
-            const result = await analyzeWeatherImpactServer({
-              eventType,
-              location,
-              weatherData,
-              currentOdds,
-              participants,
-              marketId: marketID,
-              eventDate,
-              title,
-              mode
-            })
-
-            const meta = {
-              type: 'meta',
-              success: true,
-              marketId: marketID,
-              assessment: {
-                weather_impact: result.assessment?.weather_impact || 'UNKNOWN',
-                odds_efficiency: result.assessment?.odds_efficiency || 'UNKNOWN',
-                confidence: result.assessment?.confidence || 'LOW'
-              },
-              cached: result.cached || false,
-              source: result.source || 'unknown',
-              web_search: mode === 'deep',
-              timestamp: new Date().toISOString()
-            }
-            controller.enqueue(encoder.encode(JSON.stringify(meta) + '\n'))
-
-            const text = String(result.analysis || '')
-            const parts = text.split(/(?<=\.)\s+/)
-            for (const p of parts) {
-              const chunk = { type: 'chunk', text: p }
-              controller.enqueue(encoder.encode(JSON.stringify(chunk) + '\n'))
-              await new Promise(r => setTimeout(r, 60))
-            }
-
-            const complete = {
-              type: 'complete',
-              success: true,
-              assessment: meta.assessment,
-              analysis: result.analysis || '',
-              key_factors: result.key_factors || [],
-              recommended_action: result.recommended_action || 'Monitor manually',
-              cached: meta.cached,
-              source: meta.source,
-              citations: result.citations || [],
-              limitations: result.limitations || null,
-              web_search: meta.web_search,
-              timestamp: meta.timestamp
-            }
-            controller.enqueue(encoder.encode(JSON.stringify(complete) + '\n'))
-            controller.close()
-          } catch (err) {
-            controller.enqueue(encoder.encode(JSON.stringify({ type: 'error', success: false, error: 'Analysis failed' }) + '\n'))
-            controller.close()
-          }
-        })()
-      }
-    })
-
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'application/x-ndjson',
-        'Cache-Control': 'no-store'
-      }
-    })
-  } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: 'Analysis failed' }) + '\n', {
-      status: 500,
-      headers: { 'Content-Type': 'application/x-ndjson' }
-    })
+    body = await request.json();
+  } catch {
+    return Response.json({ success: false, error: 'Invalid analysis request' }, { status: 400 });
   }
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const report = ({ stage, label }) => event(controller, { type: 'stage', stage, label });
+      try {
+        event(controller, { type: 'stage', stage: 'accepted', label: 'Analysis request accepted' });
+        const analysisRequest = new Request(new URL('/api/analyze', request.url), {
+          method: 'POST',
+          headers: request.headers,
+          body: JSON.stringify(body),
+        });
+        const response = await executeAnalysis(analysisRequest, report);
+        const result = await response.json();
+        event(controller, {
+          type: result.success ? 'complete' : 'error',
+          status: response.status,
+          ...result,
+        });
+      } catch (error) {
+        console.error('Analysis stream error:', error);
+        event(controller, { type: 'error', success: false, error: 'Analysis failed' });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Accel-Buffering': 'no',
+    },
+  });
 }
 
 export async function OPTIONS() {
@@ -129,7 +63,7 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
-  })
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }

@@ -283,15 +283,15 @@ export default function SignalsPage() {
                             {/* Stats Summary */}
                             {!isLoading && !error && (
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                                    <div className={`glass-subtle rounded-2xl p-4`}>
+                                    <div className="fc-metric p-4">
                                         <div className={`text-2xl font-light ${textColor} mb-1`}>{signals.length}</div>
                                         <div className={`text-xs ${textColor} opacity-60`}>Total Predictions</div>
                                     </div>
-                                    <div className={`glass-subtle rounded-2xl p-4`}>
+                                    <div className="fc-metric p-4">
                                         <div className={`text-2xl font-light ${textColor} mb-1`}>{Object.keys(signalsByEvent).length}</div>
                                         <div className={`text-xs ${textColor} opacity-60`}>Unique Events</div>
                                     </div>
-                                    <div className={`glass-subtle rounded-2xl p-4`}>
+                                    <div className="fc-metric p-4">
                                         <div className={`text-2xl font-light ${textColor} mb-1`}>{filteredSignals.length}</div>
                                         <div className={`text-xs ${textColor} opacity-60`}>Filtered Results</div>
                                     </div>
@@ -333,14 +333,15 @@ export default function SignalsPage() {
                             {!isLoading && !error && filteredSignals.length > 0 && (
                                 <div className="space-y-6">
                                     {Object.entries(signalsByEvent).map(([eventId, eventSignals]) => (
-                                        <div key={eventId} className={`${cardBgColor} backdrop-blur-xl border rounded-3xl p-6`}>
-                                            <h3 className={`text-lg font-light ${textColor} mb-4`}>
+                                        <div key={eventId} className="fc-proof-group p-6">
+                                            <p className="fc-kicker mb-2">Decision record · {eventSignals.length} entries</p>
+                                            <h3 className={`text-lg font-medium ${textColor} mb-4`}>
                                                 {eventSignals[0]?.market_title || eventId}
                                             </h3>
 
                                             {eventSignals[0]?.venue && (
                                                 <div className={`text-sm ${textColor} opacity-60 mb-4`}>
-                                                    📍 {eventSignals[0].venue}
+                                                    Venue · {eventSignals[0].venue}
                                                 </div>
                                             )}
 

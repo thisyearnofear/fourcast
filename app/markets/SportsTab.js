@@ -22,6 +22,7 @@ export function SportsTabContent({
   setExpandedMarketId,
   analysis,
   isAnalyzing,
+  analysisStage,
   selectedMarket,
   onPublishSignal,
   analysisMode,
@@ -205,6 +206,7 @@ export function SportsTabContent({
               setExpandedMarketId={setExpandedMarketId}
               analysis={analysis}
               isAnalyzing={isAnalyzing}
+              analysisStage={analysisStage}
               selectedMarket={selectedMarket}
               onPublishSignal={onPublishSignal}
               chains={chains}

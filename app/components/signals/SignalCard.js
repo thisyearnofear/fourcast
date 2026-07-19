@@ -20,7 +20,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
 
     return (
         <div
-            className={`border-l-2 pl-4 pb-4 cursor-pointer transition-all border-emerald-500/30 hover:border-emerald-500/60`}
+            className="fc-signal-record pl-4 pb-4 cursor-pointer"
             onClick={handleToggle}
         >
             <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -42,6 +42,14 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
                 <p className={`text-sm ${textColor} opacity-70 ${isExpanded ? '' : 'line-clamp-2'} transition-all`}>
                     {signal.ai_digest}
                 </p>
+            )}
+            {isExpanded && (
+                <div className="fc-decision-chain mt-4" aria-label="Signal proof path">
+                    <span className="is-complete">Evidence</span>
+                    <span className="is-complete">Call recorded</span>
+                    <span className={signal.tx_hash ? 'is-complete' : ''}>Arc receipt</span>
+                    <span className={signal.outcome ? 'is-complete' : ''}>{signal.outcome ? 'Outcome logged' : 'Awaiting outcome'}</span>
+                </div>
             )}
             {/* Evidence Block — shown when expanded */}
             {isExpanded && (

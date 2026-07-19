@@ -22,6 +22,7 @@ export function DiscoveryTabContent({
   setExpandedMarketId,
   analysis,
   isAnalyzing,
+  analysisStage,
   selectedMarket,
   onPublishSignal,
   fetchMarkets,
@@ -326,6 +327,7 @@ export function DiscoveryTabContent({
                   setExpandedMarketId={setExpandedMarketId}
                   analysis={analysis}
                   isAnalyzing={isAnalyzing}
+                  analysisStage={analysisStage}
                   selectedMarket={selectedMarket}
                   onPublishSignal={onPublishSignal}
                   chains={chains}

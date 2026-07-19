@@ -391,15 +391,17 @@ legacy/                 # Deprecated — kept for backwards compatibility
 | `/api/leaderboard` | meta | Analyst rankings |
 | `/api/stats` | meta | User statistics |
 | `/api/meta/health` | meta | Service health |
+| `/api/operator/pulse` | meta | Operator chrome liveness snapshot |
 
 ### Data Flow
 
 ```
 Frontend (markets page, signals page, landing)
   │
-  ├── /api/intelligence/analyze ──→ aiService.server.js ──→ Venice AI + SynthData + Weather
+  ├── /api/analyze/stream        ──→ /api/analyze ──→ aiService.server.js ──→ Venice AI + SynthData + Weather
   ├── /api/markets               ──→ polymarketService.js / kalshiService.js
   ├── /api/signals               ──→ db.js (SQLite + Movement/Aptos)
+  ├── /api/operator/pulse        ──→ db.js (track record + autopilot runs)
   ├── /api/agent/*               ──→ aiService.server.js (agent loop)
   └── /api/wallet/*              ──→ chainConfig.js / polymarketService.js
 ```
@@ -436,6 +438,11 @@ Frontend (markets page, signals page, landing)
 - Reuse existing signal marketplace
 - Extend services (no new service for each domain)
 - Single Move contract for all domains
+
+### Operator Evidence Interface
+- Primary product surfaces should make stored system activity visible: latest sweep, fresh edges, forecast count, execution status, and track-record proof.
+- Analysis progress must reflect real server-side lifecycle events from the canonical analysis route. Do not use timer-only fake stages for model work.
+- Market, signal, and position surfaces should present the same decision chain: evidence captured, recommendation recorded, receipt linked when available, and outcome reconciled.
 
 ## Tech Stack
 

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { BRAND } from "@/constants/brand";
 import WalletConnect from "@/app/components/WalletConnect";
 import StatusBadge from "@/components/StatusBadge";
+import OperatorPulse from "@/components/OperatorPulse";
 
 /**
  * Navigation + AppShell — the single source of truth for the app chrome.
@@ -142,10 +143,11 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
       {/* Header always spans the full app width so nav never cramps on
           narrow-content pages; only <main> respects maxWidth. */}
       <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6">
-        <header className="sticky top-4 z-50 flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/25 px-3 py-2.5 backdrop-blur-xl">
+        <header className="operator-header sticky top-4 z-50 flex items-center justify-between gap-4 px-3 py-2.5">
           <HomeLink />
           <div className="flex items-center gap-2">
             <PageNav />
+            <OperatorPulse compact className="hidden xl:flex" />
             <StatusBadge />
             {wallet && <WalletConnect />}
           </div>
