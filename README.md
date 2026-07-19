@@ -1,19 +1,22 @@
-# Fourcast — Verification and reputation for agent-managed prediction-market capital
+# Fourcast — A flight recorder for autonomous capital
 
-**Fourcast records what an agent knew, which policy constrained it, and why it allocated or passed—so operators and capital allocators can audit performance without trusting a black box.**
+**Fourcast is an agent operating under a mandate — making constrained decisions from pre-match evidence, sealing each one into a hash-bound receipt, and reconciling against an independently verifiable on-chain outcome. The route is one unfolding system: Mandate Control → Proof Theatre → Diligence.**
 
 > **Who this is for.** Prediction-market operators and the allocators assessing them. They need more than a claimed P&L: they need a pre-outcome record of evidence, risk limits, decisions, and results. Retail can audit; we do not optimize for them.
 >
-> **How we acquire them.** Public, inspectable decision histories. A strong operator's verified mandate adherence and resolved outcomes become the proof that earns the next allocator conversation.
->
-> **Headline loop.** Evidence → policy-bound simulation and risk checks → allocate / pass / review → decision receipt → execution and outcome reconciliation → verified reputation.
+> **What it does.**
+> 1. **Mandate Control** (`/agent`) — a live VPS worker operates under a versioned policy, decides from pre-match TxLINE evidence alone, and seals each decision into a SHA-256 receipt. The hero shows the current mandate, the proof timeline crossing from "outcome withheld" into "proof available," and the real on-chain Solana verdict.
+> 2. **Proof Theatre** (`/world-cup`) — the final act of an autonomous decision: a vertical 6-stage evidence timeline (pre-match evidence → seeded simulation → versioned policy gates → immutable receipt → TxLINE Merkle proof + Solana validation → reconciliation) for any fixture.
+> 3. **Allocator Diligence** (`/positions`) — policy adherence, receipt coverage, discipline rate, and calibration after resolution — computed from the same public receipts, not self-reported.
+> 4. **On-chain parametric settlement** — a Solana program (`match-escrow`) CPI-calls TxLINE's `txoracle::validate_stat` to verify match outcomes and release locked SOL trustlessly. Verified end-to-end on devnet.
 
 ## Surface area
 
-Fourcast has two product surfaces; both are quantized around the same operator:
+Fourcast's flagship route is one unfolding system — Mandate → Proof Theatre → Diligence — supported by Markets, Signals, and Labs:
 
-- `/world-cup` — the **TxLINE-powered World Cup intelligence terminal**: live consensus odds, score replay, cross-venue edge detection, and Solana-verified match receipts.
-- `/agent` — the **operator cockpit**: local agent runs, mandate adherence, and the Autonomous Historical Lab telemetry from the VPS worker.
+- `/agent` — **Mandate Control**: the flagship hero. A live VPS worker's current decision, proof timeline, and on-chain verdict. The manual runner is demoted to an Operator Controls drawer.
+- `/world-cup` — **Proof Theatre**: a vertical 6-stage evidence timeline for any fixture, from sealed pre-match evidence to Solana-anchored reconciliation. Cross-venue edge detection and on-chain settlement remain as fixture-card capabilities.
+- `/positions` — **Allocator Diligence**: mandate adherence, receipt coverage, discipline rate, and calibration as the hero; positions/P&L demoted to a secondary section.
 
 ![Primary Customer](https://img.shields.io/badge/Primary%20Customer-Quant%20Operator-emerald)
 ![Acquisition](https://img.shields.io/badge/Acquisition-Signal%20Marketplace-emerald)
@@ -27,26 +30,26 @@ Fourcast has two product surfaces; both are quantized around the same operator:
 |---|---|
 | **Primary customer** | Prediction-market operator plus the allocator who must diligence that operator |
 | **Distribution** | Verifiable decision history → allocator trust → operator/allocator concierge conversion |
-| **Headline product** | Verification and reputation layer: policy-bound decision receipts, risk controls, and reconciled outcomes |
-| **Second-best customer** | Signal Analyst (Reputation Climber) |
-| **Commercial wedge** | Auditable mandates and track records for agent-managed capital—not a generic retail alpha feed |
+| **Headline product** | Mandate Control: a flight recorder for autonomous capital — policy-bound decision receipts, risk controls, and reconciled outcomes |
+| **Technical highlight** | Custom Solana program CPI-calls TxLINE's `txoracle::validate_stat` for parametric insurance settlement; SHA-256 receipts reconciled against on-chain Merkle roots |
+| **Data source** | TxLINE (primary) — fixtures, odds, scores, proofs. Polymarket as secondary comparison venue |
 
-The current product now implements **Proof of Decision** end to end: deterministic simulation inputs, versioned policy checks, receipt hashing, optional on-chain commitment, and proof-backed reconciliation. `/agent` records local and VPS agent receipts, `/positions` reports mandate adherence, and `/world-cup` demonstrates TxLINE/Solana outcome proof against a receipt-bound fixture.
+Fourcast implements the full **proof chain** end to end: TxLINE data ingestion → pre-match evidence → seeded simulation → versioned policy gates → decision receipt (SHA-256) → TxLINE Merkle proof → Solana PDA verification → reconciliation → on-chain settlement via `match-escrow` CPI calling `validate_stat`. Every step is deterministic and independently verifiable.
 
 ## The Problem
 
-Sports applications rely on opaque feeds and trusted operators for settlement. Even when match data is "live," end users have no way to verify that the score they see is the score that actually happened — and no way to compare trusted consensus against peer-to-peer market pricing in a single view.
+Sports applications rely on opaque feeds and trusted operators for settlement. Even when match data is "live," end users have no way to verify the score happened as reported. Prediction-market traders lack a trusted consensus reference to spot mispricing. And anyone who wants to settle a wager trustlessly needs an oracle — which reintroduces the trust problem.
 
 ## The Solution
 
-Fourcast uses **TxLINE as its primary sports data layer** and adds the agent-verification layer on top:
+Fourcast uses **TxLINE as its single primary data layer** and builds the flagship route on top:
 
-1. **Consensus intelligence** — normalized World Cup fixtures, live consensus odds, score/event timelines
-2. **Policy-bound decision receipts** — deterministic simulation, five risk gates, allocation/pass/review verdicts, and canonical SHA-256 hashes
-3. **Autonomous historical lab** — a headless VPS worker advances a replay clock, emits pre-outcome receipts, withholds final proofs until the replay outcome time, and posts authenticated status to `/agent`
-4. **Proof-backed reconciliation** — finalised matches surface TxLINE Merkle proofs, Solana root verification, and receipt-vs-outcome reconciliation
+1. **Mandate Control** — a headless VPS worker advances a replay clock, decides from pre-match TxLINE evidence, seals each decision into a SHA-256 receipt, withholds final proofs until the replay outcome time, and posts authenticated status to `/agent`. The hero eagerly fetches the canonical verification chain so the proof timeline shows real reconciliation + on-chain Solana verdict.
+2. **Proof Theatre** — finalised matches surface a vertical 6-stage evidence timeline: pre-match evidence → seeded simulation → versioned policy gates → immutable receipt → TxLINE Merkle proof + Solana validation → reconciliation. `/api/worldcup/verify` walks the full chain in one call.
+3. **Allocator Diligence** — mandate adherence, receipt coverage, discipline rate, and calibration computed from the same public receipts.
+4. **Parametric on-chain settlement** — a custom Solana program (`match-escrow`, deployed on devnet at `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ`) CPI-calls TxLINE's `txoracle::validate_stat` to verify match outcomes and release locked SOL trustlessly. Verified end-to-end: a 0.1 SOL policy on France–Sweden (Round of 32) was settled on-chain via CPI, no intermediary involved.
 
-Polymarket and Kalshi remain as secondary comparison venues. TxLINE is the source of truth for fixtures, scores, and outcomes.
+TxLINE is the exclusive data source for fixtures, odds, scores, and proofs. Polymarket serves as a secondary comparison venue for edge detection only.
 
 ---
 
@@ -152,7 +155,7 @@ The lab is deliberately scoped as an operator process rather than another dashbo
 - It runs headlessly under PM2 on the VPS with no public port.
 - It uses the same `services/domain/decision/` policy, simulation, and receipt hashing modules as the app.
 - It posts a bearer-authenticated heartbeat to `POST /api/agent/historical-lab`; the app stores only the latest non-secret status in `historical_lab_status`.
-- `/agent` polls `GET /api/agent/historical-lab` and renders the replay phase, agent clock, receipt hash, proof visibility, and direct link to `/api/worldcup/verify?fixtureId=18175981`.
+- The Mandate Control hero (`/agent`) polls `GET /api/agent/historical-lab` and eagerly fetches `/api/worldcup/verify` for the latest receipt, rendering the current decision, proof timeline, and on-chain Solana verdict. The supporting HistoricalLabPanel below the hero shows the replay phase, agent clock, and receipt hash.
 
 To snapshot a real fixture (with verifiable Merkle proof):
 
@@ -261,7 +264,13 @@ app/world-cup/
   WorldCupClient.js     # Client UI: cards, replay viewer, verify panel, edge panel
 
 components/
-  HistoricalLabPanel.js  # /agent VPS telemetry panel
+  MandateControl.js       # /agent flagship hero — live worker state, proof timeline, dossier trigger
+  DecisionDossier.js      # Right-side drawer — 5 allocator questions from canonical receipt
+  ProofTheatre.js         # /world-cup vertical 6-stage evidence timeline
+  HistoricalLabPanel.js  # /agent VPS telemetry panel (supporting surface below hero)
+  AgentDashboard.js       # Manual runner (demoted to Operator Controls drawer)
+  AgentRunLedger.js       # Persisted decision ledger
+  MandatePanel.js         # /positions allocator diligence hero
 
 cache/txline/replays/    # Cached fixture snapshots for replay mode
 
@@ -281,7 +290,7 @@ Fourcast was originally built on Bright Data + Polymarket/Kalshi aggregation. Th
 - **Kalshi API** — secondary sports markets (optional in the World Cup view)
 - **Venice AI** — LLM for evidence synthesis in the broader agent loop
 
-The `/markets` route and `/agent` route continue to provide the original Bright Data-powered experience. The `/world-cup` route is the TxLINE-primary surface.
+The `/markets` and `/signals` routes continue to provide the original Bright Data-powered experience as supporting capability. The flagship route — Mandate (`/agent`) → Proof Theatre (`/world-cup`) → Diligence (`/positions`) — is the TxLINE-primary surface.
 
 ---
 
@@ -302,13 +311,14 @@ The `/markets` route and `/agent` route continue to provide the original Bright 
 
 ## Demo Video Outline (≈ 4 minutes)
 
-1. **0:00–0:25 — Problem.** Agent-managed prediction-market capital lacks an audit layer; claimed P&L does not prove mandate discipline.
-2. **0:25–0:55 — Operator cockpit.** Open `/agent`; show the autonomous historical lab heartbeat, replay clock, receipt hash, and phase progression.
-3. **0:55–1:35 — Pre-outcome decision.** Expand the decision receipt: evidence, deterministic simulation seed, five policy gates, verdict, and allocation/pass.
-4. **1:35–2:25 — TxLINE primary data.** Open `/world-cup`; show cached TxLINE fixture/odds/replay data clearly labelled as post-cutoff replay.
-5. **2:25–3:15 — Verification.** Click "Verify proof of decision"; show receipt integrity, TxLINE Merkle proof, Solana root check, reconciliation state, and calibration error.
-6. **3:15–3:45 — Commercial wedge.** Explain the buyer: operators get a credible track record; allocators get diligence and ongoing mandate monitoring.
-7. **3:45–4:10 — Feedback.** Praise the normalised schema and proof primitive; surface onboarding, PDA, and team-name friction honestly.
+1. **0:00–0:30 — Problem.** Agent-managed prediction-market capital lacks an audit layer; claimed P&L does not prove mandate discipline.
+2. **0:30–1:30 — Mandate Control.** Open `/agent`; show the live VPS worker, current mandate decision, proof timeline crossing from "outcome withheld" to "proof available," and on-chain Solana verdict in the telemetry strip.
+3. **1:30–2:45 — Decision dossier.** Click "Inspect decision dossier"; walk the 5 allocator questions: what it knew, what it decided, what prevented overreaching, when the result was unavailable, what later verified it. Show the raw receipt JSON.
+4. **2:45–3:30 — Proof Theatre.** Open `/world-cup`; click "Open proof theatre" on a final fixture; walk the vertical 6-stage evidence timeline from pre-match evidence to Solana-anchored reconciliation.
+5. **3:30–4:00 — Allocator Diligence.** Open `/positions`; show mandate adherence, discipline rate, and calibration — computed from the same public receipts.
+6. **4:00–4:10 — Close.** The route is one system: Mandate → Proof Theatre → Diligence. Verify without trust.
+
+See `docs/DEMO_SCRIPT_PROOF.md` for the full judge-path script with fallbacks and pre-demo checklist.
 
 ---
 

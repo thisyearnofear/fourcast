@@ -9,9 +9,11 @@
 - **Deep Reasoning Visualizer** — Real-time "thinking" overlay for AI analysis, showing provenance and provenance-backed logic
 - **Evidence-Based UI** — Explicit data provenance for AI predictions, citing data sources (SynthData, OpenMeteo, Venice AI)
 - **Operator Pulse** — Real persisted agent/autopilot activity in the landing page and app chrome: mode, latest sweep, markets scanned, fresh edges, and execution status
-- **Autonomous Decision Ledger** — Persisted agent-run receipts on `/agent`: observed markets, cross-venue verdicts, Kelly-cleared allocations or passes, and execution/dry-run posture
-- **Autonomous Historical Lab** — VPS worker telemetry on `/agent`: replay-only clock, pre-outcome receipt hash, proof visibility, and direct TxLINE verification link
-- **Mandate Reputation Spine** — `/positions` reports policy adherence, discipline rate, verdict mix, and allocation bounds from receipt-backed runs
+- **Mandate Control** — `/agent` flagship hero: live VPS worker state, current mandate decision (ALLOCATE/PASS/REVIEW), proof timeline crossing from "outcome withheld" to "proof available," and on-chain Solana verdict. Manual runner demoted to an Operator Controls drawer.
+- **Decision Dossier** — Right-side drawer on `/agent`: five allocator questions answered in order from the canonical receipt (what it knew / decided / what prevented overreaching / when the result was unavailable / what later verified it). Raw JSON toggle.
+- **Proof Theatre** — `/world-cup` vertical 6-stage evidence timeline for any fixture: pre-match evidence → seeded simulation → versioned policy gates → immutable receipt → TxLINE Merkle proof + Solana validation → reconciliation. Deep-linkable via `?fixture=<id>`.
+- **Autonomous Historical Lab** — VPS worker telemetry on `/agent` (supporting surface below the hero): replay-only clock, pre-outcome receipt hash, proof visibility, and direct TxLINE verification link
+- **Allocator Diligence** — `/positions` reports policy adherence, discipline rate, verdict mix, and allocation bounds from receipt-backed runs as the hero; positions/P&L demoted to a secondary section
 
 #### Prediction Markets Distribution
 - **One-Click Prediction Deep-Linking** — Shareable, pre-analyzed market links that hydrate state automatically

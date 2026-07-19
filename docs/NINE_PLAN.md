@@ -151,10 +151,11 @@ That is the headline loop. Autopilot is the execution capability inside it, not 
 | Surface | Role | Why it exists |
 |---|---|---|
 | `/autopilot` and `AutopilotDashboard` | Execution capability | Runs policy-bound allocations under safety rails |
-| `/agent` and `AgentDashboard` | **Headline decision surface** | Shows evidence, risk gates, verdicts, and the decision ledger |
+| `/agent` (Mandate Control) | **Flagship hero** | Live VPS worker state, current mandate decision, proof timeline, and on-chain Solana verdict. The manual `AgentDashboard` is demoted to an Operator Controls drawer. |
+| `/world-cup` (Proof Theatre) | **Proof surface** | Vertical 6-stage evidence timeline for any fixture — the final act of an autonomous decision |
 | `/markets` and `SearchLanding` | Acquisition top-of-funnel | Free tier users discover; some convert to Operators |
 | `/signals` and the insight marketplace | **Acquisition loop** | Used to surface operators to followers, not as the standalone product |
-| `/positions` (renamed "Track Record") | The reputation surface | The output an operator and allocator use to evaluate policy adherence and resolved performance |
+| `/positions` (Allocator Diligence) | The reputation surface | Mandate adherence, receipt coverage, discipline rate, and calibration as the hero; positions/P&L demoted to secondary |
 | `/labs`, deep-reasoning visualizer, 3D landing, Farcaster frame, Telegram bot | Side doors | Helpful for activation but never the lead |
 
 **Non-negotiable commitments for the next 6 weeks:**
