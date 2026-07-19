@@ -5,7 +5,7 @@
 **Settlement**: Arc (Circle's stablecoin-native L1), USDC-denominated  
 **Prizes**: $50k total — 1st ($10k), 2nd ($7.5k×2), 3rd ($5k×3), standout teams, feedback incentives, easter eggs  
 **Submission Form**: https://forms.gle/hFPM2t4Jt1zGfqzM7  
-**Demo script**: [DEMO_SCRIPT.md](./DEMO_SCRIPT.md)  
+**Demo script**: [DEMO_SCRIPT_PROOF.md](./DEMO_SCRIPT_PROOF.md)
 **Brand copy (UI)**: [constants/brand.js](../constants/brand.js)
 
 ---
@@ -14,12 +14,12 @@
 
 | Layer | Message |
 |-------|---------|
-| **One-liner** | AI agent that finds mispriced prediction markets with auditable live-web evidence |
-| **Subhead** | Bright Data SERP + Scraping Browser + Web Unlocker → AI synthesis → edge detection across Polymarket & Kalshi · Arc settlement |
+| **One-liner** | Verification and reputation layer for agent-managed prediction-market capital |
+| **Subhead** | Evidence + versioned risk policy → agent allocation or pass → auditable decision receipt → proof-backed outcome reconciliation |
 | **Primary RFB** | 02 Prediction Market Trader Intelligence |
 | **Secondary** | 05 Cross-Platform Arbitrage · 06 Social Trading / builder fees |
 | **Settlement story** | Arc for settlement; Polygon for venue orders |
-| **Product loop** | Observe → Verify contracts → Price risk → Allocate or pass → Record receipt |
+| **Product loop** | Evidence → Simulation → Policy-bound allocation/pass → Receipt → TxLINE/Solana reconciliation |
 
 Judges should never see "multi-chain" as the lead — **the AI agent is the product**, Arc is **settlement plumbing**, EVM chains are **venues**.
 
@@ -27,7 +27,7 @@ Judges should never see "multi-chain" as the lead — **the AI agent is the prod
 
 ## Why Fourcast Fits
 
-Fourcast is a **Polymarket Autopilot for serious prediction-market operators**: Bright Data-sourced live evidence, AI-synthesized fair probabilities, Kelly-sized positions, Polymarket Builder-attributed execution, and an Audited Track Record on Arc.
+Fourcast is the **verification and reputation layer for agent-managed prediction-market capital**. It combines live evidence, AI-synthesized fair probabilities, Kelly-sized risk controls, and a durable decision history so operators and allocators can distinguish skill, luck, hindsight, and policy violations.
 
 We are built for one primary customer and one acquisition loop. Our features map to RFBs with that discipline.
 

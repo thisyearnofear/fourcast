@@ -220,6 +220,91 @@ export function writeReplayFixture(fixtureId, payload) {
 }
 
 /**
+ * Resolve a fixture's pre-event decision receipt file path. Sibling to the
+ * replay fixture JSON, named `{fixtureId}.receipt.json`. Falls back through the
+ * same two replay dirs as replayFile().
+ */
+function receiptFile(fixtureId) {
+  for (const dir of [REPLAY_DIR, REPLAY_DIR_FALLBACK]) {
+    const candidate = path.join(dir, `${fixtureId}.receipt.json`);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return path.join(REPLAY_DIR, `${fixtureId}.receipt.json`);
+}
+
+/**
+ * Read a fixture-bound pre-event DecisionReceipt by fixtureId. Returns null
+ * when no receipt has been authored for this fixture — the reconciliation
+ * layer treats that as PROOF_MISSING / PENDING, not an error.
+ *
+ * Reads the default `{fixtureId}.receipt.json` (the ALLOCATE variant). Use
+ * readReceiptFile() to load a specific variant (e.g. the PASS-gate refusal).
+ */
+export function readReceiptFixture(fixtureId) {
+  return readReceiptFile(`${fixtureId}.receipt.json`);
+}
+
+/**
+ * Read any receipt-shaped file by filename from the replay dirs. Used by the
+ * verify route to select between receipt variants (allocate / pass) on the
+ * same fixture. Returns null when the file doesn't exist.
+ */
+export function readReceiptFile(filename) {
+  for (const dir of [REPLAY_DIR, REPLAY_DIR_FALLBACK]) {
+    const candidate = path.join(dir, filename);
+    if (fs.existsSync(candidate)) {
+      try {
+        return JSON.parse(fs.readFileSync(candidate, 'utf8'));
+      } catch (err) {
+        console.error(`[txline] failed to read receipt file ${filename}:`, err.message);
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * List receipt files in the replay dirs. Returns an array of
+ * { fixtureId, variant, filename } where variant is 'allocate' (default
+ * {fixtureId}.receipt.json) or 'pass' ({fixtureId}.pass.receipt.json). Used by
+ * the receipts listing surface so the UI can show every verifiable pre-event
+ * decision, including policy-bound refusals.
+ */
+export function listReceiptFiles() {
+  const out = [];
+  const seen = new Set();
+  for (const dir of [REPLAY_DIR, REPLAY_DIR_FALLBACK]) {
+    try {
+      if (!fs.existsSync(dir)) continue;
+      for (const f of fs.readdirSync(dir)) {
+        if (!f.endsWith('.receipt.json')) continue;
+        if (seen.has(f)) continue;
+        seen.add(f);
+        // {fixtureId}.receipt.json → allocate; {fixtureId}.pass.receipt.json → pass
+        const passMatch = f.match(/^(.+)\.pass\.receipt\.json$/);
+        if (passMatch) {
+          out.push({ fixtureId: passMatch[1], variant: 'pass', filename: f });
+        } else {
+          const allocMatch = f.match(/^(.+)\.receipt\.json$/);
+          if (allocMatch) out.push({ fixtureId: allocMatch[1], variant: 'allocate', filename: f });
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return out;
+}
+
+/**
+ * Back-compat: list fixture ids that have at least one bound receipt.
+ */
+export function listReceiptFixtureIds() {
+  return Array.from(new Set(listReceiptFiles().map((r) => r.fixtureId)));
+}
+
+/**
  * Build the proof metadata object attached to a fixture.
  * When the full on-chain proof is available (statToProve, summary, Merkle
  * nodes with isRightSibling), include it so the settlement UI can CPI-call

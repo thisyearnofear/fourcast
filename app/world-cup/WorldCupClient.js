@@ -9,6 +9,7 @@ import {
   CircleDot,
   Clock,
   Database,
+  Fingerprint,
   Play,
   Pause,
   RotateCcw,
@@ -178,13 +179,14 @@ function EdgePanel({ fixture, onToggle }) {
 
 /* ------------------------------- fixture card ---------------------------- */
 
-function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, verification }) {
+function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, proofResult }) {
   const implied = fixture.odds?.implied;
   const hasProof = Boolean(fixture.proof?.merkleRoot || fixture.proof?.dailyRootPda);
   const [edgeOpen, setEdgeOpen] = useState(false);
   // Derive score from proof if the live API didn't populate it
   const homeScore = fixture.home.score ?? fixture.proof?.statToProve?.value ?? null;
   const awayScore = fixture.away.score ?? fixture.proof?.statToProve2?.value ?? null;
+  const verification = proofResult?.verification || (proofResult?.verdict ? proofResult : null);
   return (
     <div className="rounded-2xl border border-white/10 bg-black/25 backdrop-blur-xl p-5 space-y-4">
       <div className="flex items-start justify-between gap-3">
@@ -250,7 +252,7 @@ function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, verifi
             className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] border border-white/15 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10 transition disabled:opacity-50"
           >
             <Shield size={12} />
-            {verifying ? 'Verifying…' : 'Verify on Solana'}
+            {verifying ? 'Verifying…' : 'Verify proof of decision'}
           </button>
         )}
         {hasProof && (
@@ -283,6 +285,8 @@ function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, verifi
         <VerificationPanel verification={verification} />
       )}
 
+      {proofResult?.receipt && <ProofDecisionPanel result={proofResult} />}
+
       {edgeOpen && implied && (
         <EdgePanel fixture={fixture} onToggle={() => {}} />
       )}
@@ -291,6 +295,70 @@ function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, verifi
         <OnChainSettlementPanel fixture={fixture} proof={fixture.proof} />
       )}
     </div>
+  );
+}
+
+function ProofDecisionPanel({ result }) {
+  const receipt = result.receipt || {};
+  const decision = receipt.decision || {};
+  const simulation = receipt.simulation || {};
+  const reconciliation = result.reconciliation || {};
+  const outcome = reconciliation.outcome || {};
+  const comparison = reconciliation.decisionVsOutcome || {};
+  const integrity = reconciliation.integrity || {};
+  const verdict = (decision.verdict || 'REVIEW').toUpperCase();
+  const verdictClass = verdict === 'ALLOCATE'
+    ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200'
+    : verdict === 'PASS'
+      ? 'border-amber-300/30 bg-amber-300/10 text-amber-100'
+      : 'border-sky-300/30 bg-sky-300/10 text-sky-100';
+  const reconciliationClass = reconciliation.status === 'reconciled'
+    ? 'text-emerald-200'
+    : reconciliation.status?.includes('mismatch')
+      ? 'text-red-200'
+      : 'text-amber-100';
+  const passedGates = (decision.riskChecks || []).filter((gate) => gate.passed).length;
+
+  return (
+    <section className="overflow-hidden border border-emerald-300/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(0,0,0,0.25)_42%)]" aria-label="Proof of decision">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <Fingerprint size={13} className="text-emerald-200" />
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100">Proof of decision</span>
+          <span className={`border px-1.5 py-0.5 font-mono text-[9px] tracking-wider ${verdictClass}`}>{verdict}</span>
+        </div>
+        <span className={`font-mono text-[10px] uppercase tracking-wider ${reconciliationClass}`}>
+          {reconciliation.status?.replace(/_/g, ' ') || 'pending'}
+        </span>
+      </div>
+
+      <div className="grid gap-px bg-white/[0.08] sm:grid-cols-2">
+        <div className="bg-black/30 p-3">
+          <p className="font-mono text-[9px] uppercase tracking-wider text-white/35">Before kickoff</p>
+          <p className="mt-1 text-xs text-white/80">{decision.rationale || 'Decision receipt available.'}</p>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-white/55">
+            <span>fair {pct(simulation.winProbability)}</span>
+            <span>loss {pct(simulation.lossProbability)}</span>
+            <span>allocation {pct(decision.allocationPct)}</span>
+            <span>{passedGates}/{decision.riskChecks?.length || 0} gates</span>
+          </div>
+          <p className="mt-2 font-mono text-[9px] text-white/35">seed {simulation.seed ?? '—'} · {simulation.runs?.toLocaleString() || '—'} paths</p>
+        </div>
+        <div className="bg-black/30 p-3">
+          <p className="font-mono text-[9px] uppercase tracking-wider text-white/35">Independently resolved</p>
+          <p className="mt-1 text-xs text-white/80">
+            {outcome.homeScore ?? '—'}–{outcome.awayScore ?? '—'} · {outcome.winner || 'outcome pending'}
+          </p>
+          <p className="mt-2 text-[11px] leading-4 text-white/55">{comparison.notes || 'Waiting for a proof-backed outcome.'}</p>
+          {reconciliation.adherence && <p className="mt-2 font-mono text-[9px] text-white/35">policy {reconciliation.adherence.policyAdhered ? 'adhered' : 'exception'} · calibration {reconciliation.adherence.calibrationError != null ? reconciliation.adherence.calibrationError.toFixed(3) : '—'}</p>}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/[0.08] px-3 py-2 font-mono text-[9px] text-white/40">
+        <span>{integrity.receiptIntact ? 'SHA-256 RECEIPT INTACT' : 'RECEIPT UNVERIFIED'}</span>
+        <span className="break-all text-white/55">{integrity.receiptHash || receipt.integrity?.contentHash || 'hash unavailable'}</span>
+      </div>
+    </section>
   );
 }
 
@@ -326,7 +394,7 @@ function VerificationPanel({ verification }) {
         )}
       </div>
       <ul className="space-y-1">
-        {verification.checks.map((c) => (
+        {(verification.checks || []).map((c) => (
           <li key={c.name} className="flex items-start gap-2 text-[11px]">
             <span className={`mt-0.5 inline-block h-2 w-2 rounded-full ${
               c.ok === true ? 'bg-emerald-400' : c.ok === false ? 'bg-red-400' : 'bg-white/30'
@@ -430,6 +498,42 @@ function ReplayViewer({ replay, onClose }) {
           <span className="font-mono text-white/70">{replay.proof.merkleRoot?.slice(0, 16) ?? '—'}…</span>
         </div>
       )}
+    </div>
+  );
+}
+
+/* --------------------------- proof-loop narrative ------------------------ */
+
+const PROOF_LOOP_STAGES = [
+  { key: 'evidence', label: 'Evidence', detail: 'TxLINE consensus + cross-venue prices recorded pre-match' },
+  { key: 'decision', label: 'Policy-bound decision', detail: 'agent allocates or passes under a versioned risk policy' },
+  { key: 'receipt', label: 'Receipt', detail: 'evidence + policy + simulation bound into one hash' },
+  { key: 'proof', label: 'Proof', detail: 'TxLINE finalises the stat; Merkle root anchors the outcome' },
+  { key: 'reconcile', label: 'Reconciliation', detail: 'Solana PDA check confirms the outcome the receipt predicted' },
+];
+
+function ProofLoopStrip({ fixtures }) {
+  const proven = fixtures.filter((f) => f.proof?.merkleRoot || f.proof?.dailyRootPda).length;
+  const finals = fixtures.filter((f) => f.status === 'final').length;
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/25 backdrop-blur-xl p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-xs uppercase tracking-[0.18em] text-white/45">Verified decision → reconciled outcome</div>
+        <div className="font-mono text-[10px] text-white/40">
+          {proven} proof-backed · {finals} final · {fixtures.length} tracked
+        </div>
+      </div>
+      <ol className="mt-3 grid gap-2 sm:grid-cols-5">
+        {PROOF_LOOP_STAGES.map((stage, index) => (
+          <li key={stage.key} className="relative rounded-lg border border-white/[0.08] bg-white/[0.03] p-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-[9px] text-emerald-300/80">{index + 1}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/75">{stage.label}</span>
+            </div>
+            <p className="mt-1 text-[10px] leading-4 text-white/40">{stage.detail}</p>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -554,14 +658,11 @@ export default function WorldCupClient() {
     setVerifyingId(fixture.id);
     try {
       const res = await fetch(`/api/worldcup/verify?fixtureId=${encodeURIComponent(fixture.id)}`).then((r) => r.json());
-      setVerifications((prev) => ({
-        ...prev,
-        [fixture.id]: res.verification || { verdict: 'unknown', checks: [], error: res.error },
-      }));
+      setVerifications((prev) => ({ ...prev, [fixture.id]: res }));
     } catch (err) {
       setVerifications((prev) => ({
         ...prev,
-        [fixture.id]: { verdict: 'rpc-error', checks: [{ name: 'fetch', ok: false, detail: err.message }] },
+        [fixture.id]: { verification: { verdict: 'rpc-error', checks: [{ name: 'fetch', ok: false, detail: err.message }] } },
       }));
     } finally {
       setVerifyingId(null);
@@ -630,6 +731,8 @@ export default function WorldCupClient() {
       }
     >
       <div className="space-y-6">
+        <ProofLoopStrip fixtures={fixtures} />
+
         {isReplayMode && (
           <div className="rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-4 flex items-start gap-3">
             <AlertTriangle size={18} className="text-amber-300 mt-0.5 shrink-0" />
@@ -677,7 +780,7 @@ export default function WorldCupClient() {
                 onVerify={handleVerify}
                 replaying={replayingId === fixture.id}
                 verifying={verifyingId === fixture.id}
-                verification={verifications[fixture.id]}
+                proofResult={verifications[fixture.id]}
               />
             ))}
           </div>

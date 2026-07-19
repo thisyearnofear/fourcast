@@ -9,6 +9,7 @@
 - **Deep Reasoning Visualizer** — Real-time "thinking" overlay for AI analysis, showing provenance and provenance-backed logic
 - **Evidence-Based UI** — Explicit data provenance for AI predictions, citing data sources (SynthData, OpenMeteo, Venice AI)
 - **Operator Pulse** — Real persisted agent/autopilot activity in the landing page and app chrome: mode, latest sweep, markets scanned, fresh edges, and execution status
+- **Autonomous Decision Ledger** — Persisted agent-run receipts on `/agent`: observed markets, cross-venue verdicts, Kelly-cleared allocations or passes, and execution/dry-run posture
 
 #### Prediction Markets Distribution
 - **One-Click Prediction Deep-Linking** — Shareable, pre-analyzed market links that hydrate state automatically
@@ -167,19 +168,19 @@
 
 ## Vision Statement
 
-Fourcast the future. We're building **quantitative prediction intelligence** for the decentralized web.
+Fourcast is building the **verification and reputation layer for agent-managed prediction-market capital**.
 
 ### The Problem
-Retail traders lack access to the sophisticated, multi-source analysis tools that institutional quants take for granted. Prediction markets span crypto, sports, politics, and more — but actionable edge requires combining ML forecasts, real-time data (including weather for sports), and AI reasoning at scale.
+Agent-managed capital has a trust problem. A claimed P&L does not reveal what an agent knew before resolution, what risks it accepted, whether it respected its mandate, or whether the performance is skill rather than luck. Prediction markets make this especially acute because execution and outcomes move quickly across fragmented venues.
 
 ### Our Solution
-Combine ML forecasts, AI reasoning, and real-time data sources to create verifiable, composable signals that traders and developers can trust — across every prediction market vertical.
+Turn live evidence, risk policy, and agent decisions into durable receipts that can be replayed, reconciled, and compared. Fourcast helps operators demonstrate disciplined execution and helps allocators evaluate agents without trusting a black box.
 
 ### Long-Term Goals
-1. **Become the standard** for quantitative prediction market analysis
-2. **Build a developer ecosystem** around composable signal infrastructure
-3. **Expand data integrations** across new verticals and data sources
-4. **Position Movement/Aptos** as the go-to chain for prediction intelligence
+1. **Become the standard** for verifiable agent decision histories in prediction markets
+2. **Build a reputation graph** around policy adherence, calibration, and resolved outcomes
+3. **Make proof-backed reconciliation** a reusable primitive across sports, weather, crypto, and politics
+4. **Offer allocators a diligence surface** for agent-managed mandates and capital
 
 ---
 
@@ -191,7 +192,7 @@ Fourcast commits to one primary customer. The other use cases exist to feed that
 
 - Run an autonomous agent loop: discover → AI forecast → Kelly-sized positions → attributed execution
 - Compare odds across Polymarket and Kalshi with fee-aware arbitrage detection
-- Build a public **Audited Track Record** on Arc that follow-on capital can verify
+- Build a public **Audited Track Record**: decision receipts, policy adherence, calibration, and reconciled outcomes that follow-on capital can verify
 - Earn Builder attribution revenue from every Autopilot fill
 - Track Brier score, win rate, calibration, and operator-tier performance metrics
 

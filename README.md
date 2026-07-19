@@ -1,12 +1,12 @@
-# Fourcast — Polymarket Autopilot for serious prediction-market operators
+# Fourcast — Verification and reputation for agent-managed prediction-market capital
 
-**AI-driven prediction-market Autopilot — Kelly-sized edges, Builder-attributed fills, an on-chain track record you can hand to follow-on capital.**
+**Fourcast records what an agent knew, which policy constrained it, and why it allocated or passed—so operators and capital allocators can audit performance without trusting a black box.**
 
-> **Who this is for.** Polymarket / Kalshi operators running real capital who need verified attribution, not vibes. Everything in this repo is built to serve that customer. Retail can audit; we don't optimize for them.
+> **Who this is for.** Prediction-market operators and the allocators assessing them. They need more than a claimed P&L: they need a pre-outcome record of evidence, risk limits, decisions, and results. Retail can audit; we do not optimize for them.
 >
-> **How we acquire them.** The signal marketplace — every published call carries an on-chain track record, an OG share card, and a follow graph on Warpcast / X. One operator's verified fill is the next operator's concierge prospect.
+> **How we acquire them.** Public, inspectable decision histories. A strong operator's verified mandate adherence and resolved outcomes become the proof that earns the next allocator conversation.
 >
-> **Headline loop.** Discover mispricings → AI forecast → Kelly-sized position → Builder-attributed execution → Audited Track Record on Arc.
+> **Headline loop.** Evidence → policy-bound simulation and risk checks → allocate / pass / review → decision receipt → execution and outcome reconciliation → verified reputation.
 
 ## Surface area
 
@@ -24,13 +24,13 @@ Fourcast has two product surfaces; both are quantized around the same operator:
 
 | | |
 |---|---|
-| **Primary customer** | Quant Operator (Polymarket / Kalshi, running real capital) |
-| **Distribution** | Signal marketplace → operator followers → concierge conversion |
-| **Headline product** | Autopilot with Kelly Criterion + Polymarket Builder attribution |
+| **Primary customer** | Prediction-market operator plus the allocator who must diligence that operator |
+| **Distribution** | Verifiable decision history → allocator trust → operator/allocator concierge conversion |
+| **Headline product** | Verification and reputation layer: policy-bound decision receipts, risk controls, and reconciled outcomes |
 | **Second-best customer** | Signal Analyst (Reputation Climber) |
-| **Pivot trigger** | Custody / trust barrier in the concierge test — see `docs/GO_TO_MARKET.md` |
+| **Commercial wedge** | Auditable mandates and track records for agent-managed capital—not a generic retail alpha feed |
 
-See `docs/GO_TO_MARKET.md` for the 14-day concierge test that validates this positioning, and `docs/NINE_PLAN.md` P3.1 for the architectural commitment that locks it in.
+The current product now implements **Proof of Decision** end to end: deterministic simulation inputs, versioned policy checks, receipt hashing, optional on-chain commitment, and proof-backed reconciliation. `/agent` records the receipts, `/positions` reports mandate adherence, and `/world-cup` demonstrates TxLINE/Solana outcome proof against a receipt-bound fixture.
 
 ## The Problem
 
@@ -38,11 +38,11 @@ Sports applications rely on opaque feeds and trusted operators for settlement. E
 
 ## The Solution
 
-Fourcast uses **TxLINE as its primary sports data layer** and adds three layers on top:
+Fourcast uses **TxLINE as its primary sports data layer** and adds the agent-verification layer on top:
 
 1. **Consensus intelligence** — normalized World Cup fixtures, live consensus odds, score/event timelines
-2. **Cross-venue edge detection** — TxLINE consensus vs Polymarket YES prices, with per-team discrepancy callouts
-3. **Verifiable resolution receipts** — every finalised match surfaces its TxLINE Merkle proof, anchored on Solana
+2. **Policy-bound decision receipts** — deterministic simulation, five risk gates, allocation/pass/review verdicts, and canonical SHA-256 hashes
+3. **Proof-backed reconciliation** — finalised matches surface TxLINE Merkle proofs, Solana root verification, and receipt-vs-outcome reconciliation
 
 Polymarket and Kalshi remain as secondary comparison venues. TxLINE is the source of truth for fixtures, scores, and outcomes.
 

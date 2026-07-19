@@ -1,6 +1,6 @@
 /**
  * Fourcast brand & product narrative — single source of truth.
- * Core story: ask a market question → AI finds edge → publish / trade → track.
+ * Core story: evidence → policy-bound decision → receipt → reconciled reputation.
  * Bright Data scrape enrichment is optional when credits/keys are available.
  */
 
@@ -17,13 +17,13 @@ export const BRAND = {
   fallbackCustomer: 'Signal Analyst / Reputation Climber',
 
   /** Positioning — single source of truth for everyone (UI + docs + tests).
-   *  Every line below should be readable as "we are building for quant operators
-   *  and acquiring them through a provable, social track record".           */
+   * Every line below should read as: Fourcast verifies both the decisions an
+   * agent made and the reputation it earned before capital is allocated. */
   positioning: {
     headline:
-      'Fourcast is a Polymarket Autopilot for serious prediction-market operators.',
+      'Fourcast is the verification and reputation layer for agent-managed prediction-market capital.',
     promise:
-      'AI-discovered edges · Kelly-sized positions · Builder-attributed fills · on-chain track record.',
+      'Policy-bound decisions · evidence receipts · Kelly-sized risk · a track record capital can verify.',
     excludeRetailLead: false, // keep free-tier acquisition open, but never as the lead
     primaryRfb: '02 — Prediction Market Trader Intelligence',
     secondaryRfb: '05 — Cross-Platform Arbitrage (execution layer)',
@@ -40,19 +40,19 @@ export const BRAND = {
 
   /** One line — hero, OG, pitch. Reads "this is for operators" on second pass. */
   tagline:
-    'AI-driven prediction-market Autopilot — Kelly-sized edges, Builder-attributed fills, verified track record on Arc.',
+    'Verifiable decision receipts and reputation for agent-managed prediction-market capital.',
 
   /** Supporting line — subheads, metadata. Speaks to the operator's daily job. */
   subhead:
-    'Fourcast runs an autonomous agent loop for prediction-market operators: discover mispricings across Polymarket & Kalshi, size positions with Kelly Criterion, attribute every fill to the on-chain Builder, and build an Audited Track Record that follow-on capital can verify in one click.',
+    'Fourcast records what an agent knew, which risk policy constrained it, and why it allocated or passed—then builds a decision history that operators and allocators can independently audit.',
 
   /** Footer / trust strip — operator language; avoids the "edge detection" framing. */
-  footerStrip: 'Polymarket · Kalshi · Autopilot · Builder-attributed fills',
+  footerStrip: 'Polymarket · Kalshi · decision receipts · verified reputation',
 
   /** Demo CTA */
-  demoTitle: 'Audit a Kelly-sized call in under a minute',
+  demoTitle: 'Audit an agent decision in under a minute',
   demoSubcopy:
-    'Browse prediction markets with AI fair-probability analysis. Free-tier audit is open; Autopilot execution is gated on the concierge path — see /autopilot.',
+    'Inspect the evidence, risk gates, and allocation posture behind an agent decision. Autopilot execution remains safety-gated — see /autopilot.',
 
   /** Product loop (NarrativeSteps) */
   loop: {
@@ -65,8 +65,8 @@ export const BRAND = {
   pages: {
     markets: 'Browse prediction markets, run AI analysis, and find mispricings',
     signals: 'Signal marketplace — the social acquisition layer that surfaces verified Quant Operators',
-    agent: 'Autonomous scan → AI forecast → Kelly-sized positions → attributed fills',
-    positions: 'Your Audited Track Record — every fill, outcome, Brier score, attribution, public on Arc',
+    agent: 'Evidence → risk policy → allocation or pass → decision receipt',
+    positions: 'Your auditable reputation — decisions, outcomes, calibration, and policy adherence',
     labs: 'Execution layer — Autopilot, Builder attribution, Telegram bot',
   },
 
@@ -136,11 +136,11 @@ export const BRAND = {
   },
 
   labs: {
-    subtitle: 'Execution & monetization — Autopilot trades, Builder attribution, Telegram bot',
+    subtitle: 'Execution capability — policy-bound Autopilot, Builder attribution, and operator tools',
     autopilot: {
       title: 'Autopilot',
       description:
-        'Autonomous execution with Kelly Criterion sizing on AI recommendations — the headline product.',
+        'Safety-gated execution of policy-bound, Kelly-sized agent decisions.',
       status: 'core',
     },
     builder: {
@@ -164,9 +164,9 @@ export const BRAND = {
   },
 
   metadata: {
-    title: 'Fourcast — Polymarket Autopilot with an on-chain Track Record',
+    title: 'Fourcast — Verifiable reputation for prediction-market agents',
     description:
-      'AI-driven prediction-market Autopilot for operators. Kelly-sized edges, Builder-attributed fills, verified Track Records on Arc. Free to audit.',
+      'Verification and reputation for agent-managed prediction-market capital: evidence, risk policy, allocation decisions, and outcomes that can be audited.',
   },
 };
 
@@ -180,7 +180,7 @@ export const ONBOARDING_COPY = [
     id: 'welcome',
     title: 'Welcome to Fourcast',
     description:
-      'Operator-grade prediction-market intelligence: AI-discovered mispricings, Kelly-sized positions, Builder-attributed fills, and an on-chain Track Record. Free to audit. Autopilot execution is gated on the concierge path — see /autopilot.',
+      'Verification and reputation for prediction-market agents: evidence, risk gates, allocation decisions, and track record. Free to audit. Autopilot execution is safety-gated — see /autopilot.',
     icon: '1',
     target: null,
   },
@@ -212,7 +212,7 @@ export const ONBOARDING_COPY = [
     id: 'positions',
     title: 'Build your Audited Track Record',
     description:
-      'Every fill, every outcome, every Brier score lands on Arc as a verifiable record. Follow-on capital can verify you in one click.',
+      'Decision receipts, outcomes, and Brier scores build an auditable record. Proof-backed and on-chain references appear when the relevant integration is available.',
     icon: '5',
     target: '[data-onboard="positions"]',
   },

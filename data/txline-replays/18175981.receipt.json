@@ -1,0 +1,129 @@
+{
+  "fixtureId": "18175981",
+  "summary": {
+    "marketsScanned": 1,
+    "candidatesFiltered": 1,
+    "forecastsMade": 1,
+    "runMode": "advisory"
+  },
+  "proof": {
+    "schemaVersion": "decision-receipt/v1",
+    "id": "receipt-18175981-allocate-france-vs-sweden-2026-06-30",
+    "createdAt": "2026-06-30T18:31:00.000Z",
+    "policy": {
+      "version": "decision-policy/v1",
+      "minAbsoluteEdge": 0.05,
+      "maxAllocationPct": 0.03,
+      "maxLossProbability": 0.75,
+      "simulationRuns": 10000
+    },
+    "evidence": {
+      "sources": [
+        "txline"
+      ],
+      "fixture": {
+        "competition": "World Cup",
+        "competitionId": 72,
+        "home": {
+          "id": 1999,
+          "name": "France",
+          "isHome": true
+        },
+        "away": {
+          "id": 3095,
+          "name": "Sweden",
+          "isHome": false
+        },
+        "kickoff": "2026-06-30T20:59:10.611Z"
+      },
+      "snapshot": {
+        "provider": "txline",
+        "capturedAt": "2026-06-30T18:30:00.000Z",
+        "mode": "pre-match",
+        "consensusOdds": {
+          "home": 1.55,
+          "draw": 4.2,
+          "away": 6,
+          "implied": {
+            "home": 0.624,
+            "draw": 0.231,
+            "away": 0.162
+          }
+        }
+      }
+    },
+    "decisions": [
+      {
+        "market": {
+          "id": "wc-18175981-home-win",
+          "fixtureId": "18175981",
+          "side": "home_win",
+          "title": "France to beat Sweden (World Cup 2026-06-30)"
+        },
+        "simulation": {
+          "runs": 10000,
+          "seed": 2894777195,
+          "direction": "BUY YES",
+          "valid": true,
+          "winProbability": 0.6812,
+          "lossProbability": 0.3188,
+          "expectedReturn": 0.091667,
+          "interval": {
+            "p05": -1,
+            "p50": 0.602564,
+            "p95": 0.602564
+          }
+        },
+        "decision": {
+          "verdict": "ALLOCATE",
+          "allocationPct": 0.021,
+          "executionEligible": true,
+          "rationale": "Policy cleared: 2.1% allocation within risk limits.",
+          "riskChecks": [
+            {
+              "id": "valid-inputs",
+              "label": "valid inputs",
+              "passed": true,
+              "description": "A valid fair probability and market price are required."
+            },
+            {
+              "id": "minimum-edge",
+              "label": "minimum edge",
+              "passed": true,
+              "description": "Absolute edge must be at least 5.0%."
+            },
+            {
+              "id": "positive-allocation",
+              "label": "positive allocation",
+              "passed": true,
+              "description": "Kelly sizing must produce a positive allocation."
+            },
+            {
+              "id": "allocation-cap",
+              "label": "allocation cap",
+              "passed": true,
+              "description": "Allocation must not exceed 3.0% of capital."
+            },
+            {
+              "id": "tail-loss-limit",
+              "label": "tail loss limit",
+              "passed": true,
+              "description": "Simulated loss probability must not exceed 75%."
+            }
+          ]
+        }
+      }
+    ],
+    "execution": {
+      "attempted": 0,
+      "completed": 0,
+      "failed": 0,
+      "dryRun": true
+    },
+    "integrity": {
+      "algorithm": "sha256",
+      "canonicalization": "fourcast-canonical-json/v1",
+      "contentHash": "2dad3158b3fe81e1233be118189109fbcd289e724d52f9d338df98572441ae5f"
+    }
+  }
+}

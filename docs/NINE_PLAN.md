@@ -138,21 +138,23 @@ Each provider exposes a typed client with: timeout, retry, cache key, error type
 
 ### P3.1 — The "one loop" decision — locked
 
-**Primary customer: Quant Operator. Primary loop: the Operator Autopilot loop.**
+**Primary customer: the prediction-market operator and the allocator evaluating that operator. Primary loop: verified agent decision → reconciled outcome → earned reputation → capital allocation.**
 
 **Progress (Jul 2026):** `/agent` now includes an **Autonomous Decision Ledger** backed by persisted run receipts. Each recorded run shows observed markets, qualified candidates, forecasts, cross-venue verdicts, Kelly-cleared allocations, and execution/dry-run results. Cross-venue assessment now requires contract wording and resolution compatibility, reserves 3% for fees/slippage, and reports `READY` versus `REVIEW` rather than treating every title-similar price delta as arbitrage.
 
-> "I am a Polymarket operator. The agent loop finds mispricings, sizes with Kelly, attributes every fill to my Builder, and posts the result to my on-chain Track Record — so the next round of capital can verify me in one click."
+**Next invariant — Proof of Decision:** every decision must be reproducible from a versioned policy, canonical market/evidence snapshot, deterministic simulation seed, and declared risk gates. The receipt hash may be committed on-chain for selected allocations and proof-backed settlements; the full simulation remains off-chain and replayable. We do not put expensive Monte Carlo computation on-chain or create a second decision engine.
 
-That is the headline loop. Everything else is a side door:
+> "I run an agent under a declared mandate. Fourcast records its evidence, simulation, risk gates, and allocation/pass before the outcome is known—then reconciles the result—so the next allocator can verify skill, policy adherence, and risk rather than trust a black box."
+
+That is the headline loop. Autopilot is the execution capability inside it, not the product identity. Everything else is a side door:
 
 | Surface | Role | Why it exists |
 |---|---|---|
-| `/autopilot` and `AutopilotDashboard` | **Headline** | This is the Operator product |
-| `/agent` and `AgentDashboard` | On-ramp + manual mode | The Operator runs this before turning on Autopilot |
+| `/autopilot` and `AutopilotDashboard` | Execution capability | Runs policy-bound allocations under safety rails |
+| `/agent` and `AgentDashboard` | **Headline decision surface** | Shows evidence, risk gates, verdicts, and the decision ledger |
 | `/markets` and `SearchLanding` | Acquisition top-of-funnel | Free tier users discover; some convert to Operators |
 | `/signals` and the insight marketplace | **Acquisition loop** | Used to surface operators to followers, not as the standalone product |
-| `/positions` (renamed "Track Record") | The reputation surface | The output every Operator shows to follow-on capital |
+| `/positions` (renamed "Track Record") | The reputation surface | The output an operator and allocator use to evaluate policy adherence and resolved performance |
 | `/labs`, deep-reasoning visualizer, 3D landing, Farcaster frame, Telegram bot | Side doors | Helpful for activation but never the lead |
 
 **Non-negotiable commitments for the next 6 weeks:**
@@ -160,7 +162,8 @@ That is the headline loop. Everything else is a side door:
 1. Every UI surface should make it obvious which loop it serves. Operators see Operator framing; acquisition traffic sees marketplace framing; never blur them.
 2. The 14-day concierge test in `docs/GO_TO_MARKET.md` is the only legitimate tiebreaker. A/B tests against retail free-tier behavior do **not** count.
 3. If a feature doesn't move Operator (or Operator-acquisition) metrics in 30 days, it goes to `/labs` or dies.
-4. Builder attribution is **not** a side door. It's a revenue line for the Operator and must be visible wherever a fill happens.
+4. Builder attribution is **not** a side door. It is a revenue line for the Operator and must be visible wherever a fill happens.
+5. A decision record must distinguish a model assertion from a verifiable fact. TxLINE-backed World Cup outcomes are the flagship reconciliation path; generic decision receipts are the reusable product primitive.
 
 ### P3.2 — Information architecture rewrite
 

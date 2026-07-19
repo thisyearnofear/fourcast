@@ -1,5 +1,8 @@
 import { runAgentLoop } from '@/services/aiService.server';
 import { saveAgentRun } from '@/services/db';
+import { randomUUID } from 'crypto';
+import { createDecisionPolicy } from '@/services/domain/decision/decisionPolicy';
+import { buildDecisionReceipt } from '@/services/domain/decision/decisionReceipt';
 
 export const runtime = 'nodejs';
 
@@ -46,6 +49,10 @@ export async function POST(request) {
       );
     }
 
+    const runId = `run-${randomUUID()}`;
+    const decisionPolicy = createDecisionPolicy();
+    const createdAt = new Date().toISOString();
+
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
@@ -58,11 +65,14 @@ export async function POST(request) {
               maxDaysOut,
               riskTolerance: Math.max(0, Math.min(1, riskTolerance)),
               autopilot, // ← was missing: pass through to agent loop for execution
+              runId,
+              decisionPolicy,
             });
 
             let marketsScanned = 0;
             let candidatesFiltered = 0;
             let forecastsMade = 0;
+            let decisions = [];
             const receipt = {
               sources: [],
               arbitrage: { candidates: 0, executable: 0, review: 0 },
@@ -109,11 +119,27 @@ export async function POST(request) {
                 receipt.highlights.push(...recommendations.slice(0, 3).map((item) => ({
                   type: 'forecast',
                   title: item.title,
-                  verdict: item.actionable ? 'act' : 'pass',
-                  rationale: item.actionable
+                  verdict: item.decision?.verdict?.toLowerCase() || (item.actionable ? 'act' : 'pass'),
+                  rationale: item.decision?.rationale || (item.actionable
                     ? `${item.direction} · ${(item.sizePct * 100).toFixed(1)}% Kelly-sized allocation`
-                    : 'No allocation: edge did not clear the risk gate',
+                    : 'No allocation: edge did not clear the risk gate'),
                 })));
+                decisions = recommendations.map((item) => ({
+                  market: {
+                    id: item.marketID,
+                    title: item.title,
+                    platform: item.platform,
+                    marketOdds: item.marketOdds,
+                  },
+                  forecast: {
+                    probability: item.aiProbability,
+                    confidence: item.confidence,
+                    source: item.source,
+                    edge: item.edge,
+                  },
+                  simulation: item.simulation,
+                  decision: item.decision,
+                }));
               }
               if (update.step === 'execute' && update.status === 'complete') {
                 receipt.execution = {
@@ -126,15 +152,30 @@ export async function POST(request) {
             }
 
             // Save agent run metadata
+            const summary = buildDecisionReceipt({
+              id: runId,
+              createdAt,
+              policy: decisionPolicy,
+              evidence: {
+                sources: receipt.sources,
+                marketsScanned,
+                candidatesFiltered,
+                crossVenue: receipt.arbitrage,
+              },
+              decisions,
+              execution: receipt.execution,
+              ledger: receipt,
+            });
+
             await saveAgentRun({
-              id: `run-${Date.now()}`,
+              id: runId,
               config: { categories, maxMarkets, minVolume, maxDaysOut, riskTolerance },
               marketsScanned,
               candidatesFiltered,
               forecastsMade,
               timestamp: Math.floor(Date.now() / 1000),
               runMode: autopilot ? 'autopilot' : 'advisory',
-              summary: receipt,
+              summary,
             });
 
             controller.close();

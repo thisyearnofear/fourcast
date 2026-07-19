@@ -29,6 +29,8 @@ import {
 } from "./autopilotSafety.js";
 import { analyzePathDependentMarket, detectPathDependentMarket } from "./pathDependentService.js";
 import { calculateKellySizing } from "../utils/kellySizing.js";
+import { createDecisionPolicy, evaluateDecision } from "./domain/decision/decisionPolicy.js";
+import { deriveSimulationSeed, simulateBinaryMarket } from "./domain/decision/simulation.js";
 
 /**
  * Autonomous agent loop that discovers, filters, forecasts, and detects edge
@@ -49,9 +51,15 @@ export async function* runAgentLoop(config = {}) {
     minVolume = 10000,
     maxDaysOut = 30,
     riskTolerance = 0.5,
+    decisionPolicy: policyOverrides = {},
+    runId = `run-${Date.now()}`,
   } = config;
 
   const loopTimestamp = Date.now();
+  const decisionPolicy = createDecisionPolicy({
+    ...policyOverrides,
+    maxAllocationPct: Math.min(policyOverrides.maxAllocationPct ?? 0.25, 0.25),
+  });
 
   // ── Step 1: Discover markets ──────────────────────────────────────────
 
@@ -689,6 +697,29 @@ Output ONLY valid JSON:
         adjustedConfidence = "LOW";
       }
 
+      // A PASS still receives a shadow simulation so its refusal is
+      // reproducible; NO TRADE itself is not a directional contract.
+      const simulationDirection = kelly.direction === 'NO TRADE'
+        ? (f.aiProbability >= marketYes ? 'BUY YES' : 'BUY NO')
+        : kelly.direction;
+      const simulation = simulateBinaryMarket({
+        probability: f.aiProbability,
+        marketOdds: marketYes,
+        direction: simulationDirection,
+        runs: decisionPolicy.simulationRuns,
+        seed: deriveSimulationSeed([runId, f.marketID, decisionPolicy.version]),
+      });
+      const decision = evaluateDecision({
+        recommendation: {
+          aiProbability: f.aiProbability,
+          marketOdds: marketYes,
+          edge: kelly.edge,
+          sizePct: kelly.sizePct,
+        },
+        simulation,
+        policy: decisionPolicy,
+      });
+
       return {
         marketID: f.marketID,
         title: f.title,
@@ -697,9 +728,9 @@ Output ONLY valid JSON:
         marketOdds: marketYes,
         edge: kelly.edge,
         absEdge,
-        actionable: kelly.actionable,
+        actionable: decision.executionEligible,
         direction: kelly.direction,
-        sizePct: kelly.sizePct,
+        sizePct: decision.allocationPct,
         kellyPct: kelly.kellyPct,
         confidence: adjustedConfidence,
         originalConfidence: f.confidence,
@@ -708,6 +739,8 @@ Output ONLY valid JSON:
         keyFactors: f.keyFactors,
         source: f.source || "llm",
         synthData: f.synthData,
+        simulation,
+        decision,
       };
     })
     .sort((a, b) => b.absEdge - a.absEdge);
@@ -736,7 +769,7 @@ Output ONLY valid JSON:
   yield {
     step: "edge",
     status: "complete",
-    data: { recommendations },
+    data: { recommendations, decisionPolicy },
   };
 
   // ── Autopilot: Execute actionable trades ──────────────────────────────

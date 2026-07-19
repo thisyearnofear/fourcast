@@ -1,6 +1,6 @@
 # Fourcast × TxLINE Hackathon Submission
 
-## Project: Fourcast — Trustless On-Chain Sports Settlement via TxLINE CPI
+## Project: Fourcast — Verifiable Agent Mandates with TxLINE Outcome Proofs
 
 **Live demo:** [https://fourcastapp.vercel.app/world-cup](https://fourcastapp.vercel.app/world-cup)
 **Program on Solana devnet:** [`AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ`](https://explorer.solana.com/address/AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ?cluster=devnet)
@@ -18,20 +18,26 @@ The main friction point was team name resolution — the API returned "Team 3095
 
 ## What it does
 
-Fourcast is a sports prediction platform that uses **TxLINE** as its primary sports data source for World Cup fixtures. When live credentials are active, the app reads TxLINE fixtures, odds, score snapshots, and Merkle proofs directly. After the hackathon data cutoff, the deployed demo switches to cached TxLINE replay snapshots so judges can still inspect the same finalised proof data and Solana verification path.
+Fourcast is the **verification and reputation layer for agent-managed prediction-market capital**. It records what an agent knew before an event, which mandate constrained it, why it allocated or passed, and how the outcome later resolved. Operators use it to run policy-bound agents; allocators use it to audit mandate adherence without trusting a black box.
 
-The core innovation is a **custom Solana program (`match-escrow`) that performs a Cross-Program Invocation (CPI) into TxLINE's `txoracle::validate_stat` instruction** to trustlessly settle parametric sports insurance policies — no trusted oracle, no intermediary, no manual verification.
+TxLINE is the proof layer for the flagship World Cup scenario. When live credentials are active, the app reads TxLINE fixtures, odds, score snapshots, and Merkle proofs directly. After the hackathon data cutoff, the deployed demo switches to cached TxLINE replay snapshots so judges can still inspect the same finalised proof data and Solana verification path.
+
+The earlier settlement path still exists: a custom Solana program (`match-escrow`) performs a Cross-Program Invocation (CPI) into TxLINE's `txoracle::validate_stat` instruction to trustlessly settle parametric sports policies. The stronger product wedge now built on top of that work is **Proof of Decision**: a pre-outcome agent receipt reconciled against an independently verifiable TxLINE/Solana outcome.
 
 ### The flow
 
-1. **Lock SOL** — A user locks SOL in a Solana program PDA, specifying a match outcome condition (e.g., "France wins")
-2. **Fetch proof** — The app fetches a TxLINE Merkle proof from `/api/scores/stat-validation` in live mode, or loads the cached replay proof in demo mode (home goals key=1, away goals key=2)
-3. **Settle on-chain** — Anyone clicks "Settle on-chain". The `match-escrow` program CPI-calls `txoracle::validate_stat` with the proof
-4. **Auto-payout** — If `validate_stat` returns `true` and the condition matches, SOL transfers to the recipient. Otherwise the locker is refunded
+1. **Evidence** — The World Cup agent reads fixture, market, and odds data.
+2. **Simulation** — The agent runs deterministic Monte Carlo with a persisted seed.
+3. **Policy-bound decision** — Five mandate gates decide ALLOCATE, PASS, or REVIEW; allocation size is capped before any execution step.
+4. **Pre-outcome receipt** — Fourcast canonicalizes the decision payload and stores a SHA-256 content hash. An optional Solana memo commitment can prove the hash existed before resolution.
+5. **TxLINE proof** — The app fetches a TxLINE Merkle proof from `/api/scores/stat-validation` in live mode, or loads the cached replay proof in demo mode.
+6. **Reconciliation** — `/api/worldcup/verify?fixtureId=18175981` checks receipt integrity, TxLINE/Solana verification, policy adherence, and decision-vs-outcome result in one call.
 
 ### Why this is novel
 
-Most "blockchain + sports" projects use a price-feed oracle (Chainlink, Pyth, Switchboard) or a multi-sig to settle bets. Fourcast is the first to **CPI directly into TxLINE's on-chain verification program**, using the same Merkle proof that TxLINE publishes on Solana devnet. The settlement is as trustless as the underlying data layer — if TxLINE's proof is valid, the payout is guaranteed by the Solana runtime.
+Most AI trading apps ask users to trust a model transcript or a claimed P&L. Fourcast produces a replayable decision receipt before the outcome is known, then reconciles it against TxLINE's independently verifiable outcome proof. That makes mandate adherence and calibration auditable instead of self-reported.
+
+The on-chain settlement path remains novel too: Fourcast can CPI directly into TxLINE's on-chain verification program, using the same Merkle proof that TxLINE publishes on Solana devnet. Settlement is as trustless as the underlying data layer; reputation is built from the same proof chain.
 
 ---
 
@@ -76,6 +82,8 @@ Most "blockchain + sports" projects use a price-feed oracle (Chainlink, Pyth, Sw
 | **Live score streaming** | `/api/scores/snapshot/{fixtureId}` | Real-time score updates with seq numbers when live credentials are active |
 | **Merkle proof fetch** | `/api/scores/stat-validation` | On-chain verifiable proof with `isRightSibling` bits in live mode |
 | **On-chain verification (CPI)** | `txoracle::validate_stat` (Solana devnet `6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J`) | The match-escrow program CPI-calls this to verify match outcomes |
+| **Proof-of-decision verification** | `/api/worldcup/verify?fixtureId=18175981` | Verifies receipt integrity, TxLINE proof, Solana result, policy adherence, and reconciliation state |
+| **Receipt commitment** | `/api/worldcup/verify/commit` | Builds an optional Solana memo transaction that commits the receipt hash before resolution |
 | **Replay mode** | `data/txline-replays/18175981.json` and `cache/txline/replays/18175981.json` | Post-deadline demo fallback using cached final-fixture proofs |
 
 ---
@@ -126,6 +134,11 @@ This transaction:
 | `components/OnChainSettlementPanel.js` | UI: lock SOL + settle on-chain |
 | `app/world-cup/WorldCupClient.js` | Main World Cup page with settlement panel |
 | `services/txline/txlineService.js` | TxLINE API integration + proof caching |
+| `services/domain/decision/` | Canonical decision policy, simulation, receipt hashing, and integrity checks |
+| `services/txline/reconciliationService.js` | Receipt/proof reconciliation state machine |
+| `services/txline/receiptAdapter.js` | Adapter from canonical decision receipts to the TxLINE reconciliation view |
+| `data/txline-replays/18175981.receipt.json` | Pre-outcome ALLOCATE receipt bound to the France 3-0 proof fixture |
+| `data/txline-replays/18175981.pass.receipt.json` | PASS variant proving non-action is also a first-class policy outcome |
 | `data/txline-replays/18175981.json` | Committed fallback proof for France 3-0 (with `isRightSibling` bits), available in deployed environments |
 | `cache/txline/replays/18175981.json` | Local replay cache generated by the snapshot script |
 
@@ -133,19 +146,11 @@ This transaction:
 
 ## Demo script
 
-1. **Open the app** → navigate to `/world-cup`
-2. **View the fixture card** → France vs Sweden, final score 3-0
-3. **See the "On-Chain Settlement Engine" panel** → shows verified result, Merkle proof node count, txoracle PDA link
-4. **Connect Solana wallet** → click "Connect Solana Wallet" (Phantom/Solflare on devnet)
-5. **Create a policy** → choose "France wins", enter 0.1 SOL, click "Lock 0.1 SOL on France"
-   - Transaction creates a PDA and locks 0.1 SOL
-   - Explorer link appears
-6. **Settle on-chain** → click "Settle on-chain (CPI validate_stat)"
-   - Transaction CPI-calls `txoracle::validate_stat`
-   - Program verifies the Merkle proof on-chain
-   - SOL transfers to the recipient (since France won 3-0)
-   - Policy PDA is closed
-7. **Verify on Solana Explorer** → click the transaction link to see the CPI inner instruction
+1. **Open `/agent`** — expand the latest autonomous run and show the decision receipt: evidence, simulation seed, five policy gates, verdict, allocation/pass, and browser-side hash verification.
+2. **Open `/positions`** — show the allocator mandate view: verified receipts, policy adherence, discipline rate, max allocation, and verdict mix computed from the public run ledger.
+3. **Open `/world-cup`** — select fixture `18175981` (France 3-0) and click **Verify proof of decision**.
+4. **Show the closed loop** — pre-outcome receipt → TxLINE Merkle proof → Solana verification result → reconciliation status, policy adherence, calibration error, and receipt hash.
+5. **Optional settlement beat** — use the existing on-chain settlement panel to show how the same TxLINE proof can drive `match-escrow` payout logic.
 
 ---
 
@@ -162,8 +167,8 @@ This transaction:
 
 ## What makes this submission strong
 
-1. **Real CPI into TxLINE's on-chain program** — not just reading an API; the Solana program actually calls `txoracle::validate_stat` and uses its return value to determine the payout
-2. **Trustless settlement** — no trusted oracle, no multi-sig, no manual verification. The Solana runtime enforces the outcome
-3. **Production-grade settlement path** — the Anchor program compiles, deploys, and has been tested end-to-end on devnet with a real transaction
-4. **Clean demo UX around a real settlement path** — the settlement panel is integrated directly into the fixture card, with wallet connection, policy creation, and one-click settlement
-5. **Replay-mode fallback** — cached proofs ensure the demo works even after the hackathon deadline
+1. **Closed proof chain** — evidence, seeded simulation, policy gates, receipt hash, TxLINE proof, Solana verification, and reconciliation are visible in one product flow
+2. **Agent autonomy with constraints** — the agent can allocate, pass, or request review under an explicit mandate; non-action is treated as a valid decision, not missing automation
+3. **Commercial buyer clarity** — operators get a credible track record; allocators get diligence and ongoing mandate monitoring
+4. **Real TxLINE/Solana integration** — the proof endpoint verifies real TxLINE Merkle proof data and degrades gracefully to proof-only reconciliation if RPC is unavailable
+5. **Replay-mode fallback** — cached proofs and deterministic receipts ensure the demo works even after the hackathon deadline
