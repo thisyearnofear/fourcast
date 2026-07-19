@@ -13,6 +13,7 @@
 Fourcast has two product surfaces; both are quantized around the same operator:
 
 - `/world-cup` — the **TxLINE-powered World Cup intelligence terminal**: live consensus odds, score replay, cross-venue edge detection, and Solana-verified match receipts.
+- `/agent` — the **operator cockpit**: local agent runs, mandate adherence, and the Autonomous Historical Lab telemetry from the VPS worker.
 
 ![Primary Customer](https://img.shields.io/badge/Primary%20Customer-Quant%20Operator-emerald)
 ![Acquisition](https://img.shields.io/badge/Acquisition-Signal%20Marketplace-emerald)
@@ -30,7 +31,7 @@ Fourcast has two product surfaces; both are quantized around the same operator:
 | **Second-best customer** | Signal Analyst (Reputation Climber) |
 | **Commercial wedge** | Auditable mandates and track records for agent-managed capital—not a generic retail alpha feed |
 
-The current product now implements **Proof of Decision** end to end: deterministic simulation inputs, versioned policy checks, receipt hashing, optional on-chain commitment, and proof-backed reconciliation. `/agent` records the receipts, `/positions` reports mandate adherence, and `/world-cup` demonstrates TxLINE/Solana outcome proof against a receipt-bound fixture.
+The current product now implements **Proof of Decision** end to end: deterministic simulation inputs, versioned policy checks, receipt hashing, optional on-chain commitment, and proof-backed reconciliation. `/agent` records local and VPS agent receipts, `/positions` reports mandate adherence, and `/world-cup` demonstrates TxLINE/Solana outcome proof against a receipt-bound fixture.
 
 ## The Problem
 
@@ -42,7 +43,8 @@ Fourcast uses **TxLINE as its primary sports data layer** and adds the agent-ver
 
 1. **Consensus intelligence** — normalized World Cup fixtures, live consensus odds, score/event timelines
 2. **Policy-bound decision receipts** — deterministic simulation, five risk gates, allocation/pass/review verdicts, and canonical SHA-256 hashes
-3. **Proof-backed reconciliation** — finalised matches surface TxLINE Merkle proofs, Solana root verification, and receipt-vs-outcome reconciliation
+3. **Autonomous historical lab** — a headless VPS worker advances a replay clock, emits pre-outcome receipts, withholds final proofs until the replay outcome time, and posts authenticated status to `/agent`
+4. **Proof-backed reconciliation** — finalised matches surface TxLINE Merkle proofs, Solana root verification, and receipt-vs-outcome reconciliation
 
 Polymarket and Kalshi remain as secondary comparison venues. TxLINE is the source of truth for fixtures, scores, and outcomes.
 
@@ -72,6 +74,12 @@ Polymarket and Kalshi remain as secondary comparison venues. TxLINE is the sourc
 │              │  │                  │  │ · PDA derivation & fetch  │
 └──────────────┘  └──────────────────┘  │ · On-chain root compare   │
                                         └───────────┬──────────────┘
+                                                     │
+                        ┌────────────────────────────▼──────────────┐
+                        │  Autonomous Historical Lab (VPS)           │
+                        │  PM2 worker · replay clock · receipts      │
+                        │  signed heartbeat → /api/agent/historical-lab │
+                        └────────────────────────────┬──────────────┘
                                                      │
                                         ┌────────────▼──────────────┐
                                         │  Solana Match-Escrow      │
@@ -135,9 +143,16 @@ The attestation won the `daily_scores_merkle_roots` seed pattern — it was not 
 
 ---
 
-## Replay Mode (post-July 19 cutoff)
+## Replay Mode and Autonomous Historical Lab
 
 TxLINE hackathon access ends July 19, 2026 23:59 UTC. The adapter detects this automatically and switches to **cached replay mode**, serving deterministic snapshots of completed matches so the deployed demo keeps working for judges. The VPS worker runs those snapshots as an **Autonomous Historical Lab**: its replay clock creates a receipt from pre-match evidence first, withholds the final proof, and reconciles only when the simulated outcome time arrives. This preserves the decision-before-outcome ordering without claiming post-cutoff live coverage.
+
+The lab is deliberately scoped as an operator process rather than another dashboard:
+
+- It runs headlessly under PM2 on the VPS with no public port.
+- It uses the same `services/domain/decision/` policy, simulation, and receipt hashing modules as the app.
+- It posts a bearer-authenticated heartbeat to `POST /api/agent/historical-lab`; the app stores only the latest non-secret status in `historical_lab_status`.
+- `/agent` polls `GET /api/agent/historical-lab` and renders the replay phase, agent clock, receipt hash, proof visibility, and direct link to `/api/worldcup/verify?fixtureId=18175981`.
 
 To snapshot a real fixture (with verifiable Merkle proof):
 
@@ -214,11 +229,20 @@ services/txline/
   solanaVerify.js        # On-chain Merkle proof verification (PDA derivation + root comparison)
   settlementService.js   # On-chain settlement: createPolicy + settlePolicy (CPI → validate_stat)
   crossVenueEdge.js      # TxLINE consensus vs Polymarket YES prices
+  reconciliationService.js # Receipt/proof reconciliation state machine
+  receiptAdapter.js      # Canonical decision receipt -> TxLINE reconciliation view
+
+services/domain/decision/
+  decisionPolicy.js      # Five-gate mandate policy
+  decisionReceipt.js     # Canonical receipt/hash/verify helpers
+  simulation.js          # Deterministic Monte Carlo and seed derivation
+  historicalLab.js       # Replay-clock phase and no-lookahead checks
 
 scripts/
   txline-generate-wallet.mjs            # Generate Solana keypair
   txline-subscribe-and-activate.mjs     # On-chain subscribe + activate
   txline-snapshot-fixture.mjs            # Snapshot a fixture's proof to cache
+  fourcast-agent-worker.mjs              # Headless autonomous worker
 
 app/api/worldcup/
   fixtures/route.js              # GET /api/worldcup/fixtures
@@ -228,9 +252,16 @@ app/api/worldcup/
   verify/route.js                # GET /api/worldcup/verify?fixtureId=X
   status/route.js                # GET /api/worldcup/status
 
+app/api/agent/
+  historical-lab/route.js        # GET/POST latest signed VPS worker heartbeat
+  runs/route.js                  # GET persisted decision ledger
+
 app/world-cup/
   page.js               # Server entry, metadata
   WorldCupClient.js     # Client UI: cards, replay viewer, verify panel, edge panel
+
+components/
+  HistoricalLabPanel.js  # /agent VPS telemetry panel
 
 cache/txline/replays/    # Cached fixture snapshots for replay mode
 
@@ -264,18 +295,20 @@ The `/markets` route and `/agent` route continue to provide the original Bright 
 | `GET /api/worldcup/edge?fixtureId=X` | TxLINE vs Polymarket cross-venue edge |
 | `GET /api/worldcup/verify?fixtureId=X` | Solana verification result for cached proof |
 | `GET /api/worldcup/status` | Adapter mode (live vs replay), cutoff, replay count |
+| `GET /api/agent/historical-lab` | Latest VPS historical lab heartbeat for `/agent` |
+| `POST /api/agent/historical-lab` | Authenticated worker heartbeat receiver |
 
 ---
 
 ## Demo Video Outline (≈ 4 minutes)
 
-1. **0:00–0:25 — Problem.** Sports apps depend on opaque feeds; users can't verify outcomes.
-2. **0:25–0:55 — Product overview.** Show `/world-cup` populated from TxLINE fixtures and consensus odds.
-3. **0:55–1:45 — Cross-venue edge.** Pick a fixture, click "Edge vs Polymarket," show the discrepancy callout.
-4. **1:45–2:35 — Historical replay.** Replay the France 3-0 fixture, show score/event updates and probability movement.
-5. **2:35–3:25 — Verification.** Click "Verify on Solana," show the Merkle root, proof components, and verdict.
-6. **3:25–3:50 — Architecture.** TxLINE is primary; Fourcast adds interpretation and transparent verification UX.
-7. **3:50–4:10 — Feedback.** Praise the normalised schema and replay/verification support; surface onboarding friction honestly.
+1. **0:00–0:25 — Problem.** Agent-managed prediction-market capital lacks an audit layer; claimed P&L does not prove mandate discipline.
+2. **0:25–0:55 — Operator cockpit.** Open `/agent`; show the autonomous historical lab heartbeat, replay clock, receipt hash, and phase progression.
+3. **0:55–1:35 — Pre-outcome decision.** Expand the decision receipt: evidence, deterministic simulation seed, five policy gates, verdict, and allocation/pass.
+4. **1:35–2:25 — TxLINE primary data.** Open `/world-cup`; show cached TxLINE fixture/odds/replay data clearly labelled as post-cutoff replay.
+5. **2:25–3:15 — Verification.** Click "Verify proof of decision"; show receipt integrity, TxLINE Merkle proof, Solana root check, reconciliation state, and calibration error.
+6. **3:15–3:45 — Commercial wedge.** Explain the buyer: operators get a credible track record; allocators get diligence and ongoing mandate monitoring.
+7. **3:45–4:10 — Feedback.** Praise the normalised schema and proof primitive; surface onboarding, PDA, and team-name friction honestly.
 
 ---
 

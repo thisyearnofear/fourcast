@@ -10,6 +10,8 @@
 - **Evidence-Based UI** — Explicit data provenance for AI predictions, citing data sources (SynthData, OpenMeteo, Venice AI)
 - **Operator Pulse** — Real persisted agent/autopilot activity in the landing page and app chrome: mode, latest sweep, markets scanned, fresh edges, and execution status
 - **Autonomous Decision Ledger** — Persisted agent-run receipts on `/agent`: observed markets, cross-venue verdicts, Kelly-cleared allocations or passes, and execution/dry-run posture
+- **Autonomous Historical Lab** — VPS worker telemetry on `/agent`: replay-only clock, pre-outcome receipt hash, proof visibility, and direct TxLINE verification link
+- **Mandate Reputation Spine** — `/positions` reports policy adherence, discipline rate, verdict mix, and allocation bounds from receipt-backed runs
 
 #### Prediction Markets Distribution
 - **One-Click Prediction Deep-Linking** — Shareable, pre-analyzed market links that hydrate state automatically
@@ -50,6 +52,7 @@
 #### Multi-Platform Trading
 - **Polymarket** - Live odds, order placement
 - **Kalshi** - Live odds, order placement
+- **TxLINE World Cup** - Primary sports data, consensus odds, score replay, Merkle proofs, and Solana verification
 - **Cross-Platform Arbitrage** - Detect price discrepancies
 - **Unified Arbitrage Execution** — One-click buy on cheap venue, sell on expensive with real-time per-leg status
 - **Autonomous Autopilot Trading** — Programmatic server-side signing and gasless relayer order execution using Polymarket private keys and Builder Program attribution
@@ -58,6 +61,8 @@
 #### On-Chain Signals
 - **Arc Publishing** - Publish predictions on Arc testnet via PredictionReceiptERC20 when configured
 - **Legacy Fallback** - Movement/Aptos publish path remains available when Arc is not connected
+- **TxLINE/Solana Proof of Decision** - Receipt integrity, TxLINE Merkle proof validation, Solana root comparison, and decision-vs-outcome reconciliation in one endpoint
+- **Parametric Sports Settlement** - Match-escrow Solana program CPI-calls TxLINE `validate_stat` to settle a proof-backed policy
 - **Tipping System** - Reward analysts with APT on legacy Movement signals
 - **Reputation Tracking** - Win rates, Brier scores, accuracy streaks
 - **Leaderboards** - Top analysts by performance
@@ -78,6 +83,7 @@
 |--------|---------|--------|
 | Polymarket | Live odds, trading | ✅ Production |
 | Kalshi | Live odds, trading | ✅ Production |
+| TxLINE | World Cup fixtures, consensus odds, scores, Merkle proofs | ✅ Live/replay |
 | Open-Meteo | Weather forecasts | ✅ Production |
 | SynthData | ML price forecasts | ✅ Production |
 | Venice AI | AI analysis engine | ✅ Production |
@@ -88,6 +94,7 @@
 
 | Chain | Purpose | Status |
 |-------|---------|--------|
+| Solana | TxLINE proof verification and match-escrow settlement | ✅ Devnet |
 | Movement (Aptos) | Signal publishing, tipping | ✅ Testnet |
 | BNB Chain | Trading contracts | 🧪 Beta |
 | Polygon | Trading contracts | 🧪 Beta |
@@ -103,6 +110,8 @@
 - Brier score (calibration)
 - Average edge detected
 - Confidence stratification (HIGH/MEDIUM/LOW accuracy)
+- Mandate adherence and discipline rate from decision receipts
+- Receipt/proof reconciliation status for resolved fixtures
 
 #### Analyst Reputation
 - Signals published
@@ -123,7 +132,7 @@
 - [ ] Portfolio tracking across markets
 
 #### Trading Improvements
-- [ ] One-click arbitrage execution
+- [x] One-click arbitrage execution
 - [ ] Automated limit orders
 - [ ] Position management dashboard
 - [ ] P&L tracking and reporting
@@ -231,7 +240,8 @@ Fourcast commits to one primary customer. The other use cases exist to feed that
 ### Caching Strategy
 - **Redis**: AI results (15min), ML forecasts (15min)
 - **In-Memory**: Market catalogs (30min), metadata (24hr)
-- **SQLite**: Persistent signals, forecasts, track records
+- **SQLite/Turso**: Persistent signals, forecasts, agent runs, and latest historical-lab heartbeat
+- **TxLINE replay cache**: Deterministic post-cutoff fixture snapshots and proof bundles
 
 ### Rate Limits
 | Endpoint | Limit |
@@ -250,7 +260,8 @@ Fourcast commits to one primary customer. The other use cases exist to feed that
 | AI Analysis | ✅ Automated | ❌ Manual | ✅ Expensive |
 | Weather Data | ✅ Real-time | ⚠️ Separate | ✅ Integrated |
 | Multi-Platform | ✅ Polymarket + Kalshi | ❌ One at a time | ⚠️ Limited |
-| On-Chain Record | ✅ Verifiable | ❌ None | ❌ Private |
+| Proof of Decision | ✅ Receipt + TxLINE reconciliation | ❌ None | ❌ Private |
+| Mandate Monitoring | ✅ Policy adherence from receipts | ❌ Spreadsheet/manual | ⚠️ Private |
 | Cost | ✅ Free tier | ✅ Free | ❌ $$$$ |
 | Accessibility | ✅ Retail-friendly | ✅ Free | ❌ Institutional only |
 
@@ -265,7 +276,7 @@ Fourcast commits to one primary customer. The other use cases exist to feed that
 
 ---
 
-**Last Updated**: February 2025
+**Last Updated**: July 2026
 
 ---
 
