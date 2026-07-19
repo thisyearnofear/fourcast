@@ -33,9 +33,11 @@ module.exports = {
       env: {
         ...readEnvFile('/home/linuxuser/fourcast/.env.agent'),
         NODE_ENV: 'production',
-        TXLINE_MODE: 'auto',
+        TXLINE_MODE: 'replay',
+        FOURCAST_AGENT_DATA_MODE: 'historical-lab',
         FOURCAST_AGENT_STATE_DIR: '/home/linuxuser/fourcast/.fourcast-agent',
         FOURCAST_AGENT_INTERVAL_MS: '300000',
+        FOURCAST_AGENT_CLOCK_STEP_MS: '3600000',
         FOURCAST_AGENT_DRY_RUN: 'true',
       },
     },

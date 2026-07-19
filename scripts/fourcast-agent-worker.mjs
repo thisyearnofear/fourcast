@@ -17,6 +17,7 @@ import { readReceiptFixture } from '../services/txline/txlineService.js';
 import { createDecisionPolicy, evaluateDecision } from '../services/domain/decision/decisionPolicy.js';
 import { buildDecisionReceipt } from '../services/domain/decision/decisionReceipt.js';
 import { deriveSimulationSeed, simulateBinaryMarket } from '../services/domain/decision/simulation.js';
+import { assertNoLookahead, historicalPhase, historicalTimeline } from '../services/domain/decision/historicalLab.js';
 import { reconcile } from '../services/txline/reconciliationService.js';
 
 dotenv.config({ path: process.env.FOURCAST_AGENT_ENV_FILE || '.env.agent' });
@@ -31,6 +32,8 @@ const fixtureFilter = process.env.FOURCAST_AGENT_FIXTURE_ID || getArgValue('--fi
 const maxFixtures = toInt(process.env.FOURCAST_AGENT_MAX_FIXTURES, 8);
 const forcedEdge = toNumber(process.env.FOURCAST_AGENT_FAIR_EDGE, 0.056);
 const dryRun = process.env.FOURCAST_AGENT_DRY_RUN !== 'false';
+const dataMode = (process.env.FOURCAST_AGENT_DATA_MODE || 'historical-lab').toLowerCase();
+const historicalStepMs = toInt(process.env.FOURCAST_AGENT_CLOCK_STEP_MS, 60 * 60 * 1000);
 const webhookUrl = process.env.FOURCAST_AGENT_WEBHOOK_URL || null;
 const webhookSecret = process.env.FOURCAST_AGENT_WEBHOOK_SECRET || null;
 
@@ -62,14 +65,22 @@ async function runCycle() {
     .slice(0, maxFixtures);
 
   const receipts = [];
+  const lab = dataMode === 'historical-lab' ? readHistoricalState() : null;
+  const agentTime = lab ? advanceHistoricalClock(lab, candidates) : null;
   for (const fixture of candidates) {
-    const receipt = await evaluateFixture({ fixture, mode });
-    receipts.push(receipt);
+    if (lab) {
+      const activity = await runHistoricalFixture({ fixture, mode, lab, agentTime });
+      if (activity) receipts.push(activity);
+    } else {
+      receipts.push(await evaluateFixture({ fixture, mode }));
+    }
   }
 
   const status = {
     ok: true,
     mode,
+    dataMode,
+    agentTime,
     fallback,
     txline: txlineStatus,
     hostname: os.hostname(),
@@ -86,7 +97,35 @@ async function runCycle() {
   console.log(`[fourcast-agent] cycle complete fixtures=${fixtures.length} receipts=${receipts.length}`);
 }
 
-async function evaluateFixture({ fixture, mode }) {
+async function runHistoricalFixture({ fixture, mode, lab, agentTime }) {
+  const replay = txlineService.readReplayFixture(fixture.id);
+  const boundReceipt = readReceiptFixture(fixture.id);
+  const timeline = historicalTimeline({ fixture, boundReceipt, replay });
+  const existing = lab.fixtures[fixture.id] || {};
+  const phase = historicalPhase({ agentTime, timeline, hasReceipt: Boolean(existing.file), reconciled: Boolean(existing.reconciled) });
+  if (phase === 'unavailable' || phase === 'waiting' || phase === 'complete') {
+    return { fixtureId: fixture.id, phase, timeline };
+  }
+
+  if (phase === 'decide') {
+    const created = await evaluateFixture({ fixture, mode, createdAt: agentTime, historical: { timeline, agentTime } });
+    lab.fixtures[fixture.id] = { file: created.file, receiptHash: created.proof.integrity.contentHash, decisionAt: agentTime, timeline, reconciled: false };
+    writeHistoricalState(lab);
+    return { ...created, phase: 'decision_receipt_created', timeline };
+  }
+
+  const stored = readGeneratedReceipt(existing.file);
+  if (!stored?.receipt || !assertNoLookahead({ receiptCreatedAt: stored.receipt.proof.createdAt, timeline })) {
+    throw new Error(`Historical lookahead guard failed for fixture ${fixture.id}`);
+  }
+  const reconciliation = reconcile({ receipt: stored.receipt, proof: replay.proof, verification: { verdict: 'proof-present' }, fixtureId: fixture.id });
+  fs.writeFileSync(existing.file, JSON.stringify({ receipt: stored.receipt, reconciliation }, null, 2) + '\n');
+  lab.fixtures[fixture.id] = { ...existing, reconciled: true, reconciledAt: agentTime };
+  writeHistoricalState(lab);
+  return { ...stored.receipt, reconciliation, file: existing.file, phase: 'proof_reconciled', timeline };
+}
+
+async function evaluateFixture({ fixture, mode, createdAt = new Date().toISOString(), historical = null }) {
   const policy = createDecisionPolicy({
     minAbsoluteEdge: toNumber(process.env.FOURCAST_AGENT_MIN_EDGE, 0.05),
     maxAllocationPct: toNumber(process.env.FOURCAST_AGENT_MAX_ALLOCATION_PCT, 0.03),
@@ -112,11 +151,13 @@ async function evaluateFixture({ fixture, mode }) {
     seed,
   });
   const decision = evaluateDecision({ recommendation, simulation, policy });
-  const detail = await txlineService.getFixtureDetail(fixture.id).catch(() => null);
+  // Historical decisions deliberately never load a completed fixture detail.
+  // The proof is fetched only in the later reconciliation phase.
+  const detail = historical ? null : await txlineService.getFixtureDetail(fixture.id).catch(() => null);
   const replay = txlineService.readReplayFixture(fixture.id);
   const receipt = buildDecisionReceipt({
     id: `fourcast-agent-${fixture.id}-${randomUUID()}`,
-    createdAt: new Date().toISOString(),
+    createdAt,
     policy,
     evidence: {
       sources: ['txline'],
@@ -132,10 +173,13 @@ async function evaluateFixture({ fixture, mode }) {
       },
       snapshot: {
         provider: 'txline',
-        capturedAt: new Date().toISOString(),
+        capturedAt: historical?.timeline?.decisionAvailableAt || createdAt,
         consensusOdds: odds,
-        score: detail?.scores?.final || null,
+        score: historical ? null : detail?.scores?.final || null,
       },
+      historicalReplay: historical
+        ? { dataMode: 'historical-lab', agentTime: historical.agentTime, outcomeAvailableAt: historical.timeline.outcomeAvailableAt, outcomeVisible: false }
+        : null,
     },
     decisions: [
       {
@@ -166,12 +210,51 @@ async function evaluateFixture({ fixture, mode }) {
     },
   });
 
-  const reconciliation = replay?.proof
+  const reconciliation = !historical && replay?.proof
     ? reconcile({ receipt, proof: replay.proof, verification: { verdict: 'proof-present' }, fixtureId: fixture.id })
     : null;
   const out = path.join(receiptDir, `${Date.now()}-${fixture.id}-${receipt.proof.integrity.contentHash.slice(0, 10)}.receipt.json`);
   fs.writeFileSync(out, JSON.stringify({ receipt, reconciliation }, null, 2) + '\n');
   return { ...receipt, reconciliation, file: out };
+}
+
+function historicalStateFile() {
+  return path.join(stateDir, 'historical-lab.json');
+}
+
+function readHistoricalState() {
+  try {
+    return JSON.parse(fs.readFileSync(historicalStateFile(), 'utf8'));
+  } catch {
+    return { version: 1, agentTime: process.env.FOURCAST_AGENT_CLOCK_START || null, fixtures: {} };
+  }
+}
+
+function writeHistoricalState(state) {
+  fs.writeFileSync(historicalStateFile(), JSON.stringify(state, null, 2) + '\n');
+}
+
+function advanceHistoricalClock(state, fixtures) {
+  if (!state.agentTime) {
+    const starts = fixtures
+      .map((fixture) => historicalTimeline({ fixture, boundReceipt: readReceiptFixture(fixture.id), replay: txlineService.readReplayFixture(fixture.id) }).decisionAvailableAt)
+      .filter(Boolean)
+      .sort();
+    state.agentTime = starts[0] || new Date().toISOString();
+  } else {
+    state.agentTime = new Date(new Date(state.agentTime).getTime() + historicalStepMs).toISOString();
+  }
+  writeHistoricalState(state);
+  return state.agentTime;
+}
+
+function readGeneratedReceipt(file) {
+  if (!file || !fs.existsSync(file)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return null;
+  }
 }
 
 function hasUsableOdds(fixture) {
@@ -190,6 +273,7 @@ function getReceiptOdds(fixtureId) {
 }
 
 function summarizeReceipt(receipt) {
+  if (!receipt?.proof?.decisions?.[0]) return { fixtureId: receipt.fixtureId, phase: receipt.phase, timeline: receipt.timeline };
   const decision = receipt.proof.decisions[0].decision;
   return {
     id: receipt.proof.id,

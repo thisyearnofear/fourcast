@@ -137,7 +137,7 @@ The attestation won the `daily_scores_merkle_roots` seed pattern — it was not 
 
 ## Replay Mode (post-July 19 cutoff)
 
-TxLINE hackathon access ends July 19, 2026 23:59 UTC. The adapter detects this automatically and switches to **cached replay mode**, serving deterministic snapshots of completed matches so the deployed demo keeps working for judges.
+TxLINE hackathon access ends July 19, 2026 23:59 UTC. The adapter detects this automatically and switches to **cached replay mode**, serving deterministic snapshots of completed matches so the deployed demo keeps working for judges. The VPS worker runs those snapshots as an **Autonomous Historical Lab**: its replay clock creates a receipt from pre-match evidence first, withholds the final proof, and reconciles only when the simulated outcome time arrives. This preserves the decision-before-outcome ordering without claiming post-cutoff live coverage.
 
 To snapshot a real fixture (with verifiable Merkle proof):
 
