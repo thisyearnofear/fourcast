@@ -80,14 +80,17 @@ export const BRAND = {
     labs: 'Autopilot & Builder program tools',
   },
 
-  /** Nav label overrides (string shown in the nav bar). */
+  /** Nav label overrides (string shown in the nav bar).
+   *  The flagship story leads: Mandate → Proof Theatre → Diligence is one
+   *  unfolding system, not five peer products. Markets/Signals/Labs remain
+   *  as supporting capability. */
   navLabels: {
     markets: 'Markets',
     signals: 'Signals',
-    agent: 'Agent',
-    positions: 'Track Record',
+    agent: 'Mandate',
+    positions: 'Diligence',
     labs: 'Labs',
-    worldCup: 'World Cup',
+    worldCup: 'Proof Theatre',
     alerts: 'Alerts',
   },
 

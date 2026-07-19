@@ -5,20 +5,29 @@ import { AppShell } from "@/app/components/PageNav";
 import PositionsDashboard from "@/components/PositionsDashboard";
 import { MandatePanel } from "@/components/MandatePanel";
 import NarrativeSteps from "@/components/NarrativeSteps";
-import { BRAND } from "@/constants/brand";
 
 export default function PositionsPage() {
   return (
     <AppShell
-      title={BRAND.navLabels.positions ?? 'Track Record'}
-      subtitle={BRAND.pages.positions}
+      title="Allocator Diligence"
+      subtitle="Why should you let this agent touch capital? The answer is behaviour, not performance — policy adherence, receipt coverage, decision discipline, and calibration after resolution. Every number below recomputes from the public decision ledger."
       maxWidth="max-w-4xl"
       subheader={<NarrativeSteps currentStep="scored" />}
     >
+      {/* Hero — allocator diligence, not a portfolio dashboard. */}
       <div className="mb-6">
         <MandatePanel />
       </div>
-      <PositionsDashboard />
+
+      {/* Secondary — positions/P&L demoted. Reputation through behaviour leads. */}
+      <section className="mt-6 mc-panel" aria-label="Positions and P&L">
+        <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
+          <span className="mc-kicker">Positions & P&L · secondary to adherence</span>
+        </div>
+        <div className="p-4 sm:p-5">
+          <PositionsDashboard />
+        </div>
+      </section>
     </AppShell>
   );
 }

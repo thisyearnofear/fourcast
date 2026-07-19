@@ -26,11 +26,14 @@ import OperatorPulse from "@/components/OperatorPulse";
 // BRAND.navLabels is a required top-level key (see constants/brand.js). We still
 // keep ?? fallbacks so unit tests / Storybook / partial mocks stay safe.
 const PRIMARY_NAV = [
+  // Flagship story leads — Mandate → Proof Theatre → Diligence is one
+  // unfolding system, not peer products. Markets/Signals follow as
+  // supporting capability so they no longer compete with the narrative.
+  { name: BRAND.navLabels.agent ?? "Mandate", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
+  { name: BRAND.navLabels.worldCup ?? "Proof Theatre", href: "/world-cup", description: "TxLINE-verified proof of decision", onboardId: "world-cup" },
+  { name: BRAND.navLabels.positions ?? "Diligence", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
   { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
-  { name: BRAND.navLabels.worldCup ?? "World Cup", href: "/world-cup", description: "TxLINE-verified World Cup intelligence", onboardId: "world-cup" },
   { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
-  { name: BRAND.navLabels.agent ?? "Agent", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
-  { name: BRAND.navLabels.positions ?? "Track Record", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
 ];
 
 const SECONDARY_NAV = [

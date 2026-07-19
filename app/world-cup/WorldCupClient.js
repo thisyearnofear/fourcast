@@ -17,6 +17,7 @@ import {
   Zap,
 } from 'lucide-react';
 import OnChainSettlementPanel from '@/components/OnChainSettlementPanel';
+import { ProofTheatre } from '@/components/ProofTheatre';
 
 /* ------------------------------- helpers -------------------------------- */
 
@@ -179,7 +180,7 @@ function EdgePanel({ fixture, onToggle }) {
 
 /* ------------------------------- fixture card ---------------------------- */
 
-function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, proofResult }) {
+function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, verifying, proofResult }) {
   const implied = fixture.odds?.implied;
   const hasProof = Boolean(fixture.proof?.merkleRoot || fixture.proof?.dailyRootPda);
   const [edgeOpen, setEdgeOpen] = useState(false);
@@ -253,6 +254,15 @@ function FixtureCard({ fixture, onReplay, onVerify, replaying, verifying, proofR
           >
             <Shield size={12} />
             {verifying ? 'Verifying…' : 'Verify proof of decision'}
+          </button>
+        )}
+        {hasProof && onOpenTheatre && (
+          <button
+            onClick={() => onOpenTheatre(fixture)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-500/25 transition"
+          >
+            <Fingerprint size={12} />
+            Open proof theatre
           </button>
         )}
         {hasProof && (
@@ -552,6 +562,22 @@ export default function WorldCupClient() {
   const [verifications, setVerifications] = useState({});
   const [streamStatus, setStreamStatus] = useState('connecting'); // connecting | open | error | closed
   const [streamBackend, setStreamBackend] = useState(null); // 'txline-sse' | 'polling'
+  const [selectedFixture, setSelectedFixture] = useState(null); // fixture object for Proof Theatre
+
+  // Deep-link support: ?fixture=<id> opens Proof Theatre on that fixture.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const fixtureId = params.get('fixture');
+    if (!fixtureId) return;
+    fetch('/api/worldcup/fixtures', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data) => {
+        const fx = (data.fixtures || []).find((f) => String(f.id) === String(fixtureId));
+        if (fx) setSelectedFixture(fx);
+      })
+      .catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -692,8 +718,8 @@ export default function WorldCupClient() {
   return (
     <AppShell
       wallet={false}
-      title="World Cup Intelligence"
-      subtitle="TxLINE is the primary source for fixtures, consensus odds, and finalised match receipts. Polymarket and Kalshi are shown only as secondary comparison venues."
+      title="Proof Theatre"
+      subtitle="The final act of an autonomous decision — sealed evidence, seeded simulation, versioned policy gates, an immutable receipt, and a TxLINE proof reconciled on Solana. Pick a fixture to audit the whole chain."
       actions={
         <div className="flex items-center gap-2">
           {streamBadge && (
@@ -731,6 +757,10 @@ export default function WorldCupClient() {
       }
     >
       <div className="space-y-6">
+        {selectedFixture && (
+          <ProofTheatre fixture={selectedFixture} onClose={() => setSelectedFixture(null)} />
+        )}
+
         <ProofLoopStrip fixtures={fixtures} />
 
         {isReplayMode && (
@@ -778,6 +808,7 @@ export default function WorldCupClient() {
                 fixture={fixture}
                 onReplay={handleReplay}
                 onVerify={handleVerify}
+                onOpenTheatre={setSelectedFixture}
                 replaying={replayingId === fixture.id}
                 verifying={verifyingId === fixture.id}
                 proofResult={verifications[fixture.id]}

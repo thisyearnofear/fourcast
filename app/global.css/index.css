@@ -13,6 +13,19 @@
   --signal-red: #ff7a6f;
   --signal-amber: #f5c56b;
   --panel-deep: #0c100f;
+
+  /* Mandate Control — technical field dossier palette.
+     One vivid semantic colour per decision state. Hairline grids and
+     document-rule dividers replace rounded-card-on-rounded-card. */
+  --mc-sealed: #f5c56b;       /* amber  — sealed / pre-outcome */
+  --mc-evidence: #5b9cff;     /* electric blue — evidence / simulation */
+  --mc-reconciled: #79f5b7;   /* green  — reconciled (alias of --accent) */
+  --mc-breach: #ff7a6f;       /* red    — policy breach / hash mismatch */
+  --mc-review: #c4b5fd;       /* violet — review / awaiting input */
+  --mc-rule: rgba(243, 240, 231, 0.13);
+  --mc-rule-strong: rgba(243, 240, 231, 0.22);
+  --mc-panel: #0a0e0d;
+  --mc-panel-ink: rgba(243, 240, 231, 0.04);
 }
 
 /* Tailwind doesn't include gradient-radial by default */
@@ -532,4 +545,170 @@ code {
 @keyframes reveal-in {
   from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* --------------------------------------------------------------------------
+   Mandate Control — technical field dossier surface.
+   Hairline grids, document-rule dividers, dense typography, one vivid
+   semantic colour per decision state. Fewer shadows, fewer translucent
+   containers, more intentional information hierarchy.
+   -------------------------------------------------------------------------- */
+
+@layer components {
+  /* Hairline panel — squared, document-like, no rounded-card stacking. */
+  .mc-panel {
+    border: 1px solid var(--mc-rule);
+    background: var(--mc-panel);
+  }
+  .mc-panel--inset {
+    border: 1px solid var(--mc-rule);
+    background: var(--mc-panel-ink);
+  }
+
+  /* Document rule — horizontal hairline divider with a labelled kicker. */
+  .mc-rule {
+    border: 0;
+    border-top: 1px solid var(--mc-rule);
+    margin: 0;
+  }
+  .mc-rule--strong { border-top-color: var(--mc-rule-strong); }
+
+  /* Hairline grid background — mission-control graph paper, not decoration. */
+  .mc-grid {
+    background-image:
+      linear-gradient(var(--mc-rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--mc-rule) 1px, transparent 1px);
+    background-size: 14px 14px;
+    background-position: -1px -1px;
+  }
+  .mc-grid--sparse {
+    background-image:
+      linear-gradient(var(--mc-rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--mc-rule) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Kicker — mono uppercase label that opens every dossier block. */
+  .mc-kicker {
+    color: rgba(243, 240, 231, 0.45);
+    font: 600 10px/1 var(--font-mono);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  /* State lamp — single vivid dot per decision state. */
+  .mc-lamp {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.02);
+  }
+  .mc-lamp--live { animation: mc-pulse 2.4s ease-in-out infinite; }
+
+  /* Verdict stamp — squared, mono, one colour per verdict. */
+  .mc-stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid currentColor;
+    padding: 0.25rem 0.55rem;
+    font: 700 10px/1 var(--font-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .mc-stamp--allocate { color: var(--mc-reconciled); background: rgba(121, 245, 183, 0.08); }
+  .mc-stamp--pass { color: var(--mc-sealed); background: rgba(245, 197, 107, 0.08); }
+  .mc-stamp--review { color: var(--mc-review); background: rgba(196, 181, 253, 0.08); }
+  .mc-stamp--breach { color: var(--mc-breach); background: rgba(255, 122, 111, 0.08); }
+
+  /* Action button — squared, document-rule border, no glass. */
+  .mc-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--mc-rule-strong);
+    background: transparent;
+    color: var(--ink);
+    padding: 0.6rem 1rem;
+    font: 600 12px/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    cursor: pointer;
+  }
+  .mc-action:hover {
+    border-color: var(--mc-reconciled);
+    color: var(--mc-reconciled);
+    background: rgba(121, 245, 183, 0.05);
+  }
+  .mc-action--primary {
+    border-color: var(--mc-reconciled);
+    color: var(--mc-reconciled);
+    background: rgba(121, 245, 183, 0.06);
+  }
+  .mc-action--primary:hover {
+    background: rgba(121, 245, 183, 0.12);
+    box-shadow: 0 0 0 1px rgba(121, 245, 183, 0.25);
+  }
+}
+
+/* Replay pulse — the one calm animated detail. The timeline visibly
+   crosses from "outcome withheld" into "proof available". */
+@keyframes mc-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.02); }
+  50% { box-shadow: 0 0 0 4px rgba(121, 245, 183, 0.08), 0 0 12px rgba(121, 245, 183, 0.55); }
+}
+
+@keyframes mc-timeline-advance {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.mc-timeline-track {
+  position: relative;
+  height: 1px;
+  background: var(--mc-rule);
+  transform-origin: left center;
+}
+.mc-timeline-track__progress {
+  position: absolute;
+  inset: 0;
+  background: var(--mc-reconciled);
+  transform-origin: left center;
+  animation: mc-timeline-advance 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Drawer — right-side decision dossier, document-rule framed. */
+.mc-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 6, 5, 0.62);
+  backdrop-filter: blur(2px);
+  z-index: 60;
+  animation: mc-fade-in 0.2s ease-out both;
+}
+.mc-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: min(640px, 100vw);
+  background: var(--mc-panel);
+  border-left: 1px solid var(--mc-rule-strong);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.45);
+  z-index: 61;
+  overflow-y: auto;
+  animation: mc-drawer-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes mc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mc-drawer-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  .mc-drawer { width: 100vw; border-left: 0; border-top: 1px solid var(--mc-rule-strong); }
 }

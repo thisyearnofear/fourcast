@@ -64,6 +64,16 @@ async function runCycle() {
     .filter((fixture) => hasUsableOdds(fixture) || Boolean(getReceiptOdds(fixture.id)))
     .slice(0, maxFixtures);
 
+  // The policy is env-derived and stable across a cycle. Lift it into the
+  // status so the Mandate Control hero can show the real mandate constraints
+  // (max allocation, min edge, tail-loss limit) without a parallel data model.
+  const mandatePolicy = createDecisionPolicy({
+    minAbsoluteEdge: toNumber(process.env.FOURCAST_AGENT_MIN_EDGE, 0.05),
+    maxAllocationPct: toNumber(process.env.FOURCAST_AGENT_MAX_ALLOCATION_PCT, 0.03),
+    maxLossProbability: toNumber(process.env.FOURCAST_AGENT_MAX_LOSS_PROBABILITY, 0.75),
+    simulationRuns: toInt(process.env.FOURCAST_AGENT_SIMULATION_RUNS, 10_000),
+  });
+
   const receipts = [];
   const lab = dataMode === 'historical-lab' ? readHistoricalState() : null;
   const agentTime = lab ? advanceHistoricalClock(lab, candidates) : null;
@@ -89,6 +99,7 @@ async function runCycle() {
     completedAt: new Date().toISOString(),
     fixturesSeen: fixtures.length,
     candidates: candidates.length,
+    policy: mandatePolicy,
     receipts: receipts.map((receipt) => summarizeReceipt(receipt)),
   };
   writeStatus(status);

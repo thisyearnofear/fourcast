@@ -1,49 +1,69 @@
 'use client';
 
-import React from 'react';
-import { Bot, FlaskConical, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, FlaskConical, SlidersHorizontal } from 'lucide-react';
 import { AppShell } from '@/app/components/PageNav';
+import { MandateControl } from '@/components/MandateControl';
 import { AgentDashboard } from '@/components/AgentDashboard';
 import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
-import NarrativeSteps from '@/components/NarrativeSteps';
 import { BRAND } from '@/constants/brand';
 
 export default function AgentPage() {
+  const [operatorOpen, setOperatorOpen] = useState(false);
+
   return (
     <AppShell
-      title={BRAND.agent.title}
-      subtitle={BRAND.agent.subtitle}
+      title="Mandate Control"
+      subtitle="An agent is alive, operating under a mandate, making constrained decisions, and leaving behind evidence nobody — including its operator — can rewrite."
       maxWidth="max-w-4xl"
-      subheader={
-        <div>
-          <div className="mb-1.5 flex items-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-300">
-              <Bot className="h-3 w-3" />
-              <span>{BRAND.agent.badge}</span>
-            </div>
-          </div>
-          {/* The 4-step loop — all steps shown as completed (observed) */}
-          <NarrativeSteps currentStep="scored" />
-        </div>
-      }
     >
-      <AgentDashboard />
-      <HistoricalLabPanel />
-      <AgentRunLedger />
+      {/* Flagship — the autonomous system, not a button simulation, is the protagonist. */}
+      <MandateControl />
 
-      {/* Labs CTA */}
-      <div className="mt-12 text-center">
+      {/* Operator controls — demoted. The manual runner is a capability, not the hero. */}
+      <section className="mt-6 mc-panel" aria-label="Operator controls — manual investigation">
+        <button
+          type="button"
+          onClick={() => setOperatorOpen((v) => !v)}
+          aria-expanded={operatorOpen}
+          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5"
+        >
+          <div className="flex items-center gap-2.5">
+            <SlidersHorizontal className="h-3.5 w-3.5 text-white/45" />
+            <span className="mc-kicker">Operator controls · manual investigation</span>
+          </div>
+          <ChevronDown className={`h-4 w-4 text-white/45 transition-transform ${operatorOpen ? 'rotate-180' : ''}`} />
+        </button>
+        {operatorOpen && (
+          <div className="border-t border-[var(--mc-rule)] p-4 sm:p-5">
+            <p className="mb-4 text-xs leading-5 text-white/45">
+              The manual runner scans markets on demand. It is a capability for investigation, not the autonomous mandate above — every manual run still produces a hash-bound receipt in the ledger below.
+            </p>
+            <AgentDashboard />
+          </div>
+        )}
+      </section>
+
+      {/* Canonical supporting surfaces — kept, not duplicated. */}
+      <div className="mt-6">
+        <HistoricalLabPanel />
+      </div>
+      <div className="mt-6">
+        <AgentRunLedger />
+      </div>
+
+      {/* Labs CTA — supporting capability, not a peer product. */}
+      <div className="mt-10 text-center">
         <p className="mb-3 text-xs font-light text-white/[0.45]">
           {BRAND.agent.labsCta}
         </p>
         <a
           href="/labs"
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-light text-white/70 transition hover:bg-white/10"
+          className="mc-action"
         >
-          <FlaskConical className="h-4 w-4 text-emerald-300" />
+          <FlaskConical className="h-3.5 w-3.5" />
           Visit Labs for Autopilot & Builder
-          <ArrowRight className="h-3.5 w-3.5" />
         </a>
       </div>
     </AppShell>
