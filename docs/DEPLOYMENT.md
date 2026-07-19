@@ -1,9 +1,10 @@
 # Deployment Guide
 
-> **Note (2026-07):** The Movement/Aptos stack described in parts of this
-> document has been **retired** — Arc (USDC) is the only settlement layer and
-> Polygon the trading venue layer. Aptos/Movement instructions below are
-> historical; see docs/ARCHITECTURE.md ("Movement/Aptos — RETIRED").
+> **Note (2026-07):** The flagship route is the TxLINE-primary Mandate Control
+> → Proof Theatre → Diligence flow. TxLINE env vars are required for live mode;
+> without them the app falls back to cached replay mode (still renders, just no
+> live odds or fixtures). The Movement/Aptos and Arc stacks below are
+> legacy/secondary; see docs/ARCHITECTURE.md ("Supporting Infrastructure").
 
 ## Frontend Deployment (Vercel)
 
@@ -19,10 +20,29 @@ vercel --prod
 
 ### Environment Variables
 
-Set these in Vercel dashboard:
+Set these in Vercel dashboard. **TxLINE vars are primary** — without them the
+flagship route falls back to cached replay mode.
 
 ```env
-# Required
+# Primary — TxLINE (required for live mode)
+TXLINE_API_TOKEN=<activated API token>
+TXLINE_GUEST_JWT=<guest JWT; renewable without re-subscribing>
+TXLINE_API_ORIGIN=https://txline-dev.txodds.com
+TXLINE_SOLANA_NETWORK=devnet
+TXLINE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
+TXLINE_SERVICE_LEVEL=1
+TXLINE_MODE=live
+TXLINE_LAST_TX_SIG=<subscribe tx signature>
+TXLINE_SOLANA_PUBLIC_KEY=<wallet public address>
+
+# Match-escrow program (on-chain settlement)
+NEXT_PUBLIC_MATCH_ESCROW_PROGRAM_ID=AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ
+NEXT_PUBLIC_TXORACLE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
+
+# Worker heartbeat auth (for the autonomous VPS worker)
+FOURCAST_AGENT_WORKER_SECRET=<your bearer token>
+
+# Secondary — AI & weather (for /markets and /signals routes)
 VENICE_API_KEY=your_venice_api_key
 NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key
 
@@ -32,12 +52,7 @@ REDIS_URL=redis://localhost:6379
 UPSTASH_REDIS_REST_URL=...
 UPSTASH_REDIS_REST_TOKEN=...
 
-# Optional: Movement
-NEXT_PUBLIC_APTOS_NETWORK=custom
-NEXT_PUBLIC_APTOS_NODE_URL=https://testnet.movementnetwork.xyz/v1
-NEXT_PUBLIC_MOVEMENT_MODULE_ADDRESS=0x...
-
-# Optional: Trading
+# Optional: Trading (for /markets route)
 POLYMARKET_PRIVATE_KEY=your_private_key
 KALSHI_API_KEY=your_api_key
 KALSHI_SECRET_KEY=your_secret_key
@@ -318,16 +333,17 @@ https://faucet.testnet.movementnetwork.xyz/
 | Upstash Redis | Pay-as-you-go | ~$5/mo |
 | Turso Database | Free tier | $0/mo |
 | Venice AI | Pay-per-use | ~$30/mo (3000 analyses) |
-| Movement Testnet | Free | $0/mo |
+| TxLINE devnet | Free World Cup tier | $0/mo |
+| Solana devnet | Free | $0/mo |
 | **Total** | | **~$55/mo** |
 
-### Gas Costs (Movement)
+### Gas Costs (Solana devnet)
 
 | Operation | Gas Cost |
 |-----------|----------|
-| Publish Signal | ~0.001 APT |
-| Tip Signal | ~0.0005 APT |
-| Initialize Registry | ~0.002 APT |
+| TxLINE subscribe | ~0.001 SOL |
+| Create policy (lock SOL) | ~0.0005 SOL |
+| Settle policy (CPI → validate_stat) | ~0.002 SOL |
 
 ---
 
@@ -372,7 +388,8 @@ For contract issues:
 ## Resources
 
 - **Vercel Docs**: https://vercel.com/docs
-- **Movement Docs**: https://docs.movementnetwork.xyz/
+- **TxLINE Quickstart**: https://txline.txodds.com/documentation/quickstart
+- **Solana Docs**: https://solana.com/docs
 - **Turso Docs**: https://docs.turso.tech/
 - **Upstash Docs**: https://upstash.com/docs
 - **Venice AI**: https://docs.venice.ai/

@@ -8,6 +8,97 @@ https://yourdomain.com/api # Production
 
 ---
 
+## Flagship Endpoints — Mandate Control, Proof Theatre, Diligence
+
+These endpoints drive the flagship route: Mandate Control (`/agent`) → Proof Theatre (`/world-cup`) → Diligence (`/positions`).
+
+### GET /worldcup/fixtures
+Fetch World Cup fixtures (live TxLINE or cached replay).
+
+**Response:**
+```json
+{
+  "success": true,
+  "fixtures": [
+    {
+      "id": "18175981",
+      "home": { "name": "France", "code": "FRA", "score": 3 },
+      "away": { "name": "Sweden", "code": "SWE", "score": 0 },
+      "status": "final",
+      "kickoff": "2026-06-30T18:00:00Z",
+      "odds": { "implied": { "home": 0.61, "draw": 0.22, "away": 0.17 } },
+      "proof": { "merkleRoot": "...", "dailyRootPda": "..." }
+    }
+  ]
+}
+```
+
+### GET /worldcup/verify?fixtureId=X
+The canonical verification chain — walks the full proof path in one call. Used by Mandate Control (eagerly), Decision Dossier, and Proof Theatre.
+
+**Response:**
+```json
+{
+  "success": true,
+  "receipt": {
+    "id": "...",
+    "createdAt": "2026-06-30T17:55:00Z",
+    "policy": { "version": "decision-policy/v1", "maxAllocationPct": 0.025, "minAbsoluteEdge": 0.05, "maxLossProbability": 0.75 },
+    "evidence": { "sources": ["txline"], "snapshot": { "capturedAt": "...", "consensusOdds": { "implied": { "home": 0.61, "draw": 0.22, "away": 0.17 } } } },
+    "decisions": [{ "forecast": { "probability": 0.64, "marketOdds": 0.61, "edge": 0.03 }, "decision": { "verdict": "ALLOCATE", "allocationPct": 0.025, "riskChecks": [...] } }],
+    "simulation": { "runs": 10000, "seed": 42, "winProbability": 0.64, "lossProbability": 0.36, "interval": { "p05": -0.5, "p50": 0.12, "p95": 1.8 } },
+    "integrity": { "contentHash": "sha256...", "algorithm": "sha256" }
+  },
+  "proof": { "merkleRoot": "...", "sequence": 991 },
+  "verification": { "verdict": "verified", "checks": [...], "explorerUrl": "https://explorer.solana.com/address/..." },
+  "reconciliation": { "status": "reconciled", "outcome": { "homeScore": 3, "awayScore": 0, "winner": "home" }, "adherence": { "policyAdhered": true, "calibrationError": 0.03 }, "integrity": { "receiptIntact": true, "receiptHash": "sha256..." } }
+}
+```
+
+### GET /worldcup/edge?fixtureId=X
+Cross-venue edge detection — TxLINE demargined consensus vs Polymarket binary YES prices.
+
+### GET /worldcup/replay?fixtureId=X
+Cached TxLINE event timeline for the replay viewer.
+
+### GET /worldcup/status
+Adapter mode (live vs replay), cutoff timestamp, replay count.
+
+### GET /agent/historical-lab
+Latest VPS historical lab heartbeat. Drives the Mandate Control hero.
+
+**Response:**
+```json
+{
+  "success": true,
+  "status": {
+    "ok": true,
+    "mode": "replay",
+    "dataMode": "historical-lab",
+    "agentTime": "2026-06-30T18:30:00Z",
+    "hostname": "vps-1",
+    "dryRun": true,
+    "policy": { "maxAllocationPct": 0.025, "minAbsoluteEdge": 0.05, "maxLossProbability": 0.75, "simulationRuns": 10000 },
+    "receipts": [{ "fixtureId": "18175981", "verdict": "ALLOCATE", "receiptHash": "sha256...", "phase": "proof_reconciled", "reconciliationStatus": "reconciled", "timeline": { "decisionAvailableAt": "...", "outcomeAvailableAt": "..." } }]
+  }
+}
+```
+
+### POST /agent/historical-lab
+Authenticated worker heartbeat receiver (bearer token required).
+
+### GET /agent/runs
+Persisted decision ledger — every agent run with receipts, verdicts, and execution status.
+
+### GET /agent/track-record
+Agent forecasting performance: win rate, Brier score, calibration, verdict mix.
+
+---
+
+## Supporting Endpoints — Markets, Signals, Trading
+
+The following endpoints support the `/markets`, `/signals`, and `/labs` routes. They are secondary to the flagship TxLINE-primary route.
+
 ## Analysis Endpoints
 
 ### POST /analyze

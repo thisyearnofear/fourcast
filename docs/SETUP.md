@@ -1,14 +1,15 @@
 # Setup Guide
 
-> **Note (2026-07):** The Movement/Aptos stack described in parts of this
-> document has been **retired** — Arc (USDC) is the only settlement layer and
-> Polygon the trading venue layer. Aptos/Movement instructions below are
-> historical; see docs/ARCHITECTURE.md ("Movement/Aptos — RETIRED").
+> **Note (2026-07):** The flagship route is the TxLINE-primary Mandate Control
+> → Proof Theatre → Diligence flow. TxLINE onboarding is the primary setup
+> path. The Movement/Aptos and Arc stacks described below are legacy/secondary;
+> see docs/ARCHITECTURE.md ("Supporting Infrastructure").
 
 ## Prerequisites
 - Node.js 20+
 - npm or yarn
 - Git
+- Solana wallet (for TxLINE on-chain subscribe)
 
 ## Quick Start
 
@@ -20,9 +21,96 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-Navigate to `http://localhost:3000`
+Navigate to `http://localhost:3000/agent` — the Mandate Control hero.
 
 ---
+
+## TxLINE Onboarding (primary, ~2 minutes)
+
+TxLINE is the primary data layer for the flagship route. Generate a Solana
+keypair and run the on-chain subscribe + activate flow. Devnet SOL is required
+for transaction fees.
+
+```bash
+# Generate wallet (saves secret key to .env.local, chmod 600)
+node scripts/txline-generate-wallet.mjs
+
+# Fund the printed public address with devnet SOL (https://faucet.solana.com),
+# then run subscribe + activate in one step:
+node scripts/txline-subscribe-and-activate.mjs
+```
+
+The script:
+1. Submits an on-chain `subscribe` transaction (service level 1, 4 weeks) to the TxLINE devnet program
+2. Calls `POST /auth/guest/start` for a guest JWT
+3. Signs `${txSig}::${jwt}` with the wallet keypair
+4. Calls `POST /api/token/activate` to receive the API token
+5. Saves `TXLINE_API_TOKEN`, `TXLINE_GUEST_JWT`, `TXLINE_LAST_TX_SIG` to `.env.local`
+6. Smoke-tests `/api/fixtures` and prints the response shape
+
+To renew the JWT later without re-subscribing:
+```bash
+node scripts/txline-subscribe-and-activate.mjs --reactivate-only
+```
+
+### Snapshot a fixture (for replay mode)
+
+```bash
+# After onboarding (TXLINE_API_TOKEN, TXLINE_GUEST_JWT in .env.local)
+node scripts/txline-snapshot-fixture.mjs 18175981 991
+```
+
+This writes `cache/txline/replays/18175981.json` containing the fixture, score
+events, and the full Merkle proof from `/api/scores/stat-validation`. The
+`/world-cup` UI then surfaces this fixture as `final` with a "Verify on Solana"
+button.
+
+### Run the autonomous worker (VPS)
+
+```bash
+# One-shot cycle (writes status + appends to runs.ndjson)
+npm run agent:once
+
+# Continuous loop (PM2 recommended for production)
+npm run agent:live
+```
+
+The worker posts a bearer-authenticated heartbeat to
+`POST /api/agent/historical-lab`; the Mandate Control hero polls
+`GET /api/agent/historical-lab` every 15 seconds.
+
+### TxLINE Environment Variables
+
+```env
+TXLINE_API_TOKEN=<activated API token from POST /api/token/activate>
+TXLINE_GUEST_JWT=<guest JWT from POST /auth/guest/start; renewable without re-subscribing>
+TXLINE_API_ORIGIN=https://txline-dev.txodds.com   # devnet host
+TXLINE_SOLANA_NETWORK=devnet
+TXLINE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
+TXLINE_SERVICE_LEVEL=1
+TXLINE_MODE=live
+TXLINE_LAST_TX_SIG=<subscribe tx signature>
+TXLINE_SOLANA_PUBLIC_KEY=<wallet public address; non-sensitive>
+
+# Match-escrow program for on-chain settlement (CPI → txoracle validate_stat)
+NEXT_PUBLIC_MATCH_ESCROW_PROGRAM_ID=AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ
+NEXT_PUBLIC_TXORACLE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
+
+# Worker heartbeat auth (generate a strong random secret)
+FOURCAST_AGENT_WORKER_SECRET=<your bearer token>
+```
+
+**`TXLINE_SOLANA_SECRET_KEY` MUST NOT be set on Vercel** — it is a signing
+key used only locally to (re-)activate the subscription.
+
+See [README](../README.md) for the full TxLINE onboarding flow.
+
+---
+
+## Secondary Setup (optional)
+
+The following setup paths are for the supporting `/markets`, `/signals`, and
+`/labs` routes. They are not required for the flagship TxLINE-primary route.
 
 ## Environment Configuration
 
@@ -405,13 +493,12 @@ See [Deployment Guide](./docs/DEPLOYMENT.md) for detailed instructions.
 
 ## Resources
 
-- **Movement Docs**: https://docs.movementnetwork.xyz/
-- **Movement Explorer**: https://explorer.movementnetwork.xyz/
+- **TxLINE Quickstart**: https://txline.txodds.com/documentation/quickstart
+- **Solana Faucet**: https://faucet.solana.com
+- **Solana Explorer**: https://explorer.solana.com
 - **Venice AI**: https://docs.venice.ai/
-- **Petra Wallet**: https://petra.app
 - **Polymarket**: https://polymarket.com
 - **Kalshi**: https://kalshi.com
 - **SynthData**: https://synthdata.co
-- **Arc (Circle L1)**: https://www.arcchain.xyz/
-- **Circle Developer**: https://developers.circle.com
-- **Agora Agents Hackathon**: https://agora.thecanteenapp.com/
+- **Turso**: https://docs.turso.tech/
+- **Upstash Redis**: https://upstash.com/docs

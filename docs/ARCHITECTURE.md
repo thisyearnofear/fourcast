@@ -2,7 +2,123 @@
 
 ## Overview
 
-Fourcast is an **AI agent that finds mispriced prediction markets with auditable live-web evidence**. It combines Bright Data web scraping, AI analysis (Venice AI), Polymarket/Kalshi venue data, and USDC settlement on Circle Arc to help traders and autonomous workflows find and act on market inefficiencies.
+Fourcast is a **flight recorder for autonomous capital**. An agent operates under a versioned mandate — it decides from pre-match TxLINE evidence alone, seals each decision into a SHA-256 receipt, and reconciles against an independently verifiable on-chain outcome after the match finalizes. The route is one unfolding system: **Mandate Control → Proof Theatre → Diligence**.
+
+TxLINE is the single primary data layer for fixtures, consensus odds, score events, and Merkle proofs. A custom Solana program (`match-escrow`) CPI-calls TxLINE's `txoracle::validate_stat` to trustlessly settle parametric sports insurance. The supporting infrastructure (Bright Data, Polymarket/Kalshi, Venice AI, SynthData) remains as secondary enrichment for the `/markets` and `/signals` routes.
+
+## Flagship Route Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                       TXLINE DATA LAYER (devnet)                        │
+│  fixtures/snapshot  ·  odds/snapshot  ·  scores/snapshot  ·  proofs     │
+└───────────────────────────────┬─────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                  FOURCAST WORLD CUP INTELLIGENCE                         │
+│  services/txline/txlineService.js                                        │
+│  · normalises PascalCase schema -> unified fixture shape                │
+│  · auto-refreshes guest JWT on 401                                       │
+│  · falls back to cached replays after July 19 cutoff                    │
+└───────┬──────────────────┬──────────────────┬───────────────────────────┘
+        │                  │                  │
+        ▼                  ▼                  ▼
+┌──────────────┐  ┌──────────────────┐  ┌──────────────────────────┐
+│ Live odds +  │  │ Cross-venue edge │  │ Verifiable receipt        │
+│ score panel  │  │ (Polymarket YES) │  │ · Merkle proof integrity  │
+│              │  │                  │  │ · PDA derivation & fetch  │
+└──────────────┘  └──────────────────┘  │ · On-chain root compare   │
+                                        └───────────┬──────────────┘
+                                                     │
+                        ┌────────────────────────────▼──────────────┐
+                        │  Autonomous Historical Lab (VPS)           │
+                        │  PM2 worker · replay clock · receipts      │
+                        │  signed heartbeat → /api/agent/historical-lab │
+                        │  · decides from pre-match evidence         │
+                        │  · seals SHA-256 receipt before outcome    │
+                        │  · withholds proof until replay crosses    │
+                        │    settlement                              │
+                        └────────────────────────────┬──────────────┘
+                                                     │
+                    ┌────────────────────────────────┼──────────────────┐
+                    ▼                                ▼                  ▼
+          ┌─────────────────┐          ┌──────────────────┐  ┌───────────────────┐
+          │ Mandate Control │          │ Proof Theatre    │  │ Allocator         │
+          │ /agent          │          │ /world-cup       │  │ Diligence         │
+          │                 │          │                  │  │ /positions        │
+          │ MandateControl  │          │ ProofTheatre     │  │ MandatePanel      │
+          │ DecisionDossier │          │ 6-stage timeline │  │ adherence +       │
+          │ 5-stage timeline│          │                  │  │ calibration       │
+          └─────────────────┘          └──────────────────┘  └───────────────────┘
+                                                     │
+                                        ┌────────────▼──────────────┐
+                                        │  Solana Match-Escrow      │
+                                        │  CPI → txoracle           │
+                                        │  validate_stat            │
+                                        │  (settlePolicy flow)      │
+                                        └───────────────────────────┘
+```
+
+### Mandate Control (`/agent`)
+
+The flagship hero. A live VPS worker (`scripts/fourcast-agent-worker.mjs`) operates under a versioned policy (`services/domain/decision/decisionPolicy.js`), decides from pre-match TxLINE evidence, and seals each decision into a canonical receipt (`services/domain/decision/decisionReceipt.js`). The hero eagerly fetches `/api/worldcup/verify` for the latest receipt so the proof timeline shows real reconciliation + on-chain Solana verdict.
+
+Key components:
+- **`components/MandateControl.js`** — live worker state, current mandate decision (ALLOCATE/PASS/REVIEW), proof timeline crossing from "outcome withheld" to "proof available", operator telemetry strip
+- **`components/DecisionDossier.js`** — right-side drawer answering 5 allocator questions from the canonical receipt
+- **`components/HistoricalLabPanel.js`** — supporting VPS telemetry panel below the hero
+- **`components/AgentRunLedger.js`** — persisted decision ledger
+- **`components/AgentDashboard.js`** — manual runner (demoted to Operator Controls drawer)
+
+### Proof Theatre (`/world-cup`)
+
+The final act of an autonomous decision. A vertical 6-stage evidence timeline for any fixture.
+
+Key components:
+- **`components/ProofTheatre.js`** — vertical timeline: pre-match evidence → seeded simulation → versioned policy gates → immutable receipt → TxLINE Merkle proof + Solana validation → reconciliation
+- **`app/world-cup/WorldCupClient.js`** — fixture grid, replay viewer, verify panel, edge panel, Proof Theatre integration
+- **`services/txline/solanaVerify.js`** — on-chain Merkle proof verification (PDA derivation + root comparison)
+- **`services/txline/reconciliationService.js`** — receipt/proof reconciliation state machine
+- **`services/txline/receiptAdapter.js`** — canonical decision receipt → TxLINE reconciliation view
+
+### Allocator Diligence (`/positions`)
+
+Mandate adherence as the hero; positions/P&L demoted to secondary.
+
+Key components:
+- **`components/MandatePanel.js`** — policy adherence, receipt coverage, discipline rate, max allocation, calibration
+- **`components/PositionsDashboard.js`** — positions and P&L (secondary section)
+
+### Decision Domain (`services/domain/decision/`)
+
+The reusable product primitive — a hash-bound receipt that distinguishes a model assertion from a verifiable fact.
+
+| Module | Responsibility |
+|--------|----------------|
+| `decisionPolicy.js` | Five-gate mandate policy (min edge, max allocation, tail-loss limit, simulation runs) |
+| `decisionReceipt.js` | Canonical receipt builder, SHA-256 hashing, verification |
+| `simulation.js` | Deterministic Monte Carlo with seed derivation |
+| `historicalLab.js` | Replay-clock phase management and no-lookahead checks |
+
+### Solana On-Chain Settlement
+
+A custom Solana program (`match-escrow` at `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ`) implements parametric sports insurance:
+
+1. **`createPolicy`** — a user locks SOL in a policy PDA specifying `{fixtureId, minTs, paysRecipientOnHomeWin, amount}`
+2. **`settlePolicy`** — a keeper submits the TxLINE Merkle proof; the program CPI-calls `txoracle::validate_stat`, and if the condition is met, SOL transfers to the recipient; otherwise refunded
+
+The on-chain verification flow:
+1. **Proof verification** — `solanaVerify.js` extracts the Merkle proof from a cached fixture replay
+2. **PDA derivation** — derives the `daily_scores_roots` PDA using seeds `[b"daily_scores_roots", epoch_day as u16 LE]`
+3. **On-chain comparison** — fetches the PDA account via Solana JSON-RPC, reads the 32-byte Merkle root, compares against `eventStatRoot`
+4. **Settlement (CPI)** — `settlementService.js` builds and submits `settle_policy` transactions
+
+Verdicts: `verified` (on-chain root matches), `onchain-mismatch` (root differs), `onchain-error` (PDA unreachable), `proof-present` (components valid but no timestamp for PDA derivation).
+
+## Supporting Infrastructure
+
+The following systems support the `/markets`, `/signals`, and `/labs` routes. They are secondary to the flagship TxLINE-primary route but remain part of the codebase.
 
 ## Core Components
 
@@ -446,13 +562,10 @@ Frontend (markets page, signals page, landing)
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15, React 19, Tailwind CSS, Three.js
-- **Backend**: Node.js, SQLite (Turso), Redis
-- **AI**: Venice AI (Llama 3.3 70B) with Edge Search
-- **Blockchains**: 
-  - **Arc** (Circle L1) — primary settlement, USDC-native, sub-second finality
-  - Movement/Aptos (signal publishing — legacy)
-  - EVM chains (BNB, Polygon, Arbitrum — trading contracts)
-- **Circle Tools**: CCTP, Gateway, Circle Wallets, Paymaster, USYC, App Kit
-- **Wallets**: MetaMask, WalletConnect (EVM + Arc); Nightly, Petra (Aptos)
-- **Data**: Polymarket, Kalshi, Open-Meteo, SynthData
+- **Frontend**: Next.js 16, React 19, Tailwind CSS
+- **Backend**: Node.js 20+, SQLite (Turso), Redis
+- **Primary data**: TxLINE devnet (free World Cup tier, service level 1) — fixtures, odds, scores, Merkle proofs
+- **Settlement/verification**: Solana devnet, TxLINE `txoracle` program, custom `match-escrow` program (CPI → `validate_stat`)
+- **Secondary enrichment**: Polymarket gamma API (cross-venue edge), Kalshi (optional), Venice AI (Llama 3.3 70B), SynthData (ML forecasts), Open-Meteo (weather)
+- **Wallets**: MetaMask, WalletConnect (EVM); Phantom/Solflare (Solana)
+- **Legacy**: Arc (Circle L1), Movement/Aptos, EVM trading contracts — retired or secondary
