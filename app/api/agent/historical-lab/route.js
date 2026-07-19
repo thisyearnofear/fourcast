@@ -14,7 +14,10 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const expectedSecret = process.env.FOURCAST_AGENT_WEBHOOK_SECRET;
+  // Bracket access keeps this server-only secret as a runtime lookup. This is
+  // important when a Vercel environment variable is added after an earlier
+  // cached build: the route must not compile an absent value into its bundle.
+  const expectedSecret = process.env['FOURCAST_AGENT_WEBHOOK_SECRET'];
   const receivedSecret = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
   if (!expectedSecret || !receivedSecret || receivedSecret !== expectedSecret) {
     return Response.json({ success: false, error: 'Unauthorized worker heartbeat' }, { status: 401 });
