@@ -2,17 +2,21 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Shield, Lock, Unlock, Zap, ExternalLink, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { useConnector, useTransactionSigner } from '@solana/connector/react';
+import { PublicKey } from '@solana/web3.js';
 
 /**
  * OnChainSettlementPanel — UI for the TxLINE-verified parametric sports insurance.
  *
  * Flow:
- *   1. User connects their Solana wallet (or uses the demo wallet)
+ *   1. User connects their Solana wallet via ConnectorKit (header or inline button)
  *   2. User locks SOL on a match outcome (home win / away win)
  *   3. Anyone clicks "Settle on-chain" → CPI-calls txoracle::validate_stat
  *   4. Funds auto-release to the winner based on the verified result
  *
  * The Solana program (match-escrow) is deployed on devnet.
+ * Wallet connection is managed by @solana/connector (ConnectorKit) —
+ * the same provider that powers the header wallet dropdown.
  */
 
 const PROGRAM_ID = 'AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ';
@@ -26,36 +30,20 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
   const [txSig, setTxSig] = useState(null);
   const [amountSol, setAmountSol] = useState('0.1');
   const [side, setSide] = useState('home'); // 'home' or 'away'
-  const [walletConnected, setWalletConnected] = useState(false);
-  const [walletPubkey, setWalletPubkey] = useState(null);
 
-  // Check for Solana wallet
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.solana) {
-      if (window.solana.publicKey) {
-        setWalletConnected(true);
-        setWalletPubkey(window.solana.publicKey.toBase58());
-      }
-      window.solana.on?.('connect', () => {
-        setWalletConnected(true);
-        setWalletPubkey(window.solana.publicKey?.toBase58());
-      });
-    }
-  }, []);
+  // ConnectorKit hooks — replaces raw window.solana
+  const {
+    connectors: solanaConnectors,
+    connectWallet: solanaConnect,
+    disconnectWallet: solanaDisconnect,
+    isConnected: walletConnected,
+    isConnecting: solanaConnecting,
+    account: solanaAccount,
+    connector: solanaConnector,
+  } = useConnector();
+  const { signer } = useTransactionSigner();
 
-  const connectWallet = useCallback(async () => {
-    if (typeof window !== 'undefined' && window.solana) {
-      try {
-        await window.solana.connect();
-        setWalletConnected(true);
-        setWalletPubkey(window.solana.publicKey?.toBase58());
-      } catch (e) {
-        setError('Wallet connection failed: ' + e.message);
-      }
-    } else {
-      setError('No Solana wallet found. Install Phantom or Solflare.');
-    }
-  }, []);
+  const walletPubkey = solanaAccount || null;
 
   // Fetch program info
   useEffect(() => {
@@ -64,6 +52,13 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
       .then(d => setProgramInfo(d.program))
       .catch(() => {});
   }, []);
+
+  // Auto-check policy when wallet connects
+  useEffect(() => {
+    if (walletConnected && walletPubkey) {
+      checkPolicy();
+    }
+  }, [walletConnected, walletPubkey]);
 
   const fixtureId = fixture?.id;
   const minTs = proof?.summary?.updateStats?.minTimestamp;
@@ -90,8 +85,23 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
     }
   }, [walletPubkey, fixtureId, minTs, paysRecipientOnHomeWin]);
 
+  const signAndSubmit = useCallback(async (transactionBase64) => {
+    if (!signer) throw new Error('Wallet signer not ready');
+    const { Transaction, Connection } = await import('@solana/web3.js');
+    const txBuf = Buffer.from(transactionBase64, 'base64');
+    const tx = Transaction.from(txBuf);
+    tx.feePayer = new PublicKey(signer.address);
+    const conn = new Connection('https://api.devnet.solana.com', 'confirmed');
+    const blockhash = await conn.getLatestBlockhash();
+    tx.recentBlockhash = blockhash.blockhash;
+    // ConnectorKit legacy signer — signAndSendTransaction handles the wallet prompt
+    const sig = await signer.signAndSendTransaction(tx);
+    await conn.confirmTransaction(sig, 'confirmed');
+    return sig;
+  }, [signer]);
+
   const createPolicy = useCallback(async () => {
-    if (!walletConnected || !window.solana?.publicKey) {
+    if (!walletConnected || !walletPubkey) {
       setError('Connect your Solana wallet first');
       return;
     }
@@ -102,8 +112,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
       const lamports = Math.floor(parseFloat(amountSol) * 1e9);
       if (lamports <= 0) throw new Error('Amount must be > 0');
 
-      const locker = window.solana.publicKey.toBase58();
-      // Recipient = same wallet (for demo; in production this would be a different party)
+      const locker = walletPubkey;
       const recipient = locker;
 
       const res = await fetch('/api/worldcup/settle/create', {
@@ -118,18 +127,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
 
       if (!res.success) throw new Error(res.error);
 
-      // Sign and submit the transaction
-      const { Transaction } = await import('@solana/web3.js');
-      const txBuf = Buffer.from(res.transactionBase64, 'base64');
-      const tx = Transaction.from(txBuf);
-      tx.feePayer = window.solana.publicKey;
-      const { Connection } = await import('@solana/web3.js');
-      const conn = new Connection('https://api.devnet.solana.com', 'confirmed');
-      const blockhash = await conn.getLatestBlockhash();
-      tx.recentBlockhash = blockhash.blockhash;
-      const signed = await window.solana.signTransaction(tx);
-      const sig = await conn.sendRawTransaction(signed.serialize());
-      await conn.confirmTransaction(sig, 'confirmed');
+      const sig = await signAndSubmit(res.transactionBase64);
       setTxSig(sig);
       await checkPolicy();
     } catch (e) {
@@ -137,10 +135,10 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
     } finally {
       setLoading(false);
     }
-  }, [walletConnected, amountSol, fixtureId, minTs, paysRecipientOnHomeWin, checkPolicy]);
+  }, [walletConnected, walletPubkey, amountSol, fixtureId, minTs, paysRecipientOnHomeWin, checkPolicy, signAndSubmit]);
 
   const settlePolicy = useCallback(async () => {
-    if (!walletConnected || !window.solana?.publicKey) {
+    if (!walletConnected || !walletPubkey) {
       setError('Connect your Solana wallet first');
       return;
     }
@@ -148,7 +146,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
     setError(null);
     setTxSig(null);
     try {
-      const caller = window.solana.publicKey.toBase58();
+      const caller = walletPubkey;
       const locker = policyState?.locker || caller;
       const recipient = policyState?.recipient || caller;
 
@@ -163,17 +161,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
 
       if (!res.success) throw new Error(res.error);
 
-      // Sign and submit
-      const { Transaction, Connection } = await import('@solana/web3.js');
-      const txBuf = Buffer.from(res.transactionBase64, 'base64');
-      const tx = Transaction.from(txBuf);
-      tx.feePayer = window.solana.publicKey;
-      const conn = new Connection('https://api.devnet.solana.com', 'confirmed');
-      const blockhash = await conn.getLatestBlockhash();
-      tx.recentBlockhash = blockhash.blockhash;
-      const signed = await window.solana.signTransaction(tx);
-      const sig = await conn.sendRawTransaction(signed.serialize());
-      await conn.confirmTransaction(sig, 'confirmed');
+      const sig = await signAndSubmit(res.transactionBase64);
       setTxSig(sig);
       await checkPolicy();
     } catch (e) {
@@ -181,7 +169,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
     } finally {
       setLoading(false);
     }
-  }, [walletConnected, policyState, fixtureId, paysRecipientOnHomeWin, checkPolicy]);
+  }, [walletConnected, walletPubkey, policyState, fixtureId, paysRecipientOnHomeWin, checkPolicy, signAndSubmit]);
 
   if (!proof?.statToProve) return null;
 
@@ -234,17 +222,35 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
         </div>
       </div>
 
-      {/* Wallet connection */}
+      {/* Wallet connection — inline fallback if not connected via header */}
       {!walletConnected ? (
-        <button
-          onClick={connectWallet}
-          className="w-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-xs font-medium py-2 hover:bg-emerald-500/30 transition-colors"
-        >
-          Connect Solana Wallet
-        </button>
+        <div className="space-y-2">
+          <p className="text-[10px] text-white/40">Connect via the header wallet button, or pick a wallet below:</p>
+          <div className="space-y-1.5">
+            {solanaConnectors.filter(c => c.ready).length > 0 ? (
+              solanaConnectors.filter(c => c.ready).map(connector => (
+                <button
+                  key={connector.id}
+                  onClick={() => solanaConnect(connector.id)}
+                  disabled={solanaConnecting}
+                  className="w-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-xs font-medium py-2 hover:bg-emerald-500/30 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {connector.icon && <img src={connector.icon} alt="" className="w-4 h-4" />}
+                  {solanaConnecting ? 'Connecting...' : `Connect ${connector.name}`}
+                </button>
+              ))
+            ) : (
+              <p className="text-[10px] text-white/40">
+                No Solana wallet detected. Install{' '}
+                <a href="https://phantom.app" target="_blank" rel="noreferrer" className="underline">Phantom</a> or{' '}
+                <a href="https://solflare.com" target="_blank" rel="noreferrer" className="underline">Solflare</a>.
+              </p>
+            )}
+          </div>
+        </div>
       ) : (
         <div className="text-[10px] text-white/50 font-mono truncate">
-          Wallet: {walletPubkey?.slice(0, 8)}...{walletPubkey?.slice(-6)}
+          {solanaConnector?.name || 'Wallet'}: {walletPubkey?.slice(0, 8)}...{walletPubkey?.slice(-6)}
         </div>
       )}
 

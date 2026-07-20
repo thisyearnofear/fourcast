@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 import { ConnectKitButton } from 'connectkit';
+import { useConnector } from '@solana/connector/react';
 import { CHAINS } from '@/constants/appConstants';
 import { BRAND } from '@/constants/brand';
 import { useChainConnections } from '@/hooks/useChainConnections';
@@ -33,6 +34,17 @@ export default function WalletConnect({ isNight = false }) {
  // Canton (private settlement)
  const canton = useCantonWalletContext();
 
+ // Solana (ConnectorKit — Phantom, Solflare, Backpack)
+ const {
+   connectors: solanaConnectors,
+   connectWallet: solanaConnect,
+   disconnectWallet: solanaDisconnect,
+   isConnected: solanaConnected,
+   isConnecting: solanaConnecting,
+   account: solanaAccount,
+   connector: solanaConnector,
+ } = useConnector();
+
  // Mark as mounted after first client render — gates JSX output to client only.
  useEffect(() => {
  setMounted(true);
@@ -44,7 +56,7 @@ export default function WalletConnect({ isNight = false }) {
  const dropdownGlass = 'mc-panel bg-slate-900/95';
 
  // Check if any wallet is connected using unified state
- const isAnyConnected = chains?.evm?.connected || chains?.arc?.connected || canton?.connected;
+ const isAnyConnected = chains?.evm?.connected || chains?.arc?.connected || canton?.connected || solanaConnected;
 
  // Format address display
  const formatAddress = (address) => {
@@ -146,6 +158,11 @@ export default function WalletConnect({ isNight = false }) {
  {CHAINS.EVM.icon} {formatAddress(chains.evm.address)}
  </span>
  )}
+ {solanaConnected && solanaAccount && (
+ <span className="px-2 py-0.5 text-xs border bg-purple-500/30 text-purple-200 border-purple-500/50">
+ ◎ {formatAddress(solanaAccount)}
+ </span>
+ )}
  {canton?.cantonEnabled && canton?.connected && (
  <span className="px-2 py-0.5 text-xs border bg-teal-500/30 text-teal-200 border-teal-500/50">
  ◈ Canton
@@ -220,6 +237,59 @@ export default function WalletConnect({ isNight = false }) {
  </button>
  )}
 
+ {/* Solana Section — ConnectorKit */}
+ <div className="mb-4 pt-4 border-t border-white/10">
+ <div className={`text-xs font-medium ${textColor} mb-1 flex items-center gap-2`}>
+ <span>◎</span>
+ Solana (Devnet)
+ </div>
+ {solanaConnected ? (
+ <>
+ <p className={`text-[10px] text-purple-300/70 mb-2`}>
+ ✓ {solanaConnector?.name || 'Wallet'} connected — match escrow & TxLINE proof settlement active
+ </p>
+ <div className="flex items-center justify-between mb-2">
+ <span className={`text-sm font-mono ${textColor}`}>
+ {formatAddress(solanaAccount)}
+ </span>
+ <button
+ onClick={() => { solanaDisconnect(); setShowDropdown(false); }}
+ className={`text-xs px-2 py-1 transition-colors hover:bg-white/10 ${textColor} opacity-60 hover:opacity-100`}
+ >
+ Disconnect
+ </button>
+ </div>
+ </>
+ ) : (
+ <>
+ <p className={`text-[10px] text-white/40 mb-3`}>
+ Connect Phantom / Solflare / Backpack for on-chain match escrow and TxLINE proof verification
+ </p>
+ <div className="space-y-2">
+ {solanaConnectors.filter(c => c.ready).length > 0 ? (
+ solanaConnectors.filter(c => c.ready).map(connector => (
+ <button
+ key={connector.id}
+ onClick={() => solanaConnect(connector.id)}
+ disabled={solanaConnecting}
+ className={`w-full px-3 py-2 text-xs font-medium transition-colors bg-purple-500/20 text-purple-200 border border-purple-400/30 hover:bg-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+ >
+ {connector.icon && <img src={connector.icon} alt="" className="w-4 h-4" />}
+ {solanaConnecting ? 'Connecting...' : `Connect ${connector.name}`}
+ </button>
+ ))
+ ) : (
+ <p className={`text-[10px] text-white/40`}>
+ No Solana wallet detected. Install{' '}
+ <a href="https://phantom.app" target="_blank" rel="noreferrer" className="underline hover:opacity-80">Phantom</a> or{' '}
+ <a href="https://solflare.com" target="_blank" rel="noreferrer" className="underline hover:opacity-80">Solflare</a>.
+ </p>
+ )}
+ </div>
+ </>
+ )}
+ </div>
+
  {/* Canton (Private Settlement) Section — hidden until enabled */}
  {canton?.cantonEnabled && (
  <div className="mb-4 pt-4 border-t border-white/10">
@@ -288,6 +358,10 @@ export default function WalletConnect({ isNight = false }) {
  <p className="flex items-center gap-1.5">
  <span>{CHAINS.ARC.icon}</span>
  <span>{CHAINS.ARC.purpose}</span>
+ </p>
+ <p className="flex items-center gap-1.5 mt-1">
+ <span>◎</span>
+ <span>Solana — on-chain match escrow & TxLINE proof settlement</span>
  </p>
  {canton?.cantonEnabled && (
  <p className="flex items-center gap-1.5 mt-1">

@@ -730,7 +730,7 @@ export default function WorldCupClient() {
 
   return (
     <AppShell
-      wallet={false}
+      wallet={true}
       title="Proof Theatre"
       subtitle="The final act of an autonomous decision — sealed evidence, seeded simulation, versioned policy gates, an immutable receipt, and a TxLINE proof reconciled on Solana. Pick a fixture to audit the whole chain."
       actions={
