@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 
 // WeatherPage is a standalone full-screen page with its own Scene3D background,
-// header (LocationSelector + UnifiedConnect), and navigation.
+// header (LocationSelector + WalletConnect), and navigation.
 // Rendering it directly avoids layout conflicts from double Scene3D and double header.
 const WeatherPage = dynamic(() => import('@/app/WeatherPage'), {
  ssr: false,

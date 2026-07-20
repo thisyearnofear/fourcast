@@ -89,7 +89,7 @@ export default async function SignalPage({ params }) {
  : null;
 
  return (
- <AppShell maxWidth="max-w-[720px]" wallet={false}>
+ <AppShell maxWidth="max-w-[720px]" wallet={true}>
  <div>
  {/* Breadcrumb */}
  <Link

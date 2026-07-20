@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useOrderSigning } from '@/hooks/useOrderSigning';
-import { ConnectKitButton } from 'connectkit';
+import WalletConnect from '@/app/components/WalletConnect';
 import { useBalance, useAccount, useSwitchChain } from 'wagmi';
 import { calculateKellySizing } from '@/utils/kellySizing';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
@@ -267,7 +267,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <p className={`text-xs ${textColor} opacity-70 mb-3`}>
  Connect wallet to trade
  </p>
- <ConnectKitButton />
+ <WalletConnect isNight={isNight} />
  </div>
  )}
 

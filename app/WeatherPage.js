@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import LocationSelector from '@/components/LocationSelector';
-import UnifiedConnect from '@/components/UnifiedConnect';
+import WalletConnect from '@/app/components/WalletConnect';
 import useHUDStore from '@/hooks/useHUDStore';
 import { weatherService } from '@/services/weatherService';
 import { WinCelebration } from '@/components/WinCelebration';
@@ -252,7 +252,7 @@ export default function WeatherPage() {
  isLoading={isLoading}
  isNight={isNight}
  />
- <UnifiedConnect isNight={isNight} variant="header" />
+ <WalletConnect isNight={isNight} />
  </div>
  </header>
  )}

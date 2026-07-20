@@ -15,12 +15,12 @@
 
 import { deriveDailyScoresPda } from './settlementService.js';
 
-const DEFAULT_RPC = 'https://api.mainnet-beta.solana.com';
+const DEFAULT_RPC = 'https://api.devnet.solana.com';
 
 function getRpcUrl() {
   if (process.env.SOLANA_RPC_URL) return process.env.SOLANA_RPC_URL;
   if (process.env.HELIUS_API_KEY) {
-    return `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`;
+    return `https://devnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`;
   }
   return DEFAULT_RPC;
 }
