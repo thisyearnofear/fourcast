@@ -14,6 +14,10 @@ export async function GET(req) {
     return renderSignalOG(searchParams);
   }
 
+  if (type === "operator") {
+    return renderOperatorOG(searchParams);
+  }
+
   return renderWeatherOG(searchParams);
 }
 
@@ -183,6 +187,224 @@ function renderLandingOG() {
   );
 }
 
+/**
+ * OG card for per-operator Track Record URLs (/agent/[operatorId]).
+ * The viral distribution surface per GTM §1 — "the OG share card on
+ * Warpcast / X is our growth channel." Shows the operator's display name,
+ * mandate knobs, and track record stats so a prospect seeing the card on
+ * Warpcast/X immediately knows what they'd get by clicking.
+ *
+ * Query params:
+ *   name        — operator display name (optional)
+ *   total       — total forecasts
+ *   resolved    — resolved forecasts
+ *   brier       — avg Brier score (optional, formatted)
+ *   minEdge     — mandate min edge (0-1, optional)
+ *   maxAlloc    — mandate max allocation (0-1, optional)
+ *   maxLoss     — mandate tail-loss limit (0-1, optional)
+ *   simRuns     — mandate Monte Carlo paths (optional)
+ */
+function renderOperatorOG(searchParams) {
+  const name = searchParams.get("name") || "Operator";
+  const total = searchParams.get("total") || "0";
+  const resolved = searchParams.get("resolved") || "0";
+  const brier = searchParams.get("brier");
+  const minEdge = searchParams.get("minEdge");
+  const maxAlloc = searchParams.get("maxAlloc");
+  const maxLoss = searchParams.get("maxLoss");
+  const simRuns = searchParams.get("simRuns");
+
+  const hasMandate = minEdge || maxAlloc || maxLoss;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#080a0d",
+          color: "white",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+        <div
+          style={{
+            height: "4px",
+            width: "100%",
+            background: "linear-gradient(90deg, #10b981, #34d399, #6ee7b7)",
+          }}
+        />
+
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            padding: "48px 56px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "auto" }}>
+            <span style={{ fontSize: "28px", opacity: 0.5 }}>fourcast</span>
+            <span
+              style={{
+                fontSize: "14px",
+                padding: "6px 14px",
+                borderRadius: "999px",
+                background: "rgba(16,185,129,0.15)",
+                color: "#6ee7b7",
+                border: "1px solid rgba(16,185,129,0.3)",
+              }}
+            >
+              Track Record
+            </span>
+          </div>
+
+          <div
+            style={{
+              fontSize: "52px",
+              fontWeight: 700,
+              lineHeight: 1.1,
+              marginTop: "24px",
+              marginBottom: "12px",
+              color: "#f1f5f9",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {name.length > 40 ? name.substring(0, 40) + "..." : name}
+          </div>
+          <div
+            style={{
+              fontSize: "22px",
+              color: "rgba(255,255,255,0.55)",
+              marginBottom: "36px",
+              maxWidth: "800px",
+            }}
+          >
+            Mandate-bound track record — every number from sealed decision receipts.
+          </div>
+
+          <div style={{ display: "flex", gap: "20px", marginBottom: hasMandate ? "28px" : "0" }}>
+            {[
+              { label: "Forecasts", value: total },
+              { label: "Resolved", value: resolved },
+              { label: "Avg Brier", value: brier || "—" },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  padding: "18px 24px",
+                  borderRadius: "12px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  minWidth: "140px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "12px",
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  {stat.label}
+                </span>
+                <span style={{ fontSize: "32px", fontWeight: 700, color: "white" }}>
+                  {stat.value}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {hasMandate && (
+            <div
+              style={{
+                display: "flex",
+                gap: "16px",
+                padding: "20px 24px",
+                borderRadius: "12px",
+                background: "rgba(16,185,129,0.06)",
+                border: "1px solid rgba(16,185,129,0.15)",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: "#6ee7b7",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  fontWeight: 700,
+                }}
+              >
+                Mandate
+              </span>
+              {minEdge && (
+                <span style={{ fontSize: "16px", color: "rgba(255,255,255,0.75)" }}>
+                  min edge {(parseFloat(minEdge) * 100).toFixed(0)}%
+                </span>
+              )}
+              {maxAlloc && (
+                <span style={{ fontSize: "16px", color: "rgba(255,255,255,0.75)" }}>
+                  max alloc {(parseFloat(maxAlloc) * 100).toFixed(1)}%
+                </span>
+              )}
+              {maxLoss && (
+                <span style={{ fontSize: "16px", color: "rgba(255,255,255,0.75)" }}>
+                  loss limit {(parseFloat(maxLoss) * 100).toFixed(0)}%
+                </span>
+              )}
+              {simRuns && (
+                <span style={{ fontSize: "16px", color: "rgba(255,255,255,0.75)" }}>
+                  {parseInt(simRuns).toLocaleString()} paths
+                </span>
+              )}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "auto",
+              paddingTop: "24px",
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)" }}>
+              Public · verifiable on-chain
+            </span>
+            <span style={{ fontSize: "18px", color: "#6ee7b7", fontWeight: 500 }}>
+              View track record →
+            </span>
+          </div>
+        </div>
+      </div>
+    ),
+    {
+      width: 1200,
+      height: 630,
+    }
+  );
+}
 /**
  * OG card for weather-based pages (existing functionality)
  */

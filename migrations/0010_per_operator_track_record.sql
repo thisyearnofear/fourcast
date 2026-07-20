@@ -1,6 +1,6 @@
 -- Per-operator track record. The flagship route's GTM doc (docs/GO_TO_MARKET.md
--- section 2.2 step 4) requires a public Track Record URL per operator. Today
--- agent_forecasts is global — this migration adds an operator_id column so
+-- §2.2 step 4) requires a public Track Record URL per operator. Today
+-- agent_forecasts is global; this migration adds an operator_id column so
 -- forecasts can be scoped to a single operator's URL.
 --
 -- operator_id is nullable for back-compat with existing rows (which belong to

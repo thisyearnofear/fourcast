@@ -19,6 +19,7 @@ import { buildDecisionReceipt } from '../services/domain/decision/decisionReceip
 import { deriveSimulationSeed, simulateBinaryMarket } from '../services/domain/decision/simulation.js';
 import { assertNoLookahead, historicalPhase, historicalTimeline } from '../services/domain/decision/historicalLab.js';
 import { reconcile } from '../services/txline/reconciliationService.js';
+import { getMandate, migrationsReady } from '../services/db.js';
 
 dotenv.config({ path: process.env.FOURCAST_AGENT_ENV_FILE || '.env.agent' });
 dotenv.config();
@@ -36,8 +37,42 @@ const dataMode = (process.env.FOURCAST_AGENT_DATA_MODE || 'historical-lab').toLo
 const historicalStepMs = toInt(process.env.FOURCAST_AGENT_CLOCK_STEP_MS, 60 * 60 * 1000);
 const webhookUrl = process.env.FOURCAST_AGENT_WEBHOOK_URL || null;
 const webhookSecret = process.env.FOURCAST_AGENT_WEBHOOK_SECRET || null;
+const operatorId = process.env.FOURCAST_AGENT_OPERATOR_ID || null;
 
 fs.mkdirSync(receiptDir, { recursive: true });
+
+/**
+ * When FOURCAST_AGENT_OPERATOR_ID is set, pull the persisted mandate from the
+ * DB and use its policy knobs instead of env var defaults. This closes the
+ * loop between the self-serve MandateBuilder (Slice 4) and the worker: a
+ * prospect saves their mandate in-browser, then the concierge deploys the
+ * worker with their operator_id, and the worker runs under that mandate.
+ *
+ * Returns null when no operator_id is configured or no mandate is found,
+ * signaling the caller to fall back to env-var defaults.
+ */
+async function loadMandatePolicy() {
+  if (!operatorId) return null;
+  try {
+    await migrationsReady;
+    const result = await getMandate(operatorId);
+    if (!result.success || !result.mandate) {
+      console.warn(`[fourcast-agent] no persisted mandate for operator ${operatorId}, falling back to env defaults`);
+      return null;
+    }
+    const m = result.mandate;
+    console.log(`[fourcast-agent] loaded mandate for operator ${operatorId}: minEdge=${m.minAbsoluteEdge} maxAlloc=${m.maxAllocationPct} maxLoss=${m.maxLossProbability} simRuns=${m.simulationRuns}`);
+    return createDecisionPolicy({
+      minAbsoluteEdge: m.minAbsoluteEdge,
+      maxAllocationPct: m.maxAllocationPct,
+      maxLossProbability: m.maxLossProbability,
+      simulationRuns: m.simulationRuns,
+    });
+  } catch (err) {
+    console.warn(`[fourcast-agent] failed to load mandate for operator ${operatorId}:`, err.message);
+    return null;
+  }
+}
 
 async function main() {
   if (once) {
@@ -64,10 +99,12 @@ async function runCycle() {
     .filter((fixture) => hasUsableOdds(fixture) || Boolean(getReceiptOdds(fixture.id)))
     .slice(0, maxFixtures);
 
-  // The policy is env-derived and stable across a cycle. Lift it into the
-  // status so the Mandate Control hero can show the real mandate constraints
-  // (max allocation, min edge, tail-loss limit) without a parallel data model.
-  const mandatePolicy = createDecisionPolicy({
+  // The policy is env-derived and stable across a cycle, UNLESS an operator_id
+  // is configured — in that case, pull the persisted mandate from the DB so
+  // the worker runs under the same policy the prospect configured in-browser.
+  // Lift it into the status so the Mandate Control hero can show the real
+  // mandate constraints without a parallel data model.
+  const mandatePolicy = (await loadMandatePolicy()) || createDecisionPolicy({
     minAbsoluteEdge: toNumber(process.env.FOURCAST_AGENT_MIN_EDGE, 0.05),
     maxAllocationPct: toNumber(process.env.FOURCAST_AGENT_MAX_ALLOCATION_PCT, 0.03),
     maxLossProbability: toNumber(process.env.FOURCAST_AGENT_MAX_LOSS_PROBABILITY, 0.75),
@@ -79,10 +116,10 @@ async function runCycle() {
   const agentTime = lab ? advanceHistoricalClock(lab, candidates) : null;
   for (const fixture of candidates) {
     if (lab) {
-      const activity = await runHistoricalFixture({ fixture, mode, lab, agentTime });
+      const activity = await runHistoricalFixture({ fixture, mode, lab, agentTime, policy: mandatePolicy });
       if (activity) receipts.push(activity);
     } else {
-      receipts.push(await evaluateFixture({ fixture, mode }));
+      receipts.push(await evaluateFixture({ fixture, mode, policy: mandatePolicy }));
     }
   }
 
@@ -95,6 +132,7 @@ async function runCycle() {
     txline: txlineStatus,
     hostname: os.hostname(),
     dryRun,
+    operatorId: operatorId || null,
     startedAt,
     completedAt: new Date().toISOString(),
     fixturesSeen: fixtures.length,
@@ -108,7 +146,7 @@ async function runCycle() {
   console.log(`[fourcast-agent] cycle complete fixtures=${fixtures.length} receipts=${receipts.length}`);
 }
 
-async function runHistoricalFixture({ fixture, mode, lab, agentTime }) {
+async function runHistoricalFixture({ fixture, mode, lab, agentTime, policy = null }) {
   const replay = txlineService.readReplayFixture(fixture.id);
   const boundReceipt = readReceiptFixture(fixture.id);
   const timeline = historicalTimeline({ fixture, boundReceipt, replay });
@@ -119,7 +157,7 @@ async function runHistoricalFixture({ fixture, mode, lab, agentTime }) {
   }
 
   if (phase === 'decide') {
-    const created = await evaluateFixture({ fixture, mode, createdAt: agentTime, historical: { timeline, agentTime } });
+    const created = await evaluateFixture({ fixture, mode, createdAt: agentTime, historical: { timeline, agentTime }, policy });
     lab.fixtures[fixture.id] = { file: created.file, receiptHash: created.proof.integrity.contentHash, decisionAt: agentTime, timeline, reconciled: false };
     writeHistoricalState(lab);
     return { ...created, phase: 'decision_receipt_created', timeline };
@@ -136,8 +174,8 @@ async function runHistoricalFixture({ fixture, mode, lab, agentTime }) {
   return { ...stored.receipt, reconciliation, file: existing.file, phase: 'proof_reconciled', timeline };
 }
 
-async function evaluateFixture({ fixture, mode, createdAt = new Date().toISOString(), historical = null }) {
-  const policy = createDecisionPolicy({
+async function evaluateFixture({ fixture, mode, createdAt = new Date().toISOString(), historical = null, policy: overridePolicy = null }) {
+  const policy = overridePolicy || createDecisionPolicy({
     minAbsoluteEdge: toNumber(process.env.FOURCAST_AGENT_MIN_EDGE, 0.05),
     maxAllocationPct: toNumber(process.env.FOURCAST_AGENT_MAX_ALLOCATION_PCT, 0.03),
     maxLossProbability: toNumber(process.env.FOURCAST_AGENT_MAX_LOSS_PROBABILITY, 0.75),

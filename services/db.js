@@ -124,16 +124,17 @@ async function recordMigration(version, name, hash) {
 }
 
 // Parse SQL file into executable statements.
-// Strips `-- line comments` so statements with leading header comments
-// (e.g. "-- Positions table\nCREATE TABLE ...") are not discarded.
+// Strips `-- line comments` BEFORE splitting on `;` so that a semicolon
+// inside a comment (e.g. "-- today agent_forecasts is global; this adds ...")
+// does not split the comment into an invalid SQL fragment.
 function parseSqlStatements(sql) {
-  return sql
+  const stripped = sql
+    .split('\n')
+    .map(line => line.replace(/--.*$/, ''))
+    .join('\n');
+  return stripped
     .split(';')
-    .map(chunk => chunk
-      .split('\n')
-      .map(line => line.replace(/--.*$/, '')) // strip line comments
-      .join('\n')
-      .trim())
+    .map(chunk => chunk.trim())
     .filter(s => s.length > 0);
 }
 
