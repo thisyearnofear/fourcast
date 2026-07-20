@@ -98,12 +98,44 @@ NEXT_PUBLIC_TXORACLE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
 
 # Worker heartbeat auth (generate a strong random secret)
 FOURCAST_AGENT_WORKER_SECRET=<your bearer token>
+
+# Per-operator mandate (optional — see "Self-serve mandate flow" below)
+# When set, the worker pulls the persisted mandate from the DB instead of
+# the env-var defaults below. The operator_id must match a mandate saved
+# via the MandateBuilder UI on /agent.
+# FOURCAST_AGENT_OPERATOR_ID=<uuid from /agent MandateBuilder>
+
+# Policy knobs (used when FOURCAST_AGENT_OPERATOR_ID is NOT set)
+FOURCAST_AGENT_MIN_EDGE=0.05
+FOURCAST_AGENT_MAX_ALLOCATION_PCT=0.03
+FOURCAST_AGENT_MAX_LOSS_PROBABILITY=0.75
+FOURCAST_AGENT_SIMULATION_RUNS=10000
 ```
 
 **`TXLINE_SOLANA_SECRET_KEY` MUST NOT be set on Vercel** — it is a signing
 key used only locally to (re-)activate the subscription.
 
 See [README](../README.md) for the full TxLINE onboarding flow.
+
+### Self-serve mandate flow (concierge test, GTM §2.2)
+
+The mandate builder on `/agent` lets a prospect configure the four policy
+knobs in-browser, run a dry-run against the canonical France–Sweden fixture,
+and save their mandate to get a public Track Record URL — no account, no
+VPS, no wallet. The flow:
+
+1. Prospect visits `/agent`, adjusts the four sliders in the Mandate Builder.
+2. Clicks "Run dry-run on France–Sweden" to see the verdict + gate checks.
+3. Clicks "Save as my mandate" — the server mints an `operator_id` (UUID),
+   persists the mandate, and returns a Track Record URL (`/agent/<uuid>`).
+4. The concierge deploys the VPS worker with `FOURCAST_AGENT_OPERATOR_ID=<uuid>`.
+   The worker pulls the mandate from the DB and runs under that policy.
+5. The concierge DMs the prospect their Track Record URL daily (see
+   `GET /api/cron/daily-summary`).
+
+No auth in this flow — the `operator_id` is an unauthenticated UUID stored in
+the prospect's localStorage. Auth + private mandates are a Premium-tier
+feature, post-concierge-test.
 
 ---
 

@@ -93,6 +93,128 @@ Persisted decision ledger — every agent run with receipts, verdicts, and execu
 ### GET /agent/track-record
 Agent forecasting performance: win rate, Brier score, calibration, verdict mix.
 
+### GET /agent/track-record/[operatorId]
+Per-operator Track Record URL — the public surface a concierge DM points a prospect at (GTM §2.2 step 4). Returns the same shape as the global `/agent/track-record`, scoped to forecasts the operator wrote with their `operator_id`, plus their persisted mandate so the `/agent/[operatorId]` page can show the policy the track record was produced under.
+
+**Response:**
+```json
+{
+  "success": true,
+  "operatorId": "uuid-here",
+  "stats": { "total_forecasts": 42, "resolved_forecasts": 28, "avg_brier_score": 0.187, "high_conf_brier": 0.142, "high_conf_count": 12 },
+  "recentForecasts": [/* resolved forecasts scoped to this operator */],
+  "mandate": {
+    "operatorId": "uuid-here",
+    "minAbsoluteEdge": 0.05,
+    "maxAllocationPct": 0.03,
+    "maxLossProbability": 0.75,
+    "simulationRuns": 10000,
+    "policyVersion": "decision-policy/v1",
+    "displayName": "Operator Name",
+    "createdAt": 1721712000,
+    "updatedAt": 1721712000
+  }
+}
+```
+
+### POST /agent/dry-run
+Self-serve dry-run preview — the in-browser version of the concierge test's "hand-roll a mandate and see what it would have decided" step (GTM §2.2). Reuses the canonical decision domain modules (`createDecisionPolicy`, `simulateBinaryMarket`, `evaluateDecision`, `buildDecisionReceipt`) to produce a real verdict + gate checks + simulation **without writing to disk, posting a heartbeat, or executing anything**.
+
+**Request:**
+```json
+{
+  "fixtureId": "18175981",
+  "minAbsoluteEdge": 0.05,
+  "maxAllocationPct": 0.03,
+  "maxLossProbability": 0.75,
+  "simulationRuns": 10000
+}
+```
+
+All fields optional; defaults to the canonical France–Sweden fixture with worker-default policy knobs. Invalid values are clamped to safe bounds.
+
+**Response:**
+```json
+{
+  "success": true,
+  "fixture": { "id": "18175981", "home": { "name": "France" }, "away": { "name": "Sweden" }, "competition": "World Cup" },
+  "policy": { "version": "decision-policy/v1", "minAbsoluteEdge": 0.05, "maxAllocationPct": 0.03, "maxLossProbability": 0.75, "simulationRuns": 10000 },
+  "recommendation": { "aiProbability": 0.666, "marketOdds": 0.61, "edge": 0.056, "sizePct": 0.021 },
+  "simulation": { "runs": 10000, "seed": 12345, "valid": true, "winProbability": 0.666, "lossProbability": 0.334, "expectedReturn": 0.094, "interval": { "p05": -1, "p50": 0.094, "p95": 0.639 } },
+  "decision": { "verdict": "ALLOCATE", "allocationPct": 0.021, "executionEligible": true, "rationale": "Policy cleared: 2.1% allocation within risk limits.", "riskChecks": [/* 5 gate checks */] },
+  "receipt": { "proof": { "schemaVersion": "decision-receipt/v1", "policy": {}, "evidence": {}, "decisions": [], "execution": { "attempted": 0, "completed": 0, "failed": 0, "dryRun": true }, "integrity": { "algorithm": "sha256", "contentHash": "abc123..." } }
+}
+```
+
+### POST /agent/mandate
+Persist a mandate draft (Slice 4 of the self-serve concierge path). The client sends the four policy knobs; the server assigns (or reuses) an `operator_id` and returns it. The client stores the `operator_id` in localStorage so subsequent saves update the same mandate.
+
+**Request:**
+```json
+{
+  "operatorId": "uuid-here",
+  "minAbsoluteEdge": 0.05,
+  "maxAllocationPct": 0.03,
+  "maxLossProbability": 0.75,
+  "simulationRuns": 10000,
+  "displayName": "Optional display name"
+}
+```
+
+`operatorId` is optional on first save (server mints a UUID); reuse it on subsequent saves to update in place.
+
+**Response:**
+```json
+{
+  "success": true,
+  "operatorId": "uuid-here",
+  "updatedAt": 1721712000,
+  "trackRecordUrl": "/agent/uuid-here"
+}
+```
+
+### GET /agent/mandate?operatorId=<uuid>
+Read a persisted mandate draft. Used by the `/agent/[operatorId]` page to pre-populate the MandateBuilder with the operator's saved policy.
+
+**Response:**
+```json
+{
+  "success": true,
+  "mandate": {
+    "operatorId": "uuid-here",
+    "minAbsoluteEdge": 0.05,
+    "maxAllocationPct": 0.03,
+    "maxLossProbability": 0.75,
+    "simulationRuns": 10000,
+    "policyVersion": "decision-policy/v1",
+    "displayName": "Operator Name",
+    "createdAt": 1721712000,
+    "updatedAt": 1721712000
+  }
+}
+```
+
+Returns `{ "success": true, "mandate": null }` for an unknown `operatorId`.
+
+### GET /cron/daily-summary
+Generates the GTM §2.2 step 2 daily summary — the 4-line Telegram DM template the concierge forwards to each operator. Triggered by Vercel Cron once per day. Verifies `CRON_SECRET`, reads the latest agent run ledger, formats the summary, and sends it to `TELEGRAM_ADMIN_CHAT_ID`. Scoped to an operator when `FOURCAST_AGENT_OPERATOR_ID` is set.
+
+**Response:**
+```json
+{
+  "success": true,
+  "sent": true,
+  "chatId": "123456",
+  "operatorId": "uuid-here",
+  "summary": "Yesterday your agent scanned 8 markets.\nSpotted 3 edges ≥5%.\nSized at 2.1% Kelly per your mandate (min edge 5%, max alloc 3.0%, loss limit 75%).\nDry-run P&L if live: +$6.32 (notional).\n\nTrack record: 42 forecasts, 28 resolved, 0.187 avg Brier.\n\nTrack Record URL: https://fourcastapp.vercel.app/agent/uuid-here"
+}
+```
+
+### GET /og?type=operator
+Per-operator OG share card (1200×630 PNG) — the viral distribution surface per GTM §1. Renders the operator's display name, mandate knobs, and track record stats so a prospect seeing the card on Warpcast/X immediately knows what they'd get by clicking.
+
+**Query params:** `type=operator`, `name`, `total`, `resolved`, `brier`, `minEdge`, `maxAlloc`, `maxLoss`, `simRuns`. Populated automatically by `generateMetadata` on `/agent/[operatorId]`.
+
 ---
 
 ## Supporting Endpoints — Markets, Signals, Trading

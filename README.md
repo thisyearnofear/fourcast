@@ -5,16 +5,17 @@
 > **Who this is for.** Prediction-market operators and the allocators assessing them. They need more than a claimed P&L: they need a pre-outcome record of evidence, risk limits, decisions, and results. Retail can audit; we do not optimize for them.
 >
 > **What it does.**
-> 1. **Mandate Control** (`/agent`) — a live VPS worker operates under a versioned policy, decides from pre-match TxLINE evidence alone, and seals each decision into a SHA-256 receipt. The hero shows the current mandate, the proof timeline crossing from "outcome withheld" into "proof available," and the real on-chain Solana verdict.
+> 1. **Mandate Control** (`/agent`) — a live VPS worker operates under a versioned policy, decides from pre-match TxLINE evidence alone, and seals each decision into a SHA-256 receipt. The hero shows the current mandate, the proof timeline crossing from "outcome withheld" into "proof available," and the real on-chain Solana verdict. A self-serve **Mandate Builder** lets a prospect configure the four policy knobs in-browser, run a dry-run against the canonical France–Sweden fixture, save their mandate, and get a public **Track Record URL** (`/agent/<operatorId>`) — no account, no VPS, no wallet.
 > 2. **Proof Theatre** (`/world-cup`) — the final act of an autonomous decision: a vertical 6-stage evidence timeline (pre-match evidence → seeded simulation → versioned policy gates → immutable receipt → TxLINE Merkle proof + Solana validation → reconciliation) for any fixture.
-> 3. **Allocator Diligence** (`/positions`) — policy adherence, receipt coverage, discipline rate, and calibration after resolution — computed from the same public receipts, not self-reported.
+> 3. **Allocator Diligence** (`/positions`) — policy adherence, receipt coverage, discipline rate, and calibration after resolution — computed from the same public receipts, not self-reported. Per-operator Track Record URLs (`/agent/<operatorId>`) surface the same data scoped to one operator — the public surface a concierge DM points a prospect at.
 > 4. **On-chain parametric settlement** — a Solana program (`match-escrow`) CPI-calls TxLINE's `txoracle::validate_stat` to verify match outcomes and release locked SOL trustlessly. Verified end-to-end on devnet.
 
 ## Surface area
 
 Fourcast's flagship route is one unfolding system — Mandate → Proof Theatre → Diligence — supported by Markets, Signals, and Labs:
 
-- `/agent` — **Mandate Control**: the flagship hero. A live VPS worker's current decision, proof timeline, and on-chain verdict. The manual runner is demoted to an Operator Controls drawer.
+- `/agent` — **Mandate Control**: the flagship hero. A live VPS worker's current decision, proof timeline, and on-chain verdict. The manual runner is demoted to an Operator Controls drawer. A **Mandate Builder** panel lets a prospect self-serve configure a mandate, run a dry-run preview, and save it to get a public Track Record URL.
+- `/agent/[operatorId]` — **Per-operator Track Record**: the public URL a concierge DM points a prospect at. Shows the operator's mandate knobs and scoped track record (forecasts, resolved, Brier score). Public by design — the OG share card target for Warpcast/X.
 - `/world-cup` — **Proof Theatre**: a vertical 6-stage evidence timeline for any fixture, from sealed pre-match evidence to Solana-anchored reconciliation. Cross-venue edge detection and on-chain settlement remain as fixture-card capabilities.
 - `/positions` — **Allocator Diligence**: mandate adherence, receipt coverage, discipline rate, and calibration as the hero; positions/P&L demoted to a secondary section.
 

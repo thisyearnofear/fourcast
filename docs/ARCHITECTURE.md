@@ -66,10 +66,22 @@ The flagship hero. A live VPS worker (`scripts/fourcast-agent-worker.mjs`) opera
 
 Key components:
 - **`components/MandateControl.js`** — live worker state, current mandate decision (ALLOCATE/PASS/REVIEW), proof timeline crossing from "outcome withheld" to "proof available", operator telemetry strip
+- **`components/MandateBuilder.js`** — self-serve mandate config + dry-run preview. Four range sliders for the real policy knobs (`minAbsoluteEdge`, `maxAllocationPct`, `maxLossProbability`, `simulationRuns`), a dry-run button that calls `POST /api/agent/dry-run`, and a "Save as my mandate" button that persists via `POST /api/agent/mandate` and returns a Track Record URL. Draft state persists to localStorage.
 - **`components/DecisionDossier.js`** — right-side drawer answering 5 allocator questions from the canonical receipt
 - **`components/HistoricalLabPanel.js`** — supporting VPS telemetry panel below the hero
 - **`components/AgentRunLedger.js`** — persisted decision ledger
 - **`components/AgentDashboard.js`** — manual runner (demoted to Operator Controls drawer)
+
+### Per-operator Track Record (`/agent/[operatorId]`)
+
+The public URL a concierge DM points a prospect at (GTM §2.2 step 4). Server component (`app/agent/[operatorId]/page.js`) fetches the operator's mandate + scoped track record and renders per-operator OG metadata via `/api/og?type=operator`. The client component (`OperatorTrackRecordClient.js`) shows the mandate knobs, track record stats, and a recent forecasts table.
+
+Key components:
+- **`app/agent/[operatorId]/page.js`** — server component, `generateMetadata` for per-operator OG cards, fetches initial data
+- **`app/agent/[operatorId]/OperatorTrackRecordClient.js`** — client rendering, "Copy URL" button, mandate + track record display
+- **`app/api/agent/track-record/[operatorId]/route.js`** — scoped track record API
+- **`app/api/agent/mandate/route.js`** — mandate persistence (POST save, GET read)
+- **`app/api/agent/dry-run/route.js`** — dry-run preview using canonical decision domain modules
 
 ### Proof Theatre (`/world-cup`)
 
@@ -237,7 +249,7 @@ The former 2,706-line god-file has been decomposed into focused modules:
 ### 5. Database Schema
 
 #### `agent_forecasts`
-Tracks AI predictions and outcomes for track record:
+Tracks AI predictions and outcomes for track record. The `operator_id` column (migration 0010) scopes forecasts to a single operator's Track Record URL:
 ```sql
 CREATE TABLE agent_forecasts (
   id TEXT PRIMARY KEY,
@@ -254,7 +266,25 @@ CREATE TABLE agent_forecasts (
   resolved BOOLEAN DEFAULT 0,
   actual_outcome REAL,
   brier_score REAL,
-  resolution_time INTEGER
+  resolution_time INTEGER,
+  operator_id TEXT,  -- migration 0010: nullable for back-compat, scopes to /agent/[operatorId]
+  -- ... autopilot execution columns (migration 0003)
+);
+```
+
+#### `mandates`
+Persisted mandate drafts keyed by anonymous `operator_id` (migration 0011). The four policy knobs match `createDecisionPolicy()` exactly:
+```sql
+CREATE TABLE mandates (
+  operator_id TEXT PRIMARY KEY,
+  min_absolute_edge REAL NOT NULL,
+  max_allocation_pct REAL NOT NULL,
+  max_loss_probability REAL NOT NULL,
+  simulation_runs INTEGER NOT NULL,
+  policy_version TEXT NOT NULL,
+  display_name TEXT,
+  created_at INTEGER DEFAULT (strftime('%s', 'now')),
+  updated_at INTEGER DEFAULT (strftime('%s', 'now'))
 );
 ```
 
@@ -267,7 +297,9 @@ CREATE TABLE agent_runs (
   markets_scanned INTEGER,
   candidates_filtered INTEGER,
   forecasts_made INTEGER,
-  timestamp INTEGER NOT NULL
+  timestamp INTEGER NOT NULL,
+  run_mode TEXT DEFAULT 'advisory',  -- migration 0008
+  summary TEXT                        -- migration 0008: replayable decision receipt JSON
 );
 ```
 

@@ -41,7 +41,7 @@ const AUDIENCE_DOORS = [
     icon: LineChart,
     eyebrow: 'I run capital',
     title: 'Mandate Control',
-    body: 'A live agent operating under a versioned policy, sealing each decision into a SHA-256 receipt before the outcome is known.',
+    body: 'A live agent operating under a versioned policy, sealing each decision into a SHA-256 receipt before the outcome is known. Self-serve: configure your mandate, run a dry-run, get a public Track Record URL.',
   },
   {
     href: '/positions',
