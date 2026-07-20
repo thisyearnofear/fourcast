@@ -6,76 +6,76 @@ import { CloudSun, Car, BarChart3 } from 'lucide-react';
  * Supports Weather, Mobility, and General market visualizations
  */
 export default function SignalCard({ signal }) {
-  const isWeather = signal.domain === 'weather' || signal.weather_json;
-  const isMobility = signal.domain === 'mobility' || (!isWeather && signal.market_title.includes('Turnout'));
+ const isWeather = signal.domain === 'weather' || signal.weather_json;
+ const isMobility = signal.domain === 'mobility' || (!isWeather && signal.market_title.includes('Turnout'));
 
-  const domainName = isWeather ? 'Weather' : (isMobility ? 'Mobility' : 'General');
+ const domainName = isWeather ? 'Weather' : (isMobility ? 'Mobility' : 'General');
 
-  // Dynamic Styles
-  const glassClass = 'glass-subtle bg-slate-900/60 text-white';
+ // Dynamic Styles
+ const glassClass = 'mc-panel bg-slate-900/60 text-white';
 
-  const badgeStyle = isWeather
-    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-    : 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+ const badgeStyle = isWeather
+ ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+ : 'bg-orange-500/20 text-orange-400 border-orange-500/30';
 
-  // Format timestamp
-  const timeAgo = (timestamp) => {
-    const seconds = Math.floor((Date.now() - timestamp * 1000) / 1000);
-    if (seconds < 60) return 'Just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
-  };
+ // Format timestamp
+ const timeAgo = (timestamp) => {
+ const seconds = Math.floor((Date.now() - timestamp * 1000) / 1000);
+ if (seconds < 60) return 'Just now';
+ const minutes = Math.floor(seconds / 60);
+ if (minutes < 60) return `${minutes}m ago`;
+ const hours = Math.floor(minutes / 60);
+ if (hours < 24) return `${hours}h ago`;
+ return `${Math.floor(hours / 24)}d ago`;
+ };
 
-  return (
-    <div className={`${glassClass} rounded-2xl p-5 transition-all hover:scale-[1.02]`}>
-      {/* Header: Domain + Confidence */}
-      <div className="flex justify-between items-start mb-3">
-        <div className={`flex items-center space-x-2 px-2 py-1 rounded-full border text-xs font-medium ${badgeStyle}`}>
-          {isWeather ? (
-            <CloudSun className="w-3 h-3" aria-hidden="true" />
-          ) : isMobility ? (
-            <Car className="w-3 h-3" aria-hidden="true" />
-          ) : (
-            <BarChart3 className="w-3 h-3" aria-hidden="true" />
-          )}
-          <span>{domainName} Signal</span>
-        </div>
-        <div className="text-right">
-          <div className="text-xs opacity-60">Confidence</div>
-          <div className={`font-bold ${signal.confidence === 'HIGH' ? 'text-green-400' : 'text-yellow-400'}`}>
-            {signal.confidence}
-          </div>
-        </div>
-      </div>
-      {/* Market Title */}
-      <h3 className="text-lg font-light leading-snug mb-2">{signal.market_title}</h3>
-      {/* Venue/Location */}
-      <div className="flex items-center space-x-1 text-xs opacity-60 mb-4">
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <span>{signal.venue}</span>
-        <span>•</span>
-        <span>{timeAgo(signal.timestamp)}</span>
-      </div>
-      {/* AI Analysis Digest */}
-      <div className={`p-3 rounded-xl text-sm leading-relaxed border bg-black/20 border-white/10`}>
-        <span className="opacity-70">Analysis: </span>
-        <span className="font-medium opacity-90">{signal.ai_digest}</span>
-      </div>
-      {/* Action Footer */}
-      <div className="mt-4 flex justify-between items-center">
-        <div className="text-xs opacity-50 font-mono">
-          ID: {typeof signal.event_id === 'string' ? signal.event_id.slice(0, 8) : String(signal.event_id || '').slice(0, 8)}...
-        </div>
-        <button className={`text-xs px-3 py-1.5 rounded-lg transition-colors hover:bg-white/10`}>
-          View On-Chain ↗
-        </button>
-      </div>
-    </div>
-  );
+ return (
+ <div className={`${glassClass} p-5 transition-all hover:scale-[1.02]`}>
+ {/* Header: Domain + Confidence */}
+ <div className="flex justify-between items-start mb-3">
+ <div className={`flex items-center space-x-2 px-2 py-1 border text-xs font-medium ${badgeStyle}`}>
+ {isWeather ? (
+ <CloudSun className="w-3 h-3" aria-hidden="true" />
+ ) : isMobility ? (
+ <Car className="w-3 h-3" aria-hidden="true" />
+ ) : (
+ <BarChart3 className="w-3 h-3" aria-hidden="true" />
+ )}
+ <span>{domainName} Signal</span>
+ </div>
+ <div className="text-right">
+ <div className="text-xs opacity-60">Confidence</div>
+ <div className={`font-bold ${signal.confidence === 'HIGH' ? 'text-green-400' : 'text-yellow-400'}`}>
+ {signal.confidence}
+ </div>
+ </div>
+ </div>
+ {/* Market Title */}
+ <h3 className="text-lg font-light leading-snug mb-2">{signal.market_title}</h3>
+ {/* Venue/Location */}
+ <div className="flex items-center space-x-1 text-xs opacity-60 mb-4">
+ <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+ </svg>
+ <span>{signal.venue}</span>
+ <span>•</span>
+ <span>{timeAgo(signal.timestamp)}</span>
+ </div>
+ {/* AI Analysis Digest */}
+ <div className={`p-3 text-sm leading-relaxed border bg-black/20 border-white/10`}>
+ <span className="opacity-70">Analysis: </span>
+ <span className="font-medium opacity-90">{signal.ai_digest}</span>
+ </div>
+ {/* Action Footer */}
+ <div className="mt-4 flex justify-between items-center">
+ <div className="text-xs opacity-50 font-mono">
+ ID: {typeof signal.event_id === 'string' ? signal.event_id.slice(0, 8) : String(signal.event_id || '').slice(0, 8)}...
+ </div>
+ <button className={`text-xs px-3 py-1.5 transition-colors hover:bg-white/10`}>
+ View On-Chain ↗
+ </button>
+ </div>
+ </div>
+ );
 }
