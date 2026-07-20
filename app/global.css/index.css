@@ -290,7 +290,6 @@ body { overflow-x: clip; }
   .platform-header { align-items: center; }
   .platform-header > div:last-child { min-width: 0; }
   .platform-nav .mc-nav-link { padding-inline: 0.38rem; font-size: 8px; }
-  .platform-wallet { max-width: 6.5rem; overflow: hidden; }
   .narrative-rail > div:nth-child(2),
   .narrative-rail > div:nth-child(3) { display: none; }
 }

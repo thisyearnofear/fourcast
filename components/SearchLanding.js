@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BRAND } from '@/constants/brand';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
+import WalletConnect from '@/app/components/WalletConnect';
 import OperatorMath from '@/components/OperatorMath';
 import OperatorPulse from '@/components/OperatorPulse';
 import { useBrightDataStatus } from '@/hooks/useBrightDataStatus';
@@ -56,13 +57,7 @@ export default function SearchLanding() {
           <div className="hidden sm:block">
             <PageNav />
           </div>
-          <button
-            type="button"
-            onClick={() => handleSearch(featured.query)}
-            className="fc-action fc-action--quiet px-3 py-2 text-xs"
-          >
-            Try demo
-          </button>
+          <WalletConnect />
         </header>
 
         <OperatorPulse className="mt-5" />
