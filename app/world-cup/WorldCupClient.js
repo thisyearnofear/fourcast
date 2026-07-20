@@ -115,8 +115,8 @@ function EdgePanel({ fixture, onToggle }) {
       )}
 
       {!data && !loading && !error && (
-        <div className="text-[11px] text-white/50">
-          Click "Compare vs Polymarket" to check for cross-venue discrepancies on this match.
+        <div className="text-[11px] text-white/40">
+          Click "Compare vs Polymarket" to check cross-venue pricing.
         </div>
       )}
 
@@ -142,7 +142,7 @@ function EdgePanel({ fixture, onToggle }) {
             </div>
           )}
           <div className="text-[11px] text-emerald-300/80 leading-snug">
-            Per-match consensus pricing is TxLINE-exclusive. Polymarket would need a separate per-match market to compare directly.
+            Per-match consensus is TxLINE-exclusive — Polymarket needs a separate market to compare.
           </div>
         </div>
       )}
@@ -166,8 +166,8 @@ function EdgePanel({ fixture, onToggle }) {
               </div>
             ))}
           </div>
-          <div className="text-[10px] text-white/50 leading-snug">
-            TxLINE consensus (left) vs Polymarket YES price (right). Polymarket binary markets don't surface draw probability.
+          <div className="text-[10px] text-white/40 leading-snug">
+            TxLINE consensus (left) vs Polymarket YES (right). Draw probability not surfaced on Polymarket.
           </div>
           {poly.marketUrl && (
             <a href={poly.marketUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] underline opacity-80 hover:opacity-100 no-underline">

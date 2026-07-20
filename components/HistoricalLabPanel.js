@@ -46,7 +46,7 @@ export function HistoricalLabPanel() {
           <div>
             <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-200"><Radio className="h-3.5 w-3.5 animate-pulse" /> VPS telemetry · replay-only</div>
             <h2 id="historical-lab-heading" className="mt-2 font-display text-lg font-semibold tracking-tight text-white">Autonomous Historical Lab</h2>
-            <p className="mt-1 max-w-2xl text-xs leading-5 text-white/55">A persistent agent replays TxLINE evidence in time order. It may decide from pre-match odds, but it cannot inspect the final proof until the replay clock crosses settlement.</p>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-white/55">Persistent agent replays evidence in time order; proof revealed after settlement.</p>
           </div>
           <button type="button" onClick={load} className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center border border-emerald-200/20 text-emerald-100/70 transition hover:border-emerald-200/50 hover:text-emerald-100" aria-label="Refresh historical lab status"><RefreshCw className={`h-3.5 w-3.5 ${state.loading ? 'animate-spin' : ''}`} /></button>
         </div>

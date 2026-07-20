@@ -234,7 +234,7 @@ export function MandateControl() {
             {/* Claim of restraint */}
             <p className="mt-5 max-w-2xl text-sm leading-6 text-white/60">
               <Lock className="mr-1.5 inline h-3.5 w-3.5 -translate-y-px text-[var(--mc-sealed)]" />
-              Outcome inaccessible when the receipt was sealed. The agent decided from pre-match evidence alone; the proof was revealed only after the replay clock crossed settlement.
+              Outcome withheld at decision time; proof revealed after settlement.
             </p>
 
             {/* Proof timeline — the one memorable composition */}

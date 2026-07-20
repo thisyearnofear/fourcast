@@ -478,7 +478,13 @@ export function AutopilotDashboard({ isNight = false }) {
  </div>
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
  <div>
- <label className={`text-[10px] ${subtleText} block mb-1`}>Run Interval</label>
+ <label className={`text-[10px] ${subtleText} block mb-1`}>
+ Run Interval
+ <span className="mc-tooltip ml-1" tabIndex={0} role="button" aria-label="Vercel Cron fires once daily on Hobby plan; interval is the minimum gap between runs.">
+ ?
+ <span className="mc-tooltip__bubble">Vercel Cron fires once daily (Hobby plan); interval is the minimum gap between runs.</span>
+ </span>
+ </label>
  <select
  value={schedule.intervalMinutes}
  onChange={handleIntervalChange}
@@ -527,9 +533,6 @@ export function AutopilotDashboard({ isNight = false }) {
  />
  </button>
  </div>
- <p className={`text-[10px] ${subtleText}`}>
- Vercel Cron fires once daily (Hobby plan limit); interval is the minimum gap between runs.
- </p>
  </div>
  </div>
  )}

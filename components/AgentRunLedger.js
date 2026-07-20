@@ -90,6 +90,12 @@ function IntegrityBadge({ verification, hash }) {
  <Fingerprint className="h-2.5 w-2.5" />
  {labels[verification.status]}
  {hash && <span className="text-white/40">{hash.slice(0, 8)}…</span>}
+ {verification.status === 'verified' && (
+ <span className="mc-tooltip ml-0.5" tabIndex={0} role="button" aria-label="Recomputed sha256 matches the recorded hash. Same evidence, policy, and seed replay to this receipt.">
+ ?
+ <span className="mc-tooltip__bubble">Recomputed sha256 in your browser matches the recorded hash. Same evidence, policy, and seed replay to this receipt.</span>
+ </span>
+ )}
  </span>
  );
 }
@@ -264,11 +270,6 @@ function RunCard({ run, expanded, onToggle }) {
  <p className="mt-4 text-xs text-white/40">This run predates detailed decision receipts. Run the agent again to record evidence and verdicts.</p>
  )}
 
- {verification.status === 'verified' && (
- <p className="mt-3 border-t border-white/[0.06] pt-2 font-mono text-[9px] leading-4 text-white/35">
- Recomputed sha256 over the canonical receipt in your browser matches the recorded hash. Same evidence, policy, and seed replay to this receipt.
- </p>
- )}
  {verification.status === 'mismatch' && (
  <p className="mt-3 border-t border-red-400/20 pt-2 font-mono text-[9px] leading-4 text-red-200/80">
  Recorded hash {verification.expected?.slice(0, 16)}… does not match recomputed {verification.actual?.slice(0, 16)}… — receipt contents were altered after the fact.
@@ -316,7 +317,7 @@ export function AgentRunLedger() {
  <div>
  <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-200/80"><Activity className="h-3.5 w-3.5" /> Autonomous decision ledger</div>
  <h2 id="run-ledger-heading" className="mt-2 font-display text-lg font-semibold tracking-tight text-white">Every recommendation has a receipt.</h2>
- <p className="mt-1 max-w-2xl text-xs leading-5 text-white/50">Observe market venues, test contract equivalence, price risk, then allocate or decline. Each receipt binds the evidence, the risk policy, the simulation, and a hash you can recompute—so a refusal is as auditable as a trade.</p>
+ <p className="mt-1 max-w-2xl text-xs leading-5 text-white/50">Each receipt binds evidence, policy, simulation, and a recomputable hash — a refusal is as auditable as a trade.</p>
  </div>
  <button type="button" onClick={loadRuns} className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-white/10 text-white/50 transition hover:border-white/25 hover:text-white" aria-label="Refresh autonomous decision ledger">
  <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />

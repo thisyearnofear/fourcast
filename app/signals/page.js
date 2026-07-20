@@ -225,9 +225,7 @@ export default function SignalsPage() {
  promise isn't gated on which tab the visitor opens. */}
  <div className="mb-8">
  <p className="mb-4 max-w-2xl text-sm font-light leading-relaxed text-white/[0.55]">
- Browse signals from verified Quant Operators. Follow analysts whose{' '}
- <span className="text-emerald-300">Audited Track Record</span>{' '}
- matches your conviction — every fill, outcome, and Brier score lands on Arc.
+ Verified Quant Operators with <span className="text-emerald-300">Audited Track Records</span> on Arc.
  </p>
  {leaderboard.length > 0 && activeTab !== 'leaderboard' && (
  <OperatorSpotlight

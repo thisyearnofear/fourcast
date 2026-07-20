@@ -50,8 +50,7 @@ export default function LabsPage() {
  Execution &amp; monetization
  </h3>
  <p className="text-xs leading-relaxed text-white/[0.55]">
- Autopilot runs the agent loop with real order execution. Builder Program
- attributes fills for USDC builder fees. Telegram is a supporting tool.
+ Autopilot executes trades; Builder Program attributes fills; Telegram is supporting.
  </p>
  </div>
  </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshCw, Scale, ShieldCheck } from 'lucide-react';
+import { RefreshCw, Scale } from 'lucide-react';
 import { isPolicyAdherentDecision } from '@/services/domain/decision/decisionPolicy';
 
 /**
@@ -49,7 +49,7 @@ export function MandatePanel() {
               Did the agent do what it said it would?
             </h2>
             <p className="mt-1 max-w-2xl text-xs leading-5 text-white/50">
-              The mandate an agent runs under, and its adherence record, computed from public decision receipts. An allocator can check every number below against the ledger itself.
+              Mandate adherence computed from public decision receipts — check every number against the ledger.
             </p>
           </div>
           <button type="button" onClick={load} className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-white/10 text-white/50 transition hover:border-white/25 hover:text-white" aria-label="Refresh mandate view">
@@ -70,7 +70,7 @@ export function MandatePanel() {
             <div className="evidence-strip mt-6 grid grid-cols-2 gap-px overflow-hidden bg-white/10 sm:grid-cols-4">
               <MandateMetric label="Verified receipts" value={`${mandate.receiptBacked}/${mandate.totalRuns}`} detail="runs carrying a hash-bound receipt" />
               <MandateMetric label="Policy adherence" value={`${mandate.adherencePct}%`} detail="decisions the policy gate settled" accent={mandate.adherencePct === 100} />
-              <MandateMetric label="Discipline rate" value={`${mandate.disciplinePct}%`} detail="PASS or REVIEW over ALLOCATE" />
+              <MandateMetric label="Discipline rate" value={`${mandate.disciplinePct}%`} detail="PASS or REVIEW over ALLOCATE" hint="A high pass share is a feature: the gate binds when edge is thin or tail risk is wide." />
               <MandateMetric label="Max allocation" value={`${mandate.maxAllocationPct}%`} detail="largest single allocation cleared" />
             </div>
 
@@ -100,10 +100,6 @@ export function MandatePanel() {
                   <span><span className="text-amber-300">●</span> pass {mandate.mix.pass}</span>
                   <span><span className="text-sky-300">●</span> review {mandate.mix.review}</span>
                 </div>
-                <p className="mt-2 flex items-start gap-1.5 text-[10px] leading-4 text-white/40">
-                  <ShieldCheck className="mt-0.5 h-3 w-3 shrink-0 text-emerald-200/70" />
-                  A high pass share is a feature: it shows the gate binds when edge is thin or tail risk is wide.
-                </p>
               </div>
             </div>
           </>
@@ -113,10 +109,18 @@ export function MandatePanel() {
   );
 }
 
-function MandateMetric({ label, value, detail, accent = false }) {
+function MandateMetric({ label, value, detail, accent = false, hint }) {
   return (
     <div className="bg-black/45 px-3 py-3">
-      <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-white/40">{label}</p>
+      <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-white/40">
+        {label}
+        {hint && (
+          <span className="mc-tooltip ml-1" tabIndex={0} role="button" aria-label={hint}>
+            ?
+            <span className="mc-tooltip__bubble">{hint}</span>
+          </span>
+        )}
+      </p>
       <p className={`mt-1 font-mono text-xl ${accent ? 'text-emerald-200' : 'text-white/85'}`}>{value}</p>
       <p className="mt-0.5 text-[10px] text-white/35">{detail}</p>
     </div>

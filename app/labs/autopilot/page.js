@@ -8,7 +8,7 @@ export default function LabsAutopilotPage() {
   return (
     <AppShell
       title="Autopilot"
-      subtitle="The headline product — built for Quant Operators who want Kelly-sized edges and Builder-attributed fills."
+      subtitle="Kelly-sized edges with Builder-attributed fills."
       maxWidth="max-w-4xl"
     >
       <OperatorMath />
