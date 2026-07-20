@@ -6,6 +6,7 @@ import { BRAND } from "@/constants/brand";
 import WalletConnect from "@/app/components/WalletConnect";
 import StatusBadge from "@/components/StatusBadge";
 import OperatorPulse from "@/components/OperatorPulse";
+import { TourLink } from "@/components/RouteGuide";
 
 /**
  * Navigation + AppShell — the single source of truth for the app chrome.
@@ -79,6 +80,8 @@ export default function PageNav() {
             {item.name}
           </Link>
         ))}
+        <span className="mx-1 h-4 w-px bg-white/10" />
+        <TourLink />
       </div>
 
       {/* Mobile: compact labels */}

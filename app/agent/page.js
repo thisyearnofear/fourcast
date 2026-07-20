@@ -7,6 +7,7 @@ import { MandateControl } from '@/components/MandateControl';
 import { AgentDashboard } from '@/components/AgentDashboard';
 import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
+import RouteGuide from '@/components/RouteGuide';
 import { BRAND } from '@/constants/brand';
 
 export default function AgentPage() {
@@ -18,6 +19,7 @@ export default function AgentPage() {
       subtitle="An agent is alive, operating under a mandate, making constrained decisions, and leaving behind evidence nobody — including its operator — can rewrite."
       maxWidth="max-w-4xl"
     >
+      <RouteGuide route="agent" />
       {/* Flagship — the autonomous system, not a button simulation, is the protagonist. */}
       <MandateControl />
 

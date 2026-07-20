@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import OnChainSettlementPanel from '@/components/OnChainSettlementPanel';
 import { ProofTheatre } from '@/components/ProofTheatre';
+import RouteGuide from '@/components/RouteGuide';
 
 /* ------------------------------- helpers -------------------------------- */
 
@@ -773,6 +774,8 @@ export default function WorldCupClient() {
         {selectedFixture && (
           <ProofTheatre fixture={selectedFixture} onClose={() => setSelectedFixture(null)} />
         )}
+
+        <RouteGuide route="world-cup" />
 
         <ProofLoopStrip fixtures={fixtures} />
 

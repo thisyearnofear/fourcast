@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowRight, Fingerprint, ShieldCheck, LineChart } from 'lucide-react';
 import { BRAND } from '@/constants/brand';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
 import WalletConnect from '@/app/components/WalletConnect';
@@ -14,6 +16,40 @@ const QUICK_SEARCHES = [
   { label: 'Fed July cut', query: 'Fed interest rate cut July 2026' },
   { label: 'SpaceX Mars', query: 'SpaceX Starship Mars cargo 2026' },
   { label: 'NVIDIA $200', query: 'NVIDIA stock $200 by September 2026' },
+];
+
+// The canonical real receipt — France 3-0 Sweden, World Cup Round of 32.
+// A 0.1 SOL policy on this match was settled on-chain via the match-escrow
+// program CPI-calling txoracle::validate_stat (see README §Solution 4).
+// Deep-linking /world-cup?fixture=<id> opens the Proof Theatre on it.
+const VERIFIED_RECEIPT = {
+  fixtureId: '18175981',
+  home: 'France',
+  away: 'Sweden',
+  score: '3–0',
+  stage: 'World Cup · Round of 32',
+  escrowProgramId: 'AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ',
+};
+
+// Two primary-customer doors. The README positions the customer as both the
+// operator running capital AND the allocator diligencing them; the search box
+// above serves the acquisition (retail/analyst) path, these doors serve the
+// headline path. Order matches the README narrative: Mandate → Diligence.
+const AUDIENCE_DOORS = [
+  {
+    href: '/agent',
+    icon: LineChart,
+    eyebrow: 'I run capital',
+    title: 'Mandate Control',
+    body: 'A live agent operating under a versioned policy, sealing each decision into a SHA-256 receipt before the outcome is known.',
+  },
+  {
+    href: '/positions',
+    icon: ShieldCheck,
+    eyebrow: 'I diligence operators',
+    title: 'Allocator Diligence',
+    body: 'Policy adherence, receipt coverage, discipline rate, and calibration — computed from the same public receipts, not self-reported.',
+  },
 ];
 
 const DEMO = {
@@ -190,6 +226,93 @@ export default function SearchLanding() {
                     Run this market
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Primary-customer doors — the README positions the customer as both
+            the operator running capital and the allocator diligencing them.
+            The search hero above serves the acquisition (retail/analyst) path;
+            these two doors serve the headline path. */}
+        <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-2" aria-label="Primary-customer entry points">
+          {AUDIENCE_DOORS.map((door) => {
+            const Icon = door.icon;
+            return (
+              <Link
+                key={door.href}
+                href={door.href}
+                className="fc-door group relative flex flex-col gap-2 border border-white/10 bg-white/[0.02] p-5 transition hover:border-emerald-400/30 hover:bg-emerald-400/[0.04] sm:p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="fc-kicker">{door.eyebrow}</span>
+                  <Icon className="h-4 w-4 text-white/40 transition group-hover:text-emerald-300" />
+                </div>
+                <h3 className="font-display text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                  {door.title}
+                </h3>
+                <p className="text-sm leading-6 text-white/60">{door.body}</p>
+                <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-200/80">
+                  Enter
+                  <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            );
+          })}
+        </section>
+
+        {/* Verify a real receipt — the single most differentiated artifact we
+            can show a cold prospect in 10 seconds. A real World Cup fixture
+            with a real Merkle proof anchored on Solana devnet, settled on-chain
+            via match-escrow CPI. Deep-links into Proof Theatre with the
+            fixture pre-selected so the visitor lands on the verification
+            chain, not a fixture list. */}
+        <section className="mt-12" aria-label="Verify a real decision on Solana">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 pb-3">
+            <div>
+              <p className="fc-kicker">Verify a real decision on Solana</p>
+              <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">
+                A receipt already settled on-chain. Audit it yourself.
+              </h2>
+            </div>
+            <p className="max-w-sm text-xs leading-5 text-white/45">
+              No signup, no wallet. The proof chain walks pre-match evidence → seeded simulation → versioned policy gates → SHA-256 receipt → TxLINE Merkle proof → Solana PDA validation → reconciliation.
+            </p>
+          </div>
+
+          <div className="fc-instrument mt-5 overflow-hidden p-1">
+            <div className="fc-instrument__inner flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
+              <div className="min-w-0">
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
+                  {VERIFIED_RECEIPT.stage}
+                </p>
+                <p className="mt-1.5 font-display text-xl font-semibold text-white sm:text-2xl">
+                  {VERIFIED_RECEIPT.home} <span className="text-white/40">v</span> {VERIFIED_RECEIPT.away}
+                </p>
+                <p className="mt-1 font-mono text-sm text-emerald-300">
+                  Final {VERIFIED_RECEIPT.score}
+                </p>
+                <p className="mt-3 max-w-md text-xs leading-5 text-white/55">
+                  A 0.1 SOL policy on this match was settled trustlessly via the <span className="font-mono text-white/70">match-escrow</span> program CPI-calling <span className="font-mono text-white/70">txoracle::validate_stat</span>. No intermediary involved.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col items-stretch gap-2">
+                <Link
+                  href={`/world-cup?fixture=${VERIFIED_RECEIPT.fixtureId}`}
+                  className="fc-action mc-action--primary inline-flex items-center justify-center gap-1.5 px-5 py-3 text-sm"
+                >
+                  <Fingerprint className="h-3.5 w-3.5" />
+                  Open Proof Theatre
+                </Link>
+                <a
+                  href={`https://explorer.solana.com/address/${VERIFIED_RECEIPT.escrowProgramId}?cluster=devnet`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mc-nav-link no-underline inline-flex items-center justify-center gap-1.5 px-5 py-2 text-xs"
+                >
+                  <ShieldCheck className="h-3 w-3" />
+                  Escrow program on devnet
+                </a>
               </div>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { AppShell } from "@/app/components/PageNav";
 import PositionsDashboard from "@/components/PositionsDashboard";
 import { MandatePanel } from "@/components/MandatePanel";
 import NarrativeSteps from "@/components/NarrativeSteps";
+import RouteGuide from "@/components/RouteGuide";
 
 export default function PositionsPage() {
   return (
@@ -14,6 +15,7 @@ export default function PositionsPage() {
       maxWidth="max-w-4xl"
       subheader={<NarrativeSteps currentStep="scored" />}
     >
+      <RouteGuide route="positions" />
       {/* Hero — allocator diligence, not a portfolio dashboard. */}
       <div className="mb-10">
         <MandatePanel />
