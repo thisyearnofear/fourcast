@@ -54,20 +54,16 @@ export default function PageNav() {
   const isActive = useIsActive();
 
   return (
-    <nav className="flex items-center gap-1" aria-label="Primary navigation">
+    <nav className="flex items-center gap-0.5" aria-label="Primary navigation">
       {/* Desktop */}
-      <div className="hidden sm:flex items-center gap-1">
+      <div className="hidden sm:flex items-center gap-0.5">
         {PRIMARY_NAV.map((item) => (
           <Link
             key={item.name}
             href={item.href}
             data-onboard={item.onboardId}
             title={item.description}
-            className={`rounded-lg px-3 py-2 text-xs font-medium transition no-underline ${
-              isActive(item.href)
-                ? "bg-white/10 text-white"
-                : "text-white/[0.65] hover:bg-white/10 hover:text-white"
-            }`}
+            className={`mc-nav-link no-underline ${isActive(item.href) ? "is-active" : ""}`}
           >
             {item.name}
           </Link>
@@ -78,11 +74,7 @@ export default function PageNav() {
             key={item.name}
             href={item.href}
             title={item.description}
-            className={`rounded-lg px-2.5 py-2 text-xs transition no-underline ${
-              isActive(item.href)
-                ? "bg-white/10 text-white"
-                : "text-white/[0.45] hover:bg-white/10 hover:text-white/80"
-            }`}
+            className={`mc-nav-link no-underline ${isActive(item.href) ? "is-active" : ""}`}
           >
             {item.name}
           </Link>
@@ -96,11 +88,10 @@ export default function PageNav() {
             key={item.name}
             href={item.href}
             aria-label={item.name}
-            className={`flex h-11 min-w-[2.75rem] flex-col items-center justify-center rounded-lg px-1 transition no-underline ${
-              isActive(item.href) ? "bg-white/10" : "opacity-60 hover:opacity-100"
-            }`}
+            className={`mc-nav-link no-underline ${isActive(item.href) ? "is-active" : ""}`}
+            style={{ padding: "0.3rem 0.4rem", fontSize: "9px" }}
           >
-            <span className="text-[9px] font-medium leading-none text-white">{item.name}</span>
+            {item.name}
           </Link>
         ))}
       </div>
@@ -117,7 +108,10 @@ export function HomeLink({ showLabel = true }) {
       href="/"
       className="flex items-center gap-2.5 text-sm font-semibold tracking-wide text-white no-underline"
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-400/25 bg-emerald-400/10 font-display text-sm text-emerald-300">
+      <span
+        className="flex h-8 w-8 items-center justify-center border border-emerald-400/25 bg-emerald-400/5 font-display text-sm text-emerald-300"
+        style={{ borderRadius: 0 }}
+      >
         {BRAND.emoji}
       </span>
       {showLabel && (
@@ -188,16 +182,12 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
  */
 export function SecondaryNav({ items, activeItem, onChange }) {
   return (
-    <div className="inline-flex rounded-xl border border-white/10 bg-black/25 p-1 backdrop-blur-xl">
+    <div className="mc-tab-strip">
       {items.map((item) => (
         <button
           key={item.id}
           onClick={() => onChange(item.id)}
-          className={`rounded-lg px-4 py-2 text-xs font-medium transition ${
-            activeItem === item.id
-              ? "bg-emerald-300/10 text-emerald-100 border border-emerald-300/30"
-              : "border border-transparent text-white/[0.55] hover:bg-white/10 hover:text-white"
-          }`}
+          className={`mc-tab ${activeItem === item.id ? "is-active" : ""}`}
         >
           {item.icon && <span className="mr-1.5" aria-hidden="true">{item.icon}</span>}
           {item.label}

@@ -106,7 +106,7 @@ export function PositionsDashboard({ isNight = false }) {
         <button
           onClick={fetchPositions}
           disabled={loading}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border bg-white/10 hover:bg-white/20 text-white border-white/20 disabled:opacity-40`}
+          className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-white/10 hover:bg-white/20 text-white border-white/20 disabled:opacity-40`}
           aria-label="Refresh positions"
         >
           {loading ? '⟳' : '↻'}
@@ -127,12 +127,12 @@ export function PositionsDashboard({ isNight = false }) {
         </div>
       )}
       {/* Filter Tabs */}
-      <div className={`inline-flex rounded-xl p-1 bg-white/5`}>
+      <div className={`inline-flex p-1 bg-white/5`}>
         {filters.map((f) => (
           <button
             key={f}
             onClick={() => setSelectedFilter(f)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`px-4 py-1.5 text-xs font-medium transition-all ${
               selectedFilter === f
                 ? 'bg-white/20 text-white border border-white/20'
                 : `${subtleText} hover:opacity-80`
@@ -144,13 +144,13 @@ export function PositionsDashboard({ isNight = false }) {
       </div>
       {/* Error */}
       {error && (
-        <div className={`text-xs p-3 rounded-lg bg-red-500/10 text-red-300`}>
+        <div className={`text-xs p-3 bg-red-500/10 text-red-300`}>
           {error}
         </div>
       )}
       {/* No Wallet Connected */}
       {!walletAddress && !loading && (
-        <div className={`text-center py-12 px-4 rounded-xl border bg-white/5 border-white/10`}>
+        <div className={`text-center py-12 px-4 border bg-white/5 border-white/10`}>
           <div className="flex justify-center mb-3 opacity-40">
             <Wallet className="h-10 w-10 text-white/60" />
           </div>
@@ -164,13 +164,13 @@ export function PositionsDashboard({ isNight = false }) {
       {loading && walletAddress && (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className={`h-28 rounded-xl skeleton`} />
+            <div key={i} className={`h-28 skeleton`} />
           ))}
         </div>
       )}
       {/* Empty State */}
       {!loading && !error && walletAddress && positions.length === 0 && (
-        <div className={`text-center py-12 px-4 rounded-xl border bg-white/5 border-white/10`}>
+        <div className={`text-center py-12 px-4 border bg-white/5 border-white/10`}>
           <div className="flex justify-center mb-3 opacity-40">
             <Briefcase className="h-10 w-10 text-white/60" />
           </div>
@@ -203,7 +203,7 @@ export function PositionsDashboard({ isNight = false }) {
           {hasMore && (
             <button
               onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
-              className={`w-full py-2.5 rounded-lg text-sm font-medium transition-all border bg-white/5 hover:bg-white/10 text-white/70 border-white/10`}
+              className={`w-full py-2.5 text-sm font-medium transition-all border bg-white/5 hover:bg-white/10 text-white/70 border-white/10`}
             >
               Show More ({positions.length - visibleCount} remaining)
             </button>
@@ -344,7 +344,7 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
             <button
               onClick={onClose}
               disabled={closing}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30 disabled:opacity-40`}
+              className={`px-3 py-1 text-xs font-medium transition-all border bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30 disabled:opacity-40`}
             >
               {closing ? '⟳' : 'Close'}
             </button>

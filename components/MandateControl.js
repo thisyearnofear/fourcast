@@ -207,7 +207,7 @@ export function MandateControl() {
             {/* Verdict + capital posture */}
             <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
               <div className="flex items-center gap-2.5">
-                <span className={`mc-lamp mc-lamp--live`} style={{ color: verdict.lamp }} aria-hidden="true" />
+                <span className={`mc-lamp mc-lamp--radar`} style={{ color: verdict.lamp }} aria-hidden="true" />
                 <span className={`mc-stamp ${verdict.stamp}`}>{verdict.label}</span>
                 {verdictKey === 'allocate' && (
                   <span className="font-mono text-sm text-white/75">
@@ -274,7 +274,7 @@ export function MandateControl() {
             <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 font-mono text-[10px] text-white/45 sm:grid-cols-4">
               <Telemetry label="Worker host" value={lab.status.hostname || '—'} />
               <Telemetry label="Last check-in" value={formatTime(lab.status.completedAt)} />
-              <Telemetry label="Receipt hash" value={latest?.receiptHash ? `${latest.receiptHash.slice(0, 14)}…` : 'pending'} mono />
+              <Telemetry label="Receipt hash" value={latest?.receiptHash ? `${latest.receiptHash.slice(0, 14)}…` : 'pending'} mono sealed={Boolean(latest?.receiptHash)} />
               <Telemetry
                 label="On-chain verdict"
                 value={verificationVerdict || 'awaiting proof'}
@@ -343,6 +343,7 @@ function ProofTimeline({ stages, livePct, timeline, reconciled }) {
       <div className="mt-5">
         <div className="mc-timeline-track">
           <div className="mc-timeline-track__progress" style={{ width: `${livePct}%`, animation: 'none' }} />
+          {reconciled && <div className="mc-proof-flash absolute inset-0" />}
         </div>
         <div className="mt-2 flex items-center justify-between font-mono text-[9px] uppercase tracking-wider">
           <span className="text-[var(--mc-sealed)]/80">
@@ -382,11 +383,15 @@ function StageNode({ stage, index }) {
   );
 }
 
-function Telemetry({ label, value, mono = false, accent = false }) {
+function Telemetry({ label, value, mono = false, accent = false, sealed = false }) {
   return (
     <div>
       <p className="text-[9px] uppercase tracking-[0.14em] text-white/35">{label}</p>
-      <p className={`mt-1 text-[11px] ${accent ? 'text-[var(--mc-reconciled)]' : 'text-white/75'} ${mono ? 'font-mono' : ''}`}>{value}</p>
+      <p
+        className={`mt-1 text-[11px] ${accent ? 'text-[var(--mc-reconciled)]' : 'text-white/75'} ${mono ? 'font-mono' : ''} ${sealed ? 'mc-seal-animate' : ''}`}
+      >
+        {value}
+      </p>
     </div>
   );
 }

@@ -90,7 +90,7 @@ export function MandatePanel() {
               </div>
               <div className="border border-white/[0.08] bg-black/25 p-3">
                 <p className="font-mono text-[9px] uppercase tracking-wider text-white/40">Verdict mix</p>
-                <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="mt-2 flex h-2 overflow-hidden bg-white/10">
                   {mandate.mix.allocate > 0 && <div className="bg-emerald-400/70" style={{ width: `${(mandate.mix.allocate / mandate.totalDecisions) * 100}%` }} />}
                   {mandate.mix.pass > 0 && <div className="bg-amber-300/60" style={{ width: `${(mandate.mix.pass / mandate.totalDecisions) * 100}%` }} />}
                   {mandate.mix.review > 0 && <div className="bg-sky-300/60" style={{ width: `${(mandate.mix.review / mandate.totalDecisions) * 100}%` }} />}

@@ -43,14 +43,14 @@ function pct(p) {
 
 function StatusBadge({ status }) {
   const map = {
-    live: { icon: CircleDot, label: 'LIVE', cls: 'bg-red-500/20 text-red-300 border-red-400/30' },
-    final: { icon: CheckCircle2, label: 'FINAL', cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30' },
-    scheduled: { icon: Clock, label: 'UPCOMING', cls: 'bg-white/10 text-white/60 border-white/20' },
+    live: { icon: CircleDot, label: 'LIVE', cls: 'mc-badge mc-badge--breach' },
+    final: { icon: CheckCircle2, label: 'FINAL', cls: 'mc-badge mc-badge--live' },
+    scheduled: { icon: Clock, label: 'UPCOMING', cls: 'mc-badge' },
   };
   const s = map[status] || map.scheduled;
   const Icon = s.icon;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${s.cls}`}>
+    <span className={`inline-flex items-center gap-1 ${s.cls}`}>
       <Icon size={11} />
       {s.label}
     </span>
@@ -93,7 +93,7 @@ function EdgePanel({ fixture, onToggle }) {
       : 'border-white/15 bg-white/[0.04] text-white/70';
 
   return (
-    <div className={`rounded-xl border ${verdictColor} p-3 space-y-2`}>
+    <div className={`border ${verdictColor} p-3 space-y-2`}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold">
           <Activity size={12} />
@@ -124,7 +124,7 @@ function EdgePanel({ fixture, onToggle }) {
             {data.reason}
           </div>
           {data.outrightContext && (data.outrightContext.homeYesPrice != null || data.outrightContext.awayYesPrice != null) && (
-            <div className="rounded-md bg-black/30 border border-white/10 p-2 text-[10px] text-white/60 leading-snug">
+            <div className="bg-black/30 border border-white/10 p-2 text-[10px] text-white/60 leading-snug">
               <div className="text-white/80 font-medium mb-1">For context (outright winner YES prices):</div>
               <div className="font-mono">
                 {fixture.home.name}: {data.outrightContext.homeYesPrice != null ? `${(data.outrightContext.homeYesPrice * 100).toFixed(2)}%` : '—'}
@@ -154,7 +154,7 @@ function EdgePanel({ fixture, onToggle }) {
               { label: 'Draw', tx: fixture.odds.implied.draw, poly: poly.draw },
               { label: fixture.away.name, tx: fixture.odds.implied.away, poly: poly.away },
             ].map((row) => (
-              <div key={row.label} className="rounded-md bg-black/30 border border-white/10 p-1.5">
+              <div key={row.label} className="bg-black/30 border border-white/10 p-1.5">
                 <div className="text-[9px] text-white/50 truncate">{row.label}</div>
                 <div className="text-[10px] font-mono">
                   <span className="text-emerald-300">{(row.tx * 100).toFixed(1)}%</span>
@@ -189,7 +189,7 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
   const awayScore = fixture.away.score ?? fixture.proof?.statToProve2?.value ?? null;
   const verification = proofResult?.verification || (proofResult?.verdict ? proofResult : null);
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/25 backdrop-blur-xl p-5 space-y-4">
+    <div className="mc-card p-5 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -226,7 +226,7 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
               { label: 'DRAW', value: implied.draw },
               { label: fixture.away.code || 'AWAY', value: implied.away },
             ].map((o) => (
-              <div key={o.label} className="rounded-lg bg-white/[0.04] border border-white/10 px-2 py-1.5 text-center">
+              <div key={o.label} className="bg-white/[0.04] border border-white/10 px-2 py-1.5 text-center">
                 <div className="text-[10px] text-white/50 truncate">{o.label}</div>
                 <div className="text-sm font-semibold text-emerald-300">{pct(o.value)}</div>
               </div>
@@ -240,7 +240,7 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
           <button
             onClick={() => onReplay(fixture)}
             disabled={replaying}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/30 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-500/30 transition disabled:opacity-50"
+            className="mc-action mc-action--primary"
           >
             {replaying ? <Pause size={12} /> : <Play size={12} />}
             {replaying ? 'Replaying…' : 'Replay match'}
@@ -250,16 +250,16 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
           <button
             onClick={() => onVerify(fixture)}
             disabled={verifying}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] border border-white/15 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10 transition disabled:opacity-50"
+            className="mc-action"
           >
             <Shield size={12} />
-            {verifying ? 'Verifying…' : 'Verify proof of decision'}
+            {verifying ? 'Verifying…' : 'Verify proof'}
           </button>
         )}
         {hasProof && onOpenTheatre && (
           <button
             onClick={() => onOpenTheatre(fixture)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-500/25 transition"
+            className="mc-action mc-action--primary"
           >
             <Fingerprint size={12} />
             Open proof theatre
@@ -270,7 +270,7 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
             href={`https://explorer.solana.com/address/${fixture.proof.dailyRootPda}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] text-white/50 hover:text-white/80 transition no-underline"
+            className="mc-nav-link no-underline"
           >
             <Database size={11} />
             PDA
@@ -279,11 +279,7 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
         {implied && (
           <button
             onClick={() => setEdgeOpen((v) => !v)}
-            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-              edgeOpen
-                ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200'
-                : 'bg-white/[0.06] border-white/15 text-white/80 hover:bg-white/10'
-            }`}
+            className={`mc-action ${edgeOpen ? 'mc-action--primary' : ''}`}
           >
             <Activity size={12} />
             {edgeOpen ? 'Hide edge' : 'Edge vs Polymarket'}
@@ -330,7 +326,7 @@ function ProofDecisionPanel({ result }) {
   const passedGates = (decision.riskChecks || []).filter((gate) => gate.passed).length;
 
   return (
-    <section className="overflow-hidden border border-emerald-300/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(0,0,0,0.25)_42%)]" aria-label="Proof of decision">
+    <section className="overflow-hidden mc-panel border-emerald-300/20" aria-label="Proof of decision">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Fingerprint size={13} className="text-emerald-200" />
@@ -386,7 +382,7 @@ function VerificationPanel({ verification }) {
   };
   const cls = verdictColors[verification.verdict] || verdictColors.unknown;
   return (
-    <div className={`rounded-xl border p-3 space-y-2 ${cls}`}>
+    <div className={`border p-3 space-y-2 ${cls}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
           <Shield size={13} />
@@ -406,7 +402,7 @@ function VerificationPanel({ verification }) {
       <ul className="space-y-1">
         {(verification.checks || []).map((c) => (
           <li key={c.name} className="flex items-start gap-2 text-[11px]">
-            <span className={`mt-0.5 inline-block h-2 w-2 rounded-full ${
+            <span className={`mt-0.5 inline-block h-2 w-2 ${
               c.ok === true ? 'bg-emerald-400' : c.ok === false ? 'bg-red-400' : 'bg-white/30'
             }`} />
             <span className="flex-1">
@@ -450,7 +446,7 @@ function ReplayViewer({ replay, onClose }) {
 
   if (!replay) return null;
   return (
-    <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/[0.06] backdrop-blur-xl p-5 space-y-3">
+    <div className="mc-card border-emerald-400/30 bg-emerald-500/[0.06] p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-xs uppercase tracking-wider text-emerald-300/70">TxLINE historical replay</div>
@@ -461,20 +457,20 @@ function ReplayViewer({ replay, onClose }) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => { setIndex(0); setPlaying(false); }}
-            className="rounded-lg border border-white/15 bg-white/[0.06] p-2 hover:bg-white/10 transition"
+            className="mc-action"
             title="Reset"
           >
             <RotateCcw size={14} />
           </button>
           <button
             onClick={() => setPlaying((p) => !p)}
-            className="rounded-lg border border-emerald-400/40 bg-emerald-500/20 p-2 hover:bg-emerald-500/30 transition"
+            className="mc-action mc-action--primary"
           >
             {playing ? <Pause size={14} /> : <Play size={14} />}
           </button>
           <button
             onClick={onClose}
-            className="rounded-lg border border-white/15 bg-white/[0.06] px-3 py-2 text-xs hover:bg-white/10 transition"
+            className="mc-action"
           >
             Close
           </button>
@@ -487,7 +483,7 @@ function ReplayViewer({ replay, onClose }) {
             <span className="text-white/60">Event {index + 1} of {events.length}</span>
             <span className="font-mono text-xs text-emerald-300">{current.minute ?? '—'}'</span>
           </div>
-          <div className="rounded-lg bg-black/30 border border-white/10 p-3 text-sm">
+          <div className="bg-black/30 border border-white/10 p-3 text-sm">
             <div className="font-medium text-white">{current.type || 'update'}</div>
             <div className="text-white/70 mt-0.5">{current.description || current.text || JSON.stringify(current)}</div>
             {current.score && (
@@ -526,16 +522,16 @@ function ProofLoopStrip({ fixtures }) {
   const proven = fixtures.filter((f) => f.proof?.merkleRoot || f.proof?.dailyRootPda).length;
   const finals = fixtures.filter((f) => f.status === 'final').length;
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/25 backdrop-blur-xl p-4 sm:p-5">
+    <div className="mc-panel p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs uppercase tracking-[0.18em] text-white/45">Verified decision → reconciled outcome</div>
+        <div className="mc-kicker">Verified decision → reconciled outcome</div>
         <div className="font-mono text-[10px] text-white/40">
           {proven} proof-backed · {finals} final · {fixtures.length} tracked
         </div>
       </div>
       <ol className="mt-3 grid gap-2 sm:grid-cols-5">
         {PROOF_LOOP_STAGES.map((stage, index) => (
-          <li key={stage.key} className="relative rounded-lg border border-white/[0.08] bg-white/[0.03] p-2.5">
+          <li key={stage.key} className="relative border border-white/[0.08] bg-white/[0.03] p-2.5">
             <div className="flex items-center gap-1.5">
               <span className="font-mono text-[9px] text-emerald-300/80">{index + 1}</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-white/75">{stage.label}</span>
@@ -725,14 +721,14 @@ export default function WorldCupClient() {
           {streamBadge && (
             <div
               data-testid="stream-badge"
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${streamBadge.color}`}
+              className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${streamBadge.color}`}
             >
               <streamBadge.icon size={12} />
               {streamBadge.label}
             </div>
           )}
           {status && (
-            <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${
+            <div className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${
               isReplayMode
                 ? 'border-amber-400/30 bg-amber-500/10 text-amber-200'
                 : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'
@@ -764,7 +760,7 @@ export default function WorldCupClient() {
         <ProofLoopStrip fixtures={fixtures} />
 
         {isReplayMode && (
-          <div className="rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-4 flex items-start gap-3">
+          <div className="border border-amber-400/30 bg-amber-500/[0.06] p-4 flex items-start gap-3">
             <AlertTriangle size={18} className="text-amber-300 mt-0.5 shrink-0" />
             <div className="text-sm text-amber-100/90">
               <strong className="font-semibold">Replay mode active.</strong>{' '}
@@ -776,7 +772,7 @@ export default function WorldCupClient() {
         )}
 
         {error && (
-          <div className="rounded-2xl border border-red-400/30 bg-red-500/[0.08] p-4 text-sm text-red-200">
+          <div className="border border-red-400/30 bg-red-500/[0.08] p-4 text-sm text-red-200">
             {error}
           </div>
         )}
@@ -788,11 +784,11 @@ export default function WorldCupClient() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse rounded-2xl border border-white/10 bg-white/[0.04] p-5 h-32" />
+              <div key={i} className="animate-pulse border border-white/10 bg-white/[0.04] p-5 h-32" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-12 text-center">
+          <div className="border border-white/10 bg-white/[0.03] p-12 text-center">
             <Activity size={32} className="mx-auto text-white/20 mb-3" />
             <div className="text-sm text-white/60">
               {fixtures.length === 0

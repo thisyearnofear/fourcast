@@ -186,7 +186,7 @@ export function ProofTheatre({ fixture, onClose }) {
             {/* 4. Immutable decision receipt */}
             <TheatreStage index="04" stage={stages[3]} color="var(--mc-sealed)">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`mc-stamp ${verdict === 'ALLOCATE' ? 'mc-stamp--allocate' : verdict === 'PASS' ? 'mc-stamp--pass' : 'mc-stamp--review'}`}>{verdict}</span>
+                <span className={`mc-stamp mc-seal-animate ${verdict === 'ALLOCATE' ? 'mc-stamp--allocate' : verdict === 'PASS' ? 'mc-stamp--pass' : 'mc-stamp--review'}`}>{verdict}</span>
                 {decision.allocationPct > 0 && <span className="font-mono text-[11px] text-white/70">{pct(decision.allocationPct)} of capital</span>}
               </div>
               <p className="mt-2 text-xs leading-5 text-white/70">{decision.rationale}</p>
@@ -196,7 +196,7 @@ export function ProofTheatre({ fixture, onClose }) {
               </div>
               <div className="mt-2 flex items-center gap-2 font-mono text-[10px] text-white/55">
                 <Fingerprint className="h-3 w-3 text-[var(--mc-reconciled)]/70" />
-                <span className="break-all">{integrity.contentHash || recIntegrity.receiptHash || '—'}</span>
+                <span className="break-all mc-seal-animate">{integrity.contentHash || recIntegrity.receiptHash || '—'}</span>
               </div>
             </TheatreStage>
 
@@ -208,7 +208,7 @@ export function ProofTheatre({ fixture, onClose }) {
               </div>
               <div className="mt-2 flex items-center gap-2">
                 <span
-                  className="mc-stamp"
+                  className={`mc-stamp ${(verification.verdict === 'verified' || verification.verdict === 'proof-present') ? 'mc-signal-animate' : ''}`}
                   style={{
                     color: verification.verdict === 'verified' || verification.verdict === 'proof-present' ? 'var(--mc-reconciled)' : verification.verdict?.includes('error') ? 'var(--mc-breach)' : 'var(--mc-sealed)',
                     background: verification.verdict === 'verified' || verification.verdict === 'proof-present' ? 'rgba(121,245,183,0.08)' : 'rgba(245,197,107,0.08)',
@@ -226,7 +226,7 @@ export function ProofTheatre({ fixture, onClose }) {
                 <ul className="mt-2 space-y-1">
                   {verification.checks.map((c) => (
                     <li key={c.name} className="flex items-start gap-2 font-mono text-[10px]">
-                      <span className={`mt-0.5 inline-block h-1.5 w-1.5 rounded-full ${c.ok === true ? 'bg-[var(--mc-reconciled)]' : c.ok === false ? 'bg-[var(--mc-breach)]' : 'bg-white/30'}`} />
+                      <span className={`mt-0.5 inline-block h-1.5 w-1.5 ${c.ok === true ? 'bg-[var(--mc-reconciled)]' : c.ok === false ? 'bg-[var(--mc-breach)]' : 'bg-white/30'}`} />
                       <span className="text-white/70">{c.name}</span>
                       {c.detail && <span className="text-white/40"> — {c.detail}</span>}
                     </li>
@@ -237,6 +237,7 @@ export function ProofTheatre({ fixture, onClose }) {
 
             {/* 6. Reconciliation */}
             <TheatreStage index="06" stage={stages[5]} color={reconciled ? 'var(--mc-reconciled)' : 'var(--mc-sealed)'} last>
+              {reconciled && <div className="mc-proof-flash mb-2" />}
               <div className="grid grid-cols-2 gap-px border border-[var(--mc-rule)] bg-[var(--mc-rule)] sm:grid-cols-4">
                 <TheatreMetric label="Outcome" value={outcome.homeScore != null ? `${outcome.homeScore}–${outcome.awayScore}` : 'pending'} />
                 <TheatreMetric label="Reconciliation" value={(reconciliation.status || 'pending').replace(/_/g, ' ')} accent={reconciled} />

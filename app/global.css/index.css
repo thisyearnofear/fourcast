@@ -106,11 +106,12 @@ body {
   opacity: .48;
 }
 
+/* Operator header — squared hairline strip, no glass blur.
+   Flight-recorder chrome: dense, technical, no rounded-card stacking. */
 .operator-header {
-  border: 1px solid var(--border);
-  background: rgba(8, 11, 11, .84);
-  box-shadow: 0 14px 44px rgba(0, 0, 0, .23), inset 0 1px 0 rgba(255,255,255,.035);
-  backdrop-filter: blur(18px);
+  border: 1px solid var(--mc-rule);
+  background: var(--mc-panel);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .28);
 }
 
 .fc-display { letter-spacing: -.055em; }
@@ -192,107 +193,87 @@ html {
   /* Dynamic viewport height for mobile */
 }
 
-/* Glassmorphism Components - DRY consolidation */
+/* Glassmorphism Components — DEPRECATED. Aliased to mc-* squared panels.
+   The flight-recorder aesthetic uses hairline borders and solid backgrounds,
+   not backdrop-blur. These aliases keep existing components rendering without
+   a hard break while they migrate to mc-* classes directly. */
 @layer components {
-  /* Base glass surface with blur and border */
   .glass-surface {
-    @apply backdrop-blur-xl border transition-all duration-300;
+    border: 1px solid var(--mc-rule);
+    background: var(--mc-panel);
+    transition: border-color 0.18s ease, background 0.18s ease;
   }
-  
-  /* Heavy glass for modals, panels, overlays */
-  .glass-heavy {
-    @apply glass-surface;
-    @apply bg-black/40 border-white/10;
-  }
-  
-  /* Subtle glass for nav, cards, buttons */
-  .glass-subtle {
-    @apply glass-surface;
-    @apply bg-white/10 border-white/20;
-  }
-  
-  /* Light theme variants (applied when not using dark mode) */
-  .glass-heavy-light {
-    @apply glass-surface;
-    @apply bg-white/40 border-black/10;
-  }
-  
-  .glass-subtle-light {
-    @apply glass-surface;
-    @apply bg-black/10 border-black/20;
-  }
-  
-  /* Input glass styling */
+  .glass-heavy { @apply glass-surface; }
+  .glass-subtle { @apply glass-surface; }
+  .glass-heavy-light { @apply glass-surface; }
+  .glass-subtle-light { @apply glass-surface; }
   .glass-input {
-    @apply backdrop-blur-md border rounded-lg px-4 py-2;
-    @apply bg-white/5 border-white/10;
+    border: 1px solid var(--mc-rule);
+    background: var(--mc-panel);
+    padding: 0.5rem 1rem;
+    color: var(--ink);
+    transition: border-color 0.18s ease;
   }
-  
-  .glass-input-light {
-    @apply backdrop-blur-md border rounded-lg px-4 py-2;
-    @apply bg-black/5 border-black/10;
-  }
+  .glass-input:focus { border-color: var(--mc-reconciled); outline: none; }
+  .glass-input-light { @apply glass-input; }
 
-  /* Button utilities - DRY consolidation */
+  /* Button utilities — aliased to mc-action (squared, no rounded-2xl). */
   .btn-base {
-    @apply font-light text-sm transition-all border rounded-2xl;
-    @apply active:scale-[0.97];
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    border: 1px solid var(--mc-rule-strong);
+    background: transparent;
+    color: var(--ink);
+    padding: 0.6rem 1rem;
+    font: 600 12px/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    cursor: pointer;
   }
+  .btn-base:active { transform: scale(0.97); }
+  .btn-sm { padding: 0.4rem 0.75rem; font-size: 11px; }
+  .btn-md { padding: 0.6rem 1rem; }
 
-  .btn-sm {
-    @apply px-3 py-1.5 text-xs;
-  }
-
-  .btn-md {
-    @apply px-6 py-3 text-sm;
-  }
-
-  /* Primary action button (blue) */
   .btn-primary {
-    @apply btn-base btn-md;
-    @apply bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30;
+    @apply btn-base;
+    border-color: rgba(91, 156, 255, 0.4);
+    color: var(--mc-evidence);
+    background: rgba(91, 156, 255, 0.06);
   }
+  .btn-primary:hover { background: rgba(91, 156, 255, 0.12); border-color: var(--mc-evidence); }
+  .btn-primary-light { @apply btn-primary; }
 
-  .btn-primary-light {
-    @apply btn-base btn-md;
-    @apply bg-blue-400/20 hover:bg-blue-400/30 text-blue-800 border-blue-500/30;
-  }
-
-  /* Success action button (green) */
   .btn-success {
-    @apply btn-base btn-md;
-    @apply bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30;
+    @apply btn-base;
+    border-color: rgba(121, 245, 183, 0.4);
+    color: var(--mc-reconciled);
+    background: rgba(121, 245, 183, 0.06);
   }
+  .btn-success:hover { background: rgba(121, 245, 183, 0.12); border-color: var(--mc-reconciled); }
+  .btn-success-light { @apply btn-success; }
 
-  .btn-success-light {
-    @apply btn-base btn-md;
-    @apply bg-green-400/20 hover:bg-green-400/30 text-green-800 border-green-500/30;
-  }
-
-  /* Primary / premium actions — emerald, not purple */
   .btn-gradient {
-    @apply btn-base btn-md;
-    @apply bg-gradient-to-r from-emerald-500/20 to-teal-500/20;
-    @apply hover:from-emerald-500/30 hover:to-teal-500/30;
-    @apply text-emerald-100 border-emerald-400/30;
+    @apply btn-success;
   }
+  .btn-gradient-light { @apply btn-success; }
 
-  .btn-gradient-light {
-    @apply btn-base btn-md;
-    @apply bg-gradient-to-r from-emerald-400/20 to-teal-400/20;
-    @apply hover:from-emerald-400/30 hover:to-teal-400/30;
-    @apply text-emerald-900 border-emerald-500/30;
-  }
-
-  /* Tab button */
   .btn-tab {
-    @apply px-4 py-2 rounded-full text-sm font-light whitespace-nowrap transition-all;
+    padding: 0.4rem 1rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: rgba(243, 240, 231, 0.55);
+    font: 600 11px/1 var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    white-space: nowrap;
+    cursor: pointer;
   }
+  .btn-tab:hover { color: var(--ink); border-color: var(--mc-rule); }
 
-  /* Toggle button group */
   .btn-toggle {
     @apply btn-base btn-sm;
-    @apply bg-white/10 border-white/20;
+    border-color: var(--mc-rule);
   }
 }
 
@@ -653,6 +634,107 @@ code {
     background: rgba(121, 245, 183, 0.12);
     box-shadow: 0 0 0 1px rgba(121, 245, 183, 0.25);
   }
+
+  /* Nav link — squared, hairline, no rounded pill. */
+  .mc-nav-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: rgba(243, 240, 231, 0.55);
+    font: 500 11px/1 var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  }
+  .mc-nav-link:hover {
+    color: var(--ink);
+    border-color: var(--mc-rule);
+  }
+  .mc-nav-link.is-active {
+    color: var(--mc-reconciled);
+    border-color: rgba(121, 245, 183, 0.3);
+    background: rgba(121, 245, 183, 0.05);
+  }
+
+  /* Input — squared, hairline, no rounded-lg. */
+  .mc-input {
+    border: 1px solid var(--mc-rule);
+    background: var(--mc-panel);
+    padding: 0.5rem 0.75rem;
+    color: var(--ink);
+    font: 400 13px/1.4 var(--font-sans);
+    transition: border-color 0.18s ease;
+  }
+  .mc-input:focus { border-color: var(--mc-reconciled); outline: none; }
+  .mc-input::placeholder { color: rgba(243, 240, 231, 0.35); }
+
+  /* Card — squared panel with hover accent, no rounded-xl. */
+  .mc-card {
+    border: 1px solid var(--mc-rule);
+    background: var(--mc-panel);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .mc-card:hover {
+    border-color: var(--mc-rule-strong);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Tab strip — squared, hairline, no rounded-full pills. */
+  .mc-tab-strip {
+    display: inline-flex;
+    border: 1px solid var(--mc-rule);
+    background: var(--mc-panel);
+    padding: 2px;
+  }
+  .mc-tab {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: rgba(243, 240, 231, 0.55);
+    font: 600 11px/1 var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    cursor: pointer;
+  }
+  .mc-tab:hover { color: var(--ink); }
+  .mc-tab.is-active {
+    color: var(--mc-reconciled);
+    border-color: rgba(121, 245, 183, 0.3);
+    background: rgba(121, 245, 183, 0.06);
+  }
+
+  /* Departure-board row — dense monospace list item, no rounded card. */
+  .mc-board-row {
+    display: grid;
+    align-items: center;
+    border-bottom: 1px solid var(--mc-rule);
+    padding: 0.6rem 0.8rem;
+    font: 500 11px/1.4 var(--font-mono);
+    letter-spacing: 0.04em;
+    transition: background 0.15s ease;
+  }
+  .mc-board-row:hover { background: var(--mc-panel-ink); }
+  .mc-board-row:last-child { border-bottom: 0; }
+
+  /* Status badge — squared, mono, no rounded-full. */
+  .mc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid currentColor;
+    padding: 0.2rem 0.5rem;
+    font: 700 9px/1 var(--font-mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .mc-badge--live { color: var(--mc-reconciled); background: rgba(121, 245, 183, 0.08); }
+  .mc-badge--sealed { color: var(--mc-sealed); background: rgba(245, 197, 107, 0.08); }
+  .mc-badge--breach { color: var(--mc-breach); background: rgba(255, 122, 111, 0.08); }
+  .mc-badge--review { color: var(--mc-review); background: rgba(196, 181, 253, 0.08); }
 }
 
 /* Replay pulse — the one calm animated detail. The timeline visibly
@@ -666,6 +748,44 @@ code {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
+
+/* ═══ Flight-recorder motion patterns ═══ */
+
+/* Radar sweep — the worker lamp sweeps like an ATC scope. */
+@keyframes mc-radar-sweep {
+  0% { box-shadow: 0 0 0 3px rgba(255,255,255,0.02), 0 0 8px rgba(121,245,183,0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(121,245,183,0.06), 0 0 20px rgba(121,245,183,0.7); }
+  100% { box-shadow: 0 0 0 3px rgba(255,255,255,0.02), 0 0 8px rgba(121,245,183,0.3); }
+}
+.mc-lamp--radar { animation: mc-radar-sweep 2.4s ease-in-out infinite; }
+
+/* Proof crossing — the moment a receipt transitions from "outcome withheld"
+   to "proof available". A brief flash that travels left-to-right. */
+@keyframes mc-proof-crossing {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+.mc-proof-flash {
+  background: linear-gradient(90deg, transparent 0%, rgba(121,245,183,0.15) 50%, transparent 100%);
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  animation: mc-proof-crossing 0.8s ease-out;
+}
+
+/* Receipt seal — a brief lock flash when the SHA-256 hash is computed. */
+@keyframes mc-seal-flash {
+  0% { box-shadow: 0 0 0 0 rgba(245,197,107,0); border-color: var(--mc-rule); }
+  30% { box-shadow: 0 0 0 4px rgba(245,197,107,0.2), 0 0 20px rgba(245,197,107,0.5); border-color: var(--mc-sealed); }
+  100% { box-shadow: 0 0 0 0 rgba(245,197,107,0); border-color: var(--mc-rule); }
+}
+.mc-seal-animate { animation: mc-seal-flash 0.6s ease-out; }
+
+/* Signal handshake — the CPI call between Solana programs. */
+@keyframes mc-signal-pulse {
+  0%, 100% { opacity: 0.4; transform: scaleX(1); }
+  50% { opacity: 1; transform: scaleX(1.02); }
+}
+.mc-signal-animate { animation: mc-signal-pulse 1.2s ease-in-out; }
 
 .mc-timeline-track {
   position: relative;

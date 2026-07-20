@@ -186,7 +186,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
   if (!proof?.statToProve) return null;
 
   return (
-    <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/[0.06] p-4 space-y-3">
+    <div className="border border-emerald-400/30 bg-emerald-500/[0.06] p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold text-emerald-200">
           <Shield size={14} />
@@ -208,7 +208,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
       </div>
 
       {/* Match result from the proof */}
-      <div className="rounded-lg bg-black/30 border border-white/10 p-2.5 text-[11px] space-y-1">
+      <div className="bg-black/30 border border-white/10 p-2.5 text-[11px] space-y-1">
         <div className="flex items-center justify-between">
           <span className="text-white/50">Verified result:</span>
           <span className="font-mono text-emerald-300">
@@ -238,7 +238,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
       {!walletConnected ? (
         <button
           onClick={connectWallet}
-          className="w-full rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-xs font-medium py-2 hover:bg-emerald-500/30 transition-colors"
+          className="w-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-xs font-medium py-2 hover:bg-emerald-500/30 transition-colors"
         >
           Connect Solana Wallet
         </button>
@@ -255,7 +255,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
           <div className="flex gap-2">
             <button
               onClick={() => setSide('home')}
-              className={`flex-1 rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-colors ${
+              className={`flex-1 border px-2 py-1.5 text-[11px] font-medium transition-colors ${
                 side === 'home'
                   ? 'border-emerald-400/50 bg-emerald-500/20 text-emerald-200'
                   : 'border-white/15 bg-white/[0.04] text-white/60'
@@ -265,7 +265,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
             </button>
             <button
               onClick={() => setSide('away')}
-              className={`flex-1 rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-colors ${
+              className={`flex-1 border px-2 py-1.5 text-[11px] font-medium transition-colors ${
                 side === 'away'
                   ? 'border-emerald-400/50 bg-emerald-500/20 text-emerald-200'
                   : 'border-white/15 bg-white/[0.04] text-white/60'
@@ -281,7 +281,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
               min="0.01"
               value={amountSol}
               onChange={e => setAmountSol(e.target.value)}
-              className="flex-1 rounded-lg bg-black/30 border border-white/15 px-2 py-1.5 text-[11px] text-white/80 font-mono"
+              className="flex-1 bg-black/30 border border-white/15 px-2 py-1.5 text-[11px] text-white/80 font-mono"
               placeholder="SOL amount"
             />
             <span className="text-[11px] text-white/50">SOL</span>
@@ -289,7 +289,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
           <button
             onClick={createPolicy}
             disabled={loading}
-            className="w-full rounded-lg bg-emerald-500/30 border border-emerald-400/40 text-emerald-100 text-xs font-semibold py-2 hover:bg-emerald-500/40 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+            className="w-full bg-emerald-500/30 border border-emerald-400/40 text-emerald-100 text-xs font-semibold py-2 hover:bg-emerald-500/40 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Lock size={12} />}
             Lock {amountSol} SOL on {side === 'home' ? homeTeam : awayTeam}
@@ -300,7 +300,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
       {/* Policy state + settle */}
       {policyState && (
         <div className="space-y-2">
-          <div className="rounded-lg bg-black/30 border border-white/10 p-2.5 text-[11px] space-y-1">
+          <div className="bg-black/30 border border-white/10 p-2.5 text-[11px] space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-white/50">Policy PDA:</span>
               <span className="font-mono text-white/70 text-[10px]">{policyState.locker?.slice(0, 8)}...</span>
@@ -327,7 +327,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
             <button
               onClick={settlePolicy}
               disabled={loading}
-              className="w-full rounded-lg bg-emerald-500/30 border border-emerald-400/40 text-emerald-100 text-xs font-semibold py-2 hover:bg-emerald-500/40 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+              className="w-full bg-emerald-500/30 border border-emerald-400/40 text-emerald-100 text-xs font-semibold py-2 hover:bg-emerald-500/40 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
             >
               {loading ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
               Settle on-chain (CPI validate_stat)
@@ -335,7 +335,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
           )}
 
           {policyState.settled && (
-            <div className="rounded-lg bg-emerald-500/15 border border-emerald-400/30 p-2.5 text-[11px] text-emerald-200 inline-flex items-center gap-1.5 w-full">
+            <div className="bg-emerald-500/15 border border-emerald-400/30 p-2.5 text-[11px] text-emerald-200 inline-flex items-center gap-1.5 w-full">
               <CheckCircle2 size={14} />
               Settled trustlessly via TxLINE Merkle proof
             </div>
@@ -349,14 +349,14 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
           href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`}
           target="_blank"
           rel="noopener noreferrer"
-          className="block rounded-lg bg-black/30 border border-emerald-400/20 p-2 text-[10px] text-emerald-300/80 hover:text-emerald-200 font-mono truncate inline-flex items-center gap-1"
+          className="block bg-black/30 border border-emerald-400/20 p-2 text-[10px] text-emerald-300/80 hover:text-emerald-200 font-mono truncate inline-flex items-center gap-1"
         >
           <ExternalLink size={10} /> {txSig.slice(0, 20)}...
         </a>
       )}
 
       {error && (
-        <div className="rounded-lg bg-red-500/10 border border-red-400/20 p-2 text-[10px] text-red-300 inline-flex items-center gap-1.5 w-full">
+        <div className="bg-red-500/10 border border-red-400/20 p-2 text-[10px] text-red-300 inline-flex items-center gap-1.5 w-full">
           <AlertTriangle size={12} /> {error.slice(0, 120)}
         </div>
       )}
