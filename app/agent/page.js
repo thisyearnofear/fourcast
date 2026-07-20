@@ -22,7 +22,7 @@ export default function AgentPage() {
       <MandateControl />
 
       {/* Operator controls — demoted. The manual runner is a capability, not the hero. */}
-      <section className="mt-6 mc-panel" aria-label="Operator controls — manual investigation">
+      <section className="platform-open-section mt-10" aria-label="Operator controls — manual investigation">
         <button
           type="button"
           onClick={() => setOperatorOpen((v) => !v)}
@@ -36,7 +36,7 @@ export default function AgentPage() {
           <ChevronDown className={`h-4 w-4 text-white/45 transition-transform ${operatorOpen ? 'rotate-180' : ''}`} />
         </button>
         {operatorOpen && (
-          <div className="border-t border-[var(--mc-rule)] p-4 sm:p-5">
+          <div className="border-t border-[var(--mc-rule)] px-4 py-5 sm:px-5">
             <p className="mb-4 text-xs leading-5 text-white/45">
               The manual runner scans markets on demand. It is a capability for investigation, not the autonomous mandate above — every manual run still produces a hash-bound receipt in the ledger below.
             </p>
@@ -46,10 +46,10 @@ export default function AgentPage() {
       </section>
 
       {/* Canonical supporting surfaces — kept, not duplicated. */}
-      <div className="mt-6">
+      <div className="platform-open-section mt-10">
         <HistoricalLabPanel />
       </div>
-      <div className="mt-6">
+      <div className="platform-open-section mt-10">
         <AgentRunLedger />
       </div>
 

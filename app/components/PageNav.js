@@ -54,9 +54,9 @@ export default function PageNav() {
   const isActive = useIsActive();
 
   return (
-    <nav className="flex items-center gap-0.5" aria-label="Primary navigation">
+    <nav className="platform-nav flex min-w-0 items-center gap-0.5" aria-label="Primary navigation">
       {/* Desktop */}
-      <div className="hidden sm:flex items-center gap-0.5">
+      <div className="hidden md:flex items-center gap-0.5">
         {PRIMARY_NAV.map((item) => (
           <Link
             key={item.name}
@@ -82,8 +82,8 @@ export default function PageNav() {
       </div>
 
       {/* Mobile: compact labels */}
-      <div className="flex sm:hidden items-center gap-0.5">
-        {[...PRIMARY_NAV, ...SECONDARY_NAV].map((item) => (
+      <div className="flex min-w-0 items-center gap-0.5 md:hidden">
+        {PRIMARY_NAV.slice(0, 3).map((item) => (
           <Link
             key={item.name}
             href={item.href}
@@ -136,31 +136,32 @@ export function HomeLink({ showLabel = true }) {
  */
 export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-w-7xl", wallet = true, children }) {
   return (
-    <div className="flex min-h-screen flex-col text-white">
+    <div className="platform-shell flex min-h-screen flex-col text-white">
+      <div className="platform-atmosphere" aria-hidden="true" />
       {/* Header always spans the full app width so nav never cramps on
           narrow-content pages; only <main> respects maxWidth. */}
-      <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6">
-        <header className="operator-header sticky top-4 z-50 flex items-center justify-between gap-4 px-3 py-2.5">
+      <div className="platform-frame mx-auto w-full max-w-7xl px-4 pt-3 sm:px-6 sm:pt-4">
+        <header className="operator-header platform-header sticky top-3 z-50 flex items-center justify-between gap-4 px-3 py-2.5 sm:top-4">
           <HomeLink />
           <div className="flex items-center gap-2">
             <PageNav />
             <OperatorPulse compact className="hidden xl:flex" />
-            <StatusBadge />
-            {wallet && <WalletConnect />}
+            <div className="hidden sm:block"><StatusBadge /></div>
+            {wallet && <div className="platform-wallet"><WalletConnect /></div>}
           </div>
         </header>
       </div>
 
-      <div className={`${maxWidth} mx-auto w-full px-4 sm:px-6`}>
+      <div className={`${maxWidth} platform-stage mx-auto w-full px-4 sm:px-6`}>
         {(title || subtitle || actions || subheader) && (
-          <div className="pt-8 pb-2">
+          <div className="platform-page-head pb-4 pt-10 sm:pt-14">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
                 {title && (
-                  <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{title}</h1>
+                  <h1 className="fc-display max-w-3xl font-display text-3xl font-semibold leading-[1.02] text-[var(--color-ink)] sm:text-5xl">{title}</h1>
                 )}
                 {subtitle && (
-                  <p className="mt-2 max-w-xl text-sm font-light leading-6 text-white/[0.55]">{subtitle}</p>
+                  <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--color-ink-muted)] sm:text-base sm:leading-7">{subtitle}</p>
                 )}
               </div>
               {actions && <div className="flex items-center gap-2">{actions}</div>}
@@ -170,7 +171,7 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
         )}
       </div>
 
-      <main className={`${maxWidth} mx-auto w-full flex-1 px-4 py-8 sm:px-6`}>
+      <main className={`${maxWidth} platform-main platform-stage mx-auto w-full flex-1 px-4 pb-16 pt-5 sm:px-6 sm:pb-24`}>
         {children}
       </main>
     </div>

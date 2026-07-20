@@ -15,16 +15,16 @@ export default function PositionsPage() {
       subheader={<NarrativeSteps currentStep="scored" />}
     >
       {/* Hero — allocator diligence, not a portfolio dashboard. */}
-      <div className="mb-6">
+      <div className="mb-10">
         <MandatePanel />
       </div>
 
       {/* Secondary — positions/P&L demoted. Reputation through behaviour leads. */}
-      <section className="mt-6 mc-panel" aria-label="Positions and P&L">
+      <section className="platform-open-section mt-10" aria-label="Positions and P&L">
         <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
           <span className="mc-kicker">Positions & P&L · secondary to adherence</span>
         </div>
-        <div className="p-4 sm:p-5">
+        <div className="px-1 py-5 sm:px-3">
           <PositionsDashboard />
         </div>
       </section>

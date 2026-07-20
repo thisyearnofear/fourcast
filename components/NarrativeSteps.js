@@ -23,15 +23,14 @@ export default function NarrativeSteps({ currentStep, isNight = false, className
 
  const currentIdx = steps.findIndex(s => s.id === currentStep);
 
- const textColor = 'text-white';
  const activeBg = 'bg-emerald-500/20 border-emerald-400/40 text-emerald-100';
- const inactiveBg = 'bg-white/5 border-white/10 text-white/40';
- const doneBg = 'bg-emerald-500/15 border-emerald-400/25 text-emerald-300';
+ const inactiveBg = 'border-transparent text-white/40';
+ const doneBg = 'border-transparent text-emerald-300';
  const lineColor = 'bg-white/10';
  const doneLineColor = 'bg-emerald-500/30';
 
  return (
- <div className={`flex items-center gap-0 ${className}`} aria-label="Navigation steps">
+ <div className={`narrative-rail flex items-center gap-0 ${className}`} aria-label="Navigation steps">
  {steps.map((step, i) => {
  const isDone = i < currentIdx;
  const isCurrent = i === currentIdx;
@@ -42,9 +41,8 @@ export default function NarrativeSteps({ currentStep, isNight = false, className
  <div
  className={`
  flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium
- border transition-all whitespace-nowrap
+ border transition-colors whitespace-nowrap
  ${isCurrent ? activeBg : isDone ? doneBg : inactiveBg}
- ${isCurrent ? 'shadow-sm shadow-emerald-500/15' : ''}
  `}
  >
  <span className={`font-mono text-[10px] ${isCurrent ? '' : 'opacity-70'}`}>{step.icon}</span>

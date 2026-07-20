@@ -91,7 +91,7 @@ export function PositionsDashboard({ isNight = false }) {
   const hasMore = visibleCount < positions.length;
 
   return (
-    <div className="space-y-6">
+    <div className="positions-workbench space-y-7">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -106,7 +106,7 @@ export function PositionsDashboard({ isNight = false }) {
         <button
           onClick={fetchPositions}
           disabled={loading}
-          className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-white/10 hover:bg-white/20 text-white border-white/20 disabled:opacity-40`}
+          className="flex-shrink-0 border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Refresh positions"
         >
           {loading ? '⟳' : '↻'}
@@ -114,7 +114,7 @@ export function PositionsDashboard({ isNight = false }) {
       </div>
       {/* Summary Cards */}
       {summary && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="evidence-strip grid grid-cols-2 gap-px bg-white/10 sm:grid-cols-4">
           <StatCard label="Total" value={summary.total} isNight={isNight} />
           <StatCard label="Open" value={summary.open} isNight={isNight} accent={summary.open > 0} />
           <StatCard label="Closed" value={summary.closed} isNight={isNight} />
@@ -132,7 +132,7 @@ export function PositionsDashboard({ isNight = false }) {
           <button
             key={f}
             onClick={() => setSelectedFilter(f)}
-            className={`px-4 py-1.5 text-xs font-medium transition-all ${
+            className={`px-4 py-1.5 text-xs font-medium transition-colors ${
               selectedFilter === f
                 ? 'bg-white/20 text-white border border-white/20'
                 : `${subtleText} hover:opacity-80`
@@ -184,8 +184,8 @@ export function PositionsDashboard({ isNight = false }) {
       )}
       {/* Position Cards */}
       {!loading && visiblePositions.length > 0 && (
-        <div className="space-y-3">
-          <h3 className={`text-sm font-medium ${textColor}`}>
+        <div className="position-ledger border-t border-white/15">
+          <h3 className={`border-b border-white/10 py-3 text-sm font-medium ${textColor}`}>
             {selectedFilter === 'OPEN' ? 'Open' : selectedFilter === 'CLOSED' ? 'Closed' : 'All'} Positions ({positions.length})
           </h3>
           {visiblePositions.map((pos, i) => (
@@ -203,7 +203,7 @@ export function PositionsDashboard({ isNight = false }) {
           {hasMore && (
             <button
               onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
-              className={`w-full py-2.5 text-sm font-medium transition-all border bg-white/5 hover:bg-white/10 text-white/70 border-white/10`}
+              className="w-full border border-white/10 bg-white/5 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10"
             >
               Show More ({positions.length - visibleCount} remaining)
             </button>
@@ -260,7 +260,7 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
       : textColor;
 
   return (
-    <div className={`fc-position-record p-4 ${
+    <article className={`position-record border-b border-white/10 px-1 py-5 sm:px-3 ${
       isOpen
         ? 'border-cyan-500/20'
         : isProfitable
@@ -344,7 +344,7 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
             <button
               onClick={onClose}
               disabled={closing}
-              className={`px-3 py-1 text-xs font-medium transition-all border bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30 disabled:opacity-40`}
+              className="border border-red-500/30 bg-red-500/20 px-3 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {closing ? '⟳' : 'Close'}
             </button>
@@ -356,7 +356,7 @@ function PositionCard({ position, isNight, textColor, subtleText, onClose, closi
         <span className={position.receipt_tx_hash ? 'is-complete' : ''}>Arc receipt</span>
         <span className={isOpen ? '' : 'is-complete'}>{isOpen ? 'Position open' : 'Outcome reconciled'}</span>
       </div>
-    </div>
+    </article>
   );
 }
 

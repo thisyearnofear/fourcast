@@ -38,8 +38,8 @@ export function MandatePanel() {
   const mandate = useMemo(() => deriveMandate(runs), [runs]);
 
   return (
-    <section className="border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(0,0,0,0.25))] p-1" aria-labelledby="mandate-heading">
-      <div className="border border-white/[0.07] bg-black/30 p-4 sm:p-5">
+    <section className="platform-workbench px-4 py-6 sm:px-6 sm:py-8" aria-labelledby="mandate-heading">
+      <div>
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-200/80">
@@ -67,7 +67,7 @@ export function MandatePanel() {
 
         {mandate.hasReceipts && (
           <>
-            <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-4">
+            <div className="evidence-strip mt-6 grid grid-cols-2 gap-px overflow-hidden bg-white/10 sm:grid-cols-4">
               <MandateMetric label="Verified receipts" value={`${mandate.receiptBacked}/${mandate.totalRuns}`} detail="runs carrying a hash-bound receipt" />
               <MandateMetric label="Policy adherence" value={`${mandate.adherencePct}%`} detail="decisions the policy gate settled" accent={mandate.adherencePct === 100} />
               <MandateMetric label="Discipline rate" value={`${mandate.disciplinePct}%`} detail="PASS or REVIEW over ALLOCATE" />
@@ -75,7 +75,7 @@ export function MandatePanel() {
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="border border-white/[0.08] bg-black/25 p-3">
+              <div className="border-t border-white/[0.12] p-3">
                 <p className="font-mono text-[9px] uppercase tracking-wider text-white/40">Stated policy</p>
                 {mandate.policy ? (
                   <ul className="mt-2 space-y-1 font-mono text-[11px] text-white/65">
@@ -88,7 +88,7 @@ export function MandatePanel() {
                   <p className="mt-2 text-[11px] text-white/40">Policy version unavailable on these receipts.</p>
                 )}
               </div>
-              <div className="border border-white/[0.08] bg-black/25 p-3">
+              <div className="border-t border-white/[0.12] p-3">
                 <p className="font-mono text-[9px] uppercase tracking-wider text-white/40">Verdict mix</p>
                 <div className="mt-2 flex h-2 overflow-hidden bg-white/10">
                   {mandate.mix.allocate > 0 && <div className="bg-emerald-400/70" style={{ width: `${(mandate.mix.allocate / mandate.totalDecisions) * 100}%` }} />}

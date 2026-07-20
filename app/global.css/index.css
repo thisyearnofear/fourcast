@@ -1,31 +1,32 @@
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 · genre: modern-minimal · macrostructure: Workbench · design-system: design.md · designed-as-app */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --app-bg: #080b0b;
-  --ink: #f3f0e7;
-  --muted: rgba(243, 240, 231, 0.55);
-  --accent: #79f5b7;
-  --accent-dim: rgba(121, 245, 183, 0.12);
-  --surface: #101513;
-  --border: rgba(243, 240, 231, 0.13);
-  --signal-red: #ff7a6f;
-  --signal-amber: #f5c56b;
-  --panel-deep: #0c100f;
+  --app-bg: var(--color-paper);
+  --ink: var(--color-ink);
+  --muted: var(--color-ink-muted);
+  --accent: var(--color-accent);
+  --accent-dim: var(--color-accent-soft);
+  --surface: var(--color-paper-raised);
+  --border: var(--color-rule);
+  --signal-red: var(--color-breach);
+  --signal-amber: var(--color-sealed);
+  --panel-deep: var(--color-paper-deep);
 
   /* Mandate Control — technical field dossier palette.
      One vivid semantic colour per decision state. Hairline grids and
      document-rule dividers replace rounded-card-on-rounded-card. */
-  --mc-sealed: #f5c56b;       /* amber  — sealed / pre-outcome */
-  --mc-evidence: #5b9cff;     /* electric blue — evidence / simulation */
-  --mc-reconciled: #79f5b7;   /* green  — reconciled (alias of --accent) */
-  --mc-breach: #ff7a6f;       /* red    — policy breach / hash mismatch */
-  --mc-review: #c4b5fd;       /* violet — review / awaiting input */
-  --mc-rule: rgba(243, 240, 231, 0.13);
-  --mc-rule-strong: rgba(243, 240, 231, 0.22);
-  --mc-panel: #0a0e0d;
-  --mc-panel-ink: rgba(243, 240, 231, 0.04);
+  --mc-sealed: var(--color-sealed);
+  --mc-evidence: var(--color-evidence);
+  --mc-reconciled: var(--color-accent);
+  --mc-breach: var(--color-breach);
+  --mc-review: var(--color-review);
+  --mc-rule: var(--color-rule);
+  --mc-rule-strong: var(--color-rule-strong);
+  --mc-panel: var(--color-paper-raised);
+  --mc-panel-ink: var(--color-wash);
 }
 
 /* Tailwind doesn't include gradient-radial by default */
@@ -74,12 +75,29 @@
   box-sizing: border-box;
 }
 
+h1, h2, h3, .fc-display {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:where(button, a, [role='button']):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button:active:not(:disabled) { transform: scale(0.98); }
+
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at 76% -10%, rgba(121, 245, 183, 0.09), transparent 26rem),
-    radial-gradient(circle at 5% 36%, rgba(245, 197, 107, 0.035), transparent 26rem),
+    radial-gradient(circle at 78% -12%, var(--color-accent-atmosphere), transparent 34rem),
+    radial-gradient(circle at 2% 38%, var(--color-sealed-atmosphere), transparent 30rem),
     var(--app-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -109,9 +127,10 @@ body {
 /* Operator header — squared hairline strip, no glass blur.
    Flight-recorder chrome: dense, technical, no rounded-card stacking. */
 .operator-header {
-  border: 1px solid var(--mc-rule);
-  background: var(--mc-panel);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, .28);
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper-glass);
+  box-shadow: 0 16px 50px var(--color-shadow);
+  backdrop-filter: blur(18px) saturate(120%);
 }
 
 .fc-display { letter-spacing: -.055em; }
@@ -186,6 +205,99 @@ html {
   height: 100dvh;
   /* Dynamic viewport height for mobile */
   background: var(--app-bg); /* fallback behind canvas */
+  overflow-x: clip;
+}
+
+body { overflow-x: clip; }
+
+/* Platform workbench — open evidence canvas rather than stacked cards. */
+.platform-shell { isolation: isolate; position: relative; }
+.platform-frame, .platform-stage { position: relative; z-index: 2; }
+.platform-atmosphere {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, transparent calc(100% - 1px), var(--color-grid) 0),
+    linear-gradient(180deg, transparent calc(100% - 1px), var(--color-grid) 0);
+  background-size: clamp(4.5rem, 8vw, 8rem) clamp(4.5rem, 8vw, 8rem);
+  mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 88%);
+}
+.platform-page-head {
+  border-bottom: 1px solid var(--color-rule);
+  animation: workbench-enter var(--dur-explain) var(--ease-out) both;
+}
+.platform-main > * {
+  animation: workbench-enter var(--dur-explain) var(--ease-out) 60ms both;
+}
+.platform-footer {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--color-rule);
+  background: var(--color-paper-footer);
+}
+.platform-workbench {
+  border-block: 1px solid var(--color-rule-strong);
+  background: linear-gradient(90deg, var(--color-accent-quiet), transparent 36%);
+}
+.platform-open-section {
+  border-top: 1px solid var(--color-rule);
+  padding-block: var(--space-md);
+}
+.evidence-strip {
+  border-block: 1px solid var(--color-rule);
+  background: var(--color-wash-soft);
+}
+.fixture-record, .position-record {
+  position: relative;
+  transition: background var(--dur-state) linear, transform var(--dur-state) var(--ease-out);
+}
+.fixture-record::before, .position-record::before {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 2px;
+  background: var(--color-accent);
+  content: '';
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition: opacity var(--dur-state) linear, transform var(--dur-state) var(--ease-out);
+}
+.proof-loop__stage:not(:last-child)::after {
+  position: absolute;
+  top: -1px;
+  right: 0;
+  width: 28%;
+  height: 1px;
+  background: var(--color-accent);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: proof-rule-in var(--dur-explain) var(--ease-out) forwards;
+  animation-delay: calc(var(--stage-index, 0) * 60ms);
+}
+.narrative-rail { max-width: 100%; overflow: hidden; }
+
+@keyframes proof-rule-in { to { transform: scaleX(1); } }
+
+@keyframes workbench-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 767px) {
+  .platform-header { align-items: center; }
+  .platform-header > div:last-child { min-width: 0; }
+  .platform-nav .mc-nav-link { padding-inline: 0.38rem; font-size: 8px; }
+  .platform-wallet { max-width: 6.5rem; overflow: hidden; }
+  .narrative-rail > div:nth-child(2),
+  .narrative-rail > div:nth-child(3) { display: none; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fixture-record:hover, .position-record:hover { background: var(--color-grid); }
+  .fixture-record:hover::before, .position-record:hover::before { opacity: 1; transform: scaleY(1); }
 }
 
 #root {
@@ -539,7 +651,7 @@ code {
   /* Hairline panel — squared, document-like, no rounded-card stacking. */
   .mc-panel {
     border: 1px solid var(--mc-rule);
-    background: var(--mc-panel);
+    background: var(--color-paper-panel);
   }
   .mc-panel--inset {
     border: 1px solid var(--mc-rule);
@@ -617,7 +729,7 @@ code {
     font: 600 12px/1 var(--font-mono);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    transition: transform var(--dur-press) var(--ease-out), border-color var(--dur-state) linear, color var(--dur-state) linear, background var(--dur-state) linear;
     cursor: pointer;
   }
   .mc-action:hover {
@@ -634,6 +746,16 @@ code {
     background: rgba(121, 245, 183, 0.12);
     box-shadow: 0 0 0 1px rgba(121, 245, 183, 0.25);
   }
+  .mc-action:focus-visible, .mc-nav-link:focus-visible, .mc-tab:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+  .mc-action:active { transform: scale(0.97); }
+  .mc-action:disabled, .mc-tab:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .mc-action, .mc-nav-link, .mc-tab { white-space: nowrap; }
 
   /* Nav link — squared, hairline, no rounded pill. */
   .mc-nav-link {
@@ -647,7 +769,7 @@ code {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     text-decoration: none;
-    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    transition: border-color var(--dur-state) linear, color var(--dur-state) linear, background var(--dur-state) linear;
   }
   .mc-nav-link:hover {
     color: var(--ink);
@@ -675,11 +797,11 @@ code {
   .mc-card {
     border: 1px solid var(--mc-rule);
     background: var(--mc-panel);
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    transition: transform var(--dur-state) var(--ease-out), border-color var(--dur-state) linear, background var(--dur-state) linear;
   }
   .mc-card:hover {
     border-color: var(--mc-rule-strong);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    background: var(--color-paper-soft);
   }
 
   /* Tab strip — squared, hairline, no rounded-full pills. */
@@ -735,6 +857,10 @@ code {
   .mc-badge--sealed { color: var(--mc-sealed); background: rgba(245, 197, 107, 0.08); }
   .mc-badge--breach { color: var(--mc-breach); background: rgba(255, 122, 111, 0.08); }
   .mc-badge--review { color: var(--mc-review); background: rgba(196, 181, 253, 0.08); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mc-card:hover, .fc-position-record:hover { transform: translateY(-1px); }
 }
 
 /* Replay pulse — the one calm animated detail. The timeline visibly

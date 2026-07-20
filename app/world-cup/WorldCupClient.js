@@ -189,7 +189,7 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
   const awayScore = fixture.away.score ?? fixture.proof?.statToProve2?.value ?? null;
   const verification = proofResult?.verification || (proofResult?.verdict ? proofResult : null);
   return (
-    <div className="mc-card p-5 space-y-4">
+    <article className="fixture-record platform-open-section space-y-4 px-1 py-6 sm:px-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -300,7 +300,7 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
       {hasProof && fixture.status === 'final' && (
         <OnChainSettlementPanel fixture={fixture} proof={fixture.proof} />
       )}
-    </div>
+    </article>
   );
 }
 
@@ -522,16 +522,20 @@ function ProofLoopStrip({ fixtures }) {
   const proven = fixtures.filter((f) => f.proof?.merkleRoot || f.proof?.dailyRootPda).length;
   const finals = fixtures.filter((f) => f.status === 'final').length;
   return (
-    <div className="mc-panel p-4 sm:p-5">
+    <section className="proof-loop platform-open-section px-1 py-5 sm:px-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="mc-kicker">Verified decision → reconciled outcome</div>
         <div className="font-mono text-[10px] text-white/40">
           {proven} proof-backed · {finals} final · {fixtures.length} tracked
         </div>
       </div>
-      <ol className="mt-3 grid gap-2 sm:grid-cols-5">
+      <ol className="proof-loop__stages mt-4 grid gap-0 sm:grid-cols-5">
         {PROOF_LOOP_STAGES.map((stage, index) => (
-          <li key={stage.key} className="relative border border-white/[0.08] bg-white/[0.03] p-2.5">
+          <li
+            key={stage.key}
+            className="proof-loop__stage relative border-t border-white/[0.12] px-1 py-3 sm:px-3"
+            style={{ '--stage-index': index }}
+          >
             <div className="flex items-center gap-1.5">
               <span className="font-mono text-[9px] text-emerald-300/80">{index + 1}</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-white/75">{stage.label}</span>
@@ -540,7 +544,7 @@ function ProofLoopStrip({ fixtures }) {
           </li>
         ))}
       </ol>
-    </div>
+    </section>
   );
 }
 
@@ -752,7 +756,7 @@ export default function WorldCupClient() {
         />
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-10">
         {selectedFixture && (
           <ProofTheatre fixture={selectedFixture} onClose={() => setSelectedFixture(null)} />
         )}
@@ -797,7 +801,7 @@ export default function WorldCupClient() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="fixture-ledger border-t border-[var(--mc-rule-strong)]">
             {filtered.map((fixture) => (
               <FixtureCard
                 key={fixture.id}

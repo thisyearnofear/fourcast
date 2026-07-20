@@ -1,0 +1,63 @@
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 */
+:root {
+  --color-paper: oklch(18% 0.014 166);
+  --color-paper-deep: oklch(14% 0.012 166);
+  --color-paper-raised: oklch(22% 0.016 166);
+  --color-paper-soft: oklch(26% 0.018 166);
+  --color-paper-glass: oklch(18% 0.014 166 / 0.88);
+  --color-paper-footer: oklch(14% 0.012 166 / 0.35);
+  --color-paper-panel: oklch(22% 0.016 166 / 0.72);
+  --color-ink: oklch(95% 0.015 90);
+  --color-ink-muted: oklch(76% 0.014 120);
+  --color-ink-faint: oklch(61% 0.012 140);
+  --color-rule: oklch(95% 0.015 90 / 0.12);
+  --color-rule-strong: oklch(95% 0.015 90 / 0.22);
+  --color-accent: oklch(86% 0.16 158);
+  --color-accent-soft: oklch(86% 0.16 158 / 0.1);
+  --color-accent-ink: oklch(18% 0.04 158);
+  --color-evidence: oklch(72% 0.15 252);
+  --color-sealed: oklch(84% 0.13 80);
+  --color-breach: oklch(72% 0.17 28);
+  --color-review: oklch(78% 0.11 292);
+  --color-focus: oklch(90% 0.17 158);
+  --color-shadow: oklch(8% 0.01 166 / 0.24);
+  --color-grid: oklch(95% 0.015 90 / 0.026);
+  --color-wash: oklch(95% 0.015 90 / 0.035);
+  --color-wash-soft: oklch(95% 0.015 90 / 0.025);
+  --color-accent-atmosphere: oklch(86% 0.16 158 / 0.1);
+  --color-accent-quiet: oklch(86% 0.16 158 / 0.035);
+  --color-sealed-atmosphere: oklch(84% 0.13 80 / 0.055);
+
+  --font-body: var(--font-sans), sans-serif;
+  --font-code: var(--font-mono), monospace;
+
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4.5rem;
+  --space-3xl: 7rem;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+  --text-display: clamp(2.5rem, 7vw, 5.75rem);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 140ms;
+  --dur-state: 180ms;
+  --dur-panel: 260ms;
+  --dur-explain: 520ms;
+
+  --rule-hairline: 1px;
+  --radius-card: 0;
+  --radius-input: 0;
+  --radius-pill: 999px;
+}

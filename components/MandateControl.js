@@ -142,7 +142,7 @@ export function MandateControl() {
   const livePct = stages.length ? (stages.filter((s) => s.state === 'complete').length / stages.length) * 100 : 0;
 
   return (
-    <section className="mc-panel relative overflow-hidden" aria-labelledby="mandate-control-heading">
+    <section className="platform-workbench relative overflow-hidden" aria-labelledby="mandate-control-heading">
       {/* Sparse hairline grid — mission-control graph paper, not decoration. */}
       <div className="pointer-events-none absolute inset-0 mc-grid--sparse opacity-[0.35]" aria-hidden="true" />
 
@@ -175,7 +175,7 @@ export function MandateControl() {
       </div>
 
       {/* Hero composition — one current decision */}
-      <div className="relative px-4 py-6 sm:px-6 sm:py-8">
+      <div className="relative px-4 py-8 sm:px-6 sm:py-10">
         {lab.error && (
           <p className="mb-5 border border-[var(--mc-breach)]/30 bg-[var(--mc-breach)]/10 p-3 font-mono text-[11px] text-[var(--mc-breach)]">
             {lab.error}
@@ -196,12 +196,12 @@ export function MandateControl() {
             {/* Decision headline */}
             <div className="flex flex-col gap-1">
               <span className="mc-kicker">Current mandate · {mandateId}</span>
-              <h1
+              <h2
                 id="mandate-control-heading"
                 className="fc-display mt-2 font-display text-3xl font-semibold leading-[1.05] tracking-tight text-white sm:text-4xl"
               >
                 {headline}
-              </h1>
+              </h2>
             </div>
 
             {/* Verdict + capital posture */}
@@ -319,7 +319,7 @@ function resolveStages({ latest, timeline, reconciled, verificationVerdict, veri
 
 function ProofTimeline({ stages, livePct, timeline, reconciled }) {
   return (
-    <div className="mc-panel--inset border border-[var(--mc-rule)] p-4 sm:p-5">
+    <div className="evidence-strip p-4 sm:p-5">
       {/* Horizontal stage rail */}
       <ol className="grid grid-cols-5 gap-px">
         {stages.map((stage, i) => (
@@ -342,7 +342,7 @@ function ProofTimeline({ stages, livePct, timeline, reconciled }) {
       {/* The crossing — outcome withheld → proof available */}
       <div className="mt-5">
         <div className="mc-timeline-track">
-          <div className="mc-timeline-track__progress" style={{ width: `${livePct}%`, animation: 'none' }} />
+          <div className="mc-timeline-track__progress" style={{ width: `${livePct}%` }} />
           {reconciled && <div className="mc-proof-flash absolute inset-0" />}
         </div>
         <div className="mt-2 flex items-center justify-between font-mono text-[9px] uppercase tracking-wider">
