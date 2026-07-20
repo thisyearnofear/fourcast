@@ -52,7 +52,7 @@ export default function SearchLanding() {
       <div className="market-field" aria-hidden />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-16 pt-4 sm:px-6 lg:px-8">
-        <header className="operator-header flex items-center justify-between gap-4 px-3 py-2.5">
+        <header className="operator-header sticky top-3 z-50 flex items-center justify-between gap-4 px-3 py-2.5 sm:top-4">
           <HomeLink />
           <div className="hidden sm:block">
             <PageNav />

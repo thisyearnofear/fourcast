@@ -5,7 +5,6 @@ import { useAccount, useDisconnect } from 'wagmi';
 import { ConnectKitButton } from 'connectkit';
 import { useConnector } from '@solana/connector/react';
 import { CHAINS } from '@/constants/appConstants';
-import { BRAND } from '@/constants/brand';
 import { useChainConnections } from '@/hooks/useChainConnections';
 import { useCantonWalletContext } from '@/app/CantonWalletLayer';
 
@@ -196,53 +195,31 @@ export default function WalletConnect({ isNight = false }) {
  </button>
  {/* Dropdown */}
  {showDropdown && (
- <div className={`absolute right-0 mt-2 w-80 ${dropdownGlass} p-4 z-50 shadow-xl`}>
- {/* Header */}
- <div className={`text-xs font-medium text-white/75 uppercase tracking-wide mb-2`}>
- Wallet Networks
- </div>
-
- {/* Helper Text - Explains why different networks */}
- {!isAnyConnected && (
- <p className={`text-xs text-white/70 mb-4 leading-relaxed`}>
- {BRAND.walletExplainer.headline}{' '}
- {BRAND.walletExplainer.layers.map((l) => l.name).join(' · ')}.
- </p>
- )}
-
+ <div className={`absolute right-0 mt-2 w-72 ${dropdownGlass} p-3 z-50 shadow-xl`}>
+ {/* Arc — primary settlement */}
  {chains?.evm?.connected && !chains?.arc?.connected && (
  <button
  type="button"
  onClick={() => switchToArc()}
  disabled={chains.evm?.isSwitching}
- className={`w-full mb-4 px-3 py-2 text-xs font-medium transition-all bg-indigo-500/30 text-indigo-100 border border-indigo-400/60 hover:bg-indigo-500/45 disabled:opacity-50 disabled:cursor-not-allowed`}
+ className={`w-full mb-3 px-3 py-2 text-xs font-medium transition-all bg-indigo-500/30 text-indigo-100 border border-indigo-400/60 hover:bg-indigo-500/45 disabled:opacity-50 disabled:cursor-not-allowed`}
  >
- 🌀 Switch to Arc testnet (USDC settlement)
+ 🌀 Switch to Arc (USDC settlement)
  </button>
  )}
 
- {chains?.arc?.connected && (
- <p className={`text-[11px] mb-3 text-indigo-300`}>
- ✓ Arc testnet — ready to publish signals in USDC
- </p>
- )}
-
- {/* Connected Chains */}
- <div className="mb-4">
+ <div className="mb-3">
  {renderChainSection(CHAINS.ARC, chains?.arc)}
  {chains?.evm?.connected && !chains?.arc?.connected && renderChainSection(CHAINS.EVM, chains.evm)}
  </div>
 
- {/* EVM Connect Section */}
+ {/* EVM */}
  {!chains?.evm?.connected && (
- <div className="mb-4">
- <div className={`text-xs font-medium ${textColor} mb-1 flex items-center gap-2`}>
+ <div className="mb-3">
+ <div className={`text-xs font-medium ${textColor} mb-2 flex items-center gap-2`}>
  <span>{CHAINS.EVM.icon}</span>
- {CHAINS.EVM.display}
+ {CHAINS.EVM.display} · venues
  </div>
- <p className={`text-[11px] text-white/70 mb-3 leading-relaxed`}>
- Connect EVM wallet, then switch to Arc or Polygon via network picker
- </p>
  <ConnectKitButton mode="dark" />
  </div>
  )}
@@ -251,24 +228,20 @@ export default function WalletConnect({ isNight = false }) {
  <button
  type="button"
  onClick={() => switchToEvmNetwork('polygon')}
- className={`mb-4 w-full text-[11px] underline text-white/70 hover:text-white`}
+ className={`mb-3 w-full text-[11px] underline text-white/70 hover:text-white`}
  >
  Use Polygon for trading instead
  </button>
  )}
 
- {/* Solana Section — ConnectorKit */}
- <div className="mb-4 pt-4 border-t border-white/15">
- <div className={`text-xs font-medium ${textColor} mb-1 flex items-center gap-2`}>
+ {/* Solana — escrow & proof settlement */}
+ <div className="mb-3 pt-3 border-t border-white/15">
+ <div className={`text-xs font-medium ${textColor} mb-2 flex items-center gap-2`}>
  <span>◎</span>
- Solana (Devnet)
+ Solana · escrow & proof
  </div>
  {solanaConnected ? (
- <>
- <p className={`text-[11px] text-purple-300 mb-2`}>
- ✓ {solanaConnector?.name || 'Wallet'} connected — match escrow & TxLINE proof settlement active
- </p>
- <div className="flex items-center justify-between mb-2">
+ <div className="flex items-center justify-between">
  <span className={`text-sm font-mono ${textColor}`}>
  {formatAddress(solanaAccount)}
  </span>
@@ -279,13 +252,8 @@ export default function WalletConnect({ isNight = false }) {
  Disconnect
  </button>
  </div>
- </>
  ) : (
- <>
- <p className={`text-[11px] text-white/70 mb-3 leading-relaxed`}>
- Connect Phantom / Solflare / Backpack for on-chain match escrow and TxLINE proof verification
- </p>
- <div className="space-y-2">
+ <div className="space-y-1.5">
  {solanaConnectors.filter(c => c.ready).length > 0 ? (
  solanaConnectors.filter(c => c.ready).map(connector => (
  <button
@@ -300,28 +268,24 @@ export default function WalletConnect({ isNight = false }) {
  ))
  ) : (
  <p className={`text-[11px] text-white/70`}>
- No Solana wallet detected. Install{' '}
+ Install{' '}
  <a href="https://phantom.app" target="_blank" rel="noreferrer" className="underline hover:text-white">Phantom</a> or{' '}
  <a href="https://solflare.com" target="_blank" rel="noreferrer" className="underline hover:text-white">Solflare</a>.
  </p>
  )}
  </div>
- </>
  )}
  </div>
 
- {/* Canton (Private Settlement) Section — hidden until enabled */}
+ {/* Canton — private settlement (hidden until enabled) */}
  {canton?.cantonEnabled && (
- <div className="mb-4 pt-4 border-t border-white/15">
- <div className={`text-xs font-medium ${textColor} mb-1 flex items-center gap-2`}>
+ <div className="mb-3 pt-3 border-t border-white/15">
+ <div className={`text-xs font-medium ${textColor} mb-2 flex items-center gap-2`}>
  <span>◈</span>
- Canton (Private Settlement)
+ Canton · private
  </div>
  {canton?.connected ? (
  <>
- <p className={`text-[11px] text-teal-300 mb-2`}>
- ✓ {canton.mode === 'wallet-sdk' ? 'Wallet SDK' : 'Console Wallet'} connected — cBTC/cETH private positions active
- </p>
  <div className="flex items-center justify-between mb-2">
  <span className={`text-sm ${textColor}`}>
  {canton.account?.partyName || formatAddress(canton.account?.partyId)}
@@ -333,23 +297,15 @@ export default function WalletConnect({ isNight = false }) {
  Disconnect
  </button>
  </div>
- {canton.network && (
- <p className="text-[11px] text-white/70 mb-2">
- Network: {canton.network.name || canton.network.id || 'Canton'}
- </p>
- )}
  <button
  onClick={() => canton.refreshBalances()}
  className="text-[11px] underline text-teal-300 hover:text-teal-200"
  >
- Refresh cBTC/cETH balances
+ Refresh balances
  </button>
  </>
  ) : (
  <>
- <p className={`text-[11px] text-white/70 mb-3 leading-relaxed`}>
- Private settlement with cBTC/cETH — position sizes hidden from all third parties via Daml smart contracts
- </p>
  <button
  type="button"
  onClick={() => canton.connect({ name: 'Fourcast' })}
@@ -371,30 +327,6 @@ export default function WalletConnect({ isNight = false }) {
  )}
  </div>
  )}
-
- {/* Footer Info - Chain Purposes */}
- <div className={`mt-4 pt-4 border-t border-white/15 space-y-1.5`}>
- <div className={`text-[11px] text-white/70 leading-relaxed`}>
- <p className="flex items-center gap-1.5">
- <span>{CHAINS.ARC.icon}</span>
- <span>{CHAINS.ARC.purpose}</span>
- </p>
- <p className="flex items-center gap-1.5 mt-1">
- <span>◎</span>
- <span>Solana — on-chain match escrow & TxLINE proof settlement</span>
- </p>
- {canton?.cantonEnabled && (
- <p className="flex items-center gap-1.5 mt-1">
- <span>◈</span>
- <span>Canton — private cBTC/cETH settlement with hidden position sizes</span>
- </p>
- )}
- <p className="flex items-center gap-1.5 mt-1">
- <span>{CHAINS.EVM.icon}</span>
- <span>{CHAINS.EVM.purpose}</span>
- </p>
- </div>
- </div>
  </div>
  )}
  </div>
