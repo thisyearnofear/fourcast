@@ -3,7 +3,7 @@ import { tierInfoFor, shortAddress } from '@/utils/signalTier';
 export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBgColor, onProfileClick }) {
  if (!leaderboard || leaderboard.length === 0) {
  return (
- <div className={`mc-panel p-12 text-center`}>
+ <div className="platform-open-section py-12 text-center">
  <div className="text-6xl mb-4">🏆</div>
  <h3 className={`text-xl font-light ${textColor} mb-2`}>No Ranked Analysts Yet</h3>
  <p className={`${textColor} opacity-60 text-sm`}>
@@ -14,16 +14,16 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
  }
 
  return (
- <div className="space-y-6">
- {/* Header */}
- <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs text-center mb-4">
+ <div>
+ {/* Header — table header strip */}
+ <div className="evidence-strip grid grid-cols-4 gap-4 px-1 py-3 text-xs text-center sm:px-3">
  <div className={`${textColor} opacity-60`}>Rank</div>
- <div className={`${textColor} opacity-60`}>Analyst</div>
- <div className={`${textColor} opacity-60`}>Stats</div>
+ <div className={`${textColor} opacity-60 text-left`}>Analyst</div>
+ <div className={`${textColor} opacity-60 text-left`}>Stats</div>
  <div className={`${textColor} opacity-60`}>Earnings</div>
  </div>
- {/* Leaderboard Cards */}
- <div className="grid grid-cols-1 gap-4">
+ {/* Leaderboard — inspectable rows */}
+ <div className="border-t border-white/15">
  {leaderboard.map((user, index) => {
  const tier = tierInfoFor(user.win_rate || 0);
  const earnings = user.total_earnings || 0;
@@ -32,9 +32,8 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
  <div
  key={user.user_address}
  onClick={() => onProfileClick(user.user_address)}
- className={`mc-panel p-4 sm:p-6 hover:scale-[1.01] transition-all cursor-pointer`}
+ className="position-record grid grid-cols-1 gap-4 border-b border-white/10 px-1 py-5 transition-colors hover:bg-white/[0.03] cursor-pointer sm:grid-cols-4 sm:items-center sm:px-3"
  >
- <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
  {/* Rank */}
  <div className="flex items-center gap-3">
  <div className={`text-2xl font-thin ${index < 3 ? ('text-amber-400') : 'opacity-40'}`}>
@@ -50,7 +49,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
  {tier.name}
  </span>
  </div>
- <div className={`text-xs ${textColor} opacity-60`}>
+ <div className={`text-xs font-mono ${textColor} opacity-60`}>
  {shortAddress(user.user_address)}
  </div>
  </div>
@@ -70,7 +69,6 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
  <div className={`text-xs ${textColor} opacity-60 mb-1`}>Tips Earned</div>
  <div className={`text-xl font-light text-emerald-300`}>
  {earnings > 0 ? `${earnings} APT` : '—'}
- </div>
  </div>
  </div>
  </div>

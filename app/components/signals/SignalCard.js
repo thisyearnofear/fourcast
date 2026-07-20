@@ -20,7 +20,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
 
  return (
  <div
- className="fc-signal-record pl-4 pb-4 cursor-pointer"
+ className="position-record border-b border-white/10 px-1 py-5 cursor-pointer transition-colors hover:bg-white/[0.03] sm:px-3"
  onClick={handleToggle}
  >
  <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -101,10 +101,10 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  </div>
  </div>
  )}
- {/* Share Menu — available without expanding provenance */}
+ {/* Share Menu — open section */}
  {shareOpen && (
  <div
- className={`mt-4 flex flex-col gap-2 p-3 bg-white/5 border border-white/10`}
+ className="mt-4 flex flex-col gap-2 border-t border-white/10 pt-4"
  onClick={(e) => e.stopPropagation()}
  >
  <div className="flex gap-2">

@@ -25,8 +25,8 @@ export default function DeFiArbitrageTab({
 
  return (
  <div className="w-full">
- {/* Filter Controls */}
- <div className={`mc-panel p-4 mb-6`}>
+ {/* Filter Controls — open section */}
+ <div className="platform-open-section mb-10">
  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
  <div className="flex-1">
  <label className={`block text-sm ${textColor} opacity-70 mb-2`}>
@@ -52,7 +52,7 @@ export default function DeFiArbitrageTab({
  <button
  onClick={refresh}
  disabled={isLoading}
- className={`px-6 py-2 text-sm font-light transition-all ${isLoading
+ className={`px-6 py-2 text-sm font-light transition-colors ${isLoading
  ? `${textColor} opacity-50 cursor-not-allowed`
  : `bg-emerald-500/30 hover:bg-emerald-500/50 text-white`
  }`}
@@ -70,7 +70,7 @@ export default function DeFiArbitrageTab({
  )}
  {/* Error State */}
  {error && !isLoading && (
- <div className={`mc-panel p-6 text-center`}>
+ <div className="platform-open-section py-6 text-center">
  <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
  <button
  onClick={refresh}
@@ -82,7 +82,7 @@ export default function DeFiArbitrageTab({
  )}
  {/* Empty State */}
  {!isLoading && !error && opportunities.length === 0 && (
- <div className={`mc-panel p-12 text-center`}>
+ <div className="platform-open-section py-12 text-center">
  <div className="text-6xl mb-4">💱</div>
  <h3 className={`text-xl font-light ${textColor} mb-2`}>No Opportunities Found</h3>
  <p className={`${textColor} opacity-60 text-sm`}>
@@ -90,21 +90,22 @@ export default function DeFiArbitrageTab({
  </p>
  </div>
  )}
- {/* Opportunities Grid */}
+ {/* Opportunities — inspectable rows */}
  {!isLoading && !error && opportunities.length > 0 && (
- <div className="space-y-4">
- <div className={`text-sm ${textColor} opacity-70`}>
+ <div>
+ <div className={`text-sm ${textColor} opacity-70 mb-4`}>
  📊 Found {opportunities.length} opportunities
  </div>
 
+ <div className="border-t border-white/15">
  {opportunities.map((opp, idx) => (
  <div
  key={opp.signal_id || idx}
- className={`mc-panel overflow-hidden transition-all`}
+ className="position-record border-b border-white/10 transition-colors"
  >
  {/* Header / Always Visible */}
  <div
- className="p-4 cursor-pointer hover:opacity-80 transition-opacity"
+ className="px-1 py-5 cursor-pointer hover:bg-white/[0.03] transition-colors sm:px-3"
  onClick={() => setExpandedOppId(expandedOppId === opp.signal_id ? null : opp.signal_id)}
  >
  <div className="flex items-start justify-between mb-3">
@@ -263,6 +264,7 @@ export default function DeFiArbitrageTab({
  )}
  </div>
  ))}
+ </div>
  </div>
  )}
  {/* Kalshi Order Panel */}

@@ -495,10 +495,10 @@ export function MarketCard({
  <div className="mt-8 pt-8 border-t border-white/10">
  <h2 className={`text-2xl font-light ${textColor} mb-6`}>Analysis</h2>
 
- <div className="space-y-4">
- {/* SynthData ML Forecast - Show when available */}
+ <div className="space-y-0">
+ {/* SynthData ML Forecast — open section */}
  {analysis?.synthData && (
- <div className={`${cardBgColor} border-2 border-purple-500/30 p-5`}>
+ <div className="platform-open-section">
  <div className="flex items-center gap-2 mb-4">
  <span className="text-xl">🤖</span>
  <h4 className={`text-sm font-medium ${textColor}`}>
@@ -649,11 +649,9 @@ export function MarketCard({
  </div>
  )}
 
- {/* Market Context & Odds - Enhanced Visual Hierarchy */}
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <div
- className={`${cardBgColor} border p-4`}
- >
+ {/* Market Context & Odds — evidence strip, not card grid */}
+ <div className="evidence-strip grid grid-cols-1 gap-px bg-white/10 sm:grid-cols-2">
+ <div className="bg-[var(--color-paper)] p-4">
  <h4
  className={`text-xs font-light ${textColor} opacity-70 mb-3 uppercase tracking-wider`}
  >
@@ -683,9 +681,7 @@ export function MarketCard({
  </div>
  </div>
 
- <div
- className={`${cardBgColor} border p-4`}
- >
+ <div className="bg-[var(--color-paper)] p-4">
  <h4
  className={`text-xs font-light ${textColor} opacity-70 mb-3 uppercase tracking-wider`}
  >
@@ -733,10 +729,8 @@ export function MarketCard({
  setSelectedMarketForOrder={setSelectedMarketForOrder}
  />
 
- {/* Analysis Text */}
- <div
- className={`${cardBgColor} border p-5`}
- >
+ {/* Analysis Text — open section */}
+ <div className="platform-open-section">
  <h4
  className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}
  >
@@ -814,11 +808,9 @@ export function MarketCard({
  className="mb-4"
  />
 
- {/* Recommendation */}
+ {/* Recommendation — open section */}
  {analysis.recommended_action && (
- <div
- className={`${cardBgColor} border p-5`}
- >
+ <div className="platform-open-section">
  <h4
  className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}
  >
@@ -830,10 +822,8 @@ export function MarketCard({
  </div>
  )}
 
- {/* Disclaimer */}
- <div
- className={`${cardBgColor} border p-4 border-white/10`}
- >
+ {/* Disclaimer — open section, quiet */}
+ <div className="platform-open-section">
  <div className="flex items-start gap-3">
  <div
  className={`mt-0.5 w-1 h-1 bg-white/40`}
@@ -853,10 +843,8 @@ export function MarketCard({
  </div>
  </div>
 
- {/* Prove Your Edge - Paper Trading With Proof */}
- <div
- className={`${cardBgColor} border p-5`}
- >
+ {/* Prove Your Edge — open section */}
+ <div className="platform-open-section">
  <div className="flex items-center gap-2 mb-3">
  <span className="text-xl">🎯</span>
  <h4 className={`text-sm font-medium ${textColor}`}>
@@ -899,10 +887,10 @@ export function MarketCard({
  </div>
  </div>
 
- {/* Wallet Connection Prompt (if not connected) */}
+ {/* Wallet Connection Prompt — open section */}
  {!canPublish && (
  <div
- className={`${cardBgColor} border p-4 flex items-center gap-3 border-orange-400/30`}
+ className="platform-open-section flex items-center gap-3 border-l-2 border-orange-400/30 pl-4"
  >
  <span className="text-2xl">🎯</span>
  <div className="flex-1">
@@ -917,9 +905,9 @@ export function MarketCard({
  </div>
  )}
 
- {/* ML Edge Detected - Prominent CTA */}
+ {/* ML Edge Detected — workbench CTA */}
  {analysis?.synthData?.polymarketEdge && Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03 && (
- <div className={`${cardBgColor} border-2 p-5 border-green-500/40 bg-green-500/5`}>
+ <div className="platform-workbench p-5">
  <div className="flex items-center gap-3 mb-4">
  <span className="text-2xl">⚡</span>
  <div>
