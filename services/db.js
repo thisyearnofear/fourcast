@@ -633,14 +633,18 @@ export async function getLeaderboard(limit = 50) {
 
 /**
  * Save an agent forecast to the database for track record
+ *
+ * operatorId is optional. When set, the forecast is scoped to that operator's
+ * Track Record URL (migration 0010). When omitted, the forecast belongs to
+ * the global/legacy agent (back-compat with existing callers).
  */
 export async function saveForecast(forecast) {
   try {
     await execute(
       `INSERT INTO agent_forecasts (
         id, market_id, market_title, platform, ai_probability, market_odds,
-        edge, confidence, reasoning, key_factors, timestamp
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        edge, confidence, reasoning, key_factors, timestamp, operator_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         forecast.id,
         forecast.marketID,
@@ -653,6 +657,7 @@ export async function saveForecast(forecast) {
         forecast.reasoning || null,
         forecast.keyFactors ? JSON.stringify(forecast.keyFactors) : null,
         forecast.timestamp || Math.floor(Date.now() / 1000),
+        forecast.operatorId || null,
       ]
     );
     return { success: true };
@@ -691,30 +696,43 @@ export async function resolveForecast(marketId, actualOutcome) {
 
 /**
  * Get agent track record statistics
+ *
+ * operatorId is optional. When set, stats and forecasts are scoped to that
+ * operator's Track Record URL (migration 0010). When omitted, returns the
+ * global/legacy aggregate (back-compat with /api/agent/track-record).
  */
-export async function getAgentTrackRecord() {
+export async function getAgentTrackRecord(operatorId = null) {
   try {
+    await migrationsReady;
+    const whereClause = operatorId ? 'WHERE operator_id = ?' : '';
+    const params = operatorId ? [operatorId] : [];
+
     const stats = await query(
-      `SELECT 
+      `SELECT
         COUNT(*) as total_forecasts,
         COUNT(CASE WHEN resolved = 1 THEN 1 END) as resolved_forecasts,
         AVG(CASE WHEN resolved = 1 THEN brier_score END) as avg_brier_score,
         AVG(CASE WHEN resolved = 1 AND confidence = 'HIGH' THEN brier_score END) as high_conf_brier,
         COUNT(CASE WHEN resolved = 1 AND confidence = 'HIGH' THEN 1 END) as high_conf_count
-       FROM agent_forecasts`
+       FROM agent_forecasts
+       ${whereClause}`,
+      params
     );
 
     const recentForecasts = await query(
-      `SELECT * FROM agent_forecasts 
-       WHERE resolved = 1 
-       ORDER BY resolution_time DESC 
-       LIMIT 50`
+      `SELECT * FROM agent_forecasts
+       ${whereClause}
+       ${operatorId ? 'AND' : 'WHERE'} resolved = 1
+       ORDER BY resolution_time DESC
+       LIMIT 50`,
+      params
     );
 
     return {
       success: true,
       stats: stats[0],
       recentForecasts,
+      operatorId: operatorId || null,
     };
   } catch (error) {
     console.error('Failed to get track record:', error);
@@ -988,6 +1006,86 @@ export async function getHistoricalLabStatus() {
   const rows = await query('SELECT payload, updated_at FROM historical_lab_status WHERE id = 1');
   if (!rows[0]) return { success: true, status: null };
   return { success: true, status: safeJsonParse(rows[0].payload, null), updatedAt: rows[0].updated_at };
+}
+
+/**
+ * Persist a mandate draft (Slice 4 of the self-serve concierge path). The
+ * operator_id is the primary key — re-saving overwrites the previous draft,
+ * keeping the "one mandate per operator" invariant. The four policy knobs
+ * match createDecisionPolicy() exactly.
+ *
+ * No auth in this slice — operator_id is an unauthenticated UUID generated
+ * client-side and stored in localStorage. Auth + private mandates are a
+ * Premium-tier feature, post-concierge-test.
+ */
+export async function saveMandate({
+  operatorId,
+  minAbsoluteEdge,
+  maxAllocationPct,
+  maxLossProbability,
+  simulationRuns,
+  policyVersion,
+  displayName = null,
+}) {
+  await migrationsReady;
+  const updatedAt = Math.floor(Date.now() / 1000);
+  await execute(
+    `INSERT INTO mandates (
+      operator_id, min_absolute_edge, max_allocation_pct, max_loss_probability,
+      simulation_runs, policy_version, display_name, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(operator_id) DO UPDATE SET
+      min_absolute_edge = excluded.min_absolute_edge,
+      max_allocation_pct = excluded.max_allocation_pct,
+      max_loss_probability = excluded.max_loss_probability,
+      simulation_runs = excluded.simulation_runs,
+      policy_version = excluded.policy_version,
+      display_name = excluded.display_name,
+      updated_at = excluded.updated_at`,
+    [
+      operatorId,
+      minAbsoluteEdge,
+      maxAllocationPct,
+      maxLossProbability,
+      simulationRuns,
+      policyVersion,
+      displayName,
+      updatedAt,
+    ],
+  );
+  return { success: true, operatorId, updatedAt };
+}
+
+/**
+ * Read a persisted mandate draft by operator_id. Returns { success: true,
+ * mandate: null } when the operator has no saved mandate — the caller (the
+ * /agent/[operatorId] page) treats this as "no mandate yet, show the builder".
+ */
+export async function getMandate(operatorId) {
+  await migrationsReady;
+  const rows = await query(
+    `SELECT operator_id, min_absolute_edge, max_allocation_pct, max_loss_probability,
+            simulation_runs, policy_version, display_name, created_at, updated_at
+     FROM mandates
+     WHERE operator_id = ?`,
+    [operatorId],
+  );
+  if (!rows[0]) return { success: true, mandate: null };
+  const m = rows[0];
+  return {
+    success: true,
+    mandate: {
+      operatorId: m.operator_id,
+      minAbsoluteEdge: m.min_absolute_edge,
+      maxAllocationPct: m.max_allocation_pct,
+      maxLossProbability: m.max_loss_probability,
+      simulationRuns: m.simulation_runs,
+      policyVersion: m.policy_version,
+      displayName: m.display_name,
+      createdAt: m.created_at,
+      updatedAt: m.updated_at,
+    },
+  };
 }
 
 function safeJsonParse(value, fallback) {

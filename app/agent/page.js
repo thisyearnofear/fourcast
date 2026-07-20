@@ -8,6 +8,7 @@ import { AgentDashboard } from '@/components/AgentDashboard';
 import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
 import RouteGuide from '@/components/RouteGuide';
+import MandateBuilder from '@/components/MandateBuilder';
 import { BRAND } from '@/constants/brand';
 
 export default function AgentPage() {
@@ -20,6 +21,9 @@ export default function AgentPage() {
       maxWidth="max-w-4xl"
     >
       <RouteGuide route="agent" />
+      {/* Self-serve mandate builder + dry-run preview — the in-browser version
+          of the concierge test's "hand-roll a mandate" step. */}
+      <MandateBuilder />
       {/* Flagship — the autonomous system, not a button simulation, is the protagonist. */}
       <MandateControl />
 
