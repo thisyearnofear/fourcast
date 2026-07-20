@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FlaskConical, Loader2, Lock, ShieldCheck, Save, ExternalLink, Check } from 'lucide-react';
+import { FlaskConical, Loader2, Lock, ShieldCheck, Save, ExternalLink, Check, ChevronDown } from 'lucide-react';
 
 /**
  * MandateBuilder — self-serve mandate config + dry-run preview.
@@ -34,7 +34,7 @@ const KNOBS = [
   {
     key: 'minAbsoluteEdge',
     label: 'Minimum edge',
-    description: 'The smallest absolute edge (AI fair − market) the agent will act on. Below this, PASS.',
+    hint: 'Smallest edge (AI fair − market) the agent will act on. Below this, PASS.',
     min: 0,
     max: 0.2,
     step: 0.005,
@@ -42,8 +42,8 @@ const KNOBS = [
   },
   {
     key: 'maxAllocationPct',
-    label: 'Max allocation per decision',
-    description: 'The Kelly-sized allocation cap. Even if Kelly says 10%, the agent won’t exceed this.',
+    label: 'Max allocation',
+    hint: 'Kelly-sized cap per decision. Even if Kelly says 10%, the agent won’t exceed this.',
     min: 0.01,
     max: 0.25,
     step: 0.005,
@@ -52,7 +52,7 @@ const KNOBS = [
   {
     key: 'maxLossProbability',
     label: 'Tail-loss limit',
-    description: 'If the simulated loss probability exceeds this, the agent PASSes regardless of edge.',
+    hint: 'If simulated loss probability exceeds this, the agent PASSes regardless of edge.',
     min: 0.5,
     max: 0.95,
     step: 0.01,
@@ -61,7 +61,7 @@ const KNOBS = [
   {
     key: 'simulationRuns',
     label: 'Monte Carlo paths',
-    description: 'Seeded simulation count. Higher = tighter confidence intervals, slower dry-run.',
+    hint: 'Seeded simulation count. Higher = tighter intervals, slower dry-run.',
     min: 1000,
     max: 50000,
     step: 1000,
@@ -184,11 +184,11 @@ export default function MandateBuilder() {
             onClick={resetDraft}
             className="text-[11px] text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
           >
-            Reset to defaults
+            Reset
           </button>
         </div>
-        <p className="mt-2 max-w-2xl text-xs leading-5 text-white/50">
-          Adjust the four policy knobs the VPS worker uses, then run a dry-run against the canonical France–Sweden fixture. No account, no wallet, no execution — this is the self-serve version of the concierge test’s “hand-roll a mandate” step.
+        <p className="mt-1.5 text-xs leading-5 text-white/45">
+          Adjust the four policy knobs, then dry-run against the canonical France–Sweden fixture. No account, no wallet, no execution.
         </p>
       </div>
 
@@ -198,9 +198,13 @@ export default function MandateBuilder() {
           {KNOBS.map((knob) => (
             <div key={knob.key}>
               <div className="flex items-baseline justify-between gap-3">
-                <label htmlFor={`knob-${knob.key}`} className="text-sm font-medium text-white/80">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-white/80">
                   {knob.label}
-                </label>
+                  <span className="mc-tooltip" tabIndex={0} role="button" aria-label={knob.hint}>
+                    ?
+                    <span className="mc-tooltip__bubble">{knob.hint}</span>
+                  </span>
+                </span>
                 <span className="font-mono text-sm text-emerald-300">{knob.format(draft[knob.key])}</span>
               </div>
               <input
@@ -213,7 +217,6 @@ export default function MandateBuilder() {
                 onChange={(e) => updateKnob(knob.key, Number(e.target.value))}
                 className="mc-range mt-2 w-full"
               />
-              <p className="mt-1.5 text-xs leading-4 text-white/40">{knob.description}</p>
             </div>
           ))}
 
@@ -247,7 +250,7 @@ export default function MandateBuilder() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Check className="h-3.5 w-3.5 text-emerald-300" />
-                  <span className="text-emerald-100">Mandate saved. Your public Track Record URL:</span>
+                  <span className="text-emerald-100">Track Record URL saved</span>
                 </div>
                 <Link
                   href={savedUrl}
@@ -259,9 +262,6 @@ export default function MandateBuilder() {
               </div>
               <p className="mt-1.5 break-all font-mono text-[10px] text-white/55">
                 {savedUrl}
-              </p>
-              <p className="mt-1.5 text-[11px] text-white/45">
-                Share this URL with an allocator. It shows your mandate and any track record produced under it — no signup required to view.
               </p>
             </div>
           )}
@@ -277,8 +277,8 @@ export default function MandateBuilder() {
 
           {!error && !result && !running && (
             <div className="flex h-full min-h-32 items-center justify-center border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
-              <p className="text-xs leading-5 text-white/40">
-                Adjust the knobs and run a dry-run. The verdict, gate checks, and allocation will appear here — the same shape the VPS worker produces under your mandate.
+              <p className="text-xs text-white/35">
+                Run a dry-run to see the verdict.
               </p>
             </div>
           )}
@@ -307,32 +307,60 @@ function DryRunResult({ result }) {
         : 'border-sky-300/30 bg-sky-300/10 text-sky-100';
   const passedGates = (decision.riskChecks || []).filter((g) => g.passed).length;
   const totalGates = (decision.riskChecks || []).length;
+  const [gatesOpen, setGatesOpen] = useState(false);
 
   return (
-    <div className="space-y-4">
-      {/* Verdict header */}
+    <div className="space-y-3">
+      {/* Verdict + inline stats */}
       <div className={`border p-4 ${verdictClass}`}>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4" />
-            <span className="font-mono text-xs font-semibold uppercase tracking-[0.16em]">Verdict</span>
+            <span className="font-display text-lg font-bold">{verdict}</span>
           </div>
-          <span className="font-display text-lg font-bold">{verdict}</span>
+          <span className="font-mono text-[10px] text-white/50">{passedGates}/{totalGates} gates</span>
         </div>
-        <p className="mt-2 text-xs leading-5 text-white/70">{decision.rationale}</p>
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-white/50">
-          <span>edge {pct(recommendation.edge)}</span>
+        <p className="mt-1.5 text-xs leading-5 text-white/70">{decision.rationale}</p>
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-white/50">
+          <span>edge <span className="text-emerald-300">{pct(recommendation.edge)}</span></span>
           <span>fair {pct(recommendation.aiProbability)}</span>
           <span>market {pct(recommendation.marketOdds)}</span>
-          <span>allocation {pct(decision.allocationPct)}</span>
-          <span>{passedGates}/{totalGates} gates</span>
+          <span>alloc {pct(decision.allocationPct)}</span>
         </div>
       </div>
 
-      {/* Gate checks */}
-      <div className="border border-white/10 bg-white/[0.02] p-4">
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">Policy gates</p>
-        <ul className="mt-2 space-y-1.5">
+      {/* Simulation + fixture in a compact 2-col strip */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="border border-white/10 bg-white/[0.02] p-3">
+          <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-white/40">Simulation</p>
+          <div className="mt-1.5 space-y-0.5 font-mono text-[11px]">
+            <div className="flex justify-between"><span className="text-white/40">win</span><span className="text-emerald-300">{simulation.valid ? pct(simulation.winProbability) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-white/40">loss</span><span className="text-white/70">{simulation.valid ? pct(simulation.lossProbability) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-white/40">E[ret]</span><span className="text-white/70">{simulation.valid ? `${(simulation.expectedReturn * 100).toFixed(1)}%` : '—'}</span></div>
+          </div>
+          <p className="mt-1.5 font-mono text-[9px] text-white/30">{simulation.runs.toLocaleString()} paths</p>
+        </div>
+        <div className="border border-white/10 bg-white/[0.02] p-3">
+          <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-white/40">Fixture</p>
+          <p className="mt-1.5 text-xs text-white/80">{fixture.home.name} v {fixture.away.name}</p>
+          <p className="mt-0.5 text-[10px] text-white/45">{fixture.competition}</p>
+          <p className="mt-2 break-all font-mono text-[9px] text-white/35">
+            {result.receipt.proof.integrity.contentHash.slice(0, 20)}…
+          </p>
+        </div>
+      </div>
+
+      {/* Collapsible gate checks */}
+      <button
+        type="button"
+        onClick={() => setGatesOpen((v) => !v)}
+        className="flex w-full items-center justify-between border border-white/10 bg-white/[0.02] px-3 py-2 text-left"
+      >
+        <span className="font-mono text-[10px] uppercase tracking-[0.13em] text-white/40">Policy gates</span>
+        <ChevronDown className={`h-3 w-3 text-white/40 transition-transform ${gatesOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {gatesOpen && (
+        <ul className="space-y-1 px-1">
           {(decision.riskChecks || []).map((gate) => (
             <li key={gate.id} className="flex items-start gap-2 text-xs">
               <span
@@ -347,50 +375,11 @@ function DryRunResult({ result }) {
             </li>
           ))}
         </ul>
-      </div>
+      )}
 
-      {/* Simulation summary */}
-      <div className="border border-white/10 bg-white/[0.02] p-4">
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">Seeded simulation</p>
-        <div className="mt-2 grid grid-cols-3 gap-2 text-center">
-          <div>
-            <div className="font-mono text-[10px] text-white/40">win prob</div>
-            <div className="mt-1 font-display text-sm font-semibold text-emerald-300">
-              {simulation.valid ? pct(simulation.winProbability) : '—'}
-            </div>
-          </div>
-          <div>
-            <div className="font-mono text-[10px] text-white/40">loss prob</div>
-            <div className="mt-1 font-display text-sm font-semibold text-white/80">
-              {simulation.valid ? pct(simulation.lossProbability) : '—'}
-            </div>
-          </div>
-          <div>
-            <div className="font-mono text-[10px] text-white/40">expected return</div>
-            <div className="mt-1 font-display text-sm font-semibold text-white/80">
-              {simulation.valid ? `${(simulation.expectedReturn * 100).toFixed(1)}%` : '—'}
-            </div>
-          </div>
-        </div>
-        <p className="mt-2 font-mono text-[9px] text-white/35">
-          {simulation.runs.toLocaleString()} paths · seed {simulation.seed}
-        </p>
-      </div>
-
-      {/* Fixture + receipt hash */}
-      <div className="border-t border-white/10 pt-3 font-mono text-[10px] text-white/40">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span>
-            {fixture.home.name} v {fixture.away.name} · {fixture.competition}
-          </span>
-          <span className="break-all text-white/55">
-            {result.receipt.proof.integrity.contentHash.slice(0, 24)}…
-          </span>
-        </div>
-        <p className="mt-1">
-          Dry-run · policy {policy.version} · receipt not persisted
-        </p>
-      </div>
+      <p className="font-mono text-[9px] text-white/30">
+        Dry-run · {policy.version} · not persisted
+      </p>
     </div>
   );
 }

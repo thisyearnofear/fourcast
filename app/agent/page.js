@@ -44,7 +44,7 @@ export default function AgentPage() {
         {operatorOpen && (
           <div className="border-t border-[var(--mc-rule)] px-4 py-5 sm:px-5">
             <p className="mb-4 text-xs leading-5 text-white/45">
-              The manual runner scans markets on demand. It is a capability for investigation, not the autonomous mandate above — every manual run still produces a hash-bound receipt in the ledger below.
+              Manual on-demand scans — every run still produces a hash-bound receipt.
             </p>
             <AgentDashboard />
           </div>

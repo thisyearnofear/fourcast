@@ -293,7 +293,7 @@ export default function SearchLanding() {
                   Final {VERIFIED_RECEIPT.score}
                 </p>
                 <p className="mt-3 max-w-md text-xs leading-5 text-white/55">
-                  A 0.1 SOL policy on this match was settled trustlessly via the <span className="font-mono text-white/70">match-escrow</span> program CPI-calling <span className="font-mono text-white/70">txoracle::validate_stat</span>. No intermediary involved.
+                  0.1 SOL settled trustlessly via <span className="font-mono text-white/70">match-escrow</span> CPI → <span className="font-mono text-white/70">txoracle::validate_stat</span>. No intermediary.
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-stretch gap-2">

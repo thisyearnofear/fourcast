@@ -11,7 +11,7 @@ export default function PositionsPage() {
   return (
     <AppShell
       title="Allocator Diligence"
-      subtitle="Why should you let this agent touch capital? The answer is behaviour, not performance — policy adherence, receipt coverage, decision discipline, and calibration after resolution. Every number below recomputes from the public decision ledger."
+      subtitle="Behaviour, not performance — adherence, coverage, discipline, and calibration. Every number recomputes from the public decision ledger."
       maxWidth="max-w-4xl"
       subheader={<NarrativeSteps currentStep="scored" />}
     >

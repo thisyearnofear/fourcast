@@ -66,7 +66,7 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
   return (
     <AppShell
       title={mandate?.displayName ? `${mandate.displayName}'s track record` : 'Operator track record'}
-      subtitle="A public, mandate-bound track record. Every number below is computed from the operator's sealed decision receipts — not self-reported."
+      subtitle="Every number is computed from sealed decision receipts — not self-reported."
       maxWidth="max-w-4xl"
       actions={
         <button
@@ -113,7 +113,7 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
                 <span className="mc-kicker">Mandate</span>
               </div>
               <p className="mt-1 text-xs text-white/45">
-                The policy this operator's agent runs under. Every decision in the track record below was gated by these knobs.
+                The policy every decision below was gated by.
               </p>
             </div>
             <div className="px-4 py-5 sm:px-5">
@@ -131,7 +131,7 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
                 </>
               ) : (
                 <p className="text-sm text-white/50">
-                  No saved mandate for this operator. The track record below reflects forecasts made before the mandate was persisted.
+                  No saved mandate — forecasts below predate the mandate system.
                 </p>
               )}
             </div>
@@ -162,8 +162,8 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
               </div>
 
               {forecasts.length === 0 ? (
-                <p className="mt-5 border border-dashed border-white/15 px-4 py-8 text-center text-xs leading-5 text-white/45">
-                  No resolved forecasts yet for this operator. When their agent runs and the markets resolve, the track record will populate here.
+                <p className="mt-5 border border-dashed border-white/15 px-4 py-8 text-center text-xs text-white/40">
+                  No resolved forecasts yet.
                 </p>
               ) : (
                 <div className="mt-5 overflow-x-auto">
@@ -195,13 +195,9 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
           </section>
 
           {/* Public-by-design notice */}
-          <div className="border border-white/10 bg-white/[0.02] p-4 text-xs leading-5 text-white/45">
-            <div className="flex items-start gap-2">
-              <ExternalLink className="mt-0.5 h-3 w-3 shrink-0 text-white/40" />
-              <p>
-                This URL is public by design — it's the target of an OG share card. Anyone with the link can audit this operator's mandate and track record. Private mandates are a Premium-tier feature.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 border border-white/10 bg-white/[0.02] px-3 py-2.5 text-[11px] text-white/40">
+            <ExternalLink className="h-3 w-3 shrink-0 text-white/35" />
+            <span>Public by design — anyone with the link can audit this. Private mandates are Premium.</span>
           </div>
         </>
       )}
