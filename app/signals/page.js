@@ -280,18 +280,18 @@ export default function SignalsPage() {
  cardBgColor={cardBgColor}
  />
 
- {/* Stats Summary */}
+ {/* Stats Summary — evidence strip, not card grid */}
  {!isLoading && !error && (
- <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
- <div className="fc-metric p-4">
+ <div className="evidence-strip grid grid-cols-3 gap-px bg-white/10 mb-10">
+ <div className="p-4 bg-[var(--color-paper)]">
  <div className={`text-2xl font-light ${textColor} mb-1`}>{signals.length}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Total Predictions</div>
  </div>
- <div className="fc-metric p-4">
+ <div className="p-4 bg-[var(--color-paper)]">
  <div className={`text-2xl font-light ${textColor} mb-1`}>{Object.keys(signalsByEvent).length}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Unique Events</div>
  </div>
- <div className="fc-metric p-4">
+ <div className="p-4 bg-[var(--color-paper)]">
  <div className={`text-2xl font-light ${textColor} mb-1`}>{filteredSignals.length}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Filtered Results</div>
  </div>
@@ -331,9 +331,9 @@ export default function SignalsPage() {
  )}
 
  {!isLoading && !error && filteredSignals.length > 0 && (
- <div className="space-y-6">
+ <div className="space-y-10">
  {Object.entries(signalsByEvent).map(([eventId, eventSignals]) => (
- <div key={eventId} className="fc-proof-group p-6">
+ <section key={eventId} className="platform-open-section">
  <p className="fc-kicker mb-2">Decision record · {eventSignals.length} entries</p>
  <h3 className={`text-lg font-medium ${textColor} mb-4`}>
  {eventSignals[0]?.market_title || eventId}
@@ -378,7 +378,7 @@ export default function SignalsPage() {
  )}
  </div>
  </div>
- </div>
+ </section>
  ))}
  </div>
  )}

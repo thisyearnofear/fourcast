@@ -37,7 +37,7 @@ export function MarketEdgeScanner({
 
  if (edgeMarkets.length === 0) {
  return (
- <div className={`mc-panel p-4 text-center text-white/40`}>
+ <div className="platform-open-section py-6 text-center text-white/40">
  <span className="text-sm font-light">No edge opportunities detected yet</span>
  </div>
  );
@@ -66,7 +66,7 @@ export function MarketEdgeScanner({
  const subtleText = 'text-white/60';
 
  return (
- <div className={`relative overflow-hidden p-5 border-2 mc-panel border-purple-500/30`}>
+ <div className="platform-workbench relative overflow-hidden p-5">
  {/* Scanner Header */}
  <div className="flex items-center gap-3 mb-4">
  <div className="flex h-2 w-2 bg-purple-500 animate-ping" />

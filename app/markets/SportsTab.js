@@ -47,11 +47,9 @@ export function SportsTabContent({
  };
 
  return (
- <div className="space-y-6">
- {/* Compact Filter Bar */}
- <div
- className={`${cardBgColor} border p-3 space-y-2`}
- >
+ <div className="space-y-10">
+ {/* Compact Filter Bar — open section */}
+ <div className="platform-open-section space-y-2">
  {/* Event Type */}
  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
  <label className={`${textColor} text-xs opacity-60 min-w-max`}>
@@ -62,7 +60,7 @@ export function SportsTabContent({
  onChange={(e) =>
  setFilters((prev) => ({ ...prev, eventType: e.target.value }))
  }
- className={`flex-1 px-3 py-2 text-sm border bg-white/10 border-white/20 text-white`}
+ className={"mc-input flex-1 px-3 py-2 text-sm"}
  >
  <option value="Soccer">Soccer</option>
  <option value="NFL">NFL</option>
@@ -100,7 +98,7 @@ export function SportsTabContent({
  <select
  value={String(minVolume)}
  onChange={(e) => setMinVolume(parseInt(e.target.value))}
- className={`flex-1 px-3 py-2 text-sm border bg-white/10 border-white/20 text-white`}
+ className={"mc-input flex-1 px-3 py-2 text-sm"}
  >
  <option value="10000">$10k+</option>
  <option value="50000">$50k+</option>
@@ -117,7 +115,7 @@ export function SportsTabContent({
  onChange={(e) =>
  setFilters((prev) => ({ ...prev, confidence: e.target.value }))
  }
- className={`flex-1 px-3 py-2 text-sm border bg-white/10 border-white/20 text-white`}
+ className={"mc-input flex-1 px-3 py-2 text-sm"}
  >
  <option value="all">All</option>
  <option value="HIGH">High</option>

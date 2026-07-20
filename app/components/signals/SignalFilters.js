@@ -1,18 +1,18 @@
 export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, isNight, textColor, cardBgColor }) {
  return (
  <>
- {/* Search Bar */}
- <div className={`mc-panel p-6 mb-6`}>
+ {/* Search Bar — open section, not card */}
+ <div className="platform-open-section mb-2">
  <input
  type="text"
  value={filters.searchText}
  onChange={(e) => setFilters(prev => ({ ...prev, searchText: e.target.value }))}
  placeholder="Search signals by market or analysis..."
- className={`w-full px-4 py-3 text-sm border bg-white/10 border-white/20 text-white placeholder-white/40`}
+ className="mc-input w-full px-4 py-3 text-sm"
  />
  </div>
- {/* Filters & Sort */}
- <div className={`mc-panel p-6 mb-8`}>
+ {/* Filters & Sort — open section */}
+ <div className="platform-open-section mb-10">
  <div className="flex justify-between items-center mb-4">
  <label className={`${textColor} text-xs opacity-60 uppercase tracking-wider`}>Filters & Sort</label>
  <div className="flex gap-2">
@@ -20,7 +20,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
  <button
  key={sort}
  onClick={() => setSortBy(sort)}
- className={`px-3 py-1.5 text-xs transition-all capitalize ${sortBy === sort
+ className={`px-3 py-1.5 text-xs transition-colors capitalize ${sortBy === sort
  ? ('bg-emerald-500/30 text-white border border-emerald-400/40')
  : `${textColor} opacity-60 hover:opacity-100`}`}
  >
@@ -37,7 +37,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
  value={filters.eventId}
  onChange={(e) => setFilters(prev => ({ ...prev, eventId: e.target.value }))}
  placeholder="Filter by event..."
- className={`w-full px-3 py-2 text-sm border bg-white/10 border-white/20 text-white placeholder-white/50`}
+ className="mc-input w-full px-3 py-2 text-sm"
  />
  </div>
 
@@ -46,7 +46,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
  <select
  value={filters.confidence}
  onChange={(e) => setFilters(prev => ({ ...prev, confidence: e.target.value }))}
- className={`w-full px-3 py-2 text-sm border bg-white/10 border-white/20 text-white`}
+ className="mc-input w-full px-3 py-2 text-sm"
  >
  <option value="all">All Confidence</option>
  <option value="HIGH">High</option>
@@ -60,7 +60,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
  <select
  value={filters.oddsEfficiency}
  onChange={(e) => setFilters(prev => ({ ...prev, oddsEfficiency: e.target.value }))}
- className={`w-full px-3 py-2 text-sm border bg-white/10 border-white/20 text-white`}
+ className="mc-input w-full px-3 py-2 text-sm"
  >
  <option value="all">All Efficiency</option>
  <option value="INEFFICIENT">Inefficient</option>
@@ -75,7 +75,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
  value={filters.author}
  onChange={(e) => setFilters(prev => ({ ...prev, author: e.target.value }))}
  placeholder="Filter by author..."
- className={`w-full px-3 py-2 text-sm border bg-white/10 border-white/20 text-white placeholder-white/50`}
+ className="mc-input w-full px-3 py-2 text-sm"
  />
  </div>
  </div>

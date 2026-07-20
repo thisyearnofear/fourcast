@@ -26,7 +26,7 @@ export default function OperatorSpotlight({ operators = [], onProfileClick }) {
  const top = operators.slice(0, 3);
 
  return (
- <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-label="Top analysts">
+ <div className="evidence-strip grid grid-cols-1 gap-px bg-white/10 sm:grid-cols-3" aria-label="Top analysts">
  {top.map((user, idx) => {
  const winRate = Math.round((user.win_rate || 0) * 100);
  const tier = tierInfoFor(user.win_rate || 0);
@@ -39,7 +39,7 @@ export default function OperatorSpotlight({ operators = [], onProfileClick }) {
  key={user.user_address || idx}
  type="button"
  onClick={() => onProfileClick?.(user.user_address)}
- className="mc-panel p-4 text-left transition-all hover:scale-[1.02] hover:border-white/20"
+ className="position-record bg-[var(--color-paper)] p-4 text-left transition-colors hover:bg-white/[0.03]"
  aria-label={`View profile for ${addr} — ranked #${idx + 1}, ${tier.name}`}
  >
  <div className="mb-3 flex items-center justify-between">

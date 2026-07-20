@@ -78,6 +78,7 @@
 h1, h2, h3, .fc-display {
   min-width: 0;
   overflow-wrap: anywhere;
+  font-family: var(--font-display), var(--font-sans), sans-serif;
 }
 
 :where(button, a, [role='button']):focus-visible {
@@ -134,7 +135,7 @@ body {
 }
 
 .fc-display { letter-spacing: -.055em; }
-.fc-kicker { color: rgba(121,245,183,.78); font: 600 10px/1 var(--font-mono); letter-spacing: .18em; text-transform: uppercase; }
+.fc-kicker { color: rgba(121,245,183,.78); font: 600 10px/1 var(--font-sans); letter-spacing: .18em; text-transform: uppercase; }
 .fc-query { border: 1px solid rgba(243,240,231,.18); background: rgba(12,16,15,.86); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
 .fc-query.is-focused { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(121,245,183,.12), inset 0 1px 0 rgba(255,255,255,.06); }
 .fc-query label { border-left: 2px solid rgba(121,245,183,.55); }
@@ -186,7 +187,7 @@ body {
 .fc-position-record { border: 1px solid rgba(243,240,231,.14); background: rgba(12,16,15,.78); box-shadow: inset 3px 0 0 transparent; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
 .fc-position-record:hover { border-color: rgba(121,245,183,.48); box-shadow: inset 3px 0 0 var(--accent), 6px 6px 0 rgba(0,0,0,.14); transform: translate(-1px, -1px); }
 
-.operator-pulse { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem 1.25rem; min-height: 2.9rem; border-block: 1px solid rgba(243,240,231,.13); background: rgba(6,9,8,.48); padding: .55rem .8rem; color: rgba(243,240,231,.55); font: 500 10px/1.4 var(--font-mono); letter-spacing: .075em; text-transform: uppercase; }
+.operator-pulse { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem 1.25rem; min-height: 2.9rem; border-block: 1px solid rgba(243,240,231,.13); background: rgba(6,9,8,.48); padding: .55rem .8rem; color: rgba(243,240,231,.55); font: 500 10px/1.4 var(--font-sans); letter-spacing: .075em; text-transform: uppercase; }
 .operator-pulse__primary, .operator-pulse__metrics { display: flex; align-items: center; gap: .55rem; }
 .operator-pulse__primary strong { color: var(--ink); font-weight: 700; }
 .operator-pulse__metrics { gap: 1.2rem; margin-left: auto; }
@@ -298,6 +299,31 @@ body { overflow-x: clip; }
 @media (hover: hover) and (pointer: fine) {
   .fixture-record:hover, .position-record:hover { background: var(--color-grid); }
   .fixture-record:hover::before, .position-record:hover::before { opacity: 1; transform: scaleY(1); }
+}
+
+/* ── Reduced motion: remove displacement, keep opacity/color at ≤150ms ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 150ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 150ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  .platform-page-head,
+  .platform-main > *,
+  .proof-loop__stage::after {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .fixture-record::before,
+  .position-record::before {
+    transition: opacity 150ms linear !important;
+    transform: none !important;
+  }
+  button:active:not(:disabled) { transform: none !important; }
 }
 
 #root {
@@ -681,10 +707,10 @@ code {
     background-size: 28px 28px;
   }
 
-  /* Kicker — mono uppercase label that opens every dossier block. */
+  /* Kicker — uppercase label that opens every dossier block. DM Sans, not mono. */
   .mc-kicker {
     color: rgba(243, 240, 231, 0.45);
-    font: 600 10px/1 var(--font-mono);
+    font: 600 10px/1 var(--font-sans);
     letter-spacing: 0.2em;
     text-transform: uppercase;
   }
@@ -726,7 +752,7 @@ code {
     background: transparent;
     color: var(--ink);
     padding: 0.6rem 1rem;
-    font: 600 12px/1 var(--font-mono);
+    font: 600 12px/1 var(--font-sans);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     transition: transform var(--dur-press) var(--ease-out), border-color var(--dur-state) linear, color var(--dur-state) linear, background var(--dur-state) linear;
@@ -765,7 +791,7 @@ code {
     border: 1px solid transparent;
     background: transparent;
     color: rgba(243, 240, 231, 0.55);
-    font: 500 11px/1 var(--font-mono);
+    font: 500 11px/1 var(--font-sans);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     text-decoration: none;
@@ -816,7 +842,7 @@ code {
     border: 1px solid transparent;
     background: transparent;
     color: rgba(243, 240, 231, 0.55);
-    font: 600 11px/1 var(--font-mono);
+    font: 600 11px/1 var(--font-sans);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;

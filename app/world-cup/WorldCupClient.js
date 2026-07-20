@@ -6,6 +6,7 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   CircleDot,
   Clock,
   Database,
@@ -184,121 +185,133 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
   const implied = fixture.odds?.implied;
   const hasProof = Boolean(fixture.proof?.merkleRoot || fixture.proof?.dailyRootPda);
   const [edgeOpen, setEdgeOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   // Derive score from proof if the live API didn't populate it
   const homeScore = fixture.home.score ?? fixture.proof?.statToProve?.value ?? null;
   const awayScore = fixture.away.score ?? fixture.proof?.statToProve2?.value ?? null;
   const verification = proofResult?.verification || (proofResult?.verdict ? proofResult : null);
+  const verdictLabel = verification?.verdict || (hasProof ? 'proof' : implied ? 'priced' : 'pending');
+
+  // Summary row — teams, score, status, verdict indicator. Click to expand.
   return (
-    <article className="fixture-record platform-open-section space-y-4 px-1 py-6 sm:px-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <StatusBadge status={fixture.status} />
-            <span className="text-[10px] uppercase tracking-wider text-white/40">
-              {fixture.stage || 'World Cup'}
-            </span>
-          </div>
-          <div className="mt-2 text-base font-semibold text-white">
-            {fixture.home.name} <span className="text-white/40 font-normal">vs</span> {fixture.away.name}
-          </div>
-          <div className="mt-0.5 text-xs text-white/50">
+    <article className="fixture-record border-b border-[var(--mc-rule)]">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center gap-4 px-1 py-4 text-left sm:px-3"
+        aria-expanded={expanded}
+      >
+        <StatusBadge status={fixture.status} />
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">
+          {fixture.home.name} <span className="text-white/35 font-normal">v</span> {fixture.away.name}
+        </span>
+        {fixture.status !== 'scheduled' && (
+          <span className="font-mono text-sm tabular-nums text-white/80 shrink-0">
+            {homeScore ?? 0}–{awayScore ?? 0}
+          </span>
+        )}
+        {hasProof && (
+          <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-wider text-emerald-300/70 shrink-0">
+            {verdictLabel}
+          </span>
+        )}
+        <ChevronDown
+          size={14}
+          className={`shrink-0 text-white/35 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {expanded && (
+        <div className="space-y-4 px-1 pb-6 sm:px-3">
+          <div className="text-xs text-white/45">
             {formatKickoff(fixture.kickoff)}
             {fixture.venue ? ` · ${fixture.venue}` : ''}
           </div>
-        </div>
-        <div className="text-right shrink-0">
-          {fixture.status !== 'scheduled' && (
-            <div className="text-2xl font-bold tracking-tight">
-              {homeScore ?? 0}
-              <span className="text-white/40 mx-1">–</span>
-              {awayScore ?? 0}
+
+          {implied && (
+            <div className="space-y-1.5">
+              <div className="text-[10px] uppercase tracking-wider text-white/40">TxLINE consensus</div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: fixture.home.code || 'HOME', value: implied.home },
+                  { label: 'DRAW', value: implied.draw },
+                  { label: fixture.away.code || 'AWAY', value: implied.away },
+                ].map((o) => (
+                  <div key={o.label} className="bg-white/[0.04] border border-white/10 px-2 py-1.5 text-center">
+                    <div className="text-[10px] text-white/50 truncate">{o.label}</div>
+                    <div className="text-sm font-semibold text-emerald-300">{pct(o.value)}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {implied && (
-        <div className="space-y-1.5">
-          <div className="text-[10px] uppercase tracking-wider text-white/40">TxLINE consensus</div>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: fixture.home.code || 'HOME', value: implied.home },
-              { label: 'DRAW', value: implied.draw },
-              { label: fixture.away.code || 'AWAY', value: implied.away },
-            ].map((o) => (
-              <div key={o.label} className="bg-white/[0.04] border border-white/10 px-2 py-1.5 text-center">
-                <div className="text-[10px] text-white/50 truncate">{o.label}</div>
-                <div className="text-sm font-semibold text-emerald-300">{pct(o.value)}</div>
-              </div>
-            ))}
+          <div className="flex items-center gap-2 pt-1 flex-wrap">
+            {fixture.status === 'final' && (
+              <button
+                onClick={() => onReplay(fixture)}
+                disabled={replaying}
+                className="mc-action mc-action--primary"
+              >
+                {replaying ? <Pause size={12} /> : <Play size={12} />}
+                {replaying ? 'Replaying…' : 'Replay match'}
+              </button>
+            )}
+            {hasProof && (
+              <button
+                onClick={() => onVerify(fixture)}
+                disabled={verifying}
+                className="mc-action"
+              >
+                <Shield size={12} />
+                {verifying ? 'Verifying…' : 'Verify proof'}
+              </button>
+            )}
+            {hasProof && onOpenTheatre && (
+              <button
+                onClick={() => onOpenTheatre(fixture)}
+                className="mc-action mc-action--primary"
+              >
+                <Fingerprint size={12} />
+                Open proof theatre
+              </button>
+            )}
+            {hasProof && (
+              <a
+                href={`https://explorer.solana.com/address/${fixture.proof.dailyRootPda}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mc-nav-link no-underline"
+              >
+                <Database size={11} />
+                PDA
+              </a>
+            )}
+            {implied && (
+              <button
+                onClick={() => setEdgeOpen((v) => !v)}
+                className={`mc-action ${edgeOpen ? 'mc-action--primary' : ''}`}
+              >
+                <Activity size={12} />
+                {edgeOpen ? 'Hide edge' : 'Edge vs Polymarket'}
+              </button>
+            )}
           </div>
+
+          {verification && (
+            <VerificationPanel verification={verification} />
+          )}
+
+          {proofResult?.receipt && <ProofDecisionPanel result={proofResult} />}
+
+          {edgeOpen && implied && (
+            <EdgePanel fixture={fixture} onToggle={() => {}} />
+          )}
+
+          {hasProof && fixture.status === 'final' && (
+            <OnChainSettlementPanel fixture={fixture} proof={fixture.proof} />
+          )}
         </div>
-      )}
-
-      <div className="flex items-center gap-2 pt-1 flex-wrap">
-        {fixture.status === 'final' && (
-          <button
-            onClick={() => onReplay(fixture)}
-            disabled={replaying}
-            className="mc-action mc-action--primary"
-          >
-            {replaying ? <Pause size={12} /> : <Play size={12} />}
-            {replaying ? 'Replaying…' : 'Replay match'}
-          </button>
-        )}
-        {hasProof && (
-          <button
-            onClick={() => onVerify(fixture)}
-            disabled={verifying}
-            className="mc-action"
-          >
-            <Shield size={12} />
-            {verifying ? 'Verifying…' : 'Verify proof'}
-          </button>
-        )}
-        {hasProof && onOpenTheatre && (
-          <button
-            onClick={() => onOpenTheatre(fixture)}
-            className="mc-action mc-action--primary"
-          >
-            <Fingerprint size={12} />
-            Open proof theatre
-          </button>
-        )}
-        {hasProof && (
-          <a
-            href={`https://explorer.solana.com/address/${fixture.proof.dailyRootPda}`}
-            target="_blank"
-            rel="noreferrer"
-            className="mc-nav-link no-underline"
-          >
-            <Database size={11} />
-            PDA
-          </a>
-        )}
-        {implied && (
-          <button
-            onClick={() => setEdgeOpen((v) => !v)}
-            className={`mc-action ${edgeOpen ? 'mc-action--primary' : ''}`}
-          >
-            <Activity size={12} />
-            {edgeOpen ? 'Hide edge' : 'Edge vs Polymarket'}
-          </button>
-        )}
-      </div>
-
-      {verification && (
-        <VerificationPanel verification={verification} />
-      )}
-
-      {proofResult?.receipt && <ProofDecisionPanel result={proofResult} />}
-
-      {edgeOpen && implied && (
-        <EdgePanel fixture={fixture} onToggle={() => {}} />
-      )}
-
-      {hasProof && fixture.status === 'final' && (
-        <OnChainSettlementPanel fixture={fixture} proof={fixture.proof} />
       )}
     </article>
   );

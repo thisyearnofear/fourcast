@@ -829,12 +829,12 @@ export default function MarketsPage() {
  <FirstRunBanner searchQuery={landingQuery} />
 
  {/* Active Chain Indicators */}
- <div className="mb-6 space-y-6">
+ <div className="platform-open-section mb-10">
  {/* Live Edge Scanner - Discovery Hook */}
- <MarketEdgeScanner 
- markets={markets} 
- onAnalyze={openAnalyzeConfig} 
- isNight={isNight} 
+ <MarketEdgeScanner
+ markets={markets}
+ onAnalyze={openAnalyzeConfig}
+ isNight={isNight}
  />
  </div>
 

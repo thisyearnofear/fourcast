@@ -47,10 +47,10 @@ export function DiscoveryTabContent({
  };
 
  return (
- <div className="space-y-6">
- {/* Compact Filter Bar */}
+ <div className="space-y-10">
+ {/* Compact Filter Bar — open section */}
  <div
- className={`${cardBgColor} border p-3 space-y-2`}
+ className="platform-open-section space-y-2"
  >
  {/* Category */}
  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -62,7 +62,7 @@ export function DiscoveryTabContent({
  onChange={(e) =>
  setFilters((prev) => ({ ...prev, category: e.target.value }))
  }
- className={`flex-1 px-3 py-2 text-sm border bg-white/10 border-white/20 text-white`}
+ className={"mc-input flex-1 px-3 py-2 text-sm"}
  >
  <option value="all">All Categories</option>
  <option value="Sports">Sports</option>
@@ -85,7 +85,7 @@ export function DiscoveryTabContent({
  onChange={(e) =>
  setFilters((prev) => ({ ...prev, platform: e.target.value }))
  }
- className={`flex-1 px-3 py-2 text-sm border bg-white/10 border-white/20 text-white`}
+ className={"mc-input flex-1 px-3 py-2 text-sm"}
  >
  <option value="all">All Platforms</option>
  <option value="polymarket">Polymarket</option>
@@ -124,7 +124,7 @@ export function DiscoveryTabContent({
  onChange={(e) =>
  setFilters((prev) => ({ ...prev, minVolume: e.target.value }))
  }
- className={`flex-1 px-3 py-2 text-sm border bg-white/10 border-white/20 text-white`}
+ className={"mc-input flex-1 px-3 py-2 text-sm"}
  >
  <option value="10000">$10k+</option>
  <option value="50000">$50k+</option>
@@ -141,7 +141,7 @@ export function DiscoveryTabContent({
  onChange={(e) =>
  setFilters((prev) => ({ ...prev, confidence: e.target.value }))
  }
- className={`flex-1 px-3 py-2 text-sm border bg-white/10 border-white/20 text-white`}
+ className={"mc-input flex-1 px-3 py-2 text-sm"}
  >
  <option value="all">All</option>
  <option value="HIGH">High</option>
