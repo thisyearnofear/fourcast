@@ -9,6 +9,7 @@
  *   ?type=settled   — PositionSettled contracts
  *   ?type=obligations — pending SettlementObligation contracts
  *   ?type=resolutions — MarketResolution contracts
+ *   ?partyId=X      — optional party ID to query as (defaults to operator)
  */
 export const runtime = 'nodejs';
 
@@ -18,6 +19,7 @@ import {
   getPendingObligations,
   getMarketResolutions,
   isCantonConfigured,
+  OPERATOR_PARTY_ID,
 } from '@/services/cantonLedgerClient';
 
 export async function GET(request) {
@@ -32,27 +34,29 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'open';
+    const partyId = searchParams.get('partyId') || OPERATOR_PARTY_ID;
 
     let results;
     switch (type) {
       case 'settled':
-        results = await getSettledPositions();
+        results = await getSettledPositions(partyId);
         break;
       case 'obligations':
-        results = await getPendingObligations();
+        results = await getPendingObligations(partyId);
         break;
       case 'resolutions':
-        results = await getMarketResolutions();
+        results = await getMarketResolutions(partyId);
         break;
       case 'open':
       default:
-        results = await getOpenPositions();
+        results = await getOpenPositions(partyId);
         break;
     }
 
     return Response.json({
       success: true,
       type,
+      partyId,
       positions: results,
       count: results.length,
     });

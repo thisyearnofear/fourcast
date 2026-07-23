@@ -92,6 +92,7 @@ export const BRAND = {
     labs: 'Labs',
     worldCup: 'Proof Theatre',
     alerts: 'Alerts',
+    canton: 'Private Markets',
   },
 
   /** Wallet explainer — show everywhere users connect */

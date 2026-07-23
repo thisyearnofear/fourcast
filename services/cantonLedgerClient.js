@@ -342,47 +342,52 @@ export async function settlePosition(positionContractId, resolutionContractId) {
 // ── Query helpers ───────────────────────────────────────────────────────
 
 /**
- * Get all open prediction markets visible to the operator.
+ * Get all open prediction positions visible to a party.
+ * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
  */
-export async function getOpenMarkets() {
-  return queryActiveContracts(OPERATOR_PARTY_ID, [
-    { module: 'Fourcast.PredictionMarket', name: 'PredictionMarket' },
-  ]);
-}
-
-/**
- * Get all market resolutions visible to the operator.
- */
-export async function getMarketResolutions() {
-  return queryActiveContracts(OPERATOR_PARTY_ID, [
-    { module: 'Fourcast.PredictionMarket', name: 'MarketResolution' },
-  ]);
-}
-
-/**
- * Get all open positions visible to the operator.
- */
-export async function getOpenPositions() {
-  return queryActiveContracts(OPERATOR_PARTY_ID, [
+export async function getOpenPositions(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
     { module: 'Fourcast.PredictionPosition', name: 'PredictionPosition' },
   ]);
 }
 
 /**
- * Get all settled positions visible to the operator.
+ * Get all settled positions visible to a party.
+ * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
  */
-export async function getSettledPositions() {
-  return queryActiveContracts(OPERATOR_PARTY_ID, [
+export async function getSettledPositions(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
     { module: 'Fourcast.PredictionPosition', name: 'PositionSettled' },
   ]);
 }
 
 /**
- * Get all pending settlement obligations for the operator.
+ * Get all pending settlement obligations visible to a party.
+ * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
  */
-export async function getPendingObligations() {
-  return queryActiveContracts(OPERATOR_PARTY_ID, [
+export async function getPendingObligations(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
     { module: 'Fourcast.PredictionPosition', name: 'SettlementObligation' },
+  ]);
+}
+
+/**
+ * Get all market resolutions visible to a party.
+ * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
+ */
+export async function getMarketResolutions(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
+    { module: 'Fourcast.PredictionMarket', name: 'MarketResolution' },
+  ]);
+}
+
+/**
+ * Get all open markets visible to a party.
+ * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
+ */
+export async function getOpenMarkets(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
+    { module: 'Fourcast.PredictionMarket', name: 'PredictionMarket' },
   ]);
 }
 

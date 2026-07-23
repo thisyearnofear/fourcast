@@ -6,13 +6,16 @@
  *   Creates a prediction market on Canton (operator action).
  *   Body: { marketId, question, settlementAsset, deadline }
  *
+ * Query params (GET):
+ *   ?partyId=X — optional party ID to query as (defaults to operator)
+ *
  * All operations are server-side via the direct JSON Ledger API.
  */
 export const runtime = 'nodejs';
 
-import { getOpenMarkets, createMarket, isCantonConfigured } from '@/services/cantonLedgerClient';
+import { getOpenMarkets, createMarket, isCantonConfigured, OPERATOR_PARTY_ID } from '@/services/cantonLedgerClient';
 
-export async function GET() {
+export async function GET(request) {
   try {
     if (!isCantonConfigured()) {
       return Response.json({
@@ -22,10 +25,14 @@ export async function GET() {
       }, { status: 503 });
     }
 
-    const markets = await getOpenMarkets();
+    const { searchParams } = new URL(request.url);
+    const partyId = searchParams.get('partyId') || OPERATOR_PARTY_ID;
+
+    const markets = await getOpenMarkets(partyId);
     return Response.json({
       success: true,
       markets,
+      partyId,
       count: markets.length,
     });
   } catch (error) {

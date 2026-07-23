@@ -339,6 +339,10 @@ See `docs/DEMO_SCRIPT_PROOF.md` for the full judge-path script with fallbacks an
 
 ---
 
+## AG Grid
+
+[AG Grid](https://www.ag-grid.com/javascript-data-grid/getting-started/) (free Community edition) could make Fourcast's Allocator Diligence table (`/positions`) and per-operator Track Records sortable/filterable — letting allocators slice by adherence rate, Brier score, or receipt coverage without custom table code. The diligence surface is fundamentally tabular decision data.
+
 ## License
 
 MIT
