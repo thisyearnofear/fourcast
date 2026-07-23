@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ChevronDown, FlaskConical, SlidersHorizontal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, FlaskConical, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { AppShell } from '@/app/components/PageNav';
 import { MandateControl } from '@/components/MandateControl';
 import { AgentDashboard } from '@/components/AgentDashboard';
@@ -13,6 +13,23 @@ import { BRAND } from '@/constants/brand';
 
 export default function AgentPage() {
   const [operatorOpen, setOperatorOpen] = useState(false);
+  const [replayInfo, setReplayInfo] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/agent/historical-lab', { cache: 'no-store' }).then(r => r.json()),
+      fetch('/api/worldcup/fixtures', { cache: 'no-store' }).then(r => r.json()),
+    ])
+      .then(([labData, fxData]) => {
+        if (!labData.status?.dryRun) return;
+        const receipts = labData.status.receipts || [];
+        const fixtureCount = fxData.fixtures?.length || labData.status.fixtureCount || 0;
+        const fixtureNames = (fxData.fixtures || []).slice(0, 3)
+          .map(f => `${f.home?.name || 'Home'} v ${f.away?.name || 'Away'}`);
+        setReplayInfo({ fixtureCount, fixtureNames, receiptCount: receipts.length });
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <AppShell
@@ -21,6 +38,25 @@ export default function AgentPage() {
       maxWidth="max-w-4xl"
     >
       <RouteGuide route="agent" />
+
+      {replayInfo && (
+        <div className="mb-6 border border-[var(--mc-sealed)]/30 bg-[var(--mc-sealed)]/5 p-4">
+          <div className="flex items-start gap-3">
+            <RotateCcw className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--mc-sealed)]" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/80">
+                Historical replay · {replayInfo.fixtureCount} cached {replayInfo.fixtureCount === 1 ? 'fixture' : 'fixtures'}, {replayInfo.receiptCount} {replayInfo.receiptCount === 1 ? 'receipt' : 'receipts'}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-white/60">
+                The TxLINE replay window closed on July 19. The agent is now replaying
+                cached fixtures, odds, and outcomes. The decision engine and proof
+                pipeline run live against historical data.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Self-serve mandate builder + dry-run preview — the in-browser version
           of the concierge test's "hand-roll a mandate" step. */}
       <MandateBuilder />

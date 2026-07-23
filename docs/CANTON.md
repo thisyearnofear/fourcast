@@ -224,6 +224,7 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 - [x] Fund `FourcastOperator` with cBTC — 0.01 cBTC from BitSafe faucet
 - [x] Run preflight script — market + 4 positions created at ledger offset 401652
 - [x] Run actual privacy test on Canton Devnet — **PASSED**: Operator sees 6 positions, Alice sees 2, Bob sees 2. Daml enforces structural privacy correctly.
+- [x] TxLINE replay mode verification (July 23, 2026) — Verifier now handles both live API format (hex strings) and cached replay format (byte arrays). All proof checks pass: inputs-present, proof-well-formed (14 hashes), stat-roots-present, stat-proof-count (2 stats). On-chain PDA mismatch is expected for historical data.
 - [ ] CIP-56 token transfer test (via NODERS wallet UI)
 
 ### Documentation

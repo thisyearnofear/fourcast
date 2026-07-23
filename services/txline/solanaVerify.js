@@ -141,13 +141,58 @@ function tryReadDailyRoot(accountData) {
  *   'onchain-error' — failed to fetch or decode the PDA
  */
 export async function verifyFixtureProof(proof, fixture) {
+  // Normalize hashes - cached replay data may have byte arrays instead of hex strings
+  const normalizeHash = (h) => {
+    if (Array.isArray(h)) {
+      // Convert byte array to hex string
+      return '0x' + h.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    return h;
+  };
+
   const programId = proof.programId || process.env.TXLINE_PROGRAM_ID || null;
-  const expectedRoot = proof.merkleRoot || proof.eventStatRoot || null;
-  const subTreeRoot = proof.eventStatsSubTreeRoot || null;
-  const statsToProve = Array.isArray(proof.statsToProve) ? proof.statsToProve : [];
-  const statProofs = Array.isArray(proof.statProofs) ? proof.statProofs : [];
-  const mainTreeProof = Array.isArray(proof.mainTreeProof) ? proof.mainTreeProof : [];
-  const subTreeProof = Array.isArray(proof.subTreeProof) ? proof.subTreeProof : [];
+  const expectedRootRaw = proof.merkleRoot || proof.eventStatRoot || null;
+  const subTreeRootRaw = proof.eventStatsSubTreeRoot || proof.summary?.eventStatsSubTreeRoot || null;
+  // Handle both array format (live API) and singular-object format (cached replay).
+  let statsToProve, statProofs;
+  if (Array.isArray(proof.statsToProve) && proof.statsToProve.length > 0) {
+    statsToProve = proof.statsToProve;
+    statProofs = Array.isArray(proof.statProofs) ? proof.statProofs : [];
+  } else if (proof.statToProve) {
+    statsToProve = [proof.statToProve];
+    statProofs = [proof.statProof || []];
+    if (proof.statToProve2 && proof.statProof2) {
+      statsToProve.push(proof.statToProve2);
+      statProofs.push(proof.statProof2);
+    }
+  } else {
+    statsToProve = [];
+    statProofs = [];
+  }
+  const mainTreeProof = (Array.isArray(proof.mainTreeProof) ? proof.mainTreeProof : [])
+    .map(node => ({ hash: normalizeHash(node.hash), position: node.position }));
+  const subTreeProof = (Array.isArray(proof.subTreeProof) ? proof.subTreeProof : [])
+    .map(node => ({ hash: normalizeHash(node.hash), position: node.position }));
+
+  statsToProve = statsToProve.map(s => ({
+    ...s,
+    value: s.value
+  }));
+
+  statProofs = statProofs.map(proofPath =>
+    proofPath.map(node => ({
+      hash: normalizeHash(node.hash),
+      position: node.position
+    }))
+  );
+
+  const expectedRoot = Array.isArray(expectedRootRaw)
+    ? '0x' + expectedRootRaw.map(b => b.toString(16).padStart(2, '0')).join('')
+    : expectedRootRaw;
+
+  const subTreeRoot = Array.isArray(subTreeRootRaw)
+    ? '0x' + subTreeRootRaw.map(b => b.toString(16).padStart(2, '0')).join('')
+    : subTreeRootRaw;
 
   const ts = proof.ts || proof.summary?.updateStats?.minTimestamp || null;
 
