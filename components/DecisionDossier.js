@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, Fingerprint, Lock, ShieldCheck, X } from 'lucide-react';
+import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
 
 /* --------------------------------------------------------------------------
    Decision Dossier — one judge-friendly explanation of a complete decision.
@@ -10,7 +11,21 @@ import { ArrowUpRight, Fingerprint, Lock, ShieldCheck, X } from 'lucide-react';
    /api/worldcup/verify chain (receipt → TxLINE proof → Solana validation →
    reconciliation) and answers the five questions an allocator would ask,
    in order. The full JSON remains available behind "View raw receipt."
+
+   Mode-aware emphasis: the audience's lead block (analyst → evidence,
+   operator → decision, allocator → verification) gets a quiet emerald
+   accent border so the reader's primary question is answered first without
+   losing the linear chain-of-custody narrative.
    -------------------------------------------------------------------------- */
+
+// Maps the audience's dossierLead to the block id rendered in the body.
+const LEAD_BLOCK = {
+  evidence: '01',
+  decision: '02',
+  policy: '03',
+  timing: '04',
+  verification: '05',
+};
 
 function formatTime(value) {
   if (!value) return '—';
@@ -36,6 +51,8 @@ function pct(p) {
 export function DecisionDossier({ fixtureId, fixture, onClose }) {
   const [state, setState] = useState({ loading: true, data: null, error: null });
   const [showRaw, setShowRaw] = useState(false);
+  const { mode } = useAudience();
+  const leadBlock = LEAD_BLOCK[AUDIENCE_META[mode]?.dossierLead ?? 'decision'] ?? '02';
 
   const load = useCallback(async () => {
     try {
@@ -145,7 +162,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
           {!state.loading && !state.error && (
             <>
               {/* 1. What did the agent know? */}
-              <DossierBlock index="01" kicker="What did the agent know?">
+              <DossierBlock index="01" kicker="What did the agent know?" isLead={leadBlock === '01'}>
                 <DossierRow label="Evidence sources" value={(receipt.evidence?.sources || ['txline']).join(' · ')} />
                 <DossierRow label="Snapshot captured" value={formatTime(receipt.evidence?.snapshot?.capturedAt)} />
                 <DossierRow label="Consensus · home" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.home)} />
@@ -156,7 +173,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
               </DossierBlock>
 
               {/* 2. What did it decide? */}
-              <DossierBlock index="02" kicker="What did it decide?">
+              <DossierBlock index="02" kicker="What did it decide?" isLead={leadBlock === '02'}>
                 <p className="text-sm leading-6 text-white/80">{decision.rationale || 'Decision rationale unavailable.'}</p>
                 <div className="mt-3 grid grid-cols-3 gap-px border border-[var(--mc-rule)] bg-[var(--mc-rule)]">
                   <DossierMetric label="Verdict" value={verdict} />
@@ -170,7 +187,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
               </DossierBlock>
 
               {/* 3. What prevented it from overreaching? */}
-              <DossierBlock index="03" kicker="What prevented it from overreaching?">
+              <DossierBlock index="03" kicker="What prevented it from overreaching?" isLead={leadBlock === '03'}>
                 <p className="mb-3 text-xs leading-5 text-white/55">
                   Policy <span className="font-mono text-white/75">{receipt.policy?.version || 'decision-policy/v1'}</span> — every gate must clear before capital moves.
                 </p>
@@ -185,7 +202,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
               </DossierBlock>
 
               {/* 4. When was the result unavailable? */}
-              <DossierBlock index="04" kicker="When was the result unavailable?">
+              <DossierBlock index="04" kicker="When was the result unavailable?" isLead={leadBlock === '04'}>
                 <div className="flex items-start gap-2">
                   <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--mc-sealed)]" />
                   <p className="text-sm leading-6 text-white/75">
@@ -199,7 +216,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
               </DossierBlock>
 
               {/* 5. What later verified the decision? */}
-              <DossierBlock index="05" kicker="What later verified the decision?">
+              <DossierBlock index="05" kicker="What later verified the decision?" isLead={leadBlock === '05'}>
                 <DossierRow label="Outcome" value={outcome.homeScore != null ? `${outcome.homeScore}–${outcome.awayScore} · ${outcome.winner || '—'}` : 'pending'} />
                 <DossierRow label="Reconciliation" value={(reconciliation.status || 'pending').replace(/_/g, ' ')} accent={reconciliation.status === 'reconciled'} />
                 <DossierRow label="Policy adherence" value={adherence.policyAdhered == null ? '—' : (adherence.policyAdhered ? 'adhered' : 'exception')} accent={adherence.policyAdhered === true} />
@@ -268,11 +285,14 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
 
 /* --------------------------------- atoms --------------------------------- */
 
-function DossierBlock({ index, kicker, children }) {
+function DossierBlock({ index, kicker, children, isLead = false }) {
   return (
-    <section className="mt-5 first:mt-0">
+    <section
+      className={`mt-5 first:mt-0 ${isLead ? 'border-l-2 border-[var(--color-accent)]/60 pl-3' : ''}`}
+      data-lead={isLead ? 'true' : undefined}
+    >
       <div className="flex items-baseline gap-3">
-        <span className="font-mono text-[10px] text-[var(--mc-reconciled)]/70">{index}</span>
+        <span className={`font-mono text-[10px] ${isLead ? 'text-[var(--mc-reconciled)]' : 'text-[var(--mc-reconciled)]/70'}`}>{index}</span>
         <span className="mc-kicker">{kicker}</span>
       </div>
       <hr className="mc-rule mt-2" />

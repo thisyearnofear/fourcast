@@ -6,6 +6,7 @@ import { BRAND } from "@/constants/brand";
 import WalletConnect from "@/app/components/WalletConnect";
 import StatusBadge from "@/components/StatusBadge";
 import OperatorPulse from "@/components/OperatorPulse";
+import AudienceSwitcher from "@/app/components/AudienceSwitcher";
 import { TourLink } from "@/components/RouteGuide";
 
 /**
@@ -80,6 +81,8 @@ export default function PageNav() {
         ))}
         <span className="mx-1 h-4 w-px bg-white/10" />
         <TourLink />
+        <span className="mx-1 h-4 w-px bg-white/10" />
+        <AudienceSwitcher compact />
       </div>
 
       {/* Mobile: compact labels */}

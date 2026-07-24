@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, Database, Fingerprint, Lock, ShieldCheck, X } from 'lucide-react';
+import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
 
 /* --------------------------------------------------------------------------
    Proof Theatre — the final act of a decision, not a sports-data utility.
@@ -17,7 +18,22 @@ import { ArrowUpRight, Database, Fingerprint, Lock, ShieldCheck, X } from 'lucid
      6. Reconciliation: decision quality, policy adherence, calibration
 
    Composed entirely from /api/worldcup/verify — no parallel data model.
+
+   Mode-aware emphasis: each audience has a primary stage (analyst →
+   evidence, operator → decision/policy, allocator → reconciliation). The
+   lead stage renders with a quiet emerald marker; the rest of the chain
+   stays in the linear custody order so nothing is hidden.
    -------------------------------------------------------------------------- */
+
+// Maps audience dossierLead to the matching ProofTheatre stage index.
+// evidence → 01, decision/policy → 03, verification → 05, timing/reconcile → 06.
+const LEAD_STAGE = {
+  evidence: '01',
+  decision: '03',
+  policy: '03',
+  verification: '05',
+  timing: '06',
+};
 
 function formatTime(value) {
   if (!value) return '—';
@@ -42,6 +58,8 @@ function pct(p) {
 
 export function ProofTheatre({ fixture, onClose }) {
   const [state, setState] = useState({ loading: true, data: null, error: null });
+  const { mode } = useAudience();
+  const leadStage = LEAD_STAGE[AUDIENCE_META[mode]?.dossierLead ?? 'decision'] ?? '03';
 
   const load = useCallback(async () => {
     if (!fixture?.id) return;
@@ -130,7 +148,7 @@ export function ProofTheatre({ fixture, onClose }) {
             <span className="absolute left-[11px] top-2 bottom-2 w-px bg-[var(--mc-rule)]" aria-hidden="true" />
 
             {/* 1. Pre-match evidence */}
-            <TheatreStage index="01" stage={stages[0]} color="var(--mc-evidence)">
+            <TheatreStage index="01" stage={stages[0]} color="var(--mc-evidence)" isLead={leadStage === '01'}>
               <div className="grid grid-cols-3 gap-px border border-[var(--mc-rule)] bg-[var(--mc-rule)]">
                 <TheatreMetric label={fixture?.home?.code || 'HOME'} value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.home)} />
                 <TheatreMetric label="DRAW" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.draw)} />
@@ -142,7 +160,7 @@ export function ProofTheatre({ fixture, onClose }) {
             </TheatreStage>
 
             {/* 2. Seeded simulation */}
-            <TheatreStage index="02" stage={stages[1]} color="var(--mc-evidence)">
+            <TheatreStage index="02" stage={stages[1]} color="var(--mc-evidence)" isLead={leadStage === '02'}>
               <p className="font-mono text-[11px] text-white/70">
                 {simulation.runs?.toLocaleString() || '—'} seeded paths · seed <span className="text-white/90">{simulation.seed ?? '—'}</span>
               </p>
@@ -156,7 +174,7 @@ export function ProofTheatre({ fixture, onClose }) {
             </TheatreStage>
 
             {/* 3. Versioned policy gates */}
-            <TheatreStage index="03" stage={stages[2]} color={verdict === 'ALLOCATE' ? 'var(--mc-reconciled)' : 'var(--mc-sealed)'}>
+            <TheatreStage index="03" stage={stages[2]} color={verdict === 'ALLOCATE' ? 'var(--mc-reconciled)' : 'var(--mc-sealed)'} isLead={leadStage === '03'}>
               <p className="mb-2 font-mono text-[10px] text-white/45">
                 policy {receipt.policy?.version || 'decision-policy/v1'} · max {(receipt.policy?.maxAllocationPct * 100).toFixed(1)}% · min edge {(receipt.policy?.minAbsoluteEdge * 100).toFixed(0)}% · tail ≤ {(receipt.policy?.maxLossProbability * 100).toFixed(0)}%
               </p>
@@ -184,7 +202,7 @@ export function ProofTheatre({ fixture, onClose }) {
             </TheatreStage>
 
             {/* 4. Immutable decision receipt */}
-            <TheatreStage index="04" stage={stages[3]} color="var(--mc-sealed)">
+            <TheatreStage index="04" stage={stages[3]} color="var(--mc-sealed)" isLead={leadStage === '04'}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`mc-stamp mc-seal-animate ${verdict === 'ALLOCATE' ? 'mc-stamp--allocate' : verdict === 'PASS' ? 'mc-stamp--pass' : 'mc-stamp--review'}`}>{verdict}</span>
                 {decision.allocationPct > 0 && <span className="font-mono text-[11px] text-white/70">{pct(decision.allocationPct)} of capital</span>}
@@ -201,7 +219,7 @@ export function ProofTheatre({ fixture, onClose }) {
             </TheatreStage>
 
             {/* 5. TxLINE Merkle proof + Solana validation */}
-            <TheatreStage index="05" stage={stages[4]} color={verification.verdict === 'verified' || verification.verdict === 'proof-present' ? 'var(--mc-reconciled)' : 'var(--mc-sealed)'}>
+            <TheatreStage index="05" stage={stages[4]} color={verification.verdict === 'verified' || verification.verdict === 'proof-present' ? 'var(--mc-reconciled)' : 'var(--mc-sealed)'} isLead={leadStage === '05'}>
               <div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[10px] text-white/55">
                 <span>Merkle root <span className="text-white/80">{proof.merkleRoot ? `${proof.merkleRoot.slice(0, 16)}…` : '—'}</span></span>
                 <span>seq <span className="text-white/80">{proof.sequence ?? '—'}</span></span>
@@ -236,7 +254,7 @@ export function ProofTheatre({ fixture, onClose }) {
             </TheatreStage>
 
             {/* 6. Reconciliation */}
-            <TheatreStage index="06" stage={stages[5]} color={reconciled ? 'var(--mc-reconciled)' : 'var(--mc-sealed)'} last>
+            <TheatreStage index="06" stage={stages[5]} color={reconciled ? 'var(--mc-reconciled)' : 'var(--mc-sealed)'} last isLead={leadStage === '06'}>
               {reconciled && <div className="mc-proof-flash mb-2" />}
               <div className="grid grid-cols-2 gap-px border border-[var(--mc-rule)] bg-[var(--mc-rule)] sm:grid-cols-4">
                 <TheatreMetric label="Outcome" value={outcome.homeScore != null ? `${outcome.homeScore}–${outcome.awayScore}` : 'pending'} />
@@ -261,16 +279,16 @@ export function ProofTheatre({ fixture, onClose }) {
 
 /* --------------------------------- atoms --------------------------------- */
 
-function TheatreStage({ index, stage, color, last = false, children }) {
+function TheatreStage({ index, stage, color, last = false, children, isLead = false }) {
   return (
-    <li className="relative pl-9 pb-6 last:pb-0">
+    <li className={`relative pl-9 pb-6 last:pb-0 ${isLead ? 'border-l-2 border-[var(--color-accent)]/60 pl-4' : ''}`} data-lead={isLead ? 'true' : undefined}>
       <span
         className="absolute left-0 top-0.5 inline-flex h-6 w-6 items-center justify-center border font-mono text-[10px]"
         style={{ borderColor: color, color, background: `${color === 'var(--mc-reconciled)' ? 'rgba(121,245,183,0.08)' : color === 'var(--mc-evidence)' ? 'rgba(91,156,255,0.08)' : 'rgba(245,197,107,0.08)'}` }}
       >
         {index}
       </span>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">{stage.label}</p>
+      <p className={`text-[11px] font-semibold uppercase tracking-wider ${isLead ? 'text-white' : 'text-white/80'}`}>{stage.label}</p>
       <p className="mt-0.5 text-[10px] leading-4 text-white/40">{stage.detail}</p>
       <div className="mt-2.5">{children}</div>
     </li>

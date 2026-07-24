@@ -1,182 +1,197 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 /**
  * ReasoningVisualizer
- * 
- * A high-fidelity "thinking" overlay that shows the AI's step-by-step reasoning.
- * Provides the "Wow" factor while the backend is processing complex analysis.
+ *
+ * A high-fidelity "thinking" overlay that shows the AI's step-by-step
+ * reasoning. Provides the "Wow" factor while the backend is processing
+ * complex analysis.
+ *
+ * Palette discipline: per tokens.css, --color-review (violet) is semantic
+ * only and not a decoration channel. The overlay uses --color-accent
+ * (verification emerald) for the live computation indicator, --color-evidence
+ * (evidence blue) for the step rail, and --color-sealed (sealed amber) for
+ * the sealed/waiting states. Motion is constrained to transform/opacity and
+ * collapses to a static layout under prefers-reduced-motion.
  */
-export default function ReasoningVisualizer({ 
- isActive, 
- onComplete, 
- title = "Analyzing Market",
- steps = [],
- currentStepIndex = 0
+export default function ReasoningVisualizer({
+  isActive,
+  onComplete,
+  title = "Analyzing Market",
+  steps = [],
+  currentStepIndex = 0
 }) {
- const [internalStep, setInternalStep] = useState(0);
- const [dots, setDots] = useState('');
+  const [internalStep, setInternalStep] = useState(0);
+  const [dots, setDots] = useState('');
+  const reducedMotion = useReducedMotion();
 
- // Fallback simulated steps if none provided
- const getSimulatedSteps = () => {
- const marketName = title.replace('Analyzing ', '') || "Market";
- return [
- { label: `Initializing deep reasoning engine for "${marketName}"...`, icon: "🧠" },
- { label: `Searching Polymarket & Kalshi for active "${marketName}" contracts...`, icon: "📊" },
- { label: "Verifying event venue and local conditions...", icon: "📍" },
- { label: "Accessing Venice AI Multi-Agent Mesh (Llama 3.3 70B)...", icon: "🌐" },
- { label: "Analyzing weather impact vectors and path dependency...", icon: "🌤" },
- { label: "Calculating cross-chain arbitrage edge and expected value...", icon: "⛓️" },
- { label: "Synthesizing final predictive assessment...", icon: "✅" }
- ];
- };
+  // Fallback simulated steps if none provided. Phase labels collapse the old
+  // seven-step sequence into three real phases (Discover → Forecast → Verify)
+  // tied to the actual agent pipeline rather than decorative copy.
+  const getSimulatedSteps = () => {
+    const marketName = title.replace('Analyzing ', '') || "Market";
+    return [
+      { label: `Discover · fetching consensus odds for "${marketName}"`, phase: 'discover' },
+      { label: `Forecast · seeded Monte Carlo over the agent fair probability`, phase: 'forecast' },
+      { label: `Verify · policy gates + hash-bound receipt sealing`, phase: 'verify' },
+    ];
+  };
 
- const activeSteps = steps.length > 0 ? steps : getSimulatedSteps();
- const displayStep = steps.length > 0 ? currentStepIndex : internalStep;
+  const activeSteps = steps.length > 0 ? steps : getSimulatedSteps();
+  const displayStep = steps.length > 0 ? currentStepIndex : internalStep;
 
- useEffect(() => {
- if (!isActive) {
- setInternalStep(0);
- return;
- }
+  useEffect(() => {
+    if (!isActive) {
+      setInternalStep(0);
+      return;
+    }
 
- // Dots animation
- const dotsInterval = setInterval(() => {
- setDots(prev => (prev.length >= 3 ? '' : prev + '.'));
- }, 500);
+    const dotsInterval = setInterval(() => {
+      setDots((prev) => (prev.length >= 3 ? '' : prev + '.'));
+    }, 500);
 
- // Auto-advance internal steps if no external steps provided
- let stepInterval;
- if (steps.length === 0) {
- stepInterval = setInterval(() => {
- setInternalStep(prev => {
- if (prev < activeSteps.length - 1) return prev + 1;
- return prev;
- });
- }, 2500);
- }
+    let stepInterval;
+    if (steps.length === 0) {
+      stepInterval = setInterval(() => {
+        setInternalStep((prev) => {
+          if (prev < activeSteps.length - 1) return prev + 1;
+          return prev;
+        });
+      }, 2800);
+    }
 
- return () => {
- clearInterval(dotsInterval);
- if (stepInterval) clearInterval(stepInterval);
- };
- }, [isActive, steps.length, activeSteps.length]);
+    return () => {
+      clearInterval(dotsInterval);
+      if (stepInterval) clearInterval(stepInterval);
+    };
+  }, [isActive, steps.length, activeSteps.length]);
 
- if (!isActive) return null;
+  if (!isActive) return null;
 
- return (
- <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
- <div className="absolute inset-0 bg-[#080a0d]/60-md" />
- 
- <motion.div 
- initial={{ opacity: 0, scale: 0.9, y: 20 }}
- animate={{ opacity: 1, scale: 1, y: 0 }}
- exit={{ opacity: 0, scale: 0.9, y: 20 }}
- className="relative w-full max-w-lg bg-[#12121a]/80 border border-white/10 overflow-hidden shadow-2xl pointer-events-auto"
- >
- {/* Progress bar at the top */}
- <div className="absolute top-0 left-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 w-full overflow-hidden">
- <motion.div 
- className="h-full bg-white/20"
- animate={{ 
- x: ["-100%", "100%"] 
- }}
- transition={{ 
- duration: 2, 
- repeat: Infinity, 
- ease: "linear" 
- }}
- />
- </div>
+  const phaseColor = (phase) => {
+    if (phase === 'discover') return 'var(--color-evidence)';
+    if (phase === 'forecast') return 'var(--color-accent)';
+    if (phase === 'verify') return 'var(--color-sealed)';
+    return 'var(--color-evidence)';
+  };
 
- <div className="p-8">
- <div className="flex items-center justify-between mb-8">
- <div>
- <h2 className="text-xl font-light text-white/90">
- {title}
- <span className="inline-block w-8 text-left ml-1">{dots}</span>
- </h2>
- <p className="text-xs text-white/30 uppercase tracking-widest mt-1">
- Venice AI • Llama 3.3 • 70B
- </p>
- </div>
- <div className="w-12 h-12 bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-2xl animate-pulse">
- {activeSteps[displayStep]?.icon || "✅"}
- </div>
- </div>
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
+      <div className="absolute inset-0 bg-[var(--color-paper-deep)]/60" aria-hidden />
 
- <div className="space-y-4">
- {activeSteps.map((step, idx) => {
- const isPast = idx < displayStep;
- const isCurrent = idx === displayStep;
- const isFuture = idx > displayStep;
+      <motion.div
+        initial={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 12 }}
+        animate={reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+        exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+        className="relative w-full max-w-lg border border-[var(--color-rule-strong)] bg-[var(--color-paper-glass)] shadow-2xl pointer-events-auto"
+        role="dialog"
+        aria-label={`Reasoning trace · ${title}`}
+      >
+        {/* Live indicator — emerald, constrained to the active edge */}
+        <div
+          className="absolute top-0 left-0 right-0 h-px overflow-hidden"
+          aria-hidden
+        >
+          <motion.div
+            className="h-full w-1/3 bg-[var(--color-accent)]"
+            initial={{ x: '-100%' }}
+            animate={reducedMotion ? { x: 0 } : { x: ['-100%', '400%'] }}
+            transition={reducedMotion ? { duration: 0 } : { duration: 1.8, repeat: Infinity, ease: 'linear' }}
+          />
+        </div>
 
- return (
- <div 
- key={idx} 
- className={`flex items-start gap-4 transition-all duration-500 ${
- isFuture ? 'opacity-20 grayscale' : 'opacity-100'
- }`}
- >
- <div className={`mt-1 flex-shrink-0 w-5 h-5 border flex items-center justify-center text-[10px] ${
- isPast 
- ? 'bg-purple-500 border-purple-500 text-white' 
- : isCurrent
- ? 'border-purple-500 text-purple-500 animate-pulse'
- : 'border-white/10 text-white/20'
- }`}>
- {isPast ? "✓" : idx + 1}
- </div>
- <div className="flex-1">
- <p className={`text-sm font-light ${
- isCurrent ? 'text-white' : isPast ? 'text-white/60' : 'text-white/20'
- }`}>
- {step.label}
- </p>
- {isCurrent && (
- <motion.div 
- initial={{ opacity: 0, height: 0 }}
- animate={{ opacity: 1, height: 'auto' }}
- className="mt-2"
- >
- <div className="h-0.5 w-full bg-white/5 overflow-hidden">
- <motion.div 
- className="h-full bg-purple-500/50"
- initial={{ width: "0%" }}
- animate={{ width: "100%" }}
- transition={{ duration: 2.5 }}
- />
- </div>
- </motion.div>
- )}
- </div>
- </div>
- );
- })}
- </div>
+        <div className="p-7 sm:p-8">
+          <div className="flex items-center justify-between mb-7">
+            <div className="min-w-0">
+              <h2 className="text-lg font-medium text-[var(--color-ink)]">
+                {title}
+                <span className="inline-block w-8 text-left ml-1 text-[var(--color-ink-muted)]">{dots}</span>
+              </h2>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-faint)]">
+                Agent · sealed reasoning trace
+              </p>
+            </div>
+            <div
+              className="relative flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-accent)]/40 bg-[var(--color-accent-quiet)] text-[var(--color-accent)]"
+              aria-live="polite"
+            >
+              <span
+                className="absolute inset-0 border border-[var(--color-accent)]/30 motion-safe:animate-pulse"
+                aria-hidden
+              />
+              <span className="font-mono text-[10px] uppercase tracking-widest">live</span>
+            </div>
+          </div>
 
- <div className="mt-10 pt-6 border-t border-white/5 flex items-center justify-between">
- <div className="flex items-center gap-3">
- <div className="flex -space-x-2">
- {[1, 2, 3].map(i => (
- <div key={i} className="w-6 h-6 border border-[#12121a] bg-white/5 flex items-center justify-center text-[10px]">
- {['🌐', '🔍', '📊'][i-1]}
- </div>
- ))}
- </div>
- <span className="text-[10px] text-white/30 font-light">
- Connected to Multi-Agent Mesh
- </span>
- </div>
- 
- <div className="text-[10px] text-white/20 font-mono">
- EST: {Math.max(0, (activeSteps.length - displayStep) * 2)}s remaining
- </div>
- </div>
- </div>
- </motion.div>
- </div>
- );
+          <ol className="space-y-3">
+            {activeSteps.map((step, idx) => {
+              const isPast = idx < displayStep;
+              const isCurrent = idx === displayStep;
+              const isFuture = idx > displayStep;
+              const tone = phaseColor(step.phase);
+              return (
+                <li
+                  key={idx}
+                  className={`flex items-start gap-3 border-l-2 pl-3 transition-opacity ${
+                    isFuture ? 'opacity-30' : 'opacity-100'
+                  }`}
+                  style={{ borderColor: tone }}
+                >
+                  <span
+                    className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center border font-mono text-[9px]"
+                    style={{
+                      borderColor: isPast || isCurrent ? tone : 'var(--color-rule)',
+                      color: isPast || isCurrent ? tone : 'var(--color-ink-faint)',
+                      background: isPast || isCurrent ? 'transparent' : 'transparent',
+                    }}
+                  >
+                    {isPast ? '\u2713' : idx + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={`text-sm leading-6 ${
+                        isCurrent ? 'text-[var(--color-ink)]' : isPast ? 'text-[var(--color-ink-muted)]' : 'text-[var(--color-ink-faint)]'
+                      }`}
+                    >
+                      {step.label}
+                    </p>
+                    {isCurrent && (
+                      <motion.div
+                        initial={reducedMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
+                        animate={reducedMotion ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
+                        transition={{ duration: 0.18 }}
+                        className="mt-2 overflow-hidden"
+                      >
+                        <div
+                          className="h-px w-full overflow-hidden"
+                          style={{ backgroundColor: 'var(--color-rule)' }}
+                        >
+                          <motion.div
+                            className="h-full"
+                            style={{ backgroundColor: tone, width: '40%' }}
+                            initial={reducedMotion ? { opacity: 0.6 } : { x: '-100%' }}
+                            animate={reducedMotion ? { opacity: 0.6 } : { x: ['-100%', '250%'] }}
+                            transition={reducedMotion ? { duration: 0 } : { duration: 1.6, repeat: Infinity, ease: 'linear' }}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+
+          <div className="mt-7 flex items-center justify-between border-t border-[var(--color-rule)] pt-4 font-mono text-[10px] text-[var(--color-ink-faint)]">
+            <span className="uppercase tracking-[0.16em]">Sealed trace · receipt pending</span>
+            <span>est. {Math.max(0, (activeSteps.length - displayStep))} phase{activeSteps.length - displayStep === 1 ? '' : 's'} remaining</span>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
 }

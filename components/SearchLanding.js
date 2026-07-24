@@ -3,13 +3,14 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowRight, Fingerprint, ShieldCheck, LineChart } from 'lucide-react';
+import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Compass } from 'lucide-react';
 import { BRAND } from '@/constants/brand';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
 import WalletConnect from '@/app/components/WalletConnect';
 import OperatorMath from '@/components/OperatorMath';
 import OperatorPulse from '@/components/OperatorPulse';
 import { useBrightDataStatus } from '@/hooks/useBrightDataStatus';
+import { useAudience, AUDIENCE_META } from '@/hooks/useAudience';
 
 const QUICK_SEARCHES = [
   { label: 'BTC $150k', query: 'Bitcoin $150k August 2026' },
@@ -37,6 +38,7 @@ const VERIFIED_RECEIPT = {
 // headline path. Order matches the README narrative: Mandate → Diligence.
 const AUDIENCE_DOORS = [
   {
+    id: 'operator',
     href: '/agent',
     icon: LineChart,
     eyebrow: 'I run capital',
@@ -44,11 +46,20 @@ const AUDIENCE_DOORS = [
     body: 'A live agent operating under a versioned policy, sealing each decision into a SHA-256 receipt before the outcome is known. Self-serve: configure your mandate, run a dry-run, get a public Track Record URL.',
   },
   {
+    id: 'allocator',
     href: '/positions',
     icon: ShieldCheck,
     eyebrow: 'I diligence operators',
     title: 'Allocator Diligence',
     body: 'Policy adherence, receipt coverage, discipline rate, and calibration — computed from the same public receipts, not self-reported.',
+  },
+  {
+    id: 'analyst',
+    href: '/markets',
+    icon: Compass,
+    eyebrow: 'I scan markets',
+    title: 'Analyst Markets',
+    body: 'Discover edge across active prediction markets. Filter by category, scan a curated set, and follow live reasoning before a mandate commits capital.',
   },
 ];
 
@@ -74,8 +85,19 @@ export default function SearchLanding() {
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
   const webIntel = useBrightDataStatus();
+  const { mode } = useAudience();
 
   const featured = useMemo(() => QUICK_SEARCHES[0], []);
+
+  // Mode-aware door ordering — the audience's primary door leads, the others
+  // remain visible. Three modes, three doors; the third (Analyst Markets) is
+  // surfaced when the visitor hasn't picked a role yet, otherwise it sits in
+  // its right position.
+  const orderedDoors = useMemo(() => {
+    const others = AUDIENCE_DOORS.filter((d) => d.id !== mode);
+    const lead = AUDIENCE_DOORS.find((d) => d.id === mode);
+    return lead ? [lead, ...others] : AUDIENCE_DOORS;
+  }, [mode]);
 
   const handleSearch = (q) => {
     const searchQuery = (q ?? query).trim();
@@ -234,25 +256,34 @@ export default function SearchLanding() {
         {/* Primary-customer doors — the README positions the customer as both
             the operator running capital and the allocator diligencing them.
             The search hero above serves the acquisition (retail/analyst) path;
-            these two doors serve the headline path. */}
+            these three doors serve the headline path. Mode-aware ordering
+            keeps the audience's primary door first while every option stays
+            visible (no exclusion — progressive disclosure, not progressive
+            gating). */}
         <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-2" aria-label="Primary-customer entry points">
-          {AUDIENCE_DOORS.map((door) => {
+          {orderedDoors.map((door) => {
             const Icon = door.icon;
+            const isLead = door.id === mode;
             return (
               <Link
                 key={door.href}
                 href={door.href}
-                className="fc-door group relative flex flex-col gap-2 border border-white/10 bg-white/[0.02] p-5 transition hover:border-emerald-400/30 hover:bg-emerald-400/[0.04] sm:p-6"
+                aria-label={`${door.title} · ${AUDIENCE_META[door.id]?.label ?? door.id} mode`}
+                className={`fc-door group relative flex flex-col gap-2 border p-5 transition sm:p-6 ${
+                  isLead
+                    ? 'border-[var(--color-accent)]/40 bg-[var(--color-accent-quiet)] hover:border-[var(--color-accent)]/70 hover:bg-[var(--color-accent-atmosphere)]'
+                    : 'border-white/10 bg-white/[0.02] hover:border-emerald-400/30 hover:bg-emerald-400/[0.04]'
+                } ${orderedDoors.length === 3 && door.id === 'analyst' ? 'sm:col-span-2 lg:col-span-1' : ''}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="fc-kicker">{door.eyebrow}</span>
-                  <Icon className="h-4 w-4 text-white/40 transition group-hover:text-emerald-300" />
+                  <Icon className={`h-4 w-4 transition ${isLead ? 'text-[var(--color-accent)]' : 'text-white/40 group-hover:text-emerald-300'}`} />
                 </div>
                 <h3 className="font-display text-xl font-semibold tracking-tight text-white sm:text-2xl">
                   {door.title}
                 </h3>
                 <p className="text-sm leading-6 text-white/60">{door.body}</p>
-                <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-200/80">
+                <span className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${isLead ? 'text-[var(--color-accent)]' : 'text-emerald-200/80'}`}>
                   Enter
                   <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
                 </span>

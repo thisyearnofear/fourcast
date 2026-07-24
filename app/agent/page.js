@@ -10,10 +10,53 @@ import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
 import RouteGuide from '@/components/RouteGuide';
 import MandateBuilder from '@/components/MandateBuilder';
 import { BRAND } from '@/constants/brand';
+import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
+
+// Each section keyed by id so the audience mode can reorder without
+// re-rendering cost and without losing disclosure state.
+const AGENT_SECTIONS = {
+  'mandate-builder': { id: 'mandate-builder', render: () => <MandateBuilder />, wrap: false },
+  'mandate-control': { id: 'mandate-control', render: () => <MandateControl />, wrap: false },
+  'operator-controls': { id: 'operator-controls', render: OperatorControlsSection, wrap: true },
+  'historical-lab': { id: 'historical-lab', render: () => <HistoricalLabPanel />, wrap: true },
+  'run-ledger': { id: 'run-ledger', render: () => <AgentRunLedger />, wrap: true },
+};
+
+function OperatorControlsSection() {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="platform-open-section mt-10" aria-label="Operator controls — manual investigation">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5"
+      >
+        <div className="flex items-center gap-2.5">
+          <SlidersHorizontal className="h-3.5 w-3.5 text-white/45" />
+          <span className="mc-kicker">Operator controls · manual investigation</span>
+        </div>
+        <ChevronDown className={`h-4 w-4 text-white/45 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="border-t border-[var(--mc-rule)] px-4 py-5 sm:px-5">
+          <p className="mb-4 text-xs leading-5 text-white/45">
+            Manual on-demand scans — every run still produces a hash-bound receipt.
+          </p>
+          <AgentDashboard />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SectionWrap({ children }) {
+  return <div className="platform-open-section mt-10">{children}</div>;
+}
 
 export default function AgentPage() {
-  const [operatorOpen, setOperatorOpen] = useState(false);
   const [replayInfo, setReplayInfo] = useState(null);
+  const { mode } = useAudience();
 
   useEffect(() => {
     Promise.all([
@@ -31,11 +74,24 @@ export default function AgentPage() {
       .catch(() => {});
   }, []);
 
+  // Mode-aware section ordering. Allocator leads with the run ledger so the
+  // diligence reader sees what the agent did first; analyst leads with the
+  // flagship so the discovery reader sees proof; operator keeps the current
+  // build-then-observe path.
+  const order = AUDIENCE_META[mode]?.agentOrder ?? AUDIENCE_META.operator.agentOrder;
+
+  const modeMeta = AUDIENCE_META[mode] ?? AUDIENCE_META.operator;
+
   return (
     <AppShell
       title="Mandate Control"
       subtitle="An agent is alive, operating under a mandate, making constrained decisions, and leaving behind evidence nobody — including its operator — can rewrite."
       maxWidth="max-w-4xl"
+      actions={
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
+          mode · {modeMeta.label.toLowerCase()}
+        </span>
+      }
     >
       <RouteGuide route="agent" />
 
@@ -57,43 +113,12 @@ export default function AgentPage() {
         </div>
       )}
 
-      {/* Self-serve mandate builder + dry-run preview — the in-browser version
-          of the concierge test's "hand-roll a mandate" step. */}
-      <MandateBuilder />
-      {/* Flagship — the autonomous system, not a button simulation, is the protagonist. */}
-      <MandateControl />
-
-      {/* Operator controls — demoted. The manual runner is a capability, not the hero. */}
-      <section className="platform-open-section mt-10" aria-label="Operator controls — manual investigation">
-        <button
-          type="button"
-          onClick={() => setOperatorOpen((v) => !v)}
-          aria-expanded={operatorOpen}
-          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5"
-        >
-          <div className="flex items-center gap-2.5">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-white/45" />
-            <span className="mc-kicker">Operator controls · manual investigation</span>
-          </div>
-          <ChevronDown className={`h-4 w-4 text-white/45 transition-transform ${operatorOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {operatorOpen && (
-          <div className="border-t border-[var(--mc-rule)] px-4 py-5 sm:px-5">
-            <p className="mb-4 text-xs leading-5 text-white/45">
-              Manual on-demand scans — every run still produces a hash-bound receipt.
-            </p>
-            <AgentDashboard />
-          </div>
-        )}
-      </section>
-
-      {/* Canonical supporting surfaces — kept, not duplicated. */}
-      <div className="platform-open-section mt-10">
-        <HistoricalLabPanel />
-      </div>
-      <div className="platform-open-section mt-10">
-        <AgentRunLedger />
-      </div>
+      {order.map((sectionId) => {
+        const section = AGENT_SECTIONS[sectionId];
+        if (!section) return null;
+        const content = section.render();
+        return section.wrap ? <SectionWrap key={section.id}>{content}</SectionWrap> : <React.Fragment key={section.id}>{content}</React.Fragment>;
+      })}
 
       {/* Labs CTA — supporting capability, not a peer product. */}
       <div className="mt-10 text-center">

@@ -6,16 +6,34 @@ import PositionsDashboard from "@/components/PositionsDashboard";
 import { MandatePanel } from "@/components/MandatePanel";
 import NarrativeSteps from "@/components/NarrativeSteps";
 import RouteGuide from "@/components/RouteGuide";
+import { AUDIENCE_META, useAudience } from "@/hooks/useAudience";
+
+const MODE_HINT = {
+  analyst: 'You\u2019re reading as Analyst. The discipline numbers lead; the position detail collapses by default.',
+  operator: 'You\u2019re reading as Operator. Policy adherence and discipline are surfaced first.',
+  allocator: 'You\u2019re reading as Allocator. Calibration and adherence lead; the run ledger sits beneath.',
+};
 
 export default function PositionsPage() {
+  const { mode } = useAudience();
+  const meta = AUDIENCE_META[mode] ?? AUDIENCE_META.allocator;
+
   return (
     <AppShell
       title="Allocator Diligence"
       subtitle="Behaviour, not performance — adherence, coverage, discipline, and calibration. Every number recomputes from the public decision ledger."
       maxWidth="max-w-4xl"
+      actions={
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
+          mode · {meta.label.toLowerCase()}
+        </span>
+      }
       subheader={<NarrativeSteps currentStep="scored" />}
     >
       <RouteGuide route="positions" />
+      <p className="mb-6 border-l-2 border-[var(--color-accent)]/40 bg-[var(--color-accent-quiet)] px-3 py-2 text-xs leading-5 text-[var(--color-ink-muted)]">
+        {MODE_HINT[mode] ?? MODE_HINT.allocator}
+      </p>
       {/* Hero — allocator diligence, not a portfolio dashboard. */}
       <div className="mb-10">
         <MandatePanel />
