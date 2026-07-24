@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Magnify from '@/components/canvasui/Magnify';
 
 /**
  * Market Edge Scanner
@@ -114,6 +115,17 @@ export function MarketEdgeScanner({
  <div className="flex items-center gap-8 pr-2">
  {/* Visual Odds Comparison */}
  <div className="flex gap-6 text-center">
+ <Magnify
+   size={70}
+   zoom={1.6}
+   color={[0.474, 0.965, 0.713]}
+   hud={0.6}
+   grid={false}
+   readout={false}
+   ripples={true}
+   rippleGlow={0.8}
+   style={{ display: 'inline-block', padding: '4px' }}
+ >
  <div className="flex flex-col">
  <span className={`text-[10px] uppercase tracking-wider ${subtleText}`}>Market</span>
  <span className={`text-xl font-light ${textColor}`}>
@@ -143,6 +155,7 @@ export function MarketEdgeScanner({
  )}
  </span>
  </div>
+ </Magnify>
  </div>
 
  <button
