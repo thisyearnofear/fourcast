@@ -6,6 +6,17 @@
    as Tailwind v4 utilities (bg-paper, text-ink-muted, font-sans, etc.) so
    utility classes can coexist with our existing CSS-var-based class strings. */
 @theme inline {
+  /* Tailwind v4's default theme only ships --spacing: 0.25rem; it does NOT
+     include the half-step values (0.5, 1.5, 2.5, 3.5) that v3 had built in.
+     The codebase uses these extensively (py-2.5, gap-1.5, mt-0.5, etc.) so
+     re-declare them or every utility silently compiles to 0. CSS variable
+     names with dots must escape the dot so the parser doesn't read it as a
+     class selector. */
+  --spacing-0\.5: calc(var(--spacing) * 0.5);
+  --spacing-1\.5: calc(var(--spacing) * 1.5);
+  --spacing-2\.5: calc(var(--spacing) * 2.5);
+  --spacing-3\.5: calc(var(--spacing) * 3.5);
+
   --color-paper: var(--color-paper);
   --color-paper-deep: var(--color-paper-deep);
   --color-paper-raised: var(--color-paper-raised);
@@ -94,11 +105,10 @@
 .edge-reveal { animation: edgeReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .edge-cell { animation: edgeCellIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Tailwind v4 Preflight (in @layer base) already sets margin: 0; padding: 0;
+   box-sizing: border-box; on every element via the universal selector. Re-declaring
+   that here OUTSIDE any layer would override every utility in @layer utilities,
+   which is why py-2.5 / gap-1.5 / mt-0.5 were silently compiling to 0. */
 
 h1, h2, h3, .fc-display {
   min-width: 0;
