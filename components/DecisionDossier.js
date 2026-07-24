@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowUpRight, Fingerprint, Lock, ShieldCheck, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Fingerprint, Lock, ShieldCheck, X } from 'lucide-react';
 import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
 import Ripple from '@/components/canvasui/Ripple';
 
@@ -54,6 +54,19 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
   const [showRaw, setShowRaw] = useState(false);
   const { mode } = useAudience();
   const leadBlock = LEAD_BLOCK[AUDIENCE_META[mode]?.dossierLead ?? 'decision'] ?? '02';
+
+  // Accordion state — the audience's lead block opens by default so the
+  // reader's primary question is answered first; everything else stays
+  // collapsed under a one-line header until the reader opts in.
+  const [openBlocks, setOpenBlocks] = useState(() => new Set([leadBlock]));
+  const toggleBlock = useCallback((index) => {
+    setOpenBlocks((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -163,7 +176,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
           {!state.loading && !state.error && (
             <>
               {/* 1. What did the agent know? */}
-              <DossierBlock index="01" kicker="What did the agent know?" isLead={leadBlock === '01'}>
+              <DossierAccordionItem index="01" kicker="What did the agent know?" isLead={leadBlock === '01'} isOpen={openBlocks.has('01')} onToggle={() => toggleBlock('01')}>
                 <DossierRow label="Evidence sources" value={(receipt.evidence?.sources || ['txline']).join(' · ')} />
                 <DossierRow label="Snapshot captured" value={formatTime(receipt.evidence?.snapshot?.capturedAt)} />
                 <DossierRow label="Consensus · home" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.home)} />
@@ -171,10 +184,10 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
                 <DossierRow label="Consensus · away" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.away)} />
                 <DossierRow label="Fair probability" value={pct(forecast.probability ?? simulation.winProbability)} />
                 <DossierRow label="Market odds" value={pct(forecast.marketOdds)} accent />
-              </DossierBlock>
+              </DossierAccordionItem>
 
               {/* 2. What did it decide? */}
-              <DossierBlock index="02" kicker="What did it decide?" isLead={leadBlock === '02'}>
+              <DossierAccordionItem index="02" kicker="What did it decide?" isLead={leadBlock === '02'} isOpen={openBlocks.has('02')} onToggle={() => toggleBlock('02')}>
                 <p className="text-sm leading-6 text-white/80">{decision.rationale || 'Decision rationale unavailable.'}</p>
                 <div className="mt-3 grid grid-cols-3 gap-px border border-[var(--mc-rule)] bg-[var(--mc-rule)]">
                   <DossierMetric label="Verdict" value={verdict} />
@@ -185,10 +198,10 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
                   <p className="mc-kicker mb-2">Simulation · {simulation.runs?.toLocaleString() || '—'} seeded paths</p>
                   <SimulationRange simulation={simulation} />
                 </div>
-              </DossierBlock>
+              </DossierAccordionItem>
 
               {/* 3. What prevented it from overreaching? */}
-              <DossierBlock index="03" kicker="What prevented it from overreaching?" isLead={leadBlock === '03'}>
+              <DossierAccordionItem index="03" kicker="What prevented it from overreaching?" isLead={leadBlock === '03'} isOpen={openBlocks.has('03')} onToggle={() => toggleBlock('03')}>
                 <p className="mb-3 text-xs leading-5 text-white/55">
                   Policy <span className="font-mono text-white/75">{receipt.policy?.version || 'decision-policy/v1'}</span> — every gate must clear before capital moves.
                 </p>
@@ -200,10 +213,10 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
                     <li className="font-mono text-[11px] text-white/40">No risk checks recorded on this receipt.</li>
                   )}
                 </ul>
-              </DossierBlock>
+              </DossierAccordionItem>
 
               {/* 4. When was the result unavailable? */}
-              <DossierBlock index="04" kicker="When was the result unavailable?" isLead={leadBlock === '04'}>
+              <DossierAccordionItem index="04" kicker="When was the result unavailable?" isLead={leadBlock === '04'} isOpen={openBlocks.has('04')} onToggle={() => toggleBlock('04')}>
                 <div className="flex items-start gap-2">
                   <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--mc-sealed)]" />
                   <p className="text-sm leading-6 text-white/75">
@@ -214,10 +227,10 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
                 <p className="mt-2 text-xs leading-5 text-white/50">
                   The agent could not read the final score when it decided. The proof was revealed only after the replay clock crossed settlement — a lookahead guard asserts this on every receipt.
                 </p>
-              </DossierBlock>
+              </DossierAccordionItem>
 
               {/* 5. What later verified the decision? */}
-              <DossierBlock index="05" kicker="What later verified the decision?" isLead={leadBlock === '05'}>
+              <DossierAccordionItem index="05" kicker="What later verified the decision?" isLead={leadBlock === '05'} isOpen={openBlocks.has('05')} onToggle={() => toggleBlock('05')}>
                 <DossierRow label="Outcome" value={outcome.homeScore != null ? `${outcome.homeScore}–${outcome.awayScore} · ${outcome.winner || '—'}` : 'pending'} />
                 <DossierRow label="Reconciliation" value={(reconciliation.status || 'pending').replace(/_/g, ' ')} accent={reconciliation.status === 'reconciled'} />
                 <DossierRow label="Policy adherence" value={adherence.policyAdhered == null ? '—' : (adherence.policyAdhered ? 'adhered' : 'exception')} accent={adherence.policyAdhered === true} />
@@ -239,7 +252,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
                     </a>
                   )}
                 </div>
-              </DossierBlock>
+              </DossierAccordionItem>
 
               {/* Raw receipt toggle */}
               <hr className="mc-rule mt-6" />
@@ -298,18 +311,48 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
 
 /* --------------------------------- atoms --------------------------------- */
 
-function DossierBlock({ index, kicker, children, isLead = false }) {
+/**
+ * DossierAccordionItem — one judge-friendly question in the dossier.
+ *
+ * Header is a button (aria-expanded / aria-controls). Body is conditionally
+ * rendered with the same animate-page-enter used by ProofTheatre's stages so
+ * the progressive-disclosure cadence is consistent across surfaces. The
+ * audience's lead block is highlighted with a 2px emerald left border and a
+ * filled chevron when collapsed; non-lead blocks share a quiet hairline.
+ */
+function DossierAccordionItem({ index, kicker, children, isLead = false, isOpen = false, onToggle }) {
+  const contentId = `dossier-block-${index}`;
   return (
     <section
       className={`mt-5 first:mt-0 ${isLead ? 'border-l-2 border-[var(--color-accent)]/60 pl-3' : ''}`}
       data-lead={isLead ? 'true' : undefined}
     >
-      <div className="flex items-baseline gap-3">
-        <span className={`font-mono text-[10px] ${isLead ? 'text-[var(--mc-reconciled)]' : 'text-[var(--mc-reconciled)]/70'}`}>{index}</span>
-        <span className="mc-kicker">{kicker}</span>
-      </div>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-controls={contentId}
+        className="group flex w-full items-baseline justify-between gap-3 text-left transition"
+      >
+        <span className="flex items-baseline gap-3 min-w-0">
+          <span className={`font-mono text-[10px] ${isLead || isOpen ? 'text-[var(--mc-reconciled)]' : 'text-[var(--mc-reconciled)]/70'}`}>
+            {index}
+          </span>
+          <span className={`mc-kicker ${isLead ? '' : 'group-hover:text-white/80'}`}>{kicker}</span>
+        </span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+            isOpen ? 'rotate-180 text-[var(--color-accent)]' : 'text-white/40 group-hover:text-white/70'
+          }`}
+          aria-hidden="true"
+        />
+      </button>
       <hr className="mc-rule mt-2" />
-      <div className="mt-3">{children}</div>
+      {isOpen && (
+        <div id={contentId} className="mt-3 animate-page-enter">
+          {children}
+        </div>
+      )}
     </section>
   );
 }
