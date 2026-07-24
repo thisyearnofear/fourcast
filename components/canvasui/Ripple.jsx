@@ -11,10 +11,12 @@
 
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
+import { useMotionBudget } from '@/hooks/useMotionBudget';
 
 export const DEFAULT_RIPPLE_OPTIONS = {
   amplitude: 0.5,
@@ -447,11 +449,12 @@ function createRipple(elements, options) {
 
 const emptySubscribe = () => () => {};
 
-export default function Ripple({ children, className, style, ...options }) {
+export default function Ripple({ children, className, style, priority = 5, motionBudget = true, ...options }) {
   const sourceRef = useRef(null);
   const contentRef = useRef(null);
   const outputRef = useRef(null);
   const instanceRef = useRef(null);
+  const reactId = useId();
   const [initialOptions] = useState(options);
   const [failed, setFailed] = useState(false);
 
@@ -462,7 +465,18 @@ export default function Ripple({ children, className, style, ...options }) {
   );
   const native = supported && !failed;
 
+  // Motion budget: ripple is the cheapest canvas-ui effect, so it ranks
+  // low by default. Pass `priority` to override (e.g. a hero CTA might
+  // pass priority={20}). When over budget, fall back to plain HTML so
+  // the wrapped children still render and the page stays functional.
+  const { allowed: budgeted } = useMotionBudget(
+    motionBudget ? `ripple-${reactId}` : null,
+    { priority },
+  );
+  const shouldRender = native && (motionBudget ? budgeted : true);
+
   useEffect(() => {
+    if (!shouldRender) return undefined;
     const source = sourceRef.current;
     const content = contentRef.current;
     const output = outputRef.current;
@@ -476,7 +490,7 @@ export default function Ripple({ children, className, style, ...options }) {
       instanceRef.current?.destroy();
       instanceRef.current = null;
     };
-  }, [initialOptions, native]);
+  }, [initialOptions, native, shouldRender]);
 
   useEffect(() => {
     instanceRef.current?.setOptions(options);
@@ -484,58 +498,50 @@ export default function Ripple({ children, className, style, ...options }) {
 
   return (
     <div className={className} style={{ position: 'relative', ...style }}>
-      <canvas
-        ref={sourceRef}
-        // The layoutsubtree attribute is required for html-in-canvas to walk
-        // the DOM tree. It's experimental; the @ts-expect-error suppresses
-        // the React type warning while we keep the original canvas-ui API.
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        layoutsubtree="true"
-        suppressHydrationWarning
-        style={
-          native
-            ? { position: 'absolute', inset: 0, width: '100%', height: '100%' }
-            : { display: 'none' }
-        }
-      >
-        {native ? (
-          <div
-            ref={contentRef}
+      {shouldRender ? (
+        <>
+          <canvas
+            ref={sourceRef}
+            // The layoutsubtree attribute is required for html-in-canvas to walk
+            // the DOM tree. It's experimental; the @ts-expect-error suppresses
+            // the React type warning while we keep the original canvas-ui API.
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            layoutsubtree="true"
+            suppressHydrationWarning
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          >
+            <div
+              ref={contentRef}
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                overflow: 'auto',
+              }}
+            >
+              {children}
+            </div>
+          </canvas>
+          <canvas
+            ref={outputRef}
+            aria-hidden="true"
             style={{
-              position: 'relative',
+              position: 'absolute',
+              inset: 0,
               width: '100%',
               height: '100%',
-              overflow: 'auto',
+              pointerEvents: 'none',
             }}
-          >
-            {children}
-          </div>
-        ) : null}
-      </canvas>
-      {!native ? (
+          />
+        </>
+      ) : (
         <div
           ref={contentRef}
-          style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-            overflow: 'auto',
-          }}
+          style={{ position: 'relative', width: '100%', height: '100%', overflow: 'auto' }}
         >
           {children}
         </div>
-      ) : null}
-      <canvas
-        ref={outputRef}
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-        }}
-      />
+      )}
     </div>
   );
 }
