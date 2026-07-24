@@ -12,6 +12,7 @@ import OperatorPulse from '@/components/OperatorPulse';
 import { useBrightDataStatus } from '@/hooks/useBrightDataStatus';
 import { useAudience, AUDIENCE_META } from '@/hooks/useAudience';
 import Ripple from '@/components/canvasui/Ripple';
+import ParticleReveal from '@/components/canvasui/ParticleReveal';
 
 const QUICK_SEARCHES = [
   { label: 'BTC $150k', query: 'Bitcoin $150k August 2026' },
@@ -137,6 +138,18 @@ export default function SearchLanding() {
             </p>
 
             <div className="mt-8 w-full">
+              <ParticleReveal
+                radius={180}
+                softness={0.65}
+                size={1.2}
+                scatter={10}
+                drift={0.6}
+                aberration={8}
+                bend={20}
+                fade={0.75}
+                background="var(--color-paper)"
+                className="fc-instrument-reveal"
+              >
               <div
                 className={`fc-query grid gap-2 p-2 transition duration-300 sm:grid-cols-[1fr_auto] ${
                   focused
@@ -167,6 +180,7 @@ export default function SearchLanding() {
                   Analyze
                 </button>
               </div>
+              </ParticleReveal>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {QUICK_SEARCHES.map((item) => (
