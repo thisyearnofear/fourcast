@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, FileSearch, Lock, Radio, RefreshCw, ShieldCheck } from 'lucide-react';
 import { DecisionDossier } from '@/components/DecisionDossier';
+import Ripple from '@/components/canvasui/Ripple';
 
 /* --------------------------------------------------------------------------
    Mandate Control — flagship surface for /agent.
@@ -246,14 +247,26 @@ export function MandateControl() {
             {/* Two actions only */}
             {latest && (
               <div className="mt-8 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  className="mc-action mc-action--primary"
-                  onClick={() => setDossier({ fixtureId: latest.fixtureId })}
+                <Ripple
+                  options={{
+                    amplitude: 0.3,
+                    refraction: 60,
+                    shine: 0.4,
+                    dispersion: 0.3,
+                    decay: 1.4,
+                    wavelength: 70,
+                  }}
+                  style={{ display: 'inline-block' }}
                 >
-                  <FileSearch className="h-3.5 w-3.5" />
-                  Inspect decision dossier
-                </button>
+                  <button
+                    type="button"
+                    className="mc-action mc-action--primary"
+                    onClick={() => setDossier({ fixtureId: latest.fixtureId })}
+                  >
+                    <FileSearch className="h-3.5 w-3.5" />
+                    Inspect decision dossier
+                  </button>
+                </Ripple>
                 <a
                   className="mc-action"
                   href={`/api/worldcup/verify?fixtureId=${encodeURIComponent(latest.fixtureId)}`}

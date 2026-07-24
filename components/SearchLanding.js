@@ -11,6 +11,7 @@ import OperatorMath from '@/components/OperatorMath';
 import OperatorPulse from '@/components/OperatorPulse';
 import { useBrightDataStatus } from '@/hooks/useBrightDataStatus';
 import { useAudience, AUDIENCE_META } from '@/hooks/useAudience';
+import Ripple from '@/components/canvasui/Ripple';
 
 const QUICK_SEARCHES = [
   { label: 'BTC $150k', query: 'Bitcoin $150k August 2026' },
@@ -328,13 +329,25 @@ export default function SearchLanding() {
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-stretch gap-2">
-                <Link
-                  href={`/world-cup?fixture=${VERIFIED_RECEIPT.fixtureId}`}
-                  className="fc-action mc-action--primary inline-flex items-center justify-center gap-1.5 px-5 py-3 text-sm"
+                <Ripple
+                  options={{
+                    amplitude: 0.3,
+                    refraction: 60,
+                    shine: 0.4,
+                    dispersion: 0.3,
+                    decay: 1.4,
+                    wavelength: 70,
+                  }}
+                  style={{ display: 'inline-block' }}
                 >
-                  <Fingerprint className="h-3.5 w-3.5" />
-                  Open Proof Theatre
-                </Link>
+                  <Link
+                    href={`/world-cup?fixture=${VERIFIED_RECEIPT.fixtureId}`}
+                    className="fc-action mc-action--primary inline-flex items-center justify-center gap-1.5 px-5 py-3 text-sm"
+                  >
+                    <Fingerprint className="h-3.5 w-3.5" />
+                    Open Proof Theatre
+                  </Link>
+                </Ripple>
                 <a
                   href={`https://explorer.solana.com/address/${VERIFIED_RECEIPT.escrowProgramId}?cluster=devnet`}
                   target="_blank"

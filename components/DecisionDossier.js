@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, Fingerprint, Lock, ShieldCheck, X } from 'lucide-react';
 import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
+import Ripple from '@/components/canvasui/Ripple';
 
 /* --------------------------------------------------------------------------
    Decision Dossier — one judge-friendly explanation of a complete decision.
@@ -257,16 +258,28 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
               )}
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <a
-                  className="mc-action mc-action--primary"
-                  href={`/api/worldcup/verify?fixtureId=${encodeURIComponent(fixtureId)}`}
-                  target="_blank"
-                  rel="noreferrer"
+                <Ripple
+                  options={{
+                    amplitude: 0.3,
+                    refraction: 60,
+                    shine: 0.4,
+                    dispersion: 0.3,
+                    decay: 1.4,
+                    wavelength: 70,
+                  }}
+                  style={{ display: 'inline-block' }}
                 >
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Open full verification
-                  <ArrowUpRight className="h-3 w-3" />
-                </a>
+                  <a
+                    className="mc-action mc-action--primary"
+                    href={`/api/worldcup/verify?fixtureId=${encodeURIComponent(fixtureId)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Open full verification
+                    <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                </Ripple>
                 <a
                   className="mc-action"
                   href={`/world-cup?fixture=${encodeURIComponent(fixtureId)}`}
