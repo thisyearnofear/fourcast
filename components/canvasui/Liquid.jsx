@@ -12,10 +12,12 @@
 
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
+import { useMotionBudget } from "@/hooks/useMotionBudget";
 
 const DEFAULTS = {
   simResolution: 128,
@@ -727,11 +729,12 @@ function createLiquid(elements, options = {}) {
 
 const emptySubscribe = () => () => {};
 
-export function Liquid({ children, className, style, ...options }) {
+export function Liquid({ children, className, style, priority = 8, motionBudget = true, ...options }) {
   const sourceRef = useRef(null);
   const contentRef = useRef(null);
   const outputRef = useRef(null);
   const instanceRef = useRef(null);
+  const reactId = useId();
   const [initialOptions] = useState(options);
   const [failed, setFailed] = useState(false);
 
@@ -742,11 +745,22 @@ export function Liquid({ children, className, style, ...options }) {
   );
   const native = supported && !failed;
 
+  // Motion budget: Liquid is the most expensive canvas-ui surface in this
+  // app (full Navier-Stokes simulation every frame). When over budget, fall
+  // back to plain HTML so the wrapped content still renders and the
+  // reasoning dialog stays readable.
+  const { allowed: budgeted } = useMotionBudget(
+    motionBudget ? `liquid-${reactId}` : null,
+    { priority },
+  );
+  const shouldRender = native && (motionBudget ? budgeted : true);
+
   useEffect(() => {
+    if (!shouldRender) return undefined;
     const source = sourceRef.current;
     const content = contentRef.current;
     const output = outputRef.current;
-    if (!source || !content || !output) return;
+    if (!source || !content || !output) return undefined;
     instanceRef.current = createLiquid(
       { source, content, output },
       initialOptions,
@@ -756,63 +770,56 @@ export function Liquid({ children, className, style, ...options }) {
       instanceRef.current?.destroy();
       instanceRef.current = null;
     };
-  }, [initialOptions, native]);
+  }, [initialOptions, native, shouldRender]);
 
   useEffect(() => {
+    if (!shouldRender) return;
     instanceRef.current?.setOptions(options);
   });
 
   return (
     <div className={className} style={{ position: "relative", ...style }}>
-      <canvas
-        ref={sourceRef}
-        // @ts-expect-error experimental html-in-canvas attribute
-        layoutsubtree="true"
-        suppressHydrationWarning
-        style={
-          native
-            ? { position: "absolute", inset: 0, width: "100%", height: "100%" }
-            : { display: "none" }
-        }
-      >
-        {native ? (
-          <div
-            ref={contentRef}
+      {shouldRender ? (
+        <>
+          <canvas
+            ref={sourceRef}
+            // @ts-expect-error experimental html-in-canvas attribute
+            layoutsubtree="true"
+            suppressHydrationWarning
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+          >
+            <div
+              ref={contentRef}
+              style={{
+                position: "relative",
+                width: "100%",
+                height: "100%",
+                overflow: "auto",
+              }}
+            >
+              {children}
+            </div>
+          </canvas>
+          <canvas
+            ref={outputRef}
+            aria-hidden
             style={{
-              position: "relative",
+              position: "absolute",
+              inset: 0,
               width: "100%",
               height: "100%",
-              overflow: "auto",
+              pointerEvents: "none",
             }}
-          >
-            {children}
-          </div>
-        ) : null}
-      </canvas>
-      {!native ? (
+          />
+        </>
+      ) : (
         <div
           ref={contentRef}
-          style={{
-            position: "relative",
-            width: "100%",
-            height: "100%",
-            overflow: "auto",
-          }}
+          style={{ position: "relative", width: "100%", height: "100%", overflow: "auto" }}
         >
           {children}
         </div>
-      ) : null}
-      <canvas
-        ref={outputRef}
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          pointerEvents: "none",
-        }}
-      />
+      )}
     </div>
   );
 }
