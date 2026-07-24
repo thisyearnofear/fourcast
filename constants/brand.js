@@ -90,7 +90,7 @@ export const BRAND = {
     agent: 'Mandate',
     positions: 'Diligence',
     labs: 'Labs',
-    worldCup: 'Proof Theatre',
+    worldCup: 'World Cup',
     alerts: 'Alerts',
     canton: 'Private Markets',
   },

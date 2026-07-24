@@ -8,12 +8,13 @@ import { useFocusTrap } from '@/hooks/useFocusTrap';
 export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market, analysis, isNight, isPublishing }) {
  const canton = useCantonWalletContext();
  const [settlementLayer, setSettlementLayer] = useState('arc'); // 'arc' | 'canton'
+ const [cantonAsset, setCantonAsset] = useState('CBTC'); // 'CBTC' | 'CETH'
  const modalRef = useFocusTrap({ isOpen, onClose });
 
  if (!isOpen) return null;
 
  const chainLabel = settlementLayer === 'canton'
- ? BRAND.publish.cantonPrivate.chain
+ ? `Canton (${cantonAsset === 'CETH' ? 'cETH' : 'cBTC'})`
  : BRAND.publish.arcPreferred.chain;
  const gasLabel = settlementLayer === 'canton'
  ? BRAND.publish.cantonPrivate.gas
@@ -25,7 +26,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  const reasoningPreview = reasoning.length > 120 ? reasoning.slice(0, 120) + '...' : reasoning;
 
  const handleConfirm = () => {
- onConfirm(settlementLayer);
+ onConfirm(settlementLayer, cantonAsset);
  };
 
  return (
@@ -112,6 +113,44 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  </button>
  )}
  </div>
+ 
+ {/* Settlement Asset Selector (only for Canton) */}
+ {settlementLayer === 'canton' && canton?.connected && (
+ <div className="mt-3 pt-3 border-t border-white/10">
+ <div className="text-[10px] uppercase tracking-wider opacity-40 mb-2">Settlement Asset</div>
+ <div className="grid grid-cols-2 gap-2">
+ <button
+ type="button"
+ onClick={() => setCantonAsset('CBTC')}
+ className={`p-2 text-left transition-all border ${
+ cantonAsset === 'CBTC'
+ ? 'bg-amber-500/20 border-amber-400/50 text-amber-200'
+ : 'bg-white/5 border-white/10 text-white/50 hover:text-white/70'
+ }`}
+ >
+ <div className="text-xs font-medium">cBTC</div>
+ <div className="text-[10px] opacity-60">Canton Bitcoin (BitSafe)</div>
+ </button>
+ <button
+ type="button"
+ onClick={() => setCantonAsset('CETH')}
+ className={`p-2 text-left transition-all border ${
+ cantonAsset === 'CETH'
+ ? 'bg-blue-500/20 border-blue-400/50 text-blue-200'
+ : 'bg-white/5 border-white/10 text-white/50 hover:text-white/70'
+ }`}
+ >
+ <div className="text-xs font-medium">cETH</div>
+ <div className="text-[10px] opacity-60">Canton Ethereum (onRails)</div>
+ </button>
+ </div>
+ <div className="mt-2 text-[10px] text-white/40">
+ {cantonAsset === 'CETH' 
+ ? 'cETH is CIP-56 compliant and composes atomically with USDCx.'
+ : 'cBTC is the first programmable Bitcoin-backed asset on Canton.'}
+ </div>
+ </div>
+ )}
  </div>
 
  <div className={`flex items-center justify-between p-3 border bg-white/5 border-white/10`}>

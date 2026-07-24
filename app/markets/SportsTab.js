@@ -3,6 +3,7 @@
 import React from "react";
 import EmptyMarketState from "@/components/EmptyMarketState";
 import { StaggeredMarketCard } from "./MarketCardShared";
+import { Skeleton } from "@/components/Skeleton";
 
 export function SportsTabContent({
  markets,
@@ -37,6 +38,8 @@ export function SportsTabContent({
  agentBrierScore,
  calibrationScore,
  visibleMarketCount,
+ displayLimit = Infinity,
+ onLoadMore,
  onSignalCountFetched,
 }) {
  const dateRangeLabels = {
@@ -160,13 +163,13 @@ export function SportsTabContent({
  {isLoading || !markets ? (
  <div className="space-y-3">
  {[1, 2, 3].map((i) => (
- <div key={i} className={`mc-panel p-5 border-white/10`}>
+ <div key={i} className="p-5 border border-[var(--color-rule)] bg-[var(--color-paper)]">
  <div className="space-y-3">
- <div className='skeleton' style={{ height: '1.25rem', width: '60%', borderRadius: '0.5rem' }} />
- <div className='skeleton' style={{ height: '1rem', width: '40%', borderRadius: '0.5rem' }} />
+ <Skeleton className="h-5 w-3/5" />
+ <Skeleton className="h-4 w-2/5" />
  <div className="flex gap-2">
- <div className='skeleton' style={{ height: '1.5rem', width: '4rem', borderRadius: '999px' }} />
- <div className='skeleton' style={{ height: '1.5rem', width: '5rem', borderRadius: '999px' }} />
+ <Skeleton className="h-6 w-16 rounded-full" />
+ <Skeleton className="h-6 w-20 rounded-full" />
  </div>
  </div>
  </div>
@@ -189,8 +192,9 @@ export function SportsTabContent({
  }}
  />
  ) : (
+ <>
  <div className="space-y-4">
- {markets.map((market, index) => (
+ {markets.slice(0, displayLimit).map((market, index) => (
  <StaggeredMarketCard
  key={market.marketID || market.id || index}
  market={market}
@@ -220,6 +224,17 @@ export function SportsTabContent({
  />
  ))}
  </div>
+ {onLoadMore && markets.length > displayLimit && (
+ <div className="mt-6 flex justify-center">
+ <button
+ onClick={onLoadMore}
+ className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors"
+ >
+ Load More ({markets.length - displayLimit} remaining)
+ </button>
+ </div>
+ )}
+ </>
  )}
  </div>
  );

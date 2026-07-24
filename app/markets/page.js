@@ -12,6 +12,7 @@ import { BRAND } from "@/constants/brand";
 import { ARC_EXPLORER_TX } from "@/constants/appConstants";
 import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
 import FirstRunBanner from "@/components/FirstRunBanner";
+import { CantonMarkets } from "@/components/CantonMarkets";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
 
 const STAGE_INDEX = { accepted: 0, context: 0, market: 1, sources: 1, forecast: 2, complete: 3 };
@@ -304,6 +305,11 @@ export default function MarketsPage() {
  if (typeof window === 'undefined') return 0;
  return parseInt(localStorage.getItem('fourcast_free_analyses') || '0', 10);
  });
+
+ // Progressive disclosure: show first 10 markets, then "Load more" batches of 10
+ const [displayLimit, setDisplayLimit] = useState(10);
+ // Reset display limit when markets change (tab switch, filter change)
+ useEffect(() => { setDisplayLimit(10); }, [markets]);
 
  // Fetch markets when tab or filters change (independent of user weather)
  useEffect(() => {
@@ -769,8 +775,10 @@ export default function MarketsPage() {
  <AppShell
  title="Markets"
  subtitle={activeTab === "sports"
- ? "Sports predictions with weather-aware analysis"
- : BRAND.pages.markets}
+ ? "Live sports markets → ML fair odds → detect edge → prove your call."
+ : activeTab === "canton"
+ ? "Private prediction markets with CBTC/cETH settlement on Canton Network."
+ : "Scan 50+ markets, run 200-model ML analysis, and surface mispricings worth trading."}
  actions={
  <div className="flex items-center gap-3">
  <div className="hidden items-center sm:flex">
@@ -804,13 +812,15 @@ export default function MarketsPage() {
  items={[
  { id: "sports", label: "Sports & Events", icon: "🏆" },
  { id: "discovery", label: "Crypto, Finance & More", icon: "📈" },
+ { id: "canton", label: "Canton Markets", icon: "◈" },
  ]}
  activeItem={activeTab}
  onChange={setActiveTab}
  />
  <p className="text-[11px] leading-relaxed text-white/45 max-w-2xl">
  <span className="text-emerald-300">Sports</span> — live, fast-resolving, narrow edges ·{' '}
- <span className="text-emerald-300">Discovery</span> — long-tail, deeper edges, longer horizons.
+ <span className="text-emerald-300">Discovery</span> — long-tail, deeper edges, longer horizons ·{' '}
+ <span className="text-purple-300">Canton</span> — private settlement, hidden position sizes.
  </p>
  </div>
  }
@@ -873,6 +883,8 @@ export default function MarketsPage() {
  agentBrierScore={agentBrierScore}
  calibrationScore={calibrationScore}
  visibleMarketCount={visibleMarketCount}
+ displayLimit={displayLimit}
+ onLoadMore={() => setDisplayLimit(prev => prev + 10)}
  />
  )}
 
@@ -908,7 +920,14 @@ export default function MarketsPage() {
  agentBrierScore={agentBrierScore}
  calibrationScore={calibrationScore}
  visibleMarketCount={visibleMarketCount}
+ displayLimit={displayLimit}
+ onLoadMore={() => setDisplayLimit(prev => prev + 10)}
  />
+ )}
+
+ {/* Canton Tab Content */}
+ {activeTab === "canton" && (
+ <CantonMarkets isNight={isNight} />
  )}
  </div>
 

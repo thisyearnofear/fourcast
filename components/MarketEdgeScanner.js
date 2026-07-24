@@ -1,13 +1,43 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Magnify from '@/components/canvasui/Magnify';
+import dynamic from 'next/dynamic';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+const Magnify = dynamic(() => import('@/components/canvasui/Magnify'), {
+  loading: () => (
+    <div className="h-24 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] animate-pulse" />
+  ),
+  ssr: false,
+});
 
 /**
  * Market Edge Scanner
  * Identifies and highlights markets with significant ML-derived edges
  */
-export function MarketEdgeScanner({ 
+export function MarketEdgeScanner(props) {
+  return (
+    <ErrorBoundary
+      fallback={({ error, reset }) => (
+        <div className="platform-open-section py-6 text-center">
+          <div className="text-[var(--color-ink-muted)] text-sm mb-4">
+            3D visualization unavailable
+          </div>
+          <button
+            onClick={reset}
+            className="px-4 py-2 bg-[var(--color-accent)] text-white text-sm hover:bg-[var(--color-accent-hover)]"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+    >
+      <MarketEdgeScannerInner {...props} />
+    </ErrorBoundary>
+  );
+}
+
+function MarketEdgeScannerInner({ 
  markets = [], 
  onAnalyze, 
  isNight = false 

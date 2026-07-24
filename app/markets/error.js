@@ -1,19 +1,19 @@
 'use client';
 
+import ErrorBoundary from '@/components/ErrorBoundary';
+
+/**
+ * Markets page error boundary
+ * Catches and displays errors in the markets page hierarchy
+ */
 export default function MarketsError({ error, reset }) {
- return (
- <div className="min-h-screen flex items-center justify-center p-4">
- <div className="mc-panel p-8 text-center max-w-md w-full">
- <div className="text-4xl mb-4 opacity-50">📊</div>
- <h2 className="text-xl font-light text-white mb-2">Markets failed to load</h2>
- <p className="text-sm text-white/50 mb-6">{error?.message || 'An unexpected error occurred'}</p>
- <button
- onClick={reset}
- className="px-6 py-2.5 bg-white/10 border border-white/20 text-white/80 text-sm hover:bg-white/20 transition-all"
- >
- Try Again
- </button>
- </div>
- </div>
- );
+  return (
+    <ErrorBoundary
+      error={error}
+      reset={reset}
+      title="Markets Unavailable"
+      message="We encountered an issue loading the markets. This may be due to network connectivity or a temporary service disruption."
+      showRetry={true}
+    />
+  );
 }

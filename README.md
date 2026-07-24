@@ -18,6 +18,7 @@ Fourcast's flagship route is one unfolding system — Mandate → Proof Theatre 
 - `/agent/[operatorId]` — **Per-operator Track Record**: the public URL a concierge DM points a prospect at. Shows the operator's mandate knobs and scoped track record (forecasts, resolved, Brier score). Public by design — the OG share card target for Warpcast/X.
 - `/world-cup` — **Proof Theatre**: a vertical 6-stage evidence timeline for any fixture, from sealed pre-match evidence to Solana-anchored reconciliation. Cross-venue edge detection and on-chain settlement remain as fixture-card capabilities.
 - `/positions` — **Allocator Diligence**: mandate adherence, receipt coverage, discipline rate, and calibration as the hero; positions/P&L demoted to a secondary section.
+- `/markets` — **Prediction Markets Hub**: three tabs for different market types. Sports & Events (Polymarket/Kalshi with weather-aware AI analysis), Crypto/Finance & More (long-tail discovery with ML edge detection), and Canton Markets (private settlement showcase with cBTC/cETH). Progressive disclosure reveals markets in batches of 10.
 
 ![Primary Customer](https://img.shields.io/badge/Primary%20Customer-Quant%20Operator-emerald)
 ![Acquisition](https://img.shields.io/badge/Acquisition-Signal%20Marketplace-emerald)
