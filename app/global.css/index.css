@@ -1,7 +1,37 @@
 /* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 · genre: modern-minimal · macrostructure: Workbench · design-system: design.md · designed-as-app */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Theme exposure — tokens.css (root export per design.md) is the canonical
+   source of truth. The @theme inline block re-exports those same variables
+   as Tailwind v4 utilities (bg-paper, text-ink-muted, font-sans, etc.) so
+   utility classes can coexist with our existing CSS-var-based class strings. */
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-paper-deep: var(--color-paper-deep);
+  --color-paper-raised: var(--color-paper-raised);
+  --color-paper-soft: var(--color-paper-soft);
+  --color-paper-glass: var(--color-paper-glass);
+  --color-paper-panel: var(--color-paper-panel);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-ink-faint: var(--color-ink-faint);
+  --color-rule: var(--color-rule);
+  --color-rule-strong: var(--color-rule-strong);
+  --color-accent: var(--color-accent);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-accent-ink: var(--color-accent-ink);
+  --color-evidence: var(--color-evidence);
+  --color-sealed: var(--color-sealed);
+  --color-breach: var(--color-breach);
+  --color-review: var(--color-review);
+  --color-focus: var(--color-focus);
+
+  /* Font stacks — chain the Next.js Font CSS variables (--font-sans /
+     --font-display / --font-mono) with safe system fallbacks. */
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-display: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
 
 :root {
   --app-bg: var(--color-paper);
@@ -29,12 +59,7 @@
   --mc-panel-ink: var(--color-wash);
 }
 
-/* Tailwind doesn't include gradient-radial by default */
-@layer utilities {
-  .bg-gradient-radial {
-    background-image: radial-gradient(var(--tw-gradient-stops));
-  }
-}
+/* Tailwind v4 ships `bg-gradient-radial` natively; no manual override needed. */
 
 /* Landing / edge motion */
 @keyframes float {
@@ -332,26 +357,30 @@ body { overflow-x: clip; }
 /* Glassmorphism Components — DEPRECATED. Aliased to mc-* squared panels.
    The flight-recorder aesthetic uses hairline borders and solid backgrounds,
    not backdrop-blur. These aliases keep existing components rendering without
-   a hard break while they migrate to mc-* classes directly. */
+   a hard break while they migrate to mc-* classes directly.
+
+   Tailwind v4 forbids @apply of custom component classes, so each alias
+   inlines the base styles instead of referencing them. */
 @layer components {
-  .glass-surface {
+  .glass-surface,
+  .glass-heavy,
+  .glass-subtle,
+  .glass-heavy-light,
+  .glass-subtle-light {
     border: 1px solid var(--mc-rule);
     background: var(--mc-panel);
     transition: border-color 0.18s ease, background 0.18s ease;
   }
-  .glass-heavy { @apply glass-surface; }
-  .glass-subtle { @apply glass-surface; }
-  .glass-heavy-light { @apply glass-surface; }
-  .glass-subtle-light { @apply glass-surface; }
-  .glass-input {
+  .glass-input,
+  .glass-input-light {
     border: 1px solid var(--mc-rule);
     background: var(--mc-panel);
     padding: 0.5rem 1rem;
     color: var(--ink);
     transition: border-color 0.18s ease;
   }
-  .glass-input:focus { border-color: var(--mc-reconciled); outline: none; }
-  .glass-input-light { @apply glass-input; }
+  .glass-input:focus,
+  .glass-input-light:focus { border-color: var(--mc-reconciled); outline: none; }
 
   /* Button utilities — aliased to mc-action (squared, no rounded-2xl). */
   .btn-base {
@@ -370,28 +399,47 @@ body { overflow-x: clip; }
   .btn-sm { padding: 0.4rem 0.75rem; font-size: 11px; }
   .btn-md { padding: 0.6rem 1rem; }
 
-  .btn-primary {
-    @apply btn-base;
-    border-color: rgba(91, 156, 255, 0.4);
-    color: var(--mc-evidence);
+  .btn-primary,
+  .btn-primary-light {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    border: 1px solid rgba(91, 156, 255, 0.4);
     background: rgba(91, 156, 255, 0.06);
+    color: var(--mc-evidence);
+    padding: 0.6rem 1rem;
+    font: 600 12px/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    cursor: pointer;
   }
-  .btn-primary:hover { background: rgba(91, 156, 255, 0.12); border-color: var(--mc-evidence); }
-  .btn-primary-light { @apply btn-primary; }
+  .btn-primary:hover,
+  .btn-primary-light:hover { background: rgba(91, 156, 255, 0.12); border-color: var(--mc-evidence); }
+  .btn-primary:active,
+  .btn-primary-light:active { transform: scale(0.97); }
 
-  .btn-success {
-    @apply btn-base;
-    border-color: rgba(121, 245, 183, 0.4);
-    color: var(--mc-reconciled);
+  .btn-success,
+  .btn-success-light,
+  .btn-gradient,
+  .btn-gradient-light {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    border: 1px solid rgba(121, 245, 183, 0.4);
     background: rgba(121, 245, 183, 0.06);
+    color: var(--mc-reconciled);
+    padding: 0.6rem 1rem;
+    font: 600 12px/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    cursor: pointer;
   }
-  .btn-success:hover { background: rgba(121, 245, 183, 0.12); border-color: var(--mc-reconciled); }
-  .btn-success-light { @apply btn-success; }
-
-  .btn-gradient {
-    @apply btn-success;
-  }
-  .btn-gradient-light { @apply btn-success; }
+  .btn-success:hover,
+  .btn-success-light:hover,
+  .btn-gradient:hover,
+  .btn-gradient-light:hover { background: rgba(121, 245, 183, 0.12); border-color: var(--mc-reconciled); }
+  .btn-success:active,
+  .btn-success-light:active,
+  .btn-gradient:active,
+  .btn-gradient-light:active { transform: scale(0.97); }
 
   .btn-tab {
     padding: 0.4rem 1rem;
@@ -408,9 +456,18 @@ body { overflow-x: clip; }
   .btn-tab:hover { color: var(--ink); border-color: var(--mc-rule); }
 
   .btn-toggle {
-    @apply btn-base btn-sm;
-    border-color: var(--mc-rule);
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    border: 1px solid var(--mc-rule);
+    background: transparent;
+    color: var(--ink);
+    padding: 0.4rem 0.75rem;
+    font: 600 11px/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    cursor: pointer;
   }
+  .btn-toggle:active { transform: scale(0.97); }
 }
 
 /* Custom animations and utilities for weather app */
