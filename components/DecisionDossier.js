@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, ChevronDown, Fingerprint, Lock, ShieldCheck, X } from 'lucide-react';
 import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
 import Ripple from '@/components/canvasui/Ripple';
+import Glass from '@/components/canvasui/Glass';
 
 /* --------------------------------------------------------------------------
    Decision Dossier — one judge-friendly explanation of a complete decision.
@@ -177,13 +178,26 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
             <>
               {/* 1. What did the agent know? */}
               <DossierAccordionItem index="01" kicker="What did the agent know?" isLead={leadBlock === '01'} isOpen={openBlocks.has('01')} onToggle={() => toggleBlock('01')}>
-                <DossierRow label="Evidence sources" value={(receipt.evidence?.sources || ['txline']).join(' · ')} />
-                <DossierRow label="Snapshot captured" value={formatTime(receipt.evidence?.snapshot?.capturedAt)} />
-                <DossierRow label="Consensus · home" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.home)} />
-                <DossierRow label="Consensus · draw" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.draw)} />
-                <DossierRow label="Consensus · away" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.away)} />
-                <DossierRow label="Fair probability" value={pct(forecast.probability ?? simulation.winProbability)} />
-                <DossierRow label="Market odds" value={pct(forecast.marketOdds)} accent />
+                <Glass
+                  size={140}
+                  ior={1.35}
+                  aberration={0.8}
+                  reflection={0.8}
+                  shine={0.05}
+                  edge={0.55}
+                  zoom={1.4}
+                  style={{ minHeight: 180 }}
+                >
+                  <div data-glass-target className="p-3">
+                    <DossierRow label="Evidence sources" value={(receipt.evidence?.sources || ['txline']).join(' · ')} />
+                    <DossierRow label="Snapshot captured" value={formatTime(receipt.evidence?.snapshot?.capturedAt)} />
+                    <DossierRow label="Consensus · home" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.home)} />
+                    <DossierRow label="Consensus · draw" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.draw)} />
+                    <DossierRow label="Consensus · away" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.away)} />
+                    <DossierRow label="Fair probability" value={pct(forecast.probability ?? simulation.winProbability)} />
+                    <DossierRow label="Market odds" value={pct(forecast.marketOdds)} accent />
+                  </div>
+                </Glass>
               </DossierAccordionItem>
 
               {/* 2. What did it decide? */}
