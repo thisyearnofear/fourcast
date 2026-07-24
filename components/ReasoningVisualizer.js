@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import Liquid from '@/components/canvasui/Liquid';
 
 /**
  * ReasoningVisualizer
@@ -127,6 +128,15 @@ export default function ReasoningVisualizer({
             </div>
           </div>
 
+          <Liquid
+            color={[0.474, 0.965, 0.713]}
+            intensity={0.6}
+            distortion={0.15}
+            blend={1.5}
+            radius={0.18}
+            force={0.6}
+            style={{ minHeight: 200 }}
+          >
           <ol className="space-y-3">
             {activeSteps.map((step, idx) => {
               const isPast = idx < displayStep;
@@ -190,6 +200,7 @@ export default function ReasoningVisualizer({
             <span className="uppercase tracking-[0.16em]">Sealed trace · receipt pending</span>
             <span>est. {Math.max(0, (activeSteps.length - displayStep))} phase{activeSteps.length - displayStep === 1 ? '' : 's'} remaining</span>
           </div>
+          </Liquid>
         </div>
       </motion.div>
     </div>
