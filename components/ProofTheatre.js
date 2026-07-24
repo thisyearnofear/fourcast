@@ -75,6 +75,15 @@ export function ProofTheatre({ fixture, onClose }) {
     });
   }, []);
 
+  // Spine fill — the spine's emerald overlay grows from the top of the
+  // chain down to the highest-open stage. This is the design.md "proof
+  // progression" motion: the reader's progression through the chain
+  // becomes a visual rhythm rather than a checklist.
+  const stageKeys = ['01', '02', '03', '04', '05', '06'];
+  const openIndexList = stageKeys.filter((k) => openStages.has(k)).map((k) => stageKeys.indexOf(k));
+  const maxOpenIndex = openIndexList.length ? Math.max(...openIndexList) : -1;
+  const spineFill = maxOpenIndex >= 0 ? (maxOpenIndex + 1) / stageKeys.length : 0;
+
   const load = useCallback(async () => {
     if (!fixture?.id) return;
     try {
@@ -158,8 +167,15 @@ export function ProofTheatre({ fixture, onClose }) {
 
         {!state.loading && !state.error && (
           <ol className="relative">
-            {/* Vertical spine */}
+            {/* Vertical spine — gray base + emerald overlay that fills from
+                the top down to the highest-open stage. Reads as "proof
+                progression from sealed evidence to reconciliation". */}
             <span className="absolute left-[11px] top-2 bottom-2 w-px bg-[var(--mc-rule)]" aria-hidden="true" />
+            <span
+              className="absolute left-[11px] top-2 w-px origin-top bg-[var(--mc-reconciled)]/70 transition-transform duration-500 ease-out"
+              style={{ height: 'calc(100% - 1rem)', transform: `scaleY(${spineFill})` }}
+              aria-hidden="true"
+            />
 
             {/* 1. Pre-match evidence */}
             <TheatreStage index="01" stage={stages[0]} color="var(--mc-evidence)" isLead={leadStage === '01'} isOpen={openStages.has('01')} onToggle={() => toggleStage('01')}>
