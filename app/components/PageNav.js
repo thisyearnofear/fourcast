@@ -1,13 +1,15 @@
-"use client";
+'use client';
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { BRAND } from "@/constants/brand";
 import WalletConnect from "@/app/components/WalletConnect";
 import StatusBadge from "@/components/StatusBadge";
 import OperatorPulse from "@/components/OperatorPulse";
 import AudienceSwitcher from "@/app/components/AudienceSwitcher";
-import { TourLink } from "@/components/RouteGuide";
+import { TourLink, replayTour } from "@/components/RouteGuide";
 
 /**
  * Navigation + AppShell — the single source of truth for the app chrome.
@@ -20,23 +22,24 @@ import { TourLink } from "@/components/RouteGuide";
  */
 
 /**
- * Primary nav. Notes:
- *  - "Positions" was renamed "Track Record" so the primary-customer language
- *    is visible without scrolling.
- *  - Labels can be overridden via BRAND.navLabels in constants/brand.js.
+ * Nav architecture (kept tight to honour the Workbench macrostructure):
+ *  - PRIMARY_NAV: 4 routes that cover the core loop, always visible.
+ *  - OVERFLOW_NAV: long-tail routes, hidden behind a "More" menu.
+ *  - UTILITY controls: audience switcher (icon popover) and tour replay
+ *    (icon-only Sparkles), each separated from the nav cluster by whitespace.
+ *
+ * Labels can be overridden via BRAND.navLabels in constants/brand.js.
  */
-// BRAND.navLabels is a required top-level key (see constants/brand.js). We still
-// keep ?? fallbacks so unit tests / Storybook / partial mocks stay safe.
 const PRIMARY_NAV = [
   { name: BRAND.navLabels.agent ?? "Mandate", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
   { name: BRAND.navLabels.worldCup ?? "Proof Theatre", href: "/world-cup", description: "TxLINE-verified proof of decision", onboardId: "world-cup" },
   { name: BRAND.navLabels.positions ?? "Diligence", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
-  { name: BRAND.navLabels.canton ?? "Private Markets", href: "/canton", description: "Private settlement on Canton — hidden position sizes, cBTC/cETH", onboardId: "canton" },
   { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
-  { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
 ];
 
-const SECONDARY_NAV = [
+const OVERFLOW_NAV = [
+  { name: BRAND.navLabels.canton ?? "Private Markets", href: "/canton", description: BRAND.nav.canton, onboardId: "canton" },
+  { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
   { name: BRAND.navLabels.labs ?? "Labs", href: "/labs", description: BRAND.nav.labs },
   { name: BRAND.navLabels.alerts ?? "Alerts", href: "/notifications", description: "Notifications from analysts you follow" },
 ];
@@ -44,6 +47,87 @@ const SECONDARY_NAV = [
 function useIsActive() {
   const pathname = usePathname();
   return (href) => (href === "/" ? pathname === "/" : pathname?.startsWith(href));
+}
+
+function MoreMenu({ items, isActive }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDocClick = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  // Close on route change — pathname change means the user navigated, so
+  // the dropdown should not linger open across routes.
+  const pathname = usePathname();
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  const active = items.find((i) => isActive(i.href));
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={active ? `More · ${active.name} selected` : "More navigation"}
+        title={active ? `More · ${active.name} selected` : "More navigation"}
+        className={`mc-nav-link no-underline inline-flex items-center gap-1 ${
+          open || active ? "is-active" : ""
+        }`}
+      >
+        More
+        <ChevronDown
+          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          aria-label="More navigation"
+          className="absolute right-0 top-full z-[60] mt-1.5 w-60 border border-[var(--color-rule)] bg-[var(--color-paper-deep)] p-1 shadow-xl"
+        >
+          {items.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              role="menuitem"
+              data-onboard={item.onboardId}
+              title={item.description}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              onClick={() => setOpen(false)}
+              className={`flex w-full flex-col gap-0.5 px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.1em] no-underline transition ${
+                isActive(item.href)
+                  ? "bg-[var(--color-accent-quiet)] text-[var(--color-accent)]"
+                  : "text-[var(--color-ink)] hover:bg-white/[0.04]"
+              }`}
+            >
+              <span className="font-semibold">{item.name}</span>
+              <span className="text-[10px] font-normal normal-case tracking-normal text-[var(--color-ink-muted)]">
+                {item.description}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -54,50 +138,51 @@ export default function PageNav() {
   const isActive = useIsActive();
 
   return (
-    <nav className="platform-nav flex min-w-0 items-center gap-0.5" aria-label="Primary navigation">
+    <nav className="platform-nav flex min-w-0 items-center gap-1" aria-label="Primary navigation">
       {/* Desktop */}
-      <div className="hidden md:flex items-center gap-0.5">
+      <div className="hidden md:flex items-center gap-1">
         {PRIMARY_NAV.map((item) => (
           <Link
             key={item.name}
             href={item.href}
             data-onboard={item.onboardId}
             title={item.description}
+            aria-current={isActive(item.href) ? "page" : undefined}
             className={`mc-nav-link no-underline ${isActive(item.href) ? "is-active" : ""}`}
           >
             {item.name}
           </Link>
         ))}
-        <span className="mx-1 h-4 w-px bg-white/10" />
-        {SECONDARY_NAV.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            title={item.description}
-            className={`mc-nav-link no-underline ${isActive(item.href) ? "is-active" : ""}`}
-          >
-            {item.name}
-          </Link>
-        ))}
-        <span className="mx-1 h-4 w-px bg-white/10" />
-        <TourLink />
-        <span className="mx-1 h-4 w-px bg-white/10" />
-        <AudienceSwitcher compact />
+        <MoreMenu items={OVERFLOW_NAV} isActive={isActive} />
+        <span className="mx-2 h-4 w-px bg-[var(--color-rule)]" aria-hidden="true" />
+        <Link
+          href="/agent"
+          onClick={replayTour}
+          title="Replay the route guides on /agent, /world-cup, and /positions"
+          aria-label="Replay the tour"
+          className="mc-nav-link no-underline inline-flex items-center"
+        >
+          <Sparkles className="h-3 w-3" aria-hidden="true" />
+        </Link>
+        <span className="mx-2 h-4 w-px bg-[var(--color-rule)]" aria-hidden="true" />
+        <AudienceSwitcher />
       </div>
 
       {/* Mobile: compact labels */}
-      <div className="flex min-w-0 items-center gap-0.5 md:hidden">
-        {PRIMARY_NAV.slice(0, 3).map((item) => (
+      <div className="flex min-w-0 items-center gap-1 md:hidden">
+        {PRIMARY_NAV.map((item) => (
           <Link
             key={item.name}
             href={item.href}
             aria-label={item.name}
+            aria-current={isActive(item.href) ? "page" : undefined}
             className={`mc-nav-link no-underline ${isActive(item.href) ? "is-active" : ""}`}
             style={{ padding: "0.3rem 0.4rem", fontSize: "9px" }}
           >
             {item.name}
           </Link>
         ))}
+        <MoreMenu items={OVERFLOW_NAV} isActive={isActive} />
       </div>
     </nav>
   );
