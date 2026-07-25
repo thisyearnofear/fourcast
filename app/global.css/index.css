@@ -588,6 +588,96 @@ body { overflow-x: clip; }
    when it scrolls into view. Reuses mc-seal-flash (already defined). */
 .fc-seal-target.is-revealed { animation: mc-seal-flash 0.6s ease-out; }
 
+/* Proof chain — interactive step rail. Each node is a button that lights
+   up on hover/focus or auto-cycles on a timer. */
+.fc-proof-chain__rail {
+  gap: 0.25rem;
+}
+.fc-proof-chain__node {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.fc-proof-chain__icon {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid rgba(243,240,231,.15);
+  background: rgba(0,0,0,.3);
+  color: rgba(243,240,231,.35);
+  font-size: 10px;
+  transition: border-color var(--dur-state) linear, background var(--dur-state) linear, color var(--dur-state) linear, box-shadow var(--dur-state) linear;
+}
+.fc-proof-chain__node:hover .fc-proof-chain__icon,
+.fc-proof-chain__node:focus-visible .fc-proof-chain__icon {
+  border-color: rgba(121,245,183,.5);
+  color: var(--color-accent);
+}
+.fc-proof-chain__node.is-active .fc-proof-chain__icon {
+  border-color: var(--color-accent);
+  background: rgba(121,245,183,.12);
+  color: var(--color-accent);
+  box-shadow: 0 0 12px rgba(121,245,183,.4);
+}
+.fc-proof-chain__node.is-complete .fc-proof-chain__icon {
+  border-color: rgba(121,245,183,.35);
+  color: rgba(121,245,183,.6);
+}
+.fc-proof-chain__line {
+  display: block;
+  width: 1.5rem;
+  height: 1px;
+  background: rgba(243,240,231,.1);
+  transition: background var(--dur-state) linear;
+}
+.fc-proof-chain__node.is-complete .fc-proof-chain__line {
+  background: rgba(121,245,183,.3);
+}
+
+/* Door hover preview — a strip at the bottom of each door that slides up
+   on hover (fine-pointer) or is always visible on touch. */
+.fc-door__preview {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height var(--dur-panel) var(--ease-out), opacity var(--dur-panel) linear;
+}
+@media (hover: hover) and (pointer: fine) {
+  .fc-door:hover .fc-door__preview {
+    max-height: 3rem;
+    opacity: 1;
+  }
+}
+@media (hover: none) or (pointer: coarse) {
+  .fc-door__preview {
+    max-height: 3rem;
+    opacity: 1;
+  }
+}
+.fc-door__preview-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(243,240,231,.08);
+  font: 500 10px/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  color: rgba(243,240,231,.4);
+}
+.fc-door__preview-dot {
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
+
 /* Dithered atmosphere — one static grain layer gives marketing surfaces
    depth without continuous animation or decorative illustration. Data-URI
    PNG noise; static, so it costs nothing after paint. */
@@ -636,6 +726,8 @@ body { overflow-x: clip; }
   .fc-marquee__track { animation: none !important; }
   .fc-market-slide { animation: none !important; }
   .fc-marquee__live-dot { animation: none !important; }
+  .fc-proof-chain__node { cursor: default !important; }
+  .fc-door__preview { max-height: 3rem !important; opacity: 1 !important; }
   button:active:not(:disabled),
   :where(a.fc-door, a.fc-action, a.mc-action, .fc-chip, .fc-market-price, summary):active { transform: none !important; }
 }

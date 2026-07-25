@@ -16,8 +16,10 @@ import ParticleReveal from '@/components/canvasui/ParticleReveal';
 import Reveal from '@/components/motion/Reveal';
 import LiveMarketMetrics from '@/components/motion/LiveMarketMetrics';
 import ContextualDataStrip from '@/components/ContextualDataStrip';
+import ProofChain from '@/components/ProofChain';
 import useLiveMarkets from '@/hooks/useLiveMarkets';
 import { confidenceLabel, confidenceTint, directionFor } from '@/utils/marketEdge';
+import TweenNumber from '@/components/motion/TweenNumber';
 
 const QUICK_SEARCHES = [
   { label: 'BTC $150k', query: 'Bitcoin $150k August 2026' },
@@ -51,6 +53,7 @@ const AUDIENCE_DOORS = [
     eyebrow: 'I run capital',
     title: 'Mandate Control',
     body: 'A live agent operating under a versioned policy, sealing each decision into a SHA-256 receipt before the outcome is known. Self-serve: configure your mandate, run a dry-run, get a public Track Record URL.',
+    preview: 'Live mandates · dry-run available',
   },
   {
     id: 'allocator',
@@ -59,6 +62,7 @@ const AUDIENCE_DOORS = [
     eyebrow: 'I diligence operators',
     title: 'Allocator Diligence',
     body: 'Policy adherence, receipt coverage, discipline rate, and calibration — computed from the same public receipts, not self-reported.',
+    preview: 'Receipts verified on-chain',
   },
   {
     id: 'analyst',
@@ -67,6 +71,7 @@ const AUDIENCE_DOORS = [
     eyebrow: 'I scan markets',
     title: 'Analyst Markets',
     body: 'Discover edge across active prediction markets. Filter by category, scan a curated set, and follow live reasoning before a mandate commits capital.',
+    preview: 'Polymarket + Kalshi · live odds',
   },
 ];
 
@@ -101,6 +106,30 @@ export default function SearchLanding() {
   }, [live.markets]);
 
   const activeMarket = live.markets[marketIndex] || live.markets[0] || null;
+
+  // Receipt seal animation — triggers when the proof section scrolls into view.
+  const [receiptSealed, setReceiptSealed] = useState(false);
+  const receiptRef = useRef(null);
+  useEffect(() => {
+    const node = receiptRef.current;
+    if (!node) return undefined;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced || typeof IntersectionObserver === 'undefined') {
+      setReceiptSealed(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setReceiptSealed(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.25 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     setArmed(true);
@@ -376,6 +405,14 @@ export default function SearchLanding() {
                   Enter
                   <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
                 </span>
+                {door.preview && (
+                  <div className="fc-door__preview">
+                    <div className="fc-door__preview-row">
+                      <span className="fc-door__preview-dot" />
+                      {door.preview}
+                    </div>
+                  </div>
+                )}
               </Link>
             );
           })}
@@ -387,6 +424,7 @@ export default function SearchLanding() {
             via match-escrow CPI. Deep-links into Proof Theatre with the
             fixture pre-selected so the visitor lands on the verification
             chain, not a fixture list. */}
+        <div ref={receiptRef}>
         <Reveal as="section" className="mt-12" aria-label="Verify a real decision on Solana">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 pb-3">
             <div>
@@ -396,9 +434,11 @@ export default function SearchLanding() {
               </h2>
             </div>
             <p className="max-w-sm text-xs leading-5 text-white/45">
-              No signup, no wallet. The proof chain walks pre-match evidence → seeded simulation → versioned policy gates → SHA-256 receipt → TxLINE Merkle proof → Solana PDA validation → reconciliation.
+              No signup, no wallet. Each step is verifiable on-chain.
             </p>
           </div>
+
+          <ProofChain />
 
           <div className="fc-instrument fc-seal-target mt-5 overflow-hidden p-1">
             <div className="fc-instrument__inner flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
@@ -413,8 +453,18 @@ export default function SearchLanding() {
                   Final {VERIFIED_RECEIPT.score}
                 </p>
                 <p className="mt-3 max-w-md text-xs leading-5 text-white/55">
-                  0.1 SOL settled trustlessly via <span className="font-mono text-white/70">match-escrow</span> CPI → <span className="font-mono text-white/70">txoracle::validate_stat</span>. No intermediary.
+                  <TweenNumber
+                    value={receiptSealed ? 0.1 : 0}
+                    duration={800}
+                    format={(v) => `${v.toFixed(2)} SOL`}
+                    className="font-mono text-white/70"
+                  /> settled trustlessly via <span className="font-mono text-white/70">match-escrow</span> CPI → <span className="font-mono text-white/70">txoracle::validate_stat</span>. No intermediary.
                 </p>
+                {receiptSealed && (
+                  <span className="mc-stamp mc-stamp--allocate mt-3 inline-flex" key="sealed">
+                    ✓ Verified on-chain
+                  </span>
+                )}
               </div>
               <div className="flex shrink-0 flex-col items-stretch gap-2">
                 <Ripple
@@ -450,6 +500,7 @@ export default function SearchLanding() {
             </div>
           </div>
         </Reveal>
+        </div>
 
         {/* Operator Math — compact (discovery mode) on the landing page so the
             eyebrow pill is omitted and spacing is tighter. The full <OperatorMath />
