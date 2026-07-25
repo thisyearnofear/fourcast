@@ -15,6 +15,7 @@ import Ripple from '@/components/canvasui/Ripple';
 import ParticleReveal from '@/components/canvasui/ParticleReveal';
 import Reveal from '@/components/motion/Reveal';
 import LiveMarketMetrics from '@/components/motion/LiveMarketMetrics';
+import ContextualDataStrip from '@/components/ContextualDataStrip';
 import useLiveMarkets from '@/hooks/useLiveMarkets';
 import { confidenceLabel, confidenceTint, directionFor } from '@/utils/marketEdge';
 
@@ -291,6 +292,31 @@ export default function SearchLanding() {
                 </div>
 
                 {/* Live signal ticker is now a full-width marquee below the hero. */}
+
+                {/* Contextual data strip — free macro/sentiment data that
+                    relates to the currently displayed market. Shows live
+                    BTC spot, Fear & Greed, Fed funds rate, etc. */}
+                {activeMarket && (
+                  <ContextualDataStrip title={activeMarket.title} />
+                )}
+
+                {/* Edge provenance — transparently shows where the edge
+                    comes from: SynthData ML ensemble (200+ models), or
+                    cross-venue arbitrage between Polymarket and Kalshi. */}
+                {activeMarket?.edgeScore != null && Math.abs(activeMarket.edgeScore) >= 0.05 && (
+                  <div className="mt-2 flex items-center gap-2 border-t border-white/8 pt-2">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/30">
+                      Edge source
+                    </span>
+                    <span className="font-mono text-[9px] text-emerald-300/60">
+                      SynthData ML · 200+ models
+                    </span>
+                    <span className="text-white/20">·</span>
+                    <span className="font-mono text-[9px] text-white/30">
+                      cross-venue parity checked
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
