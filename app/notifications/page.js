@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AppShell } from '@/app/components/PageNav';
 import TelegramLinkButton from '@/components/TelegramLinkButton';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
+import Reveal from '@/components/motion/Reveal';
 
 export default function NotificationsPage() {
  const { address } = useAccount();
@@ -128,10 +129,10 @@ export default function NotificationsPage() {
  <AppShell title="Notifications" maxWidth="max-w-[720px]">
  <div className="py-16 text-center">
  <div className="text-5xl mb-4">🔔</div>
- <p className="text-sm text-white/[0.55] mb-8">
+ <p className="text-sm text-ink-muted mb-8">
  Connect your wallet to see notifications when analysts you follow publish new signals.
  </p>
- <Link href="/markets" className="inline-block border border-emerald-300/30 bg-emerald-300/10 px-5 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/20 no-underline">
+ <Link href="/markets" className="inline-block border border-accent/35 bg-accent/10 px-5 py-3 text-sm font-semibold text-accent transition hover:bg-accent/20 no-underline">
  🔗 Connect wallet →
  </Link>
  </div>
@@ -148,10 +149,10 @@ export default function NotificationsPage() {
  <div className="flex items-center gap-4">
  {unreadCount > 0 && (
  <>
- <span className=" border border-emerald-300/30 bg-emerald-300/10 px-2 py-0.5 text-xs font-medium text-emerald-100">
+ <span className="mc-badge mc-badge--live">
  {unreadCount} new
  </span>
- <button onClick={handleMarkAllRead} className="text-xs text-white/[0.45] transition hover:text-white/80">
+ <button onClick={handleMarkAllRead} className="text-xs text-ink-faint transition hover:text-ink-muted">
  Mark all read
  </button>
  </>
@@ -164,11 +165,11 @@ export default function NotificationsPage() {
  {needsAuth && !isLoading && (
  <div className="text-center py-16">
  <div className="text-4xl mb-4">🔐</div>
- <p className="text-sm text-slate-400 mb-2">Notifications are private to your wallet.</p>
- <p className="text-xs text-slate-600 mb-6">Sign a one-time message to prove ownership — no transaction, no gas.</p>
+ <p className="text-sm text-ink-muted mb-2">Notifications are private to your wallet.</p>
+ <p className="text-xs text-ink-faint mb-6">Sign a one-time message to prove ownership — no transaction, no gas.</p>
  <button
  onClick={handleVerify}
- className="text-sm font-medium px-5 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 transition-opacity"
+ className="mc-action mc-action--primary text-sm px-5 py-3"
  >
  ✍️ Verify wallet to view
  </button>
@@ -178,7 +179,7 @@ export default function NotificationsPage() {
  {isLoading && (
  <div className="space-y-3">
  {[1, 2, 3].map(i => (
- <div key={i} className="bg-white/[0.03] border border-white/[0.06] p-4 animate-pulse">
+ <div key={i} className="bg-white/[0.03] border border-white/[0.08] p-4 animate-pulse">
  <div className="h-4 w-3/4 bg-white/[0.06] mb-2" />
  <div className="h-3 w-1/2 bg-white/[0.04]" />
  </div>
@@ -187,44 +188,46 @@ export default function NotificationsPage() {
  )}
 
  {error && (
- <div className="bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-300">{error}</div>
+ <div className="bg-breach/10 border border-breach/25 p-4 text-sm text-breach">{error}</div>
  )}
 
  {!isLoading && !needsAuth && !error && notifications.length === 0 && (
  <div className="text-center py-16">
  <div className="text-4xl mb-4 opacity-40">🔔</div>
- <p className="text-sm text-slate-500 mb-2">No notifications yet</p>
- <p className="text-xs text-slate-600 mb-6">Follow analysts on the Signals page to get notified when they publish.</p>
- <Link href="/signals" className="text-sm text-blue-400 hover:text-blue-300 transition-colors no-underline">Browse signals →</Link>
+ <p className="text-sm text-ink-muted mb-2">No notifications yet</p>
+ <p className="text-xs text-ink-faint mb-6">Follow analysts on the Signals page to get notified when they publish.</p>
+ <Link href="/signals" className="text-sm text-accent hover:text-accent/80 transition-colors no-underline">Browse signals →</Link>
  </div>
  )}
 
  {!isLoading && !needsAuth && !error && notifications.length > 0 && (
  <div className="space-y-2">
- {notifications.map(notif => {
+ {notifications.map((notif, idx) => {
  const data = parseData(notif.data_json);
  const signalUrl = data.signalId ? `/signal/${data.signalId}` : null;
  const icon = typeIcons[notif.type] || '🔔';
  const isUnread = !notif.read;
  return (
- <div key={notif.id} className={` p-4 border transition-all ${isUnread ? 'bg-blue-500/[0.06] border-blue-500/20' : 'bg-white/[0.03] border-white/[0.06]'}`}>
+ <Reveal key={notif.id} delay={Math.min(idx, 8) * 40}>
+ <div className={`p-4 border transition-colors ${isUnread ? 'bg-evidence/[0.06] border-evidence/25' : 'bg-white/[0.03] border-white/[0.08]'}`}>
  <div className="flex items-start gap-3">
  <span className="text-lg shrink-0 mt-0.5">{icon}</span>
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2 mb-1">
- {isUnread && <span className="w-1.5 h-1.5 bg-blue-400 shrink-0" />}
- <p className={`text-sm ${isUnread ? 'text-slate-200 font-medium' : 'text-slate-400'}`}>{notif.title}</p>
+ {isUnread && <span className="w-1.5 h-1.5 bg-accent shrink-0" />}
+ <p className={`text-sm ${isUnread ? 'text-ink font-medium' : 'text-ink-muted'}`}>{notif.title}</p>
  </div>
- {notif.body && <p className="text-xs text-slate-500 line-clamp-2 mt-1">{notif.body}</p>}
+ {notif.body && <p className="text-xs text-ink-faint line-clamp-2 mt-1">{notif.body}</p>}
  <div className="flex items-center gap-3 mt-2">
- <span className="text-xs text-slate-600">{formatTimestamp(notif.created_at)}</span>
+ <span className="text-xs text-ink-faint">{formatTimestamp(notif.created_at)}</span>
  {signalUrl && (
- <Link href={signalUrl} className="text-xs text-blue-400 hover:text-blue-300 transition-colors no-underline">View signal →</Link>
+ <Link href={signalUrl} className="text-xs text-accent hover:text-accent/80 transition-colors no-underline">View signal →</Link>
  )}
  </div>
  </div>
  </div>
  </div>
+ </Reveal>
  );
  })}
  </div>

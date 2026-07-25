@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Compass } from 'lucide-react';
@@ -13,6 +13,8 @@ import { useBrightDataStatus } from '@/hooks/useBrightDataStatus';
 import { useAudience, AUDIENCE_META } from '@/hooks/useAudience';
 import Ripple from '@/components/canvasui/Ripple';
 import ParticleReveal from '@/components/canvasui/ParticleReveal';
+import Reveal from '@/components/motion/Reveal';
+import TweenNumber from '@/components/motion/TweenNumber';
 
 const QUICK_SEARCHES = [
   { label: 'BTC $150k', query: 'Bitcoin $150k August 2026' },
@@ -74,20 +76,19 @@ const DEMO = {
   confidence: 'HIGH',
 };
 
-function pct(value, digits = 0) {
-  return `${(value * 100).toFixed(digits)}%`;
-}
-
-function edgeLabel(value) {
-  return `${value > 0 ? '+' : ''}${(value * 100).toFixed(1)}%`;
-}
-
 export default function SearchLanding() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
+  // Arming the instrument metrics one frame after mount makes the decision
+  // numbers roll up from zero (state-explanation motion, --dur-explain).
+  const [armed, setArmed] = useState(false);
   const webIntel = useBrightDataStatus();
   const { mode } = useAudience();
+
+  useEffect(() => {
+    setArmed(true);
+  }, []);
 
   const featured = useMemo(() => QUICK_SEARCHES[0], []);
 
@@ -108,7 +109,7 @@ export default function SearchLanding() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden text-[var(--ink)]">
+    <main className="fc-grain relative min-h-screen overflow-x-hidden text-[var(--ink)]">
       <div className="market-field" aria-hidden />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-16 pt-4 sm:px-6 lg:px-8">
@@ -227,9 +228,9 @@ export default function SearchLanding() {
 
                 <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
                   {[
-                    { label: 'Market', value: pct(DEMO.market) },
-                    { label: 'AI fair', value: pct(DEMO.fair, 0) },
-                    { label: 'Edge', value: edgeLabel(DEMO.edge), accent: true },
+                    { label: 'Market', target: DEMO.market * 100, digits: 0, suffix: '%', duration: 700 },
+                    { label: 'AI fair', target: DEMO.fair * 100, digits: 0, suffix: '%', duration: 900 },
+                    { label: 'Edge', target: DEMO.edge * 100, digits: 1, suffix: '%', prefix: '+', accent: true, duration: 1100 },
                   ].map((cell, i) => (
                     <div
                       key={cell.label}
@@ -239,13 +240,14 @@ export default function SearchLanding() {
                       <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
                         {cell.label}
                       </div>
-                      <div
+                      <TweenNumber
                         className={`mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl ${
                           cell.accent ? 'text-emerald-300' : 'text-white'
                         }`}
-                      >
-                        {cell.value}
-                      </div>
+                        value={armed ? cell.target : 0}
+                        duration={cell.duration}
+                        format={(v) => `${cell.prefix ?? ''}${v.toFixed(cell.digits)}${cell.suffix}`}
+                      />
                     </div>
                   ))}
                 </div>
@@ -275,7 +277,7 @@ export default function SearchLanding() {
             keeps the audience's primary door first while every option stays
             visible (no exclusion — progressive disclosure, not progressive
             gating). */}
-        <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-2" aria-label="Primary-customer entry points">
+        <Reveal as="section" className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-2" aria-label="Primary-customer entry points">
           {orderedDoors.map((door) => {
             const Icon = door.icon;
             const isLead = door.id === mode;
@@ -305,7 +307,7 @@ export default function SearchLanding() {
               </Link>
             );
           })}
-        </section>
+        </Reveal>
 
         {/* Verify a real receipt — the single most differentiated artifact we
             can show a cold prospect in 10 seconds. A real World Cup fixture
@@ -313,7 +315,7 @@ export default function SearchLanding() {
             via match-escrow CPI. Deep-links into Proof Theatre with the
             fixture pre-selected so the visitor lands on the verification
             chain, not a fixture list. */}
-        <section className="mt-12" aria-label="Verify a real decision on Solana">
+        <Reveal as="section" className="mt-12" aria-label="Verify a real decision on Solana">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 pb-3">
             <div>
               <p className="fc-kicker">Verify a real decision on Solana</p>
@@ -374,13 +376,15 @@ export default function SearchLanding() {
               </div>
             </div>
           </div>
-        </section>
+        </Reveal>
 
         {/* Operator Math — compact (discovery mode) on the landing page so the
             eyebrow pill is omitted and spacing is tighter. The full <OperatorMath />
             variant (eyebrow + Headline pill + generous padding) is reserved for
             /labs/autopilot where the math IS the product context. */}
-        <OperatorMath compact />
+        <Reveal delay={60}>
+          <OperatorMath compact />
+        </Reveal>
       </div>
     </main>
   );

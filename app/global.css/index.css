@@ -126,7 +126,19 @@ button:disabled {
   opacity: 0.55;
 }
 
+/* Press feedback — immediate scale on every pressable control (design.md
+   microinteractions stance). Token-timed so press feels crisp at 140ms. */
 button:active:not(:disabled) { transform: scale(0.98); }
+:where(a.fc-door, a.fc-action, a.mc-action, .fc-chip, .fc-market-price, summary):active { transform: scale(0.98); }
+:where(button, a.fc-door, a.fc-action, .fc-chip, .fc-market-price) {
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-state) linear,
+    border-color var(--dur-state) linear,
+    color var(--dur-state) linear,
+    box-shadow var(--dur-state) linear,
+    opacity var(--dur-state) linear;
+}
 
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
@@ -175,11 +187,11 @@ body {
 .fc-query.is-focused { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(121,245,183,.12), inset 0 1px 0 rgba(255,255,255,.06); }
 .fc-query label { border-left: 2px solid rgba(121,245,183,.55); }
 .fc-action { border: 1px solid var(--accent); background: var(--accent); color: #08100d; font-weight: 800; letter-spacing: .02em; transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
-.fc-action:hover { background: #b3ffd5; box-shadow: 4px 4px 0 rgba(121,245,183,.24); transform: translate(-1px, -1px); }
+.fc-action:hover { background: #b3ffd5; }
 .fc-action--quiet { background: transparent; color: var(--accent); border-color: rgba(121,245,183,.42); }
 .fc-action--quiet:hover { background: rgba(121,245,183,.1); }
 .fc-chip { border: 1px solid rgba(243,240,231,.13); background: rgba(243,240,231,.025); color: rgba(243,240,231,.62); transition: border-color .2s ease, color .2s ease, transform .2s ease; }
-.fc-chip:hover { border-color: rgba(121,245,183,.6); color: var(--ink); transform: translateY(-1px); }
+.fc-chip:hover { border-color: rgba(121,245,183,.6); color: var(--ink); }
 .fc-instrument { border: 1px solid rgba(121,245,183,.37); background: #080b0a; box-shadow: inset 0 0 0 1px rgba(255,255,255,.025); }
 .fc-instrument__inner { background: linear-gradient(145deg, rgba(121,245,183,.085), transparent 38%), var(--panel-deep); }
 .fc-metric { border: 1px solid rgba(243,240,231,.13); background: rgba(0,0,0,.23); }
@@ -191,9 +203,35 @@ body {
 .fc-market-row__question { letter-spacing: -.025em; }
 .fc-market-row__prices { border-block: 1px solid var(--color-rule); }
 .fc-market-price { border: 1px solid rgba(243,240,231,.12); background: rgba(0,0,0,.18); transition: border-color .18s ease, background .18s ease, transform .18s ease; }
-.fc-market-price:hover { transform: translateY(-1px); }
 .fc-market-price--yes:hover { border-color: rgba(121,245,183,.65); background: rgba(121,245,183,.09); }
 .fc-market-price--no:hover { border-color: rgba(255,122,111,.6); background: rgba(255,122,111,.08); }
+.fc-market-row::before {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 2px;
+  background: var(--color-accent);
+  content: '';
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition: opacity var(--dur-state) linear, transform var(--dur-state) var(--ease-out);
+}
+
+/* Primary-customer doors — squared, hairline; a 2px accent rule scales in
+   from the left on interaction so the door reads as an entry point. */
+.fc-door { position: relative; }
+.fc-door::before {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  background: var(--color-accent);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-panel) var(--ease-out);
+}
+.fc-door:focus-visible::before { transform: scaleX(1); }
 .fc-edge-readout { border: 1px solid rgba(121,245,183,.32); background: rgba(121,245,183,.08); }
 .fc-proof-rail { border-radius: 0; border-color: rgba(243,240,231,.14); background: rgba(12,16,15,.76); }
 .fc-proof-rail > :first-child { border-left: 3px solid var(--accent); }
@@ -334,6 +372,48 @@ body { overflow-x: clip; }
   .fixture-record:hover::before, .position-record:hover::before { opacity: 1; transform: scaleY(1); }
 }
 
+/* ── Motion vocabulary — scroll reveals, live-data ticks, atmosphere ──
+   These are the interruptible, token-timed patterns that replace ad-hoc
+   hover-scale and snap-in behaviour. All displacement is gated behind
+   hover/fine-pointer or one-shot reveal triggers; reduced motion (below)
+   strips displacement and keeps opacity/color feedback at ≤150ms. */
+
+/* Scroll reveal — <Reveal /> applies .reveal + .reveal--in on intersection.
+   Opacity carries the entrance; translateY is displacement, so reduced
+   motion leaves it at none and the fade still lands. */
+.reveal { opacity: 0; transition: opacity var(--dur-panel) linear, transform var(--dur-panel) var(--ease-out); }
+.reveal--in { opacity: 1; transform: translateY(0); }
+.reveal:not(.reveal--in) { transform: translateY(10px); }
+
+/* Live-data tick — a row or cell whose value just changed. The wash sweeps
+   across once (0.9s), then the class is removed by useChangeFlash. */
+@keyframes fc-tick {
+  from { background-color: var(--color-accent-soft); }
+  to { background-color: transparent; }
+}
+.fc-tick { animation: fc-tick 0.9s linear both; }
+
+/* Value roll — TweenNumber briefly lifts the glyph while the value rolls. */
+@keyframes fc-roll {
+  0% { transform: translateY(0.16em); opacity: 0.45; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.fc-roll { display: inline-block; animation: fc-roll 0.22s var(--ease-out) both; }
+
+/* Dithered atmosphere — one static grain layer gives marketing surfaces
+   depth without continuous animation or decorative illustration. Data-URI
+   PNG noise; static, so it costs nothing after paint. */
+.fc-grain::after {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  content: '';
+  mix-blend-mode: overlay;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
 /* ── Reduced motion: remove displacement, keep opacity/color at ≤150ms ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -352,11 +432,16 @@ body { overflow-x: clip; }
     transform: none !important;
   }
   .fixture-record::before,
-  .position-record::before {
+  .position-record::before,
+  .fc-market-row::before,
+  .fc-door::before {
     transition: opacity 150ms linear !important;
     transform: none !important;
   }
-  button:active:not(:disabled) { transform: none !important; }
+  .reveal, .reveal--in { transform: none !important; }
+  .fc-roll { animation: none !important; }
+  button:active:not(:disabled),
+  :where(a.fc-door, a.fc-action, a.mc-action, .fc-chip, .fc-market-price, summary):active { transform: none !important; }
 }
 
 #root {
@@ -589,17 +674,10 @@ body { overflow-x: clip; }
   border-radius: 0.5rem;
 }
 
-/* Reduced motion support */
+/* Reduced motion support — displacement is already handled by the main
+   reduced-motion block above (≤150ms, opacity/color feedback preserved).
+   Only the skeleton shimmer, which is decorative, is disabled outright here. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-  
   .skeleton,
   .skeleton-light {
     animation: none;
@@ -956,6 +1034,8 @@ code {
 
 @media (hover: hover) and (pointer: fine) {
   .mc-card:hover, .fc-position-record:hover { transform: translateY(-1px); }
+  .fc-market-price:hover { transform: translateY(-1px); }
+  .fc-door:hover::before { transform: scaleX(1); }
 }
 
 /* Replay pulse — the one calm animated detail. The timeline visibly

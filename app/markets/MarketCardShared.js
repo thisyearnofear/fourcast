@@ -8,23 +8,37 @@ import BottomSheet from "@/components/BottomSheet";
 import EvidenceBlock from "@/components/EvidenceBlock";
 import InfoTip from "@/components/InfoTip";
 import { useBrightDataStatus } from "@/hooks/useBrightDataStatus";
+import TweenNumber from "@/components/motion/TweenNumber";
+import useChangeFlash from "@/hooks/useChangeFlash";
+
+// Token-vocabulary tints (tokens.css) — replaces ad-hoc blue/purple/green
+// Tailwind palette: evidence blue, review violet, sealed amber, breach red,
+// verification emerald for positive states.
+const TINT = {
+ evidence: "bg-evidence/15 text-evidence border-evidence/35",
+ evidenceSoft: "bg-evidence/10 border-evidence/25 text-evidence",
+ review: "bg-review/15 text-review border-review/35",
+ sealed: "bg-sealed/15 text-sealed border-sealed/35",
+ accent: "bg-accent/15 text-accent border-accent/35",
+ breach: "bg-breach/15 text-breach border-breach/35",
+};
 
 export function ChainRecommendationBadge({ recommendation, isNight }) {
  const config = {
  PUBLISH: {
  icon: "◆",
  text: "Make Your Call",
- color: "bg-emerald-500/20 text-emerald-200 border-emerald-500/30"
+ color: TINT.accent
  },
  TRADE: {
  icon: "▣",
  text: "Place Order",
- color: "bg-teal-500/20 text-teal-200 border-teal-500/30"
+ color: TINT.evidence
  },
  BOTH: {
  icon: "◇",
  text: "Call It & Trade",
- color: "bg-amber-500/20 text-amber-200 border-amber-500/30"
+ color: TINT.sealed
  }
  };
 
@@ -78,7 +92,7 @@ export function ChainActionWidget({
  : buttonText;
 
  return (
- <div className={`flex items-start gap-3 pb-3 border-b border-white/10 last:pb-0 last:border-0 ${isPrimary ? ("bg-gradient-to-r from-purple-500/5 to-transparent") : ""
+ <div className={`flex items-start gap-3 pb-3 border-b border-white/10 last:pb-0 last:border-0 ${isPrimary ? "bg-[var(--color-wash-soft)]" : ""
  } px-3 py-2`}>
  <span className="text-xl flex-shrink-0">{chainDef.icon}</span>
  <div className="flex-1">
@@ -103,10 +117,10 @@ export function ChainActionWidget({
  }
  }}
  disabled={isDisabled}
- className={`px-4 py-2 text-xs font-light transition-all ${!isDisabled
+ className={`px-4 py-2 text-xs font-light transition-all border ${!isDisabled
  ? `${chainDef.color === 'purple'
- ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30'
- : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30'}`
+ ? `${TINT.review} hover:bg-review/25`
+ : `${TINT.evidence} hover:bg-evidence/25`}`
  : "opacity-50 cursor-not-allowed"
  }`}
  >
@@ -165,7 +179,7 @@ export function ChainActionWidget({
  )}
 
  {rec === "BOTH" && (
- <div className={`mt-4 p-3 bg-green-500/10 border border-green-500/20`}>
+ <div className={`mt-4 p-3 bg-accent/10 border border-accent/20`}>
  <p className={`text-xs ${textColor} leading-relaxed`}>
  <span className="font-medium">💡 Pro Tip:</span> {explanation.benefit}
  </p>
@@ -242,6 +256,10 @@ export function MarketCard({
  const platform = market.platform || "polymarket";
  const isKalshi = platform === "kalshi";
 
+ // Live odds change — the price cell washes once so the update is legible.
+ const askFlashing = useChangeFlash(market.ask);
+ const bidFlashing = useChangeFlash(market.bid);
+
  return (
  <>
  {/* Inline Card (always visible when not hidden) */}
@@ -264,8 +282,8 @@ export function MarketCard({
  <div className="flex flex-col items-end gap-1">
  <span
  className={`flex-shrink-0 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider border ${isKalshi
- ? "bg-emerald-900/40 text-emerald-300 border-emerald-700/50"
- : "bg-blue-900/40 text-blue-300 border-blue-700/50"
+ ? TINT.accent
+ : TINT.evidence
  }`}
  >
  {isKalshi ? "Kalshi" : "Polymarket"}
@@ -292,11 +310,11 @@ export function MarketCard({
  setShowOrderPanel(true);
  }
  }}
- className="fc-market-price fc-market-price--yes flex items-center gap-2 px-3 py-2"
+ className={`fc-market-price fc-market-price--yes flex items-center gap-2 px-3 py-2 ${askFlashing ? "fc-tick" : ""}`}
  >
- <span className={`text-[10px] font-medium text-green-400/70`}>YES</span>
+ <span className={`text-[10px] font-medium text-accent/70`}>YES</span>
  <span className={`text-sm font-light ${textColor}`}>
- {market.ask ? `${(market.ask * 100).toFixed(0)}%` : "—"}
+ {market.ask ? <TweenNumber value={market.ask * 100} format={(v) => `${v.toFixed(0)}%`} /> : "—"}
  </span>
  </button>
  <button 
@@ -310,18 +328,21 @@ export function MarketCard({
  setShowOrderPanel(true);
  }
  }}
- className="fc-market-price fc-market-price--no flex items-center gap-2 px-3 py-2"
+ className={`fc-market-price fc-market-price--no flex items-center gap-2 px-3 py-2 ${bidFlashing ? "fc-tick" : ""}`}
  >
- <span className={`text-[10px] font-medium text-red-400/70`}>NO</span>
+ <span className={`text-[10px] font-medium text-breach/70`}>NO</span>
  <span className={`text-sm font-light ${textColor}`}>
- {market.bid ? `${(market.bid * 100).toFixed(0)}%` : "—"}
+ {market.bid ? <TweenNumber value={market.bid * 100} format={(v) => `${v.toFixed(0)}%`} /> : "—"}
  </span>
  </button>
  {/* ML Edge Preview (if analyzed) */}
  {isCurrentMarket && analysis?.synthData?.polymarketEdge && (
  <div className="fc-edge-readout ml-auto flex items-center gap-1.5 px-3 py-2">
- <span className={`text-[10px] font-mono font-bold text-emerald-200`}>
- {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}% EDGE
+ <span className={`text-[10px] font-mono font-bold text-accent`}>
+ <TweenNumber
+ value={Math.abs(analysis.synthData.polymarketEdge.edge * 100)}
+ format={(v) => `${v.toFixed(1)}% EDGE`}
+ />
  </span>
  </div>
  )}
@@ -333,7 +354,7 @@ export function MarketCard({
  {!isCurrentMarket && market.isMLReady && (
  <div className="relative group">
  <span
- className={`px-3 py-1 font-medium border cursor-help bg-purple-500/20 text-purple-200 border-purple-400/30`}
+ className={`px-3 py-1 font-medium border cursor-help ${TINT.review}`}
  >
  🤖 ML Ready
  </span>
@@ -348,7 +369,7 @@ export function MarketCard({
  {isCurrentMarket && analysis?.source && (analysis.source === 'synthdata+llm' || analysis.source === 'synthdata+path') && (
  <div className="relative group">
  <span
- className={`px-3 py-1 font-medium border cursor-help bg-purple-500/20 text-purple-200 border-purple-400/30`}
+ className={`px-3 py-1 font-medium border cursor-help ${TINT.review}`}
  >
  🤖 ML
  </span>
@@ -361,7 +382,7 @@ export function MarketCard({
  {market.volume24h !== undefined && (
  <div className="relative group">
  <span
- className={`px-3 py-1 font-light border cursor-help bg-orange-500/10 text-orange-200 border-orange-500/20`}
+ className={`px-3 py-1 font-light border cursor-help ${TINT.sealed}`}
  >
  ⚡{" "}
  {isKalshi
@@ -379,10 +400,10 @@ export function MarketCard({
  <div className="relative group">
  <span
  className={`px-3 py-1 font-light border cursor-help ${market.confidence === "HIGH"
- ? "bg-green-500/20 text-green-300 border-green-500/30"
+ ? TINT.accent
  : market.confidence === "MEDIUM"
- ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
- : "bg-red-500/20 text-red-300 border-red-500/30"
+ ? TINT.sealed
+ : TINT.breach
  }`}
  >
  {market.confidence}
@@ -398,7 +419,7 @@ export function MarketCard({
  {market.event_location && (
  <div className="relative group">
  <span
- className={`px-3 py-1 font-light border cursor-help bg-cyan-500/20 text-cyan-300 border-cyan-500/30`}
+ className={`px-3 py-1 font-light border cursor-help ${TINT.evidence}`}
  >
  🌤️ Weather
  </span>
@@ -411,7 +432,7 @@ export function MarketCard({
  {/* AI-Ready Badge - Indicates market can be analyzed */}
  {!isCurrentMarket && !analysis && (
  <span
- className={`px-3 py-1 font-light border bg-purple-500/10 text-purple-300/60 border-purple-500/20`}
+ className={`px-3 py-1 font-light border bg-review/10 text-review/60 border-review/25`}
  >
  🔍 Analyze
  </span>
@@ -423,7 +444,7 @@ export function MarketCard({
  e.stopPropagation();
  onPublishSignal();
  }}
- className={`px-3 py-1 font-medium border transition-all hover:scale-105 bg-green-500/20 text-green-300 border-green-500/40 hover:bg-green-500/30`}
+ className={`px-3 py-1 font-medium border transition-all bg-accent/15 text-accent border-accent/40 hover:bg-accent/25`}
  >
  🎯 Make Your Call
  </button>
@@ -459,10 +480,10 @@ export function MarketCard({
  }
  }}
  aria-label={`${isKalshi ? 'Trade' : 'Place bet'} on ${market.title || market.question}`}
- className={`px-4 sm:px-5 py-3 font-light text-sm transition-all hover:scale-105 border ${
+ className={`px-4 sm:px-5 py-3 font-light text-sm transition-all border ${
  isKalshi
- ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border-emerald-400/30"
- : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30"
+ ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
+ : "bg-evidence/15 hover:bg-evidence/25 text-evidence border-evidence/35"
  }`}
  >
  {isKalshi ? "Trade ↗" : "📈 Bet"}
@@ -472,9 +493,9 @@ export function MarketCard({
  disabled={isAnalyzing}
  aria-label={`Analyze market: ${market.title || market.question}`}
  aria-busy={isAnalyzing && isCurrentMarket}
- className={`px-4 sm:px-6 py-3 font-light text-sm transition-all disabled:opacity-40 hover:scale-105 border ${
+ className={`px-4 sm:px-6 py-3 font-light text-sm transition-all disabled:opacity-40 border ${
  market.isMLReady
- ? "bg-gradient-to-r from-purple-600/40 to-pink-600/40 hover:from-purple-600/60 hover:to-pink-600/60 text-white border-purple-400/50 shadow-lg shadow-purple-500/20"
+ ? "bg-review/20 hover:bg-review/30 text-review border-review/40"
  : "bg-white/10 hover:bg-white/20 text-white border-white/20"
  }`}
  >
@@ -504,7 +525,7 @@ export function MarketCard({
  <h4 className={`text-sm font-medium ${textColor}`}>
  SynthData ML Forecast
  </h4>
- <span className={`ml-auto px-2 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-300`}>
+ <span className={`ml-auto px-2 py-0.5 text-[10px] font-medium bg-review/15 text-review`}>
  200+ MODELS
  </span>
  </div>
@@ -525,13 +546,13 @@ export function MarketCard({
  <div className="flex justify-between items-end mb-2">
  <div>
  <div className={`text-xs ${textColor} opacity-50 mb-1`}>P5 (Bear)</div>
- <div className={`text-xl font-light text-red-400`}>
+ <div className={`text-xl font-light text-breach`}>
  ${analysis.synthData.percentiles.p5.toLocaleString()}
  </div>
  </div>
  <div className="text-right">
  <div className={`text-xs ${textColor} opacity-50 mb-1`}>P95 (Bull)</div>
- <div className={`text-xl font-light text-green-400`}>
+ <div className={`text-xl font-light text-accent`}>
  ${analysis.synthData.percentiles.p95.toLocaleString()}
  </div>
  </div>
@@ -567,7 +588,7 @@ export function MarketCard({
  </div>
  <div className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter ${
  Math.abs(analysis.synthData.polymarketEdge.edge) > 0.05
- ? 'bg-green-500 text-white animate-pulse'
+ ? 'bg-accent text-accent-ink animate-pulse'
  : 'bg-white/10 text-white/70'
  }`}>
  {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}% {analysis.synthData.polymarketEdge.edge > 0 ? 'Undervalued' : 'Overvalued'}
@@ -588,12 +609,12 @@ export function MarketCard({
  <div className="flex items-center h-4 w-full bg-black/20 overflow-hidden">
  {/* Market Probability Bar (Left) */}
  <div 
- className="h-full bg-blue-500/40 transition-all duration-1000"
+ className="h-full bg-evidence/40 transition-all duration-1000"
  style={{ width: `${analysis.synthData.polymarketEdge.polymarketProb * 100}%` }}
  />
  {/* ML Probability Bar (Right - overlay or different color) */}
  <div 
- className="h-full bg-purple-500 transition-all duration-1000"
+ className="h-full bg-review transition-all duration-1000"
  style={{ width: `${analysis.synthData.polymarketEdge.synthFairProb * 100}%` }}
  />
  </div>
@@ -602,8 +623,8 @@ export function MarketCard({
  <div className="flex justify-between items-center mt-2">
  <div className="flex flex-col">
  <span className={`text-[10px] ${textColor} opacity-50`}>Live Price</span>
- <span className={`text-lg font-light text-blue-300`}>
- {(analysis.synthData.polymarketEdge.polymarketProb * 100).toFixed(1)}%
+ <span className={`text-lg font-light text-evidence`}>
+ <TweenNumber value={analysis.synthData.polymarketEdge.polymarketProb * 100} format={(v) => `${v.toFixed(1)}%`} />
  </span>
  </div>
 
@@ -611,8 +632,8 @@ export function MarketCard({
  <div className="flex flex-col items-center">
  <div className={`text-[10px] font-bold ${
  analysis.synthData.polymarketEdge.edge > 0 
- ? 'text-green-400'
- : 'text-red-400'
+ ? 'text-accent'
+ : 'text-breach'
  }`}>
  {analysis.synthData.polymarketEdge.edge > 0 ? '▲' : '▼'} {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}%
  </div>
@@ -621,8 +642,8 @@ export function MarketCard({
 
  <div className="flex flex-col text-right">
  <span className={`text-[10px] ${textColor} opacity-50`}>Fair Value</span>
- <span className={`text-lg font-light text-purple-300`}>
- {(analysis.synthData.polymarketEdge.synthFairProb * 100).toFixed(1)}%
+ <span className={`text-lg font-light text-review`}>
+ <TweenNumber value={analysis.synthData.polymarketEdge.synthFairProb * 100} format={(v) => `${v.toFixed(1)}%`} />
  </span>
  </div>
  </div>
@@ -630,12 +651,12 @@ export function MarketCard({
 
  {/* Edge Detection Badge - Prominent when edge exists */}
  {Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03 && (
- <div className={`flex items-center gap-3 px-3 py-3 bg-green-500/10 border border-green-500/20 shadow-lg shadow-green-500/5`}>
- <div className="flex-shrink-0 w-8 h-8 bg-green-500/20 flex items-center justify-center text-green-500 animate-pulse">
+ <div className={`flex items-center gap-3 px-3 py-3 bg-accent/10 border border-accent/25`}>
+ <div className="flex-shrink-0 w-8 h-8 bg-accent/15 flex items-center justify-center text-accent animate-pulse">
  ⚡
  </div>
  <div>
- <p className={`text-sm font-medium text-green-400`}>
+ <p className={`text-sm font-medium text-accent`}>
  Edge Detected: {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}%
  </p>
  <p className={`text-xs text-white/50`}>
@@ -663,9 +684,9 @@ export function MarketCard({
  YES
  </span>
  <span
- className={`text-3xl font-light text-green-400`}
+ className={`text-3xl font-light text-accent`}
  >
- {market.ask ? `${(market.ask * 100).toFixed(0)}%` : "N/A"}
+ {market.ask ? <TweenNumber value={market.ask * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
  </span>
  </div>
  <div className="flex flex-col text-right">
@@ -673,9 +694,9 @@ export function MarketCard({
  NO
  </span>
  <span
- className={`text-3xl font-light text-red-400`}
+ className={`text-3xl font-light text-breach`}
  >
- {market.bid ? `${(market.bid * 100).toFixed(0)}%` : "N/A"}
+ {market.bid ? <TweenNumber value={market.bid * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
  </span>
  </div>
  </div>
@@ -748,11 +769,11 @@ export function MarketCard({
  {analysis.thinking && (
  <div className="mt-4 pt-4 border-t border-white/5">
  <details className="group">
- <summary className="flex items-center gap-2 text-xs font-light text-purple-400 cursor-pointer hover:text-purple-300 transition-colors list-none">
+ <summary className="flex items-center gap-2 text-xs font-light text-review cursor-pointer hover:text-review/80 transition-colors list-none">
  <span className="group-open:rotate-180 transition-transform">▼</span>
  <span>View Deep Reasoning Process</span>
  </summary>
- <div className="mt-3 p-4 bg-black/40 border border-purple-500/10 text-xs font-mono text-white/50 leading-relaxed whitespace-pre-wrap">
+ <div className="mt-3 p-4 bg-black/40 border border-review/20 text-xs font-mono text-white/50 leading-relaxed whitespace-pre-wrap">
  {analysis.thinking}
  </div>
  </details>
@@ -775,7 +796,7 @@ export function MarketCard({
  return (
  <span
  key={idx}
- className={`px-2 py-1 text-xs border bg-blue-500/10 border-blue-500/20 text-blue-300`}
+ className={`px-2 py-1 text-xs border ${TINT.evidenceSoft}`}
  >
  {info.emoji} {info.label}
  </span>
@@ -890,7 +911,7 @@ export function MarketCard({
  {/* Wallet Connection Prompt — open section */}
  {!canPublish && (
  <div
- className="platform-open-section flex items-center gap-3 border-l-2 border-orange-400/30 pl-4"
+ className="platform-open-section flex items-center gap-3 border-l-2 border-sealed/30 pl-4"
  >
  <span className="text-2xl">🎯</span>
  <div className="flex-1">
@@ -911,7 +932,7 @@ export function MarketCard({
  <div className="flex items-center gap-3 mb-4">
  <span className="text-2xl">⚡</span>
  <div>
- <h4 className={`text-sm font-medium text-green-400`}>
+ <h4 className={`text-sm font-medium text-accent`}>
  ML Edge Detected
  </h4>
  <p className={`text-xs ${textColor} opacity-60`}>
@@ -921,10 +942,10 @@ export function MarketCard({
  </div>
  <button
  onClick={onPublishSignal}
- className={`w-full px-6 py-4 font-medium text-sm transition-all ${
+ className={`w-full px-6 py-4 font-medium text-sm transition-all border ${
  canPublish
- ? "bg-green-500/30 hover:bg-green-500/40 text-green-200 border border-green-500/50"
- : "bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 border border-orange-500/30"
+ ? "bg-accent/20 hover:bg-accent/30 text-accent border-accent/50"
+ : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/30"
  }`}
  >
  {canPublish ? "🎯 Publish Signal Now" : "🔗 Connect Wallet to Publish"}
@@ -944,8 +965,8 @@ export function MarketCard({
  }
  }}
  className={`flex-1 px-6 py-3 font-light text-sm transition-all border text-center ${isKalshi
- ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border-emerald-400/30"
- : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30"
+ ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
+ : "bg-evidence/15 hover:bg-evidence/25 text-evidence border-evidence/35"
  }`}
  >
  {isKalshi ? "Trade on Kalshi ↗" : "📈 Trade Here"}
@@ -956,8 +977,8 @@ export function MarketCard({
  <button
  onClick={onPublishSignal}
  className={`flex-1 px-6 py-3 font-light text-sm transition-all border relative ${canPublish
- ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
- : "bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 border-orange-400/30"
+ ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
+ : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/35"
  }`}
  >
  {canPublish
@@ -994,8 +1015,8 @@ export function MarketCard({
  {/* Platform Badge */}
  <span
  className={`inline-flex px-3 py-1 text-xs font-medium uppercase tracking-wider border ${isKalshi
- ? "bg-emerald-900/40 text-emerald-300 border-emerald-700/50"
- : "bg-blue-900/40 text-blue-300 border-blue-700/50"
+ ? TINT.accent
+ : TINT.evidence
  }`}
  >
  {isKalshi ? "Kalshi" : "Polymarket"}
@@ -1009,11 +1030,11 @@ export function MarketCard({
  <div className="space-y-4">
  {/* SynthData ML Forecast */}
  {analysis?.synthData && (
- <div className={`mc-panel border-2 border-purple-500/30 p-5`}>
+ <div className={`mc-panel border-2 border-review/30 p-5`}>
  <div className="flex items-center gap-2 mb-4">
  <span className="text-xl">🤖</span>
  <h4 className={`text-sm font-medium ${textColor}`}>SynthData ML Forecast</h4>
- <span className={`ml-auto px-2 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-300`}>
+ <span className={`ml-auto px-2 py-0.5 text-[10px] font-medium bg-review/15 text-review`}>
  200+ MODELS
  </span>
  </div>
@@ -1028,14 +1049,14 @@ export function MarketCard({
  <div className="grid grid-cols-2 gap-4">
  <div className={`glass-input p-4 text-center`}>
  <span className={`text-xs ${textColor} opacity-50`}>YES</span>
- <div className={`text-3xl font-light text-green-400`}>
- {market.ask ? `${(market.ask * 100).toFixed(0)}%` : "N/A"}
+ <div className={`text-3xl font-light text-accent`}>
+ {market.ask ? <TweenNumber value={market.ask * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
  </div>
  </div>
  <div className={`glass-input p-4 text-center`}>
  <span className={`text-xs ${textColor} opacity-50`}>NO</span>
- <div className={`text-3xl font-light text-red-400`}>
- {market.bid ? `${(market.bid * 100).toFixed(0)}%` : "N/A"}
+ <div className={`text-3xl font-light text-breach`}>
+ {market.bid ? <TweenNumber value={market.bid * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
  </div>
  </div>
  </div>
@@ -1071,11 +1092,11 @@ export function MarketCard({
  {analysis.thinking && (
  <div className="mt-4 pt-4 border-t border-white/5">
  <details className="group">
- <summary className="flex items-center gap-2 text-xs font-light text-purple-400 cursor-pointer hover:text-purple-300 transition-colors list-none">
+ <summary className="flex items-center gap-2 text-xs font-light text-review cursor-pointer hover:text-review/80 transition-colors list-none">
  <span className="group-open:rotate-180 transition-transform">▼</span>
  <span>View Deep Reasoning Process</span>
  </summary>
- <div className="mt-3 p-4 bg-black/40 border border-purple-500/10 text-xs font-mono text-white/50 leading-relaxed whitespace-pre-wrap">
+ <div className="mt-3 p-4 bg-black/40 border border-review/20 text-xs font-mono text-white/50 leading-relaxed whitespace-pre-wrap">
  {analysis.thinking}
  </div>
  </details>
@@ -1095,8 +1116,8 @@ export function MarketCard({
  }
  }}
  className={`flex-1 px-6 py-3 font-light text-sm transition-all border text-center ${isKalshi
- ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border-emerald-400/30"
- : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border-blue-400/30"
+ ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
+ : "bg-evidence/15 hover:bg-evidence/25 text-evidence border-evidence/35"
  }`}
  >
  {isKalshi ? "Trade on Kalshi ↗" : "📈 Trade Here"}
@@ -1104,8 +1125,8 @@ export function MarketCard({
  <button
  onClick={onPublishSignal}
  className={`flex-1 px-6 py-3 font-light text-sm transition-all border ${canPublish
- ? "bg-green-500/20 hover:bg-green-500/30 text-green-200 border-green-400/30"
- : "bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 border-orange-400/30"
+ ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
+ : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/35"
  }`}
  >
  {canPublish ? "🎯 Make Your Call" : "🔗 Connect & Make Your Call"}
