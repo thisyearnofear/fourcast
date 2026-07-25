@@ -14,7 +14,9 @@ import { useAudience, AUDIENCE_META } from '@/hooks/useAudience';
 import Ripple from '@/components/canvasui/Ripple';
 import ParticleReveal from '@/components/canvasui/ParticleReveal';
 import Reveal from '@/components/motion/Reveal';
-import TweenNumber from '@/components/motion/TweenNumber';
+import LiveMarketMetrics from '@/components/motion/LiveMarketMetrics';
+import useLiveMarkets from '@/hooks/useLiveMarkets';
+import { confidenceLabel, confidenceTint, directionFor } from '@/utils/marketEdge';
 
 const QUICK_SEARCHES = [
   { label: 'BTC $150k', query: 'Bitcoin $150k August 2026' },
@@ -67,15 +69,6 @@ const AUDIENCE_DOORS = [
   },
 ];
 
-const DEMO = {
-  title: 'Will Bitcoin exceed $150K by August 2026?',
-  market: 0.42,
-  fair: 0.58,
-  edge: 0.16,
-  direction: 'BUY YES',
-  confidence: 'HIGH',
-};
-
 export default function SearchLanding() {
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -85,6 +78,7 @@ export default function SearchLanding() {
   const [armed, setArmed] = useState(false);
   const webIntel = useBrightDataStatus();
   const { mode } = useAudience();
+  const live = useLiveMarkets();
 
   useEffect(() => {
     setArmed(true);
@@ -207,55 +201,53 @@ export default function SearchLanding() {
             </p>
           </div>
 
-          {/* Decision instrument — shows the core evaluation grammar. */}
+          {/* Decision instrument — shows the core evaluation grammar.
+              Fed by useLiveMarkets so the metrics reflect real Polymarket /
+              Kalshi odds and the confidence pill changes tint as the edge
+              shifts. Falls back to a neutral "awaiting data" state if the
+              API is unreachable (never invents numbers). */}
           <div className="relative">
             <div className="absolute -inset-4 bg-emerald-400/10 blur-3xl" aria-hidden />
-            <div className="fc-instrument edge-reveal relative overflow-hidden p-1 shadow-2xl shadow-black/50">
+            <div className={`fc-instrument edge-reveal relative overflow-hidden p-1 shadow-2xl shadow-black/50 ${live.isLive ? 'fc-instrument--armed' : ''}`}>
               <div className="fc-instrument__inner p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="fc-kicker">
-                      Decision replay · sample data
+                      Decision replay · {live.isLive ? 'live markets' : 'connecting'}
                     </p>
                     <h2 className="mt-2 max-w-sm text-lg font-semibold leading-snug text-white sm:text-xl">
-                      {DEMO.title}
+                      {live.markets[0]?.title || 'Awaiting live market data…'}
                     </h2>
                   </div>
-                  <span className="fc-status fc-status--positive shrink-0 px-2.5 py-1">
-                    {DEMO.confidence}
+                  <span className={`fc-status shrink-0 px-2.5 py-1 ${live.markets[0] ? confidenceTint(live.markets[0].edgeScore) : 'fc-status--review'}`}>
+                    {live.markets[0] ? confidenceLabel(live.markets[0].edgeScore) : '—'}
                   </span>
                 </div>
 
-                <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
-                  {[
-                    { label: 'Market', target: DEMO.market * 100, digits: 0, suffix: '%', duration: 700 },
-                    { label: 'AI fair', target: DEMO.fair * 100, digits: 0, suffix: '%', duration: 900 },
-                    { label: 'Edge', target: DEMO.edge * 100, digits: 1, suffix: '%', prefix: '+', accent: true, duration: 1100 },
-                  ].map((cell, i) => (
-                    <div
-                      key={cell.label}
-                      className="fc-metric edge-cell px-3 py-4"
-                      style={{ animationDelay: `${120 + i * 90}ms` }}
-                    >
-                      <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
-                        {cell.label}
+                {live.markets[0] ? (
+                  <LiveMarketMetrics market={live.markets[0]} armed={armed} />
+                ) : (
+                  <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+                    {['Market', 'AI fair', 'Edge'].map((label) => (
+                      <div key={label} className="fc-metric px-3 py-4">
+                        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">{label}</div>
+                        <div className="mt-2 font-display text-2xl font-bold tracking-tight text-white/30 sm:text-3xl">—</div>
                       </div>
-                      <TweenNumber
-                        className={`mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl ${
-                          cell.accent ? 'text-emerald-300' : 'text-white'
-                        }`}
-                        value={armed ? cell.target : 0}
-                        duration={cell.duration}
-                        format={(v) => `${cell.prefix ?? ''}${v.toFixed(cell.digits)}${cell.suffix}`}
-                      />
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/8 pt-4">
                   <p className="text-sm text-white/55">
-                    Recommendation{' '}
-                    <span className="font-semibold text-emerald-200">{DEMO.direction}</span>
+                    {live.markets[0] ? (
+                      <>Recommendation{' '}
+                        <span className="font-semibold text-emerald-200">
+                          {directionFor(live.markets[0].edgeScore)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-white/40">Connecting to live market feed…</span>
+                    )}
                   </p>
                   <button
                     type="button"
@@ -265,6 +257,22 @@ export default function SearchLanding() {
                     Run this market
                   </button>
                 </div>
+
+                {/* Live signal ticker — real edge events from the markets API.
+                    Each row flashes via fc-tick as it arrives. */}
+                {live.isLive && live.signals.length > 0 && (
+                  <div className="fc-signal-ticker mt-4 border-t border-white/8 pt-3" aria-label="Live signal feed">
+                    {live.signals.map((sig, i) => (
+                      <div
+                        key={`${sig.slice(0, 16)}-${i}`}
+                        className={`fc-signal-ticker__row ${i === 0 ? 'fc-tick' : ''}`}
+                      >
+                        <span className="fc-signal-ticker__dot" />
+                        <span className="font-mono text-[10px] tracking-[0.06em] text-white/55">{sig}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -328,7 +336,7 @@ export default function SearchLanding() {
             </p>
           </div>
 
-          <div className="fc-instrument mt-5 overflow-hidden p-1">
+          <div className="fc-instrument fc-seal-target mt-5 overflow-hidden p-1">
             <div className="fc-instrument__inner flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
               <div className="min-w-0">
                 <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
