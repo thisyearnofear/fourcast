@@ -26,7 +26,7 @@ export async function GET(request) {
 
     return Response.json(
       { success: true, items },
-      { headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' } },
+      { headers: { 'Cache-Control': 'public, max-age=120, stale-while-revalidate=600' } },
     );
   } catch (error) {
     console.error('[/api/contextual] error:', error.message);
