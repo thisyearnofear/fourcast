@@ -40,16 +40,22 @@ export function useOperatorPulse() {
   return state;
 }
 
-export default function OperatorPulse({ compact = false, className = '' }) {
+export default function OperatorPulse({ compact = false, className = '', liveCounts = null }) {
   const { loading, pulse } = useOperatorPulse();
-  const isActive = pulse?.mode === 'LIVE' || pulse?.mode === 'DRY RUN';
+  const isActive = pulse?.mode === 'LIVE' || pulse?.mode === 'DRY RUN' || !!liveCounts;
+
+  // Merge API pulse with live market counts so the header feels alive
+  // even when the backend agent hasn't run.
+  const marketsScanned = liveCounts?.marketsScanned ?? pulse?.marketsScanned ?? 0;
+  const freshEdges = liveCounts?.freshEdges ?? pulse?.freshEdges ?? 0;
+  const modeLabel = liveCounts ? 'LIVE' : (pulse?.mode || 'SYSTEM');
 
   if (compact) {
     return (
       <div className={`operator-pulse operator-pulse--compact ${className}`} aria-live="polite">
         <span className={`operator-pulse__lamp ${isActive ? 'is-active' : ''}`} />
-        <span>{loading ? 'SYNCING' : pulse?.mode || 'SYSTEM'}</span>
-        {!loading && <span className="operator-pulse__quiet">{pulse?.freshEdges || 0} fresh edges</span>}
+        <span>{loading ? 'SYNCING' : modeLabel}</span>
+        {!loading && <span className="operator-pulse__quiet">{freshEdges} fresh edges</span>}
       </div>
     );
   }
@@ -57,13 +63,17 @@ export default function OperatorPulse({ compact = false, className = '' }) {
   return (
     <section className={`operator-pulse ${className}`} aria-label="Operator system pulse" aria-live="polite">
       <div className="operator-pulse__primary">
-        <span className={`operator-pulse__lamp ${isActive ? 'is-active' : ''}`} />
+        {liveCounts ? (
+          <span className="fc-radar" aria-hidden />
+        ) : (
+          <span className={`operator-pulse__lamp ${isActive ? 'is-active' : ''}`} />
+        )}
         <span className="operator-pulse__label">Operator pulse</span>
-        <strong>{loading ? 'Synchronizing system' : pulse?.mode || 'System status unavailable'}</strong>
+        <strong>{loading ? 'Synchronizing system' : modeLabel}</strong>
       </div>
       <div className="operator-pulse__metrics">
-        <span><b>{loading ? '—' : pulse?.marketsScanned || 0}</b> markets scanned</span>
-        <span><b>{loading ? '—' : pulse?.freshEdges || 0}</b> edges ≥ 5%</span>
+        <span><b>{loading ? '—' : marketsScanned}</b> markets scanned</span>
+        <span><b>{loading ? '—' : freshEdges}</b> edges ≥ 5%</span>
         <span><b>{loading ? '—' : formatAge(pulse?.lastRunAt)}</b> last sweep</span>
       </div>
     </section>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Compass } from 'lucide-react';
@@ -80,6 +80,27 @@ export default function SearchLanding() {
   const { mode } = useAudience();
   const live = useLiveMarkets();
 
+  // Cycle through the top markets every 3s so the instrument panel
+  // feels alive between 15s API polls. Resets when new data arrives.
+  const [marketIndex, setMarketIndex] = useState(0);
+  const marketIndexRef = useRef(0);
+  useEffect(() => {
+    if (live.markets.length <= 1) return undefined;
+    const id = window.setInterval(() => {
+      marketIndexRef.current = (marketIndexRef.current + 1) % live.markets.length;
+      setMarketIndex(marketIndexRef.current);
+    }, 3000);
+    return () => window.clearInterval(id);
+  }, [live.markets.length]);
+
+  // Reset the cycle index when new markets arrive.
+  useEffect(() => {
+    marketIndexRef.current = 0;
+    setMarketIndex(0);
+  }, [live.markets]);
+
+  const activeMarket = live.markets[marketIndex] || live.markets[0] || null;
+
   useEffect(() => {
     setArmed(true);
   }, []);
@@ -104,7 +125,11 @@ export default function SearchLanding() {
 
   return (
     <main className="fc-grain relative min-h-screen overflow-x-hidden text-[var(--ink)]">
-      <div className="market-field" aria-hidden />
+      <div className="fc-backdrop" aria-hidden>
+        <div className="fc-backdrop__orb fc-backdrop__orb--a" />
+        <div className="fc-backdrop__orb fc-backdrop__orb--b" />
+        <div className="fc-backdrop__grid" />
+      </div>
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-16 pt-4 sm:px-6 lg:px-8">
         <header className="operator-header sticky top-3 z-50 flex items-center justify-between gap-4 px-3 py-2.5 sm:top-4">
@@ -115,7 +140,7 @@ export default function SearchLanding() {
           <WalletConnect />
         </header>
 
-        <OperatorPulse className="mt-5" />
+        <OperatorPulse className="mt-5" liveCounts={live.isLive ? { marketsScanned: live.scanCount, freshEdges: live.edgeCount } : null} />
 
         {/* Hero — one real operator promise + a decision instrument */}
         <section className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14 lg:py-14">
@@ -204,28 +229,35 @@ export default function SearchLanding() {
           {/* Decision instrument — shows the core evaluation grammar.
               Fed by useLiveMarkets so the metrics reflect real Polymarket /
               Kalshi odds and the confidence pill changes tint as the edge
-              shifts. Falls back to a neutral "awaiting data" state if the
-              API is unreachable (never invents numbers). */}
+              shifts. Cycles through the top 6 markets every 3s. Falls back
+              to a neutral "awaiting data" state if the API is unreachable. */}
           <div className="relative">
             <div className="absolute -inset-4 bg-emerald-400/10 blur-3xl" aria-hidden />
             <div className={`fc-instrument edge-reveal relative overflow-hidden p-1 shadow-2xl shadow-black/50 ${live.isLive ? 'fc-instrument--armed' : ''}`}>
               <div className="fc-instrument__inner p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <p className="fc-kicker">
                       Decision replay · {live.isLive ? 'live markets' : 'connecting'}
+                      {live.markets.length > 1 && (
+                        <span className="ml-2 text-white/30">
+                          {marketIndex + 1}/{live.markets.length}
+                        </span>
+                      )}
                     </p>
-                    <h2 className="mt-2 max-w-sm text-lg font-semibold leading-snug text-white sm:text-xl">
-                      {live.markets[0]?.title || 'Awaiting live market data…'}
+                    <h2 key={`title-${marketIndex}`} className="fc-market-slide mt-2 max-w-sm text-lg font-semibold leading-snug text-white sm:text-xl">
+                      {activeMarket?.title || 'Awaiting live market data…'}
                     </h2>
                   </div>
-                  <span className={`fc-status shrink-0 px-2.5 py-1 ${live.markets[0] ? confidenceTint(live.markets[0].edgeScore) : 'fc-status--review'}`}>
-                    {live.markets[0] ? confidenceLabel(live.markets[0].edgeScore) : '—'}
+                  <span className={`fc-status shrink-0 px-2.5 py-1 ${activeMarket ? confidenceTint(activeMarket.edgeScore) : 'fc-status--review'}`}>
+                    {activeMarket ? confidenceLabel(activeMarket.edgeScore) : '—'}
                   </span>
                 </div>
 
-                {live.markets[0] ? (
-                  <LiveMarketMetrics market={live.markets[0]} armed={armed} />
+                {activeMarket ? (
+                  <div key={`metrics-${marketIndex}`} className="fc-market-slide">
+                    <LiveMarketMetrics market={activeMarket} armed={armed} />
+                  </div>
                 ) : (
                   <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
                     {['Market', 'AI fair', 'Edge'].map((label) => (
@@ -239,10 +271,10 @@ export default function SearchLanding() {
 
                 <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/8 pt-4">
                   <p className="text-sm text-white/55">
-                    {live.markets[0] ? (
+                    {activeMarket ? (
                       <>Recommendation{' '}
                         <span className="font-semibold text-emerald-200">
-                          {directionFor(live.markets[0].edgeScore)}
+                          {directionFor(activeMarket.edgeScore)}
                         </span>
                       </>
                     ) : (
@@ -258,25 +290,31 @@ export default function SearchLanding() {
                   </button>
                 </div>
 
-                {/* Live signal ticker — real edge events from the markets API.
-                    Each row flashes via fc-tick as it arrives. */}
-                {live.isLive && live.signals.length > 0 && (
-                  <div className="fc-signal-ticker mt-4 border-t border-white/8 pt-3" aria-label="Live signal feed">
-                    {live.signals.map((sig, i) => (
-                      <div
-                        key={`${sig.slice(0, 16)}-${i}`}
-                        className={`fc-signal-ticker__row ${i === 0 ? 'fc-tick' : ''}`}
-                      >
-                        <span className="fc-signal-ticker__dot" />
-                        <span className="font-mono text-[10px] tracking-[0.06em] text-white/55">{sig}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* Live signal ticker is now a full-width marquee below the hero. */}
               </div>
             </div>
           </div>
         </section>
+
+        {/* Full-width marquee ticker — real edge events scrolling like a
+            stock ticker tape. Pauses on hover. Duplicates the items so the
+            CSS marquee loop is seamless. */}
+        {live.isLive && live.signals.length > 0 && (
+          <div className="fc-marquee mt-2" aria-label="Live signal feed">
+            <div className="fc-marquee__track">
+              <span className="fc-marquee__live">
+                <span className="fc-marquee__live-dot" />
+                LIVE
+              </span>
+              {[...live.signals, ...live.signals].map((sig, i) => (
+                <span key={`marquee-${i}`} className="fc-marquee__item">
+                  <span className="fc-marquee__dot" />
+                  {sig}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Primary-customer doors — the README positions the customer as both
             the operator running capital and the allocator diligencing them.
@@ -361,6 +399,7 @@ export default function SearchLanding() {
                     dispersion: 0.3,
                     decay: 1.4,
                     wavelength: 70,
+                    interval: 3.5,
                   }}
                   style={{ display: 'inline-block' }}
                 >
