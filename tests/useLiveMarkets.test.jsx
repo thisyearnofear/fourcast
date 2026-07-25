@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 describe('useLiveMarkets', () => {
-  it('starts loading then populates from /api/markets', async () => {
+  it('starts loading then populates from /api/markets/live', async () => {
     mockFetchSuccess();
     const { result } = renderHook(() => useLiveMarkets());
 

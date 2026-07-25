@@ -18,7 +18,6 @@ import { signalFor, countEdges } from '@/utils/marketEdge';
  */
 
 const REFRESH_MS = 15_000;
-const FETCH_LIMIT = 6;
 
 function emptySnapshot() {
   return {
@@ -45,13 +44,13 @@ export function useLiveMarkets() {
 
     const load = async () => {
       try {
-        const url = `/api/markets?limit=${FETCH_LIMIT}&minVolume=50000&excludeFutures=true`;
+        const url = `/api/markets/live`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`markets API ${res.status}`);
         const data = await res.json();
         if (cancelled || !data.success) return;
 
-        const markets = (data.markets || []).slice(0, FETCH_LIMIT);
+        const markets = data.markets || [];
 
         // Derive signals from real edge scores.
         const signals = markets
