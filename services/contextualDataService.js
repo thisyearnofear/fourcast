@@ -121,9 +121,11 @@ async function fetchStablecoinSupply() {
       'https://stablecoins.llama.fi/stablecoincharts/all',
       { provider: 'defillama', timeoutMs: 6000, retries: 1, cacheTtlMs: CACHE_TTL },
     );
-    const latest = data?.data?.slice(-1)?.[0];
+    // The endpoint returns a flat array, not { data: [...] }.
+    const arr = Array.isArray(data) ? data : null;
+    const latest = arr?.[arr.length - 1];
     if (!latest) return null;
-    const total = latest.totalCirculating?.USD;
+    const total = latest.totalCirculating?.peggedUSD;
     if (total == null) return null;
     const billions = (total / 1e9).toFixed(1);
     return {
@@ -141,16 +143,18 @@ async function fetchStablecoinSupply() {
 async function fetchDefiTvl() {
   try {
     const { data } = await fetchWithBudget(
-      'https://api.llama.fi/v2/histo/totaltvl',
+      'https://api.llama.fi/protocols',
       { provider: 'defillama-tvl', timeoutMs: 6000, retries: 1, cacheTtlMs: CACHE_TTL },
     );
-    const latest = Array.isArray(data) ? data[data.length - 1] : null;
-    if (!latest?.tvl) return null;
-    const billions = (latest.tvl / 1e9).toFixed(1);
+    // The endpoint returns an array of protocols; sum their TVL.
+    if (!Array.isArray(data)) return null;
+    const total = data.reduce((sum, p) => sum + (p.tvl || 0), 0);
+    if (total <= 0) return null;
+    const billions = (total / 1e9).toFixed(1);
     return {
       label: 'DeFi TVL',
       value: `$${billions}B`,
-      raw: latest.tvl,
+      raw: total,
     };
   } catch {
     return null;
