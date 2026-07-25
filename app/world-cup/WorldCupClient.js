@@ -20,6 +20,8 @@ import {
 import OnChainSettlementPanel from '@/components/OnChainSettlementPanel';
 import { ProofTheatre } from '@/components/ProofTheatre';
 import RouteGuide from '@/components/RouteGuide';
+import Reveal from '@/components/motion/Reveal';
+import { useCountUp } from '@/hooks/useCountUp';
 
 /* ------------------------------- helpers -------------------------------- */
 
@@ -45,7 +47,7 @@ function pct(p) {
 
 function StatusBadge({ status }) {
   const map = {
-    live: { icon: CircleDot, label: 'LIVE', cls: 'mc-badge mc-badge--breach' },
+    live: { icon: CircleDot, label: 'LIVE', cls: 'mc-badge mc-badge--breach mc-lamp--radar' },
     final: { icon: CheckCircle2, label: 'FINAL', cls: 'mc-badge mc-badge--live' },
     scheduled: { icon: Clock, label: 'UPCOMING', cls: 'mc-badge' },
   };
@@ -83,10 +85,16 @@ function EdgePanel({ fixture, onToggle }) {
     }
   }, [fixture.id]);
 
-  if (!fixture.odds?.implied) return null;
-
   const poly = data?.polymarket;
   const edge = data?.edge;
+
+  // Count-up the edge magnitude once the panel scrolls into view. The value
+  // is a percentage (e.g. 5.2 means 5.2%); we animate from 0 and format the
+  // eased value to one decimal place. Hook runs unconditionally (before the
+  // early return) to respect the Rules of Hooks.
+  const [edgeRef, edgeMagnitude] = useCountUp(edge?.magnitude ?? 0, { duration: 900 });
+
+  if (!fixture.odds?.implied) return null;
 
   const verdictColor = !edge
     ? 'border-white/15 bg-white/[0.04] text-white/60'
@@ -150,6 +158,12 @@ function EdgePanel({ fixture, onToggle }) {
       {data && data.found && poly && edge && (
         <div className="space-y-2">
           <div className="text-[11px] text-white/70 leading-snug">{edge.summary}</div>
+          <div ref={edgeRef} className="flex items-baseline gap-1.5">
+            <span className="font-mono text-lg font-semibold text-emerald-300">
+              {edgeMagnitude >= 0 ? '+' : ''}{edgeMagnitude.toFixed(1)}%
+            </span>
+            <span className="text-[10px] uppercase tracking-wider text-white/40">cross-venue edge</span>
+          </div>
           <div className="grid grid-cols-3 gap-1.5 text-center">
             {[
               { label: fixture.home.name, tx: fixture.odds.implied.home, poly: poly.home },
@@ -818,17 +832,18 @@ export default function WorldCupClient() {
           </div>
         ) : (
           <div className="fixture-ledger border-t border-[var(--mc-rule-strong)]">
-            {filtered.map((fixture) => (
-              <FixtureCard
-                key={fixture.id}
-                fixture={fixture}
-                onReplay={handleReplay}
-                onVerify={handleVerify}
-                onOpenTheatre={setSelectedFixture}
-                replaying={replayingId === fixture.id}
-                verifying={verifyingId === fixture.id}
-                proofResult={verifications[fixture.id]}
-              />
+            {filtered.map((fixture, index) => (
+              <Reveal key={fixture.id} delay={Math.min(index * 40, 240)} className="fixture-ledger__item">
+                <FixtureCard
+                  fixture={fixture}
+                  onReplay={handleReplay}
+                  onVerify={handleVerify}
+                  onOpenTheatre={setSelectedFixture}
+                  replaying={replayingId === fixture.id}
+                  verifying={verifyingId === fixture.id}
+                  proofResult={verifications[fixture.id]}
+                />
+              </Reveal>
             ))}
           </div>
         )}

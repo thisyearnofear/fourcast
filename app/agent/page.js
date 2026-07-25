@@ -11,6 +11,8 @@ import RouteGuide from '@/components/RouteGuide';
 import MandateBuilder from '@/components/MandateBuilder';
 import { BRAND } from '@/constants/brand';
 import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
+import { useCountUp } from '@/hooks/useCountUp';
+import Reveal from '@/components/motion/Reveal';
 
 // Each section keyed by id so the audience mode can reorder without
 // re-rendering cost and without losing disclosure state.
@@ -52,6 +54,35 @@ function OperatorControlsSection() {
 
 function SectionWrap({ children }) {
   return <div className="platform-open-section mt-10">{children}</div>;
+}
+
+// Replay banner is mounted only when historical replay is active, so the
+// count-up hooks can live here and fire on mount (the counts are evidence
+// of how many cached fixtures/receipts were processed).
+function ReplayBanner({ info }) {
+  const [fixtureRef, fixtureCount] = useCountUp(info.fixtureCount, { duration: 900 });
+  const [receiptRef, receiptCount] = useCountUp(info.receiptCount, { duration: 900 });
+  return (
+    <div className="mb-6 border border-[var(--mc-sealed)]/30 bg-[var(--mc-sealed)]/5 p-4">
+      <div className="flex items-start gap-3">
+        <RotateCcw className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--mc-sealed)]" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-white/80">
+            Historical replay ·{' '}
+            <span ref={fixtureRef} className="font-mono tabular-nums">{Math.round(fixtureCount)}</span>{' '}
+            cached {info.fixtureCount === 1 ? 'fixture' : 'fixtures'},{' '}
+            <span ref={receiptRef} className="font-mono tabular-nums">{Math.round(receiptCount)}</span>{' '}
+            {info.receiptCount === 1 ? 'receipt' : 'receipts'}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-white/60">
+            The TxLINE replay window closed on July 19. The agent is now replaying
+            cached fixtures, odds, and outcomes. The decision engine and proof
+            pipeline run live against historical data.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function AgentPage() {
@@ -96,28 +127,21 @@ export default function AgentPage() {
       <RouteGuide route="agent" />
 
       {replayInfo && (
-        <div className="mb-6 border border-[var(--mc-sealed)]/30 bg-[var(--mc-sealed)]/5 p-4">
-          <div className="flex items-start gap-3">
-            <RotateCcw className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--mc-sealed)]" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white/80">
-                Historical replay · {replayInfo.fixtureCount} cached {replayInfo.fixtureCount === 1 ? 'fixture' : 'fixtures'}, {replayInfo.receiptCount} {replayInfo.receiptCount === 1 ? 'receipt' : 'receipts'}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-white/60">
-                The TxLINE replay window closed on July 19. The agent is now replaying
-                cached fixtures, odds, and outcomes. The decision engine and proof
-                pipeline run live against historical data.
-              </p>
-            </div>
-          </div>
-        </div>
+        <Reveal>
+          <ReplayBanner info={replayInfo} />
+        </Reveal>
       )}
 
-      {order.map((sectionId) => {
+      {order.map((sectionId, idx) => {
         const section = AGENT_SECTIONS[sectionId];
         if (!section) return null;
         const content = section.render();
-        return section.wrap ? <SectionWrap key={section.id}>{content}</SectionWrap> : <React.Fragment key={section.id}>{content}</React.Fragment>;
+        const wrapped = section.wrap ? <SectionWrap>{content}</SectionWrap> : content;
+        return (
+          <Reveal key={section.id} delay={Math.min(idx, 4) * 60}>
+            {wrapped}
+          </Reveal>
+        );
       })}
 
       {/* Labs CTA — supporting capability, not a peer product. */}

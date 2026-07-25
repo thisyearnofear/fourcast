@@ -7,6 +7,27 @@ import {
  getSummaryAppearance,
  SUMMARY_LABEL,
 } from '@/utils/healthBadge';
+import Reveal from '@/components/motion/Reveal';
+import useChangeFlash from '@/hooks/useChangeFlash';
+
+const formatLatency = (ms) => {
+ if (ms == null) return '—';
+ return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
+};
+
+/**
+ * LatencyCell — displays a provider's latency value and briefly highlights
+ * with the `.fc-tick` wash whenever the value changes between polls.
+ */
+function LatencyCell({ latencyMs }) {
+ const flashing = useChangeFlash(latencyMs);
+ return (
+ <div className={`text-right shrink-0 ${flashing ? 'fc-tick' : ''}`}>
+ <div className="text-[13px] font-normal text-slate-400">{formatLatency(latencyMs)}</div>
+ <div className="text-[11px] text-slate-600 font-light mt-0.5">latency</div>
+ </div>
+ );
+}
 
 /**
  * Public status page showing real-time health of all external providers.
@@ -50,17 +71,14 @@ export default function StatusPage() {
 
  const statusBadge = (status) => {
  const c = getProviderStatusAppearance(status);
+ // Pulse the indicator dot for degraded/unreachable (not healthy) states.
+ const pulse = status === 'degraded' || status === 'unreachable' ? 'mc-lamp--radar' : '';
  return (
  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider ${c.bg} ${c.text}`}>
- <span className={`w-1.5 h-1.5 ${c.dot}`} />
+ <span className={`w-1.5 h-1.5 ${c.dot} ${pulse}`} />
  {status}
  </span>
  );
- };
-
- const formatLatency = (ms) => {
- if (ms == null) return '—';
- return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
  };
 
  const formatTime = (iso) => {
@@ -148,9 +166,9 @@ export default function StatusPage() {
  {/* Provider Cards */}
  {health && (
  <div className="w-full max-w-[640px] flex flex-col gap-3">
- {Object.entries(health.providers).map(([key, provider]) => (
+ {Object.entries(health.providers).map(([key, provider], index) => (
+ <Reveal key={key} delay={Math.min(index * 50, 300)}>
  <div
- key={key}
  className=" bg-white/[0.03] border border-white/[0.06] p-[18px_20px] transition-colors duration-200 hover:bg-white/[0.05]"
  >
  <div className="flex items-start justify-between">
@@ -169,10 +187,7 @@ export default function StatusPage() {
  </div>
 
  {/* Right: Latency */}
- <div className="text-right shrink-0">
- <div className="text-[13px] font-normal text-slate-400">{formatLatency(provider.latencyMs)}</div>
- <div className="text-[11px] text-slate-600 font-light mt-0.5">latency</div>
- </div>
+ <LatencyCell latencyMs={provider.latencyMs} />
  </div>
 
  {/* Extended metadata row */}
@@ -188,6 +203,7 @@ export default function StatusPage() {
  )}
  </div>
  </div>
+ </Reveal>
  ))}
  </div>
  )}

@@ -15,6 +15,8 @@ import MySignalsTab from '@/app/components/signals/MySignalsTab';
 import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ChainSelector } from '@/components/ChainSelector';
 import NarrativeSteps from '@/components/NarrativeSteps';
+import Reveal from '@/components/motion/Reveal';
+import { useCountUp } from '@/hooks/useCountUp';
 import { BRAND } from '@/constants/brand';
 
 export default function SignalsPage() {
@@ -184,6 +186,11 @@ export default function SignalsPage() {
  const bgColor = 'bg-black';
  const cardBgColor = 'bg-slate-900/60 border-white/20';
 
+ // Progressive disclosure: count up stats strip on scroll into view
+ const [totalPredictionsRef, totalPredictionsValue] = useCountUp(signals.length);
+ const [uniqueEventsRef, uniqueEventsValue] = useCountUp(Object.keys(signalsByEvent).length);
+ const [filteredResultsRef, filteredResultsValue] = useCountUp(filteredSignals.length);
+
  const formatTimestamp = (timestamp) => {
  if (!timestamp) return 'Unknown';
  const date = new Date(timestamp * 1000);
@@ -282,15 +289,15 @@ export default function SignalsPage() {
  {!isLoading && !error && (
  <div className="evidence-strip grid grid-cols-3 gap-px bg-white/10 mb-10">
  <div className="p-4 bg-[var(--color-paper)]">
- <div className={`text-2xl font-light ${textColor} mb-1`}>{signals.length}</div>
+ <div ref={totalPredictionsRef} className={`text-2xl font-light ${textColor} mb-1`}>{Math.round(totalPredictionsValue)}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Total Predictions</div>
  </div>
  <div className="p-4 bg-[var(--color-paper)]">
- <div className={`text-2xl font-light ${textColor} mb-1`}>{Object.keys(signalsByEvent).length}</div>
+ <div ref={uniqueEventsRef} className={`text-2xl font-light ${textColor} mb-1`}>{Math.round(uniqueEventsValue)}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Unique Events</div>
  </div>
  <div className="p-4 bg-[var(--color-paper)]">
- <div className={`text-2xl font-light ${textColor} mb-1`}>{filteredSignals.length}</div>
+ <div ref={filteredResultsRef} className={`text-2xl font-light ${textColor} mb-1`}>{Math.round(filteredResultsValue)}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Filtered Results</div>
  </div>
  </div>
@@ -331,7 +338,7 @@ export default function SignalsPage() {
  {!isLoading && !error && filteredSignals.length > 0 && (
  <div className="space-y-10">
  {Object.entries(signalsByEvent).map(([eventId, eventSignals]) => (
- <section key={eventId} className="platform-open-section">
+ <Reveal key={eventId} as="section" className="platform-open-section">
  <p className="fc-kicker mb-2">Decision record · {eventSignals.length} entries</p>
  <h3 className={`text-lg font-medium ${textColor} mb-4`}>
  {eventSignals[0]?.market_title || eventId}
@@ -376,7 +383,7 @@ export default function SignalsPage() {
  )}
  </div>
  </div>
- </section>
+ </Reveal>
  ))}
  </div>
  )}

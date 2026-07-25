@@ -7,12 +7,14 @@ import { AppShell } from '@/app/components/PageNav';
 import TelegramLinkButton from '@/components/TelegramLinkButton';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
 import Reveal from '@/components/motion/Reveal';
+import { useCountUp } from '@/hooks/useCountUp';
 
 export default function NotificationsPage() {
  const { address } = useAccount();
  const { getAuthHeaders, getCachedAuthHeaders } = useWalletAuth();
  const [notifications, setNotifications] = useState([]);
  const [unreadCount, setUnreadCount] = useState(0);
+ const [unreadRef, unreadDisplay] = useCountUp(unreadCount, { duration: 700 });
  const [isLoading, setIsLoading] = useState(true);
  const [needsAuth, setNeedsAuth] = useState(false);
  const [error, setError] = useState(null);
@@ -149,8 +151,8 @@ export default function NotificationsPage() {
  <div className="flex items-center gap-4">
  {unreadCount > 0 && (
  <>
- <span className="mc-badge mc-badge--live">
- {unreadCount} new
+ <span ref={unreadRef} className="mc-badge mc-badge--live tabular-nums">
+ {Math.round(unreadDisplay)} new
  </span>
  <button onClick={handleMarkAllRead} className="text-xs text-ink-faint transition hover:text-ink-muted">
  Mark all read
@@ -209,7 +211,7 @@ export default function NotificationsPage() {
  const isUnread = !notif.read;
  return (
  <Reveal key={notif.id} delay={Math.min(idx, 8) * 40}>
- <div className={`p-4 border transition-colors ${isUnread ? 'bg-evidence/[0.06] border-evidence/25' : 'bg-white/[0.03] border-white/[0.08]'}`}>
+ <div className={`p-4 border transition-colors duration-150 ${isUnread ? 'bg-evidence/[0.06] border-evidence/25' : 'bg-white/[0.03] border-white/[0.08]'}`}>
  <div className="flex items-start gap-3">
  <span className="text-lg shrink-0 mt-0.5">{icon}</span>
  <div className="flex-1 min-w-0">

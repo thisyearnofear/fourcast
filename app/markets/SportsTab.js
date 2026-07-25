@@ -4,6 +4,7 @@ import React from "react";
 import EmptyMarketState from "@/components/EmptyMarketState";
 import { StaggeredMarketCard } from "./MarketCardShared";
 import { Skeleton } from "@/components/Skeleton";
+import Reveal from "@/components/motion/Reveal";
 
 export function SportsTabContent({
  markets,
@@ -195,8 +196,8 @@ export function SportsTabContent({
  <>
  <div className="space-y-4">
  {markets.slice(0, displayLimit).map((market, index) => (
+ <Reveal key={market.marketID || market.id || index} delay={Math.min((index % 10) * 40, 240)}>
  <StaggeredMarketCard
- key={market.marketID || market.id || index}
  market={market}
  index={index}
  onAnalyze={onAnalyze}
@@ -222,6 +223,7 @@ export function SportsTabContent({
  calibrationScore={calibrationScore}
  visibleCount={visibleMarketCount}
  />
+ </Reveal>
  ))}
  </div>
  {onLoadMore && markets.length > displayLimit && (

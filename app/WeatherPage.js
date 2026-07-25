@@ -8,6 +8,7 @@ import useHUDStore from '@/hooks/useHUDStore';
 import { weatherService } from '@/services/weatherService';
 import { WinCelebration } from '@/components/WinCelebration';
 import { Sparkles } from 'lucide-react';
+import { useCountUp } from '@/hooks/useCountUp';
 
 export default function WeatherPage() {
  const router = useRouter();
@@ -20,6 +21,15 @@ export default function WeatherPage() {
  
  const [showCelebration, setShowCelebration] = useState(false);
  const [winningSignal, setWinningSignal] = useState(null);
+
+ // Count up the temperature from 0 when data loads or location changes.
+ // useCountUp animates once the element scrolls into view; the target
+ // retargets whenever weatherData updates (e.g. a new location is chosen).
+ const temperature = weatherData?.current?.temp_f;
+ const [tempRef, tempDisplay] = useCountUp(
+ temperature != null ? Math.round(temperature) : 0,
+ { duration: 900 }
+ );
 
  useEffect(() => {
  console.log('Page loaded, calling loadCurrentLocationWeather');
@@ -230,7 +240,7 @@ export default function WeatherPage() {
  {weatherData && !isLoading && (
  <header className="flex justify-between items-start pointer-events-auto">
  <div className={`flex-1 ${textColor} flex items-center gap-4`}>
- <div>
+ <div key={currentLocationName} className="fc-market-slide">
  <div className="text-base sm:text-lg font-light tracking-wide opacity-95">
  {weatherData.location.name}
  {weatherData.rateLimited && (
@@ -327,10 +337,10 @@ export default function WeatherPage() {
  style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
  >
  {/* Main Temperature Card */}
- <div className="flex items-end space-x-2 sm:space-x-4">
+ <div ref={tempRef} className="flex items-end space-x-2 sm:space-x-4">
  <div className="flex items-baseline">
  <span className="text-5xl sm:text-6xl font-thin leading-none">
- {Math.round(weatherData.current.temp_f)}
+ {tempDisplay}
  </span>
  <span className="text-xl sm:text-2xl font-thin opacity-75">
  °
@@ -389,7 +399,7 @@ export default function WeatherPage() {
  )}
  {error && (
  <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/80-lg z-50">
- <div className="bg-white/10-md p-8 max-w-sm mx-4 text-center border border-white/20">
+ <div className="animate-fade-in bg-white/10-md p-8 max-w-sm mx-4 text-center border border-white/20">
  <p className="text-white text-lg font-light mb-6 leading-relaxed">
  {error}
  </p>

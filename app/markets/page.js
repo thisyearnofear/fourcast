@@ -14,6 +14,7 @@ import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOption
 import FirstRunBanner from "@/components/FirstRunBanner";
 import { CantonMarkets } from "@/components/CantonMarkets";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
+import { useCountUp } from "@/hooks/useCountUp";
 
 const STAGE_INDEX = { accepted: 0, context: 0, market: 1, sources: 1, forecast: 2, complete: 3 };
 
@@ -308,6 +309,8 @@ export default function MarketsPage() {
 
  // Progressive disclosure: show first 10 markets, then "Load more" batches of 10
  const [displayLimit, setDisplayLimit] = useState(10);
+ // Count-up for "My signals" badge
+ const [mySignalsRef, mySignalsDisplay] = useCountUp(mySignalCount ?? 0, { duration: 700 });
  // Reset display limit when markets change (tab switch, filter change)
  useEffect(() => { setDisplayLimit(10); }, [markets]);
 
@@ -800,8 +803,8 @@ export default function MarketsPage() {
  />
  </div>
  {canPublish && (
- <span className=" border border-white/10 bg-white/10 px-2 py-1 text-[10px] text-white/80">
- My signals: {mySignalCount ?? "—"}
+ <span ref={mySignalsRef} className=" border border-white/10 bg-white/10 px-2 py-1 text-[10px] text-white/80 tabular-nums">
+ My signals: {mySignalCount != null ? Math.round(mySignalsDisplay) : "—"}
  </span>
  )}
  </div>

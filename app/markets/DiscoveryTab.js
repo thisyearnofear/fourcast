@@ -6,6 +6,7 @@ import { arbitrageService } from "@/services/arbitrageService";
 import EmptyMarketState from "@/components/EmptyMarketState";
 import { StaggeredMarketCard } from "./MarketCardShared";
 import { Skeleton } from "@/components/Skeleton";
+import Reveal from "@/components/motion/Reveal";
 
 export function DiscoveryTabContent({
  markets,
@@ -318,8 +319,8 @@ export function DiscoveryTabContent({
  <>
  <div className="space-y-4">
  {filteredMarkets.slice(0, displayLimit).map((market, index) => (
+ <Reveal key={market.marketID || market.id || index} delay={Math.min((index % 10) * 40, 240)}>
  <StaggeredMarketCard
- key={market.marketID || market.id || index}
  market={market}
  index={index}
  onAnalyze={onAnalyze}
@@ -345,6 +346,7 @@ export function DiscoveryTabContent({
  calibrationScore={calibrationScore}
  visibleCount={visibleMarketCount}
  />
+ </Reveal>
  ))}
  </div>
  {onLoadMore && filteredMarkets.length > displayLimit && (
