@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { AppShell } from '@/app/components/PageNav';
 import CantonSettlementHub from '@/components/CantonSettlementHub';
 import PrivacyProof from '@/components/PrivacyProof';
@@ -90,6 +91,16 @@ export default function CantonPage() {
 
       {/* Privacy proof — the binary demo */}
       <PrivacyProof />
+
+      {/* Holder wallet link */}
+      <div className="mt-6 text-right">
+        <Link
+          href="/canton/holder"
+          className="inline-flex items-center gap-1.5 text-xs text-[var(--color-accent)] hover:text-[var(--color-accent)]/80 transition-colors"
+        >
+          Open holder wallet view <span aria-hidden="true">→</span>
+        </Link>
+      </div>
 
       {/* Settlement hub — active markets, positions, lifecycle */}
       <div className="mt-10">

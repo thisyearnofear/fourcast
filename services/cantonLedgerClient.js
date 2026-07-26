@@ -204,7 +204,6 @@ export async function queryActiveContracts(partyId, templates = []) {
   const result = await ledgerCall('POST', '/v2/state/active-contracts', {
     activeAtOffset,
     eventFormat,
-    verbose: false,
   });
 
   // Parse the response — each item has contractEntry.JsActiveContract.createdEvent

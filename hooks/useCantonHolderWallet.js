@@ -1,0 +1,192 @@
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+/**
+ * useCantonHolderWallet — thin wrapper around @canton-network/dapp-sdk.
+ *
+ * In Phase 1 we can only read the holder's own contracts and dispute
+ * SettlementObligations, because the existing Daml gives the operator
+ * exclusive control over create/resolve/settle. This still proves the
+ * core Canton value prop: the holder sees contracts that non-signatories
+ * cannot see at all.
+ */
+
+let sdkPromise = null;
+
+async function loadSdk() {
+  if (typeof window === 'undefined') return null;
+  if (sdkPromise) return sdkPromise;
+  sdkPromise = import('@canton-network/dapp-sdk').then((mod) => mod);
+  return sdkPromise;
+}
+
+export function useCantonHolderWallet() {
+  const [sdk, setSdk] = useState(null);
+  const [connected, setConnected] = useState(false);
+  const [accounts, setAccounts] = useState([]);
+  const [primary, setPrimary] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    loadSdk()
+      .then((s) => {
+        if (mounted.current) setSdk(s);
+      })
+      .catch((e) => {
+        if (mounted.current) setError(e?.message || 'Failed to load Canton dApp SDK');
+      });
+    return () => { mounted.current = false; };
+  }, []);
+
+  const connect = useCallback(async () => {
+    if (!sdk) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await sdk.init();
+      const result = await sdk.connect();
+      if (result.isConnected) {
+        const accts = await sdk.listAccounts();
+        if (mounted.current) {
+          setConnected(true);
+          setAccounts(accts);
+          setPrimary(accts.find((a) => a.primary) || accts[0] || null);
+        }
+      } else {
+        throw new Error(result.reason || 'Wallet connection refused');
+      }
+    } catch (e) {
+      if (mounted.current) setError(e?.message || 'Failed to connect wallet');
+    } finally {
+      if (mounted.current) setLoading(false);
+    }
+  }, [sdk]);
+
+  const disconnect = useCallback(async () => {
+    if (!sdk) return;
+    await sdk.disconnect();
+    if (mounted.current) {
+      setConnected(false);
+      setAccounts([]);
+      setPrimary(null);
+    }
+  }, [sdk]);
+
+  const refreshAccounts = useCallback(async () => {
+    if (!sdk) return;
+    try {
+      const accts = await sdk.listAccounts();
+      if (mounted.current) {
+        setAccounts(accts);
+        setPrimary(accts.find((a) => a.primary) || accts[0] || null);
+      }
+    } catch (e) {
+      if (mounted.current) setError(e?.message || 'Failed to refresh accounts');
+    }
+  }, [sdk]);
+
+  // Listen to wallet account changes while connected.
+  useEffect(() => {
+    if (!sdk || !connected) return;
+    let cancelled = false;
+    const listener = (ev) => {
+      if (cancelled) return;
+      const accts = Array.isArray(ev) ? ev : [];
+      setAccounts(accts);
+      setPrimary(accts.find((a) => a.primary) || accts[0] || null);
+    };
+    sdk.onAccountsChanged(listener).catch(() => {});
+    return () => {
+      cancelled = true;
+      sdk.removeOnAccountsChanged?.(listener).catch(() => {});
+    };
+  }, [sdk, connected]);
+
+  /**
+   * Query active contracts visible to the connected party for a list of templates.
+   * templates: [{ module: 'Fourcast.PredictionPosition', name: 'PredictionPosition' }]
+   */
+  const queryContracts = useCallback(async (templates = []) => {
+    if (!sdk || !connected) return [];
+    const partyId = primary?.partyId || accounts[0]?.partyId;
+    if (!partyId) return [];
+
+    const end = await sdk.ledgerApi({ requestMethod: 'get', resource: '/v2/state/ledger-end' });
+    const activeAtOffset = end.offset ?? 0;
+
+    const cumulative = templates.map(({ module, name }) => ({
+      identifierFilter: {
+        TemplateFilter: {
+          value: {
+          templateId: `#canton:${module}:${name}`,
+          includeCreatedEventBlob: false,
+        },
+        },
+      },
+    }));
+
+    const eventFormat = {
+      filtersByParty: {
+        [partyId]: { cumulative },
+      },
+      verbose: false,
+    };
+
+    const result = await sdk.ledgerApi({
+      requestMethod: 'post',
+      resource: '/v2/state/active-contracts',
+      body: { activeAtOffset, eventFormat },
+    });
+
+    if (!Array.isArray(result)) return [];
+    return result.flatMap((item) => {
+      const ev = item.contractEntry?.JsActiveContract?.createdEvent;
+      if (!ev) return [];
+      return [{ contractId: ev.contractId, templateId: ev.templateId, payload: ev.createArgument }];
+    });
+  }, [sdk, connected, accounts, primary]);
+
+  /**
+   * Exercise SettlementObligation.DisputeTransfer from the connected wallet.
+   * Only the winner (holder) can dispute.
+   */
+  const disputeTransfer = useCallback(async (contractId, reason = 'Winner disputes non-payment') => {
+    if (!sdk || !connected) throw new Error('Wallet not connected');
+    const partyId = primary?.partyId || accounts[0]?.partyId;
+    if (!partyId) throw new Error('No party selected');
+
+    const packageId = process.env.NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID || '';
+    const templateId = packageId
+      ? `${packageId}:Fourcast.PredictionPosition:SettlementObligation`
+      : '#canton:Fourcast.PredictionPosition:SettlementObligation';
+
+    await sdk.prepareExecuteAndWait({
+      actAs: [partyId],
+      commands: [{
+        ExerciseCommand: {
+          templateId,
+          contractId,
+          choice: 'DisputeTransfer',
+          argument: { reason },
+        },
+      }],
+    });
+  }, [sdk, connected, accounts, primary]);
+
+  return {
+    connected,
+    accounts,
+    primary,
+    error,
+    loading,
+    connect,
+    disconnect,
+    refreshAccounts,
+    queryContracts,
+    disputeTransfer,
+  };
+}
