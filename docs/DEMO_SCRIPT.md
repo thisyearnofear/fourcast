@@ -72,12 +72,12 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 - [x] Market + position lifecycle functions implemented (`services/cantonLedgerClient.js`)
 - [x] API routes: `/api/canton/markets`, `/api/canton/markets/resolve`, `/api/canton/positions`, `/api/canton/settle`
 - [x] End-to-end verified on Devnet: create market → query → resolve → query resolutions
-- [ ] CC funded via NODERS wallet tap
-- [ ] cBTC funded via https://cbtc-faucet.bitsafe.finance/
-- [ ] Two-view privacy test (holder sees position, observer sees empty result set)
-- [ ] Deployed URL loads (not localhost)
-- [ ] Venice API key for live AI analysis
-- [ ] Form: GitHub URL, video link, demo URL
+- [x] Deployed URL loads (not localhost) — verified live after env fix & redeploy
+- [x] Two-view privacy test (holder sees position, observer sees empty result set) — verified previously on Devnet
+- [ ] CC funded via NODERS wallet tap — reported done by operator, not re-tested this session
+- [ ] cBTC funded via https://cbtc-faucet.bitsafe.finance/ — reported done by operator, not re-tested this session
+- [ ] Venice API key for live AI analysis — reported done by operator, not re-tested this session
+- [ ] Form: GitHub URL, video link, demo URL — reported submitted by operator, not verified
 
 ## Copy source of truth
 

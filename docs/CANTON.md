@@ -234,7 +234,7 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 - [ ] Presentation deck
 
 ### Deployment
-- [ ] Deploy to Vercel (ensure env vars propagate: CANTON_JSON_API_URL, CANTON_OIDC_*, NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID)
+- [x] Deploy to Vercel (env vars propagated; health endpoint healthy)
 - [ ] Verify /canton route is accessible on production
 - [ ] Record video demo showing market creation, position placement, resolution, settlement
 
