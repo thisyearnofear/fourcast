@@ -165,32 +165,32 @@ export default function AnalysisConfigModal({
  role="dialog"
  aria-modal="true"
  aria-labelledby="analysis-config-heading"
- className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-slate-900 border border-white/20 shadow-2xl"
+ className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[var(--color-paper-raised)] border border-[var(--color-rule-strong)] shadow-2xl"
  >
  {/* Header */}
- <div className="sticky top-0 z-10 bg-slate-900/95 border-b border-white/10 p-5">
+ <div className="sticky top-0 z-10 bg-[var(--color-paper-raised)]/95 border-b border-[var(--color-rule)] p-5">
  <div className="flex items-center justify-between">
  <div>
- <h2 id="analysis-config-heading" className="text-xl font-semibold text-white">Configure Analysis</h2>
- <p className="text-sm text-white/50 mt-1">Select data sources and providers</p>
+ <h2 id="analysis-config-heading" className="text-xl font-semibold text-[var(--color-ink)]">Configure Analysis</h2>
+ <p className="text-sm text-[var(--color-ink-faint)] mt-1">Select data sources and providers</p>
  </div>
  <button
  onClick={onClose}
- className="p-2 hover:bg-white/10 transition-colors"
+ className="p-2 hover:bg-[var(--color-paper-soft)] transition-colors"
  >
- <svg className="w-5 h-5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <svg className="w-5 h-5 text-[var(--color-ink-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
  </svg>
  </button>
  </div>
  
  {/* Market Summary */}
- <div className="mt-4 p-3 bg-white/5 border border-white/10">
- <p className="text-sm text-white/80 line-clamp-2">
+ <div className="mt-4 p-3 bg-[var(--color-paper-raised)] border border-[var(--color-rule)]">
+ <p className="text-sm text-[var(--color-ink)] line-clamp-2">
  {market?.title || market?.question || 'Selected Market'}
  </p>
- <div className="flex items-center gap-3 mt-2 text-xs text-white/50">
- <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400">
+ <div className="flex items-center gap-3 mt-2 text-xs text-[var(--color-ink-faint)]">
+ <span className="px-2 py-0.5 bg-[var(--color-evidence)]/20 text-[var(--color-evidence)]">
  {marketType.toUpperCase()}
  </span>
  {market?.location && (
@@ -207,7 +207,7 @@ export default function AnalysisConfigModal({
  <div className="p-5 space-y-6">
  {/* Data Sources */}
  <section>
- <h3 className="text-sm font-medium text-white/90 mb-3 flex items-center gap-2">
+ <h3 className="text-sm font-medium text-[var(--color-ink)] mb-3 flex items-center gap-2">
  <span>📂</span> Data Sources
  </h3>
  <div className="grid grid-cols-2 gap-2">
@@ -262,7 +262,7 @@ export default function AnalysisConfigModal({
 
  {/* Analysis Depth */}
  <section>
- <h3 className="text-sm font-medium text-white/90 mb-3 flex items-center gap-2">
+ <h3 className="text-sm font-medium text-[var(--color-ink)] mb-3 flex items-center gap-2">
  <span>⚡</span> Analysis Depth
  </h3>
  <div className="flex gap-2">
@@ -276,8 +276,8 @@ export default function AnalysisConfigModal({
  onClick={() => setAnalysisDepth(depth.id)}
  className={`flex-1 p-3 border transition-all ${
  analysisDepth === depth.id
- ? 'bg-emerald-500/20 border-emerald-500/50 text-white'
- : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+ ? 'bg-[var(--color-accent)]/20 border-[var(--color-accent)]/50 text-[var(--color-ink)]'
+ : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-muted)] hover:bg-[var(--color-paper-soft)]'
  }`}
  >
  <div className="text-sm font-medium">{depth.label}</div>
@@ -289,7 +289,7 @@ export default function AnalysisConfigModal({
 
  {/* API Providers */}
  <section>
- <h3 className="text-sm font-medium text-white/90 mb-3 flex items-center gap-2">
+ <h3 className="text-sm font-medium text-[var(--color-ink)] mb-3 flex items-center gap-2">
  <span>🔌</span> API Providers
  </h3>
  <div className="space-y-3">
@@ -329,18 +329,18 @@ export default function AnalysisConfigModal({
  </div>
 
  {/* Footer */}
- <div className="sticky bottom-0 bg-slate-900/95 border-t border-white/10 p-5">
+ <div className="sticky bottom-0 bg-[var(--color-paper-raised)]/95 border-t border-[var(--color-rule)] p-5">
  {/* Cost Estimate */}
- <div className="flex items-center justify-between mb-4 p-3 bg-white/5">
+ <div className="flex items-center justify-between mb-4 p-3 bg-[var(--color-paper-raised)]">
  <div>
- <div className="text-xs text-white/50">Estimated Cost</div>
- <div className="text-lg font-semibold text-emerald-400">
+ <div className="text-xs text-[var(--color-ink-faint)]">Estimated Cost</div>
+ <div className="text-lg font-semibold text-[var(--color-accent)]">
  ${costEstimate}
  </div>
  </div>
  <div className="text-right">
- <div className="text-xs text-white/50">Active Sources</div>
- <div className="text-sm text-white/70">
+ <div className="text-xs text-[var(--color-ink-faint)]">Active Sources</div>
+ <div className="text-sm text-[var(--color-ink-muted)]">
  {Object.values(dataSources).filter(Boolean).length} enabled
  </div>
  </div>
@@ -350,14 +350,14 @@ export default function AnalysisConfigModal({
  <div className="flex gap-3">
  <button
  onClick={onClose}
- className="flex-1 px-4 py-3 border border-white/20 text-white/70 hover:bg-white/5 transition-colors"
+ className="flex-1 px-4 py-3 border border-[var(--color-rule-strong)] text-[var(--color-ink-muted)] hover:bg-[var(--color-paper-raised)] transition-colors"
  >
  Cancel
  </button>
  <button
  onClick={handleConfirm}
  disabled={isLoading}
- className="flex-1 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+ className="flex-1 px-4 py-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent)] text-[var(--color-ink)] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
  >
  {isLoading ? (
  <>
@@ -387,8 +387,8 @@ function ToggleChip({ label, active, onClick, auto = false }) {
  onClick={onClick}
  className={`px-3 py-2 text-sm font-medium transition-all ${
  active
- ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
- : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10'
+ ? 'bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/40'
+ : 'bg-[var(--color-paper-raised)] text-[var(--color-ink-faint)] border border-[var(--color-rule)] hover:bg-[var(--color-paper-soft)]'
  }`}
  >
  <span>{label}</span>
@@ -401,12 +401,12 @@ function ToggleChip({ label, active, onClick, auto = false }) {
 function SelectField({ label, value, onChange, options, disabled = false }) {
  return (
  <div className="flex items-center justify-between">
- <label className="text-sm text-white/70">{label}</label>
+ <label className="text-sm text-[var(--color-ink-muted)]">{label}</label>
  <select
  value={value}
  onChange={(e) => onChange(e.target.value)}
  disabled={disabled}
- className={`px-3 py-2 text-sm bg-white/10 border border-white/10 text-white ${
+ className={`px-3 py-2 text-sm bg-[var(--color-paper-soft)] border border-[var(--color-rule)] text-[var(--color-ink)] ${
  disabled ? 'opacity-40 cursor-not-allowed' : ''
  }`}
  >

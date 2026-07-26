@@ -26,7 +26,7 @@ export default function OperatorSpotlight({ operators = [], onProfileClick }) {
  const top = operators.slice(0, 3);
 
  return (
- <div className="evidence-strip grid grid-cols-1 gap-px bg-white/10 sm:grid-cols-3" aria-label="Top analysts">
+ <div className="evidence-strip grid grid-cols-1 gap-px bg-[var(--color-paper-soft)] sm:grid-cols-3" aria-label="Top analysts">
  {top.map((user, idx) => {
  const winRate = Math.round((user.win_rate || 0) * 100);
  const tier = tierInfoFor(user.win_rate || 0);
@@ -45,27 +45,27 @@ export default function OperatorSpotlight({ operators = [], onProfileClick }) {
  <div className="mb-3 flex items-center justify-between">
  <div className="flex items-center gap-2">
  <span className={`h-1.5 w-1.5 ${tier.dot}`} aria-hidden />
- <span className="text-[10px] font-medium uppercase tracking-wider text-white/40">
+ <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-ink-faint)]">
  #{idx + 1} · {tier.name}
  </span>
  </div>
- <span className="text-[10px] font-mono text-white/30" aria-hidden>↗</span>
+ <span className="text-[10px] font-mono text-[var(--color-ink-faint)]" aria-hidden>↗</span>
  </div>
- <div className="mb-3 truncate font-mono text-sm text-white/80">
+ <div className="mb-3 truncate font-mono text-sm text-[var(--color-ink)]">
  {addr}
  </div>
  <div className="grid grid-cols-3 gap-2">
  <div>
- <div className="text-xl font-light text-white">{winRate}%</div>
- <div className="text-[10px] uppercase tracking-wider text-white/40">Win</div>
+ <div className="text-xl font-light text-[var(--color-ink)]">{winRate}%</div>
+ <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">Win</div>
  </div>
  <div>
- <div className="text-xl font-light text-white">{signals}</div>
- <div className="text-[10px] uppercase tracking-wider text-white/40">Signals</div>
+ <div className="text-xl font-light text-[var(--color-ink)]">{signals}</div>
+ <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">Signals</div>
  </div>
  <div>
- <div className="text-xl font-light text-emerald-300">{highConf}</div>
- <div className="text-[10px] uppercase tracking-wider text-white/40">High</div>
+ <div className="text-xl font-light text-[var(--color-accent)]">{highConf}</div>
+ <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">High</div>
  </div>
  </div>
  </button>

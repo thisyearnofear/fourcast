@@ -36,7 +36,7 @@ export default function HUDToggle() {
  strokeWidth="1.5"
  strokeLinecap="round"
  strokeLinejoin="round"
- className="text-white/70"
+ className="text-[var(--color-ink-muted)]"
  >
  {isHUDVisible ? (
  <>

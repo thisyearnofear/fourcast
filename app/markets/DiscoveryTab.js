@@ -108,8 +108,8 @@ export function DiscoveryTabContent({
  key={key}
  onClick={() => setDateRange(key)}
  className={`px-3 py-1.5 text-xs border transition-all font-light ${dateRange === key
- ? "bg-emerald-500/30 text-white border-emerald-400/40"
- : "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
+ ? "bg-[var(--color-accent)]/30 text-[var(--color-ink)] border-[var(--color-accent)]/40"
+ : "bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink-muted)] border-[var(--color-rule-strong)]"
  }`}
  >
  {label}
@@ -166,12 +166,12 @@ export function DiscoveryTabContent({
  }))
  }
  className={`inline-flex items-center w-12 h-6 border transition-all ${filters.includeFutures
- ? "bg-green-500/40 border-green-400/40"
- : "bg-white/10 border-white/20"
+ ? "bg-[var(--color-accent)]/40 border-[var(--color-accent)]/40"
+ : "bg-[var(--color-paper-soft)] border-[var(--color-rule-strong)]"
  }`}
  >
  <span
- className={`inline-block w-5 h-5 bg-white/80 transform transition-transform ${filters.includeFutures ? "translate-x-6" : "translate-x-1"
+ className={`inline-block w-5 h-5 bg-[var(--color-paper-raised)]0 transform transition-transform ${filters.includeFutures ? "translate-x-6" : "translate-x-1"
  }`}
  />
  </button>
@@ -191,7 +191,7 @@ export function DiscoveryTabContent({
  >
  <div className="flex items-center justify-between mb-3">
  <div className="flex items-center gap-2">
- <Zap className="h-5 w-5 text-amber-300" />
+ <Zap className="h-5 w-5 text-[var(--color-sealed)]" />
  <div>
  <h3 className={`text-sm font-medium ${textColor}`}>
  {opportunities.count} Arbitrage Opportunit
@@ -205,19 +205,19 @@ export function DiscoveryTabContent({
  <button
  onClick={() => setShowArbitrage(!showArbitrage)}
  className={`px-3 py-1.5 text-xs border transition-all ${showArbitrage
- ? "bg-emerald-500/30 text-white border-emerald-400/40"
- : "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
+ ? "bg-[var(--color-accent)]/30 text-[var(--color-ink)] border-[var(--color-accent)]/40"
+ : "bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink-muted)] border-[var(--color-rule-strong)]"
  }`}
  >
  {showArbitrage ? "Hide" : "Show"} Details
  </button>
  </div>
  {showArbitrage && (
- <div className="space-y-2 mt-3 pt-3 border-t border-white/10">
+ <div className="space-y-2 mt-3 pt-3 border-t border-[var(--color-rule)]">
  {(opportunities?.opportunities || []).slice(0, 5).map((opp, idx) => (
  <div
  key={idx}
- className={`p-3 border bg-white/5 border-white/10`}
+ className={`p-3 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}
  >
  <div className="flex items-start justify-between gap-3">
  <div className="flex-1">
@@ -228,12 +228,12 @@ export function DiscoveryTabContent({
  </p>
  <div className="flex gap-2 text-xs">
  <span
- className={`px-2 py-0.5 bg-blue-900/40 text-blue-300`}
+ className={`px-2 py-0.5 bg-[var(--color-evidence)]/20 text-[var(--color-evidence)]`}
  >
  Polymarket: {opp.arbitrage.market1Odds}%
  </span>
  <span
- className={`px-2 py-0.5 bg-emerald-900/40 text-emerald-300`}
+ className={`px-2 py-0.5 bg-[var(--color-accent)]/20 text-[var(--color-accent)]`}
  >
  Kalshi: {opp.arbitrage.market2Odds}%
  </span>
@@ -241,7 +241,7 @@ export function DiscoveryTabContent({
  </div>
  <div className="text-right">
  <div
- className={`text-lg font-bold text-yellow-300`}
+ className={`text-lg font-bold text-[var(--color-sealed)]`}
  >
  {opp.arbitrage.priceDiff}%
  </div>
@@ -250,7 +250,7 @@ export function DiscoveryTabContent({
  </div>
  <button
  onClick={() => setSelectedArbitrage(opp)}
- className={`mt-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-tight transition-all bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30`}
+ className={`mt-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-tight transition-all bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/30`}
  >
  Capture Spread
  </button>
@@ -353,7 +353,7 @@ export function DiscoveryTabContent({
  <div className="mt-6 flex justify-center">
  <button
  onClick={onLoadMore}
- className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors"
+ className="px-4 py-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent)] text-[var(--color-ink)] rounded-md text-sm font-medium transition-colors"
  >
  Load More ({filteredMarkets.length - displayLimit} remaining)
  </button>

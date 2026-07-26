@@ -182,9 +182,9 @@ export default function SignalsPage() {
  return grouped;
  }, [filteredSignals]);
 
- const textColor = 'text-white';
+ const textColor = 'text-[var(--color-ink)]';
  const bgColor = 'bg-black';
- const cardBgColor = 'bg-slate-900/60 border-white/20';
+ const cardBgColor = 'bg-[var(--color-paper-raised)] border-[var(--color-rule)]';
 
  // Progressive disclosure: count up stats strip on scroll into view
  const [totalPredictionsRef, totalPredictionsValue] = useCountUp(signals.length);
@@ -232,7 +232,7 @@ export default function SignalsPage() {
  promise isn't gated on which tab the visitor opens. */}
  <div className="mb-8">
  <p className="mb-4 max-w-2xl text-sm font-light leading-relaxed text-white/[0.55]">
- Verified Quant Operators with <span className="text-emerald-300">Audited Track Records</span> on Arc.
+ Verified Quant Operators with <span className="text-[var(--color-accent)]">Audited Track Records</span> on Arc.
  </p>
  {leaderboard.length > 0 && activeTab !== 'leaderboard' && (
  <OperatorSpotlight
@@ -287,7 +287,7 @@ export default function SignalsPage() {
 
  {/* Stats Summary — evidence strip, not card grid */}
  {!isLoading && !error && (
- <div className="evidence-strip grid grid-cols-3 gap-px bg-white/10 mb-10">
+ <div className="evidence-strip grid grid-cols-3 gap-px bg-[var(--color-paper-soft)] mb-10">
  <div className="p-4 bg-[var(--color-paper)]">
  <div ref={totalPredictionsRef} className={`text-2xl font-light ${textColor} mb-1`}>{Math.round(totalPredictionsValue)}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Total Predictions</div>
@@ -317,7 +317,7 @@ export default function SignalsPage() {
  <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
  <button
  onClick={fetchSignals}
- className={`px-4 py-2 text-sm font-light bg-white/20 hover:bg-white/30 text-white`}
+ className={`px-4 py-2 text-sm font-light bg-white/20 hover:bg-white/30 text-[var(--color-ink)]`}
  >
  Try Again
  </button>
@@ -371,7 +371,7 @@ export default function SignalsPage() {
  ))}
  </div>
 
- <div className={`mt-4 pt-4 border-t border-white/10`}>
+ <div className={`mt-4 pt-4 border-t border-[var(--color-rule)]`}>
  <div className="flex flex-wrap items-center gap-4 text-xs">
  <span className={`${textColor} opacity-60`}>
  {eventSignals.length} prediction{eventSignals.length !== 1 ? 's' : ''} published

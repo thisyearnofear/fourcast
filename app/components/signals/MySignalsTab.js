@@ -43,17 +43,17 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
  ) : (
  <>
  {/* Fallback: Basic stats — evidence strip */}
- <div className="evidence-strip grid grid-cols-2 gap-px bg-white/10 sm:grid-cols-4">
+ <div className="evidence-strip grid grid-cols-2 gap-px bg-[var(--color-paper-soft)] sm:grid-cols-4">
  <div className="bg-[var(--color-paper)] p-4">
  <div className={`text-3xl font-light ${textColor} mb-1`}>{signals.length}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Total Published</div>
  </div>
  <div className="bg-[var(--color-paper)] p-4">
- <div className={`text-3xl font-light text-green-400 mb-1`}>{won}</div>
+ <div className={`text-3xl font-light text-[var(--color-accent)] mb-1`}>{won}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Won</div>
  </div>
  <div className="bg-[var(--color-paper)] p-4">
- <div className={`text-3xl font-light text-red-400 mb-1`}>{lost}</div>
+ <div className={`text-3xl font-light text-[var(--color-breach)] mb-1`}>{lost}</div>
  <div className={`text-xs ${textColor} opacity-60`}>Lost</div>
  </div>
  <div className="bg-[var(--color-paper)] p-4">
@@ -68,13 +68,13 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
  <div className="flex items-end gap-4">
  <div>
  <div className={`text-xs ${textColor} opacity-60 mb-2 uppercase tracking-wider`}>Win Rate</div>
- <div className={`text-4xl font-light text-green-400`}>
+ <div className={`text-4xl font-light text-[var(--color-accent)]`}>
  {winRate}%
  </div>
  </div>
- <div className={`flex-1 h-2 bg-white/10`}>
+ <div className={`flex-1 h-2 bg-[var(--color-paper-soft)]`}>
  <div
- className={`h-full bg-green-500`}
+ className={`h-full bg-[var(--color-accent)]`}
  style={{ width: `${parseFloat(winRate)}%` }}
  ></div>
  </div>
@@ -94,19 +94,19 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
  </div>
  )}
  {/* Signals List — inspectable rows */}
- <div className="border-t border-white/15">
+ <div className="border-t border-[var(--color-rule)]">
  {signals.map((signal) => {
  const isExpanded = expandedSignalId === signal.id;
  const statusColor = signal.outcome === 'YES' || signal.outcome === 'CORRECT'
- ? ('text-emerald-400')
+ ? ('text-[var(--color-accent)]')
  : signal.outcome === 'NO' || signal.outcome === 'INCORRECT'
- ? ('text-red-400')
- : ('text-amber-400');
+ ? ('text-[var(--color-breach)]')
+ : ('text-[var(--color-sealed)]');
 
  return (
  <div
  key={signal.id}
- className="position-record border-b border-white/10 px-1 py-5 cursor-pointer transition-colors hover:bg-white/[0.03] sm:px-3"
+ className="position-record border-b border-[var(--color-rule)] px-1 py-5 cursor-pointer transition-colors hover:bg-white/[0.03] sm:px-3"
  onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)}
  >
  <div className="flex items-start justify-between mb-4">
@@ -143,7 +143,7 @@ export default function MySignalsTab({ signals, isLoading, isNight, textColor, c
  )}
 
  {isExpanded && (
- <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+ <div className="mt-4 pt-4 border-t border-[var(--color-rule)] space-y-3">
  {signal.tx_hash && (
  <div className={`text-xs ${textColor} opacity-60`}>
  <span className="font-medium">On-chain:</span>{' '}

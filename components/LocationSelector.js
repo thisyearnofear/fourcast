@@ -45,12 +45,12 @@ const LocationSelector = ({ onLocationChange, currentLocation, isLoading, isNigh
  value={searchQuery}
  onChange={(e) => setSearchQuery(e.target.value)}
  placeholder="Search..."
- className={`glass-input text-white placeholder-white/40 text-sm md:text-base font-light focus:outline-none w-32 md:w-48 tracking-wide`}
+ className={`glass-input text-[var(--color-ink)] placeholder-white/40 text-sm md:text-base font-light focus:outline-none w-32 md:w-48 tracking-wide`}
  disabled={isLoading || isSearching}
  />
  <button 
  type="submit" 
- className={`p-1 text-white/60 hover:text-white transition-colors disabled:opacity-40`}
+ className={`p-1 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors disabled:opacity-40`}
  disabled={!searchQuery.trim() || isLoading || isSearching}
  >
  {isSearching && !isLoading ? (
@@ -65,7 +65,7 @@ const LocationSelector = ({ onLocationChange, currentLocation, isLoading, isNigh
  </form>
  <button 
  onClick={handleCurrentLocation}
- className={`px-2 py-1 text-white/60 hover:text-white text-xs md:text-sm transition-colors disabled:opacity-40 flex items-center space-x-1`}
+ className={`px-2 py-1 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] text-xs md:text-sm transition-colors disabled:opacity-40 flex items-center space-x-1`}
  disabled={isLoading || isSearching}
  >
  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

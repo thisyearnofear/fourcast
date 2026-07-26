@@ -176,18 +176,18 @@ export default function MandateBuilder() {
       <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <FlaskConical className="h-3.5 w-3.5 text-emerald-300/80" />
+            <FlaskConical className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
             <span className="mc-kicker">Mandate builder · dry-run preview</span>
           </div>
           <button
             type="button"
             onClick={resetDraft}
-            className="text-[11px] text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
+            className="text-[11px] text-[var(--color-ink-faint)] underline-offset-2 hover:text-[var(--color-ink-muted)] hover:underline"
           >
             Reset
           </button>
         </div>
-        <p className="mt-1.5 text-xs leading-5 text-white/45">
+        <p className="mt-1.5 text-xs leading-5 text-[var(--color-ink-faint)]">
           Adjust the four policy knobs, then dry-run against the canonical France–Sweden fixture. No account, no wallet, no execution.
         </p>
       </div>
@@ -198,14 +198,14 @@ export default function MandateBuilder() {
           {KNOBS.map((knob) => (
             <div key={knob.key}>
               <div className="flex items-baseline justify-between gap-3">
-                <span className="flex items-center gap-1.5 text-sm font-medium text-white/80">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-ink)]/80">
                   {knob.label}
                   <span className="mc-tooltip" tabIndex={0} role="button" aria-label={knob.hint}>
                     ?
                     <span className="mc-tooltip__bubble">{knob.hint}</span>
                   </span>
                 </span>
-                <span className="font-mono text-sm text-emerald-300">{knob.format(draft[knob.key])}</span>
+                <span className="font-mono text-sm text-[var(--color-accent)]">{knob.format(draft[knob.key])}</span>
               </div>
               <input
                 id={`knob-${knob.key}`}
@@ -239,28 +239,28 @@ export default function MandateBuilder() {
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               {saving ? 'Saving…' : 'Save as my mandate'}
             </button>
-            <span className="inline-flex items-center gap-1 text-[11px] text-white/40">
+            <span className="inline-flex items-center gap-1 text-[11px] text-[var(--color-ink-faint)]">
               <Lock className="h-3 w-3" />
               No execution · no wallet
             </span>
           </div>
 
           {savedUrl && (
-            <div className="mt-4 border border-emerald-400/30 bg-emerald-400/[0.08] p-3 text-xs">
+            <div className="mt-4 border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/[0.08] p-3 text-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 text-emerald-300" />
-                  <span className="text-emerald-100">Track Record URL saved</span>
+                  <Check className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                  <span className="text-[var(--color-accent)]">Track Record URL saved</span>
                 </div>
                 <Link
                   href={savedUrl}
-                  className="mc-nav-link no-underline inline-flex items-center gap-1 text-emerald-200/90"
+                  className="mc-nav-link no-underline inline-flex items-center gap-1 text-[var(--color-accent)]/90"
                 >
                   Open
                   <ExternalLink className="h-3 w-3" />
                 </Link>
               </div>
-              <p className="mt-1.5 break-all font-mono text-[10px] text-white/55">
+              <p className="mt-1.5 break-all font-mono text-[10px] text-[var(--color-ink-muted)]">
                 {savedUrl}
               </p>
             </div>
@@ -270,22 +270,22 @@ export default function MandateBuilder() {
         {/* Result */}
         <div className="min-w-0">
           {error && (
-            <div className="border border-red-400/30 bg-red-500/[0.08] p-4 text-sm text-red-200">
+            <div className="border border-[var(--color-breach)]/30 bg-[var(--color-breach)]/[0.08] p-4 text-sm text-[var(--color-breach)]">
               {error}
             </div>
           )}
 
           {!error && !result && !running && (
-            <div className="flex h-full min-h-32 items-center justify-center border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
-              <p className="text-xs text-white/35">
+            <div className="flex h-full min-h-32 items-center justify-center border border-dashed border-[var(--color-rule)] bg-white/[0.02] p-6 text-center">
+              <p className="text-xs text-[var(--color-ink-faint)]">
                 Run a dry-run to see the verdict.
               </p>
             </div>
           )}
 
           {running && (
-            <div className="flex h-full min-h-32 items-center justify-center border border-white/10 bg-white/[0.02] p-6">
-              <Loader2 className="h-5 w-5 animate-spin text-emerald-300/60" />
+            <div className="flex h-full min-h-32 items-center justify-center border border-[var(--color-rule)] bg-white/[0.02] p-6">
+              <Loader2 className="h-5 w-5 animate-spin text-[var(--color-accent)]/60" />
             </div>
           )}
 
@@ -301,10 +301,10 @@ function DryRunResult({ result }) {
   const verdict = (decision.verdict || 'REVIEW').toUpperCase();
   const verdictClass =
     verdict === 'ALLOCATE'
-      ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200'
+      ? 'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
       : verdict === 'PASS'
-        ? 'border-amber-300/30 bg-amber-300/10 text-amber-100'
-        : 'border-sky-300/30 bg-sky-300/10 text-sky-100';
+        ? 'border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/10 text-[var(--color-sealed)]'
+        : 'border-[var(--color-evidence)]/30 bg-[var(--color-evidence)]/10 text-[var(--color-evidence)]';
   const passedGates = (decision.riskChecks || []).filter((g) => g.passed).length;
   const totalGates = (decision.riskChecks || []).length;
   const [gatesOpen, setGatesOpen] = useState(false);
@@ -318,11 +318,11 @@ function DryRunResult({ result }) {
             <ShieldCheck className="h-4 w-4" />
             <span className="font-display text-lg font-bold">{verdict}</span>
           </div>
-          <span className="font-mono text-[10px] text-white/50">{passedGates}/{totalGates} gates</span>
+          <span className="font-mono text-[10px] text-[var(--color-ink-faint)]">{passedGates}/{totalGates} gates</span>
         </div>
-        <p className="mt-1.5 text-xs leading-5 text-white/70">{decision.rationale}</p>
-        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-white/50">
-          <span>edge <span className="text-emerald-300">{pct(recommendation.edge)}</span></span>
+        <p className="mt-1.5 text-xs leading-5 text-[var(--color-ink-muted)]">{decision.rationale}</p>
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-[var(--color-ink-faint)]">
+          <span>edge <span className="text-[var(--color-accent)]">{pct(recommendation.edge)}</span></span>
           <span>fair {pct(recommendation.aiProbability)}</span>
           <span>market {pct(recommendation.marketOdds)}</span>
           <span>alloc {pct(decision.allocationPct)}</span>
@@ -331,20 +331,20 @@ function DryRunResult({ result }) {
 
       {/* Simulation + fixture in a compact 2-col strip */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="border border-white/10 bg-white/[0.02] p-3">
-          <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-white/40">Simulation</p>
+        <div className="border border-[var(--color-rule)] bg-white/[0.02] p-3">
+          <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-[var(--color-ink-faint)]">Simulation</p>
           <div className="mt-1.5 space-y-0.5 font-mono text-[11px]">
-            <div className="flex justify-between"><span className="text-white/40">win</span><span className="text-emerald-300">{simulation.valid ? pct(simulation.winProbability) : '—'}</span></div>
-            <div className="flex justify-between"><span className="text-white/40">loss</span><span className="text-white/70">{simulation.valid ? pct(simulation.lossProbability) : '—'}</span></div>
-            <div className="flex justify-between"><span className="text-white/40">E[ret]</span><span className="text-white/70">{simulation.valid ? `${(simulation.expectedReturn * 100).toFixed(1)}%` : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-[var(--color-ink-faint)]">win</span><span className="text-[var(--color-accent)]">{simulation.valid ? pct(simulation.winProbability) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-[var(--color-ink-faint)]">loss</span><span className="text-[var(--color-ink-muted)]">{simulation.valid ? pct(simulation.lossProbability) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-[var(--color-ink-faint)]">E[ret]</span><span className="text-[var(--color-ink-muted)]">{simulation.valid ? `${(simulation.expectedReturn * 100).toFixed(1)}%` : '—'}</span></div>
           </div>
-          <p className="mt-1.5 font-mono text-[9px] text-white/30">{simulation.runs.toLocaleString()} paths</p>
+          <p className="mt-1.5 font-mono text-[9px] text-[var(--color-ink-faint)]">{simulation.runs.toLocaleString()} paths</p>
         </div>
-        <div className="border border-white/10 bg-white/[0.02] p-3">
-          <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-white/40">Fixture</p>
-          <p className="mt-1.5 text-xs text-white/80">{fixture.home.name} v {fixture.away.name}</p>
-          <p className="mt-0.5 text-[10px] text-white/45">{fixture.competition}</p>
-          <p className="mt-2 break-all font-mono text-[9px] text-white/35">
+        <div className="border border-[var(--color-rule)] bg-white/[0.02] p-3">
+          <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-[var(--color-ink-faint)]">Fixture</p>
+          <p className="mt-1.5 text-xs text-[var(--color-ink)]">{fixture.home.name} v {fixture.away.name}</p>
+          <p className="mt-0.5 text-[10px] text-[var(--color-ink-faint)]">{fixture.competition}</p>
+          <p className="mt-2 break-all font-mono text-[9px] text-[var(--color-ink-faint)]">
             {result.receipt.proof.integrity.contentHash.slice(0, 20)}…
           </p>
         </div>
@@ -354,10 +354,10 @@ function DryRunResult({ result }) {
       <button
         type="button"
         onClick={() => setGatesOpen((v) => !v)}
-        className="flex w-full items-center justify-between border border-white/10 bg-white/[0.02] px-3 py-2 text-left"
+        className="flex w-full items-center justify-between border border-[var(--color-rule)] bg-white/[0.02] px-3 py-2 text-left"
       >
-        <span className="font-mono text-[10px] uppercase tracking-[0.13em] text-white/40">Policy gates</span>
-        <ChevronDown className={`h-3 w-3 text-white/40 transition-transform ${gatesOpen ? 'rotate-180' : ''}`} />
+        <span className="font-mono text-[10px] uppercase tracking-[0.13em] text-[var(--color-ink-faint)]">Policy gates</span>
+        <ChevronDown className={`h-3 w-3 text-[var(--color-ink-faint)] transition-transform ${gatesOpen ? 'rotate-180' : ''}`} />
       </button>
       {gatesOpen && (
         <ul className="space-y-1 px-1">
@@ -365,19 +365,19 @@ function DryRunResult({ result }) {
             <li key={gate.id} className="flex items-start gap-2 text-xs">
               <span
                 className={`mt-0.5 inline-block h-2 w-2 shrink-0 ${
-                  gate.passed ? 'bg-emerald-400' : 'bg-red-400'
+                  gate.passed ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-breach)]'
                 }`}
               />
               <span className="flex-1">
-                <span className="font-mono text-white/80">{gate.id}</span>
-                <span className="text-white/45"> — {gate.description}</span>
+                <span className="font-mono text-[var(--color-ink)]">{gate.id}</span>
+                <span className="text-[var(--color-ink-faint)]"> — {gate.description}</span>
               </span>
             </li>
           ))}
         </ul>
       )}
 
-      <p className="font-mono text-[9px] text-white/30">
+      <p className="font-mono text-[9px] text-[var(--color-ink-faint)]">
         Dry-run · {policy.version} · not persisted
       </p>
     </div>

@@ -32,12 +32,12 @@ export default function LiveMarketMetrics({ market, armed }) {
           className="fc-metric edge-cell px-3 py-4"
           style={{ animationDelay: `${120 + i * 90}ms` }}
         >
-          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
             {cell.label}
           </div>
           <TweenNumber
             className={`mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl ${
-              cell.accent ? 'text-emerald-300' : 'text-white'
+              cell.accent ? 'text-[var(--color-accent)]' : 'text-[var(--color-ink)]'
             }`}
             value={armed ? cell.target : 0}
             duration={cell.duration}

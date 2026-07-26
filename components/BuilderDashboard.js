@@ -19,8 +19,8 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  const { stats, loading, error, isConfigured, relayerConfig, refresh } = useBuilder();
  const [refreshing, setRefreshing] = useState(false);
 
- const textColor = 'text-white';
- const subtleText = 'text-white/60';
+ const textColor = 'text-[var(--color-ink)]';
+ const subtleText = 'text-[var(--color-ink-muted)]';
 
  if (variant === 'compact') {
  if (!isConfigured) return null;
@@ -40,7 +40,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  </div>
  <a
  href="/labs/builder"
- className={`text-xs no-underline text-indigo-300 hover:text-indigo-200`}
+ className={`text-xs no-underline text-[var(--color-review)] hover:text-[var(--color-review)]`}
  >
  Details →
  </a>
@@ -51,10 +51,10 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  if (!isConfigured) {
  return (
  <div className={` p-6 mc-panel`}>
- <h3 className={`font-medium mb-3 text-white`}>
+ <h3 className={`font-medium mb-3 text-[var(--color-ink)]`}>
  Builder Program
  </h3>
- <p className={`text-sm text-white/60`}>
+ <p className={`text-sm text-[var(--color-ink-muted)]`}>
  Configure builder credentials in your environment to get started
  </p>
  </div>
@@ -81,7 +81,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  className={`p-2 transition-all ${
  refreshing
  ? 'opacity-50 cursor-not-allowed'
- : 'hover:bg-white/10'
+ : 'hover:bg-[var(--color-paper-soft)]'
  }`}
  >
  <svg
@@ -96,7 +96,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  {onClose && (
  <button
  onClick={onClose}
- className={`p-2 transition-all hover:bg-white/10`}
+ className={`p-2 transition-all hover:bg-[var(--color-paper-soft)]`}
  >
  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -105,14 +105,14 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  )}
  </div>
  {error && (
- <div className={`text-xs p-3 bg-red-500/10 text-red-300`}>
+ <div className={`text-xs p-3 bg-[var(--color-breach)]/10 text-[var(--color-breach)]`}>
  {error}
  </div>
  )}
  {loading ? (
  <div className="space-y-3 animate-pulse">
- <div className={`h-4 bg-white/10`} />
- <div className={`h-4 bg-white/10`} />
+ <div className={`h-4 bg-[var(--color-paper-soft)]`} />
+ <div className={`h-4 bg-[var(--color-paper-soft)]`} />
  </div>
  ) : stats && !stats.error ? (
  <>
@@ -137,16 +137,16 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
 
  {/* Features */}
  {relayerConfig?.gasless && (
- <div className={`border p-4 border-green-400/30 bg-green-500/10`}>
+ <div className={`border p-4 border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10`}>
  <div className="flex gap-2 mb-2">
- <svg className={`w-5 h-5 text-green-400`} fill="currentColor" viewBox="0 0 20 20">
+ <svg className={`w-5 h-5 text-[var(--color-accent)]`} fill="currentColor" viewBox="0 0 20 20">
  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
  </svg>
- <h4 className={`font-medium text-sm text-green-200`}>
+ <h4 className={`font-medium text-sm text-[var(--color-accent)]`}>
  Gasless Trading Active
  </h4>
  </div>
- <ul className={`text-xs space-y-1 text-green-300/70`}>
+ <ul className={`text-xs space-y-1 text-[var(--color-accent)]/70`}>
  <li>✓ Free wallet deployment</li>
  <li>✓ Free token approvals</li>
  <li>✓ Free order execution</li>
@@ -159,7 +159,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  href="https://builders.polymarket.com/"
  target="_blank"
  rel="noopener noreferrer"
- className={`block w-full py-2 px-3 font-medium text-center text-sm transition-all bg-blue-500/20 hover:bg-blue-500/30 text-blue-200`}
+ className={`block w-full py-2 px-3 font-medium text-center text-sm transition-all bg-[var(--color-evidence)]/20 hover:bg-[var(--color-evidence)]/30 text-[var(--color-evidence)]`}
  >
  View Full Leaderboard →
  </a>
@@ -172,10 +172,10 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
 function MetricCard({ label, value, isNight }) {
  return (
  <div className={` p-3 text-center glass-input`}>
- <div className={`text-xs font-light text-white/60`}>
+ <div className={`text-xs font-light text-[var(--color-ink-muted)]`}>
  {label}
  </div>
- <div className={`text-lg font-medium mt-1 text-white`}>
+ <div className={`text-lg font-medium mt-1 text-[var(--color-ink)]`}>
  {value}
  </div>
  </div>

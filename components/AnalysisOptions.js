@@ -190,10 +190,10 @@ export default function AnalysisOptions({
  return (
  <div className={`glass-panel p-4 ${className}`}>
  <div className="flex items-center justify-between mb-3">
- <h3 className="text-sm font-semibold text-white/90">Analysis Factors</h3>
+ <h3 className="text-sm font-semibold text-[var(--color-ink)]">Analysis Factors</h3>
  <button
  onClick={() => setOptions(getSmartDefaults(marketType))}
- className="text-xs text-white/50 hover:text-white/80 transition-colors"
+ className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors"
  >
  Reset to defaults
  </button>
@@ -220,7 +220,7 @@ export default function AnalysisOptions({
  {isFinanceMarket && (
  <>
  <div className="pt-2 pb-1">
- <p className="text-xs text-white/40 uppercase tracking-wider">Finance Analysis</p>
+ <p className="text-xs text-[var(--color-ink-faint)] uppercase tracking-wider">Finance Analysis</p>
  </div>
  <ToggleRow
  label="📊 Fundamental"
@@ -251,14 +251,14 @@ export default function AnalysisOptions({
  />
  
  <details className="group">
- <summary className="cursor-pointer text-xs text-white/50 hover:text-white/70 mt-3 list-none flex items-center gap-1">
+ <summary className="cursor-pointer text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] mt-3 list-none flex items-center gap-1">
  <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
  </svg>
  Advanced options
  </summary>
  
- <div className="mt-2 pt-2 border-t border-white/10 space-y-2">
+ <div className="mt-2 pt-2 border-t border-[var(--color-rule)] space-y-2">
  <ToggleRow
  label="Deep web scrape"
  description="Optional enrichment when available — analysis works without it"
@@ -276,24 +276,24 @@ export default function AnalysisOptions({
 function ToggleRow({ label, description, isActive, onClick, autoDetected = false }) {
  return (
  <div
- className="flex items-center justify-between py-2 px-2 -mx-2 hover:bg-white/5 cursor-pointer transition-colors"
+ className="flex items-center justify-between py-2 px-2 -mx-2 hover:bg-[var(--color-paper-raised)] cursor-pointer transition-colors"
  onClick={onClick}
  >
  <div className="flex-1">
  <div className="flex items-center gap-2">
- <span className="text-sm text-white/90">{label}</span>
+ <span className="text-sm text-[var(--color-ink)]">{label}</span>
  {autoDetected && (
- <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400">
+ <span className="text-[10px] px-1.5 py-0.5 bg-[var(--color-accent)]/20 text-[var(--color-accent)]">
  auto
  </span>
  )}
  </div>
- <p className="text-xs text-white/50">{description}</p>
+ <p className="text-xs text-[var(--color-ink-faint)]">{description}</p>
  </div>
  
  <button
  className={`relative w-10 h-6 transition-colors ${
- isActive ? 'bg-emerald-500' : 'bg-white/20'
+ isActive ? 'bg-[var(--color-accent)]' : 'bg-white/20'
  }`}
  onClick={(e) => {
  e.stopPropagation();
@@ -318,10 +318,10 @@ function ToggleButton({ label, isActive, onClick, autoDetected = false, compact 
  className={`
  px-3 py-1.5 text-xs font-medium transition-all
  ${isActive 
- ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50' 
- : 'bg-white/10 text-white/50 border border-white/10'
+ ? 'bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/50' 
+ : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)] border border-[var(--color-rule)]'
  }
- ${autoDetected && isActive ? 'ring-1 ring-emerald-500/30' : ''}
+ ${autoDetected && isActive ? 'ring-1 ring-[var(--color-accent)]/30' : ''}
  hover:scale-105 active:scale-95
  `}
  >

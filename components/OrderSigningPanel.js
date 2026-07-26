@@ -186,8 +186,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
 
  // Glass CSS classes (DRY)
  const glassPanel = 'mc-panel';
- const textColor = 'text-white';
- const borderColor = 'border-white/10';
+ const textColor = 'text-[var(--color-ink)]';
+ const borderColor = 'border-[var(--color-rule)]';
 
  const content = (
  <div
@@ -224,7 +224,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar">
  {/* Chain & Balance Status Card */}
  {isConnected && (
- <div className={`bg-white/5 border-white/10 border p-4`}>
+ <div className={`bg-[var(--color-paper-raised)] border-[var(--color-rule)] border p-4`}>
  <div className="space-y-2">
  {isCorrectChain ? (
  <>
@@ -234,7 +234,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  ✓ {POLYGON_CHAIN_NAME}
  </span>
  </div>
- <div className="flex items-center justify-between pt-2 border-t border-white/10">
+ <div className="flex items-center justify-between pt-2 border-t border-[var(--color-rule)]">
  <span className={`text-xs ${textColor} opacity-70`}>Available Balance</span>
  <span className={`text-sm font-light ${textColor}`}>
  ${userBalance.toFixed(2)} {balanceSymbol}
@@ -245,13 +245,13 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <>
  <div className="flex items-center justify-between">
  <span className={`text-xs ${textColor} opacity-70`}>Network</span>
- <span className={`text-xs text-amber-400`}>
+ <span className={`text-xs text-[var(--color-sealed)]`}>
  {chain?.name || 'Unknown'}
  </span>
  </div>
  <button
  onClick={() => switchChain?.({ chainId: POLYGON_CHAIN_ID })}
- className={`w-full py-2 font-light text-xs transition-all border mt-2 bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-300`}
+ className={`w-full py-2 font-light text-xs transition-all border mt-2 bg-[var(--color-sealed)]/20 hover:bg-[var(--color-sealed)]/30 border-[var(--color-sealed)]/30 text-[var(--color-sealed)]`}
  >
  Switch to {POLYGON_CHAIN_NAME}
  </button>
@@ -263,7 +263,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
 
  {/* Connection Required */}
  {!isConnected && (
- <div className={`bg-white/5 border-white/10 border p-4 text-center`}>
+ <div className={`bg-[var(--color-paper-raised)] border-[var(--color-rule)] border p-4 text-center`}>
  <p className={`text-xs ${textColor} opacity-70 mb-3`}>
  Connect wallet to trade
  </p>
@@ -275,13 +275,13 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  {kellyResult && (
  <div className={` border overflow-hidden transition-all ${
  kellyResult.actionable
- ? 'bg-gradient-to-br from-purple-900/40 via-blue-900/20 to-emerald-900/30 border-purple-500/30 shadow-lg shadow-purple-500/10'
- : 'bg-white/5 border-white/10'
+ ? 'bg-gradient-to-br from-[var(--color-review)]/40 via-[var(--color-evidence)]/20 to-[var(--color-accent)]/30 border-[var(--color-review)]/30 shadow-lg shadow-[var(--color-review)]/10'
+ : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)]'
  }`}>
  {/* Header */}
  <div className={`flex items-center gap-2 px-3 py-2 border-b ${
  kellyResult.actionable
- ? 'border-purple-500/20'
+ ? 'border-[var(--color-review)]/20'
  : borderColor
  }`}>
  <span className="text-sm">🧮</span>
@@ -291,8 +291,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  {kellyResult.actionable && (
  <span className={`ml-auto px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
  analysis?.source?.includes('synthdata')
- ? 'bg-purple-500/30 text-purple-300'
- : 'bg-blue-500/30 text-blue-300'
+ ? 'bg-[var(--color-review)]/30 text-[var(--color-review)]'
+ : 'bg-[var(--color-evidence)]/30 text-[var(--color-evidence)]'
  }`}>
  {analysis?.source?.includes('synthdata') ? 'ML ENSEMBLE' : 'AI'}
  </span>
@@ -308,15 +308,15 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <div className="flex items-center gap-2">
  <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
  kellyResult.direction === 'BUY YES'
- ? 'bg-green-500/20 text-green-300 border border-green-500/30'
- : 'bg-red-500/20 text-red-300 border border-red-500/30'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] border border-[var(--color-accent)]/30'
+ : 'bg-[var(--color-breach)]/20 text-[var(--color-breach)] border border-[var(--color-breach)]/30'
  }`}>
  {kellyResult.direction === 'BUY YES' ? '▲ BUY YES' : '▼ BUY NO'}
  </span>
  <span className={`text-lg font-bold ${
  kellyResult.edge > 0
- ? 'text-emerald-400'
- : 'text-red-400'
+ ? 'text-[var(--color-accent)]'
+ : 'text-[var(--color-breach)]'
  }`}>
  {(kellyResult.edge * 100).toFixed(1)}%
  </span>
@@ -324,7 +324,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  </div>
 
  {/* Kelly fraction badge */}
- <span className={`text-[10px] px-2 py-0.5 bg-white/5 text-white/50`}>
+ <span className={`text-[10px] px-2 py-0.5 bg-[var(--color-paper-raised)] text-[var(--color-ink-faint)]`}>
  k = {kellyResult.kellyPct.toFixed(2)}
  </span>
  </div>
@@ -347,8 +347,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  disabled={userBalance <= 0}
  className={`px-3 py-1 text-[11px] font-medium transition-all border ${
  userBalance > 0
- ? 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-400/30 text-purple-200 hover:scale-105'
- : 'bg-gray-500/20 border-gray-400/20 text-gray-400 cursor-not-allowed'
+ ? 'bg-[var(--color-review)]/20 hover:bg-[var(--color-review)]/30 border-[var(--color-review)]/30 text-[var(--color-review)] hover:scale-105'
+ : 'bg-[var(--color-paper-soft)] border-[var(--color-rule)] text-[var(--color-ink-faint)] cursor-not-allowed'
  }`}
  >
  Apply ✓
@@ -359,10 +359,10 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <div className="flex items-center gap-3 text-[10px]">
  <span className={`px-1.5 py-0.5 ${
  (analysis?.assessment?.confidence || 'LOW') === 'HIGH'
- ? 'bg-green-500/20 text-green-300'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
  : (analysis?.assessment?.confidence || 'LOW') === 'MEDIUM'
- ? 'bg-yellow-500/20 text-yellow-300'
- : 'bg-red-500/20 text-red-300'
+ ? 'bg-[var(--color-sealed)]/20 text-[var(--color-sealed)]'
+ : 'bg-[var(--color-breach)]/20 text-[var(--color-breach)]'
  }`}>
  {analysis?.assessment?.confidence || 'LOW'}
  </span>
@@ -399,8 +399,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  key={s}
  onClick={() => setSide(s)}
  className={`flex-1 py-2 font-light text-sm transition-all border ${side === s
- ? 'bg-blue-500/40 border-blue-400 text-blue-100'
- : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+ ? 'bg-[var(--color-evidence)]/40 border-[var(--color-evidence)] text-[var(--color-evidence)]'
+ : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-muted)] hover:bg-[var(--color-paper-soft)]'
  }`}
  >
  {s}
@@ -419,7 +419,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  step="0.01"
  value={price}
  onChange={(e) => setPrice(e.target.value)}
- className={`w-full px-3 py-2 bg-transparent border ${borderColor} ${textColor} placeholder:${textColor} placeholder:opacity-30 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+ className={`w-full px-3 py-2 bg-transparent border ${borderColor} ${textColor} placeholder:${textColor} placeholder:opacity-30 focus:outline-none focus:ring-2 focus:ring-[var(--color-evidence)]/50`}
  placeholder="0.50"
  />
  <p className={`text-xs ${textColor} opacity-50 mt-1`}>
@@ -435,14 +435,14 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  min="1"
  value={size}
  onChange={(e) => setSize(e.target.value)}
- className={`w-full px-3 py-2 bg-transparent border ${borderColor} ${textColor} placeholder:${textColor} placeholder:opacity-30 focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+ className={`w-full px-3 py-2 bg-transparent border ${borderColor} ${textColor} placeholder:${textColor} placeholder:opacity-30 focus:outline-none focus:ring-2 focus:ring-[var(--color-evidence)]/50`}
  placeholder="100"
  />
  </div>
 
  {/* Cost Estimate */}
  {estimatedCost > 0 && (
- <div className={`bg-white/5 border-white/10 border p-3`}>
+ <div className={`bg-[var(--color-paper-raised)] border-[var(--color-rule)] border p-3`}>
  <div className="flex justify-between items-center">
  <span className={`text-sm ${textColor} opacity-70`}>Estimated Cost</span>
  <span className={`text-lg font-light ${textColor}`}>
@@ -450,14 +450,14 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  </span>
  </div>
  {isConnected && isCorrectChain && userBalance < estimatedCost && (
- <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/10">
+ <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-[var(--color-rule)]">
  <div className="flex items-center gap-2">
- <span className="text-red-400">⚠️</span>
- <span className={`text-xs text-red-400`}>Insufficient balance</span>
+ <span className="text-[var(--color-breach)]">⚠️</span>
+ <span className={`text-xs text-[var(--color-breach)]`}>Insufficient balance</span>
  </div>
  <button
  onClick={() => window.open('https://app.uniswap.org/swap?outputCurrency=0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', '_blank')}
- className={`w-full py-2 font-light text-xs transition-all border bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 text-blue-300`}
+ className={`w-full py-2 font-light text-xs transition-all border bg-[var(--color-evidence)]/20 hover:bg-[var(--color-evidence)]/30 border-[var(--color-evidence)]/30 text-[var(--color-evidence)]`}
  >
  Quick Swap ETH to USDC ↗
  </button>
@@ -468,8 +468,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
 
  {/* Error Display */}
  {error && (
- <div className={`bg-red-500/20 border-red-400/30 border p-3`}>
- <p className={`text-sm ${textColor} text-red-400`}>{error}</p>
+ <div className={`bg-[var(--color-breach)]/20 border-[var(--color-breach)]/30 border p-3`}>
+ <p className={`text-sm ${textColor} text-[var(--color-breach)]`}>{error}</p>
  </div>
  )}
 
@@ -478,7 +478,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  {!embedded && (
  <button
  onClick={onClose}
- className={`flex-1 py-3 font-light text-sm transition-all border bg-white/5 hover:bg-white/10 border-white/10 text-white/70`}
+ className={`flex-1 py-3 font-light text-sm transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] border-[var(--color-rule)] text-[var(--color-ink-muted)]`}
  >
  Cancel
  </button>
@@ -487,8 +487,8 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  onClick={() => setStep('review')}
  disabled={!isConnected || !isCorrectChain || !size || !price || estimatedCost > userBalance}
  className={`flex-1 py-3 font-light text-sm transition-all border ${isConnected && isCorrectChain && size && price && estimatedCost <= userBalance
- ? 'bg-blue-500/30 hover:bg-blue-500/40 border-blue-400/30 text-blue-200'
- : 'bg-gray-500/20 border-gray-400/20 text-gray-400'
+ ? 'bg-[var(--color-evidence)]/30 hover:bg-[var(--color-evidence)]/40 border-[var(--color-evidence)]/30 text-[var(--color-evidence)]'
+ : 'bg-[var(--color-paper-soft)] border-[var(--color-rule)] text-[var(--color-ink-faint)]'
  }`}
  title={
  !isConnected
@@ -511,7 +511,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  {/* Review Step */}
  {step === 'review' && (
  <div className="space-y-4 flex-1 flex flex-col">
- <div className={`bg-white/5 p-4 space-y-3`}>
+ <div className={`bg-[var(--color-paper-raised)] p-4 space-y-3`}>
  <OrderReviewRow label="Prediction" value={side} textColor={textColor} />
  <OrderReviewRow label="Price" value={`$${price}`} textColor={textColor} />
  <OrderReviewRow label="Size" value={`${size} shares`} textColor={textColor} />
@@ -527,13 +527,13 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <div className="flex gap-3 pt-4 mt-auto">
  <button
  onClick={() => setStep('input')}
- className={`flex-1 py-3 font-light text-sm transition-all border bg-white/5 hover:bg-white/10 border-white/10 text-white/70`}
+ className={`flex-1 py-3 font-light text-sm transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] border-[var(--color-rule)] text-[var(--color-ink-muted)]`}
  >
  Back
  </button>
  <button
  onClick={handleSubmitOrder}
- className={`flex-1 py-3 font-light text-sm transition-all border bg-green-500/30 hover:bg-green-500/40 border-green-400/30 text-green-200`}
+ className={`flex-1 py-3 font-light text-sm transition-all border bg-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/40 border-[var(--color-accent)]/30 text-[var(--color-accent)]`}
  >
  Sign & Submit
  </button>
@@ -546,7 +546,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <div className="space-y-4 text-center flex-1 flex flex-col justify-center">
  <div className="flex justify-center py-8">
  <div className="relative w-16 h-16">
- <div className={`absolute inset-0 border-4 border-blue-500/30 animate-spin`} />
+ <div className={`absolute inset-0 border-4 border-[var(--color-evidence)]/30 animate-spin`} />
  <div className="absolute inset-0 flex items-center justify-center">
  <span className="text-2xl">🔐</span>
  </div>
@@ -566,7 +566,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <span className="text-5xl">✓</span>
  </div>
  <p className={`text-lg ${textColor} font-light`}>Order Submitted</p>
- <div className={`bg-green-500/20 border-green-400/30 border p-3`}>
+ <div className={`bg-[var(--color-accent)]/20 border-[var(--color-accent)]/30 border p-3`}>
  <p className={`text-sm font-light ${textColor}`}>
  Order ID: {success.orderID}
  </p>

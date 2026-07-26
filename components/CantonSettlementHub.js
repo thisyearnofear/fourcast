@@ -15,15 +15,15 @@ import { useCantonWalletContext } from '@/app/CantonWalletLayer';
  */
 
 const ASSETS = {
-  CBTC: { symbol: 'cBTC', name: 'Canton Bitcoin', color: 'text-amber-300' },
-  CETH: { symbol: 'cETH', name: 'Canton Ethereum', color: 'text-blue-300' },
+  CBTC: { symbol: 'cBTC', name: 'Canton Bitcoin', color: 'text-[var(--color-sealed)]' },
+  CETH: { symbol: 'cETH', name: 'Canton Ethereum', color: 'text-[var(--color-evidence)]' },
 };
 
 const STATUS_STYLES = {
-  open: { label: 'Open', dot: 'bg-emerald-400', text: 'text-emerald-300' },
-  resolved: { label: 'Resolved', dot: 'bg-sky-400', text: 'text-sky-300' },
-  settled: { label: 'Settled', dot: 'bg-teal-400', text: 'text-teal-300' },
-  expired: { label: 'Expired', dot: 'bg-white/30', text: 'text-white/40' },
+  open: { label: 'Open', dot: 'bg-[var(--color-accent)]', text: 'text-[var(--color-accent)]' },
+  resolved: { label: 'Resolved', dot: 'bg-[var(--color-evidence)]', text: 'text-[var(--color-evidence)]' },
+  settled: { label: 'Settled', dot: 'bg-[var(--color-accent)]', text: 'text-[var(--color-accent)]' },
+  expired: { label: 'Expired', dot: 'bg-white/30', text: 'text-[var(--color-ink-faint)]' },
 };
 
 function truncateCid(cid) {
@@ -82,7 +82,7 @@ function CreateMarketPanel({ onCreated, onStatus }) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-[10px] uppercase tracking-wider text-white/40 mb-1.5">Prediction question</label>
+        <label className="block text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1.5">Prediction question</label>
         <input
           type="text"
           value={question}
@@ -95,7 +95,7 @@ function CreateMarketPanel({ onCreated, onStatus }) {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="block text-[10px] uppercase tracking-wider text-white/40 mb-1.5">Settlement asset</label>
+          <label className="block text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1.5">Settlement asset</label>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(ASSETS).map(([key, { symbol, color }]) => (
               <button
@@ -105,8 +105,8 @@ function CreateMarketPanel({ onCreated, onStatus }) {
                 disabled={submitting}
                 className={`px-3 py-2 text-xs font-medium transition-all border ${
                   asset === key
-                    ? 'bg-teal-400/10 border-teal-400/30 text-teal-200'
-                    : 'bg-white/[0.03] border-white/10 text-white/50 hover:text-white/70'
+                    ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]/30 text-[var(--color-accent)]'
+                    : 'bg-white/[0.03] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
                 }`}
               >
                 <span className={asset === key ? color : ''}>{symbol}</span>
@@ -116,7 +116,7 @@ function CreateMarketPanel({ onCreated, onStatus }) {
           </div>
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-wider text-white/40 mb-1.5">Duration</label>
+          <label className="block text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1.5">Duration</label>
           <div className="flex items-center gap-2">
             {[3, 7, 14, 30].map((d) => (
               <button
@@ -126,8 +126,8 @@ function CreateMarketPanel({ onCreated, onStatus }) {
                 disabled={submitting}
                 className={`flex-1 px-2 py-2 text-xs font-medium transition-all border ${
                   days === d
-                    ? 'bg-teal-400/10 border-teal-400/30 text-teal-200'
-                    : 'bg-white/[0.03] border-white/10 text-white/50 hover:text-white/70'
+                    ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]/30 text-[var(--color-accent)]'
+                    : 'bg-white/[0.03] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
                 }`}
               >
                 {d}d
@@ -137,7 +137,7 @@ function CreateMarketPanel({ onCreated, onStatus }) {
         </div>
       </div>
 
-      {error && <p className="border border-red-400/20 bg-red-400/10 p-2 text-[11px] text-red-200">{error}</p>}
+      {error && <p className="border border-[var(--color-breach)]/20 bg-[var(--color-breach)]/10 p-2 text-[11px] text-[var(--color-breach)]">{error}</p>}
 
       <button
         type="button"
@@ -166,29 +166,29 @@ function MarketRow({ market, resolution, onResolve }) {
         className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition-colors sm:px-5"
       >
         <div className="min-w-0 flex-1">
-          <div className="text-xs text-white leading-snug truncate">
+          <div className="text-xs text-[var(--color-ink)] leading-snug truncate">
             {payload.question || 'Untitled market'}
           </div>
-          <div className="mt-1 flex items-center gap-2 text-[10px] text-white/40 font-mono">
+          <div className="mt-1 flex items-center gap-2 text-[10px] text-[var(--color-ink-faint)] font-mono">
             <span>{payload.marketId || '—'}</span>
-            <span className="h-3 w-px bg-white/10" />
+            <span className="h-3 w-px bg-[var(--color-paper-soft)]" />
             <span>{payload.settlementAsset === 'CETH' ? 'cETH' : 'cBTC'}</span>
-            <span className="h-3 w-px bg-white/10" />
+            <span className="h-3 w-px bg-[var(--color-paper-soft)]" />
             <span>{formatTime(payload.createdAt)}</span>
           </div>
         </div>
         {resolution ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider border border-sky-400/20 bg-sky-400/5 text-sky-300">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider border border-[var(--color-evidence)]/20 bg-[var(--color-evidence)]/5 text-[var(--color-evidence)]">
             <CheckCircle2 className="h-2.5 w-2.5" />
             {resolution.payload?.outcome?.replace('Resolved', '') || 'Resolved'}
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider border border-emerald-400/20 bg-emerald-400/5 text-emerald-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/5 text-[var(--color-accent)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" />
             Active
           </span>
         )}
-        {expanded ? <ChevronDown className="h-3.5 w-3.5 text-white/30" /> : <ChevronRight className="h-3.5 w-3.5 text-white/30" />}
+        {expanded ? <ChevronDown className="h-3.5 w-3.5 text-[var(--color-ink-faint)]" /> : <ChevronRight className="h-3.5 w-3.5 text-[var(--color-ink-faint)]" />}
       </button>
 
       {expanded && (
@@ -237,13 +237,13 @@ function ResolveControls({ marketCid, onResolved }) {
 
   return (
     <div className="pt-2">
-      <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Resolve outcome</div>
+      <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-2">Resolve outcome</div>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => resolve('ResolvedYes')}
           disabled={resolving}
-          className="flex-1 px-3 py-2 text-[11px] font-medium border border-emerald-400/20 bg-emerald-400/5 text-emerald-300 hover:bg-emerald-400/10 transition-colors disabled:opacity-40"
+          className="flex-1 px-3 py-2 text-[11px] font-medium border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/5 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 transition-colors disabled:opacity-40"
         >
           YES wins
         </button>
@@ -251,7 +251,7 @@ function ResolveControls({ marketCid, onResolved }) {
           type="button"
           onClick={() => resolve('ResolvedNo')}
           disabled={resolving}
-          className="flex-1 px-3 py-2 text-[11px] font-medium border border-red-400/20 bg-red-400/5 text-red-300 hover:bg-red-400/10 transition-colors disabled:opacity-40"
+          className="flex-1 px-3 py-2 text-[11px] font-medium border border-[var(--color-breach)]/20 bg-[var(--color-breach)]/5 text-[var(--color-breach)] hover:bg-[var(--color-breach)]/10 transition-colors disabled:opacity-40"
         >
           NO wins
         </button>
@@ -259,12 +259,12 @@ function ResolveControls({ marketCid, onResolved }) {
           type="button"
           onClick={() => resolve('Voided')}
           disabled={resolving}
-          className="px-3 py-2 text-[11px] font-medium border border-white/10 bg-white/[0.03] text-white/50 hover:text-white/70 transition-colors disabled:opacity-40"
+          className="px-3 py-2 text-[11px] font-medium border border-[var(--color-rule)] bg-white/[0.03] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors disabled:opacity-40"
         >
           Void
         </button>
       </div>
-      {error && <p className="mt-2 text-[10px] text-red-200">{error}</p>}
+      {error && <p className="mt-2 text-[10px] text-[var(--color-breach)]">{error}</p>}
     </div>
   );
 }
@@ -311,16 +311,16 @@ function PositionRow({ position, resolutions, onSettled }) {
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-medium ${payload.side === 'Yes' ? 'text-emerald-300' : 'text-red-300'}`}>
+            <span className={`text-xs font-medium ${payload.side === 'Yes' ? 'text-[var(--color-accent)]' : 'text-[var(--color-breach)]'}`}>
               {outcomeLabel}
             </span>
-            <span className="text-[10px] text-white/40 font-mono">
+            <span className="text-[10px] text-[var(--color-ink-faint)] font-mono">
               {payload.marketId}
             </span>
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-[10px] text-white/40 font-mono">
+          <div className="mt-0.5 flex items-center gap-2 text-[10px] text-[var(--color-ink-faint)] font-mono">
             <span className={assetMeta.color}>{payload.stake} {assetMeta.symbol}</span>
-            <span className="h-3 w-px bg-white/10" />
+            <span className="h-3 w-px bg-[var(--color-paper-soft)]" />
             <span>Holder: {payload.holder?.split('::')[0] || '—'}</span>
           </div>
         </div>
@@ -336,7 +336,7 @@ function PositionRow({ position, resolutions, onSettled }) {
           </button>
         )}
       </div>
-      {error && <p className="mt-2 text-[10px] text-red-200">{error}</p>}
+      {error && <p className="mt-2 text-[10px] text-[var(--color-breach)]">{error}</p>}
     </div>
   );
 }
@@ -346,8 +346,8 @@ function PositionRow({ position, resolutions, onSettled }) {
 function DetailRow({ label, value, mono }) {
   return (
     <div className="flex items-center gap-2 text-[11px]">
-      <span className="w-24 shrink-0 text-white/40">{label}</span>
-      <span className={`text-white/70 truncate ${mono ? 'font-mono text-[10px]' : ''}`}>
+      <span className="w-24 shrink-0 text-[var(--color-ink-faint)]">{label}</span>
+      <span className={`text-[var(--color-ink-muted)] truncate ${mono ? 'font-mono text-[10px]' : ''}`}>
         {value || '—'}
       </span>
     </div>
@@ -438,18 +438,18 @@ export default function CantonSettlementHub() {
         <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Zap className="h-3.5 w-3.5 text-teal-300/80" />
+              <Zap className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
               <span className="mc-kicker">Settlement hub · Canton Devnet</span>
             </div>
             <div className="flex items-center gap-3">
               {/* Party selector */}
               {parties.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <label className="text-[10px] text-white/40">View as:</label>
+                  <label className="text-[10px] text-[var(--color-ink-faint)]">View as:</label>
                   <select
                     value={selectedPartyId || ''}
                     onChange={(e) => setSelectedPartyId(e.target.value)}
-                    className="text-xs bg-[var(--color-paper)] border border-white/10 text-white px-2 py-1 rounded"
+                    className="text-xs bg-[var(--color-paper)] border border-[var(--color-rule)] text-[var(--color-ink)] px-2 py-1 rounded"
                   >
                     {parties.map((party) => (
                       <option key={party.id} value={party.id}>
@@ -460,15 +460,15 @@ export default function CantonSettlementHub() {
                 </div>
               )}
               {status && (
-                <span className="text-[10px] text-teal-300/70 font-mono">{status}</span>
+                <span className="text-[10px] text-[var(--color-accent)]/70 font-mono">{status}</span>
               )}
               <div className="flex items-center gap-1.5">
-                <span className={`h-1.5 w-1.5 rounded-full ${canton.connected ? 'bg-emerald-400' : 'bg-white/20'}`} />
-                <span className="text-[10px] text-white/50">
+                <span className={`h-1.5 w-1.5 rounded-full ${canton.connected ? 'bg-[var(--color-accent)]' : 'bg-white/20'}`} />
+                <span className="text-[10px] text-[var(--color-ink-faint)]">
                   {canton.connected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
-              <button type="button" onClick={loadAll} disabled={loading} className="inline-flex h-7 w-7 items-center justify-center border border-white/10 text-white/40 hover:text-white hover:border-white/25 transition-colors disabled:opacity-40" aria-label="Refresh">
+              <button type="button" onClick={loadAll} disabled={loading} className="inline-flex h-7 w-7 items-center justify-center border border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] hover:border-[var(--color-rule-strong)] transition-colors disabled:opacity-40" aria-label="Refresh">
                 <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
               </button>
             </div>
@@ -477,12 +477,12 @@ export default function CantonSettlementHub() {
 
         {error && (
           <div className="px-4 py-3 sm:px-5">
-            <p className="border border-red-400/20 bg-red-400/10 p-2 text-[11px] text-red-200">{error}</p>
+            <p className="border border-[var(--color-breach)]/20 bg-[var(--color-breach)]/10 p-2 text-[11px] text-[var(--color-breach)]">{error}</p>
           </div>
         )}
 
         {/* Metrics strip */}
-        <div className="grid grid-cols-2 gap-px overflow-hidden bg-white/10 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-px overflow-hidden bg-[var(--color-paper-soft)] sm:grid-cols-5">
           <MetricCell label="Markets" value={markets.length} accent={markets.length > 0} />
           <MetricCell label="Active" value={activeMarkets.length} />
           <MetricCell label="Open positions" value={positions.length} />
@@ -499,10 +499,10 @@ export default function CantonSettlementHub() {
           className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5"
         >
           <div className="flex items-center gap-2">
-            <Plus className="h-3.5 w-3.5 text-teal-300/60" />
+            <Plus className="h-3.5 w-3.5 text-[var(--color-accent)]/60" />
             <span className="mc-kicker">Create prediction market</span>
           </div>
-          {createOpen ? <ChevronDown className="h-4 w-4 text-white/30" /> : <ChevronRight className="h-4 w-4 text-white/30" />}
+          {createOpen ? <ChevronDown className="h-4 w-4 text-[var(--color-ink-faint)]" /> : <ChevronRight className="h-4 w-4 text-[var(--color-ink-faint)]" />}
         </button>
         {createOpen && (
           <div className="border-t border-[var(--mc-rule)] px-4 py-4 sm:px-5">
@@ -518,14 +518,14 @@ export default function CantonSettlementHub() {
       <section className="platform-open-section" aria-label="Active prediction markets">
         <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
           <div className="flex items-center gap-2">
-            <Hash className="h-3.5 w-3.5 text-emerald-300/60" />
+            <Hash className="h-3.5 w-3.5 text-[var(--color-accent)]/60" />
             <span className="mc-kicker">Active markets · {activeMarkets.length}</span>
           </div>
         </div>
         {loading && markets.length === 0 ? (
-          <div className="px-4 py-6 text-center text-xs text-white/40">Loading markets...</div>
+          <div className="px-4 py-6 text-center text-xs text-[var(--color-ink-faint)]">Loading markets...</div>
         ) : activeMarkets.length === 0 ? (
-          <div className="px-4 py-6 text-center text-xs text-white/40">
+          <div className="px-4 py-6 text-center text-xs text-[var(--color-ink-faint)]">
             {markets.length > 0 ? 'All markets have been resolved' : 'No markets created yet. Create one above to get started.'}
           </div>
         ) : (
@@ -547,7 +547,7 @@ export default function CantonSettlementHub() {
         <section className="platform-open-section" aria-label="Resolved markets">
           <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-3.5 w-3.5 text-sky-300/60" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-evidence)]/60" />
               <span className="mc-kicker">Resolved markets · {resolvedMarkets.length}</span>
             </div>
           </div>
@@ -565,13 +565,13 @@ export default function CantonSettlementHub() {
       <section className="platform-open-section" aria-label="Open prediction positions">
         <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
           <div className="flex items-center gap-2">
-            <Lock className="h-3.5 w-3.5 text-teal-300/60" />
+            <Lock className="h-3.5 w-3.5 text-[var(--color-accent)]/60" />
             <span className="mc-kicker">Open positions · {positions.length}</span>
-            <span className="text-[9px] text-white/30 ml-1">(private — visible only to operator + holder)</span>
+            <span className="text-[9px] text-[var(--color-ink-faint)] ml-1">(private — visible only to operator + holder)</span>
           </div>
         </div>
         {positions.length === 0 ? (
-          <div className="px-4 py-6 text-center text-xs text-white/40">
+          <div className="px-4 py-6 text-center text-xs text-[var(--color-ink-faint)]">
             No open positions. Positions are created when a trader takes a side on a market.
           </div>
         ) : (
@@ -591,7 +591,7 @@ export default function CantonSettlementHub() {
         <section className="platform-open-section" aria-label="Settled positions">
           <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
             <div className="flex items-center gap-2">
-              <Unlock className="h-3.5 w-3.5 text-teal-300/60" />
+              <Unlock className="h-3.5 w-3.5 text-[var(--color-accent)]/60" />
               <span className="mc-kicker">Settled positions · {settledPositions.length}</span>
             </div>
           </div>
@@ -604,18 +604,18 @@ export default function CantonSettlementHub() {
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-medium ${p.side === 'Yes' ? 'text-emerald-300' : 'text-red-300'}`}>
+                      <span className={`text-xs font-medium ${p.side === 'Yes' ? 'text-[var(--color-accent)]' : 'text-[var(--color-breach)]'}`}>
                         {p.side}
                       </span>
-                      <span className={`text-[10px] font-mono ${isWin ? 'text-emerald-300' : 'text-white/40'}`}>
+                      <span className={`text-[10px] font-mono ${isWin ? 'text-[var(--color-accent)]' : 'text-[var(--color-ink-faint)]'}`}>
                         {isWin ? 'WON' : 'LOST'}
                       </span>
                     </div>
-                    <div className="mt-0.5 text-[10px] text-white/40 font-mono">
-                      {p.stake} {assetMeta.symbol} → <span className={isWin ? 'text-emerald-300' : 'text-white/40'}>{p.payout} {assetMeta.symbol}</span>
+                    <div className="mt-0.5 text-[10px] text-[var(--color-ink-faint)] font-mono">
+                      {p.stake} {assetMeta.symbol} → <span className={isWin ? 'text-[var(--color-accent)]' : 'text-[var(--color-ink-faint)]'}>{p.payout} {assetMeta.symbol}</span>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-mono border border-teal-400/20 bg-teal-400/5 text-teal-300">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-mono border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/5 text-[var(--color-accent)]">
                     <FileCheck className="h-2.5 w-2.5" /> Settled
                   </span>
                 </div>
@@ -630,7 +630,7 @@ export default function CantonSettlementHub() {
         <section className="platform-open-section" aria-label="Pending settlement obligations">
           <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
             <div className="flex items-center gap-2">
-              <Coins className="h-3.5 w-3.5 text-amber-300/60" />
+              <Coins className="h-3.5 w-3.5 text-[var(--color-sealed)]/60" />
               <span className="mc-kicker">Pending payouts · {obligations.length}</span>
             </div>
           </div>
@@ -641,11 +641,11 @@ export default function CantonSettlementHub() {
               <div key={ob.contractId} className="border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5">
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs text-white">
+                    <div className="text-xs text-[var(--color-ink)]">
                       <span className={assetMeta.color}>{o.amount} {assetMeta.symbol}</span>
-                      <span className="text-white/40 ml-2">to {o.winner?.split('::')[0] || '—'}</span>
+                      <span className="text-[var(--color-ink-faint)] ml-2">to {o.winner?.split('::')[0] || '—'}</span>
                     </div>
-                    <div className="mt-0.5 text-[10px] text-white/40 font-mono">
+                    <div className="mt-0.5 text-[10px] text-[var(--color-ink-faint)] font-mono">
                       {o.memo || o.marketId}
                     </div>
                   </div>
@@ -662,7 +662,7 @@ export default function CantonSettlementHub() {
             );
           })}
           <div className="px-4 py-3 sm:px-5">
-            <p className="text-[10px] text-white/40 leading-5">
+            <p className="text-[10px] text-[var(--color-ink-faint)] leading-5">
               Transfer cBTC/cETH to each winner via the NODERS Console Wallet, then confirm on-ledger.
               In production, CIP-56 token transfers automate this step.
             </p>
@@ -673,10 +673,10 @@ export default function CantonSettlementHub() {
       {/* Not connected fallback */}
       {!canton.connected && !loading && (
         <div className="platform-open-section px-4 py-8 text-center">
-          <p className="text-xs text-white/50 mb-3">
+          <p className="text-xs text-[var(--color-ink-faint)] mb-3">
             Canton ledger not connected. The operator needs server-side OIDC credentials to access the Canton Devnet.
           </p>
-          <p className="text-[10px] text-white/30 font-mono">
+          <p className="text-[10px] text-[var(--color-ink-faint)] font-mono">
             Set CANTON_JSON_API_URL + OIDC credentials in .env.local
           </p>
         </div>
@@ -688,8 +688,8 @@ export default function CantonSettlementHub() {
 function MetricCell({ label, value, accent }) {
   return (
     <div className="p-3 bg-[var(--color-paper)]">
-      <div className="text-[9px] uppercase tracking-wider text-white/40 mb-1">{label}</div>
-      <div className={`text-lg font-light font-mono ${accent ? 'text-teal-300' : 'text-white/80'}`}>
+      <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">{label}</div>
+      <div className={`text-lg font-light font-mono ${accent ? 'text-[var(--color-accent)]' : 'text-[var(--color-ink)]'}`}>
         {value}
       </div>
     </div>

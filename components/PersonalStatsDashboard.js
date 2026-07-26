@@ -57,7 +57,7 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
  return null;
  }
 
- const textColor = 'text-white';
+ const textColor = 'text-[var(--color-ink)]';
  const tier = stats.tier || { name: 'Predictor', emoji: '📊', color: 'gray' };
 
  if (compact) {
@@ -82,7 +82,7 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
  </div>
  </div>
  {stats.streak > 0 && (
- <div className={`bg-green-500/20 px-2 py-1 text-center`}>
+ <div className={`bg-[var(--color-accent)]/20 px-2 py-1 text-center`}>
  <p className={`text-xs ${textColor} opacity-70`}>
  🔥 {stats.streak}-day winning streak
  </p>
@@ -122,7 +122,7 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
  <button 
  key={range}
  onClick={() => setTimeRange(range)}
- className={`text-[10px] px-2 py-1 ${timeRange === range ? ('bg-blue-500/30 text-blue-200') : 'opacity-50'}`}
+ className={`text-[10px] px-2 py-1 ${timeRange === range ? ('bg-[var(--color-evidence)]/30 text-[var(--color-evidence)]') : 'opacity-50'}`}
  >
  {range.toUpperCase()}
  </button>
@@ -154,16 +154,16 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
  {positions.length > 0 ? (
  <div className="space-y-2">
  {positions.map(pos => (
- <div key={pos.id} className="flex justify-between items-center p-3 bg-white/5 border border-white/10">
+ <div key={pos.id} className="flex justify-between items-center p-3 bg-[var(--color-paper-raised)] border border-[var(--color-rule)]">
  <div>
  <p className={`text-sm ${textColor}`}>{pos.market_id}</p>
- <p className={`text-xs text-white/40`}>{pos.side} @ ${pos.entry_price}</p>
+ <p className={`text-xs text-[var(--color-ink-faint)]`}>{pos.side} @ ${pos.entry_price}</p>
  </div>
  <div className="text-right">
- <p className={`text-sm ${pos.realized_pnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+ <p className={`text-sm ${pos.realized_pnl >= 0 ? 'text-[var(--color-accent)]' : 'text-[var(--color-breach)]'}`}>
  {pos.realized_pnl >= 0 ? '+' : ''}{pos.realized_pnl} USDC
  </p>
- <p className={`text-xs text-white/40`}>{pos.status}</p>
+ <p className={`text-xs text-[var(--color-ink-faint)]`}>{pos.status}</p>
  </div>
  </div>
  ))}
@@ -186,7 +186,7 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
 }
 
 function StatCard({ label, value, subtext, isNight, info }) {
- const textColor = 'text-white';
+ const textColor = 'text-[var(--color-ink)]';
  return (
  <div className={`glass-input p-3 text-center`}>
  <p className={`text-xs ${textColor} opacity-60 mb-1`}>
@@ -200,11 +200,11 @@ function StatCard({ label, value, subtext, isNight, info }) {
 }
 
 function StatsSkeleton({ isNight, compact }) {
- const bgColor = 'bg-white/5';
- const borderColor = 'border-white/10';
+ const bgColor = 'bg-[var(--color-paper-raised)]';
+ const borderColor = 'border-[var(--color-rule)]';
  return (
  <div className={`${bgColor} border ${borderColor} p-6 space-y-4 animate-pulse`}>
- <div className="h-12 w-40 bg-white/10"></div>
+ <div className="h-12 w-40 bg-[var(--color-paper-soft)]"></div>
  </div>
  );
 }

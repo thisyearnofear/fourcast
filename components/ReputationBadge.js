@@ -35,12 +35,12 @@ export default function ReputationBadge({
  // Color the win rate text
  const winRateColor =
  winRate >= 75
- ? 'text-green-400'
+ ? 'text-[var(--color-accent)]'
  : winRate >= 55
- ? 'text-blue-400'
+ ? 'text-[var(--color-evidence)]'
  : winRate >= 40
- ? 'text-yellow-400'
- : 'text-red-400';
+ ? 'text-[var(--color-sealed)]'
+ : 'text-[var(--color-breach)]';
 
  if (variant === 'compact') {
  return (
@@ -51,24 +51,24 @@ export default function ReputationBadge({
  </span>
  {/* Calibration score */}
  {stats.calibrationScore != null && (
- <span className='text-white/50'>
+ <span className='text-[var(--color-ink-faint)]'>
  <span className={`font-medium ${
  stats.calibrationScore >= 70
- ? 'text-green-400'
+ ? 'text-[var(--color-accent)]'
  : stats.calibrationScore >= 50
- ? 'text-yellow-400'
- : 'text-red-400'
+ ? 'text-[var(--color-sealed)]'
+ : 'text-[var(--color-breach)]'
  }`}>{Math.round(stats.calibrationScore)}% cal</span>
  </span>
  )}
  {/* Brier score */}
  {stats.agentBrierScore != null && (
- <span className={`text-[10px] text-white/40`}>
+ <span className={`text-[10px] text-[var(--color-ink-faint)]`}>
  B={stats.agentBrierScore.toFixed(3)}
  </span>
  )}
  {totalPredictions > 0 && (
- <span className='text-white/40'>
+ <span className='text-[var(--color-ink-faint)]'>
  · {totalPredictions} pred
  </span>
  )}
@@ -77,10 +77,10 @@ export default function ReputationBadge({
  }
 
  // Full variant — used in profile sidebar or dedicated reputation card
- const border = 'border-white/10';
+ const border = 'border-[var(--color-rule)]';
  const bg = 'bg-white/[0.04]';
- const textColor = 'text-white';
- const muted = 'text-white/50';
+ const textColor = 'text-[var(--color-ink)]';
+ const muted = 'text-[var(--color-ink-faint)]';
 
  return (
  <div className={` ${bg} border ${border} p-4 space-y-3 ${className}`}>
@@ -119,7 +119,7 @@ export default function ReputationBadge({
  </div>
  {/* Win streak */}
  {stats.streak > 0 && (
- <div className={`text-center text-xs text-green-400/80`}>
+ <div className={`text-center text-xs text-[var(--color-accent)]/80`}>
  🔥 {stats.streak}-prediction winning streak
  </div>
  )}
@@ -129,10 +129,10 @@ export default function ReputationBadge({
  <span className={muted}>Calibration</span>
  <span className={
  stats.calibrationScore >= 70
- ? 'text-green-400'
+ ? 'text-[var(--color-accent)]'
  : stats.calibrationScore >= 50
- ? 'text-yellow-400'
- : 'text-red-400'
+ ? 'text-[var(--color-sealed)]'
+ : 'text-[var(--color-breach)]'
  }>
  {Math.round(stats.calibrationScore)}%
  </span>

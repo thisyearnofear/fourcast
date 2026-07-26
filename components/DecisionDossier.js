@@ -131,14 +131,14 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <span className="mc-kicker">Decision dossier · {fixtureId}</span>
-              <h2 id="dossier-heading" className="fc-display mt-2 font-display text-xl font-semibold tracking-tight text-white">
+              <h2 id="dossier-heading" className="fc-display mt-2 font-display text-xl font-semibold tracking-tight text-[var(--color-ink)]">
                 {headline}
               </h2>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--mc-rule)] text-white/55 transition hover:border-[var(--mc-rule-strong)] hover:text-white"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--mc-rule)] text-[var(--color-ink-faint)] transition hover:border-[var(--mc-rule-strong)] hover:text-[var(--color-ink)]"
               aria-label="Close decision dossier"
             >
               <X className="h-4 w-4" />
@@ -147,7 +147,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className={`mc-stamp ${verdictStamp}`}>{verdict}</span>
             {decision.allocationPct > 0 && (
-              <span className="font-mono text-[11px] text-white/70">
+              <span className="font-mono text-[11px] text-[var(--color-ink-muted)]">
                 {pct(decision.allocationPct)} of capital
               </span>
             )}
@@ -202,7 +202,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
 
               {/* 2. What did it decide? */}
               <DossierAccordionItem index="02" kicker="What did it decide?" isLead={leadBlock === '02'} isOpen={openBlocks.has('02')} onToggle={() => toggleBlock('02')}>
-                <p className="text-sm leading-6 text-white/80">{decision.rationale || 'Decision rationale unavailable.'}</p>
+                <p className="text-sm leading-6 text-[var(--color-ink)]">{decision.rationale || 'Decision rationale unavailable.'}</p>
                 <div className="mt-3 grid grid-cols-3 gap-px border border-[var(--mc-rule)] bg-[var(--mc-rule)]">
                   <DossierMetric label="Verdict" value={verdict} />
                   <DossierMetric label="Allocation" value={pct(decision.allocationPct)} />
@@ -216,15 +216,15 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
 
               {/* 3. What prevented it from overreaching? */}
               <DossierAccordionItem index="03" kicker="What prevented it from overreaching?" isLead={leadBlock === '03'} isOpen={openBlocks.has('03')} onToggle={() => toggleBlock('03')}>
-                <p className="mb-3 text-xs leading-5 text-white/55">
-                  Policy <span className="font-mono text-white/75">{receipt.policy?.version || 'decision-policy/v1'}</span> — every gate must clear before capital moves.
+                <p className="mb-3 text-xs leading-5 text-[var(--color-ink-faint)]">
+                  Policy <span className="font-mono text-[var(--color-ink-muted)]">{receipt.policy?.version || 'decision-policy/v1'}</span> — every gate must clear before capital moves.
                 </p>
                 <ul className="space-y-2">
                   {(decision.riskChecks || []).map((gate) => (
                     <RiskGate key={gate.id} gate={gate} />
                   ))}
                   {decision.riskChecks?.length === 0 && (
-                    <li className="font-mono text-[11px] text-white/40">No risk checks recorded on this receipt.</li>
+                    <li className="font-mono text-[11px] text-[var(--color-ink-faint)]">No risk checks recorded on this receipt.</li>
                   )}
                 </ul>
               </DossierAccordionItem>
@@ -233,12 +233,12 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
               <DossierAccordionItem index="04" kicker="When was the result unavailable?" isLead={leadBlock === '04'} isOpen={openBlocks.has('04')} onToggle={() => toggleBlock('04')}>
                 <div className="flex items-start gap-2">
                   <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--mc-sealed)]" />
-                  <p className="text-sm leading-6 text-white/75">
-                    Receipt sealed at <span className="font-mono text-white/90">{formatTime(receipt.createdAt)}</span>.
-                    Outcome remained locked until <span className="font-mono text-white/90">{formatTime(receipt.evidence?.historicalReplay?.outcomeAvailableAt)}</span>.
+                  <p className="text-sm leading-6 text-[var(--color-ink-muted)]">
+                    Receipt sealed at <span className="font-mono text-[var(--color-ink)]">{formatTime(receipt.createdAt)}</span>.
+                    Outcome remained locked until <span className="font-mono text-[var(--color-ink)]">{formatTime(receipt.evidence?.historicalReplay?.outcomeAvailableAt)}</span>.
                   </p>
                 </div>
-                <p className="mt-2 text-xs leading-5 text-white/50">
+                <p className="mt-2 text-xs leading-5 text-[var(--color-ink-faint)]">
                   The agent could not read the final score when it decided. The proof was revealed only after the replay clock crossed settlement — a lookahead guard asserts this on every receipt.
                 </p>
               </DossierAccordionItem>
@@ -260,7 +260,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
                       href={verification.explorerUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-2 inline-flex items-center gap-1 font-mono text-[10px] text-[var(--mc-reconciled)]/85 underline decoration-[var(--mc-reconciled)]/40 underline-offset-4 hover:text-white"
+                      className="mt-2 inline-flex items-center gap-1 font-mono text-[10px] text-[var(--mc-reconciled)]/85 underline decoration-[var(--mc-reconciled)]/40 underline-offset-4 hover:text-[var(--color-ink)]"
                     >
                       View PDA on Solana explorer <ArrowUpRight className="h-3 w-3" />
                     </a>
@@ -279,7 +279,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
                 {showRaw ? 'Hide raw receipt' : 'View raw receipt'}
               </button>
               {showRaw && (
-                <pre className="mt-3 max-h-96 overflow-auto border border-[var(--mc-rule)] bg-black/40 p-3 font-mono text-[10px] leading-4 text-white/65">
+                <pre className="mt-3 max-h-96 overflow-auto border border-[var(--mc-rule)] bg-[var(--color-paper-deep)] p-3 font-mono text-[10px] leading-4 text-[var(--color-ink-muted)]">
                   {JSON.stringify(state.data, null, 2)}
                 </pre>
               )}
@@ -352,11 +352,11 @@ function DossierAccordionItem({ index, kicker, children, isLead = false, isOpen 
           <span className={`font-mono text-[10px] ${isLead || isOpen ? 'text-[var(--mc-reconciled)]' : 'text-[var(--mc-reconciled)]/70'}`}>
             {index}
           </span>
-          <span className={`mc-kicker ${isLead ? '' : 'group-hover:text-white/80'}`}>{kicker}</span>
+          <span className={`mc-kicker ${isLead ? '' : 'group-hover:text-[var(--color-ink)]'}`}>{kicker}</span>
         </span>
         <ChevronDown
           className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-            isOpen ? 'rotate-180 text-[var(--color-accent)]' : 'text-white/40 group-hover:text-white/70'
+            isOpen ? 'rotate-180 text-[var(--color-accent)]' : 'text-[var(--color-ink-faint)] group-hover:text-[var(--color-ink-muted)]'
           }`}
           aria-hidden="true"
         />
@@ -374,8 +374,8 @@ function DossierAccordionItem({ index, kicker, children, isLead = false, isOpen 
 function DossierRow({ label, value, mono = false, accent = false }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-[var(--mc-rule)]/60 py-1.5 last:border-0">
-      <span className="text-[11px] text-white/45">{label}</span>
-      <span className={`text-[12px] text-right ${accent ? 'text-[var(--mc-reconciled)]' : 'text-white/80'} ${mono ? 'font-mono' : ''}`}>
+      <span className="text-[11px] text-[var(--color-ink-faint)]">{label}</span>
+      <span className={`text-[12px] text-right ${accent ? 'text-[var(--mc-reconciled)]' : 'text-[var(--color-ink)]'} ${mono ? 'font-mono' : ''}`}>
         {value}
       </span>
     </div>
@@ -384,9 +384,9 @@ function DossierRow({ label, value, mono = false, accent = false }) {
 
 function DossierMetric({ label, value }) {
   return (
-    <div className="bg-black/30 px-3 py-2.5">
-      <p className="font-mono text-[9px] uppercase tracking-wider text-white/40">{label}</p>
-      <p className="mt-1 font-mono text-sm text-white/85">{value}</p>
+    <div className="bg-[var(--color-paper-deep)] px-3 py-2.5">
+      <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">{label}</p>
+      <p className="mt-1 font-mono text-sm text-[var(--color-ink)]">{value}</p>
     </div>
   );
 }
@@ -406,10 +406,10 @@ function RiskGate({ gate }) {
         {passed ? '✓' : '✕'}
       </span>
       <div className="min-w-0">
-        <p className={`font-mono text-[10px] uppercase tracking-wider ${passed ? 'text-white/65' : 'text-[var(--mc-breach)]'}`}>
+        <p className={`font-mono text-[10px] uppercase tracking-wider ${passed ? 'text-[var(--color-ink-muted)]' : 'text-[var(--mc-breach)]'}`}>
           {gate.label || gate.id}
         </p>
-        <p className="text-[11px] leading-4 text-white/50">{gate.description}</p>
+        <p className="text-[11px] leading-4 text-[var(--color-ink-faint)]">{gate.description}</p>
       </div>
     </li>
   );
@@ -417,24 +417,24 @@ function RiskGate({ gate }) {
 
 function SimulationRange({ simulation }) {
   if (!simulation || simulation.valid === false || !simulation.interval) {
-    return <p className="font-mono text-[10px] text-white/40">Simulation interval unavailable.</p>;
+    return <p className="font-mono text-[10px] text-[var(--color-ink-faint)]">Simulation interval unavailable.</p>;
   }
   const { p05, p50, p95 } = simulation.interval;
   return (
     <div>
-      <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-wider text-white/40">
+      <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">
         <span>seed {simulation.seed ?? '—'}</span>
         <span>loss {pct(simulation.lossProbability)}</span>
       </div>
       <div className="mt-1 flex items-center gap-1 font-mono text-[10px]">
         <span className="text-[var(--mc-breach)]/80">{p05 > 0 ? '+' : ''}{p05?.toFixed(2)}</span>
-        <div className="relative h-1 flex-1 bg-white/10">
-          <div className="absolute inset-y-0 bg-gradient-to-r from-[var(--mc-breach)]/60 via-white/40 to-[var(--mc-reconciled)]/70" style={{ left: '15%', right: '10%' }} />
-          <div className="absolute top-1/2 h-2.5 w-px -translate-y-1/2 bg-white/80" style={{ left: '50%' }} />
+        <div className="relative h-1 flex-1 bg-[var(--color-paper-soft)]">
+          <div className="absolute inset-y-0 bg-gradient-to-r from-[var(--mc-breach)]/60 via-[var(--color-wash)] to-[var(--mc-reconciled)]/70" style={{ left: '15%', right: '10%' }} />
+          <div className="absolute top-1/2 h-2.5 w-px -translate-y-1/2 bg-[var(--color-paper-raised)]0" style={{ left: '50%' }} />
         </div>
         <span className="text-[var(--mc-reconciled)]/90">+{p95?.toFixed(2)}</span>
       </div>
-      <p className="mt-0.5 font-mono text-[9px] text-white/35">p05 / median {p50 > 0 ? '+' : ''}{p50?.toFixed(2)} / p95 · per unit staked</p>
+      <p className="mt-0.5 font-mono text-[9px] text-[var(--color-ink-faint)]">p05 / median {p50 > 0 ? '+' : ''}{p50?.toFixed(2)} / p95 · per unit staked</p>
     </div>
   );
 }

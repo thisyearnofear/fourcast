@@ -51,9 +51,9 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
  fetchHistory();
  }, [displayAddress]);
 
- const bgColor = 'bg-white/5';
- const borderColor = 'border-white/10';
- const textColor = 'text-white';
+ const bgColor = 'bg-[var(--color-paper-raised)]';
+ const borderColor = 'border-[var(--color-rule)]';
+ const textColor = 'text-[var(--color-ink)]';
 
  const filteredHistory = history.filter(pred => {
  if (filter === 'wins') return pred.outcome === 'WIN';
@@ -87,8 +87,8 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
  onClick={() => setFilter(f)}
  className={`px-4 py-2 text-sm font-light whitespace-nowrap transition-all ${
  filter === f
- ? 'bg-blue-500/30 border-blue-400 text-blue-100'
- : 'mc-panel text-white/70 hover:bg-white/10'
+ ? 'bg-[var(--color-evidence)]/30 border-[var(--color-evidence)] text-[var(--color-evidence)]'
+ : 'mc-panel text-[var(--color-ink-muted)] hover:bg-[var(--color-paper-soft)]'
  } border`}
  >
  {f === 'all' && `All (${history.length})`}
@@ -116,19 +116,19 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
  * Individual prediction card in timeline
  */
 function PredictionCard({ prediction, isNight }) {
- const textColor = 'text-white';
- const bgColor = 'bg-white/5';
- const borderColor = 'border-white/10';
+ const textColor = 'text-[var(--color-ink)]';
+ const bgColor = 'bg-[var(--color-paper-raised)]';
+ const borderColor = 'border-[var(--color-rule)]';
 
  const isWin = prediction.outcome === 'WIN';
  const isPending = prediction.outcome === 'PENDING';
  const isLoss = prediction.outcome === 'LOSS';
 
  const cardBg = isWin
- ? 'bg-green-500/10 border-green-400/30'
+ ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]/30'
  : isLoss
- ? 'bg-red-500/10 border-red-400/30'
- : 'bg-yellow-500/10 border-yellow-400/30';
+ ? 'bg-[var(--color-breach)]/10 border-[var(--color-breach)]/30'
+ : 'bg-[var(--color-sealed)]/10 border-[var(--color-sealed)]/30';
 
  const statusEmoji = isWin ? '✓' : isLoss ? '✗' : '⏳';
  const statusText = isWin ? 'You were right!' : isLoss ? 'Incorrect, but data-driven' : 'Waiting for resolution';
@@ -168,10 +168,10 @@ function PredictionCard({ prediction, isNight }) {
  {/* Prediction Details */}
  <div className="flex items-center gap-4">
  <div className={`px-3 py-1 text-xs font-light ${
- prediction.confidence === 'very-high' ? 'bg-green-500/30 text-green-100' :
- prediction.confidence === 'high' ? 'bg-blue-500/30 text-blue-100' :
- prediction.confidence === 'medium' ? 'bg-yellow-500/30 text-yellow-100' :
- 'bg-white/10 text-white/70'
+ prediction.confidence === 'very-high' ? 'bg-[var(--color-accent)]/30 text-[var(--color-accent)]' :
+ prediction.confidence === 'high' ? 'bg-[var(--color-evidence)]/30 text-[var(--color-evidence)]' :
+ prediction.confidence === 'medium' ? 'bg-[var(--color-sealed)]/30 text-[var(--color-sealed)]' :
+ 'bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)]'
  }`}>
  {prediction.confidence || 'Moderate'} Confidence
  </div>
@@ -184,7 +184,7 @@ function PredictionCard({ prediction, isNight }) {
  </div>
  {/* Reasoning */}
  {prediction.reasoning && (
- <div className={`bg-white/5 p-3`}>
+ <div className={`bg-[var(--color-paper-raised)] p-3`}>
  <p className={`text-xs ${textColor} opacity-75 font-light leading-relaxed`}>
  {prediction.reasoning}
  </p>
@@ -204,7 +204,7 @@ function PredictionCard({ prediction, isNight }) {
  </div>
  {/* Share Button (if resolved win) */}
  {isWin && (
- <button className={`text-xs font-light px-3 py-1.5 transition-all bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-400/30`}>
+ <button className={`text-xs font-light px-3 py-1.5 transition-all bg-[var(--color-evidence)]/20 hover:bg-[var(--color-evidence)]/30 text-[var(--color-evidence)] border border-[var(--color-evidence)]/30`}>
  🔗 Share this win
  </button>
  )}
@@ -220,11 +220,11 @@ function TimelineSkeleton({ isNight }) {
  <div className="space-y-4">
  <div className="flex gap-2 pb-2">
  {[...Array(4)].map((_, i) => (
- <div key={i} className="h-10 w-20 bg-white/10 animate-pulse"></div>
+ <div key={i} className="h-10 w-20 bg-[var(--color-paper-soft)] animate-pulse"></div>
  ))}
  </div>
  {[...Array(3)].map((_, i) => (
- <div key={i} className="h-32 bg-white/5 animate-pulse"></div>
+ <div key={i} className="h-32 bg-[var(--color-paper-raised)] animate-pulse"></div>
  ))}
  </div>
  );

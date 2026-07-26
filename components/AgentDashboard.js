@@ -20,10 +20,10 @@ export function AgentDashboard({ isNight = false }) {
  const [maxMarkets, setMaxMarkets] = useState(5);
  const [riskTolerance, setRiskTolerance] = useState(0.5);
 
- const textColor = 'text-white';
- const subtleText = 'text-white/60';
+ const textColor = 'text-[var(--color-ink)]';
+ const subtleText = 'text-[var(--color-ink-muted)]';
  // Using mc-panel CSS class instead of inline cardBg
- const inputBg = 'bg-white/10 border-white/20 text-white';
+ const inputBg = 'bg-[var(--color-paper-soft)] border-[var(--color-rule-strong)] text-[var(--color-ink)]';
 
  const handleRun = () => {
  run({
@@ -46,7 +46,7 @@ export function AgentDashboard({ isNight = false }) {
  <div className="flex items-start justify-between gap-3">
  <div className="min-w-0 flex-1">
  <h3 className={`flex items-center gap-2 font-medium text-base sm:text-lg ${textColor}`}>
- <Bot className="h-5 w-5 text-emerald-300" />
+ <Bot className="h-5 w-5 text-[var(--color-accent)]" />
  {BRAND.agent.title}
  </h3>
  <p className={`text-xs ${subtleText} mt-1`}>
@@ -56,8 +56,8 @@ export function AgentDashboard({ isNight = false }) {
  <div 
  className={`flex-shrink-0 px-2 py-1 text-xs font-medium ${
  isRunning
- ? 'bg-green-500/20 text-green-300 animate-pulse'
- : 'bg-white/10 text-white/40'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] animate-pulse'
+ : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)]'
  }`}
  role="status"
  aria-live="polite"
@@ -114,7 +114,7 @@ export function AgentDashboard({ isNight = false }) {
  aria-valuemin={10}
  aria-valuemax={100}
  aria-valuenow={riskTolerance * 100}
- className="w-full accent-emerald-500"
+ className="w-full accent-[var(--color-accent)]"
  />
  <div className={`flex justify-between text-xs ${subtleText}`}>
  <span>Conservative</span>
@@ -130,8 +130,8 @@ export function AgentDashboard({ isNight = false }) {
  aria-busy={isRunning}
  className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 font-medium text-sm transition-all ${
  isRunning
- ? 'bg-red-500/20 hover:bg-red-500/30 text-red-200'
- : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200'
+ ? 'bg-[var(--color-breach)]/20 hover:bg-[var(--color-breach)]/30 text-[var(--color-breach)]'
+ : 'bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)]'
  }`}
  >
  {isRunning ? 'Stop Agent' : (
@@ -143,7 +143,7 @@ export function AgentDashboard({ isNight = false }) {
  </button>
  {/* Error */}
  {error && (
- <div className={`text-xs p-3 bg-red-500/10 text-red-300`}>
+ <div className={`text-xs p-3 bg-[var(--color-breach)]/10 text-[var(--color-breach)]`}>
  {error}
  </div>
  )}
@@ -152,7 +152,7 @@ export function AgentDashboard({ isNight = false }) {
  <div className="space-y-3" role="status" aria-live="polite" aria-label="Agent progress">
  {/* Progress bar */}
  <div 
- className={`h-1 overflow-hidden bg-white/10`}
+ className={`h-1 overflow-hidden bg-[var(--color-paper-soft)]`}
  role="progressbar"
  aria-valuenow={
  currentStep.step === 'discover' ? 25 :
@@ -164,7 +164,7 @@ export function AgentDashboard({ isNight = false }) {
  aria-valuemax={100}
  >
  <div 
- className={`h-full transition-all duration-500 ease-out bg-blue-400`}
+ className={`h-full transition-all duration-500 ease-out bg-[var(--color-evidence)]`}
  style={{
  width: `${
  currentStep.step === 'discover' ? '25%' :
@@ -186,7 +186,7 @@ export function AgentDashboard({ isNight = false }) {
  )}
  {/* Recommendations with Empty State */}
  {!isRunning && recommendations.length === 0 && steps.length > 0 && (
- <div className={`text-center py-8 px-4 border bg-white/5 border-white/10`}>
+ <div className={`text-center py-8 px-4 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
  <div className="text-4xl mb-3 opacity-40">🔍</div>
  <p className={`text-sm ${textColor} opacity-70 mb-1`}>No actionable opportunities found</p>
  <p className={`text-xs ${subtleText}`}>Try adjusting your risk tolerance or category filters</p>
@@ -218,9 +218,9 @@ export function AgentDashboard({ isNight = false }) {
  🔄 Arbitrage Detected ({steps.find(s => s.step === 'filter')?.data?.arbitrageCount || 0})
  </h4>
  {steps.find(s => s.step === 'filter')?.data?.topArbitrage?.map((arb, i) => (
- <div key={i} className={`text-xs p-2 border bg-purple-500/10 border-purple-400/30 text-purple-200`}>
+ <div key={i} className={`text-xs p-2 border bg-[var(--color-review)]/10 border-[var(--color-review)]/30 text-[var(--color-review)]`}>
  <div className="font-medium">{arb.polymarket.title}</div>
- <div className={`text-purple-300/70 mt-1`}>
+ <div className={`text-[var(--color-review)]/70 mt-1`}>
  {arb.arbitrage.priceDiff}% spread · {arb.similarity}% match
  </div>
  </div>
@@ -266,9 +266,9 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
  subMessage = current.message;
  }
 
- const subtleText = 'text-white/40';
- const activeText = 'text-blue-300';
- const completeText = 'text-green-300';
+ const subtleText = 'text-[var(--color-ink-faint)]';
+ const activeText = 'text-[var(--color-evidence)]';
+ const completeText = 'text-[var(--color-accent)]';
 
  return (
  <div className="space-y-1 transition-all duration-300">
@@ -283,7 +283,7 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
  </div>
  {subMessage && (
  <div 
- className={`ml-6 text-xs text-white/50`}
+ className={`ml-6 text-xs text-[var(--color-ink-faint)]`}
  style={{ 
  animation: 'fadeInUp 0.3s ease-out',
  opacity: 1
@@ -296,30 +296,30 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
  );
 }
 
-function RecommendationCard({ rec, isNight }) {
- const isActionable = rec.actionable;
- const edgeColor = rec.edge > 0 ? 'green' : 'red';
- const hasCalibrationWarning = rec.calibrationWarning;
+function RecommendationCard({ rec, isNight }) {  const isActionable = rec.actionable;
+  const edgeClass = rec.edge > 0
+    ? 'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10'
+    : 'border-[var(--color-breach)]/30 bg-[var(--color-breach)]/10';
+  const hasCalibrationWarning = rec.calibrationWarning;
  const isSynthBacked = rec.source === 'synthdata+llm' || rec.source === 'synthdata+path';
  const isPathDependent = rec.source === 'synthdata+path';
  const hasReputation = rec.calibrationScore != null || rec.agentBrierScore != null;
 
- return (
- <div className={`border p-4 ${
- isActionable
- ? `border-${edgeColor}-400/30 bg-${edgeColor}-500/10`
- : 'border-white/10 bg-white/5'
- }`}>
+ return (    <div className={`border p-4 ${
+      isActionable
+        ? edgeClass
+        : 'border-[var(--color-rule)] bg-[var(--color-paper-raised)]'
+    }`}>
  <div className="flex items-start justify-between gap-2 mb-2">
  <div className="flex items-center gap-1.5">
- <h5 className={`text-sm font-medium leading-tight text-white`}>
+ <h5 className={`text-sm font-medium leading-tight text-[var(--color-ink)]`}>
  {rec.title}
  </h5>
  {isSynthBacked && (
  <span className={`text-[10px] px-1.5 py-0.5 font-medium ${
  isPathDependent
- ? 'bg-purple-500/20 text-purple-300'
- : 'bg-cyan-500/20 text-cyan-300'
+ ? 'bg-[var(--color-review)]/20 text-[var(--color-review)]'
+ : 'bg-[var(--color-evidence)]/20 text-[var(--color-evidence)]'
  }`} title={isPathDependent ? 'Path-dependent ML analysis' : 'Backed by 200+ ML models via SynthData'}>
  {isPathDependent ? '🎯 PATH' : '🤖 ML'}
  </span>
@@ -327,15 +327,15 @@ function RecommendationCard({ rec, isNight }) {
  </div>
  <span className={`text-xs px-2 py-0.5 whitespace-nowrap font-medium ${
  isActionable
- ? 'bg-green-500/20 text-green-300'
- : 'bg-white/10 text-white/50'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
+ : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)]'
  }`}>
  {rec.direction}
  </span>
  </div>
  {/* SynthData details if available */}
  {isSynthBacked && rec.synthData && (
- <div className={`text-xs mb-2 px-2 py-1.5 bg-purple-500/10 text-purple-200`}>
+ <div className={`text-xs mb-2 px-2 py-1.5 bg-[var(--color-review)]/10 text-[var(--color-review)]`}>
  {rec.synthData.asset && (
  <div className="flex items-center justify-between">
  <span className="opacity-70">{rec.synthData.asset}</span>
@@ -351,7 +351,7 @@ function RecommendationCard({ rec, isNight }) {
  </div>
  )}
  {hasCalibrationWarning && (
- <div className={`text-xs px-2 py-1 mb-2 bg-orange-500/20 text-orange-300`}>
+ <div className={`text-xs px-2 py-1 mb-2 bg-[var(--color-sealed)]/20 text-[var(--color-sealed)]`}>
  ⚠️ {rec.calibrationWarning}
  </div>
  )}
@@ -359,24 +359,24 @@ function RecommendationCard({ rec, isNight }) {
  {hasReputation && (
  <div className={`flex items-center gap-3 text-xs mb-2 px-2 py-1.5 bg-white/[0.03]`}>
  {rec.calibrationScore != null && (
- <span className='text-white/60'>
+ <span className='text-[var(--color-ink-muted)]'>
  Cal: <strong className={
  rec.calibrationScore >= 70
- ? 'text-green-400'
+ ? 'text-[var(--color-accent)]'
  : rec.calibrationScore >= 50
- ? 'text-yellow-400'
- : 'text-red-400'
+ ? 'text-[var(--color-sealed)]'
+ : 'text-[var(--color-breach)]'
  }>{Math.round(rec.calibrationScore)}%</strong>
  </span>
  )}
  {rec.agentBrierScore != null && (
- <span className='text-white/60'>
+ <span className='text-[var(--color-ink-muted)]'>
  Brier: <strong className={
  rec.agentBrierScore < 0.15
- ? 'text-green-400'
+ ? 'text-[var(--color-accent)]'
  : rec.agentBrierScore < 0.25
- ? 'text-yellow-400'
- : 'text-red-400'
+ ? 'text-[var(--color-sealed)]'
+ : 'text-[var(--color-breach)]'
  }>{rec.agentBrierScore.toFixed(3)}</strong>
  </span>
  )}
@@ -384,32 +384,32 @@ function RecommendationCard({ rec, isNight }) {
  )}
  <div className="grid grid-cols-3 gap-2 text-xs">
  <div>
- <span className='text-white/50'>
+ <span className='text-[var(--color-ink-faint)]'>
  {isSynthBacked ? 'ML Prob' : 'AI Prob'}
  </span>
- <div className={`font-medium text-white`}>
+ <div className={`font-medium text-[var(--color-ink)]`}>
  {(rec.aiProbability * 100).toFixed(1)}%
  </div>
  </div>
  <div>
- <span className='text-white/50'>Market</span>
- <div className={`font-medium text-white`}>
+ <span className='text-[var(--color-ink-faint)]'>Market</span>
+ <div className={`font-medium text-[var(--color-ink)]`}>
  {(rec.marketOdds * 100).toFixed(1)}%
  </div>
  </div>
  <div>
- <span className='text-white/50'>Edge</span>
+ <span className='text-[var(--color-ink-faint)]'>Edge</span>
  <div className={`font-medium ${
  rec.edge > 0
- ? 'text-green-300'
- : 'text-red-300'
+ ? 'text-[var(--color-accent)]'
+ : 'text-[var(--color-breach)]'
  }`}>
  {rec.edge > 0 ? '+' : ''}{(rec.edge * 100).toFixed(1)}%
  </div>
  </div>
  </div>
  {isSynthBacked && rec.synthData?.currentPrice && (
- <div className={`mt-2 pt-2 border-t text-xs grid grid-cols-2 gap-1 border-white/10 text-white/50`}>
+ <div className={`mt-2 pt-2 border-t text-xs grid grid-cols-2 gap-1 border-[var(--color-rule)] text-[var(--color-ink-faint)]`}>
  <span>{rec.synthData.asset} ${rec.synthData.currentPrice.toLocaleString()}</span>
  {rec.synthData.percentiles?.p5 && rec.synthData.percentiles?.p95 && (
  <span>Range: ${rec.synthData.percentiles.p5.toLocaleString()}–${rec.synthData.percentiles.p95.toLocaleString()}</span>
@@ -417,12 +417,12 @@ function RecommendationCard({ rec, isNight }) {
  </div>
  )}
  {isActionable && rec.sizePct > 0 && (
- <div className={`mt-2 pt-2 border-t text-xs border-white/10 text-white/60`}>
+ <div className={`mt-2 pt-2 border-t text-xs border-[var(--color-rule)] text-[var(--color-ink-muted)]`}>
  Suggested size: {(rec.sizePct * 100).toFixed(0)}% of portfolio · {rec.platform}
  </div>
  )}
  {rec.reasoning && (
- <p className={`mt-2 text-xs leading-relaxed text-white/50`}>
+ <p className={`mt-2 text-xs leading-relaxed text-[var(--color-ink-faint)]`}>
  {rec.reasoning.length > 200 ? rec.reasoning.slice(0, 200) + '…' : rec.reasoning}
  </p>
  )}

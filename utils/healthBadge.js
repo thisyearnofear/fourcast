@@ -17,11 +17,17 @@
  * Per-provider status (a single external dependency is healthy / degraded /
  * unreachable / disabled / unknown).
  */
+// Palette is mapped to design.md semantic tokens so the status surface reads
+// as part of the same evidence workspace, not a generic dark theme:
+//   healthy     → verification emerald (live/verified)
+//   degraded    → sealed amber (caution)
+//   unreachable → breach red (failure)
+//   disabled    → ink-faint (dormant)
 const PROVIDER_STATUS = {
-  healthy:     { dot: 'bg-green-500',  text: 'text-green-300',  bg: 'bg-green-500/10'  },
-  degraded:    { dot: 'bg-yellow-500', text: 'text-yellow-300', bg: 'bg-yellow-500/10' },
-  unreachable: { dot: 'bg-red-500',    text: 'text-red-300',    bg: 'bg-red-500/10'    },
-  disabled:    { dot: 'bg-gray-500',   text: 'text-gray-400',   bg: 'bg-gray-500/10'   },
+  healthy:     { dot: 'bg-accent',     text: 'text-accent',     bg: 'bg-accent/10'     },
+  degraded:    { dot: 'bg-sealed',     text: 'text-sealed',     bg: 'bg-sealed/10'     },
+  unreachable: { dot: 'bg-breach',     text: 'text-breach',     bg: 'bg-breach/10'     },
+  disabled:    { dot: 'bg-ink-faint',  text: 'text-ink-faint',  bg: 'bg-ink-faint/10'  },
 };
 
 /**
@@ -29,14 +35,14 @@ const PROVIDER_STATUS = {
  * `loading` is for the initial pre-fetch state.
  */
 const SUMMARY_STATUS = {
-  all_healthy: { dot: 'bg-green-500',  text: 'text-green-300',  bg: 'bg-green-500/10',  border: 'border-green-500/20'  },
-  degraded:    { dot: 'bg-yellow-500', text: 'text-yellow-300', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
-  loading:     { dot: 'bg-gray-500',   text: 'text-gray-400',   bg: 'bg-gray-500/10',   border: 'border-gray-500/20'   },
+  all_healthy: { dot: 'bg-accent',    text: 'text-accent',    bg: 'bg-accent/10',    border: 'border-accent/20'    },
+  degraded:    { dot: 'bg-sealed',    text: 'text-sealed',    bg: 'bg-sealed/10',    border: 'border-sealed/20'    },
+  loading:     { dot: 'bg-ink-faint', text: 'text-ink-faint', bg: 'bg-ink-faint/10', border: 'border-ink-faint/20' },
 };
 
 /** Returns `{ dot, text, bg }` appearance for a per-provider status. */
 export function getProviderStatusAppearance(status) {
-  return PROVIDER_STATUS[status] || { dot: 'bg-gray-500', text: 'text-gray-400', bg: 'bg-gray-500/10' };
+  return PROVIDER_STATUS[status] || { dot: 'bg-ink-faint', text: 'text-ink-faint', bg: 'bg-ink-faint/10' };
 }
 
 /** Returns `{ dot, text, bg, border }` appearance for an aggregate summary. */

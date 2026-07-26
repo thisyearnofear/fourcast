@@ -91,14 +91,14 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
       </div>
 
       {loading && (
-        <div className="border border-white/10 bg-white/[0.02] p-12 text-center">
-          <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-emerald-300/40 border-t-emerald-300" />
-          <p className="mt-3 text-xs text-white/45">Loading track record…</p>
+        <div className="border border-[var(--color-rule)] bg-white/[0.02] p-12 text-center">
+          <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-[var(--color-accent)]/40 border-t-[var(--color-accent)]" />
+          <p className="mt-3 text-xs text-[var(--color-ink-faint)]">Loading track record…</p>
         </div>
       )}
 
       {error && (
-        <div className="border border-red-400/30 bg-red-500/[0.08] p-4 text-sm text-red-200">
+        <div className="border border-[var(--color-breach)]/30 bg-[var(--color-breach)]/[0.08] p-4 text-sm text-[var(--color-breach)]">
           {error}
         </div>
       )}
@@ -109,10 +109,10 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
           <section className="platform-open-section mb-8" aria-label="Operator mandate">
             <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
               <div className="flex items-center gap-2">
-                <Scale className="h-3.5 w-3.5 text-emerald-300/80" />
+                <Scale className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
                 <span className="mc-kicker">Mandate</span>
               </div>
-              <p className="mt-1 text-xs text-white/45">
+              <p className="mt-1 text-xs text-[var(--color-ink-faint)]">
                 The policy every decision below was gated by.
               </p>
             </div>
@@ -125,12 +125,12 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
                     <MandateKnob label="Tail-loss limit" value={pct(mandate.maxLossProbability, 0)} />
                     <MandateKnob label="Monte Carlo paths" value={mandate.simulationRuns?.toLocaleString()} />
                   </div>
-                  <p className="mt-3 font-mono text-[10px] text-white/35">
+                  <p className="mt-3 font-mono text-[10px] text-[var(--color-ink-faint)]">
                     policy {mandate.policyVersion} · operator {operatorId.slice(0, 8)}…
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-white/50">
+                <p className="text-sm text-[var(--color-ink-faint)]">
                   No saved mandate — forecasts below predate the mandate system.
                 </p>
               )}
@@ -141,12 +141,12 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
           <section className="platform-open-section mb-8" aria-label="Track record stats">
             <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-300/80" />
+                <ShieldCheck className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
                 <span className="mc-kicker">Track record</span>
               </div>
             </div>
             <div className="px-4 py-5 sm:px-5">
-              <div className="evidence-strip grid grid-cols-2 gap-px overflow-hidden bg-white/10 sm:grid-cols-4">
+              <div className="evidence-strip grid grid-cols-2 gap-px overflow-hidden bg-[var(--color-paper-soft)] sm:grid-cols-4">
                 <StatCell label="Total forecasts" value={stats.total_forecasts ?? 0} />
                 <StatCell label="Resolved" value={stats.resolved_forecasts ?? 0} />
                 <StatCell
@@ -162,13 +162,13 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
               </div>
 
               {forecasts.length === 0 ? (
-                <p className="mt-5 border border-dashed border-white/15 px-4 py-8 text-center text-xs text-white/40">
+                <p className="mt-5 border border-dashed border-[var(--color-rule)] px-4 py-8 text-center text-xs text-[var(--color-ink-faint)]">
                   No resolved forecasts yet.
                 </p>
               ) : (
                 <div className="mt-5 overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+                    <thead className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">
                       <tr>
                         <th className="px-2 py-2">Market</th>
                         <th className="px-2 py-2">AI prob</th>
@@ -180,11 +180,11 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
                     <tbody>
                       {forecasts.slice(0, 20).map((f) => (
                         <tr key={f.id} className="border-t border-white/[0.08]">
-                          <td className="px-2 py-2 text-white/80">{f.market_title || f.market_id}</td>
-                          <td className="px-2 py-2 font-mono text-white/70">{pct(f.ai_probability)}</td>
-                          <td className="px-2 py-2 font-mono text-emerald-300/80">{pct(f.edge)}</td>
-                          <td className="px-2 py-2 font-mono text-white/70">{f.actual_outcome != null ? (f.actual_outcome > 0.5 ? 'YES' : 'NO') : '—'}</td>
-                          <td className="px-2 py-2 font-mono text-white/70">{f.brier_score != null ? Number(f.brier_score).toFixed(3) : '—'}</td>
+                          <td className="px-2 py-2 text-[var(--color-ink)]">{f.market_title || f.market_id}</td>
+                          <td className="px-2 py-2 font-mono text-[var(--color-ink-muted)]">{pct(f.ai_probability)}</td>
+                          <td className="px-2 py-2 font-mono text-[var(--color-accent)]/80">{pct(f.edge)}</td>
+                          <td className="px-2 py-2 font-mono text-[var(--color-ink-muted)]">{f.actual_outcome != null ? (f.actual_outcome > 0.5 ? 'YES' : 'NO') : '—'}</td>
+                          <td className="px-2 py-2 font-mono text-[var(--color-ink-muted)]">{f.brier_score != null ? Number(f.brier_score).toFixed(3) : '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -195,8 +195,8 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
           </section>
 
           {/* Public-by-design notice */}
-          <div className="flex items-center gap-2 border border-white/10 bg-white/[0.02] px-3 py-2.5 text-[11px] text-white/40">
-            <ExternalLink className="h-3 w-3 shrink-0 text-white/35" />
+          <div className="flex items-center gap-2 border border-[var(--color-rule)] bg-white/[0.02] px-3 py-2.5 text-[11px] text-[var(--color-ink-faint)]">
+            <ExternalLink className="h-3 w-3 shrink-0 text-[var(--color-ink-faint)]" />
             <span>Public by design — anyone with the link can audit this. Private mandates are Premium.</span>
           </div>
         </>
@@ -207,19 +207,19 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
 
 function MandateKnob({ label, value }) {
   return (
-    <div className="bg-black/45 px-3 py-3">
-      <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-white/40">{label}</p>
-      <p className="mt-1 font-mono text-lg text-white/85">{value}</p>
+    <div className="bg-[var(--color-paper-deep)] px-3 py-3">
+      <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-[var(--color-ink-faint)]">{label}</p>
+      <p className="mt-1 font-mono text-lg text-[var(--color-ink)]">{value}</p>
     </div>
   );
 }
 
 function StatCell({ label, value, detail }) {
   return (
-    <div className="bg-black/45 px-3 py-3">
-      <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-white/40">{label}</p>
-      <p className="mt-1 font-mono text-xl text-white/85">{value}</p>
-      {detail && <p className="mt-0.5 text-[10px] text-white/35">{detail}</p>}
+    <div className="bg-[var(--color-paper-deep)] px-3 py-3">
+      <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-[var(--color-ink-faint)]">{label}</p>
+      <p className="mt-1 font-mono text-xl text-[var(--color-ink)]">{value}</p>
+      {detail && <p className="mt-0.5 text-[10px] text-[var(--color-ink-faint)]">{detail}</p>}
     </div>
   );
 }

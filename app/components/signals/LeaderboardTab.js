@@ -23,7 +23,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
  <div className={`${textColor} opacity-60`}>Earnings</div>
  </div>
  {/* Leaderboard — inspectable rows */}
- <div className="border-t border-white/15">
+ <div className="border-t border-[var(--color-rule)]">
  {leaderboard.map((user, index) => {
  const tier = tierInfoFor(user.win_rate || 0);
  const earnings = user.total_earnings || 0;
@@ -32,11 +32,11 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
  <div
  key={user.user_address}
  onClick={() => onProfileClick(user.user_address)}
- className="position-record grid grid-cols-1 gap-4 border-b border-white/10 px-1 py-5 transition-colors hover:bg-white/[0.03] cursor-pointer sm:grid-cols-4 sm:items-center sm:px-3"
+ className="position-record grid grid-cols-1 gap-4 border-b border-[var(--color-rule)] px-1 py-5 transition-colors hover:bg-white/[0.03] cursor-pointer sm:grid-cols-4 sm:items-center sm:px-3"
  >
  {/* Rank */}
  <div className="flex items-center gap-3">
- <div className={`text-2xl font-thin ${index < 3 ? ('text-amber-400') : 'opacity-40'}`}>
+ <div className={`text-2xl font-thin ${index < 3 ? ('text-[var(--color-sealed)]') : 'opacity-40'}`}>
  #{index + 1}
  </div>
  </div>
@@ -56,10 +56,10 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
 
  {/* Stats */}
  <div className="space-y-1">
- <span className={`text-xs px-2 py-0.5 border block w-fit bg-white/10 border-white/20 opacity-70`}>
+ <span className={`text-xs px-2 py-0.5 border block w-fit bg-[var(--color-paper-soft)] border-[var(--color-rule-strong)] opacity-70`}>
  {user.total_predictions} Signals
  </span>
- <span className={`text-xs px-2 py-0.5 border block w-fit bg-green-500/20 text-green-300 border-green-500/30`}>
+ <span className={`text-xs px-2 py-0.5 border block w-fit bg-[var(--color-accent)]/20 text-[var(--color-accent)] border-[var(--color-accent)]/30`}>
  {(user.win_rate * 100).toFixed(1)}% Win
  </span>
  </div>
@@ -67,7 +67,7 @@ export default function LeaderboardTab({ leaderboard, isNight, textColor, cardBg
  {/* Earnings */}
  <div className="text-right sm:text-right">
  <div className={`text-xs ${textColor} opacity-60 mb-1`}>Tips Earned</div>
- <div className={`text-xl font-light text-emerald-300`}>
+ <div className={`text-xl font-light text-[var(--color-accent)]`}>
  {earnings > 0 ? `${earnings} APT` : '—'}
  </div>
  </div>

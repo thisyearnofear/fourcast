@@ -35,29 +35,29 @@ export default function FirstRunBanner({ searchQuery }) {
  if (!visible) return null;
 
  return (
- <div className="mb-6 overflow-hidden border border-emerald-400/20 bg-emerald-400/[0.07] px-4 py-4 sm:px-5">
+ <div className="mb-6 overflow-hidden border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/[0.07] px-4 py-4 sm:px-5">
  <div className="flex flex-wrap items-start justify-between gap-3">
  <div className="min-w-0 max-w-2xl">
- <p className="font-display text-sm font-semibold text-emerald-100">
+ <p className="font-display text-sm font-semibold text-[var(--color-accent)]">
  Your first edge — three steps
  </p>
- <ol className="mt-2 space-y-1 text-sm text-white/65">
+ <ol className="mt-2 space-y-1 text-sm text-[var(--color-ink-muted)]">
  <li>
- <span className="font-mono text-emerald-300/80">1</span> Pick a market
+ <span className="font-mono text-[var(--color-accent)]/80">1</span> Pick a market
  {searchQuery ? (
- <span className="text-white/45"> — filtered for “{searchQuery}”</span>
+ <span className="text-[var(--color-ink-faint)]"> — filtered for “{searchQuery}”</span>
  ) : null}
  </li>
  <li>
- <span className="font-mono text-emerald-300/80">2</span> Tap Analyze — AI fair odds vs market
+ <span className="font-mono text-[var(--color-accent)]/80">2</span> Tap Analyze — AI fair odds vs market
  </li>
  <li>
- <span className="font-mono text-emerald-300/80">3</span> Share or publish when you like the call
+ <span className="font-mono text-[var(--color-accent)]/80">3</span> Share or publish when you like the call
  </li>
  </ol>
- <p className="mt-2 text-xs text-white/40">
+ <p className="mt-2 text-xs text-[var(--color-ink-faint)]">
  Wallet is optional until you publish or trade.{' '}
- <Link href="/signals" className="text-emerald-200/80 underline-offset-2 hover:underline">
+ <Link href="/signals" className="text-[var(--color-accent)]/80 underline-offset-2 hover:underline">
  See live signals
  </Link>
  </p>
@@ -65,7 +65,7 @@ export default function FirstRunBanner({ searchQuery }) {
  <button
  type="button"
  onClick={dismiss}
- className=" border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/60 hover:text-white"
+ className=" border border-[var(--color-rule)] bg-[var(--color-paper-deep)] px-3 py-1.5 text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
  >
  Got it
  </button>

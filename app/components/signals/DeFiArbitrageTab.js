@@ -54,7 +54,7 @@ export default function DeFiArbitrageTab({
  disabled={isLoading}
  className={`px-6 py-2 text-sm font-light transition-colors ${isLoading
  ? `${textColor} opacity-50 cursor-not-allowed`
- : `bg-emerald-500/30 hover:bg-emerald-500/50 text-white`
+ : `bg-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/50 text-[var(--color-ink)]`
  }`}
  >
  {isLoading ? 'Refreshing...' : 'Refresh'}
@@ -74,7 +74,7 @@ export default function DeFiArbitrageTab({
  <p className={`${textColor} opacity-90 mb-4`}>{error}</p>
  <button
  onClick={refresh}
- className={`px-4 py-2 text-sm font-light bg-white/20 hover:bg-white/30 text-white`}
+ className={`px-4 py-2 text-sm font-light bg-white/20 hover:bg-white/30 text-[var(--color-ink)]`}
  >
  Try Again
  </button>
@@ -97,11 +97,11 @@ export default function DeFiArbitrageTab({
  📊 Found {opportunities.length} opportunities
  </div>
 
- <div className="border-t border-white/15">
+ <div className="border-t border-[var(--color-rule)]">
  {opportunities.map((opp, idx) => (
  <div
  key={opp.signal_id || idx}
- className="position-record border-b border-white/10 transition-colors"
+ className="position-record border-b border-[var(--color-rule)] transition-colors"
  >
  {/* Header / Always Visible */}
  <div
@@ -120,8 +120,8 @@ export default function DeFiArbitrageTab({
  )}
  </div>
  <span className={`text-xl font-light px-3 py-1 ${opp.arbitrage.spread_percent > 15
- ? 'bg-emerald-500/20 text-emerald-300'
- : 'bg-emerald-500/15 text-emerald-200'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
+ : 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
  }`}>
  {opp.arbitrage.spread_percent.toFixed(1)}%
  </span>
@@ -129,7 +129,7 @@ export default function DeFiArbitrageTab({
 
  {/* Quick Preview */}
  <div className="grid grid-cols-2 gap-2 text-xs">
- <div className={`bg-white/5 p-2`}>
+ <div className={`bg-[var(--color-paper-raised)] p-2`}>
  <span className={`${textColor} opacity-60`}>Buy on</span>
  <div className={`${textColor} font-light capitalize`}>
  {opp.arbitrage.buy_platform}
@@ -138,7 +138,7 @@ export default function DeFiArbitrageTab({
  @ {(opp.arbitrage.buy_odds * 100).toFixed(1)}%
  </div>
  </div>
- <div className={`bg-white/5 p-2`}>
+ <div className={`bg-[var(--color-paper-raised)] p-2`}>
  <span className={`${textColor} opacity-60`}>Sell on</span>
  <div className={`${textColor} font-light capitalize`}>
  {opp.arbitrage.sell_platform}
@@ -152,7 +152,7 @@ export default function DeFiArbitrageTab({
 
  {/* Expandable Details */}
  {expandedOppId === opp.signal_id && (
- <div className={`bg-white/5 border-t border-white/10 p-4 space-y-4`}>
+ <div className={`bg-[var(--color-paper-raised)] border-t border-[var(--color-rule)] p-4 space-y-4`}>
  {/* DeFi Metrics */}
  <div>
  <h4 className={`text-sm font-light ${textColor} mb-3 opacity-80`}>
@@ -179,7 +179,7 @@ export default function DeFiArbitrageTab({
  </div>
  <div>
  <span className={`${textColor} opacity-60`}>Flash Loan Ready</span>
- <div className={`font-light text-sm ${opp.defi_metrics.flash_loan_suitable ? 'text-emerald-400' : 'text-amber-400'}`}>
+ <div className={`font-light text-sm ${opp.defi_metrics.flash_loan_suitable ? 'text-[var(--color-accent)]' : 'text-[var(--color-sealed)]'}`}>
  {opp.defi_metrics.flash_loan_suitable ? '✅ Yes' : '⚠️ Limited'}
  </div>
  </div>
@@ -192,7 +192,7 @@ export default function DeFiArbitrageTab({
  📊 Platform Details
  </h4>
  <div className="grid grid-cols-2 gap-3">
- <div className={`bg-emerald-500/10 border border-emerald-500/20 p-3`}>
+ <div className={`bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/20 p-3`}>
  <h5 className={`text-xs font-light ${textColor} mb-2 uppercase opacity-70`}>
  Polymarket
  </h5>
@@ -203,7 +203,7 @@ export default function DeFiArbitrageTab({
  Vol: ${(opp.polymarket.volume_24h / 1000).toFixed(1)}k
  </div>
  </div>
- <div className={`bg-emerald-500/10 border border-emerald-500/20 p-3`}>
+ <div className={`bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/20 p-3`}>
  <h5 className={`text-xs font-light ${textColor} mb-2 uppercase opacity-70`}>
  Kalshi
  </h5>
@@ -232,7 +232,7 @@ export default function DeFiArbitrageTab({
  <button
  onClick={() => setSelectedArbitrageOpp(opp)}
  className={`flex-1 px-3 py-2 text-xs font-semibold text-center transition-all shadow-sm
- bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90`}
+ bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent)] text-[var(--color-ink)] hover:opacity-90`}
  >
  ⚡ Execute Arbitrage
  </button>
@@ -240,7 +240,7 @@ export default function DeFiArbitrageTab({
  href={`https://polymarket.com/market/${opp.polymarket.id}`}
  target="_blank"
  rel="noopener noreferrer"
- className={`flex-1 px-3 py-2 text-xs font-light text-center transition-all bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200`}
+ className={`flex-1 px-3 py-2 text-xs font-light text-center transition-all bg-[var(--color-accent)]/15 hover:bg-[var(--color-accent)]/25 text-[var(--color-accent)]`}
  >
  View on Polymarket ↗
  </a>
@@ -255,7 +255,7 @@ export default function DeFiArbitrageTab({
  odds_yes: opp.kalshi.odds_yes,
  odds_no: 1 - opp.kalshi.odds_yes
  })}
- className={`flex-1 px-3 py-2 text-xs font-light text-center transition-all bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300`}
+ className={`flex-1 px-3 py-2 text-xs font-light text-center transition-all bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)]`}
  >
  Trade on Kalshi 📊
  </button>

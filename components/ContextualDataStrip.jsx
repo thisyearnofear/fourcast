@@ -22,7 +22,7 @@ export default function ContextualDataStrip({ title }) {
   if (loading && items.length === 0) {
     return (
       <div className="fc-contextual-strip mt-3" aria-label="Market context loading">
-        <span className="font-mono text-[10px] tracking-[0.06em] text-white/30">
+        <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--color-ink-faint)]">
           Fetching market context…
         </span>
       </div>
@@ -38,10 +38,10 @@ export default function ContextualDataStrip({ title }) {
           key={`${item.label}-${i}`}
           className="fc-market-slide inline-flex items-center gap-1.5"
         >
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">
+          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--color-ink-faint)]">
             {item.label}
           </span>
-          <span className="font-mono text-[11px] font-medium text-white/65">
+          <span className="font-mono text-[11px] font-medium text-[var(--color-ink-muted)]">
             {item.value}
           </span>
         </span>

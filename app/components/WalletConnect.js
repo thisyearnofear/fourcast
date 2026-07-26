@@ -53,9 +53,9 @@ export default function WalletConnect({ isNight = false }) {
  // + mint border) per design.md so it reads against the operator header.
  // Connected state keeps the document-surface mc-panel look for the pills.
  const triggerDisconnected = 'fc-action--quiet px-4 py-2 text-sm font-medium';
- const triggerConnected = 'mc-panel px-3 py-2 text-sm font-medium text-white';
- const textColor = 'text-white';
- const dropdownGlass = 'mc-panel bg-slate-900/95';
+ const triggerConnected = 'mc-panel px-3 py-2 text-sm font-medium text-[var(--color-ink)]';
+ const textColor = 'text-[var(--color-ink)]';
+ const dropdownGlass = 'mc-panel bg-[var(--color-paper-raised)]';
 
  // Check if any wallet is connected using unified state
  const isAnyConnected = chains?.evm?.connected || chains?.arc?.connected || canton?.connected || solanaConnected;
@@ -81,7 +81,7 @@ export default function WalletConnect({ isNight = false }) {
  // so the header alignment stays pixel-stable through hydration.
  return (
  <div className="relative">
- <div className="w-[120px] h-[36px] bg-white/5" aria-hidden="true" />
+ <div className="w-[120px] h-[36px] bg-[var(--color-paper-raised)]" aria-hidden="true" />
  </div>
  );
  }
@@ -95,13 +95,14 @@ export default function WalletConnect({ isNight = false }) {
  );
  }
 
- // Helper to get chain color classes
+ // Helper to get chain color classes — mapped to semantic tokens so the
+ // wallet pills don't reintroduce a raw Tailwind palette.
  const getChainColorClasses = (chain) => {
  const colorMap = {
- blue: 'bg-blue-500/30 text-blue-200 border-blue-500/50',
- purple: 'bg-purple-500/30 text-purple-200 border-purple-500/50',
- amber: 'bg-amber-500/30 text-amber-200 border-amber-500/50',
- indigo: 'bg-indigo-500/30 text-indigo-200 border-indigo-500/50',
+ blue: 'bg-[var(--color-evidence)]/30 text-[var(--color-evidence)] border-[var(--color-evidence)]/50',
+ purple: 'bg-[var(--color-review)]/30 text-[var(--color-review)] border-[var(--color-review)]/50',
+ amber: 'bg-[var(--color-sealed)]/30 text-[var(--color-sealed)] border-[var(--color-sealed)]/50',
+ indigo: 'bg-[var(--color-evidence)]/30 text-[var(--color-evidence)] border-[var(--color-evidence)]/50',
  };
  return colorMap[chain.color] || colorMap.blue;
  };
@@ -113,7 +114,7 @@ export default function WalletConnect({ isNight = false }) {
  const address = formatAddress(chainState.address);
 
  return (
- <div key={chain.id} className="mb-4 pb-4 border-b border-white/15 last:mb-0 last:pb-0 last:border-0">
+ <div key={chain.id} className="mb-4 pb-4 border-b border-[var(--color-rule)] last:mb-0 last:pb-0 last:border-0">
  <div className={`text-xs font-medium ${textColor} mb-2 flex items-center gap-2`}>
  <span>{chain.icon}</span>
  {chain.display}
@@ -125,15 +126,15 @@ export default function WalletConnect({ isNight = false }) {
  disconnectEvm();
  setShowDropdown(false);
  }}
- className={`text-xs px-2 py-1 transition-colors hover:bg-white/10 ${textColor} text-white/70 hover:text-white`}
+ className={`text-xs px-2 py-1 transition-colors hover:bg-[var(--color-paper-soft)] ${textColor} text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  >
  Disconnect
  </button>
  </div>
- <div className="space-y-1 text-xs text-white/75">
+ <div className="space-y-1 text-xs text-[var(--color-ink-muted)]">
  {(chain.capabilities || []).map(cap => (
  <div key={cap} className="flex items-center gap-2">
- <span className="text-green-400">✓</span> {cap}
+ <span className="text-[var(--color-accent)]">✓</span> {cap}
  </div>
  ))}
  </div>
@@ -164,12 +165,12 @@ export default function WalletConnect({ isNight = false }) {
  </span>
  )}
  {solanaConnected && solanaAccount && (
- <span className="px-2 py-0.5 text-xs border bg-purple-500/30 text-purple-200 border-purple-500/50">
+ <span className="px-2 py-0.5 text-xs border bg-[var(--color-review)]/30 text-[var(--color-review)] border-[var(--color-review)]/50">
  ◎ {formatAddress(solanaAccount)}
  </span>
  )}
  {canton?.cantonEnabled && canton?.connected && (
- <span className="px-2 py-0.5 text-xs border bg-teal-500/30 text-teal-200 border-teal-500/50">
+ <span className="px-2 py-0.5 text-xs border bg-[var(--color-accent)]/30 text-[var(--color-accent)] border-[var(--color-accent)]/50">
  ◈ Canton
  </span>
  )}
@@ -178,8 +179,8 @@ export default function WalletConnect({ isNight = false }) {
      Replaces the old .platform-wallet max-width clip that silently
      hid connected-state pills on phones. */}
  <span className="flex items-center gap-1.5 sm:hidden">
- <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
- <span className="font-mono text-xs text-white">
+ <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" aria-hidden />
+ <span className="font-mono text-xs text-[var(--color-ink)]">
  {formatAddress(
  chains?.arc?.address ||
  chains?.evm?.address ||
@@ -202,7 +203,7 @@ export default function WalletConnect({ isNight = false }) {
  type="button"
  onClick={() => switchToArc()}
  disabled={chains.evm?.isSwitching}
- className={`w-full mb-3 px-3 py-2 text-xs font-medium transition-all bg-indigo-500/30 text-indigo-100 border border-indigo-400/60 hover:bg-indigo-500/45 disabled:opacity-50 disabled:cursor-not-allowed`}
+ className={`w-full mb-3 px-3 py-2 text-xs font-medium transition-all bg-[var(--color-review)]/30 text-[var(--color-review)] border border-[var(--color-review)]/60 hover:bg-[var(--color-review)]/45 disabled:opacity-50 disabled:cursor-not-allowed`}
  >
  🌀 Switch to Arc (USDC settlement)
  </button>
@@ -228,14 +229,14 @@ export default function WalletConnect({ isNight = false }) {
  <button
  type="button"
  onClick={() => switchToEvmNetwork('polygon')}
- className={`mb-3 w-full text-[11px] underline text-white/70 hover:text-white`}
+ className={`mb-3 w-full text-[11px] underline text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  >
  Use Polygon for trading instead
  </button>
  )}
 
  {/* Solana — escrow & proof settlement */}
- <div className="mb-3 pt-3 border-t border-white/15">
+ <div className="mb-3 pt-3 border-t border-[var(--color-rule)]">
  <div className={`text-xs font-medium ${textColor} mb-2 flex items-center gap-2`}>
  <span>◎</span>
  Solana · escrow & proof
@@ -247,7 +248,7 @@ export default function WalletConnect({ isNight = false }) {
  </span>
  <button
  onClick={() => { solanaDisconnect(); setShowDropdown(false); }}
- className={`text-xs px-2 py-1 transition-colors hover:bg-white/10 ${textColor} text-white/70 hover:text-white`}
+ className={`text-xs px-2 py-1 transition-colors hover:bg-[var(--color-paper-soft)] ${textColor} text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  >
  Disconnect
  </button>
@@ -260,17 +261,17 @@ export default function WalletConnect({ isNight = false }) {
  key={connector.id}
  onClick={() => solanaConnect(connector.id)}
  disabled={solanaConnecting}
- className={`w-full px-3 py-2 text-xs font-medium transition-colors bg-purple-500/30 text-purple-100 border border-purple-400/60 hover:bg-purple-500/45 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+ className={`w-full px-3 py-2 text-xs font-medium transition-colors bg-[var(--color-review)]/30 text-[var(--color-review)] border border-[var(--color-review)]/60 hover:bg-[var(--color-review)]/45 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
  >
  {connector.icon && <img src={connector.icon} alt="" className="w-4 h-4" />}
  {solanaConnecting ? 'Connecting...' : `Connect ${connector.name}`}
  </button>
  ))
  ) : (
- <p className={`text-[11px] text-white/70`}>
+ <p className={`text-[11px] text-[var(--color-ink-muted)]`}>
  Install{' '}
- <a href="https://phantom.app" target="_blank" rel="noreferrer" className="underline hover:text-white">Phantom</a> or{' '}
- <a href="https://solflare.com" target="_blank" rel="noreferrer" className="underline hover:text-white">Solflare</a>.
+ <a href="https://phantom.app" target="_blank" rel="noreferrer" className="underline hover:text-[var(--color-ink)]">Phantom</a> or{' '}
+ <a href="https://solflare.com" target="_blank" rel="noreferrer" className="underline hover:text-[var(--color-ink)]">Solflare</a>.
  </p>
  )}
  </div>
@@ -279,7 +280,7 @@ export default function WalletConnect({ isNight = false }) {
 
  {/* Canton — private settlement (hidden until enabled) */}
  {canton?.cantonEnabled && (
- <div className="mb-3 pt-3 border-t border-white/15">
+ <div className="mb-3 pt-3 border-t border-[var(--color-rule)]">
  <div className={`text-xs font-medium ${textColor} mb-2 flex items-center gap-2`}>
  <span>◈</span>
  Canton · private
@@ -292,14 +293,14 @@ export default function WalletConnect({ isNight = false }) {
  </span>
  <button
  onClick={() => { canton.disconnect(); setShowDropdown(false); }}
- className={`text-xs px-2 py-1 transition-all hover:bg-white/10 ${textColor} text-white/70 hover:text-white`}
+ className={`text-xs px-2 py-1 transition-all hover:bg-[var(--color-paper-soft)] ${textColor} text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  >
  Disconnect
  </button>
  </div>
  <button
  onClick={() => canton.refreshBalances()}
- className="text-[11px] underline text-teal-300 hover:text-teal-200"
+ className="text-[11px] underline text-[var(--color-accent)] hover:text-[var(--color-accent)]"
  >
  Refresh balances
  </button>
@@ -310,7 +311,7 @@ export default function WalletConnect({ isNight = false }) {
  type="button"
  onClick={() => canton.connect({ name: 'Fourcast' })}
  disabled={canton?.connecting || (canton?.mode === 'console-wallet' && canton?.extensionAvailable === false)}
- className={`w-full px-3 py-2 text-xs font-medium transition-all bg-teal-500/30 text-teal-100 border border-teal-400/60 hover:bg-teal-500/45 disabled:opacity-50 disabled:cursor-not-allowed`}
+ className={`w-full px-3 py-2 text-xs font-medium transition-all bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/60 hover:bg-[var(--color-accent)]/45 disabled:opacity-50 disabled:cursor-not-allowed`}
  >
  {canton?.connecting
  ? 'Connecting...'
@@ -321,7 +322,7 @@ export default function WalletConnect({ isNight = false }) {
  : 'Connect Console Wallet'}
  </button>
  {canton?.error && (
- <p className="text-[11px] text-red-400 mt-2">{canton.error}</p>
+ <p className="text-[11px] text-[var(--color-breach)] mt-2">{canton.error}</p>
  )}
  </>
  )}

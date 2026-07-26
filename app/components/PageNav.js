@@ -195,10 +195,10 @@ export function HomeLink({ showLabel = true }) {
   return (
     <Link
       href="/"
-      className="flex items-center gap-2.5 text-sm font-semibold tracking-wide text-white no-underline"
+      className="flex items-center gap-2.5 text-sm font-semibold tracking-wide text-[var(--color-ink)] no-underline"
     >
       <span
-        className="flex h-8 w-8 items-center justify-center border border-emerald-400/25 bg-emerald-400/5 font-display text-sm text-emerald-300"
+        className="flex h-8 w-8 items-center justify-center border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/5 font-display text-sm text-[var(--color-accent)]"
         style={{ borderRadius: 0 }}
       >
         {BRAND.emoji}
@@ -225,7 +225,7 @@ export function HomeLink({ showLabel = true }) {
  */
 export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-w-7xl", wallet = true, children }) {
   return (
-    <div className="platform-shell flex min-h-screen flex-col text-white">
+    <div className="platform-shell flex min-h-screen flex-col text-[var(--color-ink)]">
       <div className="platform-atmosphere" aria-hidden="true" />
       {/* Header always spans the full app width so nav never cramps on
           narrow-content pages; only <main> respects maxWidth. */}

@@ -13,7 +13,6 @@ const LAB_FEATURES = [
  href: '/labs/autopilot',
  icon: Bot,
  status: BRAND.labs.autopilot.status,
- gradient: 'from-emerald-600 to-teal-500',
  },
  {
  id: 'builder',
@@ -22,7 +21,6 @@ const LAB_FEATURES = [
  href: '/labs/builder',
  icon: Hammer,
  status: 'beta',
- gradient: 'from-amber-600 to-emerald-500',
  },
  {
  id: 'telegram',
@@ -32,7 +30,6 @@ const LAB_FEATURES = [
  icon: MessageCircle,
  status: 'stable',
  external: true,
- gradient: 'from-emerald-500 to-cyan-500',
  },
 ];
 
@@ -40,13 +37,13 @@ export default function LabsPage() {
  return (
  <AppShell title="Labs" subtitle={BRAND.labs.subtitle} maxWidth="max-w-5xl">
  {/* Labs Notice */}
- <div className="mb-10 border border-white/10 bg-white/5 p-5">
+ <div className="mb-10 border border-[var(--color-rule)] bg-[var(--color-wash)] p-5">
  <div className="flex items-start gap-3">
- <div className="flex-shrink-0 flex h-8 w-8 items-center justify-center bg-emerald-500/15 text-emerald-300">
+ <div className="flex-shrink-0 flex h-8 w-8 items-center justify-center bg-[var(--color-accent)]/15 text-[var(--color-accent)]">
  <FlaskConical className="h-4 w-4" strokeWidth={2} />
  </div>
  <div>
- <h3 className="mb-1 text-sm font-medium text-white">
+ <h3 className="mb-1 text-sm font-medium text-[var(--color-ink)]">
  Execution &amp; monetization
  </h3>
  <p className="text-xs leading-relaxed text-white/[0.55]">
@@ -78,35 +75,36 @@ function FeatureCard({ feature }) {
  <a
  href={feature.href}
  {...extraProps}
- className="group flex flex-col border border-white/10 bg-white/5 p-5 no-underline transition-all hover:border-white/20 hover:bg-white/[0.08]"
+ className="group flex flex-col border border-[var(--color-rule)] bg-[var(--color-paper-raised)] p-5 no-underline transition-all hover:border-[var(--color-rule-strong)] hover:bg-white/[0.08]"
  >
- {/* Icon */}
- <div className={`w-12 h-12 bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-white shadow-lg mb-4`}>
+ {/* Icon — squared hairline surface, no decorative gradient.
+ design.md: app interest comes from state/data, not illustration. */}
+ <div className="w-12 h-12 border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 flex items-center justify-center text-[var(--color-accent)] mb-4">
  <Icon className="h-5 w-5" strokeWidth={2} />
  </div>
 
  {/* Title + Status */}
  <div className="mb-2 flex items-center gap-2">
- <h3 className="text-base font-medium text-white">
+ <h3 className="text-base font-medium text-[var(--color-ink)]">
  {feature.title}
  </h3>
  <span className={` px-2 py-0.5 text-[10px] font-medium ${
- isCore ? 'bg-emerald-500/15 text-emerald-300'
- : isStable ? 'bg-emerald-500/15 text-emerald-300'
- : 'bg-amber-500/15 text-amber-300'
+ isCore ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+ : isStable ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+ : 'bg-[var(--color-sealed)]/15 text-[var(--color-sealed)]'
  }`}>
  {isCore ? 'Core' : isStable ? 'Stable' : 'Beta'}
  </span>
- {isExternal && <ArrowUpRight className="h-3 w-3 text-white/30" />}
+ {isExternal && <ArrowUpRight className="h-3 w-3 text-[var(--color-ink-faint)]" />}
  </div>
 
  {/* Description */}
- <p className="flex-1 text-xs leading-relaxed text-white/50">
+ <p className="flex-1 text-xs leading-relaxed text-[var(--color-ink-faint)]">
  {feature.description}
  </p>
 
  {/* Hover arrow */}
- <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-emerald-300 opacity-0 transition-opacity group-hover:opacity-100">
+ <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-[var(--color-accent)] opacity-0 transition-opacity group-hover:opacity-100">
  {isExternal ? 'Open' : 'Explore'}
  <ArrowRight className="h-3 w-3" />
  </div>

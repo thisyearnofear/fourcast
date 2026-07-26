@@ -65,7 +65,7 @@ function CompactChainSelector({ options, onNetworkChange }) {
  option.onSwitch(e.target.value);
  onNetworkChange?.({ chainId: option.chainId, networkId: e.target.value });
  }}
- className="px-2 py-1 text-xs mc-panel text-white hover:bg-white/20 transition-colors cursor-pointer"
+ className="px-2 py-1 text-xs mc-panel text-[var(--color-ink)] hover:bg-white/20 transition-colors cursor-pointer"
  >
  {option.networks.map((net) => (
  <option key={net.id} value={net.id}>
@@ -74,7 +74,7 @@ function CompactChainSelector({ options, onNetworkChange }) {
  ))}
  </select>
  ) : (
- <span className="px-2 py-1 text-xs text-white/70">
+ <span className="px-2 py-1 text-xs text-[var(--color-ink-muted)]">
  {option.currentNetwork.display}
  </span>
  )}
@@ -93,14 +93,14 @@ function FullChainSelector({ options, onNetworkChange }) {
  {options.map((option) => (
  <div
  key={option.chainId}
- className="mc-panel p-4 hover:border-white/20 transition-all"
+ className="mc-panel p-4 hover:border-[var(--color-rule-strong)] transition-all"
  >
  <div className="flex items-center justify-between mb-3">
  <div className="flex items-center gap-2">
  <span className="text-xl">{option.icon}</span>
- <h4 className="text-sm font-medium text-white">{option.category}</h4>
+ <h4 className="text-sm font-medium text-[var(--color-ink)]">{option.category}</h4>
  </div>
- <span className="text-xs text-white/50">
+ <span className="text-xs text-[var(--color-ink-faint)]">
  {option.currentNetwork.display}
  </span>
  </div>
@@ -116,8 +116,8 @@ function FullChainSelector({ options, onNetworkChange }) {
  }}
  className={`px-3 py-1.5 text-xs font-light transition-all ${
  option.currentNetwork.id === net.id
- ? 'bg-white/20 text-white border border-white/30'
- : 'bg-white/10 text-white/70 border border-white/10 hover:bg-white/15 hover:text-white'
+ ? 'bg-white/20 text-[var(--color-ink)] border border-white/30'
+ : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] border border-[var(--color-rule)] hover:bg-[var(--color-paper-soft)] hover:text-[var(--color-ink)]'
  }`}
  >
  {net.display}
@@ -125,7 +125,7 @@ function FullChainSelector({ options, onNetworkChange }) {
  ))}
  </div>
  ) : (
- <p className="text-xs text-white/50 italic">
+ <p className="text-xs text-[var(--color-ink-faint)] italic">
  Switch in your wallet settings (cannot switch from app)
  </p>
  )}

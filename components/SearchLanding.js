@@ -179,11 +179,11 @@ export default function SearchLanding() {
               Prediction-market operator terminal
             </p>
 
-            <h1 className="fc-display mt-4 text-5xl font-extrabold leading-[0.9] tracking-tight text-white sm:text-6xl lg:text-[4.25rem]">
+            <h1 className="fc-display mt-4 text-5xl font-extrabold leading-[0.9] tracking-tight text-[var(--color-ink)] sm:text-6xl lg:text-[4.25rem]">
               {BRAND.name}
             </h1>
 
-            <p className="mt-5 max-w-md text-lg leading-7 text-white/70 sm:text-xl">
+            <p className="mt-5 max-w-md text-lg leading-7 text-[var(--color-ink-muted)] sm:text-xl">
               {BRAND.tagline}
             </p>
 
@@ -217,7 +217,7 @@ export default function SearchLanding() {
                     onBlur={() => setFocused(false)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Will Bitcoin trade above $100k by June?"
-                    className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/45"
+                    className="min-w-0 flex-1 bg-transparent text-base text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)]"
                     autoFocus
                   />
                 </label>
@@ -246,10 +246,10 @@ export default function SearchLanding() {
               </div>
             </div>
 
-            <p className="mt-6 text-sm text-white/40">
+            <p className="mt-6 text-sm text-[var(--color-ink-faint)]">
               No wallet needed to analyze. Publish and trade when you are ready.
               {!webIntel.loading && !webIntel.available && (
-                <span className="mt-1 block text-white/30">
+                <span className="mt-1 block text-[var(--color-ink-faint)]">
                   {BRAND.webIntel.unavailableNote}
                 </span>
               )}
@@ -262,7 +262,7 @@ export default function SearchLanding() {
               shifts. Cycles through the top 6 markets every 3s. Falls back
               to a neutral "awaiting data" state if the API is unreachable. */}
           <div className="relative">
-            <div className="absolute -inset-4 bg-emerald-400/10 blur-3xl" aria-hidden />
+            <div className="absolute -inset-4 bg-[var(--color-accent)]/10 blur-3xl" aria-hidden />
             <div className={`fc-instrument edge-reveal relative overflow-hidden p-1 shadow-2xl shadow-black/50 ${live.isLive ? 'fc-instrument--armed' : ''}`}>
               <div className="fc-instrument__inner p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
@@ -270,12 +270,12 @@ export default function SearchLanding() {
                     <p className="fc-kicker">
                       Decision replay · {live.isLive ? 'live markets' : 'connecting'}
                       {live.markets.length > 1 && (
-                        <span className="ml-2 text-white/30">
+                        <span className="ml-2 text-[var(--color-ink-faint)]">
                           {marketIndex + 1}/{live.markets.length}
                         </span>
                       )}
                     </p>
-                    <h2 key={`title-${marketIndex}`} className="fc-market-slide mt-2 max-w-sm text-lg font-semibold leading-snug text-white sm:text-xl">
+                    <h2 key={`title-${marketIndex}`} className="fc-market-slide mt-2 max-w-sm text-lg font-semibold leading-snug text-[var(--color-ink)] sm:text-xl">
                       {activeMarket?.title || 'Awaiting live market data…'}
                     </h2>
                   </div>
@@ -292,23 +292,23 @@ export default function SearchLanding() {
                   <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
                     {['Market', 'AI fair', 'Edge'].map((label) => (
                       <div key={label} className="fc-metric px-3 py-4">
-                        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">{label}</div>
-                        <div className="mt-2 font-display text-2xl font-bold tracking-tight text-white/30 sm:text-3xl">—</div>
+                        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">{label}</div>
+                        <div className="mt-2 font-display text-2xl font-bold tracking-tight text-[var(--color-ink-faint)] sm:text-3xl">—</div>
                       </div>
                     ))}
                   </div>
                 )}
 
-                <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/8 pt-4">
-                  <p className="text-sm text-white/55">
+                <div className="mt-5 flex items-center justify-between gap-3 border-t border-[var(--color-rule)] pt-4">
+                  <p className="text-sm text-[var(--color-ink-faint)]">
                     {activeMarket ? (
                       <>Recommendation{' '}
-                        <span className="font-semibold text-emerald-200">
+                        <span className="font-semibold text-[var(--color-accent)]">
                           {directionFor(activeMarket.edgeScore)}
                         </span>
                       </>
                     ) : (
-                      <span className="text-white/40">Connecting to live market feed…</span>
+                      <span className="text-[var(--color-ink-faint)]">Connecting to live market feed…</span>
                     )}
                   </p>
                   <button
@@ -333,15 +333,15 @@ export default function SearchLanding() {
                     comes from: SynthData ML ensemble (200+ models), or
                     cross-venue arbitrage between Polymarket and Kalshi. */}
                 {activeMarket?.edgeScore != null && Math.abs(activeMarket.edgeScore) >= 0.05 && (
-                  <div className="mt-2 flex items-center gap-2 border-t border-white/8 pt-2">
-                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/30">
+                  <div className="mt-2 flex items-center gap-2 border-t border-[var(--color-rule)] pt-2">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-faint)]">
                       Edge source
                     </span>
-                    <span className="font-mono text-[9px] text-emerald-300/60">
+                    <span className="font-mono text-[9px] text-[var(--color-accent)]/60">
                       SynthData ML · 200+ models
                     </span>
-                    <span className="text-white/20">·</span>
-                    <span className="font-mono text-[9px] text-white/30">
+                    <span className="text-[var(--color-ink-faint)]">·</span>
+                    <span className="font-mono text-[9px] text-[var(--color-ink-faint)]">
                       cross-venue parity checked
                     </span>
                   </div>
@@ -390,18 +390,18 @@ export default function SearchLanding() {
                 className={`fc-door group relative flex flex-col gap-2 border p-5 transition sm:p-6 ${
                   isLead
                     ? 'border-[var(--color-accent)]/40 bg-[var(--color-accent-quiet)] hover:border-[var(--color-accent)]/70 hover:bg-[var(--color-accent-atmosphere)]'
-                    : 'border-white/10 bg-white/[0.02] hover:border-emerald-400/30 hover:bg-emerald-400/[0.04]'
+                    : 'border-[var(--color-rule)] bg-white/[0.02] hover:border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/[0.04]'
                 } ${orderedDoors.length === 3 && door.id === 'analyst' ? 'sm:col-span-2 lg:col-span-1' : ''}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="fc-kicker">{door.eyebrow}</span>
-                  <Icon className={`h-4 w-4 transition ${isLead ? 'text-[var(--color-accent)]' : 'text-white/40 group-hover:text-emerald-300'}`} />
+                  <Icon className={`h-4 w-4 transition ${isLead ? 'text-[var(--color-accent)]' : 'text-[var(--color-ink-faint)] group-hover:text-[var(--color-accent)]'}`} />
                 </div>
-                <h3 className="font-display text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                <h3 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-2xl">
                   {door.title}
                 </h3>
-                <p className="text-sm leading-6 text-white/60">{door.body}</p>
-                <span className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${isLead ? 'text-[var(--color-accent)]' : 'text-emerald-200/80'}`}>
+                <p className="text-sm leading-6 text-[var(--color-ink-muted)]">{door.body}</p>
+                <span className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${isLead ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent)]/80'}`}>
                   Enter
                   <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
                 </span>
@@ -426,14 +426,14 @@ export default function SearchLanding() {
             chain, not a fixture list. */}
         <div ref={receiptRef}>
         <Reveal as="section" className="mt-12" aria-label="Verify a real decision on Solana">
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 pb-3">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--color-rule)] pb-3">
             <div>
               <p className="fc-kicker">Verify a real decision on Solana</p>
-              <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">
+              <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold leading-tight tracking-tight text-[var(--color-ink)] sm:text-3xl">
                 A receipt already settled on-chain. Audit it yourself.
               </h2>
             </div>
-            <p className="max-w-sm text-xs leading-5 text-white/45">
+            <p className="max-w-sm text-xs leading-5 text-[var(--color-ink-faint)]">
               No signup, no wallet. Each step is verifiable on-chain.
             </p>
           </div>
@@ -443,22 +443,22 @@ export default function SearchLanding() {
           <div className="fc-instrument fc-seal-target mt-5 overflow-hidden p-1">
             <div className="fc-instrument__inner flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
               <div className="min-w-0">
-                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
                   {VERIFIED_RECEIPT.stage}
                 </p>
-                <p className="mt-1.5 font-display text-xl font-semibold text-white sm:text-2xl">
-                  {VERIFIED_RECEIPT.home} <span className="text-white/40">v</span> {VERIFIED_RECEIPT.away}
+                <p className="mt-1.5 font-display text-xl font-semibold text-[var(--color-ink)] sm:text-2xl">
+                  {VERIFIED_RECEIPT.home} <span className="text-[var(--color-ink-faint)]">v</span> {VERIFIED_RECEIPT.away}
                 </p>
-                <p className="mt-1 font-mono text-sm text-emerald-300">
+                <p className="mt-1 font-mono text-sm text-[var(--color-accent)]">
                   Final {VERIFIED_RECEIPT.score}
                 </p>
-                <p className="mt-3 max-w-md text-xs leading-5 text-white/55">
+                <p className="mt-3 max-w-md text-xs leading-5 text-[var(--color-ink-faint)]">
                   <TweenNumber
                     value={receiptSealed ? 0.1 : 0}
                     duration={800}
                     format={(v) => `${v.toFixed(2)} SOL`}
-                    className="font-mono text-white/70"
-                  /> settled trustlessly via <span className="font-mono text-white/70">match-escrow</span> CPI → <span className="font-mono text-white/70">txoracle::validate_stat</span>. No intermediary.
+                    className="font-mono text-[var(--color-ink-muted)]"
+                  /> settled trustlessly via <span className="font-mono text-[var(--color-ink-muted)]">match-escrow</span> CPI → <span className="font-mono text-[var(--color-ink-muted)]">txoracle::validate_stat</span>. No intermediary.
                 </p>
                 {receiptSealed && (
                   <span className="mc-stamp mc-stamp--allocate mt-3 inline-flex" key="sealed">

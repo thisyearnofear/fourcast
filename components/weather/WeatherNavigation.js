@@ -1,9 +1,9 @@
 'use client';
 
 export default function WeatherNavigation({ isNight }) {
- const bgColor = 'bg-white/10 border-white/20 hover:bg-white/15';
+ const bgColor = 'bg-[var(--color-paper-soft)] border-[var(--color-rule-strong)] hover:bg-[var(--color-paper-soft)]';
  
- const textColor = 'text-white';
+ const textColor = 'text-[var(--color-ink)]';
  const hoverBg = 'hover:bg-white/20';
 
  return (

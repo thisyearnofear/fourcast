@@ -15,7 +15,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
  // Glass CSS classes (DRY)
  const glassPanel = 'mc-panel';
  const glassInput = 'glass-input';
- const textColor = 'text-white';
+ const textColor = 'text-[var(--color-ink)]';
 
  const handleLogin = async (e) => {
  e.preventDefault();
@@ -84,7 +84,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
  type="email"
  value={email}
  onChange={(e) => setEmail(e.target.value)}
- className={`w-full py-3 ${glassInput} ${textColor} focus:border-emerald-500 outline-none`}
+ className={`w-full py-3 ${glassInput} ${textColor} focus:border-[var(--color-accent)] outline-none`}
  placeholder="your@email.com"
  required
  disabled={isLoading}
@@ -97,7 +97,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
  type="password"
  value={password}
  onChange={(e) => setPassword(e.target.value)}
- className={`w-full py-3 ${glassInput} ${textColor} focus:border-emerald-500 outline-none`}
+ className={`w-full py-3 ${glassInput} ${textColor} focus:border-[var(--color-accent)] outline-none`}
  placeholder="••••••••"
  required
  disabled={isLoading}
@@ -105,7 +105,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
  </div>
 
  {error && (
- <div className={`text-red-400 text-sm bg-red-500/20 border border-red-400/30 px-4 py-3`}>
+ <div className={`text-[var(--color-breach)] text-sm bg-[var(--color-breach)]/20 border border-[var(--color-breach)]/30 px-4 py-3`}>
  {error}
  </div>
  )}
@@ -115,14 +115,14 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
  type="button"
  onClick={onClose}
  disabled={isLoading}
- className={`flex-1 px-4 py-3 font-light text-sm transition-all border bg-white/5 hover:bg-white/10 border-white/10 text-white/70 disabled:opacity-50`}
+ className={`flex-1 px-4 py-3 font-light text-sm transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] border-[var(--color-rule)] text-[var(--color-ink-muted)] disabled:opacity-50`}
  >
  Cancel
  </button>
  <button
  type="submit"
  disabled={isLoading}
- className={`flex-1 px-4 py-3 font-light text-sm transition-all border bg-emerald-500/30 hover:bg-emerald-500/40 border-emerald-400/30 text-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+ className={`flex-1 px-4 py-3 font-light text-sm transition-all border bg-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/40 border-[var(--color-accent)]/30 text-[var(--color-accent)] disabled:opacity-50 disabled:cursor-not-allowed`}
  >
  {isLoading ? (
  <span className="flex items-center justify-center gap-2">
@@ -142,7 +142,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
  href="https://kalshi.com/sign-up"
  target="_blank"
  rel="noopener noreferrer"
- className="text-emerald-500 hover:underline"
+ className="text-[var(--color-accent)] hover:underline"
  >
  Sign up here
  </a>

@@ -74,7 +74,7 @@ export default function StatusBadge() {
  : `${fullLabel}${updatedAt ? ` · updated ${updatedAt}` : ''}`
  }
  aria-label={`System status: ${fullLabel}. Click for details.`}
- className={`hidden md:inline-flex items-center gap-1.5 border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-medium transition-colors hover:bg-white/10 ${c.text}`}
+ className={`hidden md:inline-flex items-center gap-1.5 border border-[var(--color-rule)] bg-[var(--color-paper-raised)] px-2.5 py-1.5 text-[11px] font-medium transition-colors hover:bg-[var(--color-paper-soft)] ${c.text}`}
  >
  <span className="relative flex h-2 w-2" aria-hidden>
  {summary === 'all_healthy' && (

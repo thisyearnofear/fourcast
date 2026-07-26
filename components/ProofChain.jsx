@@ -134,15 +134,15 @@ export default function ProofChain() {
       </div>
 
       {/* Detail panel */}
-      <div className="fc-proof-chain__detail mt-3 min-h-[3rem] border-t border-white/8 pt-3">
+      <div className="fc-proof-chain__detail mt-3 min-h-[3rem] border-t border-[var(--color-rule)] pt-3">
         <div key={active} className="fc-market-slide">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-emerald-300/60">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-accent)]/60">
             Step {active + 1} / {STEPS.length}
           </span>
-          <p className="mt-1 text-sm font-medium text-white/80">
+          <p className="mt-1 text-sm font-medium text-[var(--color-ink)]">
             {STEPS[active].label}
           </p>
-          <p className="mt-0.5 text-xs leading-5 text-white/50">
+          <p className="mt-0.5 text-xs leading-5 text-[var(--color-ink-faint)]">
             {STEPS[active].detail}
           </p>
         </div>

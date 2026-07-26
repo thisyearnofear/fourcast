@@ -47,30 +47,30 @@ export function WinCelebration({ isOpen, signal, onClose }) {
 
  {/* Win Message */}
  <div className="space-y-2">
- <h2 className="text-4xl font-light text-white">
+ <h2 className="text-4xl font-light text-[var(--color-ink)]">
  You Won!
  </h2>
- <p className="text-lg text-white/80 font-light">
+ <p className="text-lg text-[var(--color-ink)] font-light">
  {signal.marketTitle}
  </p>
  </div>
 
  {/* Confidence Message */}
- <div className="bg-green-500/20 border border-green-400/30 p-4">
- <p className="text-sm text-green-100 font-light">
+ <div className="bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/30 p-4">
+ <p className="text-sm text-[var(--color-accent)] font-light">
  {profitMessage}
  </p>
  </div>
 
  {/* Stats */}
  <div className="grid grid-cols-2 gap-3">
- <div className="bg-white/5 p-3">
- <p className="text-xs text-white/60 mb-1">Your Prediction</p>
- <p className="text-lg text-white font-light">{signal.side}</p>
+ <div className="bg-[var(--color-paper-raised)] p-3">
+ <p className="text-xs text-[var(--color-ink-muted)] mb-1">Your Prediction</p>
+ <p className="text-lg text-[var(--color-ink)] font-light">{signal.side}</p>
  </div>
- <div className="bg-white/5 p-3">
- <p className="text-xs text-white/60 mb-1">Confidence</p>
- <p className="text-lg text-white font-light">
+ <div className="bg-[var(--color-paper-raised)] p-3">
+ <p className="text-xs text-[var(--color-ink-muted)] mb-1">Confidence</p>
+ <p className="text-lg text-[var(--color-ink)] font-light">
  {signal.confidence || 'High'}
  </p>
  </div>
@@ -78,7 +78,7 @@ export function WinCelebration({ isOpen, signal, onClose }) {
 
  {/* Share Buttons */}
  <div className="space-y-2">
- <p className="text-xs text-white/60 uppercase tracking-wider">
+ <p className="text-xs text-[var(--color-ink-muted)] uppercase tracking-wider">
  Share your win
  </p>
  <div className="flex gap-2">
@@ -96,7 +96,7 @@ export function WinCelebration({ isOpen, signal, onClose }) {
  {/* Close Button */}
  <button
  onClick={onClose}
- className="w-full py-3 bg-white/10 hover:bg-white/20 text-white font-light transition-all"
+ className="w-full py-3 bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink)] font-light transition-all"
  >
  Dismiss
  </button>
@@ -126,8 +126,8 @@ function ShareButton({ platform, signal }) {
  onClick={handleShare}
  className={`flex-1 py-2 font-light text-sm transition-all border ${
  platform === 'x'
- ? 'bg-black/40 hover:bg-black/60 border-white/20 text-white'
- : 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-400/30 text-purple-200'
+ ? 'bg-[var(--color-paper)] hover:bg-[var(--color-paper-deep)] border-[var(--color-rule)] text-[var(--color-ink)]'
+ : 'bg-[var(--color-review)]/20 hover:bg-[var(--color-review)]/30 border-[var(--color-review)]/30 text-[var(--color-review)]'
  }`}
  >
  {icon} Share on {label}

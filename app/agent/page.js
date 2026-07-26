@@ -35,14 +35,14 @@ function OperatorControlsSection() {
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5"
       >
         <div className="flex items-center gap-2.5">
-          <SlidersHorizontal className="h-3.5 w-3.5 text-white/45" />
+          <SlidersHorizontal className="h-3.5 w-3.5 text-[var(--color-ink-faint)]" />
           <span className="mc-kicker">Operator controls · manual investigation</span>
         </div>
-        <ChevronDown className={`h-4 w-4 text-white/45 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 text-[var(--color-ink-faint)] transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div className="border-t border-[var(--mc-rule)] px-4 py-5 sm:px-5">
-          <p className="mb-4 text-xs leading-5 text-white/45">
+          <p className="mb-4 text-xs leading-5 text-[var(--color-ink-faint)]">
             Manual on-demand scans — every run still produces a hash-bound receipt.
           </p>
           <AgentDashboard />
@@ -67,14 +67,14 @@ function ReplayBanner({ info }) {
       <div className="flex items-start gap-3">
         <RotateCcw className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--mc-sealed)]" />
         <div className="flex-1">
-          <p className="text-sm font-medium text-white/80">
+          <p className="text-sm font-medium text-[var(--color-ink)]">
             Historical replay ·{' '}
             <span ref={fixtureRef} className="font-mono tabular-nums">{Math.round(fixtureCount)}</span>{' '}
             cached {info.fixtureCount === 1 ? 'fixture' : 'fixtures'},{' '}
             <span ref={receiptRef} className="font-mono tabular-nums">{Math.round(receiptCount)}</span>{' '}
             {info.receiptCount === 1 ? 'receipt' : 'receipts'}
           </p>
-          <p className="mt-1 text-xs leading-5 text-white/60">
+          <p className="mt-1 text-xs leading-5 text-[var(--color-ink-muted)]">
             The TxLINE replay window closed on July 19. The agent is now replaying
             cached fixtures, odds, and outcomes. The decision engine and proof
             pipeline run live against historical data.

@@ -24,7 +24,7 @@ import { useState } from 'react';
 export default function EvidenceBlock({
  signal,
  isNight = true,
- textColor = 'text-white',
+ textColor = 'text-[var(--color-ink)]',
  calibrationScore,
  agentBrierScore,
  sources,
@@ -37,7 +37,7 @@ export default function EvidenceBlock({
  const bg = 'bg-white/[0.03]';
  const border = 'border-white/[0.06]';
  const muted = 'opacity-50';
- const labelColor = 'text-white/60';
+ const labelColor = 'text-[var(--color-ink-muted)]';
 
  // --- Derive sources from signal metadata ---
  const derivedSources = sources || buildSources(signal);
@@ -61,16 +61,16 @@ export default function EvidenceBlock({
  Calibration
  </span>
  {/* Gauge bar */}
- <div className="relative w-16 h-1.5 overflow-hidden bg-white/10">
+ <div className="relative w-16 h-1.5 overflow-hidden bg-[var(--color-paper-soft)]">
  <div
  className={`absolute inset-y-0 left-0 transition-all duration-700 ${
- calibrationScore >= 70 ? 'bg-green-400' : calibrationScore >= 50 ? 'bg-yellow-400' : 'bg-red-400'
+ calibrationScore >= 70 ? 'bg-[var(--color-accent)]' : calibrationScore >= 50 ? 'bg-[var(--color-sealed)]' : 'bg-[var(--color-breach)]'
  }`}
  style={{ width: `${Math.min(100, Math.max(0, calibrationScore))}%` }}
  />
  </div>
  <span className={`text-xs font-semibold ${
- calibrationScore >= 70 ? 'text-green-400' : calibrationScore >= 50 ? 'text-yellow-400' : 'text-red-400'
+ calibrationScore >= 70 ? 'text-[var(--color-accent)]' : calibrationScore >= 50 ? 'text-[var(--color-sealed)]' : 'text-[var(--color-breach)]'
  }`}>
  {Math.round(calibrationScore)}%
  </span>
@@ -83,7 +83,7 @@ export default function EvidenceBlock({
  Brier
  </span>
  <span className={`text-xs font-semibold ${
- agentBrierScore < 0.15 ? 'text-green-400' : agentBrierScore < 0.25 ? 'text-yellow-400' : 'text-red-400'
+ agentBrierScore < 0.15 ? 'text-[var(--color-accent)]' : agentBrierScore < 0.25 ? 'text-[var(--color-sealed)]' : 'text-[var(--color-breach)]'
  }`}>
  {agentBrierScore.toFixed(3)}
  </span>
@@ -99,7 +99,7 @@ export default function EvidenceBlock({
  e.stopPropagation();
  setTrackRecordOpen(!trackRecordOpen);
  }}
- className={`ml-auto text-[10px] font-medium tracking-wider px-2.5 py-1 transition-all whitespace-nowrap bg-blue-500/10 hover:bg-blue-500/20 text-blue-300`}
+ className={`ml-auto text-[10px] font-medium tracking-wider px-2.5 py-1 transition-all whitespace-nowrap bg-[var(--color-evidence)]/10 hover:bg-[var(--color-evidence)]/20 text-[var(--color-evidence)]`}
  >
  How has Fourcast done? →
  </button>
@@ -114,7 +114,7 @@ export default function EvidenceBlock({
  <a
  href="/signals?tab=leaderboard"
  onClick={(e) => e.stopPropagation()}
- className={`inline-flex items-center gap-1 font-medium text-blue-300 hover:text-blue-200 transition-colors`}
+ className={`inline-flex items-center gap-1 font-medium text-[var(--color-evidence)] hover:opacity-80 transition-colors`}
  >
  View full track record →
  </a>
@@ -130,7 +130,7 @@ export default function EvidenceBlock({
  }`}
  >
  <span className="flex items-center gap-2">
- <span className="font-mono text-emerald-300">01</span>
+ <span className="font-mono text-[var(--color-accent)]">01</span>
  <span>Evidence &amp; Provenance</span>
  </span>
  <span className={`transform transition-transform duration-200 ${sourcesExpanded ? 'rotate-180' : ''}`}>
@@ -157,12 +157,12 @@ export default function EvidenceBlock({
  </div>
  <div className="flex items-center gap-3">
  {source.subtype && (
- <span className={`text-[10px] text-white/30`}>
+ <span className={`text-[10px] text-[var(--color-ink-faint)]`}>
  {source.subtype}
  </span>
  )}
  {source.timestamp && (
- <span className={`text-[10px] text-white/30`}>
+ <span className={`text-[10px] text-[var(--color-ink-faint)]`}>
  {formatRelativeTime(source.timestamp)}
  </span>
  )}
@@ -192,7 +192,7 @@ export default function EvidenceBlock({
  <div className="space-y-1">
  {derivedCounterSignals.map((counter, idx) => (
  <div key={idx} className="flex items-start gap-2 text-xs">
- <span className={`text-amber-400/70 mt-0.5`}>⚡</span>
+ <span className={`text-[var(--color-sealed)]/70 mt-0.5`}>⚡</span>
  <span className={`${textColor} opacity-70`}>{counter}</span>
  </div>
  ))}
@@ -216,18 +216,18 @@ export default function EvidenceBlock({
  className={`block text-xs px-3 py-2 transition-opacity hover:opacity-100 bg-white/[0.04] opacity-80`}
  >
  <div className="flex items-center gap-2">
- <span className={`flex-shrink-0 px-1 text-[8px] font-mono bg-cyan-500/10 text-cyan-400/60`}>
+ <span className={`flex-shrink-0 px-1 text-[8px] font-mono bg-[var(--color-evidence)]/10 text-[var(--color-evidence)]/60`}>
  {src.rank || idx + 1}
  </span>
  <span className={`${textColor} font-medium truncate`}>{src.title}</span>
  {src.source && (
- <span className={`text-[9px] flex-shrink-0 text-white/30`}>
+ <span className={`text-[9px] flex-shrink-0 text-[var(--color-ink-faint)]`}>
  {src.source}
  </span>
  )}
  </div>
  {src.snippet && (
- <p className={`text-[10px] mt-1 pl-5 text-white/40 line-clamp-2`}>
+ <p className={`text-[10px] mt-1 pl-5 text-[var(--color-ink-faint)] line-clamp-2`}>
  {src.snippet}
  </p>
  )}
@@ -235,7 +235,7 @@ export default function EvidenceBlock({
  ))}
  </div>
  {signal.brightData.deepResearch && (
- <div className={`mt-2 px-3 py-2 text-[10px] bg-cyan-500/5 border border-cyan-500/10 text-cyan-300/70`}>
+ <div className={`mt-2 px-3 py-2 text-[10px] bg-[var(--color-evidence)]/5 border border-[var(--color-evidence)]/10 text-[var(--color-evidence)]/70`}>
  <span className="font-medium">Deep Research:</span>
  {' '}Scraped {signal.brightData.deepResearch.charCount?.toLocaleString()} chars
  {signal.brightData.deepResearch.sentenceCount

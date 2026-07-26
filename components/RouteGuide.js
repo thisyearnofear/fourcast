@@ -118,24 +118,24 @@ export default function RouteGuide({ route }) {
   if (!guide || !visible) return null;
 
   return (
-    <div className="mb-8 overflow-hidden border border-emerald-400/20 bg-emerald-400/[0.07] px-4 py-4 sm:px-5">
+    <div className="mb-8 overflow-hidden border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/[0.07] px-4 py-4 sm:px-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 max-w-2xl">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-300/80" />
-            <p className="font-display text-sm font-semibold text-emerald-100">
+            <Sparkles className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
+            <p className="font-display text-sm font-semibold text-[var(--color-accent)]">
               {guide.title}
             </p>
           </div>
-          <ol className="mt-2.5 space-y-1.5 text-sm text-white/65">
+          <ol className="mt-2.5 space-y-1.5 text-sm text-[var(--color-ink-muted)]">
             {guide.steps.map((step, i) => (
               <li key={i} className="flex gap-2">
-                <span className="mt-0.5 font-mono text-emerald-300/80 shrink-0">{i + 1}</span>
+                <span className="mt-0.5 font-mono text-[var(--color-accent)]/80 shrink-0">{i + 1}</span>
                 <span className="leading-6">{step}</span>
               </li>
             ))}
           </ol>
-          <p className="mt-3 text-xs text-white/40">{guide.footnote}</p>
+          <p className="mt-3 text-xs text-[var(--color-ink-faint)]">{guide.footnote}</p>
         </div>
         <button
           type="button"
@@ -143,7 +143,7 @@ export default function RouteGuide({ route }) {
             dismissRoute(route);
             setVisible(false);
           }}
-          className="inline-flex items-center gap-1 border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/60 hover:text-white"
+          className="inline-flex items-center gap-1 border border-[var(--color-rule)] bg-[var(--color-paper-deep)] px-3 py-1.5 text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
         >
           <X className="h-3 w-3" />
           Got it

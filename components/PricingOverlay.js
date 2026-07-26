@@ -38,8 +38,8 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  // Don't show pricing overlay if payment system isn't configured
  if (!isOpen || !isConfigured) return null;
 
- const textColor = 'text-white';
- const mutedColor = 'text-white/50';
+ const textColor = 'text-[var(--color-ink)]';
+ const mutedColor = 'text-[var(--color-ink-faint)]';
 
  const activePlan = PLANS.find(p => p.id === selectedPlan);
  const isProcessing = txState.status !== 'idle' && txState.status !== 'success' && txState.status !== 'error';
@@ -67,13 +67,13 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  role="dialog"
  aria-modal="true"
  aria-labelledby="pricing-overlay-heading"
- className={`relative w-full max-w-3xl overflow-hidden bg-slate-900 border border-white/10 shadow-2xl`}
+ className={`relative w-full max-w-3xl overflow-hidden bg-[var(--color-paper-deep)] border border-[var(--color-rule)] shadow-2xl`}
  onClick={(e) => e.stopPropagation()}
  >
  {/* Header */}
- <div className={`px-6 pt-8 pb-6 text-center border-b border-white/10`}>
+ <div className={`px-6 pt-8 pb-6 text-center border-b border-[var(--color-rule)]`}>
  <div className="mb-3 flex items-center justify-center">
- <Sparkles className="h-10 w-10 text-emerald-300" aria-hidden="true" />
+ <Sparkles className="h-10 w-10 text-[var(--color-accent)]" aria-hidden="true" />
  </div>
  <h2 id="pricing-overlay-heading" className={`text-2xl font-semibold ${textColor} mb-2`}>
  Unlock Your Autopilot
@@ -84,7 +84,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  : "You've experienced the power of AI-driven prediction analysis. Upgrade for unlimited access to every feature."}
  </p>
  {!isConfigured && (
- <p className="text-xs text-amber-400 mt-2">
+ <p className="text-xs text-[var(--color-sealed)] mt-2">
  ⚙️ Payment not configured — add contract addresses to .env.local
  </p>
  )}
@@ -103,13 +103,13 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  disabled={plan.disabled || isProcessing}
  className={`relative flex flex-col p-5 text-left transition-all border ${
  isProPlan
- ? 'bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30'
- : 'bg-white/5 border-white/10 hover:border-white/20'
+ ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]/40 ring-1 ring-[var(--color-accent)]/30'
+ : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] hover:border-[var(--color-rule-strong)]'
  } ${plan.disabled ? 'opacity-60 cursor-default' : 'cursor-pointer'}`}
  >
  {isProPlan && (
  <div className={`absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider
- bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg`}>
+ bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent)] text-[var(--color-ink)] shadow-lg`}>
  Operator Tier
  </div>
  )}
@@ -124,10 +124,10 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  <ul className="flex-1 space-y-2 mb-4">
  {plan.features.map((f, i) => (
  <li key={i} className="flex items-start gap-2 text-sm">
- <span className={`mt-0.5 ${plan.disabled ? 'text-gray-400' : 'text-green-400'}`}>
+ <span className={`mt-0.5 ${plan.disabled ? 'text-[var(--color-ink-faint)]' : 'text-[var(--color-accent)]'}`}>
  {plan.disabled ? '○' : '✓'}
  </span>
- <span className={`${plan.disabled ? mutedColor : ''} text-white/80`}>
+ <span className={`${plan.disabled ? mutedColor : ''} text-[var(--color-ink)]`}>
  {f}
  </span>
  </li>
@@ -136,10 +136,10 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  <div
  className={`w-full py-2.5 text-sm font-medium text-center transition-all ${
  plan.disabled
- ? 'bg-white/10 text-white/40'
+ ? 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)]'
  : isSelected
- ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
- : 'bg-white/10 text-white/70 hover:bg-white/20'
+ ? 'bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent)] text-[var(--color-ink)] shadow-md'
+ : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] hover:bg-white/20'
  }`}
  >
  {plan.cta}
@@ -151,7 +151,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
 
  {/* Transaction Status */}
  {txState.status !== 'idle' && (
- <div className={`px-6 pb-3 text-center ${txState.status === 'success' ? 'text-green-400' : txState.status === 'error' ? 'text-red-400' : ''}`}>
+ <div className={`px-6 pb-3 text-center ${txState.status === 'success' ? 'text-[var(--color-accent)]' : txState.status === 'error' ? 'text-[var(--color-breach)]' : ''}`}>
  <p className="text-sm font-medium">{getTxStatusText()}</p>
  {txState.hash && (
  <a
@@ -179,7 +179,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  <div className={`flex items-center justify-center gap-4 px-6 pb-6`}>
  <button
  onClick={() => { onClose(); resetTx(); }}
- className={`text-sm font-medium px-4 py-2 transition-all text-white/60 hover:text-white/80`}
+ className={`text-sm font-medium px-4 py-2 transition-all text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  >
  {txState.status === 'success' ? 'Close' : 'Maybe later'}
  </button>
@@ -187,10 +187,10 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  <button
  className={`px-6 py-2.5 text-sm font-semibold transition-all shadow-lg ${
  txState.status === 'success'
- ? 'bg-green-500 text-white cursor-default'
+ ? 'bg-[var(--color-accent)] text-[var(--color-ink)] cursor-default'
  : isProcessing
- ? 'bg-white/20 text-white/60 cursor-wait'
- : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90'
+ ? 'bg-white/20 text-[var(--color-ink-muted)] cursor-wait'
+ : 'bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent)] text-[var(--color-ink)] hover:opacity-90'
  }`}
  disabled={isProcessing || txState.status === 'success'}
  onClick={() => {

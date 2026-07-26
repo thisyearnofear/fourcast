@@ -77,11 +77,11 @@ export default function TelegramLinkButton({ address }) {
  if (linked) {
  return (
  <div className="flex items-center gap-2 text-xs">
- <span className="text-emerald-400">✓ Telegram linked</span>
+ <span className="text-[var(--color-accent)]">✓ Telegram linked</span>
  <button
  onClick={handleUnlink}
  disabled={busy}
- className="text-slate-600 hover:text-slate-400 transition-colors"
+ className="text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors"
  >
  unlink
  </button>
@@ -94,12 +94,12 @@ export default function TelegramLinkButton({ address }) {
  <button
  onClick={handleLink}
  disabled={busy}
- className={`text-xs font-medium px-3 py-1.5 border border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 transition-colors ${busy ? 'opacity-50' : ''}`}
+ className={`text-xs font-medium px-3 py-1.5 border border-[var(--color-evidence)]/30 bg-[var(--color-evidence)]/10 text-[var(--color-evidence)] hover:bg-[var(--color-evidence)]/20 transition-colors ${busy ? 'opacity-50' : ''}`}
  >
  {busy ? 'Linking…' : '📲 Get these on Telegram'}
  </button>
  {deepLink && (
- <span className="text-[10px] text-slate-500 max-w-[220px] text-right">
+ <span className="text-[10px] text-[var(--color-ink-faint)] max-w-[220px] text-right">
  {deepLink.startsWith('http')
  ? 'Opened Telegram — tap Start to finish linking, then refresh here.'
  : deepLink}

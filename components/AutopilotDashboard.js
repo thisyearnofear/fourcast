@@ -40,10 +40,10 @@ export function AutopilotDashboard({ isNight = false }) {
  // Bright Data connection status (fetched once on mount)
  const [bdStatus, setBdStatus] = useState(null);
 
- const textColor = 'text-white';
- const subtleText = 'text-white/60';
- const mutedBg = 'bg-white/5';
- const cardBg = 'bg-slate-900/60';
+ const textColor = 'text-[var(--color-ink)]';
+ const subtleText = 'text-[var(--color-ink-muted)]';
+ const mutedBg = 'bg-[var(--color-paper-raised)]';
+ const cardBg = 'bg-[var(--color-paper-raised)]';
 
  const fetchExecutions = useCallback(async () => {
  setLoading(true);
@@ -353,7 +353,7 @@ export function AutopilotDashboard({ isNight = false }) {
  {BRAND.labs.autopilot.description}
  </p>
  {(brightDataActive || !agentRunning) && brightDataActive && (
- <span className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30`}>
+ <span className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-[var(--color-evidence)]/20 text-[var(--color-evidence)] border border-[var(--color-evidence)]/30`}>
  {brightDataProducts.scrapingBrowser
  ? 'Bright Data: SERP + Deep Research'
  : brightDataProducts.serp
@@ -368,12 +368,12 @@ export function AutopilotDashboard({ isNight = false }) {
  <span className="font-medium uppercase tracking-wider">Deep web scrape:</span>
  {bdStatus.available ? (
  <>
- <span className="text-emerald-500">online</span>
- {bdStatus.products?.serp && <span className="text-emerald-500/80">SERP</span>}
- {bdStatus.products?.scrapingBrowser && <span className="text-emerald-500/80">Browser</span>}
+ <span className="text-[var(--color-accent)]">online</span>
+ {bdStatus.products?.serp && <span className="text-[var(--color-accent)]/80">SERP</span>}
+ {bdStatus.products?.scrapingBrowser && <span className="text-[var(--color-accent)]/80">Browser</span>}
  </>
  ) : (
- <span className="text-white/45">
+ <span className="text-[var(--color-ink-faint)]">
  {bdStatus.products?.forceDisabled
  ? 'disabled'
  : bdStatus.products?.degraded
@@ -388,23 +388,23 @@ export function AutopilotDashboard({ isNight = false }) {
  {!scheduleLoading && schedule && (
  <div className={`flex flex-wrap items-center gap-3 mt-1.5 text-[10px] ${subtleText}`}>
  <span className="font-medium uppercase tracking-wider">Schedule:</span>
- <span className={schedule.enabled ? 'text-emerald-500' : 'text-slate-400'}>
+ <span className={schedule.enabled ? 'text-[var(--color-accent)]' : 'text-[var(--color-ink-faint)]'}>
  {schedule.enabled
  ? `Runs every ${schedule.intervalMinutes} minutes via Vercel Cron`
  : 'Scheduled autopilot is disabled'}
  </span>
  {schedule.dryRun && (
- <span className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30`}>
+ <span className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-[var(--color-sealed)]/20 text-[var(--color-sealed)] border border-[var(--color-sealed)]/30`}>
  Dry Run
  </span>
  )}
  {schedule.enabled && schedule.lastRunAt && (
- <span className='text-white/40'>
+ <span className='text-[var(--color-ink-faint)]'>
  Last run: {formatRelativeTime(schedule.lastRunAt)}
  </span>
  )}
  {schedule.enabled && schedule.lastRunAt && (
- <span className='text-white/40'>
+ <span className='text-[var(--color-ink-faint)]'>
  Next eligible run: {formatRelativeTime(schedule.lastRunAt + schedule.intervalMinutes * 60)}
  </span>
  )}
@@ -415,19 +415,19 @@ export function AutopilotDashboard({ isNight = false }) {
  {/* Config Toggle */}
  <button
  onClick={() => setShowConfig(!showConfig)}
- className={`flex-shrink-0 px-2.5 py-1.5 text-xs font-medium transition-all border bg-white/5 hover:bg-white/10 text-white/70 border-white/10`}
+ className={`flex-shrink-0 px-2.5 py-1.5 text-xs font-medium transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] border-[var(--color-rule)]`}
  aria-label="Toggle agent config"
  >
  ⚙
  </button>
  {/* Schedule Toggle */}
- <div className={`flex items-center gap-2 px-2 py-1.5 text-xs font-medium transition-all border bg-white/5 hover:bg-white/10 border-white/10 ${scheduleLoading || scheduleSaving ? 'opacity-60' : ''}`}>
+ <div className={`flex items-center gap-2 px-2 py-1.5 text-xs font-medium transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] border-[var(--color-rule)] ${scheduleLoading || scheduleSaving ? 'opacity-60' : ''}`}>
  <span className={subtleText}>Schedule</span>
  <button
  onClick={handleToggleSchedule}
  disabled={scheduleLoading || scheduleSaving || !schedule}
  className={`relative inline-flex h-4 w-7 items-center transition-colors ${
- schedule?.enabled ? 'bg-emerald-500' : 'bg-white/20'
+ schedule?.enabled ? 'bg-[var(--color-accent)]' : 'bg-white/20'
  } disabled:cursor-not-allowed`}
  aria-label="Toggle scheduled autopilot"
  >
@@ -442,7 +442,7 @@ export function AutopilotDashboard({ isNight = false }) {
  <button
  onClick={fetchExecutions}
  disabled={loading || agentRunning}
- className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-white/10 hover:bg-white/20 text-white border-white/20 disabled:opacity-40`}
+ className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink)] border-[var(--color-rule-strong)] disabled:opacity-40`}
  aria-label="Refresh execution history"
  >
  {loading ? '⟳' : '↻'}
@@ -451,7 +451,7 @@ export function AutopilotDashboard({ isNight = false }) {
  {agentRunning ? (
  <button
  onClick={stopAgent}
- className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30"
+ className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-[var(--color-breach)]/20 hover:bg-[var(--color-breach)]/30 text-[var(--color-breach)] border-[var(--color-breach)]/30"
  aria-label="Stop agent"
  >
  ⏹ Stop
@@ -459,7 +459,7 @@ export function AutopilotDashboard({ isNight = false }) {
  ) : (
  <button
  onClick={runAgent}
- className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/30"
+ className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)] border-[var(--color-accent)]/30"
  aria-label="Run agent"
  >
  ▶ Run Agent
@@ -469,7 +469,7 @@ export function AutopilotDashboard({ isNight = false }) {
  </div>
  {/* Schedule Panel */}
  {schedule && (
- <div className={`mc-panel p-4 space-y-3 border border-emerald-500/20`}>
+ <div className={`mc-panel p-4 space-y-3 border border-[var(--color-accent)]/20`}>
  <div className="flex items-center justify-between">
  <h3 className={`text-xs font-medium ${textColor}`}>Scheduled Autopilot</h3>
  {scheduleSaving && (
@@ -489,7 +489,7 @@ export function AutopilotDashboard({ isNight = false }) {
  value={schedule.intervalMinutes}
  onChange={handleIntervalChange}
  disabled={scheduleSaving}
- className={`w-full px-2 py-1.5 text-xs border bg-white/5 border-white/10 text-white disabled:opacity-50`}
+ className={`w-full px-2 py-1.5 text-xs border bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink)] disabled:opacity-50`}
  >
  <option value={15}>Every 15 minutes</option>
  <option value={30}>Every 30 minutes</option>
@@ -507,7 +507,7 @@ export function AutopilotDashboard({ isNight = false }) {
  value={schedule.dailyCapPct}
  onChange={handleDailyCapChange}
  disabled={scheduleSaving}
- className={`w-full px-2 py-1.5 text-xs border bg-white/5 border-white/10 text-white disabled:opacity-50`}
+ className={`w-full px-2 py-1.5 text-xs border bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink)] disabled:opacity-50`}
  />
  <p className={`text-[10px] ${subtleText} mt-1`}>
  Max {(schedule.dailyCapPct * 100).toFixed(0)}% of bankroll per day
@@ -515,14 +515,14 @@ export function AutopilotDashboard({ isNight = false }) {
  </div>
  </div>
 
- <div className="flex items-center justify-between gap-4 pt-2 border-t border-white/10">
+ <div className="flex items-center justify-between gap-4 pt-2 border-t border-[var(--color-rule)]">
  <div className="flex items-center gap-2">
  <span className={`text-[10px] ${subtleText}`}>Dry Run</span>
  <button
  onClick={handleDryRunToggle}
  disabled={scheduleSaving}
  className={`relative inline-flex h-4 w-7 items-center transition-colors ${
- schedule.dryRun ? 'bg-amber-500' : 'bg-white/20'
+ schedule.dryRun ? 'bg-[var(--color-sealed)]' : 'bg-white/20'
  } disabled:cursor-not-allowed`}
  aria-label="Toggle dry run mode"
  >
@@ -538,7 +538,7 @@ export function AutopilotDashboard({ isNight = false }) {
  )}
  {/* Config Panel */}
  {showConfig && (
- <div className={`mc-panel p-4 space-y-3 border border-cyan-500/20`}>
+ <div className={`mc-panel p-4 space-y-3 border border-[var(--color-evidence)]/20`}>
  <div className="flex items-center justify-between">
  <h3 className={`text-xs font-medium ${textColor}`}>Agent Configuration</h3>
  <button
@@ -557,7 +557,7 @@ export function AutopilotDashboard({ isNight = false }) {
  max={10}
  value={agentConfig.maxMarkets}
  onChange={e => setAgentConfig(prev => ({ ...prev, maxMarkets: parseInt(e.target.value) || 5 }))}
- className={`w-full px-2 py-1.5 text-xs border bg-white/5 border-white/10 text-white`}
+ className={`w-full px-2 py-1.5 text-xs border bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink)]`}
  />
  </div>
  <div>
@@ -568,7 +568,7 @@ export function AutopilotDashboard({ isNight = false }) {
  step={1000}
  value={agentConfig.minVolume}
  onChange={e => setAgentConfig(prev => ({ ...prev, minVolume: parseInt(e.target.value) || 10000 }))}
- className={`w-full px-2 py-1.5 text-xs border bg-white/5 border-white/10 text-white`}
+ className={`w-full px-2 py-1.5 text-xs border bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink)]`}
  />
  </div>
  <div>
@@ -580,7 +580,7 @@ export function AutopilotDashboard({ isNight = false }) {
  step={0.1}
  value={agentConfig.riskTolerance}
  onChange={e => setAgentConfig(prev => ({ ...prev, riskTolerance: parseFloat(e.target.value) }))}
- className="w-full accent-emerald-500"
+ className="w-full accent-[var(--color-accent)]"
  />
  <div className={`text-[10px] ${subtleText} mt-0.5 text-right`}>
  {(agentConfig.riskTolerance * 100).toFixed(0)}%
@@ -591,14 +591,14 @@ export function AutopilotDashboard({ isNight = false }) {
  )}
  {/* Live Progress Feed */}
  {liveSteps.length > 0 && (
- <div className={`mc-panel border border-cyan-500/20 overflow-hidden`}>
+ <div className={`mc-panel border border-[var(--color-evidence)]/20 overflow-hidden`}>
  {/* Progress header */}
- <div className={`flex items-center justify-between px-4 py-2.5 border-b border-white/10`}>
+ <div className={`flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-rule)]`}>
  <div className="flex items-center gap-2">
  {agentRunning && (
  <span className="relative flex h-2 w-2">
- <span className="animate-ping absolute inline-flex h-full w-full bg-emerald-400 opacity-75" />
- <span className="relative inline-flex h-2 w-2 bg-emerald-500" />
+ <span className="animate-ping absolute inline-flex h-full w-full bg-[var(--color-accent)] opacity-75" />
+ <span className="relative inline-flex h-2 w-2 bg-[var(--color-accent)]" />
  </span>
  )}
  <h3 className={`text-xs font-medium ${textColor}`}>
@@ -630,13 +630,13 @@ export function AutopilotDashboard({ isNight = false }) {
  </div>
  {/* Schedule Error */}
  {scheduleError && (
- <div className={`text-xs p-3 bg-amber-500/10 text-amber-300`}>
+ <div className={`text-xs p-3 bg-[var(--color-sealed)]/10 text-[var(--color-sealed)]`}>
  Schedule: {scheduleError}
  </div>
  )}
  {/* Error */}
  {error && (
- <div className={`text-xs p-3 bg-red-500/10 text-red-300`}>
+ <div className={`text-xs p-3 bg-[var(--color-breach)]/10 text-[var(--color-breach)]`}>
  {error}
  </div>
  )}
@@ -650,14 +650,14 @@ export function AutopilotDashboard({ isNight = false }) {
  )}
  {/* Empty State */}
  {!loading && !error && executions.length === 0 && (
- <div className={`text-center py-12 px-4 border bg-white/5 border-white/10`}>
+ <div className={`text-center py-12 px-4 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
  <div className="text-4xl mb-3 opacity-40">🤖</div>
  <p className={`text-sm ${textColor} opacity-70 mb-1`}>No autopilot trades yet</p>
  <p className={`text-xs ${subtleText}`}>
  Click <strong>Run Agent</strong> to scan markets and execute trades automatically
  </p>
  {bdStatus && !bdStatus.available && (
- <p className={`text-[10px] mt-2 text-white/35`}>
+ <p className={`text-[10px] mt-2 text-[var(--color-ink-faint)]`}>
  Deep web scrape is optional — agent runs on AI + market data without it
  </p>
  )}
@@ -682,7 +682,7 @@ export function AutopilotDashboard({ isNight = false }) {
  {hasMore && (
  <button
  onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
- className={`w-full py-2.5 text-sm font-medium transition-all border bg-white/5 hover:bg-white/10 text-white/70 border-white/10`}
+ className={`w-full py-2.5 text-sm font-medium transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] border-[var(--color-rule)]`}
  >
  Show More ({executions.length - visibleCount} remaining)
  </button>
@@ -718,19 +718,19 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
  let icon, color;
  if (isFailed) {
  icon = '❌';
- color = 'text-red-300 border-red-500/30 bg-red-500/10';
+ color = 'text-[var(--color-breach)] border-[var(--color-breach)]/30 bg-[var(--color-breach)]/10';
  } else if (isComplete) {
  icon = '✅';
- color = 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10';
+ color = 'text-[var(--color-accent)] border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10';
  } else if (isSkipped) {
  icon = '⏭';
- color = 'text-yellow-300 border-yellow-500/30 bg-yellow-500/10';
+ color = 'text-[var(--color-sealed)] border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/10';
  } else if (isRunning) {
  icon = '⟳';
- color = 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10';
+ color = 'text-[var(--color-evidence)] border-[var(--color-evidence)]/30 bg-[var(--color-evidence)]/10';
  } else {
  icon = '•';
- color = 'text-white/50 border-white/10 bg-white/5';
+ color = 'text-[var(--color-ink-faint)] border-[var(--color-rule)] bg-[var(--color-paper-raised)]';
  }
 
  // Step label
@@ -774,27 +774,27 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
  <div className="flex items-center gap-2">
  <span className={`font-medium ${textColor} text-[11px]`}>{stepLabel}</span>
  {progressInfo && (
- <span className={`text-[10px] font-mono text-white/40`}>
+ <span className={`text-[10px] font-mono text-[var(--color-ink-faint)]`}>
  [{progressInfo}]
  </span>
  )}
- <span className={`text-[10px] text-white/40 truncate`}>
+ <span className={`text-[10px] text-[var(--color-ink-faint)] truncate`}>
  {isComplete ? 'complete' : isRunning ? 'running...' : isSkipped ? 'skipped' : message || ''}
  </span>
  </div>
  {marketTitle && (
- <div className={`text-[10px] mt-0.5 truncate text-white/50`}>
+ <div className={`text-[10px] mt-0.5 truncate text-[var(--color-ink-faint)]`}>
  {marketTitle}
  </div>
  )}
  {dataSummary && (
- <div className={`text-[10px] mt-0.5 font-mono text-white/40`}>
+ <div className={`text-[10px] mt-0.5 font-mono text-[var(--color-ink-faint)]`}>
  {dataSummary}
  </div>
  )}
  {/* Bright Data error indicator */}
  {data?.brightDataError && (
- <div className={`mt-1.5 p-1.5 border text-[9px] bg-amber-500/10 border-amber-500/20 text-amber-200`}>
+ <div className={`mt-1.5 p-1.5 border text-[9px] bg-[var(--color-sealed)]/10 border-[var(--color-sealed)]/20 text-[var(--color-sealed)]`}>
  <span className="font-bold">BRIGHT DATA:</span> {data.brightDataError}
  </div>
  )}
@@ -807,9 +807,9 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
  href={src.url}
  target="_blank"
  rel="noopener noreferrer"
- className={`flex items-center gap-1.5 text-[9px] truncate hover:underline text-cyan-300/70`}
+ className={`flex items-center gap-1.5 text-[9px] truncate hover:underline text-[var(--color-evidence)]/70`}
  >
- <span className={`flex-shrink-0 px-1 text-[8px] font-mono bg-cyan-500/10 text-cyan-400/50`}>
+ <span className={`flex-shrink-0 px-1 text-[8px] font-mono bg-[var(--color-evidence)]/10 text-[var(--color-evidence)]/50`}>
  {src.rank || idx + 1}
  </span>
  <span className="opacity-50">{getDomain(src.url)}</span>
@@ -820,7 +820,7 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
  )}
  {/* Deep research indicator with structured info */}
  {data?.deepResearch && (
- <div className={`mt-2 p-1.5 border text-[9px] bg-cyan-500/10 border-cyan-500/20 text-cyan-200`}>
+ <div className={`mt-2 p-1.5 border text-[9px] bg-[var(--color-evidence)]/10 border-[var(--color-evidence)]/20 text-[var(--color-evidence)]`}>
  <span className="font-bold">DEEP RESEARCH:</span>
  <span className="ml-1">
  {data.deepResearch.sentenceCount
@@ -836,12 +836,12 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
  {data.deepResearch.title || getDomain(data.deepResearch.url)}
  </a>
  {data.deepResearch.charCount && (
- <span className={`ml-1 text-cyan-300/40`}>
+ <span className={`ml-1 text-[var(--color-evidence)]/40`}>
  ({data.deepResearch.charCount.toLocaleString()} chars total)
  </span>
  )}
  {data.deepResearch.product && (
- <span className={`ml-1 text-cyan-300/40`}>
+ <span className={`ml-1 text-[var(--color-evidence)]/40`}>
  via {data.deepResearch.product}
  </span>
  )}
@@ -849,11 +849,11 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
  )}
  {/* Research Transparency: show products used */}
  {data?.productsUsed && data?.sources && (
- <div className={`mt-1.5 flex items-center gap-2 text-[8px] text-white/30`}>
+ <div className={`mt-1.5 flex items-center gap-2 text-[8px] text-[var(--color-ink-faint)]`}>
  <span>Products:</span>
- {data.productsUsed.serp && <span className="px-1 bg-emerald-500/10 text-emerald-500">SERP</span>}
- {data.productsUsed.scrapingBrowser && <span className="px-1 bg-emerald-500/10 text-emerald-500">Scraping Browser</span>}
- {data.productsUsed.webUnlocker && <span className="px-1 bg-emerald-500/10 text-emerald-500">Web Unlocker</span>}
+ {data.productsUsed.serp && <span className="px-1 bg-[var(--color-accent)]/10 text-[var(--color-accent)]">SERP</span>}
+ {data.productsUsed.scrapingBrowser && <span className="px-1 bg-[var(--color-accent)]/10 text-[var(--color-accent)]">Scraping Browser</span>}
+ {data.productsUsed.webUnlocker && <span className="px-1 bg-[var(--color-accent)]/10 text-[var(--color-accent)]">Web Unlocker</span>}
  <span>{data.sources.length} sources</span>
  </div>
  )}
@@ -863,14 +863,14 @@ function LiveStep({ step, isNight, textColor, subtleText }) {
 }
 
 function StatCard({ label, value, isNight, accent = true }) {
- const textColor = 'text-white';
- const subtleText = 'text-white/60';
+ const textColor = 'text-[var(--color-ink)]';
+ const subtleText = 'text-[var(--color-ink-muted)]';
  const accentColor = accent
- ? 'text-green-300'
- : 'text-red-300';
+ ? 'text-[var(--color-accent)]'
+ : 'text-[var(--color-breach)]';
 
  return (
- <div className={`mc-panel p-3 ${typeof value === 'string' && value.includes('%') && parseInt(value) > 0 && accent ? 'border-green-500/20' : ''}`}>
+ <div className={`mc-panel p-3 ${typeof value === 'string' && value.includes('%') && parseInt(value) > 0 && accent ? 'border-[var(--color-accent)]/20' : ''}`}>
  <div className={`text-2xl font-light ${typeof value === 'number' ? textColor : accentColor}`}>
  {value}
  </div>
@@ -884,16 +884,16 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
  const isFailed = exec.execution_status === 'FAILED';
  const statusIcon = isSuccess ? '✅' : isFailed ? '❌' : '⏳';
  const statusColor = isSuccess
- ? 'bg-green-500/20 text-green-300 border-green-500/30'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] border-[var(--color-accent)]/30'
  : isFailed
- ? 'bg-red-500/20 text-red-300 border-red-500/30'
- : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+ ? 'bg-[var(--color-breach)]/20 text-[var(--color-breach)] border-[var(--color-breach)]/30'
+ : 'bg-[var(--color-sealed)]/20 text-[var(--color-sealed)] border-[var(--color-sealed)]/30';
 
  const direction = exec.direction || '—';
  const isYes = direction === 'BUY YES';
  const directionColor = isYes
- ? 'text-green-300'
- : 'text-red-300';
+ ? 'text-[var(--color-accent)]'
+ : 'text-[var(--color-breach)]';
 
  const timestamp = exec.timestamp
  ? new Date(exec.timestamp * 1000).toLocaleString()
@@ -906,7 +906,7 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
 
  return (
  <div className={`mc-panel p-4 transition-all hover:scale-[1.005] ${
- isSuccess ? ('border-green-500/20') : ''
+ isSuccess ? ('border-[var(--color-accent)]/20') : ''
  }`}>
  {/* Header */}
  <div className="flex items-start justify-between gap-3 mb-3">
@@ -943,7 +943,7 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
  </div>
  </div>
  {/* Second Row */}
- <div className="grid grid-cols-4 gap-2 text-xs mt-2 pt-2 border-t border-white/10">
+ <div className="grid grid-cols-4 gap-2 text-xs mt-2 pt-2 border-t border-[var(--color-rule)]">
  <div>
  <span className={subtleText}>AI Prob</span>
  <div className={`font-medium ${textColor} mt-0.5`}>{prob}</div>
@@ -967,7 +967,7 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
  <summary className={`text-[10px] ${subtleText} cursor-pointer hover:opacity-80 transition-opacity`}>
  Response Details
  </summary>
- <pre className={`mt-1 p-2 text-[10px] font-mono overflow-x-auto bg-white/5 text-white/50`}>
+ <pre className={`mt-1 p-2 text-[10px] font-mono overflow-x-auto bg-[var(--color-paper-raised)] text-[var(--color-ink-faint)]`}>
  {exec.execution_response}
  </pre>
  </details>

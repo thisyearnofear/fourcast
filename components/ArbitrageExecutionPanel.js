@@ -17,12 +17,12 @@ export function ArbitrageExecutionPanel({ opportunity, onClose, isNight }) {
  const modalRef = useFocusTrap({ isOpen: true, onClose });
 
  const { polymarket, kalshi, arbitrage } = opportunity;
- const textColor = 'text-white';
- const cardBg = 'bg-slate-800';
- const borderColor = 'border-white/10';
+ const textColor = 'text-[var(--color-ink)]';
+ const cardBg = 'bg-[var(--color-paper-raised)]';
+ const borderColor = 'border-[var(--color-rule)]';
 
  return (
- <div className="fixed inset-0 z-50 flex items-center justify-center-md bg-black/40">
+ <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
  <div
  ref={modalRef}
  role="dialog"
@@ -32,14 +32,14 @@ export function ArbitrageExecutionPanel({ opportunity, onClose, isNight }) {
  >
  
  {/* Header */}
- <div className="p-6 border-b border-white/10 flex justify-between items-center">
+ <div className="p-6 border-b border-[var(--color-rule)] flex justify-between items-center">
  <div>
  <div className="flex items-center gap-2 mb-1">
  <span className="text-2xl">⚡</span>
  <h2 id="arbitrage-execution-heading" className={`text-xl font-medium ${textColor}`}>Arbitrage Execution</h2>
  </div>
  <p className={`text-sm ${textColor} opacity-60`}>
- Capture <span className="text-green-500 font-bold">{arbitrage.priceDiff}% spread</span> between markets
+ Capture <span className="text-[var(--color-accent)] font-bold">{arbitrage.priceDiff}% spread</span> between markets
  </p>
  </div>
  <button 
@@ -54,14 +54,14 @@ export function ArbitrageExecutionPanel({ opportunity, onClose, isNight }) {
  <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
  
  {/* Left: Polymarket (Buy/Sell) */}
- <div className="flex-1 border-r border-white/10 relative p-4 flex flex-col">
- <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+ <div className="flex-1 border-r border-[var(--color-rule)] relative p-4 flex flex-col">
+ <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--color-evidence)]"></div>
  <div className="mb-4">
- <span className="text-xs font-bold uppercase tracking-wider text-blue-500">Leg 1: Polymarket</span>
+ <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-evidence)]">Leg 1: Polymarket</span>
  <h3 className={`text-md font-medium ${textColor} mt-1 line-clamp-2`}>{polymarket.title}</h3>
  </div>
  
- <div className="flex-1 relative overflow-hidden border border-white/5">
+ <div className="flex-1 relative overflow-hidden border border-[var(--color-rule)]">
  {/* We embed the OrderSigningPanel but strictly controlled */}
  <OrderSigningPanel 
  market={polymarket}
@@ -75,13 +75,13 @@ export function ArbitrageExecutionPanel({ opportunity, onClose, isNight }) {
 
  {/* Right: Kalshi (Buy/Sell) */}
  <div className="flex-1 relative p-4 flex flex-col">
- <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></div>
+ <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--color-accent)]"></div>
  <div className="mb-4">
- <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Leg 2: Kalshi</span>
+ <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-accent)]">Leg 2: Kalshi</span>
  <h3 className={`text-md font-medium ${textColor} mt-1 line-clamp-2`}>{kalshi.title}</h3>
  </div>
 
- <div className="flex-1 relative overflow-hidden border border-white/5">
+ <div className="flex-1 relative overflow-hidden border border-[var(--color-rule)]">
  <KalshiOrderPanel 
  market={kalshi}
  isNight={isNight}

@@ -30,15 +30,15 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
  if (!isOpen) return null;
 
  // Glass CSS classes (DRY)
- const textColor = 'text-white';
- const glassPanel = 'mc-panel bg-slate-900/95';
- const borderColor = 'border-white/10';
+ const textColor = 'text-[var(--color-ink)]';
+ const glassPanel = 'mc-panel bg-[var(--color-paper-raised)]';
+ const borderColor = 'border-[var(--color-rule)]';
 
  return (
  <div className="fixed inset-0 z-[100] flex justify-end">
  {/* Backdrop */}
  <div
- className="absolute inset-0 bg-black/20"
+ className="absolute inset-0 bg-[var(--color-paper-deep)]"
  onClick={onClose}
  />
  {/* Drawer */}
@@ -48,7 +48,7 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
  <h2 className={`text-2xl font-thin ${textColor}`}>Analyst Profile</h2>
  <button
  onClick={onClose}
- className={`p-2 hover:bg-gray-500/10 ${textColor}`}
+ className={`p-2 hover:bg-[var(--color-paper-soft)]/10 ${textColor}`}
  >
  ✕
  </button>
@@ -69,7 +69,7 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
  <div className="space-y-8">
  {/* Stats Grid */}
  <div className="grid grid-cols-2 gap-4">
- <div className={`p-4 border ${borderColor} bg-white/5`}>
+ <div className={`p-4 border ${borderColor} bg-[var(--color-paper-raised)]`}>
  <div className={`text-xs ${textColor} opacity-60 mb-1`}>Win Rate</div>
  <div className={`text-2xl font-light ${textColor}`}>
  {profile.stats.win_count + profile.stats.loss_count > 0
@@ -77,7 +77,7 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
  : 0}%
  </div>
  </div>
- <div className={`p-4 border ${borderColor} bg-white/5`}>
+ <div className={`p-4 border ${borderColor} bg-[var(--color-paper-raised)]`}>
  <div className={`text-xs ${textColor} opacity-60 mb-1`}>Signals</div>
  <div className={`text-2xl font-light ${textColor}`}>
  {profile.stats.total_predictions}
@@ -91,12 +91,12 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
  <div className="space-y-3">
  {profile.recent_predictions.length > 0 ? (
  profile.recent_predictions.map((pred, i) => (
- <div key={i} className={`p-4 border ${borderColor} bg-white/5`}>
+ <div key={i} className={`p-4 border ${borderColor} bg-[var(--color-paper-raised)]`}>
  <div className={`text-sm ${textColor} mb-1`}>
  {pred.market_title || 'Unknown Market'}
  </div>
  <div className="flex justify-between items-center text-xs">
- <span className={pred.side === 'YES' ? 'text-green-500' : 'text-red-500'}>
+ <span className={pred.side === 'YES' ? 'text-[var(--color-accent)]' : 'text-[var(--color-breach)]'}>
  {pred.side}
  </span>
  <span className={`${textColor} opacity-50`}>

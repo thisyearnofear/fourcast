@@ -12,8 +12,8 @@ export function ChainNetworkBadge({ signal, isNight }) {
  const chain = originMap[signal.chain_origin] || CHAINS.ARC;
 
  const colorMap = {
- emerald: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
- slate: 'bg-slate-500/20 text-slate-300 border-slate-500/30',
+ emerald: 'bg-accent/20 text-accent border-accent/30',
+ slate: 'bg-[var(--color-ink-faint)]/20 text-[var(--color-ink-muted)] border-[var(--color-ink-faint)]/30',
  };
 
  return (
@@ -27,10 +27,10 @@ export function ChainNetworkBadge({ signal, isNight }) {
 export function ConfidenceBadge({ confidence, isNight }) {
  const baseClass = 'px-3 py-1 text-xs font-light border';
  const colorMap = {
- HIGH: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
- MEDIUM: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
- LOW: 'bg-red-500/20 text-red-300 border-red-500/30',
- default: 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+ HIGH: 'bg-accent/20 text-accent border-accent/30',
+ MEDIUM: 'bg-sealed/20 text-sealed border-sealed/30',
+ LOW: 'bg-breach/20 text-breach border-breach/30',
+ default: 'bg-[var(--color-ink-faint)]/20 text-[var(--color-ink-muted)] border-[var(--color-ink-faint)]/30'
  };
  // Icons ensure confidence is not color-only — accessible to colorblind users
  const iconMap = {
@@ -69,8 +69,8 @@ export function QualityBadge({ signal, isNight }) {
 
 export function EfficiencyBadge({ efficiency, isNight }) {
  const colorMap = {
- INEFFICIENT: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
- EFFICIENT: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+ INEFFICIENT: 'bg-sealed/20 text-sealed border-sealed/30',
+ EFFICIENT: 'bg-accent/20 text-accent border-accent/30'
  };
 
  return (
@@ -82,7 +82,7 @@ export function EfficiencyBadge({ efficiency, isNight }) {
 
 export function OnChainBadge({ txHash, isNight }) {
  return (
- <span className={`px-3 py-1 text-xs font-light border bg-emerald-500/20 text-emerald-300 border-emerald-500/30`}>On-chain: {typeof txHash === 'string' ? txHash.substring(0, 8) : ''}...
+ <span className={`px-3 py-1 text-xs font-light border bg-accent/20 text-accent border-accent/30`}>On-chain: {typeof txHash === 'string' ? txHash.substring(0, 8) : ''}...
  </span>
  );
 }

@@ -109,7 +109,7 @@ export default function WeatherPage() {
  // Memoized calculated values
  const isNight = useMemo(() => isNightTime(), [weatherData?.location?.localtime]);
  const textColor = useMemo(() =>
- 'text-white',
+ 'text-[var(--color-ink)]',
  [isNight]
  );
 
@@ -128,45 +128,45 @@ export default function WeatherPage() {
  <div className="w-screen h-screen min-h-dvh relative flex flex-col bg-black">
  {/* Hero Overlay - First Visit */}
  {showHero && (
- <div className="fixed inset-0 z-[100] bg-black/95-md flex items-center justify-center p-4 overflow-y-auto">
- <div className="max-w-lg w-full bg-white/5 border border-white/10 p-6 sm:p-8 shadow-2xl">
+ <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 overflow-y-auto">
+ <div className="max-w-lg w-full bg-[var(--color-paper-raised)] border border-[var(--color-rule)] p-6 sm:p-8 shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
- <div className="flex h-9 w-9 items-center justify-center bg-emerald-500/10 border border-emerald-400/25">
- <Sparkles className="h-5 w-5 text-emerald-300" aria-hidden="true" />
+ <div className="flex h-9 w-9 items-center justify-center bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/25">
+ <Sparkles className="h-5 w-5 text-[var(--color-accent)]" aria-hidden="true" />
  </div>
- <h1 className="text-2xl font-bold text-white">Fourcast</h1>
+ <h1 className="text-2xl font-bold text-[var(--color-ink)]">Fourcast</h1>
  </div>
  
- <p className="text-lg text-white/90 mb-1 font-light">
+ <p className="text-lg text-[var(--color-ink)] mb-1 font-light">
  Predict Smarter with AI Intelligence
  </p>
- <p className="text-sm text-white/60 mb-6 leading-relaxed">
+ <p className="text-sm text-[var(--color-ink-muted)] mb-6 leading-relaxed">
  We analyze 200+ ML models, live weather data, and market dynamics to find prediction edges.
  </p>
 
  {/* Interactive Demo Card - Shows what the product does */}
- <div className="mb-6 bg-white/5 border border-white/15 p-4">
+ <div className="mb-6 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] p-4">
  <div className="flex items-center gap-2 mb-3">
- <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30">
+ <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-[var(--color-evidence)]/20 text-[var(--color-evidence)] border border-[var(--color-evidence)]/30">
  Polymarket
  </span>
- <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-400/30">
+ <span className="px-2 py-0.5 text-[10px] font-medium bg-[var(--color-review)]/20 text-[var(--color-review)] border border-[var(--color-review)]/30">
  🤖 ML
  </span>
  </div>
  
- <p className="text-white font-medium mb-3 text-sm">
+ <p className="text-[var(--color-ink)] font-medium mb-3 text-sm">
  Will Bitcoin exceed $100k by April 2026?
  </p>
 
  {/* AI Confidence Visualization */}
  <div className="mb-3">
  <div className="flex justify-between items-center mb-1">
- <span className="text-xs text-white/60">AI Confidence</span>
- <span className="text-xs font-medium text-green-400">73%</span>
+ <span className="text-xs text-[var(--color-ink-muted)]">AI Confidence</span>
+ <span className="text-xs font-medium text-[var(--color-accent)]">73%</span>
  </div>
- <div className="h-2 bg-white/10 overflow-hidden">
- <div className="h-full bg-gradient-to-r from-purple-500/80 to-green-500/80" style={{width: '73%'}}></div>
+ <div className="h-2 bg-[var(--color-paper-soft)] overflow-hidden">
+ <div className="h-full bg-gradient-to-r from-[var(--color-review)]/80 to-[var(--color-accent)]/80" style={{width: '73%'}}></div>
  </div>
  </div>
 
@@ -174,38 +174,38 @@ export default function WeatherPage() {
  <div className="flex items-center gap-4 mb-3 text-xs">
  <div className="flex items-center gap-1.5">
  <span>☀️</span>
- <span className="text-white/70">Weather: Favorable</span>
+ <span className="text-[var(--color-ink-muted)]">Weather: Favorable</span>
  </div>
  <div className="flex items-center gap-1.5">
- <span className="text-green-400">⚡</span>
- <span className="text-white/70">Edge: +8%</span>
+ <span className="text-[var(--color-accent)]">⚡</span>
+ <span className="text-[var(--color-ink-muted)]">Edge: +8%</span>
  </div>
  </div>
 
  {/* Market Odds */}
- <div className="flex justify-between items-center pt-3 border-t border-white/10">
+ <div className="flex justify-between items-center pt-3 border-t border-[var(--color-rule)]">
  <div>
- <span className="text-xs text-white/50 block">Market YES</span>
- <span className="text-lg font-light text-green-400">65%</span>
+ <span className="text-xs text-[var(--color-ink-faint)] block">Market YES</span>
+ <span className="text-lg font-light text-[var(--color-accent)]">65%</span>
  </div>
  <div className="text-right">
- <span className="text-xs text-white/50 block">ML Fair</span>
- <span className="text-lg font-light text-purple-400">73%</span>
+ <span className="text-xs text-[var(--color-ink-faint)] block">ML Fair</span>
+ <span className="text-lg font-light text-[var(--color-review)]">73%</span>
  </div>
  </div>
  </div>
 
  {/* Feature Pills - Quick value props */}
  <div className="flex flex-wrap gap-2 mb-6">
- <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 text-xs text-white/70">
+ <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-xs text-[var(--color-ink-muted)]">
  <span>🤖</span>
  <span>200+ ML Models</span>
  </div>
- <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 text-xs text-white/70">
+ <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-xs text-[var(--color-ink-muted)]">
  <span>🌤️</span>
  <span>Live Weather</span>
  </div>
- <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 text-xs text-white/70">
+ <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-xs text-[var(--color-ink-muted)]">
  <span>📡</span>
  <span>On-Chain Proofs</span>
  </div>
@@ -213,14 +213,14 @@ export default function WeatherPage() {
 
  <button
  onClick={dismissHero}
- className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium transition-all transform hover:scale-[1.02]"
+ className="w-full py-3 bg-[var(--color-paper-soft)] hover:bg-white/20 border border-[var(--color-rule-strong)] text-[var(--color-ink)] font-medium transition-all transform hover:scale-[1.02]"
  >
  Explore Markets →
  </button>
  
  <button
  onClick={dismissHero}
- className="w-full py-2 mt-2 text-white/50 hover:text-white/70 text-sm transition-colors"
+ className="w-full py-2 mt-2 text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] text-sm transition-colors"
  >
  Skip tour
  </button>
@@ -244,7 +244,7 @@ export default function WeatherPage() {
  <div className="text-base sm:text-lg font-light tracking-wide opacity-95">
  {weatherData.location.name}
  {weatherData.rateLimited && (
- <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1">
+ <span className="ml-2 text-xs bg-[var(--color-evidence)]/20 text-[var(--color-evidence)] px-2 py-1">
  DEMO
  </span>
  )}
@@ -270,7 +270,7 @@ export default function WeatherPage() {
  {/* Portal Coach Mark — anchored near the portals at the bottom */}
  {!isLoading && weatherData && (
  <div className="absolute bottom-28 sm:bottom-32 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none portal-coach-mark">
- <div className={`flex items-center gap-2 px-4 py-2 mc-panel text-white/60`}>
+ <div className={`flex items-center gap-2 px-4 py-2 mc-panel text-[var(--color-ink-muted)]`}>
  <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
  </svg>
@@ -294,11 +294,11 @@ export default function WeatherPage() {
  {/* Centered Floating Navigation - Icons on mobile, full labels on desktop */}
  {weatherData && !isLoading && (
  <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
- <div className={`-md border px-2 sm:px-6 py-2 sm:py-3 transition-all duration-300 bg-white/10 border-white/20 hover:bg-white/15`}>
+ <div className={`-md border px-2 sm:px-6 py-2 sm:py-3 transition-all duration-300 bg-[var(--color-paper-soft)] border-[var(--color-rule-strong)] hover:bg-[var(--color-paper-soft)]`}>
  <div className="flex items-center space-x-1 sm:space-x-6">
  <button
  onClick={() => router.push('/markets')}
- className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 transition-all hover:scale-105 text-white hover:bg-white/15`}
+ className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 transition-all hover:scale-105 text-[var(--color-ink)] hover:bg-[var(--color-paper-soft)]`}
  title="Markets - Browse & trade predictions"
  >
  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,15 +306,15 @@ export default function WeatherPage() {
  </svg>
  <div className="hidden sm:flex flex-col items-start">
  <span className="text-sm font-medium leading-tight">Markets</span>
- <span className={`text-[10px] leading-tight text-white/50`}>Browse & trade predictions</span>
+ <span className={`text-[10px] leading-tight text-[var(--color-ink-faint)]`}>Browse & trade predictions</span>
  </div>
  </button>
 
- <div className={`w-px h-6 sm:h-8 bg-white/15`}></div>
+ <div className={`w-px h-6 sm:h-8 bg-[var(--color-paper-soft)]`}></div>
 
  <button
  onClick={() => router.push('/signals')}
- className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 transition-all hover:scale-105 text-white hover:bg-white/15`}
+ className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 transition-all hover:scale-105 text-[var(--color-ink)] hover:bg-[var(--color-paper-soft)]`}
  title="Signals - Predictions & track records"
  >
  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,7 +322,7 @@ export default function WeatherPage() {
  </svg>
  <div className="hidden sm:flex flex-col items-start">
  <span className="text-sm font-medium leading-tight">Signals</span>
- <span className={`text-[10px] leading-tight text-white/50`}>Predictions & track records</span>
+ <span className={`text-[10px] leading-tight text-[var(--color-ink-faint)]`}>Predictions & track records</span>
  </div>
  </button>
  </div>
@@ -392,31 +392,31 @@ export default function WeatherPage() {
  </div>
  {/* Loading and Error Modals */}
  {isLoading && (
- <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-50">
+ <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--color-ink)] z-50">
  <div className="w-16 h-16 border-4 border-white/30 border-t-white animate-spin mb-4"></div>
  <p className="text-lg font-light">Loading weather data...</p>
  </div>
  )}
  {error && (
- <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/80-lg z-50">
- <div className="animate-fade-in bg-white/10-md p-8 max-w-sm mx-4 text-center border border-white/20">
- <p className="text-white text-lg font-light mb-6 leading-relaxed">
+ <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/80 z-50">
+ <div className="animate-fade-in bg-[var(--color-paper-soft)] p-8 max-w-sm mx-4 text-center border border-[var(--color-rule-strong)]">
+ <p className="text-[var(--color-ink)] text-lg font-light mb-6 leading-relaxed">
  {error}
  </p>
 
  <form onSubmit={handleErrorSearch} className="mb-6">
- <div className="flex items-center space-x-2 bg-white/10 p-3 border border-white/20">
+ <div className="flex items-center space-x-2 bg-[var(--color-paper-soft)] p-3 border border-[var(--color-rule-strong)]">
  <input
  type="text"
  value={errorSearchQuery}
  onChange={(e) => setErrorSearchQuery(e.target.value)}
  placeholder="Enter city name..."
- className="flex-1 bg-transparent text-white placeholder-white/60 focus:outline-none text-sm font-light"
+ className="flex-1 bg-transparent text-[var(--color-ink)] placeholder-white/60 focus:outline-none text-sm font-light"
  disabled={isLoading}
  />
  <button
  type="submit"
- className="text-white/80 hover:text-white transition-colors disabled:opacity-40"
+ className="text-[var(--color-ink)] hover:text-[var(--color-ink)] transition-colors disabled:opacity-40"
  disabled={!errorSearchQuery.trim() || isLoading}
  >
  <svg
@@ -439,7 +439,7 @@ export default function WeatherPage() {
  <div className="flex space-x-3">
  <button
  onClick={loadCurrentLocationWeather}
- className="flex-1 bg-white/20 hover:bg-white/30 px-4 py-3 text-white font-light transition-all duration-300 border border-white/30 hover:scale-105 text-sm"
+ className="flex-1 bg-white/20 hover:bg-white/30 px-4 py-3 text-[var(--color-ink)] font-light transition-all duration-300 border border-white/30 hover:scale-105 text-sm"
  disabled={isLoading}
  >
  Try Location Again

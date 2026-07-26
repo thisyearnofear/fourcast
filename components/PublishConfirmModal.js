@@ -37,44 +37,44 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  role="dialog"
  aria-modal="true"
  aria-labelledby="publish-modal-heading"
- className={`relative max-w-md w-full p-6 border bg-black/60 border-white/10`}
+ className={`relative max-w-md w-full p-6 border bg-[var(--color-paper-deep)] border-[var(--color-rule)]`}
  >
- <h3 id="publish-modal-heading" className={`text-lg font-light mb-4 text-white`}>
+ <h3 id="publish-modal-heading" className={`text-lg font-light mb-4 text-[var(--color-ink)]`}>
  Record Your Prediction
  </h3>
 
  <div className="space-y-3 mb-6">
- <div className={` p-3 border bg-white/5 border-white/10`}>
+ <div className={` p-3 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
  <div className="text-[10px] uppercase tracking-wider opacity-40 mb-1">Market</div>
- <div className={`text-sm font-medium text-white`}>
+ <div className={`text-sm font-medium text-[var(--color-ink)]`}>
  {market?.title || market?.question || 'Unknown'}
  </div>
  </div>
 
  <div className="flex gap-3">
- <div className={`flex-1 p-3 border bg-white/5 border-white/10`}>
+ <div className={`flex-1 p-3 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
  <div className="text-[10px] uppercase tracking-wider opacity-40 mb-1">Your Call</div>
- <div className={`text-sm font-medium text-green-300`}>
+ <div className={`text-sm font-medium text-[var(--color-accent)]`}>
  {recommendation}
  </div>
  </div>
- <div className={`flex-1 p-3 border bg-white/5 border-white/10`}>
+ <div className={`flex-1 p-3 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
  <div className="text-[10px] uppercase tracking-wider opacity-40 mb-1">Confidence</div>
- <div className={`text-sm font-medium text-purple-300`}>
+ <div className={`text-sm font-medium text-[var(--color-review)]`}>
  {confidence}
  </div>
  </div>
  </div>
 
- <div className={` p-3 border bg-white/5 border-white/10`}>
+ <div className={` p-3 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
  <div className="text-[10px] uppercase tracking-wider opacity-40 mb-1">AI Reasoning</div>
- <div className={`text-xs leading-relaxed text-white/60`}>
+ <div className={`text-xs leading-relaxed text-[var(--color-ink-muted)]`}>
  {reasoningPreview}
  </div>
  </div>
 
  {/* Settlement Layer Selector */}
- <div className={` p-3 border bg-white/5 border-white/10`}>
+ <div className={` p-3 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
  <div className="text-[10px] uppercase tracking-wider opacity-40 mb-2">Settlement Layer</div>
  <div className={`grid ${canton?.cantonEnabled ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
  <button
@@ -82,8 +82,8 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  onClick={() => setSettlementLayer('arc')}
  className={` p-2.5 text-left transition-all border ${
  settlementLayer === 'arc'
- ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-200'
- : 'bg-white/5 border-white/10 text-white/50 hover:text-white/70'
+ ? 'bg-[var(--color-review)]/20 border-[var(--color-review)]/50 text-[var(--color-review)]'
+ : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
  }`}
  >
  <div className="text-xs font-medium flex items-center gap-1.5">
@@ -100,8 +100,8 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  disabled={!canton?.connected}
  className={` p-2.5 text-left transition-all border disabled:opacity-30 disabled:cursor-not-allowed ${
  settlementLayer === 'canton'
- ? 'bg-teal-500/20 border-teal-400/50 text-teal-200'
- : 'bg-white/5 border-white/10 text-white/50 hover:text-white/70'
+ ? 'bg-[var(--color-accent)]/20 border-[var(--color-accent)]/50 text-[var(--color-accent)]'
+ : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
  }`}
  >
  <div className="text-xs font-medium flex items-center gap-1.5">
@@ -116,7 +116,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  
  {/* Settlement Asset Selector (only for Canton) */}
  {settlementLayer === 'canton' && canton?.connected && (
- <div className="mt-3 pt-3 border-t border-white/10">
+ <div className="mt-3 pt-3 border-t border-[var(--color-rule)]">
  <div className="text-[10px] uppercase tracking-wider opacity-40 mb-2">Settlement Asset</div>
  <div className="grid grid-cols-2 gap-2">
  <button
@@ -124,8 +124,8 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  onClick={() => setCantonAsset('CBTC')}
  className={`p-2 text-left transition-all border ${
  cantonAsset === 'CBTC'
- ? 'bg-amber-500/20 border-amber-400/50 text-amber-200'
- : 'bg-white/5 border-white/10 text-white/50 hover:text-white/70'
+ ? 'bg-[var(--color-sealed)]/20 border-[var(--color-sealed)]/50 text-[var(--color-sealed)]'
+ : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
  }`}
  >
  <div className="text-xs font-medium">cBTC</div>
@@ -136,15 +136,15 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  onClick={() => setCantonAsset('CETH')}
  className={`p-2 text-left transition-all border ${
  cantonAsset === 'CETH'
- ? 'bg-blue-500/20 border-blue-400/50 text-blue-200'
- : 'bg-white/5 border-white/10 text-white/50 hover:text-white/70'
+ ? 'bg-[var(--color-evidence)]/20 border-[var(--color-evidence)]/50 text-[var(--color-evidence)]'
+ : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
  }`}
  >
  <div className="text-xs font-medium">cETH</div>
  <div className="text-[10px] opacity-60">Canton Ethereum (onRails)</div>
  </button>
  </div>
- <div className="mt-2 text-[10px] text-white/40">
+ <div className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
  {cantonAsset === 'CETH' 
  ? 'cETH is CIP-56 compliant and composes atomically with USDCx.'
  : 'cBTC is the first programmable Bitcoin-backed asset on Canton.'}
@@ -153,13 +153,13 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  )}
  </div>
 
- <div className={`flex items-center justify-between p-3 border bg-white/5 border-white/10`}>
+ <div className={`flex items-center justify-between p-3 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
  <div className="text-[10px] uppercase tracking-wider opacity-40">Chain</div>
- <div className={`text-xs font-medium ${settlementLayer === 'canton' ? 'text-teal-300' : 'text-indigo-300'}`}>
+ <div className={`text-xs font-medium ${settlementLayer === 'canton' ? 'text-[var(--color-accent)]' : 'text-[var(--color-review)]'}`}>
  {chainLabel}
  </div>
  <div className="text-[10px] uppercase tracking-wider opacity-40">Fee</div>
- <div className={`text-xs font-medium text-white/80`}>{gasLabel}</div>
+ <div className={`text-xs font-medium text-[var(--color-ink)]`}>{gasLabel}</div>
  </div>
  </div>
 
@@ -167,7 +167,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  <button
  onClick={onClose}
  disabled={isPublishing}
- className={`flex-1 px-4 py-2.5 border text-sm transition-all border-white/10 text-white/50 hover:text-white/70 disabled:opacity-30`}
+ className={`flex-1 px-4 py-2.5 border text-sm transition-all border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] disabled:opacity-30`}
  >
  Cancel
  </button>
@@ -176,8 +176,8 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  disabled={isPublishing}
  className={`flex-1 px-4 py-2.5 text-sm font-medium transition-all disabled:opacity-50 ${
  settlementLayer === 'canton'
- ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border border-teal-400/30 text-teal-200 hover:from-teal-500/30 hover:to-cyan-500/30'
- : 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 text-purple-200 hover:from-purple-500/30 hover:to-pink-500/30'
+ ? 'bg-gradient-to-r from-[var(--color-accent)]/20 to-[var(--color-evidence)]/20 border border-[var(--color-accent)]/30 text-[var(--color-accent)] hover:from-[var(--color-accent)]/30 hover:to-[var(--color-evidence)]/30'
+ : 'bg-gradient-to-r from-[var(--color-review)]/20 to-[var(--color-review)]/20 border border-[var(--color-review)]/30 text-[var(--color-review)] hover:from-[var(--color-review)]/30 hover:to-[var(--color-review)]/30'
  }`}
  >
  {isPublishing
@@ -188,7 +188,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  </button>
  </div>
 
- <p className={`text-[10px] text-center mt-4 text-white/25`}>
+ <p className={`text-[10px] text-center mt-4 text-[var(--color-ink-faint)]`}>
  {settlementLayer === 'canton'
  ? 'Private Daml transaction — position size visible only to you and the operator.'
  : 'This action is on-chain and cannot be undone.'}

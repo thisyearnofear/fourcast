@@ -20,7 +20,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
 
  return (
  <div
- className="position-record border-b border-white/10 px-1 py-5 cursor-pointer transition-colors hover:bg-white/[0.03] sm:px-3"
+ className="position-record border-b border-[var(--color-rule)] px-1 py-5 cursor-pointer transition-colors hover:bg-white/[0.03] sm:px-3"
  onClick={handleToggle}
  >
  <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -94,7 +94,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  e.stopPropagation();
  setShareOpen(!shareOpen);
  }}
- className="text-xs px-3 py-1.5 transition-all flex items-center gap-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border border-emerald-400/30"
+ className="text-xs px-3 py-1.5 transition-all flex items-center gap-1 bg-[var(--color-accent)]/15 hover:bg-[var(--color-accent)]/25 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
  >
  Share
  </button>
@@ -104,7 +104,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  {/* Share Menu — open section */}
  {shareOpen && (
  <div
- className="mt-4 flex flex-col gap-2 border-t border-white/10 pt-4"
+ className="mt-4 flex flex-col gap-2 border-t border-[var(--color-rule)] pt-4"
  onClick={(e) => e.stopPropagation()}
  >
  <div className="flex gap-2">
@@ -112,7 +112,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  href={generateXUrl(signal, userStats)}
  target="_blank"
  rel="noopener noreferrer"
- className={`flex-1 text-xs px-3 py-2 transition-all text-center bg-black/40 hover:bg-black/60 text-white border border-white/20`}
+ className={`flex-1 text-xs px-3 py-2 transition-all text-center bg-[var(--color-paper-deep)] hover:bg-[var(--color-paper)] text-[var(--color-ink)] border border-[var(--color-rule-strong)]`}
  >
  𝕏 Share
  </a>
@@ -120,7 +120,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  href={generateFarcasterUrl(signal, userStats)}
  target="_blank"
  rel="noopener noreferrer"
- className={`flex-1 text-xs px-3 py-2 transition-all text-center bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-100 border border-emerald-400/30`}
+ className={`flex-1 text-xs px-3 py-2 transition-all text-center bg-[var(--color-accent)]/15 hover:bg-[var(--color-accent)]/25 text-[var(--color-accent)] border border-[var(--color-accent)]/30`}
  >
  Warpcast
  </a>
@@ -131,7 +131,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  setCopied(true);
  setTimeout(() => setCopied(false), 2000);
  }}
- className={`w-full text-xs px-3 py-2 transition-all text-center flex items-center justify-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 border border-emerald-500/20`}
+ className={`w-full text-xs px-3 py-2 transition-all text-center flex items-center justify-center gap-1.5 bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/20 text-[var(--color-accent)] border border-[var(--color-accent)]/20`}
  >
  <span>{copied ? 'Copied' : 'Copy signal link'}</span>
  </button>

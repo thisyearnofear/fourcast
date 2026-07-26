@@ -38,7 +38,7 @@ export default function RecentPredictions({ chainId = 56, isNight = false }) {
  return true;
  });
 
- const textColor = 'text-white';
+ const textColor = 'text-[var(--color-ink)]';
  const tabClass = (active) => `
  text-xs px-3 py-1 transition-all 
  ${active 

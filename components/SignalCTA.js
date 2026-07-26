@@ -59,7 +59,7 @@ export default function SignalCTA({ marketTitle, authorAddress }) {
  {/* Analyze this market */}
  <Link
  href={analyzeQuery ? `/markets?q=${analyzeQuery}` : '/markets'}
- className="flex-1 text-center text-sm font-medium px-5 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 transition-opacity no-underline"
+ className="flex-1 text-center text-sm font-medium px-5 py-3 bg-[var(--color-accent)] text-[var(--color-paper-deep)] hover:opacity-90 transition-opacity no-underline"
  >
  🔍 Analyze this market →
  </Link>
@@ -67,7 +67,7 @@ export default function SignalCTA({ marketTitle, authorAddress }) {
  {/* Share this signal */}
  <button
  onClick={handleShare}
- className="flex-1 text-center text-sm font-medium px-5 py-3 bg-white/[0.04] text-slate-300 border border-white/[0.08] hover:bg-white/[0.08] transition-colors"
+ className="flex-1 text-center text-sm font-medium px-5 py-3 bg-white/[0.04] text-[var(--color-ink-muted)] border border-[var(--color-rule)] hover:bg-white/[0.08] transition-colors"
  >
  {copied ? '✓ Copied!' : '🔗 Share this signal'}
  </button>
@@ -78,17 +78,17 @@ export default function SignalCTA({ marketTitle, authorAddress }) {
  {/* Follow the analyst */}
  {authorAddress ? (
  <div className="flex items-center gap-3">
- <span className="text-xs text-slate-500">Want more signals from this analyst?</span>
+ <span className="text-xs text-[var(--color-ink-faint)]">Want more signals from this analyst?</span>
  <FollowButton authorAddress={authorAddress} currentAddress={address} />
  </div>
  ) : (
- <span className="text-xs text-slate-600">Anonymous signal</span>
+ <span className="text-xs text-[var(--color-ink-faint)]">Anonymous signal</span>
  )}
 
  {/* Try Fourcast */}
  <Link
  href="/markets"
- className="text-xs text-blue-400 hover:text-blue-300 transition-colors no-underline"
+ className="text-xs text-[var(--color-accent)] hover:opacity-80 transition-colors no-underline"
  >
  Try Fourcast on your own markets →
  </Link>

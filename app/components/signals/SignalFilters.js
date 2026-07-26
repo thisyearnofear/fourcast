@@ -21,7 +21,7 @@ export default function SignalFilters({ filters, setFilters, sortBy, setSortBy, 
  key={sort}
  onClick={() => setSortBy(sort)}
  className={`px-3 py-1.5 text-xs transition-colors capitalize ${sortBy === sort
- ? ('bg-emerald-500/30 text-white border border-emerald-400/40')
+ ? ('bg-[var(--color-accent)]/30 text-[var(--color-ink)] border border-[var(--color-accent)]/40')
  : `${textColor} opacity-60 hover:opacity-100`}`}
  >
  {sort}

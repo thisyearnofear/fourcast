@@ -97,10 +97,10 @@ function EdgePanel({ fixture, onToggle }) {
   if (!fixture.odds?.implied) return null;
 
   const verdictColor = !edge
-    ? 'border-white/15 bg-white/[0.04] text-white/60'
+    ? 'border-[var(--color-rule)] bg-white/[0.04] text-[var(--color-ink-muted)]'
     : Math.abs(edge.magnitude) >= 5
-      ? 'border-emerald-400/40 bg-emerald-500/[0.08] text-emerald-200'
-      : 'border-white/15 bg-white/[0.04] text-white/70';
+      ? 'border-[var(--color-accent)]/40 bg-[var(--color-accent)]/[0.08] text-[var(--color-accent)]'
+      : 'border-[var(--color-rule)] bg-white/[0.04] text-[var(--color-ink-muted)]';
 
   return (
     <div className={`border ${verdictColor} p-3 space-y-2`}>
@@ -119,29 +119,29 @@ function EdgePanel({ fixture, onToggle }) {
       </div>
 
       {error && (
-        <div className="text-[11px] text-red-300">{error}</div>
+        <div className="text-[11px] text-[var(--color-breach)]">{error}</div>
       )}
 
       {!data && !loading && !error && (
-        <div className="text-[11px] text-white/40">
+        <div className="text-[11px] text-[var(--color-ink-faint)]">
           Click "Compare vs Polymarket" to check cross-venue pricing.
         </div>
       )}
 
       {data && !data.found && (
         <div className="space-y-2">
-          <div className="text-[11px] text-white/70 leading-snug">
+          <div className="text-[11px] text-[var(--color-ink-muted)] leading-snug">
             {data.reason}
           </div>
           {data.outrightContext && (data.outrightContext.homeYesPrice != null || data.outrightContext.awayYesPrice != null) && (
-            <div className="bg-black/30 border border-white/10 p-2 text-[10px] text-white/60 leading-snug">
-              <div className="text-white/80 font-medium mb-1">For context (outright winner YES prices):</div>
+            <div className="bg-[var(--color-paper-deep)] border border-[var(--color-rule)] p-2 text-[10px] text-[var(--color-ink-muted)] leading-snug">
+              <div className="text-[var(--color-ink)] font-medium mb-1">For context (outright winner YES prices):</div>
               <div className="font-mono">
                 {fixture.home.name}: {data.outrightContext.homeYesPrice != null ? `${(data.outrightContext.homeYesPrice * 100).toFixed(2)}%` : '—'}
-                <span className="text-white/40 mx-1">·</span>
+                <span className="text-[var(--color-ink-faint)] mx-1">·</span>
                 {fixture.away.name}: {data.outrightContext.awayYesPrice != null ? `${(data.outrightContext.awayYesPrice * 100).toFixed(2)}%` : '—'}
               </div>
-              <div className="text-white/40 mt-1">{data.outrightContext.note}</div>
+              <div className="text-[var(--color-ink-faint)] mt-1">{data.outrightContext.note}</div>
               {data.outrightContext.homeMarketUrl && (
                 <a href={data.outrightContext.homeMarketUrl} target="_blank" rel="noreferrer" className="inline-block mt-1 underline opacity-80 hover:opacity-100">
                   View outright winner market →
@@ -149,7 +149,7 @@ function EdgePanel({ fixture, onToggle }) {
               )}
             </div>
           )}
-          <div className="text-[11px] text-emerald-300/80 leading-snug">
+          <div className="text-[11px] text-[var(--color-accent)]/80 leading-snug">
             Per-match consensus is TxLINE-exclusive — Polymarket needs a separate market to compare.
           </div>
         </div>
@@ -157,12 +157,12 @@ function EdgePanel({ fixture, onToggle }) {
 
       {data && data.found && poly && edge && (
         <div className="space-y-2">
-          <div className="text-[11px] text-white/70 leading-snug">{edge.summary}</div>
+          <div className="text-[11px] text-[var(--color-ink-muted)] leading-snug">{edge.summary}</div>
           <div ref={edgeRef} className="flex items-baseline gap-1.5">
-            <span className="font-mono text-lg font-semibold text-emerald-300">
+            <span className="font-mono text-lg font-semibold text-[var(--color-accent)]">
               {edgeMagnitude >= 0 ? '+' : ''}{edgeMagnitude.toFixed(1)}%
             </span>
-            <span className="text-[10px] uppercase tracking-wider text-white/40">cross-venue edge</span>
+            <span className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">cross-venue edge</span>
           </div>
           <div className="grid grid-cols-3 gap-1.5 text-center">
             {[
@@ -170,17 +170,17 @@ function EdgePanel({ fixture, onToggle }) {
               { label: 'Draw', tx: fixture.odds.implied.draw, poly: poly.draw },
               { label: fixture.away.name, tx: fixture.odds.implied.away, poly: poly.away },
             ].map((row) => (
-              <div key={row.label} className="bg-black/30 border border-white/10 p-1.5">
-                <div className="text-[9px] text-white/50 truncate">{row.label}</div>
+              <div key={row.label} className="bg-[var(--color-paper-deep)] border border-[var(--color-rule)] p-1.5">
+                <div className="text-[9px] text-[var(--color-ink-faint)] truncate">{row.label}</div>
                 <div className="text-[10px] font-mono">
-                  <span className="text-emerald-300">{(row.tx * 100).toFixed(1)}%</span>
-                  <span className="text-white/40 mx-0.5">/</span>
-                  <span className="text-white/70">{row.poly != null ? `${(row.poly * 100).toFixed(1)}%` : '—'}</span>
+                  <span className="text-[var(--color-accent)]">{(row.tx * 100).toFixed(1)}%</span>
+                  <span className="text-[var(--color-ink-faint)] mx-0.5">/</span>
+                  <span className="text-[var(--color-ink-muted)]">{row.poly != null ? `${(row.poly * 100).toFixed(1)}%` : '—'}</span>
                 </div>
               </div>
             ))}
           </div>
-          <div className="text-[10px] text-white/40 leading-snug">
+          <div className="text-[10px] text-[var(--color-ink-faint)] leading-snug">
             TxLINE consensus (left) vs Polymarket YES (right). Draw probability not surfaced on Polymarket.
           </div>
           {poly.marketUrl && (
@@ -217,44 +217,44 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
         aria-expanded={expanded}
       >
         <StatusBadge status={fixture.status} />
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">
-          {fixture.home.name} <span className="text-white/35 font-normal">v</span> {fixture.away.name}
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--color-ink)]">
+          {fixture.home.name} <span className="text-[var(--color-ink-faint)] font-normal">v</span> {fixture.away.name}
         </span>
         {fixture.status !== 'scheduled' && (
-          <span className="font-mono text-sm tabular-nums text-white/80 shrink-0">
+          <span className="font-mono text-sm tabular-nums text-[var(--color-ink)] shrink-0">
             {homeScore ?? 0}–{awayScore ?? 0}
           </span>
         )}
         {hasProof && (
-          <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-wider text-emerald-300/70 shrink-0">
+          <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-wider text-[var(--color-accent)]/70 shrink-0">
             {verdictLabel}
           </span>
         )}
         <ChevronDown
           size={14}
-          className={`shrink-0 text-white/35 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+          className={`shrink-0 text-[var(--color-ink-faint)] transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
         />
       </button>
 
       {expanded && (
         <div className="space-y-4 px-1 pb-6 sm:px-3">
-          <div className="text-xs text-white/45">
+          <div className="text-xs text-[var(--color-ink-faint)]">
             {formatKickoff(fixture.kickoff)}
             {fixture.venue ? ` · ${fixture.venue}` : ''}
           </div>
 
           {implied && (
             <div className="space-y-1.5">
-              <div className="text-[10px] uppercase tracking-wider text-white/40">TxLINE consensus</div>
+              <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">TxLINE consensus</div>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { label: fixture.home.code || 'HOME', value: implied.home },
                   { label: 'DRAW', value: implied.draw },
                   { label: fixture.away.code || 'AWAY', value: implied.away },
                 ].map((o) => (
-                  <div key={o.label} className="bg-white/[0.04] border border-white/10 px-2 py-1.5 text-center">
-                    <div className="text-[10px] text-white/50 truncate">{o.label}</div>
-                    <div className="text-sm font-semibold text-emerald-300">{pct(o.value)}</div>
+                  <div key={o.label} className="bg-white/[0.04] border border-[var(--color-rule)] px-2 py-1.5 text-center">
+                    <div className="text-[10px] text-[var(--color-ink-faint)] truncate">{o.label}</div>
+                    <div className="text-sm font-semibold text-[var(--color-accent)]">{pct(o.value)}</div>
                   </div>
                 ))}
               </div>
@@ -342,23 +342,23 @@ function ProofDecisionPanel({ result }) {
   const integrity = reconciliation.integrity || {};
   const verdict = (decision.verdict || 'REVIEW').toUpperCase();
   const verdictClass = verdict === 'ALLOCATE'
-    ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200'
+    ? 'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
     : verdict === 'PASS'
-      ? 'border-amber-300/30 bg-amber-300/10 text-amber-100'
-      : 'border-sky-300/30 bg-sky-300/10 text-sky-100';
+      ? 'border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/10 text-[var(--color-sealed)]'
+      : 'border-[var(--color-evidence)]/30 bg-[var(--color-evidence)]/10 text-[var(--color-evidence)]';
   const reconciliationClass = reconciliation.status === 'reconciled'
-    ? 'text-emerald-200'
+    ? 'text-[var(--color-accent)]'
     : reconciliation.status?.includes('mismatch')
-      ? 'text-red-200'
-      : 'text-amber-100';
+      ? 'text-[var(--color-breach)]'
+      : 'text-[var(--color-sealed)]';
   const passedGates = (decision.riskChecks || []).filter((gate) => gate.passed).length;
 
   return (
-    <section className="overflow-hidden mc-panel border-emerald-300/20" aria-label="Proof of decision">
+    <section className="overflow-hidden mc-panel border-[var(--color-accent)]/20" aria-label="Proof of decision">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <Fingerprint size={13} className="text-emerald-200" />
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100">Proof of decision</span>
+          <Fingerprint size={13} className="text-[var(--color-accent)]" />
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-accent)]">Proof of decision</span>
           <span className={`border px-1.5 py-0.5 font-mono text-[9px] tracking-wider ${verdictClass}`}>{verdict}</span>
         </div>
         <span className={`font-mono text-[10px] uppercase tracking-wider ${reconciliationClass}`}>
@@ -367,30 +367,30 @@ function ProofDecisionPanel({ result }) {
       </div>
 
       <div className="grid gap-px bg-white/[0.08] sm:grid-cols-2">
-        <div className="bg-black/30 p-3">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-white/35">Before kickoff</p>
-          <p className="mt-1 text-xs text-white/80">{decision.rationale || 'Decision receipt available.'}</p>
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-white/55">
+        <div className="bg-[var(--color-paper-deep)] p-3">
+          <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">Before kickoff</p>
+          <p className="mt-1 text-xs text-[var(--color-ink)]">{decision.rationale || 'Decision receipt available.'}</p>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-[var(--color-ink-faint)]">
             <span>fair {pct(simulation.winProbability)}</span>
             <span>loss {pct(simulation.lossProbability)}</span>
             <span>allocation {pct(decision.allocationPct)}</span>
             <span>{passedGates}/{decision.riskChecks?.length || 0} gates</span>
           </div>
-          <p className="mt-2 font-mono text-[9px] text-white/35">seed {simulation.seed ?? '—'} · {simulation.runs?.toLocaleString() || '—'} paths</p>
+          <p className="mt-2 font-mono text-[9px] text-[var(--color-ink-faint)]">seed {simulation.seed ?? '—'} · {simulation.runs?.toLocaleString() || '—'} paths</p>
         </div>
-        <div className="bg-black/30 p-3">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-white/35">Independently resolved</p>
-          <p className="mt-1 text-xs text-white/80">
+        <div className="bg-[var(--color-paper-deep)] p-3">
+          <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">Independently resolved</p>
+          <p className="mt-1 text-xs text-[var(--color-ink)]">
             {outcome.homeScore ?? '—'}–{outcome.awayScore ?? '—'} · {outcome.winner || 'outcome pending'}
           </p>
-          <p className="mt-2 text-[11px] leading-4 text-white/55">{comparison.notes || 'Waiting for a proof-backed outcome.'}</p>
-          {reconciliation.adherence && <p className="mt-2 font-mono text-[9px] text-white/35">policy {reconciliation.adherence.policyAdhered ? 'adhered' : 'exception'} · calibration {reconciliation.adherence.calibrationError != null ? reconciliation.adherence.calibrationError.toFixed(3) : '—'}</p>}
+          <p className="mt-2 text-[11px] leading-4 text-[var(--color-ink-faint)]">{comparison.notes || 'Waiting for a proof-backed outcome.'}</p>
+          {reconciliation.adherence && <p className="mt-2 font-mono text-[9px] text-[var(--color-ink-faint)]">policy {reconciliation.adherence.policyAdhered ? 'adhered' : 'exception'} · calibration {reconciliation.adherence.calibrationError != null ? reconciliation.adherence.calibrationError.toFixed(3) : '—'}</p>}
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/[0.08] px-3 py-2 font-mono text-[9px] text-white/40">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/[0.08] px-3 py-2 font-mono text-[9px] text-[var(--color-ink-faint)]">
         <span>{integrity.receiptIntact ? 'SHA-256 RECEIPT INTACT' : 'RECEIPT UNVERIFIED'}</span>
-        <span className="break-all text-white/55">{integrity.receiptHash || receipt.integrity?.contentHash || 'hash unavailable'}</span>
+        <span className="break-all text-[var(--color-ink-faint)]">{integrity.receiptHash || receipt.integrity?.contentHash || 'hash unavailable'}</span>
       </div>
     </section>
   );
@@ -400,13 +400,13 @@ function ProofDecisionPanel({ result }) {
 
 function VerificationPanel({ verification }) {
   const verdictColors = {
-    verified: 'text-emerald-300 border-emerald-400/40 bg-emerald-500/10',
-    'proof-present': 'text-emerald-300 border-emerald-400/40 bg-emerald-500/10',
-    anchored: 'text-amber-300 border-amber-400/40 bg-amber-500/10',
-    failed: 'text-red-300 border-red-400/40 bg-red-500/10',
-    incomplete: 'text-white/60 border-white/20 bg-white/5',
-    'rpc-error': 'text-red-300 border-red-400/40 bg-red-500/10',
-    unknown: 'text-white/60 border-white/20 bg-white/5',
+    verified: 'text-[var(--color-accent)] border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10',
+    'proof-present': 'text-[var(--color-accent)] border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10',
+    anchored: 'text-[var(--color-sealed)] border-[var(--color-sealed)]/40 bg-[var(--color-sealed)]/10',
+    failed: 'text-[var(--color-breach)] border-[var(--color-breach)]/40 bg-[var(--color-breach)]/10',
+    incomplete: 'text-[var(--color-ink-muted)] border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)]',
+    'rpc-error': 'text-[var(--color-breach)] border-[var(--color-breach)]/40 bg-[var(--color-breach)]/10',
+    unknown: 'text-[var(--color-ink-muted)] border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)]',
   };
   const cls = verdictColors[verification.verdict] || verdictColors.unknown;
   return (
@@ -431,19 +431,19 @@ function VerificationPanel({ verification }) {
         {(verification.checks || []).map((c) => (
           <li key={c.name} className="flex items-start gap-2 text-[11px]">
             <span className={`mt-0.5 inline-block h-2 w-2 ${
-              c.ok === true ? 'bg-emerald-400' : c.ok === false ? 'bg-red-400' : 'bg-white/30'
+              c.ok === true ? 'bg-[var(--color-accent)]' : c.ok === false ? 'bg-[var(--color-breach)]' : 'bg-white/30'
             }`} />
             <span className="flex-1">
-              <span className="font-mono text-white/80">{c.name}</span>
-              {c.detail && <span className="text-white/50"> — {c.detail}</span>}
+              <span className="font-mono text-[var(--color-ink)]">{c.name}</span>
+              {c.detail && <span className="text-[var(--color-ink-faint)]"> — {c.detail}</span>}
             </span>
           </li>
         ))}
       </ul>
       {verification.expectedRoot && (
-        <div className="pt-1 border-t border-white/10">
-          <div className="text-[10px] uppercase tracking-wider text-white/40">Merkle root</div>
-          <div className="font-mono text-[10px] break-all text-white/70">{verification.expectedRoot}</div>
+        <div className="pt-1 border-t border-[var(--color-rule)]">
+          <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">Merkle root</div>
+          <div className="font-mono text-[10px] break-all text-[var(--color-ink-muted)]">{verification.expectedRoot}</div>
         </div>
       )}
     </div>
@@ -474,11 +474,11 @@ function ReplayViewer({ replay, onClose }) {
 
   if (!replay) return null;
   return (
-    <div className="mc-card border-emerald-400/30 bg-emerald-500/[0.06] p-5 space-y-3">
+    <div className="mc-card border-[var(--color-accent)]/30 bg-[var(--color-accent)]/[0.06] p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-xs uppercase tracking-wider text-emerald-300/70">TxLINE historical replay</div>
-          <div className="text-lg font-semibold text-white">
+          <div className="text-xs uppercase tracking-wider text-[var(--color-accent)]/70">TxLINE historical replay</div>
+          <div className="text-lg font-semibold text-[var(--color-ink)]">
             {replay.fixture.home.name} vs {replay.fixture.away.name}
           </div>
         </div>
@@ -508,12 +508,12 @@ function ReplayViewer({ replay, onClose }) {
       {current ? (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-white/60">Event {index + 1} of {events.length}</span>
-            <span className="font-mono text-xs text-emerald-300">{current.minute ?? '—'}'</span>
+            <span className="text-[var(--color-ink-muted)]">Event {index + 1} of {events.length}</span>
+            <span className="font-mono text-xs text-[var(--color-accent)]">{current.minute ?? '—'}'</span>
           </div>
-          <div className="bg-black/30 border border-white/10 p-3 text-sm">
-            <div className="font-medium text-white">{current.type || 'update'}</div>
-            <div className="text-white/70 mt-0.5">{current.description || current.text || JSON.stringify(current)}</div>
+          <div className="bg-[var(--color-paper-deep)] border border-[var(--color-rule)] p-3 text-sm">
+            <div className="font-medium text-[var(--color-ink)]">{current.type || 'update'}</div>
+            <div className="text-[var(--color-ink-muted)] mt-0.5">{current.description || current.text || JSON.stringify(current)}</div>
             {current.score && (
               <div className="mt-2 text-xl font-bold">
                 {current.score.home} – {current.score.away}
@@ -522,14 +522,14 @@ function ReplayViewer({ replay, onClose }) {
           </div>
         </div>
       ) : (
-        <div className="text-sm text-white/50">No events in this replay.</div>
+        <div className="text-sm text-[var(--color-ink-faint)]">No events in this replay.</div>
       )}
 
       {replay.proof && (
-        <div className="pt-2 border-t border-white/10 text-[11px] text-white/50">
-          Finalised with TxLINE seq <span className="font-mono text-white/70">{replay.proof.sequence ?? '—'}</span>
+        <div className="pt-2 border-t border-[var(--color-rule)] text-[11px] text-[var(--color-ink-faint)]">
+          Finalised with TxLINE seq <span className="font-mono text-[var(--color-ink-muted)]">{replay.proof.sequence ?? '—'}</span>
           {' · root '}
-          <span className="font-mono text-white/70">{replay.proof.merkleRoot?.slice(0, 16) ?? '—'}…</span>
+          <span className="font-mono text-[var(--color-ink-muted)]">{replay.proof.merkleRoot?.slice(0, 16) ?? '—'}…</span>
         </div>
       )}
     </div>
@@ -553,7 +553,7 @@ function ProofLoopStrip({ fixtures }) {
     <section className="proof-loop platform-open-section px-1 py-5 sm:px-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="mc-kicker">Verified decision → reconciled outcome</div>
-        <div className="font-mono text-[10px] text-white/40">
+        <div className="font-mono text-[10px] text-[var(--color-ink-faint)]">
           {proven} proof-backed · {finals} final · {fixtures.length} tracked
         </div>
       </div>
@@ -565,10 +565,10 @@ function ProofLoopStrip({ fixtures }) {
             style={{ '--stage-index': index }}
           >
             <div className="flex items-center gap-1.5">
-              <span className="font-mono text-[9px] text-emerald-300/80">{index + 1}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/75">{stage.label}</span>
+              <span className="font-mono text-[9px] text-[var(--color-accent)]/80">{index + 1}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">{stage.label}</span>
             </div>
-            <p className="mt-1 text-[10px] leading-4 text-white/40">{stage.detail}</p>
+            <p className="mt-1 text-[10px] leading-4 text-[var(--color-ink-faint)]">{stage.detail}</p>
           </li>
         ))}
       </ol>
@@ -728,17 +728,17 @@ export default function WorldCupClient() {
 
   const streamBadge = (() => {
     if (streamStatus === 'connecting') {
-      return { color: 'border-white/20 bg-white/5 text-white/60', icon: Activity, label: 'Connecting\u2026' };
+      return { color: 'border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] text-[var(--color-ink-muted)]', icon: Activity, label: 'Connecting\u2026' };
     }
     if (streamStatus === 'open') {
       return {
-        color: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
+        color: 'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]',
         icon: Zap,
         label: streamBackend === 'txline-sse' ? 'Live SSE' : 'Live polling',
       };
     }
     if (streamStatus === 'error') {
-      return { color: 'border-amber-400/30 bg-amber-500/10 text-amber-200', icon: AlertTriangle, label: 'Stream retry' };
+      return { color: 'border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/10 text-[var(--color-sealed)]', icon: AlertTriangle, label: 'Stream retry' };
     }
     return null;
   })();
@@ -762,8 +762,8 @@ export default function WorldCupClient() {
           {status && (
             <div className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${
               isReplayMode
-                ? 'border-amber-400/30 bg-amber-500/10 text-amber-200'
-                : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'
+                ? 'border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/10 text-[var(--color-sealed)]'
+                : 'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
             }`}>
               {isReplayMode ? <AlertTriangle size={12} /> : <Zap size={12} />}
               {isReplayMode ? 'Replay mode (cached TxLINE)' : 'Live TxLINE'}
@@ -794,9 +794,9 @@ export default function WorldCupClient() {
         <ProofLoopStrip fixtures={fixtures} />
 
         {isReplayMode && (
-          <div className="border border-amber-400/30 bg-amber-500/[0.06] p-4 flex items-start gap-3">
-            <AlertTriangle size={18} className="text-amber-300 mt-0.5 shrink-0" />
-            <div className="text-sm text-amber-100/90">
+          <div className="border border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/[0.06] p-4 flex items-start gap-3">
+            <AlertTriangle size={18} className="text-[var(--color-sealed)] mt-0.5 shrink-0" />
+            <div className="text-sm text-[var(--color-sealed)]/90">
               <strong className="font-semibold">Replay mode active.</strong>{' '}
               {cutoffPassed
                 ? 'TxLINE hackathon access ended on July 19, 2026. The app is serving cached, cryptographically-verified snapshots of completed matches so the product experience remains intact.'
@@ -806,7 +806,7 @@ export default function WorldCupClient() {
         )}
 
         {error && (
-          <div className="border border-red-400/30 bg-red-500/[0.08] p-4 text-sm text-red-200">
+          <div className="border border-[var(--color-breach)]/30 bg-[var(--color-breach)]/[0.08] p-4 text-sm text-[var(--color-breach)]">
             {error}
           </div>
         )}
@@ -818,13 +818,13 @@ export default function WorldCupClient() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse border border-white/10 bg-white/[0.04] p-5 h-32" />
+              <div key={i} className="animate-pulse border border-[var(--color-rule)] bg-white/[0.04] p-5 h-32" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="border border-white/10 bg-white/[0.03] p-12 text-center">
-            <Activity size={32} className="mx-auto text-white/20 mb-3" />
-            <div className="text-sm text-white/60">
+          <div className="border border-[var(--color-rule)] bg-white/[0.03] p-12 text-center">
+            <Activity size={32} className="mx-auto text-[var(--color-ink-faint)] mb-3" />
+            <div className="text-sm text-[var(--color-ink-muted)]">
               {fixtures.length === 0
                 ? 'No World Cup fixtures available yet. Complete TxLINE onboarding to seed live data, or add cached replays under cache/txline/replays/.'
                 : 'No fixtures match the selected filter.'}

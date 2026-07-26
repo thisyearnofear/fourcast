@@ -4,7 +4,7 @@ export default function TemperatureDisplay({ weatherData, isNight, isPortalMode 
   if (!weatherData) return null;
 
   const displayWeatherData = isPortalMode && weatherData.portal ? weatherData.portal : weatherData;
-  const textColor = isPortalMode || !isNight ? 'text-black' : 'text-white';
+  const textColor = isPortalMode || !isNight ? 'text-black' : 'text-[var(--color-ink)]';
 
   return (
     <div className="flex items-end space-x-2 sm:space-x-4">

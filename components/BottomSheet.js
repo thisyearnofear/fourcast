@@ -86,13 +86,13 @@ export default function BottomSheet({
  
  {/* Header */}
  {title && (
- <div className={`flex items-center justify-between px-6 py-4 border-b border-white/10`}>
- <h2 className={`text-lg font-medium text-white`}>
+ <div className={`flex items-center justify-between px-6 py-4 border-b border-[var(--color-rule)]`}>
+ <h2 className={`text-lg font-medium text-[var(--color-ink)]`}>
  {title}
  </h2>
  <button
  onClick={onClose}
- className={`p-2 transition-colors hover:bg-white/10 text-white/60 hover:text-white`}
+ className={`p-2 transition-colors hover:bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  aria-label="Close"
  >
  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

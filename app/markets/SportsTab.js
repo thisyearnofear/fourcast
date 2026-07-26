@@ -84,8 +84,8 @@ export function SportsTabContent({
  key={key}
  onClick={() => setDateRange(key)}
  className={`px-3 py-1.5 text-xs border transition-all font-light ${dateRange === key
- ? "bg-emerald-500/30 text-white border-emerald-400/40"
- : "bg-white/10 hover:bg-white/20 text-white/70 border-white/20"
+ ? "bg-[var(--color-accent)]/30 text-[var(--color-ink)] border-[var(--color-accent)]/40"
+ : "bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink-muted)] border-[var(--color-rule-strong)]"
  }`}
  >
  {label}
@@ -140,12 +140,12 @@ export function SportsTabContent({
  }))
  }
  className={`inline-flex items-center w-12 h-6 border transition-all ${filters.includeFutures
- ? "bg-green-500/40 border-green-400/40"
- : "bg-white/10 border-white/20"
+ ? "bg-[var(--color-accent)]/40 border-[var(--color-accent)]/40"
+ : "bg-[var(--color-paper-soft)] border-[var(--color-rule-strong)]"
  }`}
  >
  <span
- className={`inline-block w-5 h-5 bg-white/80 transform transition-transform ${filters.includeFutures ? "translate-x-6" : "translate-x-1"
+ className={`inline-block w-5 h-5 bg-[var(--color-paper-raised)]0 transform transition-transform ${filters.includeFutures ? "translate-x-6" : "translate-x-1"
  }`}
  />
  </button>
@@ -230,7 +230,7 @@ export function SportsTabContent({
  <div className="mt-6 flex justify-center">
  <button
  onClick={onLoadMore}
- className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors"
+ className="px-4 py-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent)] text-[var(--color-ink)] rounded-md text-sm font-medium transition-colors"
  >
  Load More ({markets.length - displayLimit} remaining)
  </button>

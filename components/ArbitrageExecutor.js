@@ -34,9 +34,9 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  const buyLeg = buyPlatform === 'polymarket' ? polymarket : kalshi;
  const sellLeg = sellPlatform === 'polymarket' ? polymarket : kalshi;
 
- const textColor = 'text-white';
- const mutedColor = 'text-white/50';
- const cardBg = 'bg-slate-900 border-white/10';
+ const textColor = 'text-[var(--color-ink)]';
+ const mutedColor = 'text-[var(--color-ink-muted)]';
+ const cardBg = 'bg-[var(--color-paper-raised)] border-[var(--color-rule)]';
 
  const executeAll = useCallback(async () => {
  setOverallStatus('executing');
@@ -148,7 +148,7 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  onClick={(e) => e.stopPropagation()}
  >
  {/* Header */}
- <div className={`px-6 py-5 border-b border-white/10`}>
+ <div className={`px-6 py-5 border-b border-[var(--color-rule)]`}>
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-3">
  <span className="text-2xl">⚡</span>
@@ -159,18 +159,18 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  </p>
  </div>
  </div>
- <button onClick={onClose} className={`text-sm px-3 py-1.5 bg-white/10 text-white/60 hover:bg-white/20 transition-all`}>
+ <button onClick={onClose} className={`text-sm px-3 py-1.5 bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] hover:bg-white/20 transition-all`}>
  Close
  </button>
  </div>
  </div>
 
  {/* Spread Summary */}
- <div className={`px-6 py-4 bg-green-500/5 border-b border-white/5`}>
+ <div className={`px-6 py-4 bg-[var(--color-accent)]/5 border-b border-[var(--color-rule)]`}>
  <div className="flex items-center justify-between">
  <div>
  <span className={`text-xs font-medium uppercase tracking-wider ${mutedColor}`}>Price Spread</span>
- <div className={`text-2xl font-bold text-green-400`}>
+ <div className={`text-2xl font-bold text-[var(--color-accent)]`}>
  {arbitrage.spread_percent || '0'}%
  </div>
  </div>
@@ -182,17 +182,17 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  </div>
  </div>
  {overallStatus === 'success' && (
- <div className={`mt-3 px-3 py-2 text-sm font-medium text-center bg-green-500/20 text-green-400`}>
+ <div className={`mt-3 px-3 py-2 text-sm font-medium text-center bg-[var(--color-accent)]/20 text-[var(--color-accent)]`}>
  ✅ Arbitrage executed successfully — both legs confirmed
  </div>
  )}
  {overallStatus === 'partial' && (
- <div className={`mt-3 px-3 py-2 text-sm font-medium text-center bg-amber-500/20 text-amber-400`}>
+ <div className={`mt-3 px-3 py-2 text-sm font-medium text-center bg-[var(--color-sealed)]/20 text-[var(--color-sealed)]`}>
  ⚠️ Partial execution — one leg confirmed, one failed
  </div>
  )}
  {overallStatus === 'failed' && (
- <div className={`mt-3 px-3 py-2 text-sm font-medium text-center bg-red-500/20 text-red-400`}>
+ <div className={`mt-3 px-3 py-2 text-sm font-medium text-center bg-[var(--color-breach)]/20 text-[var(--color-breach)]`}>
  ❌ Execution failed — both legs rejected
  </div>
  )}
@@ -210,11 +210,11 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  const isErr = l?.status === 'failed';
 
  return (
- <div key={i} className={`p-4 border bg-white/5 border-white/10`}>
+ <div key={i} className={`p-4 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
  <div className={`inline-flex px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider mb-3 ${
  item.action === 'Buy'
- ? 'bg-green-500/20 text-green-400 border border-green-500/30'
- : 'bg-red-500/20 text-red-400 border border-red-500/30'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] border border-[var(--color-accent)]/30'
+ : 'bg-[var(--color-breach)]/20 text-[var(--color-breach)] border border-[var(--color-breach)]/30'
  }`}>
  Leg {i + 1}: {item.action} on {item.platform}
  </div>
@@ -227,19 +227,19 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  </div>
  {/* Status indicator */}
  {isWorking && (
- <div className="flex items-center gap-2 text-xs text-blue-400">
- <div className="w-3 h-3 border-2 border-blue-400/30 border-t-blue-400 animate-spin" />
+ <div className="flex items-center gap-2 text-xs text-[var(--color-evidence)]">
+ <div className="w-3 h-3 border-2 border-[var(--color-evidence)]/30 border-t-[var(--color-evidence)] animate-spin" />
  Submitting order...
  </div>
  )}
  {isDone && (
- <div className="text-xs text-green-400">✅ Confirmed</div>
+ <div className="text-xs text-[var(--color-accent)]">✅ Confirmed</div>
  )}
  {isErr && (
- <div className="text-xs text-red-400">❌ {l.error?.slice(0, 50) || 'Failed'}</div>
+ <div className="text-xs text-[var(--color-breach)]">❌ {l.error?.slice(0, 50) || 'Failed'}</div>
  )}
  {l?.txHash && (
- <div className="text-[10px] mt-1 font-mono text-blue-400/60 truncate">
+ <div className="text-[10px] mt-1 font-mono text-[var(--color-evidence)]/60 truncate">
  TX: {l.txHash.slice(0, 20)}...
  </div>
  )}
@@ -256,15 +256,15 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  disabled={!address}
  className={`w-full py-3 text-sm font-semibold transition-all ${
  address
- ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 shadow-lg'
- : 'bg-white/10 text-white/30 cursor-not-allowed'
+ ? 'bg-[var(--color-accent)] text-[var(--color-paper-deep)] hover:opacity-90 shadow-lg'
+ : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)] cursor-not-allowed'
  }`}
  >
  {address ? `Execute Arbitrage (${arbitrage.spread_percent || '0'}% spread)` : 'Connect wallet to execute'}
  </button>
  )}
  {overallStatus === 'executing' && (
- <div className={`w-full py-3 text-sm font-semibold text-center bg-blue-500/20 text-blue-400`}>
+ <div className={`w-full py-3 text-sm font-semibold text-center bg-[var(--color-evidence)]/20 text-[var(--color-evidence)]`}>
  <div className="flex items-center justify-center gap-2">
  <div className="w-4 h-4 border-2 border-current/30 border-t-current animate-spin" />
  Executing both legs...
@@ -276,8 +276,8 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  onClick={onClose}
  className={`w-full py-3 text-sm font-semibold transition-all ${
  overallStatus === 'success'
- ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
- : 'bg-white/10 text-white/60 hover:bg-white/20'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/30'
+ : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] hover:bg-white/20'
  }`}
  >
  {overallStatus === 'success' ? '✅ Done — Close' : 'Close'}

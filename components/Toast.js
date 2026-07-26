@@ -67,24 +67,24 @@ function Toast({ toast, onRemove, isNight }) {
  const getColors = (type, isNight) => {
  const colorMap = {
  success: {
- bg: "bg-green-500/20 border-green-400/30",
- text: "text-green-200",
- link: "text-green-300 hover:text-green-100",
+ bg: "bg-[var(--color-accent)]/20 border-[var(--color-accent)]/30",
+ text: "text-[var(--color-accent)]",
+ link: "text-[var(--color-accent)] hover:opacity-80",
  },
  error: {
- bg: "bg-red-500/20 border-red-400/30",
- text: "text-red-200",
- link: "text-red-300 hover:text-red-100",
+ bg: "bg-[var(--color-breach)]/20 border-[var(--color-breach)]/30",
+ text: "text-[var(--color-breach)]",
+ link: "text-[var(--color-breach)] hover:opacity-80",
  },
  warning: {
- bg: "bg-yellow-500/20 border-yellow-400/30",
- text: "text-yellow-200",
- link: "text-yellow-300 hover:text-yellow-100",
+ bg: "bg-[var(--color-sealed)]/20 border-[var(--color-sealed)]/30",
+ text: "text-[var(--color-sealed)]",
+ link: "text-[var(--color-sealed)] hover:opacity-80",
  },
  info: {
- bg: "bg-blue-500/20 border-blue-400/30",
- text: "text-blue-200",
- link: "text-blue-300 hover:text-blue-100",
+ bg: "bg-[var(--color-evidence)]/20 border-[var(--color-evidence)]/30",
+ text: "text-[var(--color-evidence)]",
+ link: "text-[var(--color-evidence)] hover:opacity-80",
  },
  };
  return colorMap[type] || colorMap.info;

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { useMarketsData } from "./useMarketsData";
 import { useSignalPublisher } from "@/hooks/useSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
 import useFilterStore from "@/hooks/useFilterStore";
@@ -16,51 +17,17 @@ import { CantonMarkets } from "@/components/CantonMarkets";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
 import { useCountUp } from "@/hooks/useCountUp";
 
-const STAGE_INDEX = { accepted: 0, context: 0, market: 1, sources: 1, forecast: 2, complete: 3 };
-
-async function requestStreamingAnalysis(payload, onStage) {
- const response = await fetch("/api/analyze/stream", {
- method: "POST",
- headers: { "Content-Type": "application/json" },
- body: JSON.stringify(payload),
- });
-
- if (!response.body) throw new Error('Analysis stream unavailable');
-
- const reader = response.body.getReader();
- const decoder = new TextDecoder();
- let buffer = '';
- let complete = null;
-
- let streamDone = false;
- while (!streamDone) {
- const { done, value } = await reader.read();
- streamDone = done;
- buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
- const lines = buffer.split('\n');
- buffer = lines.pop() || '';
-
- for (const line of lines) {
- if (!line.trim()) continue;
- const event = JSON.parse(line);
- if (event.type === 'stage') onStage(STAGE_INDEX[event.stage] ?? 0);
- if (event.type === 'complete' || event.type === 'error') complete = event;
- }
- }
-
- if (!complete) throw new Error('Analysis stream ended without a result');
- if (!complete.success) {
- const error = new Error(complete.error || 'Analysis failed');
- error.status = complete.status;
- throw error;
- }
- return complete;
-}
+// Streaming analysis transport + markets/analysis data pipeline live in
+// sibling modules so this page shell stays focused on orchestration.
+//   app/markets/useAnalysisStream.js → STAGE_INDEX, requestStreamingAnalysis
+//   app/markets/useMarketsData.js    → fetchMarkets, analyzeMarket,
+//                                       openAnalyzeConfig,
+//                                       analyzeMarketWithConfig
 
 function PanelSkeleton({ className = "h-28" }) {
  return (
  <div
- className={`animate-pulse border border-white/10 bg-white/[0.04] ${className}`}
+ className={`animate-pulse border border-[var(--color-rule)] bg-white/[0.04] ${className}`}
  aria-hidden
  />
  );
@@ -337,261 +304,37 @@ export default function MarketsPage() {
  }
  }, [canPublish, walletAddress]);
 
- const fetchMarkets = async () => {
- setIsLoadingMarkets(true);
- setMarkets(null);
- setError(null);
-
- try {
- const isSportsMode = activeTab === "sports";
-
- // Calculate max days based on selected date range
- let maxDaysToResolution = 7;
- let dateRange = selectedDateRange;
-
- if (isSportsMode) {
- if (dateRange === "today") maxDaysToResolution = 1;
- else if (dateRange === "tomorrow") maxDaysToResolution = 2;
- else if (dateRange === "this-week") maxDaysToResolution = 7;
- else if (dateRange === "later") maxDaysToResolution = 60;
- } else {
- dateRange = discoveryDateRange;
- if (dateRange === "today") maxDaysToResolution = 1;
- else if (dateRange === "tomorrow") maxDaysToResolution = 2;
- else if (dateRange === "this-week") maxDaysToResolution = 7;
- else if (dateRange === "later") maxDaysToResolution = 60;
- }
-
- const requestBody = isSportsMode
- ? {
- weatherData: null,
- location: null,
- eventType: sportsFilters.eventType,
- confidence: sportsFilters.confidence,
- limitCount: 50,
- maxDaysToResolution: maxDaysToResolution,
- minVolume: sportsMinVolume,
- analysisType: "event-weather",
- theme: sportsFilters.eventType === "Sports" ? "sports" : undefined,
- dateRange: selectedDateRange,
- excludeFutures: !sportsFilters.includeFutures,
- }
- : {
- location: null,
- eventType:
- discoveryFilters.category === "all"
- ? "all"
- : discoveryFilters.category,
- confidence: discoveryFilters.confidence,
- limitCount: 50,
- maxDaysToResolution: maxDaysToResolution,
- theme: "all",
- minVolume: parseInt(discoveryFilters.minVolume),
- analysisType: "discovery",
- weatherData: null,
- dateRange: discoveryDateRange,
- excludeFutures: !discoveryFilters.includeFutures,
- searchText: discoveryFilters.searchText || null,
- };
-
- const response = await fetch("/api/markets", {
- method: "POST",
- headers: { "Content-Type": "application/json" },
- body: JSON.stringify(requestBody),
+ // Markets + analysis data pipeline (see ./useMarketsData.js for the three
+ // callbacks + their state-read/write contract).
+ const {
+ fetchMarkets,
+ analyzeMarket,
+ analyzeMarketWithConfig,
+ openAnalyzeConfig,
+ } = useMarketsData({
+ activeTab,
+ sportsFilters,
+ selectedDateRange,
+ sportsMinVolume,
+ discoveryFilters,
+ discoveryDateRange,
+ analysisOptions,
+ analysisMode,
+ pendingMarket,
+ setMarkets,
+ setSelectedMarket,
+ setError,
+ setIsLoadingMarkets,
+ setIsLoadingAnalysis,
+ setAnalysis,
+ setAnalysisStage,
+ setExpandedMarketId,
+ setShowPricing,
+ setShowConfigModal,
+ setPendingMarket,
+ setFreeAnalysesUsed,
+ addToast,
  });
-
- if (!response.ok) {
- const errorText = await response.text();
- console.error("[Markets Page] API error response:", errorText);
- throw new Error(`API error: ${response.status}`);
- }
-
- const result = await response.json();
-
- if (result.success) {
- if (Array.isArray(result.markets) && result.markets.length > 0) {
- setMarkets(result.markets);
- setSelectedMarket(result.markets[0]);
- } else {
- setMarkets([]);
- setError(
- result.message || "No markets found. Try adjusting filters."
- );
- }
- } else {
- console.error(
- "[Markets Page] API returned success=false:",
- result.error
- );
- setError(result.error || "Failed to fetch markets");
- }
- } catch (err) {
- console.error("[Markets Page] Market fetch failed:", err);
- setError("Unable to fetch markets: " + err.message);
- } finally {
- setIsLoadingMarkets(false);
- }
- };
-
- const analyzeMarket = async (market, mode = analysisMode) => {
- if (!market) return;
- setIsLoadingAnalysis(true);
- setError(null);
- setAnalysis(null);
- setAnalysisStage(0);
- setSelectedMarket(market);
- setExpandedMarketId(market.marketID || market.id || market.tokenID);
-
- try {
- const data = await requestStreamingAnalysis({
- eventType: market.eventType || market.title || "Market",
- title: market.title || market.question,
- location: market.location || market.eventLocation || "",
- weatherData: null,
- currentOdds:
- market.currentOdds ||
- (market.bid !== undefined && market.ask !== undefined
- ? { yes: Number(market.ask), no: Number(market.bid) }
- : null),
- participants: market.teams || [],
- marketID: market.marketID || market.id || market.tokenID,
- eventDate: market.resolutionDate || market.expiresAt || null,
- mode,
- // Analysis factor toggles from user preferences
- includeWeather: analysisOptions.includeWeather,
- includeSynthData: analysisOptions.includeSynthData,
- includeFutures: analysisOptions.includeFutures,
- webSearchEnabled: analysisOptions.webSearchEnabled,
- analysisTypes: analysisOptions.analysisTypes || [],
- }, setAnalysisStage);
-
- if (data.success) {
- setAnalysis(data);
- // Track free analysis usage
- const used = parseInt(localStorage.getItem('fourcast_free_analyses') || '0', 10) + 1;
- localStorage.setItem('fourcast_free_analyses', String(used));
- setFreeAnalysesUsed(used);
-
- // Show upsell toast after 2 free analyses
- if (used === 2) {
- addToast(
- "Free analysis used 2/3. One more left — then upgrade for unlimited access.",
- 'info',
- 6000
- );
- }
- if (used === 3) {
- addToast(
- "You've used all free analyses. Upgrade to Pro for unlimited AI analysis.",
- 'info',
- 8000
- );
- }
- } else {
- // Check if rate limited (429)
- if (data.status === 429) {
- setShowPricing(true);
- setError("You've used your free analyses. Upgrade to Pro for unlimited AI analysis.");
- } else {
- setError(data.error || "Analysis failed");
- }
- }
- } catch (err) {
- console.error("Analysis failed:", err);
- if (err.status === 429) setShowPricing(true);
- setError("Failed to analyze market");
- } finally {
- setIsLoadingAnalysis(false);
- }
- };
-
- // Open analysis config modal instead of running directly
- const openAnalyzeConfig = (market) => {
- setPendingMarket(market);
- setShowConfigModal(true);
- };
-
- // Run analysis with config from modal
- const analyzeMarketWithConfig = async (config) => {
- if (!pendingMarket) return;
- 
- const market = pendingMarket;
- setShowConfigModal(false);
- setIsLoadingAnalysis(true);
- setError(null);
- setAnalysis(null);
- setAnalysisStage(0);
- setSelectedMarket(market);
- setExpandedMarketId(market.marketID || market.id || market.tokenID);
-
- try {
- const requestBody = {
- eventType: market.eventType || market.title || "Market",
- title: market.title || market.question,
- location: market.location || market.eventLocation || "",
- weatherData: null,
- currentOdds:
- market.currentOdds ||
- (market.bid !== undefined && market.ask !== undefined
- ? { yes: Number(market.ask), no: Number(market.bid) }
- : null),
- participants: market.teams || [],
- marketID: market.marketID || market.id || market.tokenID,
- eventDate: market.resolutionDate || market.expiresAt || null,
- // Map modal's 'quick/standard/deep' to API's 'basic/detailed/deep'
- mode: (config.depth === 'quick' ? 'basic' : config.depth === 'standard' ? 'detailed' : config.depth) || analysisMode,
- // Config from modal
- includeWeather: config.includeWeather,
- includeSynthData: config.includeSynthData,
- includeFutures: config.includeFutures,
- webSearchEnabled: config.includeWebSearch,
- analysisTypes: [
- ...(config.includeFundamental ? ['fundamental'] : []),
- ...(config.includeTechnical ? ['technical'] : []),
- ...(config.includeSentiment ? ['sentiment'] : []),
- ],
- // Provider preferences
- aiProvider: config.providers?.aiProvider,
- weatherProvider: config.providers?.weatherProvider,
- marketDataProvider: config.providers?.marketDataProvider,
- };
-
- const data = await requestStreamingAnalysis(requestBody, setAnalysisStage);
-
- if (data.success) {
- setAnalysis(data);
- const used = parseInt(localStorage.getItem('fourcast_free_analyses') || '0', 10) + 1;
- localStorage.setItem('fourcast_free_analyses', String(used));
- setFreeAnalysesUsed(used);
- if (used === 2) {
- addToast(
- "Free analysis used 2/3. One more left — then upgrade for unlimited access.",
- 'info', 6000
- );
- }
- if (used === 3) {
- addToast(
- "You've used all free analyses. Upgrade to Pro for unlimited AI analysis.",
- 'info', 8000
- );
- }
- } else {
- if (data.status === 429) {
- setShowPricing(true);
- setError("You've used your free analyses. Upgrade to Pro for unlimited AI analysis.");
- } else {
- setError(data.error || "Analysis failed");
- }
- }
- } catch (err) {
- console.error("Analysis failed:", err);
- if (err.status === 429) setShowPricing(true);
- setError("Failed to analyze market");
- } finally {
- setIsLoadingAnalysis(false);
- setPendingMarket(null);
- }
- };
 
  const handlePublishSignal = useCallback(async (settlementLayer = 'arc') => {
  if (!selectedMarket || !analysis) return;
@@ -753,8 +496,8 @@ export default function MarketsPage() {
  }
  }, [selectedMarket, analysis, canPublish, chains, weatherData, addToast, publishSignal, publishChain, publishError]);
 
- const textColor = "text-white";
- const cardBgColor = "bg-slate-900/60 border-white/20";
+ const textColor = "text-[var(--color-ink)]";
+ const cardBgColor = "bg-[var(--color-paper-raised)] border-[var(--color-rule)]";
 
  // Safety check: render a loading state if chain connections aren't ready yet.
  // This guard is intentionally placed AFTER all hooks (the last hook is the
@@ -789,7 +532,7 @@ export default function MarketsPage() {
  <select
  value={analysisMode}
  onChange={(e) => setAnalysisMode(e.target.value)}
- className=" border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-white"
+ className=" border border-[var(--color-rule)] bg-[var(--color-paper-soft)] px-3 py-1.5 text-xs text-[var(--color-ink)]"
  >
  <option value="basic">Basic (Free)</option>
  <option value="deep">Deep (Research)</option>
@@ -803,7 +546,7 @@ export default function MarketsPage() {
  />
  </div>
  {canPublish && (
- <span ref={mySignalsRef} className=" border border-white/10 bg-white/10 px-2 py-1 text-[10px] text-white/80 tabular-nums">
+ <span ref={mySignalsRef} className=" border border-[var(--color-rule)] bg-[var(--color-paper-soft)] px-2 py-1 text-[10px] text-[var(--color-ink)] tabular-nums">
  My signals: {mySignalCount != null ? Math.round(mySignalsDisplay) : "—"}
  </span>
  )}
@@ -820,10 +563,10 @@ export default function MarketsPage() {
  activeItem={activeTab}
  onChange={setActiveTab}
  />
- <p className="text-[11px] leading-relaxed text-white/45 max-w-2xl">
- <span className="text-emerald-300">Sports</span> — live, fast-resolving, narrow edges ·{' '}
- <span className="text-emerald-300">Discovery</span> — long-tail, deeper edges, longer horizons ·{' '}
- <span className="text-purple-300">Canton</span> — private settlement, hidden position sizes.
+ <p className="text-[11px] leading-relaxed text-[var(--color-ink-faint)] max-w-2xl">
+ <span className="text-[var(--color-accent)]">Sports</span> — live, fast-resolving, narrow edges ·{' '}
+ <span className="text-[var(--color-accent)]">Discovery</span> — long-tail, deeper edges, longer horizons ·{' '}
+ <span className="text-[var(--color-review)]">Canton</span> — private settlement, hidden position sizes.
  </p>
  </div>
  }

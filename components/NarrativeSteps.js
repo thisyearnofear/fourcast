@@ -23,11 +23,11 @@ export default function NarrativeSteps({ currentStep, isNight = false, className
 
  const currentIdx = steps.findIndex(s => s.id === currentStep);
 
- const activeBg = 'bg-emerald-500/20 border-emerald-400/40 text-emerald-100';
- const inactiveBg = 'border-transparent text-white/40';
- const doneBg = 'border-transparent text-emerald-300';
- const lineColor = 'bg-white/10';
- const doneLineColor = 'bg-emerald-500/30';
+ const activeBg = 'bg-[var(--color-accent)]/20 border-[var(--color-accent)]/40 text-[var(--color-accent)]';
+ const inactiveBg = 'border-transparent text-[var(--color-ink-faint)]';
+ const doneBg = 'border-transparent text-[var(--color-accent)]';
+ const lineColor = 'bg-[var(--color-paper-soft)]';
+ const doneLineColor = 'bg-[var(--color-accent)]/30';
 
  return (
  <div className={`narrative-rail flex items-center gap-0 ${className}`} aria-label="Navigation steps">
@@ -48,7 +48,7 @@ export default function NarrativeSteps({ currentStep, isNight = false, className
  <span className={`font-mono text-[10px] ${isCurrent ? '' : 'opacity-70'}`}>{step.icon}</span>
  <span>{isCurrent ? step.label : step.short}</span>
  {isCurrent && (
- <span className="w-1.5 h-1.5 bg-emerald-400 animate-pulse ml-0.5" />
+ <span className="w-1.5 h-1.5 bg-[var(--color-accent)] animate-pulse ml-0.5" />
  )}
  </div>
 

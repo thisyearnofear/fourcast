@@ -5,9 +5,9 @@
  * Shows what Synth provides without creating a separate page
  */
 export function SynthShowcase({ isNight = false }) {
- const textColor = 'text-white';
+ const textColor = 'text-[var(--color-ink)]';
  // Using mc-panel CSS class instead of inline styles
- const subtleText = 'text-white/60';
+ const subtleText = 'text-[var(--color-ink-muted)]';
 
  return (
  <div className={` p-6 mc-panel`}>
@@ -16,7 +16,7 @@ export function SynthShowcase({ isNight = false }) {
  <h3 className={`font-medium text-lg ${textColor}`}>
  Powered by SynthData
  </h3>
- <span className={`ml-auto px-2 py-1 text-[10px] font-medium bg-purple-500/20 text-purple-300`}>
+ <span className={`ml-auto px-2 py-1 text-[10px] font-medium bg-[var(--color-review)]/20 text-[var(--color-review)]`}>
  200+ ML MODELS
  </span>
  </div>
@@ -53,9 +53,9 @@ export function SynthShowcase({ isNight = false }) {
  </div>
  </div>
  </div>
- <div className={`mt-4 pt-4 border-t border-white/10`}>
+ <div className={`mt-4 pt-4 border-t border-[var(--color-rule)]`}>
  <p className={`text-xs ${subtleText}`}>
- Look for the <span className={`px-1.5 py-0.5 font-medium bg-purple-500/20 text-purple-300`}>🤖 ML</span> badge on markets to see SynthData-backed analysis
+ Look for the <span className={`px-1.5 py-0.5 font-medium bg-[var(--color-review)]/20 text-[var(--color-review)]`}>🤖 ML</span> badge on markets to see SynthData-backed analysis
  </p>
  </div>
  </div>

@@ -94,7 +94,7 @@ export default function FollowButton({ authorAddress, currentAddress }) {
  // Don't render a follow button for your own profile
  if (isSelf) {
  return (
- <span className="text-xs text-slate-500 px-3 py-1.5 border border-white/[0.06]">
+ <span className="text-xs text-[var(--color-ink-faint)] px-3 py-1.5 border border-[var(--color-rule)]">
  This is you · {followerCount} follower{followerCount !== 1 ? 's' : ''}
  </span>
  );
@@ -105,7 +105,7 @@ export default function FollowButton({ authorAddress, currentAddress }) {
  return (
  <Link
  href="/markets"
- className="text-xs font-medium px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 no-underline"
+ className="text-xs font-medium px-4 py-2 bg-[var(--color-accent)] text-[var(--color-paper-deep)] hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 no-underline"
  >
  🔗 Connect wallet to follow
  </Link>
@@ -124,12 +124,12 @@ export default function FollowButton({ authorAddress, currentAddress }) {
  disabled={loading}
  className={`text-xs font-medium px-4 py-2 border transition-all inline-flex items-center gap-1.5 ${
  following
- ? 'bg-white/[0.04] text-slate-400 border-white/[0.08] hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400'
- : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white border-transparent hover:opacity-90'
+ ? 'bg-white/[0.04] text-[var(--color-ink-muted)] border-[var(--color-rule)] hover:bg-[var(--color-breach)]/10 hover:border-[var(--color-breach)]/20 hover:text-[var(--color-breach)]'
+ : 'bg-[var(--color-accent)] text-[var(--color-paper-deep)] border-transparent hover:opacity-90'
  } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
  >
  {following ? '✓ Following' : '+ Follow'}
- <span className="text-slate-500 ml-1">
+ <span className="text-[var(--color-ink-faint)] ml-1">
  {followerCount}
  </span>
  </button>

@@ -18,11 +18,11 @@
  */
 export function tierInfoFor(winRate) {
   const r = Number(winRate) || 0;
-  if (r >= 0.85) return { name: 'Sage',          emoji: '👑', dot: 'bg-amber-400'   };
-  if (r >= 0.75) return { name: 'Elite Analyst', emoji: '🌟', dot: 'bg-emerald-400' };
-  if (r >= 0.60) return { name: 'Forecaster',    emoji: '🎯', dot: 'bg-emerald-300' };
-  if (r >= 0.50) return { name: 'Predictor',     emoji: '📊', dot: 'bg-slate-300'   };
-  return               { name: 'Novice',      emoji: '🌱', dot: 'bg-slate-500'   };
+  if (r >= 0.85) return { name: 'Sage',          emoji: '👑', dot: 'bg-[var(--color-sealed)]'   };
+  if (r >= 0.75) return { name: 'Elite Analyst', emoji: '🌟', dot: 'bg-[var(--color-accent)]' };
+  if (r >= 0.60) return { name: 'Forecaster',    emoji: '🎯', dot: 'bg-[var(--color-accent)]' };
+  if (r >= 0.50) return { name: 'Predictor',     emoji: '📊', dot: 'bg-[var(--color-ink-muted)]'   };
+  return               { name: 'Novice',      emoji: '🌱', dot: 'bg-[var(--color-ink-faint)]'   };
 }
 
 /**

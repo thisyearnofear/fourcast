@@ -95,9 +95,9 @@ export default function CctpTransfer({ isNight = false }) {
  }
  };
 
- const textColor = 'text-white';
- const mutedColor = 'text-white/50';
- const cardBg = 'bg-white/5 border-white/10';
+ const textColor = 'text-[var(--color-ink)]';
+ const mutedColor = 'text-[var(--color-ink-faint)]';
+ const cardBg = 'bg-[var(--color-paper-raised)] border-[var(--color-rule)]';
 
  return (
  <div className={` border ${cardBg} p-5 mc-panel`}>
@@ -113,8 +113,8 @@ export default function CctpTransfer({ isNight = false }) {
  onClick={() => setDirection('arc-to-polygon')}
  className={`flex-1 py-2 text-xs font-medium transition-all ${
  direction === 'arc-to-polygon'
- ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
- : 'bg-white/5 text-white/50 border border-white/10'
+ ? 'bg-[var(--color-review)]/20 text-[var(--color-review)] border border-[var(--color-review)]/30'
+ : 'bg-[var(--color-paper-raised)] text-[var(--color-ink-faint)] border border-[var(--color-rule)]'
  }`}
  >
  Arc → Polygon
@@ -123,8 +123,8 @@ export default function CctpTransfer({ isNight = false }) {
  onClick={() => setDirection('polygon-to-arc')}
  className={`flex-1 py-2 text-xs font-medium transition-all ${
  direction === 'polygon-to-arc'
- ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
- : 'bg-white/5 text-white/50 border border-white/10'
+ ? 'bg-[var(--color-review)]/20 text-[var(--color-review)] border border-[var(--color-review)]/30'
+ : 'bg-[var(--color-paper-raised)] text-[var(--color-ink-faint)] border border-[var(--color-rule)]'
  }`}
  >
  Polygon → Arc
@@ -138,14 +138,14 @@ export default function CctpTransfer({ isNight = false }) {
  onChange={(e) => setAmount(e.target.value)}
  min="1"
  step="1"
- className={`flex-1 px-3 py-2 text-sm font-mono bg-transparent border border-white/10 text-white focus:outline-none focus:border-purple-500/50`}
+ className={`flex-1 px-3 py-2 text-sm font-mono bg-transparent border border-[var(--color-rule)] text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-review)]/50`}
  placeholder="Amount (USDC)"
  />
  <span className={`text-sm ${mutedColor}`}>USDC</span>
  </div>
  {/* Network indicator */}
  <div className={`flex items-center gap-2 mb-4 text-xs ${mutedColor}`}>
- <span className={`w-2 h-2 ${canTransfer ? 'bg-green-400' : 'bg-gray-500'}`} />
+ <span className={`w-2 h-2 ${canTransfer ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-ink-faint)]'}`} />
  <span>
  {!address
  ? 'Connect wallet'
@@ -160,10 +160,10 @@ export default function CctpTransfer({ isNight = false }) {
  disabled={!canTransfer || txState.status === 'approving' || txState.status === 'transferring'}
  className={`w-full py-2.5 text-sm font-medium transition-all ${
  txState.status === 'success'
- ? 'bg-green-500/20 text-green-400 cursor-default'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] cursor-default'
  : canTransfer
- ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90'
- : 'bg-white/10 text-white/30 cursor-not-allowed'
+ ? 'bg-[var(--color-review)] text-[var(--color-paper-deep)] hover:opacity-90'
+ : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)] cursor-not-allowed'
  }`}
  >
  {txState.status === 'success'

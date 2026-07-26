@@ -153,21 +153,21 @@ export function MandateControl() {
           <span className="mc-kicker">Mandate Control</span>
           <span
             className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em] ${
-              lab.status ? 'text-[var(--mc-reconciled)]' : 'text-white/40'
+              lab.status ? 'text-[var(--mc-reconciled)]' : 'text-[var(--color-ink-faint)]'
             }`}
           >
             <Radio className={`h-3 w-3 ${lab.status ? 'animate-pulse' : ''}`} />
             {lab.status ? (lab.status.dryRun ? 'Agent live · historical replay' : 'Agent live') : 'Agent offline'}
           </span>
         </div>
-        <div className="flex items-center gap-3 font-mono text-[10px] text-white/45">
+        <div className="flex items-center gap-3 font-mono text-[10px] text-[var(--color-ink-faint)]">
           <span>replay clock {formatTime(lab.status?.agentTime)}</span>
           <span className="hidden sm:inline">·</span>
           <span className="hidden sm:inline">{relativeClock(lab.status?.agentTime)}</span>
           <button
             type="button"
             onClick={load}
-            className="inline-flex h-7 w-7 items-center justify-center border border-[var(--mc-rule)] text-white/55 transition hover:border-[var(--mc-rule-strong)] hover:text-white"
+            className="inline-flex h-7 w-7 items-center justify-center border border-[var(--mc-rule)] text-[var(--color-ink-faint)] transition hover:border-[var(--mc-rule-strong)] hover:text-[var(--color-ink)]"
             aria-label="Refresh mandate control status"
           >
             <RefreshCw className={`h-3 w-3 ${lab.loading ? 'animate-spin' : ''}`} />
@@ -185,8 +185,8 @@ export function MandateControl() {
 
         {!lab.loading && !lab.error && !lab.status && (
           <div className="py-10 text-center">
-            <Lock className="mx-auto h-6 w-6 text-white/30" />
-            <p className="mt-3 font-mono text-[11px] leading-5 text-white/45">
+            <Lock className="mx-auto h-6 w-6 text-[var(--color-ink-faint)]" />
+            <p className="mt-3 font-mono text-[11px] leading-5 text-[var(--color-ink-faint)]">
               Worker has not checked in yet. The lab remains private until its first signed heartbeat.
             </p>
           </div>
@@ -199,7 +199,7 @@ export function MandateControl() {
               <span className="mc-kicker">Current mandate · {mandateId}</span>
               <h2
                 id="mandate-control-heading"
-                className="fc-display mt-2 font-display text-3xl font-semibold leading-[1.05] tracking-tight text-white sm:text-4xl"
+                className="fc-display mt-2 font-display text-3xl font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] sm:text-4xl"
               >
                 {headline}
               </h2>
@@ -211,29 +211,29 @@ export function MandateControl() {
                 <span className={`mc-lamp mc-lamp--radar`} style={{ color: verdict.lamp }} aria-hidden="true" />
                 <span className={`mc-stamp ${verdict.stamp}`}>{verdict.label}</span>
                 {verdictKey === 'allocate' && (
-                  <span className="font-mono text-sm text-white/75">
+                  <span className="font-mono text-sm text-[var(--color-ink-muted)]">
                     {allocationPct}% of capital
                   </span>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[11px] text-white/55">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[11px] text-[var(--color-ink-faint)]">
                 <span>
-                  <span className="text-white/35">max </span>
-                  <span className="text-white/80">{policy ? `${(policy.maxAllocationPct * 100).toFixed(1)}%` : '2.5%'}</span>
+                  <span className="text-[var(--color-ink-faint)]">max </span>
+                  <span className="text-[var(--color-ink)]">{policy ? `${(policy.maxAllocationPct * 100).toFixed(1)}%` : '2.5%'}</span>
                 </span>
                 <span>
-                  <span className="text-white/35">min edge </span>
-                  <span className="text-white/80">{policy ? `${(policy.minAbsoluteEdge * 100).toFixed(0)}%` : '5%'}</span>
+                  <span className="text-[var(--color-ink-faint)]">min edge </span>
+                  <span className="text-[var(--color-ink)]">{policy ? `${(policy.minAbsoluteEdge * 100).toFixed(0)}%` : '5%'}</span>
                 </span>
                 <span>
-                  <span className="text-white/35">tail ≤ </span>
-                  <span className="text-white/80">{policy ? `${(policy.maxLossProbability * 100).toFixed(0)}%` : '75%'}</span>
+                  <span className="text-[var(--color-ink-faint)]">tail ≤ </span>
+                  <span className="text-[var(--color-ink)]">{policy ? `${(policy.maxLossProbability * 100).toFixed(0)}%` : '75%'}</span>
                 </span>
               </div>
             </div>
 
             {/* Claim of restraint */}
-            <p className="mt-5 max-w-2xl text-sm leading-6 text-white/60">
+            <p className="mt-5 max-w-2xl text-sm leading-6 text-[var(--color-ink-muted)]">
               <Lock className="mr-1.5 inline h-3.5 w-3.5 -translate-y-px text-[var(--mc-sealed)]" />
               Outcome withheld at decision time; proof revealed after settlement.
             </p>
@@ -284,7 +284,7 @@ export function MandateControl() {
                 The on-chain verdict is the real Solana result from the eager
                 verification fetch, not a self-reported heartbeat field. */}
             <hr className="mc-rule mt-8" />
-            <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 font-mono text-[10px] text-white/45 sm:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 font-mono text-[10px] text-[var(--color-ink-faint)] sm:grid-cols-4">
               <Telemetry label="Worker host" value={lab.status.hostname || '—'} />
               <Telemetry label="Last check-in" value={formatTime(lab.status.completedAt)} />
               <Telemetry label="Receipt hash" value={latest?.receiptHash ? `${latest.receiptHash.slice(0, 14)}…` : 'pending'} mono sealed={Boolean(latest?.receiptHash)} />
@@ -338,13 +338,13 @@ function ProofTimeline({ stages, livePct, timeline, reconciled }) {
         {stages.map((stage, i) => (
           <li key={stage.key} className="relative">
             <StageNode stage={stage} index={i} />
-            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-white/70">{stage.label}</p>
-            <p className="mt-0.5 text-[10px] leading-4 text-white/40">{stage.detail}</p>
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">{stage.label}</p>
+            <p className="mt-0.5 text-[10px] leading-4 text-[var(--color-ink-faint)]">{stage.detail}</p>
             {stage.key === 'sealed' && timeline?.decisionAvailableAt && (
               <p className="mt-1 font-mono text-[9px] text-[var(--mc-sealed)]/80">{formatTime(timeline.decisionAvailableAt)}</p>
             )}
             {stage.key === 'proof' && timeline?.outcomeAvailableAt && (
-              <p className={`mt-1 font-mono text-[9px] ${reconciled ? 'text-[var(--mc-reconciled)]/80' : 'text-white/40'}`}>
+              <p className={`mt-1 font-mono text-[9px] ${reconciled ? 'text-[var(--mc-reconciled)]/80' : 'text-[var(--color-ink-faint)]'}`}>
                 {formatTime(timeline.outcomeAvailableAt)}
               </p>
             )}
@@ -363,7 +363,7 @@ function ProofTimeline({ stages, livePct, timeline, reconciled }) {
             <Lock className="mr-1 inline h-2.5 w-2.5" />
             outcome withheld
           </span>
-          <span className={reconciled ? 'text-[var(--mc-reconciled)]/90' : 'text-white/40'}>
+          <span className={reconciled ? 'text-[var(--mc-reconciled)]/90' : 'text-[var(--color-ink-faint)]'}>
             {reconciled ? (
               <>
                 <ShieldCheck className="mr-1 inline h-2.5 w-2.5" />
@@ -399,9 +399,9 @@ function StageNode({ stage, index }) {
 function Telemetry({ label, value, mono = false, accent = false, sealed = false }) {
   return (
     <div>
-      <p className="text-[9px] uppercase tracking-[0.14em] text-white/35">{label}</p>
+      <p className="text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-faint)]">{label}</p>
       <p
-        className={`mt-1 text-[11px] ${accent ? 'text-[var(--mc-reconciled)]' : 'text-white/75'} ${mono ? 'font-mono' : ''} ${sealed ? 'mc-seal-animate' : ''}`}
+        className={`mt-1 text-[11px] ${accent ? 'text-[var(--mc-reconciled)]' : 'text-[var(--color-ink-muted)]'} ${mono ? 'font-mono' : ''} ${sealed ? 'mc-seal-animate' : ''}`}
       >
         {value}
       </p>

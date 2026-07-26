@@ -131,10 +131,10 @@ export function ProofTheatre({ fixture, onClose }) {
       <div className="relative flex flex-wrap items-start justify-between gap-3 border-b border-[var(--mc-rule)] px-4 py-3 sm:px-6">
         <div className="min-w-0">
           <span className="mc-kicker">Proof theatre · {fixture?.id}</span>
-          <h2 id="proof-theatre-heading" className="fc-display mt-2 font-display text-xl font-semibold tracking-tight text-white sm:text-2xl">
+          <h2 id="proof-theatre-heading" className="fc-display mt-2 font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-2xl">
             {fixture ? `${fixture.home?.name} v ${fixture.away?.name}` : 'Selected fixture'}
           </h2>
-          <p className="mt-1 max-w-2xl text-xs leading-5 text-white/55">
+          <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--color-ink-faint)]">
             The final act of an autonomous decision — from sealed evidence to independently verifiable outcome. Fourcast doesn&apos;t ask you to trust a chart; it asks you to recompute the receipt.
           </p>
         </div>
@@ -142,7 +142,7 @@ export function ProofTheatre({ fixture, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--mc-rule)] text-white/55 transition hover:border-[var(--mc-rule-strong)] hover:text-white"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--mc-rule)] text-[var(--color-ink-faint)] transition hover:border-[var(--mc-rule-strong)] hover:text-[var(--color-ink)]"
             aria-label="Close proof theatre"
           >
             <X className="h-4 w-4" />
@@ -184,17 +184,17 @@ export function ProofTheatre({ fixture, onClose }) {
                 <TheatreMetric label="DRAW" value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.draw)} />
                 <TheatreMetric label={fixture?.away?.code || 'AWAY'} value={pct(receipt.evidence?.snapshot?.consensusOdds?.implied?.away)} />
               </div>
-              <p className="mt-2 font-mono text-[10px] text-white/45">
+              <p className="mt-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
                 captured {formatTime(receipt.evidence?.snapshot?.capturedAt)} · sources {(receipt.evidence?.sources || ['txline']).join(' + ')}
               </p>
             </TheatreStage>
 
             {/* 2. Seeded simulation */}
             <TheatreStage index="02" stage={stages[1]} color="var(--mc-evidence)" isLead={leadStage === '02'} isOpen={openStages.has('02')} onToggle={() => toggleStage('02')}>
-              <p className="font-mono text-[11px] text-white/70">
-                {simulation.runs?.toLocaleString() || '—'} seeded paths · seed <span className="text-white/90">{simulation.seed ?? '—'}</span>
+              <p className="font-mono text-[11px] text-[var(--color-ink-muted)]">
+                {simulation.runs?.toLocaleString() || '—'} seeded paths · seed <span className="text-[var(--color-ink)]">{simulation.seed ?? '—'}</span>
               </p>
-              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-mono text-[10px] text-white/55">
+              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-mono text-[10px] text-[var(--color-ink-faint)]">
                 <span>win {pct(simulation.winProbability)}</span>
                 <span>loss {pct(simulation.lossProbability)}</span>
                 <span>fair {pct(forecast.probability)}</span>
@@ -205,7 +205,7 @@ export function ProofTheatre({ fixture, onClose }) {
 
             {/* 3. Versioned policy gates */}
             <TheatreStage index="03" stage={stages[2]} color={verdict === 'ALLOCATE' ? 'var(--mc-reconciled)' : 'var(--mc-sealed)'} isLead={leadStage === '03'} isOpen={openStages.has('03')} onToggle={() => toggleStage('03')}>
-              <p className="mb-2 font-mono text-[10px] text-white/45">
+              <p className="mb-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
                 policy {receipt.policy?.version || 'decision-policy/v1'} · max {(receipt.policy?.maxAllocationPct * 100).toFixed(1)}% · min edge {(receipt.policy?.minAbsoluteEdge * 100).toFixed(0)}% · tail ≤ {(receipt.policy?.maxLossProbability * 100).toFixed(0)}%
               </p>
               <ul className="space-y-1.5">
@@ -220,13 +220,13 @@ export function ProofTheatre({ fixture, onClose }) {
                     >
                       {gate.passed ? '✓' : '✕'}
                     </span>
-                    <span className={`font-mono text-[10px] uppercase tracking-wider ${gate.passed ? 'text-white/60' : 'text-[var(--mc-breach)]'}`}>
+                    <span className={`font-mono text-[10px] uppercase tracking-wider ${gate.passed ? 'text-[var(--color-ink-muted)]' : 'text-[var(--mc-breach)]'}`}>
                       {gate.label || gate.id}
                     </span>
                   </li>
                 ))}
                 {decision.riskChecks?.length === 0 && (
-                  <li className="font-mono text-[10px] text-white/40">No risk checks recorded.</li>
+                  <li className="font-mono text-[10px] text-[var(--color-ink-faint)]">No risk checks recorded.</li>
                 )}
               </ul>
             </TheatreStage>
@@ -235,14 +235,14 @@ export function ProofTheatre({ fixture, onClose }) {
             <TheatreStage index="04" stage={stages[3]} color="var(--mc-sealed)" isLead={leadStage === '04'} isOpen={openStages.has('04')} onToggle={() => toggleStage('04')}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`mc-stamp mc-seal-animate ${verdict === 'ALLOCATE' ? 'mc-stamp--allocate' : verdict === 'PASS' ? 'mc-stamp--pass' : 'mc-stamp--review'}`}>{verdict}</span>
-                {decision.allocationPct > 0 && <span className="font-mono text-[11px] text-white/70">{pct(decision.allocationPct)} of capital</span>}
+                {decision.allocationPct > 0 && <span className="font-mono text-[11px] text-[var(--color-ink-muted)]">{pct(decision.allocationPct)} of capital</span>}
               </div>
-              <p className="mt-2 text-xs leading-5 text-white/70">{decision.rationale}</p>
-              <div className="mt-2 flex items-start gap-2 font-mono text-[10px] text-white/45">
+              <p className="mt-2 text-xs leading-5 text-[var(--color-ink-muted)]">{decision.rationale}</p>
+              <div className="mt-2 flex items-start gap-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
                 <Lock className="mt-0.5 h-3 w-3 shrink-0 text-[var(--mc-sealed)]" />
                 sealed {formatTime(receipt.createdAt)} — outcome locked until {formatTime(receipt.evidence?.historicalReplay?.outcomeAvailableAt)}
               </div>
-              <div className="mt-2 flex items-center gap-2 font-mono text-[10px] text-white/55">
+              <div className="mt-2 flex items-center gap-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
                 <Fingerprint className="h-3 w-3 text-[var(--mc-reconciled)]/70" />
                 <span className="break-all mc-seal-animate">{integrity.contentHash || recIntegrity.receiptHash || '—'}</span>
               </div>
@@ -250,9 +250,9 @@ export function ProofTheatre({ fixture, onClose }) {
 
             {/* 5. TxLINE Merkle proof + Solana validation */}
             <TheatreStage index="05" stage={stages[4]} color={verification.verdict === 'verified' || verification.verdict === 'proof-present' ? 'var(--mc-reconciled)' : 'var(--mc-sealed)'} isLead={leadStage === '05'} isOpen={openStages.has('05')} onToggle={() => toggleStage('05')}>
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[10px] text-white/55">
-                <span>Merkle root <span className="text-white/80">{proof.merkleRoot ? `${proof.merkleRoot.slice(0, 16)}…` : '—'}</span></span>
-                <span>seq <span className="text-white/80">{proof.sequence ?? '—'}</span></span>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[10px] text-[var(--color-ink-faint)]">
+                <span>Merkle root <span className="text-[var(--color-ink)]">{proof.merkleRoot ? `${proof.merkleRoot.slice(0, 16)}…` : '—'}</span></span>
+                <span>seq <span className="text-[var(--color-ink)]">{proof.sequence ?? '—'}</span></span>
               </div>
               <div className="mt-2 flex items-center gap-2">
                 <span
@@ -265,7 +265,7 @@ export function ProofTheatre({ fixture, onClose }) {
                   Solana · {verification.verdict || 'pending'}
                 </span>
                 {verification.explorerUrl && (
-                  <a href={verification.explorerUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-mono text-[10px] text-[var(--mc-reconciled)]/85 underline decoration-[var(--mc-reconciled)]/40 underline-offset-4 hover:text-white">
+                  <a href={verification.explorerUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-mono text-[10px] text-[var(--mc-reconciled)]/85 underline decoration-[var(--mc-reconciled)]/40 underline-offset-4 hover:text-[var(--color-ink)]">
                     <Database className="h-3 w-3" /> PDA <ArrowUpRight className="h-3 w-3" />
                   </a>
                 )}
@@ -275,8 +275,8 @@ export function ProofTheatre({ fixture, onClose }) {
                   {verification.checks.map((c) => (
                     <li key={c.name} className="flex items-start gap-2 font-mono text-[10px]">
                       <span className={`mt-0.5 inline-block h-1.5 w-1.5 ${c.ok === true ? 'bg-[var(--mc-reconciled)]' : c.ok === false ? 'bg-[var(--mc-breach)]' : 'bg-white/30'}`} />
-                      <span className="text-white/70">{c.name}</span>
-                      {c.detail && <span className="text-white/40"> — {c.detail}</span>}
+                      <span className="text-[var(--color-ink-muted)]">{c.name}</span>
+                      {c.detail && <span className="text-[var(--color-ink-faint)]"> — {c.detail}</span>}
                     </li>
                   ))}
                 </ul>
@@ -292,9 +292,9 @@ export function ProofTheatre({ fixture, onClose }) {
                 <TheatreMetric label="Policy" value={adherence.policyAdhered == null ? '—' : (adherence.policyAdhered ? 'adhered' : 'exception')} accent={adherence.policyAdhered === true} />
                 <TheatreMetric label="Calibration" value={adherence.calibrationError != null ? adherence.calibrationError.toFixed(3) : '—'} />
               </div>
-              {comparison.notes && <p className="mt-2 text-xs leading-5 text-white/65">{comparison.notes}</p>}
+              {comparison.notes && <p className="mt-2 text-xs leading-5 text-[var(--color-ink-muted)]">{comparison.notes}</p>}
               {recIntegrity.receiptIntact !== undefined && (
-                <p className="mt-2 flex items-center gap-1.5 font-mono text-[10px] text-white/45">
+                <p className="mt-2 flex items-center gap-1.5 font-mono text-[10px] text-[var(--color-ink-faint)]">
                   <ShieldCheck className={`h-3 w-3 ${recIntegrity.receiptIntact ? 'text-[var(--mc-reconciled)]/70' : 'text-[var(--mc-breach)]/70'}`} />
                   {recIntegrity.receiptIntact ? 'SHA-256 receipt intact — recompute it yourself.' : 'Receipt integrity check failed.'}
                 </p>
@@ -331,13 +331,13 @@ function TheatreStage({ index, stage, color, last = false, children, isLead = fa
         className="group flex w-full items-start justify-between gap-3 text-left transition"
       >
         <span className="min-w-0 flex-1">
-          <span className={`block text-[11px] font-semibold uppercase tracking-wider transition-colors ${isLead || isOpen ? 'text-white' : 'text-white/80'} group-hover:text-white`}>
+          <span className={`block text-[11px] font-semibold uppercase tracking-wider transition-colors ${isLead || isOpen ? 'text-[var(--color-ink)]' : 'text-[var(--color-ink)]'} group-hover:text-[var(--color-ink)]`}>
             {stage.label}
           </span>
-          <span className="mt-0.5 block text-[10px] leading-4 text-white/40">{stage.detail}</span>
+          <span className="mt-0.5 block text-[10px] leading-4 text-[var(--color-ink-faint)]">{stage.detail}</span>
         </span>
         <ChevronDown
-          className={`mt-1 h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--color-accent)]' : 'text-white/45'}`}
+          className={`mt-1 h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--color-accent)]' : 'text-[var(--color-ink-faint)]'}`}
           aria-hidden="true"
         />
       </button>
@@ -352,9 +352,9 @@ function TheatreStage({ index, stage, color, last = false, children, isLead = fa
 
 function TheatreMetric({ label, value, accent = false }) {
   return (
-    <div className="bg-black/30 px-3 py-2.5">
-      <p className="font-mono text-[9px] uppercase tracking-wider text-white/40">{label}</p>
-      <p className={`mt-1 font-mono text-sm ${accent ? 'text-[var(--mc-reconciled)]' : 'text-white/85'}`}>{value}</p>
+    <div className="bg-[var(--color-paper-deep)] px-3 py-2.5">
+      <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">{label}</p>
+      <p className={`mt-1 font-mono text-sm ${accent ? 'text-[var(--mc-reconciled)]' : 'text-[var(--color-ink)]'}`}>{value}</p>
     </div>
   );
 }
@@ -366,13 +366,13 @@ function SimulationRange({ simulation }) {
     <div className="mt-2">
       <div className="flex items-center gap-1 font-mono text-[10px]">
         <span className="text-[var(--mc-breach)]/80">{p05 > 0 ? '+' : ''}{p05?.toFixed(2)}</span>
-        <div className="relative h-1 flex-1 bg-white/10">
-          <div className="absolute inset-y-0 bg-gradient-to-r from-[var(--mc-breach)]/60 via-white/40 to-[var(--mc-reconciled)]/70" style={{ left: '15%', right: '10%' }} />
-          <div className="absolute top-1/2 h-2.5 w-px -translate-y-1/2 bg-white/80" style={{ left: '50%' }} />
+        <div className="relative h-1 flex-1 bg-[var(--color-paper-soft)]">
+          <div className="absolute inset-y-0 bg-gradient-to-r from-[var(--mc-breach)]/60 via-[var(--color-wash)] to-[var(--mc-reconciled)]/70" style={{ left: '15%', right: '10%' }} />
+          <div className="absolute top-1/2 h-2.5 w-px -translate-y-1/2 bg-[var(--color-paper-raised)]0" style={{ left: '50%' }} />
         </div>
         <span className="text-[var(--mc-reconciled)]/90">+{p95?.toFixed(2)}</span>
       </div>
-      <p className="mt-0.5 font-mono text-[9px] text-white/35">p05 / median {p50 > 0 ? '+' : ''}{p50?.toFixed(2)} / p95 · per unit staked</p>
+      <p className="mt-0.5 font-mono text-[9px] text-[var(--color-ink-faint)]">p05 / median {p50 > 0 ? '+' : ''}{p50?.toFixed(2)} / p95 · per unit staked</p>
     </div>
   );
 }

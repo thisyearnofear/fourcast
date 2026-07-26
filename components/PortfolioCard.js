@@ -28,18 +28,18 @@ export default function PortfolioCard({ isNight = false }) {
  // Show placeholder when no data available
  if (!loading && !stats) {
  return (
- <div className={` border p-4 text-center mb-4 bg-white/5 border-white/10`}>
- <p className={`text-sm text-white/40`}>No portfolio data yet</p>
- <p className={`text-xs mt-1 text-white/25`}>
+ <div className={` border p-4 text-center mb-4 bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
+ <p className={`text-sm text-[var(--color-ink-faint)]`}>No portfolio data yet</p>
+ <p className={`text-xs mt-1 text-[var(--color-ink-faint)]`}>
  Connect wallet and publish signals to build your portfolio
  </p>
  </div>
  );
  }
 
- const textColor = 'text-white';
- const mutedColor = 'text-white/50';
- const cardBg = 'bg-white/5 border-white/10';
+ const textColor = 'text-[var(--color-ink)]';
+ const mutedColor = 'text-[var(--color-ink-faint)]';
+ const cardBg = 'bg-[var(--color-paper-raised)] border-[var(--color-rule)]';
  const glassClass = 'mc-panel';
 
  // Loading skeleton
@@ -48,7 +48,7 @@ export default function PortfolioCard({ isNight = false }) {
  <div className={` border ${cardBg} p-4 mb-4 animate-pulse`}>
  <div className="flex items-center gap-4">
  {[0, 1, 2].map(i => (
- <div key={i} className={`h-10 w-20 bg-white/10`} />
+ <div key={i} className={`h-10 w-20 bg-[var(--color-paper-soft)]`} />
  ))}
  </div>
  </div>
@@ -100,7 +100,7 @@ export default function PortfolioCard({ isNight = false }) {
  <button
  onClick={() => router.push('/signals')}
  className={`text-xs font-medium px-3 py-1.5 transition-all whitespace-nowrap
- bg-white/10 hover:bg-white/20 text-white/70 hover:text-white`}
+ bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  >
  Full stats →
  </button>

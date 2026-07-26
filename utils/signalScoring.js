@@ -43,13 +43,13 @@ export function getQualityColor(score, isNight) {
    * Return color based on quality score
    */
   if (score >= 80) {
-    return isNight ? 'text-emerald-400' : 'text-emerald-600';
+    return isNight ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent)]';
   } else if (score >= 60) {
-    return isNight ? 'text-emerald-300' : 'text-emerald-500';
+    return isNight ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent)]';
   } else if (score >= 40) {
-    return isNight ? 'text-amber-400' : 'text-amber-600';
+    return isNight ? 'text-[var(--color-sealed)]' : 'text-[var(--color-sealed)]';
   } else {
-    return isNight ? 'text-red-400' : 'text-red-600';
+    return isNight ? 'text-[var(--color-breach)]' : 'text-[var(--color-breach)]';
   }
 }
 
@@ -58,13 +58,13 @@ export function getQualityBgColor(score, isNight) {
    * Return background color based on quality score
    */
   if (score >= 80) {
-    return isNight ? 'bg-emerald-500/20' : 'bg-emerald-400/20';
+    return isNight ? 'bg-[var(--color-accent)]/20' : 'bg-[var(--color-accent)]/20';
   } else if (score >= 60) {
-    return isNight ? 'bg-emerald-500/15' : 'bg-emerald-400/15';
+    return isNight ? 'bg-[var(--color-accent)]/15' : 'bg-[var(--color-accent)]/15';
   } else if (score >= 40) {
-    return isNight ? 'bg-amber-500/20' : 'bg-amber-400/20';
+    return isNight ? 'bg-[var(--color-sealed)]/20' : 'bg-[var(--color-sealed)]/20';
   } else {
-    return isNight ? 'bg-red-500/20' : 'bg-red-400/20';
+    return isNight ? 'bg-[var(--color-breach)]/20' : 'bg-[var(--color-breach)]/20';
   }
 }
 

@@ -65,7 +65,7 @@ export class ErrorBoundary extends Component {
           
           <button
             onClick={this.handleReset}
-            className="px-4 py-2 bg-[var(--color-accent)] text-white text-sm hover:bg-[var(--color-accent-hover)]"
+            className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-ink)] text-sm hover:bg-[var(--color-accent-hover)]"
           >
             Try again
           </button>

@@ -24,10 +24,10 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
 
  // Glass CSS classes (DRY)
  const glassPanel = 'mc-panel';
- const textColor = 'text-white';
- const borderColor = 'border-white/10';
+ const textColor = 'text-[var(--color-ink)]';
+ const borderColor = 'border-[var(--color-rule)]';
  const glassInput = 'glass-input';
- const inputBg = 'bg-white/5';
+ const inputBg = 'bg-[var(--color-paper-raised)]';
 
  const yesOdds = market.currentOdds?.yes || market.odds_yes || 0.5;
  const noOdds = 1 - yesOdds;
@@ -129,7 +129,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  <button
  onClick={() => setOrderSide('yes')}
  className={`px-4 py-3 transition-all border ${orderSide === 'yes'
- ? 'bg-green-500/30 border-green-400 text-green-100'
+ ? 'bg-[var(--color-accent)]/30 border-[var(--color-accent)] text-[var(--color-accent)]'
  : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
  }`}
  >
@@ -139,7 +139,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  <button
  onClick={() => setOrderSide('no')}
  className={`px-4 py-3 transition-all border ${orderSide === 'no'
- ? 'bg-red-500/30 border-red-400 text-red-100'
+ ? 'bg-[var(--color-breach)]/30 border-[var(--color-breach)] text-[var(--color-breach)]'
  : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
  }`}
  >
@@ -156,7 +156,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  <button
  onClick={() => setOrderType('limit')}
  className={`px-4 py-3 transition-all border ${orderType === 'limit'
- ? 'bg-blue-500/30 border-blue-400 text-blue-100'
+ ? 'bg-[var(--color-evidence)]/30 border-[var(--color-evidence)] text-[var(--color-evidence)]'
  : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
  }`}
  >
@@ -165,7 +165,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  <button
  onClick={() => setOrderType('market')}
  className={`px-4 py-3 transition-all border ${orderType === 'market'
- ? 'bg-blue-500/30 border-blue-400 text-blue-100'
+ ? 'bg-[var(--color-evidence)]/30 border-[var(--color-evidence)] text-[var(--color-evidence)]'
  : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
  }`}
  >
@@ -182,7 +182,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  min="1"
  value={contracts}
  onChange={(e) => setContracts(parseInt(e.target.value) || 1)}
- className={`w-full px-4 py-3 ${inputBg} border ${borderColor} ${textColor} focus:border-emerald-500 outline-none transition-colors`}
+ className={`w-full px-4 py-3 ${inputBg} border ${borderColor} ${textColor} focus:border-[var(--color-accent)] outline-none transition-colors`}
  />
  </div>
 
@@ -196,20 +196,20 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  max="99"
  value={limitPrice}
  onChange={(e) => setLimitPrice(parseInt(e.target.value) || 1)}
- className={`w-full px-4 py-3 ${inputBg} border ${borderColor} ${textColor} focus:border-emerald-500 outline-none transition-colors`}
+ className={`w-full px-4 py-3 ${inputBg} border ${borderColor} ${textColor} focus:border-[var(--color-accent)] outline-none transition-colors`}
  />
  </div>
  )}
 
  {/* Order Summary */}
- <div className={`bg-white/5 p-4 space-y-2`}>
+ <div className={`bg-[var(--color-paper-raised)] p-4 space-y-2`}>
  <div className="flex justify-between text-sm">
  <span className={`${textColor} opacity-70`}>Estimated Cost</span>
  <span className={`font-light ${textColor}`}>${(estimatedCost / 100).toFixed(2)}</span>
  </div>
  <div className="flex justify-between text-sm">
  <span className={`${textColor} opacity-70`}>Potential Profit</span>
- <span className="font-light text-green-400">${(potentialProfit / 100).toFixed(2)}</span>
+ <span className="font-light text-[var(--color-accent)]">${(potentialProfit / 100).toFixed(2)}</span>
  </div>
  </div>
  </div>
@@ -218,8 +218,8 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  {orderResult && (
  <div
  className={`mb-4 px-4 py-3 text-sm ${orderResult.success
- ? 'bg-green-500/20 text-green-400 border border-green-500/30'
- : 'bg-red-500/20 text-red-400 border border-red-500/30'
+ ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] border border-[var(--color-accent)]/30'
+ : 'bg-[var(--color-breach)]/20 text-[var(--color-breach)] border border-[var(--color-breach)]/30'
  }`}
  >
  {orderResult.message}
@@ -232,7 +232,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  <button
  onClick={onClose}
  disabled={isSubmitting}
- className={`flex-1 px-4 py-3 font-light text-sm transition-all border bg-white/5 hover:bg-white/10 border-white/10 text-white/70 disabled:opacity-50`}
+ className={`flex-1 px-4 py-3 font-light text-sm transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] border-[var(--color-rule)] text-[var(--color-ink-muted)] disabled:opacity-50`}
  >
  Cancel
  </button>
@@ -240,7 +240,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  <button
  onClick={handleSubmitOrder}
  disabled={isSubmitting || (balance !== null && estimatedCost > balance)}
- className={`flex-1 px-4 py-3 font-light text-sm transition-all border bg-emerald-500/30 hover:bg-emerald-500/40 border-emerald-400/30 text-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+ className={`flex-1 px-4 py-3 font-light text-sm transition-all border bg-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/40 border-[var(--color-accent)]/30 text-[var(--color-accent)] disabled:opacity-50 disabled:cursor-not-allowed`}
  >
  {isSubmitting ? (
  <span className="flex items-center justify-center gap-2">
