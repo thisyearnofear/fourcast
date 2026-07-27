@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 
 /**
  * CantonWalletLayer — context provider for Canton Network integration.
@@ -10,9 +10,9 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
  * API with OIDC password grant auth. No browser extension or client-side SDK
  * is needed — credentials stay server-side.
  *
- * The operator (FourcastOperator) is automatically "connected" — the server
- * has the credentials to act as that party. End-user holder parties would
- * be allocated in a future multi-party flow.
+ * The operator must explicitly connect by clicking the operator-ledger button;
+ * the server then verifies the backend credentials. End-user holder parties use
+ * the separate Console Wallet flow at /canton/holder.
  *
  * Canton provides private settlement (cBTC/cETH) with Daml smart contracts,
  * complementing Arc's public reputation layer and EVM venue execution.
@@ -28,36 +28,6 @@ export function CantonWalletProvider({ children }) {
   const [account, setAccount] = useState(null);
   const [network, setNetwork] = useState(null);
   const [error, setError] = useState(null);
-
-  // Check server-side ledger status on mount
-  useEffect(() => {
-    if (!CANTON_ENABLED) return;
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/canton/balance');
-        const data = await res.json();
-        if (cancelled) return;
-
-        if (data.success && data.canton?.configured) {
-          setConnected(true);
-          setAccount({
-            partyId: data.canton.operatorPartyId,
-            partyName: 'FourcastOperator',
-          });
-          setNetwork({
-            id: data.canton.network,
-            name: `Canton ${data.canton.network}`,
-          });
-        }
-      } catch {
-        // Server not reachable — stay disconnected
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, []);
 
   // --- Connect (server-side mode: just verify connectivity) ---
   const connect = useCallback(async () => {

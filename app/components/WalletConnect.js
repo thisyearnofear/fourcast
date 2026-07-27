@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAccount, useDisconnect } from 'wagmi';
 import { ConnectKitButton } from 'connectkit';
 import { useConnector } from '@solana/connector/react';
@@ -278,12 +279,12 @@ export default function WalletConnect({ isNight = false }) {
  )}
  </div>
 
- {/* Canton — private settlement (hidden until enabled) */}
+ {/* Canton — operator ledger (hidden until enabled) */}
  {canton?.cantonEnabled && (
  <div className="mb-3 pt-3 border-t border-[var(--color-rule)]">
  <div className={`text-xs font-medium ${textColor} mb-2 flex items-center gap-2`}>
  <span>◈</span>
- Canton · private
+ Canton · operator ledger
  </div>
  {canton?.connected ? (
  <>
@@ -298,32 +299,37 @@ export default function WalletConnect({ isNight = false }) {
  Disconnect
  </button>
  </div>
- <button
- onClick={() => canton.refreshBalances()}
- className="text-[11px] underline text-[var(--color-accent)] hover:text-[var(--color-accent)]"
+ <p className="text-[10px] text-[var(--color-ink-faint)] mb-2">
+ Connected to the server-managed operator ledger.
+ </p>
+ <Link
+ href="/canton/holder"
+ onClick={() => setShowDropdown(false)}
+ className="inline-flex items-center gap-1 text-[11px] text-[var(--color-accent)] hover:text-[var(--color-accent)]/80 transition-colors"
  >
- Refresh balances
- </button>
+ Open Console Wallet holder view →
+ </Link>
  </>
  ) : (
  <>
  <button
  type="button"
  onClick={() => canton.connect({ name: 'Fourcast' })}
- disabled={canton?.connecting || (canton?.mode === 'console-wallet' && canton?.extensionAvailable === false)}
+ disabled={canton?.connecting}
  className={`w-full px-3 py-2 text-xs font-medium transition-all bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/60 hover:bg-[var(--color-accent)]/45 disabled:opacity-50 disabled:cursor-not-allowed`}
  >
- {canton?.connecting
- ? 'Connecting...'
- : canton?.mode === 'wallet-sdk'
- ? 'Connect to Canton Node'
- : canton?.extensionAvailable === false
- ? 'Install Console Wallet extension'
- : 'Connect Console Wallet'}
+ {canton?.connecting ? 'Connecting...' : 'Connect operator ledger'}
  </button>
  {canton?.error && (
  <p className="text-[11px] text-[var(--color-breach)] mt-2">{canton.error}</p>
  )}
+ <Link
+ href="/canton/holder"
+ onClick={() => setShowDropdown(false)}
+ className="mt-2 inline-flex w-full items-center justify-center gap-1 px-3 py-2 text-[11px] border border-[var(--color-rule)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] hover:border-[var(--color-accent)]/30 transition-colors"
+ >
+ Console Wallet holder view →
+ </Link>
  </>
  )}
  </div>
