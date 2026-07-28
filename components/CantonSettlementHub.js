@@ -663,8 +663,10 @@ export default function CantonSettlementHub() {
           })}
           <div className="px-4 py-3 sm:px-5">
             <p className="text-[10px] text-[var(--color-ink-faint)] leading-5">
-              Transfer cBTC/cETH to each winner via the NODERS Console Wallet, then confirm on-ledger.
-              In production, CIP-56 token transfers automate this step.
+              Each row is a <span className="text-[var(--color-ink-muted)]">SettlementObligation</span> — an on-ledger,
+              machine-verifiable instruction to pay the winner. The final cBTC/cETH transfer is a manual step in
+              this demo (via NODERS Console Wallet); automated CIP-56 payout is the coded Phase-2 step in
+              docs/CANTON_WALLET_ROADMAP.md.
             </p>
           </div>
         </section>

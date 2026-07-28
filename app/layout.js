@@ -74,7 +74,7 @@ export default function RootLayout({ children }) {
               <div className="flex items-center gap-4 flex-wrap justify-center">
                 <Link href="/markets" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">Markets</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/world-cup" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">World Cup</Link>
+                <Link href="/world-cup" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.worldCup ?? 'Proof Theatre'}</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
                 <Link href="/signals" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">Signals</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>

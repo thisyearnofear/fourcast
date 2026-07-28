@@ -747,7 +747,7 @@ export default function WorldCupClient() {
     <AppShell
       wallet={true}
       title="Proof Theatre"
-      subtitle="The final act of an autonomous decision — sealed evidence, seeded simulation, versioned policy gates, an immutable receipt, and a TxLINE proof reconciled on Solana. Pick a fixture to audit the whole chain."
+      subtitle="Decision proofs archived on Solana from the World Cup 2026 season: sealed evidence, seeded simulation, versioned policy gates, an immutable receipt, and TxLINE-Merkle anchoring. The verification pipeline is the product — these fixtures are the canonical dataset."
       actions={
         <div className="flex items-center gap-2">
           {streamBadge && (

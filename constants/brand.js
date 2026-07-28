@@ -91,26 +91,27 @@ export const BRAND = {
     agent: 'Mandate',
     positions: 'Diligence',
     labs: 'Labs',
-    worldCup: 'World Cup',
+    worldCup: 'Proof Theatre',
     alerts: 'Alerts',
     canton: 'Private Markets',
   },
 
   /** Wallet explainer — show everywhere users connect */
   walletExplainer: {
-    headline: 'Fourcast uses three layers:',
+    headline: 'Fourcast uses four layers:',
     layers: [
       { icon: '◆', name: 'Arc', detail: 'Public reputation — USDC settlement for signals, subscriptions, tips (~$0.01/tx)' },
       { icon: '◈', name: 'Canton', detail: 'Private settlement — cBTC/cETH positions with hidden sizes via Daml smart contracts' },
       { icon: 'Ξ', name: 'EVM (Polygon)', detail: 'Venue execution — Polymarket & Kalshi order placement' },
+      { icon: '◎', name: 'Solana', detail: 'Proof anchoring — decision receipts verified on-chain via TxLINE & match-escrow' },
     ],
-    cta: 'Connect an EVM wallet for Arc + venues. Connect Console Wallet for private Canton settlement.',
+    cta: 'Connect an EVM wallet for Arc + venues. Connect Console Wallet for private Canton settlement. Phantom for Solana proof inspection.',
   },
 
   publish: {
     arcPreferred: { chain: 'Arc (USDC)', gas: '~$0.01 USDC' },
     cantonPrivate: { chain: 'Canton (cBTC/cETH)', gas: 'sub-cent', privacy: 'Position sizes hidden from all third parties' },
-    footnote: 'Arc publishes public reputation receipts. Canton creates private positions with hidden sizes. EVM wallets handle venue order placement.',
+    footnote: 'Arc publishes public reputation receipts. Canton creates private positions with hidden sizes. EVM wallets handle venue order placement. Solana anchors the proof receipts on the /world-cup surface.',
   },
 
   agent: {

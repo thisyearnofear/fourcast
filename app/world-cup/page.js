@@ -1,21 +1,22 @@
 import WorldCupClient from './WorldCupClient';
 
+const TITLE = 'Proof Theatre · Fourcast';
+const DESCRIPTION =
+  'Archived World Cup 2026 fixture set: sealed decision receipts, TxLINE-Merkle proofs, and on-chain settlement — all auditable on Solana.';
+
 export const metadata = {
-  title: 'World Cup · Fourcast',
-  description:
-    'TxLINE-powered World Cup intelligence terminal: live consensus odds, score replay, and Solana-verified match receipts.',
+  title: TITLE,
+  description: DESCRIPTION,
   openGraph: {
-    title: 'World Cup · Fourcast',
-    description:
-      'TxLINE-powered World Cup intelligence terminal: live consensus odds, score replay, and Solana-verified match receipts.',
+    title: TITLE,
+    description: DESCRIPTION,
     url: '/world-cup',
     siteName: 'Fourcast',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'World Cup · Fourcast',
-    description:
-      'TxLINE-powered World Cup intelligence terminal: live consensus odds, score replay, and Solana-verified match receipts.',
+    title: TITLE,
+    description: DESCRIPTION,
   },
 };
 

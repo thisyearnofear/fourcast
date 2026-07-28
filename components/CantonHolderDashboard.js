@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Wallet, LogOut, RefreshCw, Shield, AlertCircle, Eye, EyeOff, Coins, CheckCircle2 } from 'lucide-react';
 import { useCantonHolderWallet } from '@/hooks/useCantonHolderWallet';
 
@@ -277,9 +278,13 @@ export default function CantonHolderDashboard() {
             Why a wallet is required
           </h3>
           <p className="text-xs text-[var(--color-ink-faint)] max-w-md mx-auto leading-5">
-            Canton's private prediction positions are only visible to their signatories. 
-            Without connecting a wallet, this page has no way to prove which contracts belong to you. 
+            Canton's private prediction positions are only visible to their signatories.
+            Without connecting a wallet, this page has no way to prove which contracts belong to you.
             The Console Wallet extension lets the dApp query the ledger as your specific party.
+          </p>
+          <p className="mt-4 text-[11px] text-[var(--color-ink-faint)] leading-5 max-w-md mx-auto">
+            No extension? The <Link href="/canton" className="text-[var(--color-accent)] underline-offset-2 hover:underline">operator workbench</Link> runs
+            a live two-party privacy query server-side — no wallet needed.
           </p>
         </div>
       )}

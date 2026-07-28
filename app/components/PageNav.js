@@ -32,7 +32,7 @@ import { TourLink, replayTour } from "@/components/RouteGuide";
  */
 const PRIMARY_NAV = [
   { name: BRAND.navLabels.agent ?? "Mandate", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
-  { name: BRAND.navLabels.worldCup ?? "Proof Theatre", href: "/world-cup", description: "TxLINE-verified proof of decision", onboardId: "world-cup" },
+  { name: BRAND.navLabels.worldCup ?? "Proof Theatre", href: "/world-cup", description: "TxLINE-verified decision receipts anchored on Solana", onboardId: "world-cup" },
   { name: BRAND.navLabels.positions ?? "Diligence", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
   { name: BRAND.navLabels.canton ?? "Private Markets", href: "/canton", description: BRAND.nav.canton, onboardId: "canton" },
   { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
