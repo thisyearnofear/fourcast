@@ -47,12 +47,12 @@ export const metadata = {
       },
     ],
   },
+  // No twitter.site/creator: no X account. Warpcast/Farcaster reads the
+  // openGraph tags above directly, so the card still renders there.
   twitter: {
     card: 'summary_large_image',
     title: BRAND.metadata.title,
     description: BRAND.metadata.description,
-    site: '@fourcastapp',
-    creator: '@fourcastapp',
     images: ['/api/og?type=landing'],
   },
 };

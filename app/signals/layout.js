@@ -5,6 +5,8 @@ export const metadata = routeMetadata({
   title: 'Signals — Fourcast',
   description: BRAND.pages.signals,
   path: '/signals',
+  ogType: 'route',
+  ogName: 'signals',
 });
 
 export default function SignalsLayout({ children }) {

@@ -62,7 +62,10 @@ SECRETS_PATTERNS=(
     'password: [^ ]{8,}'
 )
 
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -v '\.md$' || true)
+# Secret-content scan: skip docs and *.example files — those are
+# documentation placeholders by definition (e.g. your_api_key_here).
+# Real env files are still caught by the filename checks above.
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -v '\.md$' | grep -v '\.example$' || true)
 
 if [ ! -z "$STAGED_FILES" ]; then
     for file in $STAGED_FILES; do

@@ -5,6 +5,8 @@ export const metadata = routeMetadata({
   title: 'Diligence — Fourcast',
   description: BRAND.pages.positions,
   path: '/positions',
+  ogType: 'route',
+  ogName: 'diligence',
 });
 
 export default function PositionsLayout({ children }) {

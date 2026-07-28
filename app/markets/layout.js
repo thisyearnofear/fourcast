@@ -5,6 +5,8 @@ export const metadata = routeMetadata({
   title: 'Markets — Fourcast',
   description: BRAND.pages.markets,
   path: '/markets',
+  ogType: 'route',
+  ogName: 'markets',
 });
 
 export default function MarketsLayout({ children }) {

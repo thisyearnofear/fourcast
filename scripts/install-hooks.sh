@@ -4,8 +4,9 @@
 # Run this after cloning or if the hook gets removed
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-HOOK_SOURCE="$SCRIPT_DIR/scripts/pre-commit.sh"
-HOOK_DEST="$SCRIPT_DIR/.git/hooks/pre-commit"
+REPO_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+HOOK_SOURCE="$SCRIPT_DIR/pre-commit.sh"
+HOOK_DEST="$REPO_ROOT/.git/hooks/pre-commit"
 
 if [ ! -f "$HOOK_SOURCE" ]; then
     echo "❌ Error: pre-commit.sh not found in scripts/"

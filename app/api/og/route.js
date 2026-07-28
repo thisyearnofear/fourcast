@@ -1,6 +1,31 @@
 import { ImageResponse } from "@vercel/og";
+import { promises as fs } from "fs";
+import path from "path";
 
 export const runtime = "nodejs";
+
+// Design-system fonts for OG cards (Syne display + DM Sans body).
+// Loaded from assets/fonts as static TTF weights; @vercel/og requires an
+// explicit fonts array to override the system fallback.
+let fontCache;
+async function loadFonts() {
+  if (!fontCache) {
+    const dir = path.join(process.cwd(), "assets", "fonts");
+    const [syneBold, dmSans, dmSansSemi] = await Promise.all([
+      fs.readFile(path.join(dir, "Syne-Bold.ttf")),
+      fs.readFile(path.join(dir, "DMSans-Regular.ttf")),
+      fs.readFile(path.join(dir, "DMSans-SemiBold.ttf")),
+    ]);
+    fontCache = [
+      { name: "Syne", data: syneBold, weight: 700, style: "normal" },
+      { name: "DM Sans", data: dmSans, weight: 400, style: "normal" },
+      { name: "DM Sans", data: dmSansSemi, weight: 600, style: "normal" },
+    ];
+  }
+  return fontCache;
+}
+
+const OG_FONTS = "Syne, 'DM Sans', system-ui, sans-serif";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
@@ -18,13 +43,180 @@ export async function GET(req) {
     return renderOperatorOG(searchParams);
   }
 
+  if (type === "route") {
+    return renderRouteOG(searchParams);
+  }
+
   return renderWeatherOG(searchParams);
+}
+
+/** Shared ImageResponse options with design-system fonts loaded. */
+async function ogOptions() {
+  const fonts = await loadFonts();
+  return { width: 1200, height: 630, fonts };
+}
+
+/**
+ * OG card for generic platform routes (/api/og?type=route&name=markets).
+ * One template; name key picks the eyebrow, headline, and supporting line.
+ * Query params: name, title (override), line (override).
+ */
+const ROUTE_CARDS = {
+  markets: {
+    eyebrow: "MARKETS",
+    headline: "Edge discovery, live",
+    line: "Browse Polymarket and Kalshi markets, run AI analysis, and find mispricings before the crowd.",
+  },
+  signals: {
+    eyebrow: "SIGNALS",
+    headline: "Verified analysts, public track record",
+    line: "Signal marketplace — the social acquisition layer where calls are sealed as on-chain receipts.",
+  },
+  diligence: {
+    eyebrow: "DILIGENCE",
+    headline: "Behaviour, not performance",
+    line: "Policy adherence, receipt coverage, and calibration — every number recomputed from the public decision ledger.",
+  },
+  proof: {
+    eyebrow: "PROOF THEATRE",
+    headline: "Decision receipts, on-chain",
+    line: "Archived WC2026 fixtures: sealed evidence, policy gates, immutable receipts, TxLINE proofs anchored on Solana.",
+  },
+  labs: {
+    eyebrow: "LABS",
+    headline: "Execution layer",
+    line: "Safety-gated Autopilot execution, Builder attribution, and operator tools.",
+  },
+  canton: {
+    eyebrow: "PRIVATE SETTLEMENT",
+    headline: "Hidden-size positions on Canton",
+    line: "Daml signatory/observer permissions keep position sizes private. Settlement in cBTC/cETH.",
+  },
+  status: {
+    eyebrow: "STATUS",
+    headline: "Live system health",
+    line: "Provider uptime, latency, and operational status for the Fourcast platform.",
+  },
+};
+
+async function renderRouteOG(searchParams) {
+  const name = searchParams.get("name") || "markets";
+  const cfg = ROUTE_CARDS[name] || ROUTE_CARDS.markets;
+  const title = searchParams.get("title") || cfg.headline;
+  const line = searchParams.get("line") || cfg.line;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#080a0d",
+          color: "white",
+          fontFamily: OG_FONTS,
+          position: "relative",
+          overflow: "hidden",
+          padding: "64px",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(circle at 85% 10%, rgba(16,185,129,0.18), transparent 40%), radial-gradient(circle at 10% 90%, rgba(59,130,246,0.10), transparent 40%)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        />
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: "24px", color: "rgba(255,255,255,0.7)" }}>fourcast</div>
+          <div
+            style={{
+              fontSize: "12px",
+              padding: "6px 12px",
+              borderRadius: "999px",
+              background: "rgba(16,185,129,0.15)",
+              color: "#6ee7b7",
+              border: "1px solid rgba(16,185,129,0.3)",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              fontFamily: "'DM Sans', system-ui",
+              fontWeight: 600,
+            }}
+          >
+            {cfg.eyebrow}
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: "auto",
+            position: "relative",
+            zIndex: 1,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "64px",
+              fontWeight: 700,
+              lineHeight: 1.02,
+              letterSpacing: "-0.02em",
+              fontFamily: "Syne, 'DM Sans', system-ui",
+              maxWidth: "860px",
+              color: "white",
+            }}
+          >
+            {title.length > 80 ? title.substring(0, 80) + "…" : title}
+          </div>
+          <div
+            style={{
+              marginTop: "20px",
+              fontSize: "24px",
+              lineHeight: 1.4,
+              color: "rgba(255,255,255,0.62)",
+              maxWidth: "820px",
+              fontFamily: "'DM Sans', system-ui",
+            }}
+          >
+            {line.length > 160 ? line.substring(0, 160) + "…" : line}
+          </div>
+          <div
+            style={{
+              marginTop: "36px",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              color: "#6ee7b7",
+              fontSize: "18px",
+              fontFamily: "'DM Sans', system-ui",
+            }}
+          >
+            <span>Open Fourcast</span>
+            <span aria-hidden="true">→</span>
+          </div>
+        </div>
+      </div>
+    ),
+    await ogOptions()
+  );
 }
 
 /**
  * OG card for the Fourcast landing page
  */
-function renderLandingOG() {
+async function renderLandingOG() {
   return new ImageResponse(
     (
       <div
@@ -34,7 +226,7 @@ function renderLandingOG() {
           display: "flex",
           backgroundColor: "#080a0d",
           color: "white",
-          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
           padding: "54px",
@@ -180,10 +372,7 @@ function renderLandingOG() {
         </div>
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-    }
+    await ogOptions()
   );
 }
 
@@ -204,7 +393,7 @@ function renderLandingOG() {
  *   maxLoss     — mandate tail-loss limit (0-1, optional)
  *   simRuns     — mandate Monte Carlo paths (optional)
  */
-function renderOperatorOG(searchParams) {
+async function renderOperatorOG(searchParams) {
   const name = searchParams.get("name") || "Operator";
   const total = searchParams.get("total") || "0";
   const resolved = searchParams.get("resolved") || "0";
@@ -226,7 +415,7 @@ function renderOperatorOG(searchParams) {
           flexDirection: "column",
           backgroundColor: "#080a0d",
           color: "white",
-          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
         }}
@@ -399,16 +588,13 @@ function renderOperatorOG(searchParams) {
         </div>
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-    }
+    await ogOptions()
   );
 }
 /**
  * OG card for weather-based pages (existing functionality)
  */
-function renderWeatherOG(searchParams) {
+async function renderWeatherOG(searchParams) {
   const title = searchParams.get("title");
   const temp = searchParams.get("temp");
   const condition = searchParams.get("condition");
@@ -427,6 +613,7 @@ function renderWeatherOG(searchParams) {
           backgroundColor: "#1f2937",
           color: "white",
           padding: "40px",
+          fontFamily: OG_FONTS,
         }}
       >
         <div style={{ fontSize: "32px", opacity: 0.6, marginBottom: "20px" }}>
@@ -453,10 +640,7 @@ function renderWeatherOG(searchParams) {
         )}
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-    }
+    await ogOptions()
   );
 }
 
@@ -464,7 +648,7 @@ function renderWeatherOG(searchParams) {
  * OG card for prediction signals
  * Renders market title, confidence, edge, author, and Fourcast branding
  */
-function renderSignalOG(searchParams) {
+async function renderSignalOG(searchParams) {
   const title = searchParams.get("title") || "Prediction Signal";
   const confidence = (searchParams.get("confidence") || "LOW").toUpperCase();
   const edge = searchParams.get("edge");
@@ -504,7 +688,7 @@ function renderSignalOG(searchParams) {
           flexDirection: "column",
           backgroundColor: "#080a0d",
           color: "white",
-          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
         }}
@@ -704,9 +888,6 @@ function renderSignalOG(searchParams) {
         </div>
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-    }
+    await ogOptions()
   );
 }

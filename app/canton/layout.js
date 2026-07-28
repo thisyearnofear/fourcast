@@ -5,6 +5,8 @@ export const metadata = routeMetadata({
   description:
     'Canton private settlement — hidden-size positions via Daml smart contracts with sub-cent gas.',
   path: '/canton',
+  ogType: 'route',
+  ogName: 'canton',
 });
 
 export default function CantonLayout({ children }) {
