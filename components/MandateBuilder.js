@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { FlaskConical, Loader2, Lock, ShieldCheck, Save, ExternalLink, Check, ChevronDown } from 'lucide-react';
+import InfoTip from '@/components/InfoTip';
 
 /**
  * MandateBuilder — self-serve mandate config + dry-run preview.
@@ -178,6 +179,7 @@ export default function MandateBuilder() {
           <div className="flex items-center gap-2">
             <FlaskConical className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
             <span className="mc-kicker">Mandate builder · dry-run preview</span>
+            <InfoTip term="mandate" />
           </div>
           <button
             type="button"

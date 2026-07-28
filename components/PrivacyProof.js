@@ -5,14 +5,19 @@ import { Eye, EyeOff, Shield } from 'lucide-react';
 
 /**
  * PrivacyProof — the binary demo that proves the privacy model.
- * Shows two queries side-by-side:
- * - Holder query: returns full position data
- * - Observer query: returns empty result set
+ * Shows two LIVE queries side-by-side against the Canton ledger:
+ * - Operator query (signatory/counterparty): returns full position data
+ * - Observer query (non-signatory party): returns an empty result set
  *
  * This is the key success metric from HACKATHON.md:
  * "A PredictionPosition created on Canton Devnet returns an empty result set
  * when queried by a non-signatory party, while the same query from the holder
  * returns the full position."
+ *
+ * Both cells are real ledger responses. The observer party ID comes from
+ * /api/canton/parties (CANTON_OBSERVER_PARTY_ID); when none is allocated we
+ * query with an unallocated party ID, which on Canton still yields a genuine
+ * live empty result — the filter simply matches nothing.
  */
 export default function PrivacyProof() {
   const [querying, setQuerying] = useState(false);
@@ -23,24 +28,39 @@ export default function PrivacyProof() {
     setResults(null);
 
     try {
-      // Query as holder (operator is counterparty, so they see all positions)
-      const holderRes = await fetch('/api/canton/positions?type=open');
-      const holderData = await holderRes.json();
+      // Resolve the observer party from the configured demo parties. If none
+      // is allocated, fall back to an unallocated party ID — the ledger
+      // filter still returns a genuine empty live result for it.
+      let observerPartyId = null;
+      try {
+        const partiesRes = await fetch('/api/canton/parties');
+        const partiesData = await partiesRes.json();
+        const observer = partiesData.parties?.find((p) => p.role === 'observer');
+        observerPartyId = observer?.id || null;
+      } catch {
+        /* fall through to the unallocated-party fallback */
+      }
+      if (!observerPartyId) {
+        observerPartyId = 'ExternalObserver::1220non-signatory-demo-party';
+      }
 
-      // Observer view: non-signatories see empty result set.
-      // This is the structural privacy guarantee of Canton's Daml contracts.
-      // We simulate this by returning an empty array — in a real multi-party
-      // setup, a query from a non-signatory party would return nothing.
-      const observerData = {
-        success: true,
-        type: 'open',
-        positions: [],
-        count: 0,
-      };
+      // Two LIVE queries in parallel — the empty observer cell is a real
+      // ledger response, not a fabricated constant.
+      const [holderRes, observerRes] = await Promise.all([
+        fetch('/api/canton/positions?type=open'),
+        fetch(`/api/canton/positions?type=open&partyId=${encodeURIComponent(observerPartyId)}`),
+      ]);
+      const holderData = await holderRes.json();
+      const observerData = await observerRes.json();
+      if (!observerData.success) {
+        throw new Error(observerData.error || 'Observer query failed');
+      }
 
       setResults({
         holder: holderData,
         observer: observerData,
+        observerPartyId,
+        observerIsConfigured: observerPartyId !== 'ExternalObserver::1220non-signatory-demo-party',
       });
     } catch (err) {
       console.error('Privacy demo failed:', err);
@@ -89,12 +109,12 @@ export default function PrivacyProof() {
 
         {results && !results.error && (
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* Holder view */}
+            {/* Holder view — live query as the operator (signatory) */}
             <div className="border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/5 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Eye className="h-4 w-4 text-[var(--color-accent)]" />
                 <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-accent)]">
-                  Holder / Operator query
+                  Signatory query · live
                 </div>
               </div>
               <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-2">
@@ -110,30 +130,34 @@ export default function PrivacyProof() {
               )}
               {results.holder.count === 0 && (
                 <p className="text-[10px] text-[var(--color-ink-faint)]">
-                  No positions yet. Create a market and position to see data here.
+                  No positions yet. Create a market and position below to see data here.
                 </p>
               )}
             </div>
 
-            {/* Observer view */}
+            {/* Observer view — live query as a non-signatory party */}
             <div className="border border-[var(--color-rule)] bg-white/[0.02] p-4">
               <div className="flex items-center gap-2 mb-3">
                 <EyeOff className="h-4 w-4 text-[var(--color-ink-faint)]" />
                 <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">
-                  Observer (non-signatory) query
+                  Non-signatory query · live
                 </div>
               </div>
               <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-2">
-                Party: <span className="font-mono text-[var(--color-ink-muted)]">RandomObserver</span>
+                Party:{' '}
+                <span className="font-mono text-[var(--color-ink-muted)]">
+                  {results.observerIsConfigured ? 'Public Observer' : 'ExternalObserver (unallocated)'}
+                </span>
               </div>
               <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-3">
-                Result: <span className="text-[var(--color-ink-muted)]">0 positions</span>
+                Result: <span className="text-[var(--color-ink-muted)]">{results.observer.count ?? results.observer.positions?.length ?? 0} positions</span>
               </div>
               <pre className="overflow-x-auto rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-muted)] font-mono">
-                {'[]'}
+                {JSON.stringify(results.observer.positions ?? [], null, 2)}
               </pre>
               <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
-                Empty result set — structural privacy enforced by Daml.
+                Real ledger response — the filter matched nothing, because this party
+                is not a signatory or observer on any position contract.
               </p>
             </div>
           </div>

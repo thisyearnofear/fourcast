@@ -27,17 +27,17 @@ export function ChainRecommendationBadge({ recommendation, isNight }) {
  const config = {
  PUBLISH: {
  icon: "◆",
- text: "Make Your Call",
+ text: "Publish Receipt",
  color: TINT.accent
  },
  TRADE: {
  icon: "▣",
- text: "Place Order",
+ text: "Trade This Market",
  color: TINT.evidence
  },
  BOTH: {
  icon: "◇",
- text: "Call It & Trade",
+ text: "Publish & Trade",
  color: TINT.sealed
  }
  };
@@ -72,8 +72,8 @@ export function ChainActionWidget({
  const shouldPublish = rec === "PUBLISH" || rec === "BOTH";
  const shouldTrade = rec === "TRADE" || rec === "BOTH";
 
- const publishButtonText = shouldTrade ? "Also Make Your Call" : "Make Your Call";
- const tradeButtonText = shouldPublish ? "Also Trade" : "Place Order";
+ const publishButtonText = shouldTrade ? "Also Publish Receipt" : "Publish My Receipt";
+ const tradeButtonText = shouldPublish ? "Also Trade" : "Trade This Market";
 
  // Get explanation for why this action is recommended
  const explanation = getRecommendationExplanation(
@@ -155,7 +155,7 @@ export function ChainActionWidget({
  () => {
  if (chains.arc.connected) onPublishSignal(market, analysis);
  },
- "Paper trade with proof — every call is timestamped on Arc, immutable, and publicly verifiable"
+ "Seal your call as a public, timestamped receipt on Arc — the first entry of your auditable track record"
  )}
 
  {shouldTrade && (
@@ -296,45 +296,28 @@ export function MarketCard({
  </div>
  </div>
 
- {/* Market Odds Summary - NEW: Shows odds on the card! */}
+ {/* Market Odds Summary — read-only stat surface. Trading actions live
+ in the expanded view so the browse state stays decision-first. */}
  {!isExpanded && (
  <div className="fc-market-row__prices flex items-center gap-2 py-3">
- <button 
- onClick={(e) => {
- e.stopPropagation();
- if (isKalshi) {
- setSelectedKalshiMarket(market);
- } else {
- setOrderSide("YES");
- setSelectedMarketForOrder(market);
- setShowOrderPanel(true);
- }
- }}
+ <div
  className={`fc-market-price fc-market-price--yes flex items-center gap-2 px-3 py-2 ${askFlashing ? "fc-tick" : ""}`}
+ aria-label={`Market YES price: ${market.ask ? `${(market.ask * 100).toFixed(0)} percent` : 'unavailable'}`}
  >
  <span className={`text-[10px] font-medium text-accent/70`}>YES</span>
  <span className={`text-sm font-light ${textColor}`}>
  {market.ask ? <TweenNumber value={market.ask * 100} format={(v) => `${v.toFixed(0)}%`} /> : "—"}
  </span>
- </button>
- <button 
- onClick={(e) => {
- e.stopPropagation();
- if (isKalshi) {
- setSelectedKalshiMarket(market);
- } else {
- setOrderSide("NO");
- setSelectedMarketForOrder(market);
- setShowOrderPanel(true);
- }
- }}
+ </div>
+ <div
  className={`fc-market-price fc-market-price--no flex items-center gap-2 px-3 py-2 ${bidFlashing ? "fc-tick" : ""}`}
+ aria-label={`Market NO price: ${market.bid ? `${(market.bid * 100).toFixed(0)} percent` : 'unavailable'}`}
  >
  <span className={`text-[10px] font-medium text-breach/70`}>NO</span>
  <span className={`text-sm font-light ${textColor}`}>
  {market.bid ? <TweenNumber value={market.bid * 100} format={(v) => `${v.toFixed(0)}%`} /> : "—"}
  </span>
- </button>
+ </div>
  {/* ML Edge Preview (if analyzed) */}
  {isCurrentMarket && analysis?.synthData?.polymarketEdge && (
  <div className="fc-edge-readout ml-auto flex items-center gap-1.5 px-3 py-2">
@@ -445,8 +428,9 @@ export function MarketCard({
  onPublishSignal();
  }}
  className={`px-3 py-1 font-medium border transition-all bg-accent/15 text-accent border-accent/40 hover:bg-accent/25`}
+ title="Seal this call as a public, timestamped receipt"
  >
- 🎯 Make Your Call
+ 🎯 Publish My Receipt
  </button>
  )}
  {/* Chain Recommendation Badge - Early visibility */}
@@ -469,39 +453,23 @@ export function MarketCard({
  ← Back
  </button>
  ) : (
- <>
- <button
- onClick={() => {
- if (isKalshi) {
- setSelectedKalshiMarket(market);
- } else {
- setSelectedMarketForOrder(market);
- setShowOrderPanel(true);
- }
- }}
- aria-label={`${isKalshi ? 'Trade' : 'Place bet'} on ${market.title || market.question}`}
- className={`px-4 sm:px-5 py-3 font-light text-sm transition-all border ${
- isKalshi
- ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
- : "bg-evidence/15 hover:bg-evidence/25 text-evidence border-evidence/35"
- }`}
- >
- {isKalshi ? "Trade ↗" : "📈 Bet"}
- </button>
+ // Collapsed state: one primary action. Analyze is the evidence-first
+ // entry point; trading actions live in the expanded view (and on the
+ // order panel reachable after analysis) so cold visitors are never
+ // pushed straight into an order ticket from a browse row.
  <button
  onClick={() => onAnalyze(market, "basic")}
  disabled={isAnalyzing}
  aria-label={`Analyze market: ${market.title || market.question}`}
  aria-busy={isAnalyzing && isCurrentMarket}
- className={`px-4 sm:px-6 py-3 font-light text-sm transition-all disabled:opacity-40 border ${
+ className={`px-4 sm:px-6 py-3 font-medium text-sm transition-all disabled:opacity-40 border ${
  market.isMLReady
- ? "bg-review/20 hover:bg-review/30 text-review border-review/40"
- : "bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink)] border-[var(--color-rule-strong)]"
+ ? "bg-accent/20 hover:bg-accent/30 text-accent border-accent/50"
+ : "bg-accent/15 hover:bg-accent/25 text-accent border-accent/40"
  }`}
  >
- {isAnalyzing && isCurrentMarket ? "Analyzing..." : market.isMLReady ? "🤖 ML Analyze" : "🔍 Analyze"}
+ {isAnalyzing && isCurrentMarket ? "Analyzing..." : market.isMLReady ? "🤖 Analyze with ML" : "🔍 Analyze"}
  </button>
- </>
  )}
  </div>
  </div>
@@ -916,11 +884,11 @@ export function MarketCard({
  <span className="text-2xl">🎯</span>
  <div className="flex-1">
  <p className={`text-sm ${textColor} font-medium mb-1`}>
- Connect wallet to start your track record
+ Connect a wallet to publish your first receipt
  </p>
  <p className={`text-xs ${textColor} opacity-70 font-light`}>
- Connect wallet — Arc (USDC) to publish
- and start building a verifiable prediction history
+ One wallet, one signature (~2 seconds, ~$0.01). Your call is sealed
+ on Arc and starts a public, verifiable track record.
  </p>
  </div>
  </div>
@@ -934,6 +902,7 @@ export function MarketCard({
  <div>
  <h4 className={`text-sm font-medium text-accent`}>
  ML Edge Detected
+ <InfoTip term="fairProbability" isNight={isNight} className="ml-1.5" />
  </h4>
  <p className={`text-xs ${textColor} opacity-60`}>
  Fair odds: {(analysis.synthData.polymarketEdge.synthFairProb * 100).toFixed(1)}% vs Market: {(analysis.synthData.polymarketEdge.polymarketProb * 100).toFixed(1)}%
@@ -948,7 +917,7 @@ export function MarketCard({
  : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/30"
  }`}
  >
- {canPublish ? "🎯 Publish Signal Now" : "🔗 Connect Wallet to Publish"}
+ {canPublish ? "🎯 Publish My Receipt" : "🔗 Connect Wallet to Publish My Receipt"}
  </button>
  </div>
  )}
@@ -982,8 +951,8 @@ export function MarketCard({
  }`}
  >
  {canPublish
- ? "🎯 Make Your Call"
- : "🔗 Connect & Make Your Call"}
+ ? "🎯 Publish My Receipt"
+ : "🔗 Connect & Publish My Receipt"}
  </button>
  )}
 
@@ -1129,7 +1098,7 @@ export function MarketCard({
  : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/35"
  }`}
  >
- {canPublish ? "🎯 Make Your Call" : "🔗 Connect & Make Your Call"}
+ {canPublish ? "🎯 Publish My Receipt" : "🔗 Connect & Publish My Receipt"}
  </button>
  </div>
  </div>

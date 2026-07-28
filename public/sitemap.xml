@@ -21,11 +21,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://fourcastapp.vercel.app/labs</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.4</priority>
-  </url>
-  <url>
     <loc>https://fourcastapp.vercel.app/status</loc>
     <changefreq>hourly</changefreq>
     <priority>0.5</priority>

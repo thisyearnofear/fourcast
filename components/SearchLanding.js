@@ -418,6 +418,39 @@ export default function SearchLanding() {
           })}
         </Reveal>
 
+        {/* Private settlement teaser — the Canton's hidden-size advantage is
+            our structural differentiator for size-taking traders. Surfacing
+            it on the landing ensures judges and whales discover it within the
+            first scroll instead of hunting through the More menu. */}
+        <Reveal
+          as="section"
+          className="mt-8 grid gap-px overflow-hidden border border-[var(--color-rule)] bg-[var(--color-paper-soft)] sm:grid-cols-[1fr_auto] lg:mt-6"
+          aria-label="Private settlement on Canton"
+        >
+          <div className="flex items-start gap-4 bg-[var(--color-paper)] p-5 sm:items-center">
+            <ShieldCheck className="h-5 w-5 shrink-0 text-[var(--color-accent)]" strokeWidth={1.5} />
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-accent)]/80">
+                Private settlement · Canton
+              </p>
+              <p className="mt-2 text-base font-medium leading-6 text-[var(--color-ink)]">
+                Take size without leaking it.
+              </p>
+              <p className="mt-1 text-sm leading-6 text-[var(--color-ink-muted)]">
+                Positions are sealed in Daml contracts — only you and the operator can see the size. Settled in cBTC/cETH.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/canton"
+            className="group flex items-center justify-center gap-2 bg-[var(--color-paper)] p-5 text-sm font-medium text-[var(--color-accent)] transition hover:bg-[var(--color-accent-quiet)] no-underline"
+            aria-label="Open private markets on Canton"
+          >
+            Run the privacy proof
+            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+          </Link>
+        </Reveal>
+
         {/* Verify a real receipt — the single most differentiated artifact we
             can show a cold prospect in 10 seconds. A real World Cup fixture
             with a real Merkle proof anchored on Solana devnet, settled on-chain

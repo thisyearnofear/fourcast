@@ -87,7 +87,7 @@ Fourcast AI → Next.js API routes → Canton JSON Ledger API (v2)
 ### Console Wallet
 - Dashboard/signing: https://consolewallet.io/develop/ledger
 - Useful for: signing transactions, sending assets, checking balances, reviewing activity, interacting with Canton apps
-- Note: Fourcast uses server-side direct ledger API access, not the Console Wallet extension
+- Note: Fourcast uses server-side direct ledger API for the operator flow, plus a Console Wallet holder dashboard at `/canton/holder` for end-user wallet connection
 
 ---
 
@@ -175,7 +175,7 @@ Whales come for privacy. Settled P&L is still publishable via `PositionSettled` 
 - **Graceful outage messaging**: If Canton Devnet is unreachable, the /canton page displays a truthful "Devnet currently unavailable" banner with diagnostic check results (env, auth, ledger, package) instead of a broken page. No mock data.
 
 ### Connection mode
-Server-side direct ledger API. The Next.js API routes authenticate to NODERS Keycloak via OIDC password grant and call the Canton JSON Ledger API directly. No browser extension or client-side SDK needed — all credentials stay server-side. The operator (FourcastOperator) is automatically "connected" when the server is configured.
+Server-side direct ledger API for the operator flow. The Next.js API routes authenticate to NODERS Keycloak via OIDC password grant and call the Canton JSON Ledger API directly — all operator credentials stay server-side. The operator (FourcastOperator) is automatically "connected" when the server is configured. A separate Console Wallet holder dashboard (`/canton/holder`) lets end users connect their own wallet to view private positions and dispute unsettled obligations.
 
 ### UI Implementation Status (Completed July 22, 2026)
 
@@ -187,8 +187,9 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
    - Holder (Trader): Takes positions, settles after resolution. Sees only their own positions.
    - Observer (Public): Can discover market questions, but not positions. Sees empty result set when querying positions.
 
-2. **PrivacyProof** — Interactive demo showing the binary privacy guarantee
-   - Side-by-side comparison: holder query returns full position data, observer query returns empty array
+2. **PrivacyProof** — Live dual-party ledger query proving the binary privacy guarantee
+   - Side-by-side: signatory query returns full position data; non-signatory query returns a real empty result set from the ledger
+   - Both cells are live API calls — the observer party ID is resolved from `/api/canton/parties` (or an unallocated fallback), then queried in parallel
    - Demonstrates structural privacy enforced by Daml signatory/observer system
    - Explains why this matters: whales can take real size without being copied or front-run
 
@@ -200,7 +201,8 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
    - View active/resolved markets, open/settled positions, pending obligations
 
 ### Navigation
-- Added "Private Markets" to main nav (positioned after flagship routes)
+- "Private Markets" promoted to primary nav (alongside Mandate, Proof Theatre, Diligence, Markets)
+- Landing page (`/`) includes a Canton teaser section with a direct "Run the privacy proof" CTA to `/canton`
 - Brand constants include Canton-specific labels and descriptions
 - Unified wallet dropdown shows EVM (Arc/Polygon) + Solana + Canton
 
@@ -212,7 +214,7 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 
 ### Integration
 - All API routes wired up: `/api/canton/markets`, `/api/canton/positions`, `/api/canton/settle`, etc.
-- PrivacyProof simulates observer view (non-signatory sees empty result set)
+- PrivacyProof runs live dual-party queries (signatory vs non-signatory) — no simulated or hardcoded results
 - CantonSettlementHub connects to live Canton Devnet via NODERS NaaS
 
 ---
@@ -251,7 +253,7 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 6. **Build the deck** — Problem (whales get copied on Polymarket), Solution (Canton's Daml contracts enforce privacy), Demo (show the UI), Market (30k traders, $39B volume), Ask (funding to build out)
 
 ### Post-Submission
-1. **Multi-party flow** — Currently the operator is the only party. Need to allocate holder parties (users) and implement the full consent flow via Console Wallet
+1. **Multi-party flow** — Holder dashboard (`/canton/holder`) with Console Wallet connect is live. Remaining: implement the full consent-based position creation flow (currently the operator creates positions on behalf of holders after off-chain consent)
 2. **CIP-56 automation** — Currently settlement transfers are manual via NODERS wallet UI. Need to automate via Wallet SDK token transfer API
 3. **Position creation UI** — Currently positions are created via API call. Need a form in the SettlementHub for users to place positions
 4. **Settled P&L leaderboard** — Show verified results without leaked entries (whales keep clout, privacy preserved)

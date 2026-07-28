@@ -31,7 +31,7 @@ export async function generateMetadata({ params }) {
  author: signal.author_address || '',
  });
 
- const ogUrl = `${host}/api/og?${ogParams.toString()}`;
+ const ogUrl = `/api/og?${ogParams.toString()}`;
 
  return {
  title: `Signal: ${title.substring(0, 60)}`,
@@ -39,7 +39,7 @@ export async function generateMetadata({ params }) {
  openGraph: {
  title: `Signal: ${title.substring(0, 60)}`,
  description,
- images: [{ url: ogUrl, width: 1200, height: 630 }],
+ images: [{ url: ogUrl, width: 1200, height: 630, alt: `Fourcast signal: ${title.substring(0, 80)}` }],
  type: 'article',
  siteName: 'Fourcast',
  },

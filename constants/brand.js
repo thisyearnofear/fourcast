@@ -77,6 +77,7 @@ export const BRAND = {
     signals: 'Signal marketplace — verified analysts on the acquisition path',
     agent: 'Autonomous agent loop — operator mode',
     positions: 'Your on-chain track record',
+    canton: 'Private positions with hidden sizes, settled in cBTC/cETH',
     labs: 'Autopilot & Builder program tools',
   },
 

@@ -27,6 +27,22 @@ export const GLOSSARY = {
  title: 'Fair probability',
  body: 'The AI\'s own estimate of how likely this event is, built from live web evidence — independent of what the market currently charges.',
  },
+ mandate: {
+ title: 'Mandate',
+ body: 'The written policy your agent runs under: minimum edge, max position size, and loss limits. Versioned and public, so anyone can verify the agent stayed inside its own rules.',
+ },
+ sealedReceipt: {
+ title: 'Sealed receipt',
+ body: 'When a call is made, the AI\'s evidence, fair odds, and risk decision are hashed and timestamped on-chain before the outcome is known. Nobody can rewrite history afterwards.',
+ },
+ calibration: {
+ title: 'Calibration',
+ body: 'Do stated probabilities match real-world frequency? An analyst who says 70% should be right about 7 times out of 10. Good calibration means you can trust the number, not just the narrative.',
+ },
+ diligence: {
+ title: 'Diligence',
+ body: 'The audited behaviour record an allocator reviews: policy adherence, receipt coverage, and calibration — computed from public receipts, not self-reported P&L.',
+ },
  arbitrage: {
  title: 'Arbitrage',
  body: 'The same question priced differently on two venues (e.g. Polymarket vs Kalshi). Buying the cheap side and selling the expensive side locks in the difference.',

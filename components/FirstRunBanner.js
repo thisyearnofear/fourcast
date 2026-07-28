@@ -2,34 +2,38 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-const STORAGE_KEY = 'fourcast_first_run_dismissed';
+import { dismissGuide, isGuideDismissed } from '@/lib/tourState';
 
 /**
  * Lightweight first-session guide for Markets (esp. landing → ?q=&first=1).
+ * Dismissal state lives in the unified tour object (lib/tourState.js) so
+ * "Replay the tour" brings this banner back alongside the route guides.
  */
 export default function FirstRunBanner({ searchQuery }) {
  const [visible, setVisible] = useState(false);
 
  useEffect(() => {
- try {
- if (localStorage.getItem(STORAGE_KEY) === '1') return;
- } catch {
- /* ignore */
- }
+ if (isGuideDismissed('markets')) return;
  const params = new URLSearchParams(window.location.search);
  if (params.get('first') === '1' || searchQuery) {
  setVisible(true);
  }
  }, [searchQuery]);
 
+ useEffect(() => {
+ const onFocus = () => {
+ const params = new URLSearchParams(window.location.search);
+ if (!isGuideDismissed('markets') && (params.get('first') === '1' || searchQuery)) {
+ setVisible(true);
+ }
+ };
+ window.addEventListener('focus', onFocus);
+ return () => window.removeEventListener('focus', onFocus);
+ }, [searchQuery]);
+
  const dismiss = () => {
  setVisible(false);
- try {
- localStorage.setItem(STORAGE_KEY, '1');
- } catch {
- /* ignore */
- }
+ dismissGuide('markets');
  };
 
  if (!visible) return null;

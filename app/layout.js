@@ -27,34 +27,35 @@ const mono = JetBrains_Mono({
   display: 'swap',
 });
 
-export async function generateMetadata() {
-  const host = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
-  const landingOgImage = `${host}/api/og?type=landing`;
+const HOST = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
 
-  return {
+export const metadata = {
+  metadataBase: new URL(HOST),
+  title: BRAND.metadata.title,
+  description: BRAND.metadata.description,
+  openGraph: {
     title: BRAND.metadata.title,
     description: BRAND.metadata.description,
-    openGraph: {
-      title: BRAND.metadata.title,
-      description: BRAND.metadata.description,
-      type: 'website',
-      images: [
-        {
-          url: landingOgImage,
-          width: 1200,
-          height: 630,
-          alt: 'Fourcast — Polymarket Autopilot preview',
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: BRAND.metadata.title,
-      description: BRAND.metadata.description,
-      images: [landingOgImage],
-    },
-  };
-}
+    type: 'website',
+    siteName: BRAND.name,
+    images: [
+      {
+        url: '/api/og?type=landing',
+        width: 1200,
+        height: 630,
+        alt: 'Fourcast — verification and reputation for prediction-market agents',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: BRAND.metadata.title,
+    description: BRAND.metadata.description,
+    site: '@fourcastapp',
+    creator: '@fourcastapp',
+    images: ['/api/og?type=landing'],
+  },
+};
 
 export default function RootLayout({ children }) {
   return (

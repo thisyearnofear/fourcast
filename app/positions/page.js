@@ -7,6 +7,7 @@ import { MandatePanel } from "@/components/MandatePanel";
 import NarrativeSteps from "@/components/NarrativeSteps";
 import RouteGuide from "@/components/RouteGuide";
 import Reveal from "@/components/motion/Reveal";
+import InfoTip from "@/components/InfoTip";
 import { AUDIENCE_META, useAudience } from "@/hooks/useAudience";
 
 const MODE_HINT = {
@@ -22,7 +23,13 @@ export default function PositionsPage() {
   return (
     <AppShell
       title="Allocator Diligence"
-      subtitle="Behaviour, not performance — adherence, coverage, discipline, and calibration. Every number recomputes from the public decision ledger."
+      subtitle={
+        <>
+          Behaviour, not performance — adherence, coverage, discipline, and calibration
+          <InfoTip term="calibration" className="ml-1" />
+          . Every number recomputes from the public decision ledger.
+        </>
+      }
       maxWidth="max-w-4xl"
       actions={
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">

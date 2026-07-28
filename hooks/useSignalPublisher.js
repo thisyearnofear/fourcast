@@ -21,11 +21,14 @@ export function useSignalPublisher() {
   const publishToArc = useCallback(
     async (signalData, signalDbId) => {
       if (!chains?.arc?.connected || !evmConnected || !evmAddress) {
-        setPublishError('Switch wallet to Arc testnet (chain 5042002)');
+        setPublishError('Connect your wallet to publish this receipt. It takes one signature and about two seconds.');
         return null;
       }
       if (!isArcPublishConfigured()) {
-        setPublishError('Arc prediction contract not deployed — set NEXT_PUBLIC_PREDICTION_RECEIPT_CONTRACT');
+        // Developer-facing detail stays in the console; users get a calm,
+        // actionable message instead of env-var jargon.
+        console.warn('[publish] receipt contract not configured (NEXT_PUBLIC_PREDICTION_RECEIPT_CONTRACT)');
+        setPublishError('Publishing is temporarily unavailable. Please try again shortly.');
         return null;
       }
 
@@ -43,7 +46,7 @@ export function useSignalPublisher() {
         return hash;
       } catch (error) {
         console.error('Arc publish failed:', error);
-        setPublishError(error.message || 'Failed to publish on Arc');
+        setPublishError('Publishing failed — your receipt was not recorded. Nothing was charged; you can try again.');
         return null;
       } finally {
         setIsPublishing(false);
@@ -59,7 +62,7 @@ export function useSignalPublisher() {
     async (signalData, signalDbId) => {
       const target = resolvePublishChain();
       if (!target) {
-        setPublishError('Connect a wallet on Arc to publish');
+        setPublishError('Connect your wallet to publish this receipt. It takes one signature and about two seconds.');
         return { txHash: null, chain: null };
       }
 

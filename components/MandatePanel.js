@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, Scale } from 'lucide-react';
 import { isPolicyAdherentDecision } from '@/services/domain/decision/decisionPolicy';
+import InfoTip from '@/components/InfoTip';
 
 /**
  * Allocator-facing mandate view. Derived entirely from the public decision
@@ -44,12 +45,15 @@ export function MandatePanel() {
           <div>
             <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--color-evidence)]/80">
               <Scale className="h-3.5 w-3.5" /> Allocator mandate view
+              <InfoTip term="mandate" className="ml-1" />
             </div>
             <h2 id="mandate-heading" className="mt-2 font-display text-lg font-semibold tracking-tight text-[var(--color-ink)]">
               Did the agent do what it said it would?
             </h2>
             <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--color-ink-muted)]">
-              Mandate adherence computed from public decision receipts — check every number against the ledger.
+              Mandate adherence computed from public decision receipts
+              <InfoTip term="sealedReceipt" className="ml-1" />
+              — check every number against the ledger.
             </p>
           </div>
           <button type="button" onClick={load} className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--color-rule)] text-[var(--color-ink-muted)] transition hover:border-[var(--color-rule-strong)] hover:text-[var(--color-ink)]" aria-label="Refresh mandate view">

@@ -1,6 +1,6 @@
 # Canton Wallet & Settlement UX Roadmap
 
-> Status: draft — no code changes yet. This plan is designed to be implemented in phases so that the existing working demo (operator server-side ledger client) is never broken.
+> Status: Phase 1 partially implemented. The holder dashboard (`/canton/holder`) with Console Wallet connect, private position queries, and dispute flow is live. The operator server-side ledger client remains the primary settlement path. This plan tracks the remaining work.
 
 ---
 
@@ -16,7 +16,16 @@
 
 **Why first:** highest impact, lowest risk, additive to existing operator hub.
 
-### Scope
+### Status: Partially implemented
+- [x] Holder / Trader view at `/canton/holder` (was `/canton/trader` in the original plan)
+- [x] `components/CantonHolderDashboard.js` — wallet connect, private position queries, dispute flow
+- [x] `hooks/useCantonHolderWallet.js` — Console Wallet connection + contract queries + dispute
+- [x] Connected party sees only contracts they are a signatory/observer on
+- [ ] "Take position" form (YES/NO, stake, asset) — currently the operator creates positions on behalf of holders
+- [ ] `POST /api/canton/positions` (holder takes a position) — not yet wired
+- [ ] Update `components/CantonMarkets.js` CTA to route to `/canton/holder`
+
+### Scope (remaining)
 - Leave `CantonSettlementHub` (operator view) unchanged.
 - Add a new **Holder / Trader** view (e.g., `/canton/trader`) that uses the Console Wallet browser extension.
 - Integrate the Canton dApp SDK (`@canton-network/wallet-adapter`) for:

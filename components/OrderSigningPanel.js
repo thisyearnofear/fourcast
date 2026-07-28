@@ -6,6 +6,7 @@ import WalletConnect from '@/app/components/WalletConnect';
 import { useBalance, useAccount, useSwitchChain } from 'wagmi';
 import { calculateKellySizing } from '@/utils/kellySizing';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import InfoTip from '@/components/InfoTip';
 
 // Polygon Configuration
 const POLYGON_CHAIN_ID = 137;
@@ -288,6 +289,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <span className={`text-[11px] font-medium uppercase tracking-wider ${textColor} opacity-70`}>
  Kelly Criterion Sizing
  </span>
+ <InfoTip term="kelly" isNight={isNight} />
  {kellyResult.actionable && (
  <span className={`ml-auto px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
  analysis?.source?.includes('synthdata')

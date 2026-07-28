@@ -39,9 +39,12 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  aria-labelledby="publish-modal-heading"
  className={`relative max-w-md w-full p-6 border bg-[var(--color-paper-deep)] border-[var(--color-rule)]`}
  >
- <h3 id="publish-modal-heading" className={`text-lg font-light mb-4 text-[var(--color-ink)]`}>
- Record Your Prediction
+ <h3 id="publish-modal-heading" className={`text-lg font-light mb-2 text-[var(--color-ink)]`}>
+ Publish one sealed receipt
  </h3>
+ <p className="mb-4 text-xs leading-5 text-[var(--color-ink-faint)]">
+ Your call is timestamped and sealed on-chain before the outcome is known — a tamper-proof receipt that starts your public track record.
+ </p>
 
  <div className="space-y-3 mb-6">
  <div className={` p-3 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>

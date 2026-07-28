@@ -17,7 +17,6 @@ export const runtime = 'nodejs';
  */
 export async function generateMetadata({ params }) {
   const operatorId = params?.operatorId;
-  const host = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
 
   if (!operatorId) {
     return {
@@ -47,7 +46,7 @@ export async function generateMetadata({ params }) {
       ogParams.set('maxLoss', String(mandate.maxLossProbability));
       ogParams.set('simRuns', String(mandate.simulationRuns));
     }
-    const ogImage = `${host}/api/og?${ogParams.toString()}`;
+    const ogImage = `/api/og?${ogParams.toString()}`;
 
     const title = `${name}'s Track Record — Fourcast`;
     const description = `${total} forecasts · ${resolved} resolved${brier ? ` · ${brier} avg Brier` : ''}. Mandate-bound, verifiable on-chain.`;
@@ -59,7 +58,7 @@ export async function generateMetadata({ params }) {
         title,
         description,
         type: 'website',
-        url: `${host}/agent/${operatorId}`,
+        url: `/agent/${operatorId}`,
         images: [{ url: ogImage, width: 1200, height: 630, alt: `${name}'s Fourcast track record` }],
       },
       twitter: {

@@ -3,20 +3,21 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { X, Sparkles } from 'lucide-react';
+import { dismissGuide, isGuideDismissed, resetTour } from '@/lib/tourState';
 
 /**
  * RouteGuide — per-route first-run guide for the flagship routes.
  *
  * Replaces the single site-wide FirstRunBanner pattern with route-aware copy.
- * Each route has its own localStorage dismissal key, so a visitor who dismisses
- * the guide on /agent still sees it on /world-cup and /positions. A shared
- * "tour" key lets the "Replay the tour" entry in PageNav re-show every guide.
+ * Dismissal state lives in the unified tour object (lib/tourState.js) shared
+ * with FirstRunBanner, so "Replay the tour" in PageNav re-shows every guide
+ * (banner + routes) from one storage key.
  *
  * Routes: 'agent' | 'world-cup' | 'positions'
  */
 
-const STORAGE_PREFIX = 'fourcast_route_guide_';
-const TOUR_RESET_KEY = 'fourcast_route_guide_tour_reset';
+// Tour visibility/dismissal lives in one unified storage object — see
+// lib/tourState.js (replaces the old per-route + banner + reset keys).
 
 /**
  * Per-route guide content. Each entry is a 3-step "what this page proves in
@@ -53,47 +54,18 @@ const ROUTE_GUIDES = {
   },
 };
 
-/**
- * Read whether a route guide should be visible.
- * Hidden when: explicitly dismissed for this route, OR a tour-reset signal
- * has not been consumed yet (PageNav's "Replay the tour" sets the signal).
- */
 function readVisible(route) {
   if (typeof window === 'undefined') return false;
-  try {
-    // Tour reset: when PageNav sets TOUR_RESET_KEY, all route guides re-show
-    // once and then clear the signal.
-    const reset = window.localStorage.getItem(TOUR_RESET_KEY);
-    if (reset) {
-      window.localStorage.removeItem(STORAGE_PREFIX + route);
-      window.localStorage.removeItem(TOUR_RESET_KEY);
-      return true;
-    }
-    return window.localStorage.getItem(STORAGE_PREFIX + route) !== '1';
-  } catch {
-    return false;
-  }
-}
-
-function dismissRoute(route) {
-  try {
-    window.localStorage.setItem(STORAGE_PREFIX + route, '1');
-  } catch {
-    /* ignore */
-  }
+  return !isGuideDismissed(route);
 }
 
 /**
  * Re-show every route guide on the next visit to each route. Called by
- * PageNav's "Replay the tour" entry. Exported so PageNav can import it
- * without coupling to the storage key format.
+ * PageNav's "Replay the tour" entry. Kept as a thin alias so PageNav's
+ * import stays source-compatible.
  */
 export function replayTour() {
-  try {
-    window.localStorage.setItem(TOUR_RESET_KEY, '1');
-  } catch {
-    /* ignore */
-  }
+  resetTour();
 }
 
 export default function RouteGuide({ route }) {
@@ -140,7 +112,7 @@ export default function RouteGuide({ route }) {
         <button
           type="button"
           onClick={() => {
-            dismissRoute(route);
+            dismissGuide(route);
             setVisible(false);
           }}
           className="inline-flex items-center gap-1 border border-[var(--color-rule)] bg-[var(--color-paper-deep)] px-3 py-1.5 text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
