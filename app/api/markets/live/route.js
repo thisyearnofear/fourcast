@@ -1,17 +1,8 @@
 import { polymarketService } from '@/services/polymarketService';
+import { isLiveMarket } from '@/utils/marketFilters';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-export function isLiveMarket(market, now = Date.now()) {
-  const resolutionTime = new Date(market?.resolutionDate).getTime();
-  if (!Number.isFinite(resolutionTime) || resolutionTime <= now) return false;
-
-  const rawMarket = market.rawMarket || {};
-  return rawMarket.closed !== true
-    && rawMarket.active !== false
-    && rawMarket.acceptingOrders !== false;
-}
 
 /**
  * Lightweight live-markets feed for the landing page.

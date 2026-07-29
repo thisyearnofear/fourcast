@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isLiveMarket } from '@/app/api/markets/live/route.js';
+import { isLiveMarket } from '@/utils/marketFilters';
 
 describe('live markets feed', () => {
   const now = new Date('2026-07-29T12:00:00Z').getTime();

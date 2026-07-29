@@ -162,3 +162,19 @@ export function mergeAndDeduplicateMarkets(polymarketMarkets, kalshiMarkets) {
   
   return Array.from(marketMap.values());
 }
+/**
+ * Check whether a market is genuinely live: future resolution date and
+ * raw platform status flags all agree it is still trading.
+ * @param {Object} market - Normalized market object with resolutionDate/rawMarket
+ * @param {number} now - Reference timestamp (defaults to Date.now())
+ * @returns {boolean}
+ */
+export function isLiveMarket(market, now = Date.now()) {
+  const resolutionTime = new Date(market?.resolutionDate).getTime();
+  if (!Number.isFinite(resolutionTime) || resolutionTime <= now) return false;
+
+  const rawMarket = market.rawMarket || {};
+  return rawMarket.closed !== true
+    && rawMarket.active !== false
+    && rawMarket.acceptingOrders !== false;
+}
