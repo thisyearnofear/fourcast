@@ -23,8 +23,10 @@ import { TourLink, replayTour } from "@/components/RouteGuide";
 
 /**
  * Nav architecture (kept tight to honour the Workbench macrostructure):
- *  - PRIMARY_NAV: 4 routes that cover the core loop, always visible.
- *  - OVERFLOW_NAV: long-tail routes, hidden behind a "More" menu.
+ *  - PRIMARY_NAV: the flagship route — Mandate → Proof Theatre → Diligence
+ *    is one unfolding system, so those three are always visible.
+ *  - OVERFLOW_NAV: supporting capability (Markets, Private Markets, Signals,
+ *    Labs, Alerts) hidden behind a "More" menu.
  *  - UTILITY controls: audience switcher (icon popover) and tour replay
  *    (icon-only Sparkles), each separated from the nav cluster by whitespace.
  *
@@ -34,11 +36,11 @@ const PRIMARY_NAV = [
   { name: BRAND.navLabels.agent ?? "Mandate", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
   { name: BRAND.navLabels.worldCup ?? "Proof Theatre", href: "/world-cup", description: "TxLINE-verified decision receipts anchored on Solana", onboardId: "world-cup" },
   { name: BRAND.navLabels.positions ?? "Diligence", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
-  { name: BRAND.navLabels.canton ?? "Private Markets", href: "/canton", description: BRAND.nav.canton, onboardId: "canton" },
-  { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
 ];
 
 const OVERFLOW_NAV = [
+  { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
+  { name: BRAND.navLabels.canton ?? "Private Markets", href: "/canton", description: BRAND.nav.canton, onboardId: "canton" },
   { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
   { name: BRAND.navLabels.labs ?? "Labs", href: "/labs", description: BRAND.nav.labs },
   { name: BRAND.navLabels.alerts ?? "Alerts", href: "/notifications", description: "Notifications from analysts you follow" },

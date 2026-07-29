@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, ChevronDown, Database, Fingerprint, Lock, ShieldCheck, X } from 'lucide-react';
 import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
+import ShareReceiptButton from '@/components/ShareReceiptButton';
 
 /* --------------------------------------------------------------------------
    Proof Theatre — the final act of a decision, not a sports-data utility.
@@ -138,16 +139,29 @@ export function ProofTheatre({ fixture, onClose }) {
             The final act of an autonomous decision — from sealed evidence to independently verifiable outcome. Fourcast doesn&apos;t ask you to trust a chart; it asks you to recompute the receipt.
           </p>
         </div>
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--mc-rule)] text-[var(--color-ink-faint)] transition hover:border-[var(--mc-rule-strong)] hover:text-[var(--color-ink)]"
-            aria-label="Close proof theatre"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
+        <div className="flex shrink-0 items-start gap-2">
+          {!state.loading && !state.error && (
+            <ShareReceiptButton
+              fixtureId={fixture?.id}
+              home={fixture?.home?.name}
+              away={fixture?.away?.name}
+              verdict={verdict}
+              score={outcome?.homeScore != null ? `${outcome.homeScore}–${outcome.awayScore}` : null}
+              receiptHash={integrity?.contentHash || outcome?.proofRef?.receiptHash}
+              label="Share proof chain"
+            />
+          )}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-8 w-8 items-center justify-center border border-[var(--mc-rule)] text-[var(--color-ink-faint)] transition hover:border-[var(--mc-rule-strong)] hover:text-[var(--color-ink)]"
+              aria-label="Close proof theatre"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="relative px-4 py-5 sm:px-6">

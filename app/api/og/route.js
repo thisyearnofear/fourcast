@@ -47,6 +47,10 @@ export async function GET(req) {
     return renderRouteOG(searchParams);
   }
 
+  if (type === "receipt") {
+    return renderReceiptOG(searchParams);
+  }
+
   return renderWeatherOG(searchParams);
 }
 
@@ -205,6 +209,194 @@ async function renderRouteOG(searchParams) {
           >
             <span>Open Fourcast</span>
             <span aria-hidden="true">→</span>
+          </div>
+        </div>
+      </div>
+    ),
+    await ogOptions()
+  );
+}
+
+/**
+ * OG card for a sealed decision receipt (/api/og?type=receipt).
+ * The share target for /world-cup?fixture=<id> deep links — the artifact a
+ * prospect posts when the proof chain is the point.
+ * Query params: home, away, score, verdict, hash, stage.
+ */
+const RECEIPT_VERDICT_STYLES = {
+  ALLOCATE: { color: "#6ee7b7", border: "rgba(16,185,129,0.4)", bg: "rgba(16,185,129,0.12)" },
+  PASS: { color: "#fcd34d", border: "rgba(245,158,11,0.4)", bg: "rgba(245,158,11,0.10)" },
+  REVIEW: { color: "#c4b5fd", border: "rgba(167,139,250,0.4)", bg: "rgba(167,139,250,0.10)" },
+};
+
+async function renderReceiptOG(searchParams) {
+  const home = searchParams.get("home") || "Home";
+  const away = searchParams.get("away") || "Away";
+  const score = searchParams.get("score");
+  const verdict = (searchParams.get("verdict") || "").toUpperCase();
+  const hash = searchParams.get("hash");
+  const stage = searchParams.get("stage") || "World Cup";
+  const verdictStyle = RECEIPT_VERDICT_STYLES[verdict] || RECEIPT_VERDICT_STYLES.REVIEW;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#080a0d",
+          color: "white",
+          fontFamily: OG_FONTS,
+          position: "relative",
+          overflow: "hidden",
+          padding: "56px 64px",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(circle at 85% 10%, rgba(16,185,129,0.16), transparent 40%), radial-gradient(circle at 10% 90%, rgba(59,130,246,0.08), transparent 40%)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            height: "4px",
+            width: "100%",
+            background: "linear-gradient(90deg, #10b981, #34d399, #6ee7b7)",
+          }}
+        />
+
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: "24px", color: "rgba(255,255,255,0.7)" }}>fourcast</div>
+          <div
+            style={{
+              fontSize: "12px",
+              padding: "6px 12px",
+              borderRadius: "999px",
+              background: "rgba(16,185,129,0.15)",
+              color: "#6ee7b7",
+              border: "1px solid rgba(16,185,129,0.3)",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              fontFamily: "'DM Sans', system-ui",
+              fontWeight: 600,
+            }}
+          >
+            Sealed decision receipt
+          </div>
+          {verdict && (
+            <div
+              style={{
+                fontSize: "12px",
+                padding: "6px 12px",
+                borderRadius: "999px",
+                background: verdictStyle.bg,
+                color: verdictStyle.color,
+                border: `1px solid ${verdictStyle.border}`,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                fontFamily: "'DM Sans', system-ui",
+                fontWeight: 600,
+              }}
+            >
+              {verdict}
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginTop: "auto", position: "relative", zIndex: 1, display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              fontSize: "15px",
+              color: "rgba(255,255,255,0.45)",
+              textTransform: "uppercase",
+              letterSpacing: "0.14em",
+              fontFamily: "'DM Sans', system-ui",
+            }}
+          >
+            {stage}
+          </div>
+          <div
+            style={{
+              marginTop: "12px",
+              fontSize: "68px",
+              fontWeight: 700,
+              lineHeight: 1.02,
+              letterSpacing: "-0.02em",
+              fontFamily: "Syne, 'DM Sans', system-ui",
+              color: "white",
+              display: "flex",
+              alignItems: "baseline",
+              gap: "20px",
+              flexWrap: "wrap",
+            }}
+          >
+            <span>{home}</span>
+            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "44px" }}>v</span>
+            <span>{away}</span>
+            {score && (
+              <span style={{ color: "#6ee7b7", fontSize: "44px", fontFamily: "'DM Sans', system-ui", fontWeight: 600 }}>
+                {score}
+              </span>
+            )}
+          </div>
+          <div
+            style={{
+              marginTop: "22px",
+              fontSize: "20px",
+              lineHeight: 1.4,
+              color: "rgba(255,255,255,0.6)",
+              maxWidth: "880px",
+              fontFamily: "'DM Sans', system-ui",
+            }}
+          >
+            Decided from pre-match evidence, sealed into a SHA-256 receipt before the outcome, reconciled against a Solana-anchored Merkle proof.
+          </div>
+          {hash && (
+            <div
+              style={{
+                marginTop: "18px",
+                fontSize: "16px",
+                color: "rgba(255,255,255,0.42)",
+                fontFamily: "monospace",
+                letterSpacing: "0.02em",
+              }}
+            >
+              receipt {hash}
+            </div>
+          )}
+          <div
+            style={{
+              marginTop: "28px",
+              paddingTop: "22px",
+              borderTop: "1px solid rgba(255,255,255,0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <span style={{ fontSize: "15px", color: "rgba(255,255,255,0.4)", fontFamily: "'DM Sans', system-ui" }}>
+              Public · verifiable on-chain
+            </span>
+            <span style={{ fontSize: "18px", color: "#6ee7b7", fontFamily: "'DM Sans', system-ui" }}>
+              Audit the proof chain →
+            </span>
           </div>
         </div>
       </div>

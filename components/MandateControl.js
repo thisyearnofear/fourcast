@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, FileSearch, Lock, Radio, RefreshCw, ShieldCheck } from 'lucide-react';
 import { DecisionDossier } from '@/components/DecisionDossier';
+import ShareReceiptButton from '@/components/ShareReceiptButton';
 import Ripple from '@/components/canvasui/Ripple';
 
 /* --------------------------------------------------------------------------
@@ -244,7 +245,9 @@ export function MandateControl() {
               <ProofTimeline stages={stages} livePct={livePct} timeline={timeline} reconciled={reconciled} />
             </div>
 
-            {/* Two actions only */}
+            {/* Actions — inspect, verify, share. The share action is the
+                distribution loop: the receipt deep link renders a per-fixture
+                OG card when posted to X/Warpcast. */}
             {latest && (
               <div className="mt-8 flex flex-wrap gap-3">
                 <Ripple
@@ -277,6 +280,13 @@ export function MandateControl() {
                   Verify independently
                   <ArrowUpRight className="h-3 w-3" />
                 </a>
+                <ShareReceiptButton
+                  fixtureId={latest.fixtureId}
+                  home={fixture?.home?.name}
+                  away={fixture?.away?.name}
+                  verdict={verdict.label}
+                  receiptHash={latest.receiptHash}
+                />
               </div>
             )}
 

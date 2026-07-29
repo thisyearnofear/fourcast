@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Compass } from 'lucide-react';
 import { BRAND } from '@/constants/brand';
@@ -12,7 +11,6 @@ import OperatorPulse from '@/components/OperatorPulse';
 import { useBrightDataStatus } from '@/hooks/useBrightDataStatus';
 import { useAudience, AUDIENCE_META } from '@/hooks/useAudience';
 import Ripple from '@/components/canvasui/Ripple';
-import ParticleReveal from '@/components/canvasui/ParticleReveal';
 import Reveal from '@/components/motion/Reveal';
 import LiveMarketMetrics from '@/components/motion/LiveMarketMetrics';
 import ContextualDataStrip from '@/components/ContextualDataStrip';
@@ -20,13 +18,6 @@ import ProofChain from '@/components/ProofChain';
 import useLiveMarkets from '@/hooks/useLiveMarkets';
 import { confidenceLabel, confidenceTint, directionFor } from '@/utils/marketEdge';
 import TweenNumber from '@/components/motion/TweenNumber';
-
-const QUICK_SEARCHES = [
-  { label: 'BTC $150k', query: 'Bitcoin $150k August 2026' },
-  { label: 'Fed July cut', query: 'Fed interest rate cut July 2026' },
-  { label: 'SpaceX Mars', query: 'SpaceX Starship Mars cargo 2026' },
-  { label: 'NVIDIA $200', query: 'NVIDIA stock $200 by September 2026' },
-];
 
 // The canonical real receipt — France 3-0 Sweden, World Cup Round of 32.
 // A 0.1 SOL policy on this match was settled on-chain via the match-escrow
@@ -76,9 +67,6 @@ const AUDIENCE_DOORS = [
 ];
 
 export default function SearchLanding() {
-  const router = useRouter();
-  const [query, setQuery] = useState('');
-  const [focused, setFocused] = useState(false);
   // Arming the instrument metrics one frame after mount makes the decision
   // numbers roll up from zero (state-explanation motion, --dur-explain).
   const [armed, setArmed] = useState(false);
@@ -135,8 +123,6 @@ export default function SearchLanding() {
     setArmed(true);
   }, []);
 
-  const featured = useMemo(() => QUICK_SEARCHES[0], []);
-
   // Mode-aware door ordering — the audience's primary door leads, the others
   // remain visible. Three modes, three doors; the third (Analyst Markets) is
   // surfaced when the visitor hasn't picked a role yet, otherwise it sits in
@@ -146,12 +132,6 @@ export default function SearchLanding() {
     const lead = AUDIENCE_DOORS.find((d) => d.id === mode);
     return lead ? [lead, ...others] : AUDIENCE_DOORS;
   }, [mode]);
-
-  const handleSearch = (q) => {
-    const searchQuery = (q ?? query).trim();
-    if (!searchQuery) return;
-    router.push(`/markets?q=${encodeURIComponent(searchQuery)}&first=1`);
-  };
 
   return (
     <main className="fc-grain relative min-h-screen overflow-x-hidden text-[var(--ink)]">
@@ -187,67 +167,45 @@ export default function SearchLanding() {
               {BRAND.tagline}
             </p>
 
-            <div className="mt-8 w-full">
-              <ParticleReveal
-                radius={180}
-                softness={0.65}
-                size={1.2}
-                scatter={10}
-                drift={0.6}
-                aberration={8}
-                bend={20}
-                fade={0.75}
-                background="var(--color-paper)"
-                className="fc-instrument-reveal"
+            {/* Hero CTAs commit to the headline customer: the operator under
+                mandate and the allocator auditing them. Search lives on
+                /markets — the analyst door below leads there. */}
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Ripple
+                options={{
+                  amplitude: 0.3,
+                  refraction: 60,
+                  shine: 0.4,
+                  dispersion: 0.3,
+                  decay: 1.4,
+                  wavelength: 70,
+                }}
+                style={{ display: 'inline-block' }}
               >
-              <div
-                className={`fc-query grid gap-2 p-2 transition duration-300 sm:grid-cols-[1fr_auto] ${
-                  focused
-                    ? 'is-focused'
-                    : ''
-                }`}
-              >
-                <label className="flex min-h-12 items-center gap-3 px-4">
-                  <span className="sr-only">Search markets</span>
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => setFocused(true)}
-                    onBlur={() => setFocused(false)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    placeholder="Will Bitcoin trade above $100k by June?"
-                    className="min-w-0 flex-1 bg-transparent text-base text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)]"
-                    autoFocus
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => handleSearch()}
-                  disabled={!query.trim()}
-                  className="fc-action min-h-12 px-6 text-sm disabled:cursor-not-allowed disabled:opacity-30"
+                <Link
+                  href="/agent"
+                  className="fc-action mc-action--primary inline-flex items-center justify-center gap-1.5 px-6 py-3 text-sm"
                 >
-                  Analyze
-                </button>
-              </div>
-              </ParticleReveal>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {QUICK_SEARCHES.map((item) => (
-                  <button
-                    key={item.query}
-                    type="button"
-                    onClick={() => handleSearch(item.query)}
-                    className="fc-chip px-3 py-1.5 text-xs"
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
+                  Open Mandate Control
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Ripple>
+              <a
+                href="#verify-receipt"
+                className="fc-action inline-flex items-center justify-center gap-1.5 px-6 py-3 text-sm"
+              >
+                Audit a settled receipt
+              </a>
             </div>
 
             <p className="mt-6 text-sm text-[var(--color-ink-faint)]">
-              No wallet needed to analyze. Publish and trade when you are ready.
+              No wallet needed to audit.{' '}
+              <Link
+                href="/markets"
+                className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-4 transition hover:text-[var(--color-ink)]"
+              >
+                Scan markets as an analyst →
+              </Link>
               {!webIntel.loading && !webIntel.available && (
                 <span className="mt-1 block text-[var(--color-ink-faint)]">
                   {BRAND.webIntel.unavailableNote}
@@ -311,13 +269,12 @@ export default function SearchLanding() {
                       <span className="text-[var(--color-ink-faint)]">Connecting to live market feed…</span>
                     )}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => handleSearch(featured.query)}
+                  <Link
+                    href={activeMarket ? `/markets?q=${encodeURIComponent(activeMarket.title)}&first=1` : '/markets'}
                     className="fc-action px-3 py-2 text-xs"
                   >
                     Run this market
-                  </button>
+                  </Link>
                 </div>
 
                 {/* Live signal ticker is now a full-width marquee below the hero. */}
@@ -373,11 +330,11 @@ export default function SearchLanding() {
 
         {/* Primary-customer doors — the README positions the customer as both
             the operator running capital and the allocator diligencing them.
-            The search hero above serves the acquisition (retail/analyst) path;
-            these three doors serve the headline path. Mode-aware ordering
-            keeps the audience's primary door first while every option stays
-            visible (no exclusion — progressive disclosure, not progressive
-            gating). */}
+            The hero CTAs above commit to the headline path; these three doors
+            route by role, with the analyst path leading to /markets (where
+            search lives). Mode-aware ordering keeps the audience's primary
+            door first while every option stays visible (no exclusion —
+            progressive disclosure, not progressive gating). */}
         <Reveal as="section" className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-2" aria-label="Primary-customer entry points">
           {orderedDoors.map((door) => {
             const Icon = door.icon;
@@ -457,7 +414,7 @@ export default function SearchLanding() {
             via match-escrow CPI. Deep-links into Proof Theatre with the
             fixture pre-selected so the visitor lands on the verification
             chain, not a fixture list. */}
-        <div ref={receiptRef}>
+        <div ref={receiptRef} id="verify-receipt" className="scroll-mt-24">
         <Reveal as="section" className="mt-12" aria-label="Verify a real decision on Solana">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--color-rule)] pb-3">
             <div>

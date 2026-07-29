@@ -72,15 +72,15 @@ export default function RootLayout({ children }) {
           <footer className="platform-footer w-full px-5 py-8">
             <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
               <div className="flex items-center gap-4 flex-wrap justify-center">
-                <Link href="/markets" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">Markets</Link>
+                <Link href="/agent" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.agent ?? 'Mandate'}</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
                 <Link href="/world-cup" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.worldCup ?? 'Proof Theatre'}</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
+                <Link href="/positions" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.positions ?? 'Diligence'}</Link>
+                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
+                <Link href="/markets" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">Markets</Link>
+                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
                 <Link href="/signals" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">Signals</Link>
-                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/agent" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">Agent</Link>
-                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/positions" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.positions ?? 'Track Record'}</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
                 <Link href="/labs" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">Labs</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
