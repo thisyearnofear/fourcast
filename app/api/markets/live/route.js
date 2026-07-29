@@ -3,6 +3,16 @@ import { polymarketService } from '@/services/polymarketService';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+export function isLiveMarket(market, now = Date.now()) {
+  const resolutionTime = new Date(market?.resolutionDate).getTime();
+  if (!Number.isFinite(resolutionTime) || resolutionTime <= now) return false;
+
+  const rawMarket = market.rawMarket || {};
+  return rawMarket.closed !== true
+    && rawMarket.active !== false
+    && rawMarket.acceptingOrders !== false;
+}
+
 /**
  * Lightweight live-markets feed for the landing page.
  *
@@ -20,6 +30,9 @@ export async function GET() {
     );
 
     const markets = (catalogResult.markets || [])
+      // Gamma's closed=false catalog can still contain ended markets. Do not
+      // call a market live unless its own status and resolution date agree.
+      .filter((market) => isLiveMarket(market))
       .sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))
       .slice(0, 6)
       .map((m) => ({
@@ -41,7 +54,7 @@ export async function GET() {
         timestamp: new Date().toISOString(),
       },
       {
-        headers: { 'Cache-Control': 'public, max-age=30, stale-while-revalidate=300' },
+        headers: { 'Cache-Control': 'public, max-age=0, s-maxage=30, stale-while-revalidate=30' },
       },
     );
   } catch (error) {

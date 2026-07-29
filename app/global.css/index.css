@@ -98,48 +98,17 @@
   to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
-/* Animated backdrop — drifting gradient mesh + grid lines that breathe.
-   Two radial gradients slowly drift across the canvas, giving the page
-   a living atmosphere without WebGL or continuous repaint cost. */
-@keyframes fc-drift-a {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(40px, -30px); }
-}
-@keyframes fc-drift-b {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-30px, 20px); }
-}
+/* Backdrop — static grid lines. The floating orbs were generic atmosphere
+   with no product meaning; the interface is strong enough without them. */
 @keyframes fc-grid-breathe {
   0%, 100% { opacity: 0.35; }
-  50% { opacity: 0.55; }
+  50% { opacity: 0.45; }
 }
 .fc-backdrop {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: hidden;
-}
-.fc-backdrop__orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  will-change: transform;
-}
-.fc-backdrop__orb--a {
-  width: 40rem;
-  height: 40rem;
-  top: -10rem;
-  right: -5rem;
-  background: radial-gradient(circle, var(--color-accent-atmosphere), transparent 70%);
-  animation: fc-drift-a 18s ease-in-out infinite;
-}
-.fc-backdrop__orb--b {
-  width: 32rem;
-  height: 32rem;
-  bottom: 5rem;
-  left: -8rem;
-  background: radial-gradient(circle, var(--color-sealed-atmosphere), transparent 70%);
-  animation: fc-drift-b 22s ease-in-out infinite;
 }
 .fc-backdrop__grid {
   position: absolute;

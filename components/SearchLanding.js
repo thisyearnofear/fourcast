@@ -2,21 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Compass } from 'lucide-react';
-import { BRAND } from '@/constants/brand';
+import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Compass, Lock, FileCheck, Scale } from 'lucide-react';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
-import WalletConnect from '@/app/components/WalletConnect';
-import OperatorMath from '@/components/OperatorMath';
-import OperatorPulse from '@/components/OperatorPulse';
-import { useBrightDataStatus } from '@/hooks/useBrightDataStatus';
 import { useAudience, AUDIENCE_META } from '@/hooks/useAudience';
 import Ripple from '@/components/canvasui/Ripple';
 import Reveal from '@/components/motion/Reveal';
-import LiveMarketMetrics from '@/components/motion/LiveMarketMetrics';
-import ContextualDataStrip from '@/components/ContextualDataStrip';
 import ProofChain from '@/components/ProofChain';
-import useLiveMarkets from '@/hooks/useLiveMarkets';
-import { confidenceLabel, confidenceTint, directionFor } from '@/utils/marketEdge';
 import TweenNumber from '@/components/motion/TweenNumber';
 
 // The canonical real receipt — France 3-0 Sweden, World Cup Round of 32.
@@ -32,10 +23,21 @@ const VERIFIED_RECEIPT = {
   escrowProgramId: 'AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ',
 };
 
-// Two primary-customer doors. The README positions the customer as both the
-// operator running capital AND the allocator diligencing them; the search box
-// above serves the acquisition (retail/analyst) path, these doors serve the
-// headline path. Order matches the README narrative: Mandate → Diligence.
+// The four-stage receipt flow shown in the hero. Values are pulled from the
+// canonical ALLOCATE receipt (18175981.receipt.json) — the one that was
+// actually settled on-chain for 0.1 SOL. The PASS variant
+// (18175981.pass.receipt.json) is a separate refusal scenario where the edge
+// did NOT meet threshold; it is not the settled receipt.
+const RECEIPT_STAGES = [
+  { icon: Scale, label: 'Mandate', value: 'v1', detail: 'Versioned policy' },
+  { icon: LineChart, label: 'Decision', value: 'ALLOCATE', detail: 'Edge 5.7% · Kelly 2.1%' },
+  { icon: Lock, label: 'Sealed', value: 'SHA-256', detail: 'Before outcome' },
+  { icon: FileCheck, label: 'Reconciled', value: 'TxLINE', detail: 'Outcome verified' },
+];
+
+// Primary-customer doors. The README positions the customer as both the
+// operator running capital AND the allocator diligencing them. Order
+// matches the README narrative: Mandate → Diligence → Analyst.
 const AUDIENCE_DOORS = [
   {
     id: 'operator',
@@ -43,8 +45,8 @@ const AUDIENCE_DOORS = [
     icon: LineChart,
     eyebrow: 'I run capital',
     title: 'Mandate Control',
-    body: 'A live agent operating under a versioned policy, sealing each decision into a SHA-256 receipt before the outcome is known. Self-serve: configure your mandate, run a dry-run, get a public Track Record URL.',
-    preview: 'Live mandates · dry-run available',
+    body: 'An autonomous decision engine operating under a versioned policy, sealing each decision into a SHA-256 receipt before the outcome is known. Self-serve: configure your mandate, run a dry-run, get a public Track Record URL.',
+    preview: 'Historical replay · dry-run available',
   },
   {
     id: 'allocator',
@@ -66,34 +68,17 @@ const AUDIENCE_DOORS = [
   },
 ];
 
+// Supporting capabilities — secondary routes that don't belong in the
+// primary narrative but should be discoverable from the landing page.
+const SUPPORTING_CAPS = [
+  { href: '/markets', label: 'Markets', desc: 'Edge discovery across Polymarket & Kalshi' },
+  { href: '/canton', label: 'Private Markets', desc: 'Hidden-size settlement on Canton' },
+  { href: '/signals', label: 'Signals', desc: 'Verified analyst signal marketplace' },
+  { href: '/labs', label: 'Labs', desc: 'Autopilot execution & builder tools' },
+];
+
 export default function SearchLanding() {
-  // Arming the instrument metrics one frame after mount makes the decision
-  // numbers roll up from zero (state-explanation motion, --dur-explain).
-  const [armed, setArmed] = useState(false);
-  const webIntel = useBrightDataStatus();
   const { mode } = useAudience();
-  const live = useLiveMarkets();
-
-  // Cycle through the top markets every 3s so the instrument panel
-  // feels alive between 15s API polls. Resets when new data arrives.
-  const [marketIndex, setMarketIndex] = useState(0);
-  const marketIndexRef = useRef(0);
-  useEffect(() => {
-    if (live.markets.length <= 1) return undefined;
-    const id = window.setInterval(() => {
-      marketIndexRef.current = (marketIndexRef.current + 1) % live.markets.length;
-      setMarketIndex(marketIndexRef.current);
-    }, 3000);
-    return () => window.clearInterval(id);
-  }, [live.markets.length]);
-
-  // Reset the cycle index when new markets arrive.
-  useEffect(() => {
-    marketIndexRef.current = 0;
-    setMarketIndex(0);
-  }, [live.markets]);
-
-  const activeMarket = live.markets[marketIndex] || live.markets[0] || null;
 
   // Receipt seal animation — triggers when the proof section scrolls into view.
   const [receiptSealed, setReceiptSealed] = useState(false);
@@ -119,14 +104,7 @@ export default function SearchLanding() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    setArmed(true);
-  }, []);
-
-  // Mode-aware door ordering — the audience's primary door leads, the others
-  // remain visible. Three modes, three doors; the third (Analyst Markets) is
-  // surfaced when the visitor hasn't picked a role yet, otherwise it sits in
-  // its right position.
+  // Mode-aware door ordering — the audience's primary door leads.
   const orderedDoors = useMemo(() => {
     const others = AUDIENCE_DOORS.filter((d) => d.id !== mode);
     const lead = AUDIENCE_DOORS.find((d) => d.id === mode);
@@ -136,8 +114,6 @@ export default function SearchLanding() {
   return (
     <main className="fc-grain relative min-h-screen overflow-x-hidden text-[var(--ink)]">
       <div className="fc-backdrop" aria-hidden>
-        <div className="fc-backdrop__orb fc-backdrop__orb--a" />
-        <div className="fc-backdrop__orb fc-backdrop__orb--b" />
         <div className="fc-backdrop__grid" />
       </div>
 
@@ -147,29 +123,34 @@ export default function SearchLanding() {
           <div className="hidden sm:block">
             <PageNav />
           </div>
-          <WalletConnect />
+          {/* On the landing page, replace wallet connect with a proof CTA.
+              WalletConnect remains on all other routes via AppShell. */}
+          <a
+            href="#verify-receipt"
+            className="fc-action inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-sm"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            View verified receipt
+          </a>
         </header>
 
-        <OperatorPulse className="mt-5" liveCounts={live.isLive ? { marketsScanned: live.scanCount, freshEdges: live.edgeCount } : null} />
-
-        {/* Hero — one real operator promise + a decision instrument */}
+        {/* Hero — outcome-led headline + the canonical 4-stage receipt flow.
+            The receipt flow is deterministic and always present; it never
+            depends on an upstream API being available. */}
         <section className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14 lg:py-14">
           <div className="max-w-xl">
             <p className="fc-kicker">
-              Prediction-market operator terminal
+              Flight recorder for autonomous capital
             </p>
 
-            <h1 className="fc-display mt-4 text-5xl font-extrabold leading-[0.9] tracking-tight text-[var(--color-ink)] sm:text-6xl lg:text-[4.25rem]">
-              {BRAND.name}
+            <h1 className="fc-display mt-4 text-4xl font-extrabold leading-[0.95] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-[3.75rem]">
+              Know what your agent knew before it risked capital.
             </h1>
 
             <p className="mt-5 max-w-md text-lg leading-7 text-[var(--color-ink-muted)] sm:text-xl">
-              {BRAND.tagline}
+              An auditable record for every autonomous capital decision — what the agent knew, which policy constrained it, what it decided before the outcome, and how that decision performed.
             </p>
 
-            {/* Hero CTAs commit to the headline customer: the operator under
-                mandate and the allocator auditing them. Search lives on
-                /markets — the analyst door below leads there. */}
             <div className="mt-8 flex flex-wrap gap-3">
               <Ripple
                 options={{
@@ -206,136 +187,86 @@ export default function SearchLanding() {
               >
                 Scan markets as an analyst →
               </Link>
-              {!webIntel.loading && !webIntel.available && (
-                <span className="mt-1 block text-[var(--color-ink-faint)]">
-                  {BRAND.webIntel.unavailableNote}
-                </span>
-              )}
             </p>
           </div>
 
-          {/* Decision instrument — shows the core evaluation grammar.
-              Fed by useLiveMarkets so the metrics reflect real Polymarket /
-              Kalshi odds and the confidence pill changes tint as the edge
-              shifts. Cycles through the top 6 markets every 3s. Falls back
-              to a neutral "awaiting data" state if the API is unreachable. */}
+          {/* 4-stage receipt flow — the core differentiator above the fold.
+              Shows the canonical proof chain: Mandate → Decision → Sealed →
+              Reconciled. Always present, always truthful. */}
           <div className="relative">
-            <div className="absolute -inset-4 bg-[var(--color-accent)]/10 blur-3xl" aria-hidden />
-            <div className={`fc-instrument edge-reveal relative overflow-hidden p-1 shadow-2xl shadow-black/50 ${live.isLive ? 'fc-instrument--armed' : ''}`}>
+            <div className="absolute -inset-4 bg-[var(--color-accent)]/5 blur-3xl" aria-hidden />
+            <div className="fc-instrument edge-reveal relative overflow-hidden p-1 shadow-2xl shadow-black/50">
               <div className="fc-instrument__inner p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="fc-kicker">
-                      Decision replay · {live.isLive ? 'live markets' : 'connecting'}
-                      {live.markets.length > 1 && (
-                        <span className="ml-2 text-[var(--color-ink-faint)]">
-                          {marketIndex + 1}/{live.markets.length}
-                        </span>
-                      )}
-                    </p>
-                    <h2 key={`title-${marketIndex}`} className="fc-market-slide mt-2 max-w-sm text-lg font-semibold leading-snug text-[var(--color-ink)] sm:text-xl">
-                      {activeMarket?.title || 'Awaiting live market data…'}
-                    </h2>
-                  </div>
-                  <span className={`fc-status shrink-0 px-2.5 py-1 ${activeMarket ? confidenceTint(activeMarket.edgeScore) : 'fc-status--review'}`}>
-                    {activeMarket ? confidenceLabel(activeMarket.edgeScore) : '—'}
+                <div className="flex items-center justify-between gap-3">
+                  <p className="fc-kicker">
+                    Decision receipt · {VERIFIED_RECEIPT.stage}
+                  </p>
+                  <span className="fc-status fc-status--positive shrink-0 px-2.5 py-1">
+                    Verified
                   </span>
                 </div>
 
-                {activeMarket ? (
-                  <div key={`metrics-${marketIndex}`} className="fc-market-slide">
-                    <LiveMarketMetrics market={activeMarket} armed={armed} />
-                  </div>
-                ) : (
-                  <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
-                    {['Market', 'AI fair', 'Edge'].map((label) => (
-                      <div key={label} className="fc-metric px-3 py-4">
-                        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">{label}</div>
-                        <div className="mt-2 font-display text-2xl font-bold tracking-tight text-[var(--color-ink-faint)] sm:text-3xl">—</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <p className="mt-3 font-display text-lg font-semibold text-[var(--color-ink)] sm:text-xl">
+                  {VERIFIED_RECEIPT.home} <span className="text-[var(--color-ink-faint)]">v</span> {VERIFIED_RECEIPT.away}
+                </p>
+                <p className="mt-1 font-mono text-sm text-[var(--color-accent)]">
+                  Final {VERIFIED_RECEIPT.score}
+                </p>
 
-                <div className="mt-5 flex items-center justify-between gap-3 border-t border-[var(--color-rule)] pt-4">
-                  <p className="text-sm text-[var(--color-ink-faint)]">
-                    {activeMarket ? (
-                      <>Recommendation{' '}
-                        <span className="font-semibold text-[var(--color-accent)]">
-                          {directionFor(activeMarket.edgeScore)}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-[var(--color-ink-faint)]">Connecting to live market feed…</span>
-                    )}
-                  </p>
-                  <Link
-                    href={activeMarket ? `/markets?q=${encodeURIComponent(activeMarket.title)}&first=1` : '/markets'}
-                    className="fc-action px-3 py-2 text-xs"
-                  >
-                    Run this market
-                  </Link>
+                {/* 4-stage flow rail */}
+                <div className="mt-5 flex items-stretch gap-1 overflow-x-auto pb-1">
+                  {RECEIPT_STAGES.map((stage, i) => {
+                    const StageIcon = stage.icon;
+                    return (
+                      <div key={stage.label} className="flex flex-1 items-stretch">
+                        <div className="flex flex-1 flex-col items-center gap-1.5 border border-[var(--color-rule)] bg-white/[0.02] p-3 text-center">
+                          <StageIcon className="h-4 w-4 text-[var(--color-accent)]" strokeWidth={1.5} />
+                          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-faint)]">
+                            {stage.label}
+                          </span>
+                          <span className="font-display text-sm font-bold text-[var(--color-ink)]">
+                            {stage.value}
+                          </span>
+                          <span className="font-mono text-[8px] leading-tight text-[var(--color-ink-faint)]">
+                            {stage.detail}
+                          </span>
+                        </div>
+                        {i < RECEIPT_STAGES.length - 1 && (
+                          <div className="flex items-center px-0.5" aria-hidden>
+                            <ArrowRight className="h-3 w-3 text-[var(--color-ink-faint)]" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
-                {/* Live signal ticker is now a full-width marquee below the hero. */}
-
-                {/* Contextual data strip — free macro/sentiment data that
-                    relates to the currently displayed market. Shows live
-                    BTC spot, Fear & Greed, Fed funds rate, etc. */}
-                {activeMarket && (
-                  <ContextualDataStrip title={activeMarket.title} />
-                )}
-
-                {/* Edge provenance — transparently shows where the edge
-                    comes from: SynthData ML ensemble (200+ models), or
-                    cross-venue arbitrage between Polymarket and Kalshi. */}
-                {activeMarket?.edgeScore != null && Math.abs(activeMarket.edgeScore) >= 0.05 && (
-                  <div className="mt-2 flex items-center gap-2 border-t border-[var(--color-rule)] pt-2">
-                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-faint)]">
-                      Edge source
-                    </span>
-                    <span className="font-mono text-[9px] text-[var(--color-accent)]/60">
-                      SynthData ML · 200+ models
-                    </span>
-                    <span className="text-[var(--color-ink-faint)]">·</span>
-                    <span className="font-mono text-[9px] text-[var(--color-ink-faint)]">
-                      cross-venue parity checked
-                    </span>
-                  </div>
-                )}
+                <div className="mt-5 flex items-center justify-between gap-3 border-t border-[var(--color-rule)] pt-4">
+                  <p className="text-xs leading-5 text-[var(--color-ink-faint)]">
+                    <TweenNumber
+                      value={0.1}
+                      duration={800}
+                      format={(v) => `${v.toFixed(2)} SOL`}
+                      className="font-mono text-[var(--color-ink-muted)]"
+                    /> settled trustlessly via <span className="font-mono text-[var(--color-ink-muted)]">match-escrow</span> CPI.
+                  </p>
+                  <Link
+                    href={`/world-cup?fixture=${VERIFIED_RECEIPT.fixtureId}`}
+                    className="fc-action px-3 py-2 text-xs"
+                  >
+                    Open Proof Theatre
+                    <ArrowRight className="ml-1 inline h-3 w-3" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Full-width marquee ticker — real edge events scrolling like a
-            stock ticker tape. Pauses on hover. Duplicates the items so the
-            CSS marquee loop is seamless. */}
-        {live.isLive && live.signals.length > 0 && (
-          <div className="fc-marquee mt-2" aria-label="Live signal feed">
-            <div className="fc-marquee__track">
-              <span className="fc-marquee__live">
-                <span className="fc-marquee__live-dot" />
-                LIVE
-              </span>
-              {[...live.signals, ...live.signals].map((sig, i) => (
-                <span key={`marquee-${i}`} className="fc-marquee__item">
-                  <span className="fc-marquee__dot" />
-                  {sig}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Primary-customer doors — the README positions the customer as both
-            the operator running capital and the allocator diligencing them.
-            The hero CTAs above commit to the headline path; these three doors
-            route by role, with the analyst path leading to /markets (where
-            search lives). Mode-aware ordering keeps the audience's primary
-            door first while every option stays visible (no exclusion —
-            progressive disclosure, not progressive gating). */}
-        <Reveal as="section" className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-2" aria-label="Primary-customer entry points">
+        {/* Primary-customer doors — route by role. No Reveal wrapper to
+            reduce scroll-animation saturation; these are above the fold
+            on most viewports. */}
+        <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-2" aria-label="Primary-customer entry points">
           {orderedDoors.map((door) => {
             const Icon = door.icon;
             const isLead = door.id === mode;
@@ -373,47 +304,12 @@ export default function SearchLanding() {
               </Link>
             );
           })}
-        </Reveal>
+        </section>
 
-        {/* Private settlement teaser — the Canton's hidden-size advantage is
-            our structural differentiator for size-taking traders. Surfacing
-            it on the landing ensures judges and whales discover it within the
-            first scroll instead of hunting through the More menu. */}
-        <Reveal
-          as="section"
-          className="mt-8 grid gap-px overflow-hidden border border-[var(--color-rule)] bg-[var(--color-paper-soft)] sm:grid-cols-[1fr_auto] lg:mt-6"
-          aria-label="Private settlement on Canton"
-        >
-          <div className="flex items-start gap-4 bg-[var(--color-paper)] p-5 sm:items-center">
-            <ShieldCheck className="h-5 w-5 shrink-0 text-[var(--color-accent)]" strokeWidth={1.5} />
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-accent)]/80">
-                Private settlement · Canton
-              </p>
-              <p className="mt-2 text-base font-medium leading-6 text-[var(--color-ink)]">
-                Take size without leaking it.
-              </p>
-              <p className="mt-1 text-sm leading-6 text-[var(--color-ink-muted)]">
-                Positions are sealed in Daml contracts — only you and the operator can see the size. Settled in cBTC/cETH.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/canton"
-            className="group flex items-center justify-center gap-2 bg-[var(--color-paper)] p-5 text-sm font-medium text-[var(--color-accent)] transition hover:bg-[var(--color-accent-quiet)] no-underline"
-            aria-label="Open private markets on Canton"
-          >
-            Run the privacy proof
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-          </Link>
-        </Reveal>
-
-        {/* Verify a real receipt — the single most differentiated artifact we
-            can show a cold prospect in 10 seconds. A real World Cup fixture
-            with a real Merkle proof anchored on Solana devnet, settled on-chain
-            via match-escrow CPI. Deep-links into Proof Theatre with the
-            fixture pre-selected so the visitor lands on the verification
-            chain, not a fixture list. */}
+        {/* Verify a real receipt — the single most differentiated artifact.
+            A real World Cup fixture with a real Merkle proof anchored on
+            Solana devnet, settled on-chain via match-escrow CPI. Deep-links
+            into Proof Theatre with the fixture pre-selected. */}
         <div ref={receiptRef} id="verify-receipt" className="scroll-mt-24">
         <Reveal as="section" className="mt-12" aria-label="Verify a real decision on Solana">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--color-rule)] pb-3">
@@ -492,13 +388,32 @@ export default function SearchLanding() {
         </Reveal>
         </div>
 
-        {/* Operator Math — compact (discovery mode) on the landing page so the
-            eyebrow pill is omitted and spacing is tighter. The full <OperatorMath />
-            variant (eyebrow + Headline pill + generous padding) is reserved for
-            /labs/autopilot where the math IS the product context. */}
-        <Reveal delay={60}>
-          <OperatorMath compact />
-        </Reveal>
+        {/* Supporting capabilities — secondary routes grouped compactly.
+            The primary narrative (mandate → receipt → proof → reputation)
+            is told above; these are tools that support it. */}
+        <section className="mt-10 border-t border-[var(--color-rule)] pt-6" aria-label="Supporting capabilities">
+          <p className="fc-kicker mb-4">Supporting capabilities</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {SUPPORTING_CAPS.map((cap) => (
+              <Link
+                key={cap.href}
+                href={cap.href}
+                className="group flex flex-col gap-1 border border-[var(--color-rule)] bg-white/[0.02] p-4 transition hover:border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/[0.04]"
+              >
+                <span className="font-display text-sm font-semibold text-[var(--color-ink)]">
+                  {cap.label}
+                </span>
+                <span className="text-xs leading-5 text-[var(--color-ink-muted)]">
+                  {cap.desc}
+                </span>
+                <span className="mt-1 inline-flex items-center gap-1 text-xs text-[var(--color-accent)]/80">
+                  Open
+                  <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );

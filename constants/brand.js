@@ -40,7 +40,7 @@ export const BRAND = {
 
   /** One line — hero, OG, pitch. Reads "this is for operators" on second pass. */
   tagline:
-    'Verifiable decision receipts and reputation for agent-managed prediction-market capital.',
+    'An auditable record for every autonomous capital decision.',
 
   /** Supporting line — subheads, metadata. Speaks to the operator's daily job. */
   subhead:

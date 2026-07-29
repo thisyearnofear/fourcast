@@ -16,18 +16,18 @@ import { useEffect, useRef, useState } from 'react';
 
 const STEPS = [
   {
-    label: 'Pre-match evidence',
-    detail: 'Venue, fixture, and team form collected and hashed before kickoff.',
+    label: 'Evidence recorded',
+    detail: 'Fixture, odds, and team form collected and hashed before kickoff.',
     icon: '◐',
   },
   {
-    label: 'Seeded simulation',
-    detail: '200+ ML models produce a fair-value probability under a fixed seed.',
+    label: 'Seeded Monte Carlo',
+    detail: 'A seeded Monte Carlo quantifies risk from the recorded probability under a fixed seed.',
     icon: '◑',
   },
   {
     label: 'Policy gates',
-    detail: 'Versioned policy checks edge threshold, Kelly size, and risk limits.',
+    detail: 'Versioned policy determines allocate, pass, or review based on edge threshold, Kelly size, and risk limits.',
     icon: '◒',
   },
   {
@@ -36,8 +36,8 @@ const STEPS = [
     icon: '◓',
   },
   {
-    label: 'Merkle proof',
-    detail: 'Receipt anchored into a TxLINE Merkle tree for public auditability.',
+    label: 'TxLINE Merkle proof',
+    detail: 'TxLINE supplies the outcome Merkle proof. The receipt is independently SHA-256 sealed and optionally committed on-chain.',
     icon: '●',
   },
   {
@@ -47,7 +47,7 @@ const STEPS = [
   },
   {
     label: 'Reconciliation',
-    detail: 'Outcome resolved, receipt matched, reputation updated from the same proof.',
+    detail: 'Receipt and verified outcome are reconciled. Reputation updated from the same proof.',
     icon: '✓',
   },
 ];
