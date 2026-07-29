@@ -689,7 +689,6 @@ body { overflow-x: clip; }
   .fc-roll { animation: none !important; }
   .fc-instrument--armed { box-shadow: none !important; }
   .fc-seal-target.is-revealed { animation: none !important; }
-  .fc-backdrop__orb--a, .fc-backdrop__orb--b { animation: none !important; }
   .fc-backdrop__grid { animation: none !important; }
   .fc-radar::before { animation: none !important; }
   .fc-marquee__track { animation: none !important; }

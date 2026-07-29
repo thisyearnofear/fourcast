@@ -219,7 +219,7 @@ export default function SearchLanding() {
                     const StageIcon = stage.icon;
                     return (
                       <div key={stage.label} className="flex flex-1 items-stretch">
-                        <div className="flex flex-1 flex-col items-center gap-1.5 border border-[var(--color-rule)] bg-white/[0.02] p-3 text-center">
+                        <div className="flex min-w-[80px] flex-1 flex-col items-center gap-1.5 border border-[var(--color-rule)] bg-white/[0.02] p-3 text-center">
                           <StageIcon className="h-4 w-4 text-[var(--color-accent)]" strokeWidth={1.5} />
                           <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-faint)]">
                             {stage.label}
