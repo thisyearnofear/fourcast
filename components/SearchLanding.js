@@ -4,16 +4,22 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Compass, Lock, FileCheck, Scale } from 'lucide-react';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
-import { useAudience, AUDIENCE_META } from '@/hooks/useAudience';
+import { useAudience } from '@/hooks/useAudience';
+import { useInView } from '@/hooks/useInView';
+import { usePointerGlow } from '@/hooks/usePointerGlow';
+import { useParallax } from '@/hooks/useParallax';
 import Ripple from '@/components/canvasui/Ripple';
 import Reveal from '@/components/motion/Reveal';
 import ProofChain from '@/components/ProofChain';
 import TweenNumber from '@/components/motion/TweenNumber';
+import LiveUTCClock from '@/components/motion/LiveUTCClock';
 
 // The canonical real receipt — France 3-0 Sweden, World Cup Round of 32.
-// A 0.1 SOL policy on this match was settled on-chain via the match-escrow
-// program CPI-calling txoracle::validate_stat (see README §Solution 4).
-// Deep-linking /world-cup?fixture=<id> opens the Proof Theatre on it.
+// The ALLOCATE receipt itself was a dry-run (execution.dryRun: true); a
+// separate 0.1 SOL escrow policy on the same fixture settled on-chain via
+// the match-escrow program CPI-calling txoracle::validate_stat (see
+// TXLINE_SUBMISSION.md). Deep-linking /world-cup?fixture=<id> opens the
+// Proof Theatre on it.
 const VERIFIED_RECEIPT = {
   fixtureId: '18175981',
   home: 'France',
@@ -21,13 +27,14 @@ const VERIFIED_RECEIPT = {
   score: '3–0',
   stage: 'World Cup · Round of 32',
   escrowProgramId: 'AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ',
+  settlementTx: '3W6Y7rtQGgcBuD8ih8hUK2pZTSFZM4yDwXRfAudxmhdzDDjDnpNqEN2TZzGBW6F4PEKhmUbfv2NWXWAQf8wwhduB',
 };
 
 // The four-stage receipt flow shown in the hero. Values are pulled from the
-// canonical ALLOCATE receipt (18175981.receipt.json) — the one that was
-// actually settled on-chain for 0.1 SOL. The PASS variant
-// (18175981.pass.receipt.json) is a separate refusal scenario where the edge
-// did NOT meet threshold; it is not the settled receipt.
+// canonical ALLOCATE receipt (18175981.receipt.json) — a dry-run decision;
+// the on-chain 0.1 SOL settlement was a separate escrow policy on the same
+// fixture. The PASS variant (18175981.pass.receipt.json) is a separate
+// refusal scenario where the edge did NOT meet threshold.
 const RECEIPT_STAGES = [
   { icon: Scale, label: 'Mandate', value: 'v1', detail: 'Versioned policy' },
   { icon: LineChart, label: 'Decision', value: 'ALLOCATE', detail: 'Edge 5.7% · Kelly 2.1%' },
@@ -77,8 +84,69 @@ const SUPPORTING_CAPS = [
   { href: '/labs', label: 'Labs', desc: 'Autopilot execution & builder tools' },
 ];
 
+// A primary-customer door with cursor-following glow and subtle tilt on
+// fine pointers. Extracted so each card can own its usePointerGlow ref.
+function DoorCard({ door, isLead, spanClass, delay }) {
+  const glowRef = usePointerGlow({ tilt: 2 });
+  const Icon = door.icon;
+  return (
+    <Link
+      ref={glowRef}
+      href={door.href}
+      style={{ '--door-delay': `${delay}ms` }}
+      className={`fc-door fc-glow fc-tilt group relative flex flex-col gap-2 overflow-hidden border p-5 transition sm:p-6 ${
+        isLead
+          ? 'border-[var(--color-accent)]/40 bg-[var(--color-accent-quiet)] hover:border-[var(--color-accent)]/70 hover:bg-[var(--color-accent-atmosphere)]'
+          : 'border-[var(--color-rule)] bg-white/[0.02] hover:border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/[0.04]'
+      } ${spanClass}`}
+    >
+      <div className="flex items-center justify-between">
+        <span className="fc-kicker">{door.eyebrow}</span>
+        <Icon className={`h-4 w-4 transition ${isLead ? 'text-[var(--color-accent)]' : 'text-[var(--color-ink-faint)] group-hover:text-[var(--color-accent)]'}`} />
+      </div>
+      <h3 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-2xl">
+        {door.title}
+      </h3>
+      <p className="text-sm leading-6 text-[var(--color-ink-muted)]">{door.body}</p>
+      <span className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${isLead ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent)]/80'}`}>
+        Enter
+        <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
+      </span>
+      {door.preview && (
+        <div className="fc-door__preview">
+          <div className="fc-door__preview-row">
+            <span className="fc-door__preview-dot" />
+            {door.preview}
+          </div>
+        </div>
+      )}
+    </Link>
+  );
+}
+
 export default function SearchLanding() {
   const { mode } = useAudience();
+
+  // Hero print sequence — once the card has printed its fields (~950ms),
+  // the seal flashes and the SOL value counts up. Reduced motion lands
+  // everything immediately.
+  const [heroPrinted, setHeroPrinted] = useState(false);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setHeroPrinted(true);
+      return undefined;
+    }
+    const t = window.setTimeout(() => setHeroPrinted(true), 950);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  // Door-card stagger — one-shot reveal when the section first intersects.
+  const [doorsRef, doorsIn] = useInView({ threshold: 0.05, rootMargin: '0px' });
+
+  // Ambient interactivity — cursor glow on the hero receipt instrument and
+  // a subtle scroll parallax on the backdrop grid. Both bail on reduced motion.
+  const heroGlowRef = usePointerGlow();
+  const gridRef = useParallax();
 
   // Receipt seal animation — triggers when the proof section scrolls into view.
   const [receiptSealed, setReceiptSealed] = useState(false);
@@ -114,7 +182,7 @@ export default function SearchLanding() {
   return (
     <main className="fc-grain relative min-h-screen overflow-x-hidden text-[var(--ink)]">
       <div className="fc-backdrop" aria-hidden>
-        <div className="fc-backdrop__grid" />
+        <div ref={gridRef} className="fc-backdrop__grid" />
       </div>
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-16 pt-4 sm:px-6 lg:px-8">
@@ -139,19 +207,19 @@ export default function SearchLanding() {
             depends on an upstream API being available. */}
         <section className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14 lg:py-14">
           <div className="max-w-xl">
-            <p className="fc-kicker">
+            <p className="fc-kicker fc-print">
               Flight recorder for autonomous capital
             </p>
 
-            <h1 className="fc-display mt-4 text-4xl font-extrabold leading-[0.95] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-[3.75rem]">
+            <h1 className="fc-display fc-print mt-4 text-4xl font-extrabold leading-[0.95] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-[3.75rem]" style={{ '--print-delay': '70ms' }}>
               Know what your agent knew before it risked capital.
             </h1>
 
-            <p className="mt-5 max-w-md text-lg leading-7 text-[var(--color-ink-muted)] sm:text-xl">
+            <p className="fc-print mt-5 max-w-md text-lg leading-7 text-[var(--color-ink-muted)] sm:text-xl" style={{ '--print-delay': '140ms' }}>
               An auditable record for every autonomous capital decision — what the agent knew, which policy constrained it, what it decided before the outcome, and how that decision performed.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="fc-print mt-8 flex flex-wrap gap-3" style={{ '--print-delay': '210ms' }}>
               <Ripple
                 options={{
                   amplitude: 0.3,
@@ -175,11 +243,11 @@ export default function SearchLanding() {
                 href="#verify-receipt"
                 className="fc-action inline-flex items-center justify-center gap-1.5 px-6 py-3 text-sm"
               >
-                Audit a settled receipt
+                Audit a settled proof
               </a>
             </div>
 
-            <p className="mt-6 text-sm text-[var(--color-ink-faint)]">
+            <p className="fc-print mt-6 text-sm text-[var(--color-ink-faint)]" style={{ '--print-delay': '280ms' }}>
               No wallet needed to audit.{' '}
               <Link
                 href="/markets"
@@ -195,21 +263,28 @@ export default function SearchLanding() {
               Reconciled. Always present, always truthful. */}
           <div className="relative">
             <div className="absolute -inset-4 bg-[var(--color-accent)]/5 blur-3xl" aria-hidden />
-            <div className="fc-instrument edge-reveal relative overflow-hidden p-1 shadow-2xl shadow-black/50">
+            <div ref={heroGlowRef} className={`fc-instrument fc-glow edge-reveal relative overflow-hidden p-1 shadow-2xl shadow-black/50 ${heroPrinted ? 'mc-seal-animate' : ''}`}>
               <div className="fc-instrument__inner p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-3">
+                <div className="fc-print flex items-center justify-between gap-3" style={{ '--print-delay': '200ms' }}>
                   <p className="fc-kicker">
                     Decision receipt · {VERIFIED_RECEIPT.stage}
                   </p>
-                  <span className="fc-status fc-status--positive shrink-0 px-2.5 py-1">
-                    Verified
+                  <span className="flex shrink-0 items-center gap-2.5">
+                    <span className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-faint)]">
+                      <span className="fc-rec-lamp" aria-hidden />
+                      Rec <LiveUTCClock />
+                    </span>
+                    <span className="fc-status fc-status--positive inline-flex items-center gap-1.5 px-2.5 py-1">
+                      <span className="mc-lamp mc-lamp--live !h-1.5 !w-1.5" aria-hidden />
+                      Verified
+                    </span>
                   </span>
                 </div>
 
-                <p className="mt-3 font-display text-lg font-semibold text-[var(--color-ink)] sm:text-xl">
+                <p className="fc-print mt-3 font-display text-lg font-semibold text-[var(--color-ink)] sm:text-xl" style={{ '--print-delay': '280ms' }}>
                   {VERIFIED_RECEIPT.home} <span className="text-[var(--color-ink-faint)]">v</span> {VERIFIED_RECEIPT.away}
                 </p>
-                <p className="mt-1 font-mono text-sm text-[var(--color-accent)]">
+                <p className="fc-print mt-1 font-mono text-sm text-[var(--color-accent)]" style={{ '--print-delay': '340ms' }}>
                   Final {VERIFIED_RECEIPT.score}
                 </p>
 
@@ -218,7 +293,7 @@ export default function SearchLanding() {
                   {RECEIPT_STAGES.map((stage, i) => {
                     const StageIcon = stage.icon;
                     return (
-                      <div key={stage.label} className="flex flex-1 items-stretch">
+                      <div key={stage.label} className="fc-print flex flex-1 items-stretch" style={{ '--print-delay': `${420 + i * 90}ms` }}>
                         <div className="flex min-w-[80px] flex-1 flex-col items-center gap-1.5 border border-[var(--color-rule)] bg-white/[0.02] p-3 text-center">
                           <StageIcon className="h-4 w-4 text-[var(--color-accent)]" strokeWidth={1.5} />
                           <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-faint)]">
@@ -241,14 +316,22 @@ export default function SearchLanding() {
                   })}
                 </div>
 
-                <div className="mt-5 flex items-center justify-between gap-3 border-t border-[var(--color-rule)] pt-4">
+                <div className="fc-print mt-5 flex items-center justify-between gap-3 border-t border-[var(--color-rule)] pt-4" style={{ '--print-delay': '800ms' }}>
                   <p className="text-xs leading-5 text-[var(--color-ink-faint)]">
-                    <TweenNumber
-                      value={0.1}
+                    A <TweenNumber
+                      value={heroPrinted ? 0.1 : 0}
                       duration={800}
                       format={(v) => `${v.toFixed(2)} SOL`}
                       className="font-mono text-[var(--color-ink-muted)]"
-                    /> settled trustlessly via <span className="font-mono text-[var(--color-ink-muted)]">match-escrow</span> CPI.
+                    /> escrow policy on this fixture settled trustlessly via <span className="font-mono text-[var(--color-ink-muted)]">match-escrow</span> CPI.{' '}
+                    <a
+                      href={`https://explorer.solana.com/tx/${VERIFIED_RECEIPT.settlementTx}?cluster=devnet`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-2 transition hover:text-[var(--color-ink)]"
+                    >
+                      view tx ↗
+                    </a>
                   </p>
                   <Link
                     href={`/world-cup?fixture=${VERIFIED_RECEIPT.fixtureId}`}
@@ -263,60 +346,37 @@ export default function SearchLanding() {
           </div>
         </section>
 
-        {/* Primary-customer doors — route by role. No Reveal wrapper to
-            reduce scroll-animation saturation; these are above the fold
-            on most viewports. */}
-        <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-2" aria-label="Primary-customer entry points">
-          {orderedDoors.map((door) => {
-            const Icon = door.icon;
-            const isLead = door.id === mode;
-            return (
-              <Link
-                key={door.href}
-                href={door.href}
-                aria-label={`${door.title} · ${AUDIENCE_META[door.id]?.label ?? door.id} mode`}
-                className={`fc-door group relative flex flex-col gap-2 border p-5 transition sm:p-6 ${
-                  isLead
-                    ? 'border-[var(--color-accent)]/40 bg-[var(--color-accent-quiet)] hover:border-[var(--color-accent)]/70 hover:bg-[var(--color-accent-atmosphere)]'
-                    : 'border-[var(--color-rule)] bg-white/[0.02] hover:border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/[0.04]'
-                } ${orderedDoors.length === 3 && door.id === 'analyst' ? 'sm:col-span-2 lg:col-span-1' : ''}`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="fc-kicker">{door.eyebrow}</span>
-                  <Icon className={`h-4 w-4 transition ${isLead ? 'text-[var(--color-accent)]' : 'text-[var(--color-ink-faint)] group-hover:text-[var(--color-accent)]'}`} />
-                </div>
-                <h3 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-2xl">
-                  {door.title}
-                </h3>
-                <p className="text-sm leading-6 text-[var(--color-ink-muted)]">{door.body}</p>
-                <span className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${isLead ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent)]/80'}`}>
-                  Enter
-                  <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
-                </span>
-                {door.preview && (
-                  <div className="fc-door__preview">
-                    <div className="fc-door__preview-row">
-                      <span className="fc-door__preview-dot" />
-                      {door.preview}
-                    </div>
-                  </div>
-                )}
-              </Link>
-            );
-          })}
+        {/* Primary-customer doors — route by role. One-shot slide-in stagger
+            (≤300ms total) when the section first intersects; no persistent
+            scroll animation. */}
+        <section
+          ref={doorsRef}
+          className={`fc-doors mt-4 grid gap-3 sm:grid-cols-2 lg:mt-2 ${doorsIn ? 'fc-doors--in' : ''}`}
+          aria-label="Primary-customer entry points"
+        >
+          {orderedDoors.map((door, doorIndex) => (
+            <DoorCard
+              key={door.href}
+              door={door}
+              isLead={door.id === mode}
+              spanClass={orderedDoors.length === 3 && door.id === 'analyst' ? 'sm:col-span-2 lg:col-span-1' : ''}
+              delay={doorIndex * 80}
+            />
+          ))}
         </section>
 
-        {/* Verify a real receipt — the single most differentiated artifact.
+        {/* Verify a real proof — the single most differentiated artifact.
             A real World Cup fixture with a real Merkle proof anchored on
-            Solana devnet, settled on-chain via match-escrow CPI. Deep-links
-            into Proof Theatre with the fixture pre-selected. */}
+            Solana devnet; a 0.1 SOL escrow policy on it settled on-chain
+            via match-escrow CPI. Deep-links into Proof Theatre with the
+            fixture pre-selected. */}
         <div ref={receiptRef} id="verify-receipt" className="scroll-mt-24">
         <Reveal as="section" className="mt-12" aria-label="Verify a real decision on Solana">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--color-rule)] pb-3">
             <div>
               <p className="fc-kicker">Verify a real decision on Solana</p>
               <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold leading-tight tracking-tight text-[var(--color-ink)] sm:text-3xl">
-                A receipt already settled on-chain. Audit it yourself.
+                A proof already settled on-chain. Audit it yourself.
               </h2>
             </div>
             <p className="max-w-sm text-xs leading-5 text-[var(--color-ink-faint)]">
@@ -339,12 +399,12 @@ export default function SearchLanding() {
                   Final {VERIFIED_RECEIPT.score}
                 </p>
                 <p className="mt-3 max-w-md text-xs leading-5 text-[var(--color-ink-faint)]">
-                  <TweenNumber
+                  A <TweenNumber
                     value={receiptSealed ? 0.1 : 0}
                     duration={800}
                     format={(v) => `${v.toFixed(2)} SOL`}
                     className="font-mono text-[var(--color-ink-muted)]"
-                  /> settled trustlessly via <span className="font-mono text-[var(--color-ink-muted)]">match-escrow</span> CPI → <span className="font-mono text-[var(--color-ink-muted)]">txoracle::validate_stat</span>. No intermediary.
+                  /> escrow policy on this fixture settled trustlessly via <span className="font-mono text-[var(--color-ink-muted)]">match-escrow</span> CPI → <span className="font-mono text-[var(--color-ink-muted)]">txoracle::validate_stat</span>. No intermediary.
                 </p>
                 {receiptSealed && (
                   <span className="mc-stamp mc-stamp--allocate mt-3 inline-flex" key="sealed">
@@ -381,6 +441,15 @@ export default function SearchLanding() {
                 >
                   <ShieldCheck className="h-3 w-3" />
                   Escrow program on devnet
+                </a>
+                <a
+                  href={`https://explorer.solana.com/tx/${VERIFIED_RECEIPT.settlementTx}?cluster=devnet`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mc-nav-link no-underline inline-flex items-center justify-center gap-1.5 px-5 py-2 text-xs"
+                >
+                  <FileCheck className="h-3 w-3" />
+                  Settlement tx on devnet
                 </a>
               </div>
             </div>

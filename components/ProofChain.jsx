@@ -47,7 +47,7 @@ const STEPS = [
   },
   {
     label: 'Reconciliation',
-    detail: 'Receipt and verified outcome are reconciled. Reputation updated from the same proof.',
+    detail: 'Receipt and verified outcome are reconciled. Reputation derived from the same proofs.',
     icon: '✓',
   },
 ];
@@ -57,6 +57,7 @@ const CYCLE_MS = 2500;
 export default function ProofChain() {
   const [active, setActive] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [paused, setPaused] = useState(false);
   const containerRef = useRef(null);
   const timerRef = useRef(0);
 
@@ -85,9 +86,10 @@ export default function ProofChain() {
     return () => observer.disconnect();
   }, []);
 
-  // Auto-cycle through steps once visible.
+  // Auto-cycle through steps once visible. Pauses while the user hovers or
+  // focuses the chain (WCAG 2.2.2) so context isn't pulled out from under them.
   useEffect(() => {
-    if (!visible) return undefined;
+    if (!visible || paused) return undefined;
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) {
@@ -100,18 +102,21 @@ export default function ProofChain() {
     }, CYCLE_MS);
 
     return () => window.clearInterval(timerRef.current);
-  }, [visible]);
+  }, [visible, paused]);
 
-  const goTo = (idx) => {
-    setActive(idx);
-    window.clearInterval(timerRef.current);
-    timerRef.current = window.setInterval(() => {
-      setActive((prev) => (prev + 1) % STEPS.length);
-    }, CYCLE_MS);
-  };
+  const goTo = (idx) => setActive(idx);
 
   return (
-    <div ref={containerRef} className="fc-proof-chain mt-4">
+    <div
+      ref={containerRef}
+      className={`fc-proof-chain mt-4 ${visible ? 'is-visible' : ''}`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setPaused(false);
+      }}
+    >
       {/* Step rail */}
       <div className="fc-proof-chain__rail flex items-center gap-1 overflow-x-auto pb-2">
         {STEPS.map((step, i) => {
@@ -123,8 +128,10 @@ export default function ProofChain() {
               type="button"
               onMouseEnter={() => goTo(i)}
               onFocus={() => goTo(i)}
+              style={{ '--node-delay': `${i * 60}ms` }}
               className={`fc-proof-chain__node ${isActive ? 'is-active' : ''} ${isComplete ? 'is-complete' : ''}`}
               aria-label={step.label}
+              aria-current={isActive ? 'step' : undefined}
             >
               <span className="fc-proof-chain__icon">{step.icon}</span>
               <span className="fc-proof-chain__line" />

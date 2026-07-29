@@ -112,7 +112,8 @@
 }
 .fc-backdrop__grid {
   position: absolute;
-  inset: 0;
+  /* Overscan the top so the parallax shift (≤40px) never exposes an edge. */
+  inset: -48px 0 0 0;
   background-image:
     linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(243,240,231,.035) calc(100% - 1px)),
     repeating-linear-gradient(180deg, transparent 0, transparent 5.7rem, rgba(243,240,231,.035) 5.75rem, rgba(243,240,231,.035) 5.8rem);
@@ -522,10 +523,61 @@ body { overflow-x: clip; }
 }
 .fc-roll { display: inline-block; animation: fc-roll 0.22s var(--ease-out) both; }
 
-/* Instrument armed — subtle border glow when the live market feed is active. */
-.fc-instrument--armed {
-  border-color: rgba(121,245,183,.55);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 0 24px rgba(121,245,183,.08);
+/* Hero print — receipt-card fields and hero copy print in sequence on load.
+   Stagger is driven per-element via --print-delay. */
+@keyframes fc-print {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fc-print { animation: fc-print var(--dur-panel) var(--ease-out) both; animation-delay: var(--print-delay, 0ms); }
+
+/* Door stagger — doors slide in once when the section first intersects.
+   Uses an animation (not transition) so it can't clobber the press-feedback
+   transitions on a.fc-door. Delay driven per-door via --door-delay. */
+.fc-doors:not(.fc-doors--in) .fc-door { opacity: 0; }
+.fc-doors--in .fc-door {
+  animation: fc-market-slide-in var(--dur-panel) var(--ease-out) both;
+  animation-delay: var(--door-delay, 0ms);
+}
+
+/* Ambient pointer glow — a transform-only accent spot that follows the
+   cursor, driven by usePointerGlow via --glow-x/--glow-y. Fine pointers
+   only; reduced motion removes it entirely. */
+.fc-glow { position: relative; }
+.fc-glow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(121,245,183,.07), transparent 70%);
+  transform: translate3d(calc(var(--glow-x, -100rem) - 9rem), calc(var(--glow-y, -100rem) - 9rem), 0);
+  opacity: 0;
+  transition: opacity var(--dur-state) linear;
+}
+@media (hover: hover) and (pointer: fine) {
+  .fc-glow:hover::after { opacity: 1; }
+}
+
+/* Door tilt — ±2deg max, driven by usePointerGlow({ tilt: 2 }).
+   :not(:active) keeps the press-feedback scale (line ~255) in charge
+   while the pointer is down. */
+@media (hover: hover) and (pointer: fine) {
+  .fc-tilt:not(:active) { transform: perspective(700px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)); }
+}
+
+/* Record lamp — blinking REC dot next to the live UTC clock. */
+.fc-rec-lamp {
+  display: inline-block;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: var(--color-breach);
+  box-shadow: 0 0 6px rgba(255,107,107,.5);
+  animation: fc-lamp 1.8s ease-in-out infinite;
 }
 
 /* Confidence tints — sealed (amber) and review (violet) for MED/LOW. */
@@ -558,7 +610,9 @@ body { overflow-x: clip; }
 .fc-seal-target.is-revealed { animation: mc-seal-flash 0.6s ease-out; }
 
 /* Proof chain — interactive step rail. Each node is a button that lights
-   up on hover/focus or auto-cycles on a timer. */
+   up on hover/focus or auto-cycles on a timer. Nodes and connecting lines
+   draw in left-to-right when the chain first scrolls into view, staggered
+   per-node via --node-delay. */
 .fc-proof-chain__rail {
   gap: 0.25rem;
 }
@@ -571,6 +625,13 @@ body { overflow-x: clip; }
   border: 0;
   padding: 0;
   cursor: pointer;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--dur-panel) linear var(--node-delay, 0ms), transform var(--dur-panel) var(--ease-out) var(--node-delay, 0ms);
+}
+.fc-proof-chain.is-visible .fc-proof-chain__node {
+  opacity: 1;
+  transform: none;
 }
 .fc-proof-chain__icon {
   display: grid;
@@ -603,7 +664,13 @@ body { overflow-x: clip; }
   width: 1.5rem;
   height: 1px;
   background: rgba(243,240,231,.1);
+  transform: scaleX(0);
+  transform-origin: left;
   transition: background var(--dur-state) linear;
+}
+.fc-proof-chain.is-visible .fc-proof-chain__line {
+  transform: scaleX(1);
+  transition: transform var(--dur-panel) var(--ease-out) calc(var(--node-delay, 0ms) + 100ms), background var(--dur-state) linear;
 }
 .fc-proof-chain__node.is-complete .fc-proof-chain__line {
   background: rgba(121,245,183,.3);
@@ -687,7 +754,12 @@ body { overflow-x: clip; }
   }
   .reveal, .reveal--in { transform: none !important; }
   .fc-roll { animation: none !important; }
-  .fc-instrument--armed { box-shadow: none !important; }
+  .fc-print { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .fc-doors .fc-door { animation: none !important; opacity: 1 !important; }
+  .fc-proof-chain__node, .fc-proof-chain__line { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .fc-glow::after { display: none !important; }
+  .fc-tilt { transform: none !important; }
+  .fc-rec-lamp { animation: none !important; }
   .fc-seal-target.is-revealed { animation: none !important; }
   .fc-backdrop__grid { animation: none !important; }
   .fc-radar::before { animation: none !important; }
