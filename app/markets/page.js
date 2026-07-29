@@ -15,6 +15,7 @@ import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOption
 import FirstRunBanner from "@/components/FirstRunBanner";
 import { CantonMarkets } from "@/components/CantonMarkets";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
+import Link from "next/link";
 import { useCountUp } from "@/hooks/useCountUp";
 
 // Streaming analysis transport + markets/analysis data pipeline live in
@@ -511,9 +512,14 @@ export default function MarketsPage() {
  chainConnections
  });
  return (
- <div className="min-h-screen flex items-center justify-center">
- <p className={textColor}>Loading wallet connections…</p>
+ <AppShell title="Markets" subtitle="Connecting wallet providers…">
+ <div className="space-y-3 py-6" aria-busy="true" aria-label="Loading wallet connections">
+ {[0, 1, 2].map((i) => (
+ <div key={i} className="h-16 animate-pulse border border-[var(--color-rule)] bg-[var(--color-paper-soft)]" />
+ ))}
+ <p className="text-xs text-[var(--color-ink-faint)]">Loading wallet connections…</p>
  </div>
+ </AppShell>
  );
  }
 
@@ -524,11 +530,11 @@ export default function MarketsPage() {
  ? "Live sports markets → ML fair odds → detect edge → prove your call."
  : activeTab === "canton"
  ? "Private prediction markets with CBTC/cETH settlement on Canton Network."
- : "Scan 50+ markets, run 200-model ML analysis, and surface mispricings worth trading."}
+ : "Scan live markets, run ML fair-odds analysis, and surface mispricings worth trading."}
  actions={
  <div className="flex items-center gap-3">
  <div className="hidden items-center sm:flex">
- <label className="mr-2 text-xs text-white/[0.55]">Analysis Mode</label>
+ <label className="mr-2 text-xs text-[var(--color-ink-muted)]">Analysis Mode</label>
  <select
  value={analysisMode}
  onChange={(e) => setAnalysisMode(e.target.value)}
@@ -556,8 +562,8 @@ export default function MarketsPage() {
  <div className="space-y-2">
  <SecondaryNav
  items={[
- { id: "sports", label: "Sports & Events", icon: "🏆" },
- { id: "discovery", label: "Crypto, Finance & More", icon: "📈" },
+ { id: "sports", label: "Sports & Events", icon: "◆" },
+ { id: "discovery", label: "Crypto, Finance & More", icon: "▲" },
  { id: "canton", label: "Canton Markets", icon: "◈" },
  ]}
  activeItem={activeTab}
@@ -566,7 +572,7 @@ export default function MarketsPage() {
  <p className="text-[11px] leading-relaxed text-[var(--color-ink-faint)] max-w-2xl">
  <span className="text-[var(--color-accent)]">Sports</span> — live, fast-resolving, narrow edges ·{' '}
  <span className="text-[var(--color-accent)]">Discovery</span> — long-tail, deeper edges, longer horizons ·{' '}
- <span className="text-[var(--color-review)]">Canton</span> — private settlement, hidden position sizes.
+ <Link href="/canton" className="text-[var(--color-review)] underline decoration-[var(--color-rule-strong)] underline-offset-2 transition hover:text-[var(--color-ink)]">Canton</Link> — private settlement, hidden position sizes.
  </p>
  </div>
  }

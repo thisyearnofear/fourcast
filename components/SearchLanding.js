@@ -13,6 +13,7 @@ import Reveal from '@/components/motion/Reveal';
 import ProofChain from '@/components/ProofChain';
 import TweenNumber from '@/components/motion/TweenNumber';
 import LiveUTCClock from '@/components/motion/LiveUTCClock';
+import TrustStatsStrip from '@/components/TrustStatsStrip';
 
 // The canonical real receipt — France 3-0 Sweden, World Cup Round of 32.
 // The ALLOCATE receipt itself was a dry-run (execution.dryRun: true); a
@@ -36,10 +37,10 @@ const VERIFIED_RECEIPT = {
 // fixture. The PASS variant (18175981.pass.receipt.json) is a separate
 // refusal scenario where the edge did NOT meet threshold.
 const RECEIPT_STAGES = [
-  { icon: Scale, label: 'Mandate', value: 'v1', detail: 'Versioned policy' },
-  { icon: LineChart, label: 'Decision', value: 'ALLOCATE', detail: 'Edge 5.7% · Kelly 2.1%' },
-  { icon: Lock, label: 'Sealed', value: 'SHA-256', detail: 'Before outcome' },
-  { icon: FileCheck, label: 'Reconciled', value: 'TxLINE', detail: 'Outcome verified' },
+  { icon: Scale, label: 'Mandate', value: 'v1', detail: 'Versioned policy', gloss: 'Mandate: the written policy the agent runs under — minimum edge, max position size, loss limits. Versioned and public.' },
+  { icon: LineChart, label: 'Decision', value: 'ALLOCATE', detail: 'Edge 5.7% · Kelly 2.1%', gloss: 'Decision: the agent\'s call. Edge is the gap between fair odds and market price; Kelly sizing decides how much to stake.' },
+  { icon: Lock, label: 'Sealed', value: 'SHA-256', detail: 'Before outcome', gloss: 'Sealed: evidence, odds, and the risk decision are SHA-256 fingerprinted before the outcome is known — history can\'t be rewritten.' },
+  { icon: FileCheck, label: 'Reconciled', value: 'TxLINE', detail: 'Outcome verified', gloss: 'Reconciled: TxLINE checks the real-world outcome against the sealed decision and grades it.' },
 ];
 
 // Primary-customer doors. The README positions the customer as both the
@@ -294,7 +295,7 @@ export default function SearchLanding() {
                     const StageIcon = stage.icon;
                     return (
                       <div key={stage.label} className="fc-print flex flex-1 items-stretch" style={{ '--print-delay': `${420 + i * 90}ms` }}>
-                        <div className="flex min-w-[80px] flex-1 flex-col items-center gap-1.5 border border-[var(--color-rule)] bg-white/[0.02] p-3 text-center">
+                        <div title={stage.gloss} className="flex min-w-[80px] flex-1 flex-col items-center gap-1.5 border border-[var(--color-rule)] bg-white/[0.02] p-3 text-center">
                           <StageIcon className="h-4 w-4 text-[var(--color-accent)]" strokeWidth={1.5} />
                           <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-faint)]">
                             {stage.label}
@@ -315,6 +316,10 @@ export default function SearchLanding() {
                     );
                   })}
                 </div>
+
+                <p className="fc-print mt-2 font-mono text-[9px] leading-4 tracking-[0.04em] text-[var(--color-ink-faint)]" style={{ '--print-delay': '780ms' }}>
+                  Mandate = the rules · Kelly = how much to stake · SHA-256 = tamper-proof fingerprint · TxLINE = outcome check
+                </p>
 
                 <div className="fc-print mt-5 flex items-center justify-between gap-3 border-t border-[var(--color-rule)] pt-4" style={{ '--print-delay': '800ms' }}>
                   <p className="text-xs leading-5 text-[var(--color-ink-faint)]">
@@ -343,6 +348,9 @@ export default function SearchLanding() {
                 </div>
               </div>
             </div>
+            <p className="fc-print mt-3 text-center text-xs leading-5 text-[var(--color-ink-faint)]" style={{ '--print-delay': '880ms' }}>
+              Plain English: the AI&rsquo;s rules, its bet, and its reasoning are fingerprinted and locked before the game is played — so the record can&rsquo;t be rewritten after the fact.
+            </p>
           </div>
         </section>
 
@@ -364,6 +372,10 @@ export default function SearchLanding() {
             />
           ))}
         </section>
+
+        {/* Aggregate proof-of-use numbers. Renders nothing on API failure or
+            all-zero data — never fabricates a trust signal. */}
+        <TrustStatsStrip />
 
         {/* Verify a real proof — the single most differentiated artifact.
             A real World Cup fixture with a real Merkle proof anchored on

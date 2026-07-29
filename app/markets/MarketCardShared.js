@@ -339,7 +339,7 @@ export function MarketCard({
  <span
  className={`px-3 py-1 font-medium border cursor-help ${TINT.review}`}
  >
- 🤖 ML Ready
+ ML Ready
  </span>
  <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 bg-[var(--color-paper-deep)] text-[var(--color-ink)] border border-[var(--color-rule-strong)]`}>
  Quantitative analysis available via SynthData
@@ -354,7 +354,7 @@ export function MarketCard({
  <span
  className={`px-3 py-1 font-medium border cursor-help ${TINT.review}`}
  >
- 🤖 ML
+ ML
  </span>
  <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 bg-[var(--color-paper-deep)] text-[var(--color-ink)] border border-[var(--color-rule-strong)]`}>
  {analysis.source === 'synthdata+path' ? 'Path-dependent ML analysis' : 'SynthData 200+ ML models'}
@@ -430,7 +430,7 @@ export function MarketCard({
  className={`px-3 py-1 font-medium border transition-all bg-accent/15 text-accent border-accent/40 hover:bg-accent/25`}
  title="Seal this call as a public, timestamped receipt"
  >
- 🎯 Publish My Receipt
+ Publish My Receipt
  </button>
  )}
  {/* Chain Recommendation Badge - Early visibility */}
@@ -527,9 +527,9 @@ export function MarketCard({
  </div>
  
  {/* Percentile Visualization Bar */}
- <div className="relative h-2 overflow-hidden bg-gradient-to-r from-[var(--color-breach)]/20 via-[var(--color-sealed)]/20 to-[var(--color-accent)]/20">
+ <div className="relative h-2 overflow-hidden border border-[var(--color-rule)] bg-[var(--color-wash-soft)]">
  <div 
- className={`absolute top-0 h-full w-1 bg-white opacity-60`}
+ className={`absolute top-0 h-full w-1 bg-[var(--color-accent)]`}
  style={{
  left: `${((analysis.synthData.currentPrice - analysis.synthData.percentiles.p5) / (analysis.synthData.percentiles.p95 - analysis.synthData.percentiles.p5)) * 100}%`
  }}
@@ -917,7 +917,7 @@ export function MarketCard({
  : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/30"
  }`}
  >
- {canPublish ? "🎯 Publish My Receipt" : "🔗 Connect Wallet to Publish My Receipt"}
+ {canPublish ? "Publish My Receipt" : "Connect Wallet to Publish My Receipt"}
  </button>
  </div>
  )}
@@ -938,7 +938,7 @@ export function MarketCard({
  : "bg-evidence/15 hover:bg-evidence/25 text-evidence border-evidence/35"
  }`}
  >
- {isKalshi ? "Trade on Kalshi ↗" : "📈 Trade Here"}
+ {isKalshi ? "Trade on Kalshi ↗" : "Trade Here"}
  </button>
 
  {/* Hide regular publish button if edge section is shown */}
@@ -951,8 +951,8 @@ export function MarketCard({
  }`}
  >
  {canPublish
- ? "🎯 Publish My Receipt"
- : "🔗 Connect & Publish My Receipt"}
+ ? "Publish My Receipt"
+ : "Connect & Publish My Receipt"}
  </button>
  )}
 
@@ -1016,13 +1016,13 @@ export function MarketCard({
 
  {/* Market Odds */}
  <div className="grid grid-cols-2 gap-4">
- <div className={`glass-input p-4 text-center`}>
+ <div className={`border border-[var(--color-rule)] bg-[var(--color-paper-soft)] p-4 text-center`}>
  <span className={`text-xs ${textColor} opacity-50`}>YES</span>
  <div className={`text-3xl font-light text-accent`}>
  {market.ask ? <TweenNumber value={market.ask * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
  </div>
  </div>
- <div className={`glass-input p-4 text-center`}>
+ <div className={`border border-[var(--color-rule)] bg-[var(--color-paper-soft)] p-4 text-center`}>
  <span className={`text-xs ${textColor} opacity-50`}>NO</span>
  <div className={`text-3xl font-light text-breach`}>
  {market.bid ? <TweenNumber value={market.bid * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
@@ -1036,13 +1036,12 @@ export function MarketCard({
  <h4 className={`text-xs font-light ${textColor} opacity-40 uppercase tracking-widest mb-3`}>Data Provenance</h4>
  <div className="flex flex-wrap gap-2">
  {[
- { name: 'Polymarket/Kalshi', icon: '🏦' },
- analysis.synthData ? { name: 'SynthData ML', icon: '🤖' } : null,
- analysis.weather_conditions ? { name: 'OpenMeteo', icon: '🌤' } : null,
- { name: 'Venice AI Mesh', icon: '🌐' }
+ { name: 'Polymarket/Kalshi' },
+ analysis.synthData ? { name: 'SynthData ML' } : null,
+ analysis.weather_conditions ? { name: 'OpenMeteo' } : null,
+ { name: 'Venice AI Mesh' }
  ].filter(Boolean).map((source) => (
  <div key={source.name} className="flex items-center gap-2 px-3 py-1.5 bg-[var(--color-paper-raised)] border border-[var(--color-rule)]">
- <span className="text-sm">{source.icon}</span>
  <span className={`text-[10px] ${textColor} opacity-60 font-medium`}>{source.name}</span>
  </div>
  ))}
@@ -1089,7 +1088,7 @@ export function MarketCard({
  : "bg-evidence/15 hover:bg-evidence/25 text-evidence border-evidence/35"
  }`}
  >
- {isKalshi ? "Trade on Kalshi ↗" : "📈 Trade Here"}
+ {isKalshi ? "Trade on Kalshi ↗" : "Trade Here"}
  </button>
  <button
  onClick={onPublishSignal}
@@ -1098,7 +1097,7 @@ export function MarketCard({
  : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/35"
  }`}
  >
- {canPublish ? "🎯 Publish My Receipt" : "🔗 Connect & Publish My Receipt"}
+ {canPublish ? "Publish My Receipt" : "Connect & Publish My Receipt"}
  </button>
  </div>
  </div>
