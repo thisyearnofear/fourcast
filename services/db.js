@@ -987,6 +987,27 @@ export async function getAgentRunLedger(limit = 12) {
 }
 
 /**
+ * All stored run summaries, parsed, for aggregate receipt statistics.
+ * Summaries are small JSON documents; a full scan is fine at current volume
+ * and avoids json_extract (unavailable in some deployed SQLite builds).
+ */
+export async function getReceiptStatsRows() {
+  try {
+    await migrationsReady;
+    const rows = await query(`SELECT summary FROM agent_runs`);
+    return {
+      success: true,
+      summaries: rows
+        .map((row) => safeJsonParse(row.summary, null))
+        .filter(Boolean),
+    };
+  } catch (error) {
+    console.error('Failed to get receipt stats rows:', error);
+    return { success: false, error: error.message, summaries: [] };
+  }
+}
+
+/**
  * The worker reports one compact, signed status document. Keeping only its
  * latest state is intentional: receipts remain the immutable audit trail,
  * while this table answers the operational question, "what is it doing now?"
