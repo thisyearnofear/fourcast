@@ -80,7 +80,7 @@ const AUDIENCE_DOORS = [
 // primary narrative but should be discoverable from the landing page.
 const SUPPORTING_CAPS = [
   { href: '/markets', label: 'Markets', desc: 'Edge discovery across Polymarket & Kalshi' },
-  { href: '/canton', label: 'Private Markets', desc: 'Hidden-size settlement on Canton' },
+  { href: '/proof?chain=canton', label: 'Canton proof', desc: 'Atomic settlement + hidden-size privacy, live' },
   { href: '/signals', label: 'Signals', desc: 'Verified analyst signal marketplace' },
   { href: '/labs', label: 'Labs', desc: 'Autopilot execution & builder tools' },
 ];

@@ -34,13 +34,12 @@ import { TourLink, replayTour } from "@/components/RouteGuide";
  */
 const PRIMARY_NAV = [
   { name: BRAND.navLabels.agent ?? "Mandate", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
-  { name: BRAND.navLabels.worldCup ?? "Proof Theatre", href: "/world-cup", description: "TxLINE-verified decision receipts anchored on Solana", onboardId: "world-cup" },
+  { name: BRAND.navLabels.worldCup ?? "Proof Theatre", href: "/proof", description: "One audit trail across chains — Solana receipts + Canton atomic settlement", onboardId: "world-cup" },
   { name: BRAND.navLabels.positions ?? "Diligence", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
 ];
 
 const OVERFLOW_NAV = [
   { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
-  { name: BRAND.navLabels.canton ?? "Private Markets", href: "/canton", description: BRAND.nav.canton, onboardId: "canton" },
   { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
   { name: BRAND.navLabels.labs ?? "Labs", href: "/labs", description: BRAND.nav.labs },
   { name: BRAND.navLabels.alerts ?? "Alerts", href: "/notifications", description: "Notifications from analysts you follow" },

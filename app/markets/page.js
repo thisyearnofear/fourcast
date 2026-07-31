@@ -13,7 +13,6 @@ import { BRAND } from "@/constants/brand";
 import { ARC_EXPLORER_TX } from "@/constants/appConstants";
 import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
 import FirstRunBanner from "@/components/FirstRunBanner";
-import { CantonMarkets } from "@/components/CantonMarkets";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
 import Link from "next/link";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -173,9 +172,12 @@ export default function MarketsPage() {
  } = useSignalPublisher();
  const { addToast, removeToast } = useGlobalToast();
 
- // Tab state: 'sports' or 'discovery' (persisted)
+ // Tab state: 'sports' or 'discovery' (persisted). The chain-named 'canton'
+ // tab was removed — private markets are a property, not a category. A
+ // persisted 'canton' value falls back to 'discovery' so old sessions render.
  const filterStore = useFilterStore();
- const activeTab = filterStore.marketsActiveTab;
+ const persistedTab = filterStore.marketsActiveTab;
+ const activeTab = persistedTab === "sports" ? "sports" : "discovery";
  const setActiveTab = (tab) => filterStore.setMarketsActiveTab(tab);
 
  // Weather state (for UI theming and discovery mode)
@@ -528,8 +530,6 @@ export default function MarketsPage() {
  title="Markets"
  subtitle={activeTab === "sports"
  ? "Live sports markets → ML fair odds → detect edge → prove your call."
- : activeTab === "canton"
- ? "Private prediction markets with CBTC/cETH settlement on Canton Network."
  : "Scan live markets, run ML fair-odds analysis, and surface mispricings worth trading."}
  actions={
  <div className="flex items-center gap-3">
@@ -564,15 +564,13 @@ export default function MarketsPage() {
  items={[
  { id: "sports", label: "Sports & Events", icon: "◆" },
  { id: "discovery", label: "Crypto, Finance & More", icon: "▲" },
- { id: "canton", label: "Canton Markets", icon: "◈" },
  ]}
  activeItem={activeTab}
  onChange={setActiveTab}
  />
  <p className="text-[11px] leading-relaxed text-[var(--color-ink-faint)] max-w-2xl">
  <span className="text-[var(--color-accent)]">Sports</span> — live, fast-resolving, narrow edges ·{' '}
- <span className="text-[var(--color-accent)]">Discovery</span> — long-tail, deeper edges, longer horizons ·{' '}
- <Link href="/canton" className="text-[var(--color-review)] underline decoration-[var(--color-rule-strong)] underline-offset-2 transition hover:text-[var(--color-ink)]">Canton</Link> — private settlement, hidden position sizes.
+ <span className="text-[var(--color-accent)]">Discovery</span> — long-tail, deeper edges, longer horizons.
  </p>
  </div>
  }
@@ -677,10 +675,7 @@ export default function MarketsPage() {
  />
  )}
 
- {/* Canton Tab Content */}
- {activeTab === "canton" && (
- <CantonMarkets isNight={isNight} />
- )}
+ {/* Canton tab removed — private markets are a property, not a category. */}
  </div>
 
  {/* Modal Layers */}
