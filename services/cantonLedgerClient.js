@@ -1,24 +1,28 @@
 /**
- * Canton Ledger Client — server-side direct JSON Ledger API.
+ * Canton Ledger Client v2 — server-side direct JSON Ledger API.
  *
- * Authenticates to the NODERS NaaS Keycloak via OIDC password grant,
- * then submits Daml commands and queries active contracts against the
- * Canton JSON Ledger API (v2).
+ * v2 speaks to the atomic-settlement contract set (canton-2.0.0, built against
+ * the DevNet's vetted CIP-56 interface packages). The command surface changes
+ * from IOU bookkeeping (SettlementObligation + manual wallet transfer) to:
  *
- * This replaces the client-side Console Wallet / Wallet SDK approach.
- * All credentials stay server-side — never exposed to the browser.
+ *   market → holder-signed PositionOffer → operator AcceptOffer
+ *          → both sides lock CIP-56 allocations (escrow)
+ *          → attestation → resolve → Settle/SettleAsHolder executes+cancels
+ *            the allocations IN the settlement transaction
  *
- * Env vars required:
- *   CANTON_JSON_API_URL        — ledger API base URL
- *   CANTON_OIDC_TOKEN_URL      — Keycloak token endpoint
- *   CANTON_OIDC_CLIENT_ID      — Keycloak client ID (password grant)
- *   CANTON_OIDC_USERNAME       — Keycloak user email/username
- *   CANTON_OIDC_PASSWORD       — Keycloak user password
- *   CANTON_OIDC_AUDIENCE       — token audience
- *   CANTON_OIDC_SCOPE          — token scope (default: openid daml_ledger_api offline_access)
- *   CANTON_LEDGER_USER_ID      — ledger user ID (Keycloak subject UUID)
- *   CANTON_OPERATOR_PARTY_ID   — FourcastOperator party ID
- *   NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID — DAR package hash
+ * Env vars required (transport, unchanged from v1):
+ *   CANTON_JSON_API_URL, CANTON_OIDC_TOKEN_URL, CANTON_OIDC_CLIENT_ID,
+ *   CANTON_OIDC_USERNAME, CANTON_OIDC_PASSWORD, CANTON_OIDC_AUDIENCE,
+ *   CANTON_OIDC_SCOPE, CANTON_LEDGER_USER_ID, CANTON_OPERATOR_PARTY_ID,
+ *   NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID (the v2 package id after upload)
+ * Env vars added in v2:
+ *   CANTON_REFERENCE_RULES_CID — TokenRules contract id for the reference
+ *     CIP-56 registry (Fourcast.Token); created once by canton-v2-preflight.
+ *   CANTON_ATTESTER_PARTY_ID   — designated attester for new markets
+ *     (defaults to the operator = devnet self-attestation).
+ *   CANTON_IFACE_PKG_*         — overrides for the network CIP-56 interface
+ *     package ids (defaults to the DevNet-vetted values from
+ *     vendor/network-cip-0056/manifest.json).
  */
 
 import crypto from 'node:crypto';
@@ -34,24 +38,43 @@ const LEDGER_USER_ID = process.env.CANTON_LEDGER_USER_ID || '';
 const OPERATOR_PARTY_ID = process.env.CANTON_OPERATOR_PARTY_ID || '';
 const PACKAGE_ID = process.env.NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID || '';
 
-// DAR package name (used for query template IDs — Canton v2 expects names, not hashes)
-const PACKAGE_NAME = 'canton';
+// v2: designated attester for newly created markets (devnet default: operator,
+// i.e. self-attested; point this at an independent oracle party for prod).
+const ATTESTER_PARTY_ID = process.env.CANTON_ATTESTER_PARTY_ID || '';
 
-// Module-level token cache (survives across requests in the same serverless instance)
+// v2: reference-registry TransactionRules contract (Fourcast.Token) on the
+// ledger — the CIP-56 AllocationFactory/Holding implementation for the demo
+// instrument. Created once by scripts/canton-v2-preflight.mjs.
+const REFERENCE_RULES_CID = process.env.CANTON_REFERENCE_RULES_CID || '';
+
+// Network-vetted CIP-56 interface package ids (vendor/network-cip-0056/manifest.json).
+const IFACE_PKG = {
+  metadata: process.env.CANTON_IFACE_PKG_METADATA_V1
+    || '4ded6b668cb3b64f7a88a30874cd41c75829f5e064b3fbbadf41ec7e8363354f',
+  holding: process.env.CANTON_IFACE_PKG_HOLDING_V1
+    || '718a0f77e505a8de22f188bd4c87fe74101274e9d4cb1bfac7d09aec7158d35b',
+  transferInstruction: process.env.CANTON_IFACE_PKG_TRANSFER_INSTRUCTION_V1
+    || '55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281',
+  allocation: process.env.CANTON_IFACE_PKG_ALLOCATION_V1
+    || '93c942ae2b4c2ba674fb152fe38473c507bda4e82b4e4c5da55a552a9d8cce1d',
+  allocationInstruction: process.env.CANTON_IFACE_PKG_ALLOCATION_INSTRUCTION_V1
+    || '275064aacfe99cea72ee0c80563936129563776f67415ef9f13e4297eecbc520',
+  allocationRequest: process.env.CANTON_IFACE_PKG_ALLOCATION_REQUEST_V1
+    || '6fe848530b2404017c4a12874c956ad7d5c8a419ee9b040f96b5c13172d2e193',
+};
+
+// Package name (used for query template IDs — Canton v2 expects names, not hashes).
+// v2 ships under a NEW lineage: `fourcast` (the legacy `canton` v1 package stays
+// resolvable at #canton — see docs/CANTON_V2_DEPLOY.md).
+const PACKAGE_NAME = 'fourcast';
+
 let cachedToken = null;
 let tokenExpiryMs = 0;
 
-/**
- * Check if the ledger client is configured (all required env vars present).
- */
 export function isCantonConfigured() {
   return Boolean(LEDGER_API_URL && TOKEN_URL && CLIENT_ID && USERNAME && PASSWORD && AUDIENCE);
 }
 
-/**
- * Fetch an OIDC access token from Keycloak (password grant).
- * Caches the token with a 60s safety margin before expiry.
- */
 async function getToken() {
   if (cachedToken && tokenExpiryMs && Date.now() < tokenExpiryMs - 60_000) {
     return cachedToken;
@@ -81,9 +104,6 @@ async function getToken() {
   return cachedToken;
 }
 
-/**
- * Make an authenticated call to the Canton JSON Ledger API (v2).
- */
 async function ledgerCall(method, path, body) {
   const token = await getToken();
   const headers = { Authorization: `Bearer ${token}` };
@@ -95,7 +115,7 @@ async function ledgerCall(method, path, body) {
   }
 
   const res = await fetch(`${LEDGER_API_URL}${path}`, init);
-  const parsed = await res.json();
+  const parsed = await res.json().catch(() => ({}));
 
   const isError = !res.ok || (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && ('code' in parsed || 'cause' in parsed));
   if (isError) {
@@ -105,42 +125,21 @@ async function ledgerCall(method, path, body) {
   return parsed;
 }
 
-/**
- * Generate a unique command ID.
- */
 function commandId() {
   return `fourcast-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
 }
 
-/**
- * Build a template ID string from module + template name.
- * Uses the package hash for command submission (Canton accepts both forms for commands).
- */
 function templateId(module, name) {
   if (!PACKAGE_ID) return '';
   return `${PACKAGE_ID}:${module}:${name}`;
 }
 
-/**
- * Build a template ID for queries using the package NAME (not hash).
- * Canton v2 active-contracts queries require package names, not hashes.
- */
 function queryTemplateId(module, name) {
   return `#${PACKAGE_NAME}:${module}:${name}`;
 }
 
 // ── Command submission ──────────────────────────────────────────────────
 
-/**
- * Submit Daml commands to the ledger and wait for completion.
- *
- * @param {object} opts
- * @param {string[]} opts.actAs       Parties acting on the commands
- * @param {string[]} [opts.readAs]    Parties reading the results
- * @param {object[]} opts.commands    Array of CreateCommand / ExerciseCommand
- * @param {string}  [opts.userId]     Override user ID (defaults to LEDGER_USER_ID)
- * @returns {Promise<object>} Transaction result with updateId and completionOffset
- */
 export async function submitCommands({ actAs, readAs = [], commands, userId }) {
   if (!isCantonConfigured()) {
     throw new Error('Canton ledger not configured — set CANTON_JSON_API_URL and OIDC env vars');
@@ -165,29 +164,68 @@ export async function submitCommands({ actAs, readAs = [], commands, userId }) {
   };
 }
 
-// ── Contract queries ────────────────────────────────────────────────────
+/**
+ * Fetch a full transaction by updateId (the deployed JSON API's
+ * submit-and-wait returns only {updateId, completionOffset} — no inline tree).
+ */
+export async function getTransactionById(updateId, requestingParties) {
+  const result = await ledgerCall('POST', '/v2/updates/transaction-by-id', {
+    updateId,
+    requestingParties: requestingParties?.length ? requestingParties : [OPERATOR_PARTY_ID],
+  });
+  return result?.transaction || result;
+}
 
 /**
- * Query active contracts for a party, filtered by template IDs.
- *
- * @param {string} partyId       The party to query as
- * @param {string[]} templates   Array of { module, name } objects
- * @returns {Promise<object[]>}  Array of { contractId, templateId, payload }
+ * Submit ONE command and return the contract id the flow actually needs.
+ * Resolution order: (1) an ExercisedEvent whose exerciseResult is a plain cid
+ * string (choices returning ContractId); (2) a token-standard result record
+ * (output.allocationCid / output.transferInstructionCid); (3) the LAST
+ * CreatedEvent in the transaction (allocation impls create change first, the
+ * target contract last); (4) the first CreatedEvent.
  */
+async function submitForContractId({ actAs, readAs = [], commands }) {
+  const { raw } = await submitCommands({ actAs, readAs, commands });
+  const updateId = raw?.updateId;
+  if (!updateId) throw new Error(`submission returned no updateId: ${JSON.stringify(raw).slice(0, 300)}`);
+  const tx = await getTransactionById(updateId, [...new Set([...actAs, ...readAs, OPERATOR_PARTY_ID])]);
+  const events = tx?.events || raw?.transaction?.events || [];
+
+  let lastCreated = null;
+  let firstCreated = null;
+  for (const ev of events) {
+    const exercised = ev.ExercisedEvent || ev.exercisedEvent;
+    if (exercised?.exerciseResult !== undefined) {
+      const r = exercised.exerciseResult;
+      if (typeof r === 'string') return r;
+      const cid = r?.output?.allocationCid || r?.output?.transferInstructionCid
+        || r?.output?.receiverHoldingCids?.[0];
+      if (cid) return cid;
+    }
+    const created = ev.CreatedEvent || ev.createdEvent;
+    if (created?.contractId) {
+      if (!firstCreated) firstCreated = created.contractId;
+      lastCreated = created.contractId;
+    }
+  }
+  if (lastCreated) return lastCreated;
+  throw new Error('no contract id found in submission result');
+}
+
+// ── Contract queries ────────────────────────────────────────────────────
+
 export async function queryActiveContracts(partyId, templates = []) {
   if (!isCantonConfigured()) return [];
   if (!partyId) return [];
 
-  // Get current ledger end offset (required for active-contracts queries)
   const end = await ledgerCall('GET', '/v2/state/ledger-end');
   const activeAtOffset = end.offset ?? 0;
 
-  // Build eventFormat with TemplateFilter for each template
-  const cumulative = templates.map(({ module, name }) => ({
+  const cumulative = templates.map((t) => ({
     identifierFilter: {
       TemplateFilter: {
         value: {
-          templateId: queryTemplateId(module, name),
+          templateId: typeof t === 'string' ? t : queryTemplateId(t.module, t.name),
           includeCreatedEventBlob: false,
         },
       },
@@ -206,7 +244,6 @@ export async function queryActiveContracts(partyId, templates = []) {
     eventFormat,
   });
 
-  // Parse the response — each item has contractEntry.JsActiveContract.createdEvent
   if (!Array.isArray(result)) return [];
 
   return result.flatMap((item) => {
@@ -220,23 +257,52 @@ export async function queryActiveContracts(partyId, templates = []) {
   });
 }
 
-// ── High-level market operations ────────────────────────────────────────
+// ── Value helpers (JSON API v2 encodings, same conventions v1 verified) ──
+
+const EMPTY_META = { values: {} };
+const NO_EXTRA_ARGS = { context: { values: {} }, meta: { values: {} } };
+
+/** Daml Decimal as a string with at most 10 decimal places, no trailing zeros. */
+function dec(x) {
+  const n = Number(x);
+  if (!Number.isFinite(n)) return '0';
+  return n.toFixed(10).replace(/\.?0+$/, '') || '0';
+}
+
+/** Reference-registry instrument for the demo (admin = registry operator). */
+function referenceInstrumentId(settlementAsset, admin) {
+  const asset = String(settlementAsset || 'CBTC').toUpperCase() === 'CETH' ? 'CETH' : 'CBTC';
+  return { admin, id: asset === 'CETH' ? 'cETH' : 'cBTC' };
+}
+
+// ── Markets ─────────────────────────────────────────────────────────────
+
+export async function getOpenMarkets(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
+    { module: 'Fourcast.PredictionMarket', name: 'PredictionMarket' },
+  ]);
+}
+
+export async function getMarketResolutions(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
+    { module: 'Fourcast.PredictionMarket', name: 'MarketResolution' },
+  ]);
+}
+
+export async function getAttestations(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
+    { module: 'Fourcast.PredictionMarket', name: 'ResolutionAttestation' },
+  ]);
+}
 
 /**
- * Create a prediction market on Canton (operator action).
- *
- * @param {object} marketData  Market data (marketId, question, settlementAsset, deadline)
- * @returns {Promise<object>}   { updateId, completionOffset }
+ * Create a prediction market. The instrument is bound at creation; the demo
+ * uses the reference registry (admin = operator). Production cBTC/cETH passes
+ * an explicit `instrument: { admin, id }`.
  */
-export async function createMarket(marketData) {
-  const marketId = String(marketData.marketId || marketData.event_id || marketData.id || 'market-001');
-  const question = String(marketData.question || marketData.title || marketData.market_title || '');
-  const settlementAsset = String(marketData.settlement_asset || 'CBTC').toUpperCase() === 'CETH' ? 'CETH' : 'CBTC';
+export async function createMarket({ marketId, question, settlementAsset, deadline, instrument, attester }) {
   const now = new Date().toISOString();
-  const deadline = marketData.deadline
-    ? new Date(marketData.deadline).toISOString()
-    : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
+  const asset = String(settlementAsset || 'CBTC').toUpperCase() === 'CETH' ? 'CETH' : 'CBTC';
   return submitCommands({
     actAs: [OPERATOR_PARTY_ID],
     commands: [{
@@ -244,27 +310,44 @@ export async function createMarket(marketData) {
         templateId: templateId('Fourcast.PredictionMarket', 'PredictionMarket'),
         createArguments: {
           operator: OPERATOR_PARTY_ID,
-          marketId,
-          question,
-          settlementAsset,
+          marketId: String(marketId || `market-${Date.now()}`),
+          question: String(question || ''),
+          settlementAsset: asset,
+          instrument: instrument || referenceInstrumentId(asset, OPERATOR_PARTY_ID),
+          attester: attester || ATTESTER_PARTY_ID || OPERATOR_PARTY_ID,
           createdAt: now,
-          deadline,
+          deadline: deadline ? new Date(deadline).toISOString()
+            : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         },
       },
     }],
   });
 }
 
-/**
- * Resolve a prediction market on Canton (operator action).
- *
- * @param {string} marketContractId  Contract ID of the PredictionMarket
- * @param {string} outcome           'ResolvedYes' | 'ResolvedNo' | 'Voided'
- * @returns {Promise<object>}         { updateId, completionOffset }
- */
-export async function resolveMarket(marketContractId, outcome) {
-  const validOutcome = ['ResolvedYes', 'ResolvedNo', 'Voided'].includes(outcome) ? outcome : 'ResolvedYes';
+/** Issue a resolution attestation (attester action; devnet: operator). */
+export async function createAttestation({ marketId, outcome, evidenceHash, evidenceUri }) {
+  const attester = ATTESTER_PARTY_ID || OPERATOR_PARTY_ID;
+  const result = await submitForContractId({
+    actAs: [attester],
+    commands: [{
+      CreateCommand: {
+        templateId: templateId('Fourcast.PredictionMarket', 'ResolutionAttestation'),
+        createArguments: {
+          attester,
+          marketId: String(marketId),
+          outcome,
+          evidenceHash: String(evidenceHash || ''),
+          evidenceUri: String(evidenceUri || ''),
+          issuedAt: new Date().toISOString(),
+        },
+      },
+    }],
+  });
+  return { attestationContractId: result };
+}
 
+/** Resolve a market with a signed attestation (operator action). */
+export async function resolveMarket(marketContractId, { attestationCid, viewers = [] }) {
   return submitCommands({
     actAs: [OPERATOR_PARTY_ID],
     commands: [{
@@ -272,122 +355,423 @@ export async function resolveMarket(marketContractId, outcome) {
         templateId: templateId('Fourcast.PredictionMarket', 'PredictionMarket'),
         contractId: marketContractId,
         choice: 'ResolveMarket',
-        choiceArgument: { outcome: validOutcome },
+        choiceArgument: { attestationCid, viewers },
       },
     }],
   });
 }
 
-/**
- * Create a prediction position on Canton (operator creates for a holder).
- *
- * @param {object} signalData     Signal data (event_id, recommended_action, stake, settlement_asset)
- * @param {string} holderPartyId  Canton party ID of the position holder
- * @returns {Promise<object>}      { updateId, completionOffset }
- */
-export async function createPosition(signalData, holderPartyId) {
-  const rawId = String(signalData.event_id || signalData.market_title || 'market-001');
-  const side = String(signalData.recommended_action || signalData.confidence || 'UNKNOWN').toUpperCase();
-  const stake = parseFloat(signalData.stake || signalData.position_size || '0');
-  const settlementAsset = String(signalData.settlement_asset || 'CBTC').toUpperCase();
-
-  const damlSide = side === 'YES' || side === 'HIGH' || side === 'BUY' ? 'Yes'
-    : side === 'NO' || side === 'LOW' || side === 'SELL' ? 'No'
-    : 'Yes';
-
-  const damlAsset = settlementAsset === 'CETH' ? 'CETH' : 'CBTC';
-
-  return submitCommands({
-    actAs: [OPERATOR_PARTY_ID],
-    commands: [{
-      CreateCommand: {
-        templateId: templateId('Fourcast.PredictionPosition', 'PredictionPosition'),
-        createArguments: {
-          operator: OPERATOR_PARTY_ID,
-          holder: holderPartyId,
-          marketId: rawId,
-          side: damlSide,
-          stake: stake.toString(),
-          settlementAsset: damlAsset,
-          status: 'Open',
-          createdAt: new Date().toISOString(),
-        },
-      },
-    }],
-  });
-}
-
-/**
- * Settle a prediction position on Canton (operator action).
- *
- * @param {string} positionContractId     Contract ID of the PredictionPosition
- * @param {string} resolutionContractId   Contract ID of the MarketResolution
- * @returns {Promise<object>}              { updateId, completionOffset }
- */
-export async function settlePosition(positionContractId, resolutionContractId) {
+/** Void a market (refund scenario). */
+export async function voidMarket(marketContractId, { reason, viewers = [] }) {
   return submitCommands({
     actAs: [OPERATOR_PARTY_ID],
     commands: [{
       ExerciseCommand: {
-        templateId: templateId('Fourcast.PredictionPosition', 'PredictionPosition'),
-        contractId: positionContractId,
-        choice: 'Settle',
-        choiceArgument: { resolutionCid: resolutionContractId },
+        templateId: templateId('Fourcast.PredictionMarket', 'PredictionMarket'),
+        contractId: marketContractId,
+        choice: 'VoidMarket',
+        choiceArgument: { reason: String(reason || ''), viewers },
       },
     }],
   });
 }
 
-// ── Query helpers ───────────────────────────────────────────────────────
+// ── Positions (offer / accept consent flow) ─────────────────────────────
 
-/**
- * Get all open prediction positions visible to a party.
- * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
- */
+export async function getPositionOffers(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
+    { module: 'Fourcast.PredictionPosition', name: 'PositionOffer' },
+  ]);
+}
+
 export async function getOpenPositions(partyId = OPERATOR_PARTY_ID) {
   return queryActiveContracts(partyId, [
     { module: 'Fourcast.PredictionPosition', name: 'PredictionPosition' },
   ]);
 }
 
-/**
- * Get all settled positions visible to a party.
- * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
- */
 export async function getSettledPositions(partyId = OPERATOR_PARTY_ID) {
   return queryActiveContracts(partyId, [
     { module: 'Fourcast.PredictionPosition', name: 'PositionSettled' },
   ]);
 }
 
-/**
- * Get all pending settlement obligations visible to a party.
- * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
- */
-export async function getPendingObligations(partyId = OPERATOR_PARTY_ID) {
+export async function getExpiredPositions(partyId = OPERATOR_PARTY_ID) {
   return queryActiveContracts(partyId, [
-    { module: 'Fourcast.PredictionPosition', name: 'SettlementObligation' },
+    { module: 'Fourcast.PredictionPosition', name: 'PositionExpired' },
   ]);
 }
 
 /**
- * Get all market resolutions visible to a party.
- * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
+ * Holder-signed position offer — v2 consent primitive.
+ * `asParty` is the holder; until external wallet signing lands (roadmap
+ * Phase 1), the server submits on the holder party's behalf (the ledger user
+ * needs actAs rights over that party).
  */
-export async function getMarketResolutions(partyId = OPERATOR_PARTY_ID) {
+export async function createPositionOffer({ holder, marketCid, side, stake, oddsMultiplier }) {
+  if (!holder) throw new Error('holder party is required for a position offer');
+  return submitForContractId({
+    actAs: [holder],
+    commands: [{
+      CreateCommand: {
+        templateId: templateId('Fourcast.PredictionPosition', 'PositionOffer'),
+        createArguments: {
+          holder: holder,
+          operator: OPERATOR_PARTY_ID,
+          marketCid,
+          side,
+          stake: dec(stake),
+          oddsMultiplier: dec(oddsMultiplier ?? 2),
+          proposedAt: new Date().toISOString(),
+        },
+      },
+    }],
+  }).then((offerContractId) => ({ offerContractId }));
+}
+
+/** Operator accepts a holder's offer → creates the position (both signatories). */
+export async function acceptOffer(offerContractId) {
+  return submitForContractId({
+    actAs: [OPERATOR_PARTY_ID],
+    commands: [{
+      ExerciseCommand: {
+        templateId: templateId('Fourcast.PredictionPosition', 'PositionOffer'),
+        contractId: offerContractId,
+        choice: 'AcceptOffer',
+        choiceArgument: {},
+      },
+    }],
+  }).then((positionContractId) => ({ positionContractId }));
+}
+
+/** Operator rejects an offer (nothing was ever locked). */
+export async function rejectOffer(offerContractId) {
+  return submitCommands({
+    actAs: [OPERATOR_PARTY_ID],
+    commands: [{
+      ExerciseCommand: {
+        templateId: templateId('Fourcast.PredictionPosition', 'PositionOffer'),
+        contractId: offerContractId,
+        choice: 'RejectOffer',
+        choiceArgument: {},
+      },
+    }],
+  });
+}
+
+// ── Reference registry (Fourcast.Token) — escrow + demo funding ─────────
+
+export function isReferenceRegistryConfigured() {
+  return Boolean(REFERENCE_RULES_CID);
+}
+
+/** One-time: create the reference registry's TokenRules contract. */
+export async function createTokenRules() {
+  return submitForContractId({
+    actAs: [OPERATOR_PARTY_ID],
+    commands: [{
+      CreateCommand: {
+        templateId: templateId('Fourcast.Token', 'TokenRules'),
+        createArguments: { admin: OPERATOR_PARTY_ID },
+      },
+    }],
+  }).then((rulesCid) => ({ rulesCid }));
+}
+
+/** Operator self-mint (devnet payout reserve). */
+export async function mintSelf({ amount, instrumentId }) {
+  return submitForContractId({
+    actAs: [OPERATOR_PARTY_ID],
+    commands: [{
+      ExerciseCommand: {
+        templateId: templateId('Fourcast.Token', 'TokenRules'),
+        contractId: REFERENCE_RULES_CID,
+        choice: 'Mint',
+        choiceArgument: {
+          owner: OPERATOR_PARTY_ID,
+          amount: dec(amount),
+          instrumentId: instrumentId || referenceInstrumentId('CBTC', OPERATOR_PARTY_ID),
+        },
+      },
+    }],
+  }).then((tokenCid) => ({ tokenCid }));
+}
+
+/** User mint: holder-signed request, admin fulfills. */
+export async function requestMint(ownerPartyId) {
+  return submitForContractId({
+    actAs: [ownerPartyId],
+    commands: [{
+      CreateCommand: {
+        templateId: templateId('Fourcast.Token', 'MintRequest'),
+        createArguments: { owner: ownerPartyId, admin: OPERATOR_PARTY_ID },
+      },
+    }],
+  }).then((mintRequestCid) => ({ mintRequestCid }));
+}
+
+export async function acceptMint(mintRequestCid, { amount, instrumentId }) {
+  return submitForContractId({
+    actAs: [OPERATOR_PARTY_ID],
+    commands: [{
+      ExerciseCommand: {
+        templateId: templateId('Fourcast.Token', 'MintRequest'),
+        contractId: mintRequestCid,
+        choice: 'AcceptMint',
+        choiceArgument: {
+          amount: dec(amount),
+          instrumentId: instrumentId || referenceInstrumentId('CBTC', OPERATOR_PARTY_ID),
+        },
+      },
+    }],
+  }).then((tokenCid) => ({ tokenCid }));
+}
+
+/** Unlocked reference holdings of a party (Fourcast.Token:Token). */
+export async function getHoldings(partyId) {
   return queryActiveContracts(partyId, [
-    { module: 'Fourcast.PredictionMarket', name: 'MarketResolution' },
+    { module: 'Fourcast.Token', name: 'Token' },
   ]);
+}
+
+/** Locked escrow allocations visible to a party (Fourcast.Token:TokenAllocation). */
+export async function getAllocations(partyId = OPERATOR_PARTY_ID) {
+  return queryActiveContracts(partyId, [
+    { module: 'Fourcast.Token', name: 'TokenAllocation' },
+  ]);
+}
+
+export async function getBalances(partyId) {
+  const [holdings, allocations] = await Promise.all([getHoldings(partyId), getAllocations(partyId)]);
+  // NB: party visibility ≠ ownership — the registry admin sees everyone's
+  // tokens (it's a signatory), so filter by owner/sender explicitly.
+  const unlocked = holdings
+    .filter((h) => h.payload?.holding?.owner === partyId)
+    .reduce((acc, h) => acc + Number(h.payload?.holding?.amount ?? 0), 0);
+  const locked = allocations
+    .filter((a) => a.payload?.allocation?.transferLeg?.sender === partyId)
+    .reduce((acc, a) => acc + Number(a.payload?.allocation?.transferLeg?.amount ?? 0), 0);
+  return { partyId, unlocked, locked, holdings, allocations };
+}
+
+// ── Escrow: fund a position's allocation legs ───────────────────────────
+
+/**
+ * Build the exact AllocationSpecification a position expects for a leg.
+ * Must match the Daml-computed spec byte-for-byte (Settle validates equality).
+ */
+export function allocationSpecFor(pos, legId) {
+  const stake = Number(pos.stake);
+  const mult = Number(pos.oddsMultiplier ?? 2);
+  const transferLeg = legId === 'stake'
+    ? { sender: pos.holder, receiver: pos.operator, amount: dec(stake), instrumentId: pos.instrument, meta: EMPTY_META }
+    : { sender: pos.operator, receiver: pos.holder, amount: dec(stake * (mult - 1)), instrumentId: pos.instrument, meta: EMPTY_META };
+  return {
+    settlement: {
+      executor: pos.operator,
+      settlementRef: { id: `position:${pos.marketId}`, cid: pos.offerCid },
+      requestedAt: pos.createdAt,
+      allocateBefore: pos.allocateBefore,
+      settleBefore: pos.settleBefore,
+      meta: EMPTY_META,
+    },
+    transferLegId: legId,
+    transferLeg,
+  };
 }
 
 /**
- * Get all open markets visible to a party.
- * @param {string} [partyId] - Optional party ID. Defaults to OPERATOR_PARTY_ID.
+ * Lock one side of a position's escrow via the registry's CIP-56
+ * AllocationFactory (the wallet-funding step). `senderPartyId` must hold
+ * unlocked holdings of the leg's instrument.
  */
-export async function getOpenMarkets(partyId = OPERATOR_PARTY_ID) {
-  return queryActiveContracts(partyId, [
-    { module: 'Fourcast.PredictionMarket', name: 'PredictionMarket' },
-  ]);
+export async function allocateLeg(positionPayload, legId, senderPartyId) {
+  if (!REFERENCE_RULES_CID) {
+    throw new Error('reference registry not configured — set CANTON_REFERENCE_RULES_CID (run canton-v2-preflight)');
+  }
+  const spec = allocationSpecFor(positionPayload, legId);
+  const holdings = await getHoldings(senderPartyId);
+  const inputHoldingCids = holdings
+    .filter((h) => h.payload?.holding?.owner === senderPartyId)
+    .map((h) => h.contractId);
+
+  return submitForContractId({
+    // readAs operator: the registry factory contract is disclosed through the
+    // operator party (mirrors production registry discovery).
+    actAs: [senderPartyId],
+    readAs: senderPartyId === OPERATOR_PARTY_ID ? [] : [OPERATOR_PARTY_ID],
+    commands: [{
+      ExerciseCommand: {
+        templateId: `${IFACE_PKG.allocationInstruction}:Splice.Api.Token.AllocationInstructionV1:AllocationFactory`,
+        contractId: REFERENCE_RULES_CID,
+        choice: 'AllocationFactory_Allocate',
+        choiceArgument: {
+          expectedAdmin: OPERATOR_PARTY_ID,
+          allocation: spec,
+          requestedAt: new Date().toISOString(),
+          inputHoldingCids,
+          extraArgs: NO_EXTRA_ARGS,
+        },
+      },
+    }],
+  }).then((allocationCid) => ({ allocationCid, spec }));
 }
 
-export { templateId, queryTemplateId, OPERATOR_PARTY_ID, PACKAGE_ID };
+/**
+ * Fetch a position payload and return the two escrow allocation contract ids
+ * already on-ledger for it (matched by settlementRef + leg id). Operator view
+ * sees all reference-registry allocations.
+ */
+export async function findPositionAllocations(positionPayload) {
+  const allocations = await getAllocations(OPERATOR_PARTY_ID);
+  const matchLeg = (legId) => allocations.find((a) => {
+    const alloc = a.payload?.allocation;
+    return alloc?.transferLegId === legId
+      && alloc?.settlement?.settlementRef?.cid === positionPayload.offerCid
+      && String(alloc?.transferLeg?.instrumentId?.id) === String(positionPayload.instrument?.id);
+  });
+  return {
+    stakeAllocationCid: matchLeg('stake')?.contractId || null,
+    payoutAllocationCid: matchLeg('payout')?.contractId || null,
+  };
+}
+
+// ── Escrow withdrawal helpers (cleanup of unfunded positions) ────────────
+
+/** Withdraw (archive) a position's AllocationRequest — aborts an unfunded
+ *  position. Operator (settlement executor) controlled. */
+export async function withdrawAllocationRequest(positionContractId) {
+  return submitCommands({
+    actAs: [OPERATOR_PARTY_ID],
+    commands: [{
+      ExerciseCommand: {
+        templateId: `${IFACE_PKG.allocationRequest}:Splice.Api.Token.AllocationRequestV1:AllocationRequest`,
+        contractId: positionContractId,
+        choice: 'AllocationRequest_Withdraw',
+        choiceArgument: { extraArgs: NO_EXTRA_ARGS },
+      },
+    }],
+  });
+}
+
+/** Sender withdraws an escrowed allocation → funds return, unlocked.
+ *  Controlled by the allocation's sender party. */
+export async function withdrawAllocation(allocationContractId, senderPartyId) {
+  return submitCommands({
+    actAs: [senderPartyId],
+    commands: [{
+      ExerciseCommand: {
+        templateId: `${IFACE_PKG.allocation}:Splice.Api.Token.AllocationV1:Allocation`,
+        contractId: allocationContractId,
+        choice: 'Allocation_Withdraw',
+        choiceArgument: { extraArgs: NO_EXTRA_ARGS },
+      },
+    }],
+  });
+}
+
+// ── Settlement + expiry (atomic) ────────────────────────────────────────
+
+/**
+ * Settle a position atomically. If allocation cids are not provided, they are
+ * discovered from the position's settlementRef. `lane`: 'operator' (Settle)
+ * or 'holder' (SettleAsHolder; needs holder actAs rights).
+ */
+export async function settlePositionV2(positionContractId, { resolutionCid, lane = 'operator', holderPartyId, stakeAllocationCid, payoutAllocationCid } = {}) {
+  if (lane === 'holder' && !holderPartyId) {
+    throw new Error('holder lane requires holderPartyId (SettleAsHolder is holder-controlled)');
+  }
+  if (!stakeAllocationCid || !payoutAllocationCid) {
+    const positions = await getOpenPositions(OPERATOR_PARTY_ID);
+    const pos = positions.find((p) => p.contractId === positionContractId)?.payload;
+    if (!pos) throw new Error('position not visible to operator — cannot discover allocations');
+    const found = await findPositionAllocations(pos);
+    stakeAllocationCid = stakeAllocationCid || found.stakeAllocationCid;
+    payoutAllocationCid = payoutAllocationCid || found.payoutAllocationCid;
+    if (!stakeAllocationCid || !payoutAllocationCid) {
+      throw new Error('escrow legs not fully allocated yet — cannot settle');
+    }
+  }
+
+  const params = {
+    resolutionCid,
+    stakeAllocationCid,
+    payoutAllocationCid,
+    stakeExtraArgs: NO_EXTRA_ARGS,
+    payoutExtraArgs: NO_EXTRA_ARGS,
+  };
+
+  return submitCommands({
+    actAs: [lane === 'holder' ? holderPartyId : OPERATOR_PARTY_ID],
+    commands: [{
+      ExerciseCommand: {
+        templateId: templateId('Fourcast.PredictionPosition', 'PredictionPosition'),
+        contractId: positionContractId,
+        choice: lane === 'holder' ? 'SettleAsHolder' : 'Settle',
+        choiceArgument: { params },
+      },
+    }],
+  });
+}
+
+/** Expire an unresolved position after settleBefore; refunds both legs. */
+export async function expirePosition(positionContractId, { lane = 'operator', holderPartyId, reason = 'settlement window closed' } = {}) {
+  if (lane === 'holder' && !holderPartyId) {
+    throw new Error('holder lane requires holderPartyId (ExpirePositionAsHolder is holder-controlled)');
+  }
+  const positions = await getOpenPositions(OPERATOR_PARTY_ID);
+  const pos = positions.find((p) => p.contractId === positionContractId)?.payload;
+  if (!pos) throw new Error('position not visible to operator');
+  const found = await findPositionAllocations(pos);
+  if (!found.stakeAllocationCid || !found.payoutAllocationCid) {
+    throw new Error('escrow legs not fully allocated — expire must cancel both');
+  }
+
+  const params = {
+    stakeAllocationCid: found.stakeAllocationCid,
+    payoutAllocationCid: found.payoutAllocationCid,
+    stakeExtraArgs: NO_EXTRA_ARGS,
+    payoutExtraArgs: NO_EXTRA_ARGS,
+    reason: String(reason),
+  };
+
+  return submitCommands({
+    actAs: [lane === 'holder' ? holderPartyId : OPERATOR_PARTY_ID],
+    commands: [{
+      ExerciseCommand: {
+        templateId: templateId('Fourcast.PredictionPosition', 'PredictionPosition'),
+        contractId: positionContractId,
+        choice: lane === 'holder' ? 'ExpirePositionAsHolder' : 'ExpirePosition',
+        choiceArgument: { params },
+      },
+    }],
+  });
+}
+
+// ── Package ops (deployment) ────────────────────────────────────────────
+
+/** Upload a DAR (Buffer) to the participant. Returns true if accepted. */
+export async function uploadDar(darBytes) {
+  const token = await getToken();
+  const res = await fetch(`${LEDGER_API_URL}/v2/packages`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ darFile: darBytes.toString('base64') }),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`DAR upload failed: HTTP ${res.status} — ${text.slice(0, 400)}`);
+  }
+  return true;
+}
+
+/** List package ids known to the participant. */
+export async function listPackages() {
+  const result = await ledgerCall('GET', '/v2/packages');
+  return result.packageIds || [];
+}
+
+export { templateId, queryTemplateId, IFACE_PKG, NO_EXTRA_ARGS, EMPTY_META, referenceInstrumentId, OPERATOR_PARTY_ID, PACKAGE_ID };

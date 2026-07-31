@@ -1,90 +1,397 @@
--- | Fourcast Canton contracts — main module with Daml Script test.
---   The script demonstrates the full lifecycle:
---   1. Operator creates a prediction market (public, visible to all)
---   2. Operator creates Alice's YES position (private — only operator + Alice)
---   3. Operator creates Bob's NO position (private — only operator + Bob)
---   4. Operator resolves the market (YES wins)
---   5. Operator settles Alice's winning position (1000 cBTC payout)
---   6. Operator settles Bob's losing position (0 payout)
+-- | Fourcast Canton v2 — atomic-settlement lifecycle scripts.
+--
+--   `main` is the demo-narrative script (same story as v1's Main: BTC > $150K,
+--   Alice YES / Bob NO, YES wins). The difference under the hood: stakes are
+--   locked as CIP-56 allocations, resolution is attestation-anchored, a HOLDER
+--   settles her own win, and value actually moves inside the Settle
+--   transaction — asserted by balances below, not by narration.
+--
+--   Run all scripts: `dpm test` (or `daml test`) from canton/.
 module Main where
 
 import Daml.Script
+import DA.Optional (isNone)
+import DA.Time (addRelTime, days, seconds)
+
 import Fourcast.Types
 import Fourcast.PredictionMarket
 import Fourcast.PredictionPosition
+import Fourcast.Token
 
--- | Test script: full prediction market lifecycle on Canton.
---   Run with: daml script --dar canton.dar --script Main:main
-main : Script ()
-main = do
+import Splice.Api.Token.HoldingV1 as H
+import Splice.Api.Token.AllocationV1 as A
+import Splice.Api.Token.AllocationInstructionV1 as AI
+
+-- | Reference-registry fixture: operator + traders + a cBTC-sim instrument.
+data Devnet = Devnet
+  with
+    operator : Party
+    alice : Party
+    bob : Party
+    charlie : Party
+    rulesCid : ContractId TokenRules
+    cbtc : H.InstrumentId
+
+setup : Script Devnet
+setup = do
   operator <- allocateParty "FourcastOperator"
-  alice <- allocateParty "Alice"
-  bob <- allocateParty "Bob"
-  now <- getTime
+  alice    <- allocateParty "Alice"
+  bob      <- allocateParty "Bob"
+  charlie  <- allocateParty "Charlie"
+  rulesCid <- submit operator $ createCmd TokenRules with admin = operator
+  let cbtc = H.InstrumentId with admin = operator, id = "cBTC"
+  -- Operator funds its payout reserve (registry-admin self-mint).
+  _ <- submit operator $ exerciseCmd rulesCid Mint with
+    owner = operator
+    amount = 5000.0
+    instrumentId = cbtc
+  -- User mints go through MintRequest/AcceptMint: every Token carries its
+  -- owner's consent (holder-signed, like every other asset template).
+  aliceReq <- submit alice $ createCmd MintRequest with owner = alice, admin = operator
+  _ <- submit operator $ exerciseCmd aliceReq AcceptMint with
+    amount = 2000.0
+    instrumentId = cbtc
+  bobReq <- submit bob $ createCmd MintRequest with owner = bob, admin = operator
+  _ <- submit operator $ exerciseCmd bobReq AcceptMint with
+    amount = 1000.0
+    instrumentId = cbtc
+  pure Devnet with ..
 
-  -- 1. Operator creates a prediction market (cBTC settlement)
-  marketCid <- submit operator (createCmd PredictionMarket with
-    operator = operator
-    marketId = "market-001"
-    question = "Will BTC exceed $150K by end of 2026?"
+-- | Sum of unlocked reference-token balances visible to a party.
+unlockedBalance : Party -> Script Decimal
+unlockedBalance p = do
+  toks <- query @Token p
+  pure $ sum [ t.holding.amount | (_, t) <- toks, t.holding.owner == p, isNone t.holding.lock ]
+
+-- | Funds a party currently has locked in allocations (as the leg's sender).
+lockedInAllocations : Party -> Script Decimal
+lockedInAllocations p = do
+  allocs <- query @TokenAllocation p
+  pure $ sum [ a.allocation.transferLeg.amount | (_, a) <- allocs, a.allocation.transferLeg.sender == p ]
+
+-- | Escrow one settlement leg via the registry's CIP-56 AllocationFactory.
+--   Exactly how a wallet funds an AllocationRequest off a position.
+allocateToLeg : Devnet -> Party -> A.AllocationSpecification -> Script (ContractId A.Allocation)
+allocateToLeg devnet sender spec = do
+  tokens <- query @Token sender
+  let inputs : [ContractId H.Holding] =
+        [ toInterfaceContractId cid
+        | (cid, t) <- tokens
+        , t.holding.owner == sender
+        , t.holding.instrumentId == spec.transferLeg.instrumentId
+        , isNone t.holding.lock ]
+  requestedAt <- getTime
+  passTime (seconds 1)
+  let factoryCid : ContractId AI.AllocationFactory = toInterfaceContractId devnet.rulesCid
+  -- On a production network the sender's wallet discovers the registry's
+  -- factory contract and submits with it disclosed (registry contracts aren't
+  -- visible to every user). readAs plays the disclosure role in scripts.
+  let submitSender = if sender == devnet.operator
+        then submit sender
+        else submitMulti [sender] [devnet.operator]
+  result <- submitSender $ exerciseCmd factoryCid AI.AllocationFactory_Allocate with
+      expectedAdmin = devnet.operator
+      allocation = spec
+      requestedAt = requestedAt
+      inputHoldingCids = inputs
+      extraArgs = noExtraArgs
+  case result.output of
+    AI.AllocationInstructionResult_Completed {allocationCid} -> pure allocationCid
+    AI.AllocationInstructionResult_Pending {} -> error "reference registry completes allocations immediately"
+    AI.AllocationInstructionResult_Failed -> error "allocation failed"
+
+-- | Create a market + a holder-signed position offer + operator acceptance,
+--   then lock both sides into escrow. Returns everything the caller needs to
+--   settle or expire the position.
+data ActivePosition = ActivePosition
+  with
+    marketCid : ContractId PredictionMarket
+    positionCid : ContractId PredictionPosition
+    position : PredictionPosition
+    stakeAllocationCid : ContractId A.Allocation
+    payoutAllocationCid : ContractId A.Allocation
+
+openPosition : Devnet -> Text -> Text -> Party -> Side -> Decimal -> Script ActivePosition
+openPosition devnet marketId question holder side stake = do
+  t0 <- getTime
+  marketCid <- submit devnet.operator $ createCmd PredictionMarket with
+    operator = devnet.operator
+    marketId = marketId
+    question = question
     settlementAsset = CBTC
-    createdAt = now
-    deadline = now)
+    instrument = devnet.cbtc
+    attester = devnet.operator -- devnet: self-attested; swap for an oracle party in prod
+    createdAt = t0
+    deadline = addRelTime t0 (days 1)
+  offerCid <- submit holder $ createCmd PositionOffer with
+    holder = holder
+    operator = devnet.operator
+    marketCid = marketCid
+    side = side
+    stake = stake
+    oddsMultiplier = 2.0
+    proposedAt = t0
+  passTime (seconds 1)
+  positionCid <- submit devnet.operator $ exerciseCmd offerCid AcceptOffer
+  Some position <- queryContractId holder positionCid
+  stakeAllocationCid <- allocateToLeg devnet holder
+    (positionAllocationSpec position stakeLegId (positionStakeLeg position))
+  payoutAllocationCid <- allocateToLeg devnet devnet.operator
+    (positionAllocationSpec position payoutLegId (positionPayoutLeg position))
+  pure ActivePosition with ..
 
-  -- 2. Alice takes a YES position — 500 cBTC stake
-  --   ONLY operator and Alice can see this contract.
-  --   Operator creates on behalf of Alice (consent captured via Console Wallet in prod).
-  alicePositionCid <- submit operator (createCmd PredictionPosition with
-    operator = operator
-    holder = alice
-    marketId = "market-001"
-    side = Yes
-    stake = 500.0
-    settlementAsset = CBTC
-    status = Open
-    createdAt = now)
+-- | Attest (as the market's attester) and resolve. Mines forward past the
+--   market deadline first.
+resolveWithAttestation : Devnet -> ActivePosition -> Outcome -> Text -> [Party] -> Script (ContractId MarketResolution)
+resolveWithAttestation devnet ap outcome evidenceHash viewers = do
+  passTime (days 2)
+  t1 <- getTime
+  attestationCid <- submit devnet.operator $ createCmd ResolutionAttestation with
+    attester = devnet.operator -- market's designated attester (devnet: operator)
+    marketId = ap.position.marketId
+    outcome = outcome
+    evidenceHash = evidenceHash
+    evidenceUri = "https://fourcast.app/txline/receipts/" <> ap.position.marketId
+    issuedAt = t1
+  submit devnet.operator $ exerciseCmd marketCidOf ResolveMarket with
+    attestationCid = attestationCid
+    viewers = viewers
+  where marketCidOf = ap.marketCid
 
-  -- 3. Bob takes a NO position — 300 cBTC stake
-  --   ONLY operator and Bob can see this contract.
-  bobPositionCid <- submit operator (createCmd PredictionPosition with
-    operator = operator
-    holder = bob
-    marketId = "market-001"
-    side = No
-    stake = 300.0
-    settlementAsset = CBTC
-    status = Open
-    createdAt = now)
+-- | Demo narrative: Alice wins and settles HER OWN position. Bob loses and the
+--   operator settles his. Every number below is asserted against balances.
+demo : Script ()
+demo = do
+  devnet@Devnet{..} <- setup
 
-  -- 4. Operator resolves the market — YES wins
-  resolutionCid <- submit operator (exerciseCmd marketCid ResolveMarket with
-    outcome = ResolvedYes)
+  -- Sanity pre-checks
+  a0 <- unlockedBalance alice
+  assertMsg "Alice starts with 2000" (a0 == 2000.0)
 
-  -- 5. Operator settles Alice's winning position
-  --   The Settle choice fetches MarketResolution by contract ID to verify
-  --   the outcome — no fabricated outcomes possible.
-  aliceSettledCid <- submit operator (exerciseCmd alicePositionCid Settle with
-    resolutionCid = resolutionCid)
+  -- 1. Market, holder-signed offers, escrow locked on both sides
+  aliceAp <- openPosition devnet "market-2026-btc-150k" "Will BTC exceed $150K by end of 2026?" alice Yes 500.0
+  bobAp   <- openPosition devnet "market-2026-btc-150k" "Will BTC exceed $150K by end of 2026?" bob   No  300.0
 
-  -- 6. Operator settles Bob's losing position
-  bobSettledCid <- submit operator (exerciseCmd bobPositionCid Settle with
-    resolutionCid = resolutionCid)
+  aliceLocked <- lockedInAllocations alice
+  assertMsg "Alice's 500 stake is visibly locked in her wallet" (aliceLocked == 500.0)
+  operatorLocked <- lockedInAllocations operator
+  assertMsg "Operator payout reserves for both positions are locked" (operatorLocked == 800.0)
 
-  -- Verify via query
-  aliceResults <- query @PositionSettled alice
-  case aliceResults of
-    [(cid, settled)] -> do
-      if settled.winner == Some alice && settled.payout == 1000.0
-        then return ()
-        else error "Alice settlement verification failed"
-    _ -> error "Expected exactly one settled position for Alice"
+  -- 2. Attested resolution: YES wins
+  resolutionCid <- resolveWithAttestation devnet aliceAp ResolvedYes "sha256:9f2c-demo-txline-receipt" [alice, bob]
 
-  bobResults <- query @PositionSettled bob
-  case bobResults of
-    [(cid, settled)] -> do
-      if settled.winner == Some operator && settled.payout == 0.0
-        then return ()
-        else error "Bob settlement verification failed"
-    _ -> error "Expected exactly one settled position for Bob"
+  -- 3. ALICE settles her own winning position (controller = holder).
+  _ <- submit alice $ exerciseCmd aliceAp.positionCid SettleAsHolder with
+    params = SettleParams with
+      resolutionCid = resolutionCid
+      stakeAllocationCid = aliceAp.stakeAllocationCid
+      payoutAllocationCid = aliceAp.payoutAllocationCid
+      stakeExtraArgs = noExtraArgs
+      payoutExtraArgs = noExtraArgs
+
+  aliceAfter <- unlockedBalance alice
+  assertMsg "Alice: stake returned + 500 payout executed, atomically" (aliceAfter == 2500.0)
+
+  -- 4. The OPERATOR settles Bob's losing position.
+  _ <- submit operator $ exerciseCmd bobAp.positionCid Settle with
+    params = SettleParams with
+      resolutionCid = resolutionCid
+      stakeAllocationCid = bobAp.stakeAllocationCid
+      payoutAllocationCid = bobAp.payoutAllocationCid
+      stakeExtraArgs = noExtraArgs
+      payoutExtraArgs = noExtraArgs
+
+  bobAfter <- unlockedBalance bob
+  assertMsg "Bob: 1000 - 300 stake executed to operator" (bobAfter == 700.0)
+  operatorAfter <- unlockedBalance operator
+  assertMsg "Operator: paid 500 net payout, received 300 losing stake" (operatorAfter == 4800.0)
+
+  -- Conservation: no token created or destroyed by settlement
+  totalAfter <- sumA [unlockedBalance alice, unlockedBalance bob, unlockedBalance operator]
+  assertMsg "token supply conserved (8000 = minted)" (totalAfter == 8000.0)
+  assertMsg "nothing remains locked anywhere" =<< do
+    l <- lockedInAllocations operator; pure (l == 0.0)
+
+  -- 5. Receipts carry the evidence commitment
+  aliceReceipts <- query @PositionSettled alice
+  case aliceReceipts of
+    [(_, receipt)] -> do
+      assertMsg "receipt payout = gross winnings incl. stake" (receipt.payout == 1000.0)
+      assertMsg "receipt commits to resolution evidence" (receipt.evidenceHash /= "")
+    _ -> error "expected exactly one settled receipt for Alice"
+
+  -- 6. Structural privacy: Charlie (non-stakeholder) sees nothing
+  charliePositions <- query @PredictionPosition charlie
+  assertMsg "Charlie sees no positions" (null charliePositions)
+  charlieAllocations <- query @TokenAllocation charlie
+  assertMsg "Charlie sees no locked stakes" (null charlieAllocations)
+  charlieReceipts <- query @PositionSettled charlie
+  assertMsg "Charlie sees no settlement receipts" (null charlieReceipts)
 
   return ()
+  where sumA = foldr (liftA2 (+)) (pure 0.0)
+
+main : Script ()
+main = demo
+
+-- | Holder loses; operator settles; the stake allocation executes and pays
+--   the operator; the operator's payout allocation returns unlocked.
+test_losingStakeFlowsToOperator : Script ()
+test_losingStakeFlowsToOperator = do
+  devnet@Devnet{..} <- setup
+  bobAp <- openPosition devnet "market-l1" "Will ETH flip BTC in 2026?" bob No 300.0
+  resolutionCid <- resolveWithAttestation devnet bobAp ResolvedYes "sha256:evidence-l1" [bob]
+
+  _ <- submit operator $ exerciseCmd bobAp.positionCid Settle with
+    params = SettleParams with
+      resolutionCid = resolutionCid
+      stakeAllocationCid = bobAp.stakeAllocationCid
+      payoutAllocationCid = bobAp.payoutAllocationCid
+      stakeExtraArgs = noExtraArgs
+      payoutExtraArgs = noExtraArgs
+
+  bobAfter <- unlockedBalance bob
+  assertMsg "Bob lost his 300 stake" (bobAfter == 700.0)
+  opAfter <- unlockedBalance operator
+  assertMsg "Operator received Bob's stake" (opAfter == 5300.0)
+
+-- | Voided market: both legs cancel in one transaction; nobody loses a cent.
+test_voidedMarketRefundsEveryone : Script ()
+test_voidedMarketRefundsEveryone = do
+  devnet@Devnet{..} <- setup
+  ap <- openPosition devnet "market-v1" "Will it rain?" alice Yes 400.0
+  passTime (days 2)
+  _ <- submit operator $ exerciseCmd ap.marketCid VoidMarket with
+    reason = "data source discontinued"
+    viewers = [alice]
+
+  resolutionCid <-
+    let f cs = case cs of [(c, _)] -> pure c; _ -> error "expected one resolution"
+    in f =<< query @MarketResolution alice
+
+  _ <- submit alice $ exerciseCmd ap.positionCid SettleAsHolder with
+    params = SettleParams with
+      resolutionCid = resolutionCid
+      stakeAllocationCid = ap.stakeAllocationCid
+      payoutAllocationCid = ap.payoutAllocationCid
+      stakeExtraArgs = noExtraArgs
+      payoutExtraArgs = noExtraArgs
+
+  aliceAfter <- unlockedBalance alice
+  assertMsg "Alice fully refunded on void" (aliceAfter == 2000.0)
+  opAfter <- unlockedBalance operator
+  assertMsg "Operator reserve fully refunded on void" (opAfter == 5000.0)
+
+-- | Consent, attestation and timing guards — v1's structural holes closed.
+test_consentAndGuardRails : Script ()
+test_consentAndGuardRails = do
+  devnet@Devnet{..} <- setup
+  t0 <- getTime
+  marketCid <- submit operator $ createCmd PredictionMarket with
+    operator = operator
+    marketId = "market-guards"
+    question = "guards market"
+    settlementAsset = CBTC
+    instrument = cbtc
+    attester = bob -- deliberately NOT the operator
+    createdAt = t0
+    deadline = addRelTime t0 (days 1)
+
+  offerCid <- submit alice $ createCmd PositionOffer with
+    holder = alice
+    operator = operator
+    marketCid = marketCid
+    side = Yes
+    stake = 100.0
+    oddsMultiplier = 2.0
+    proposedAt = t0
+
+  -- (a) The operator CANNOT create a position unilaterally: the holder's
+  --     signature is structural, not procedural.
+  submitMustFail operator $ createCmd PredictionPosition with
+    operator = operator
+    holder = alice
+    offerCid = offerCid
+    marketCid = marketCid
+    marketId = "market-guards"
+    settlementAsset = CBTC
+    instrument = cbtc
+    attester = bob
+    side = Yes
+    stake = 100.0
+    oddsMultiplier = 2.0
+    createdAt = t0
+    allocateBefore = addRelTime t0 (days 1)
+    settleBefore = addRelTime t0 (days 366)
+
+  -- (b) The operator CANNOT forge an attestation for a market whose
+  --     designated attester is someone else.
+  submitMustFail operator $ createCmd ResolutionAttestation with
+    attester = bob
+    marketId = "market-guards"
+    outcome = ResolvedYes
+    evidenceHash = "sha256:forged"
+    evidenceUri = ""
+    issuedAt = t0
+
+  -- (c) Even with a genuine attestation, the market CANNOT resolve early.
+  passTime (seconds 1)
+  goodAttestation <- submit bob $ createCmd ResolutionAttestation with
+    attester = bob
+    marketId = "market-guards"
+    outcome = ResolvedYes
+    evidenceHash = "sha256:ok"
+    evidenceUri = ""
+    issuedAt = t0
+  submitMustFail operator $ exerciseCmd marketCid ResolveMarket with
+    attestationCid = goodAttestation
+    viewers = [alice]
+
+  -- (d) Resolving with an attestation FOR A DIFFERENT MARKET fails.
+  otherAttestation <- submit bob $ createCmd ResolutionAttestation with
+    attester = bob
+    marketId = "other-market"
+    outcome = ResolvedNo
+    evidenceHash = "sha256:other"
+    evidenceUri = ""
+    issuedAt = t0
+  passTime (days 2)
+  submitMustFail operator $ exerciseCmd marketCid ResolveMarket with
+    attestationCid = otherAttestation
+    viewers = [alice]
+
+-- | Nobody resolves in time: after the settlement window closes, escrowed
+--   funds are reclaimed atomically by either party. The deadline is enforced
+--   by the contract, unlike v1's ExpirePosition.
+test_expireRefundsAfterGrace : Script ()
+test_expireRefundsAfterGrace = do
+  devnet@Devnet{..} <- setup
+  ap <- openPosition devnet "market-x1" "Will somebody forget to resolve?" alice Yes 100.0
+
+  locked <- lockedInAllocations alice
+  assertMsg "stake locked before expiry" (locked == 100.0)
+
+  -- Expiry is impossible while the settlement window is open.
+  submitMustFail alice $ exerciseCmd ap.positionCid ExpirePositionAsHolder with
+    params = ExpireParams with
+      stakeAllocationCid = ap.stakeAllocationCid
+      payoutAllocationCid = ap.payoutAllocationCid
+      stakeExtraArgs = noExtraArgs
+      payoutExtraArgs = noExtraArgs
+      reason = "too early"
+
+  passTime (days 400)
+  _ <- submit alice $ exerciseCmd ap.positionCid ExpirePositionAsHolder with
+    params = ExpireParams with
+      stakeAllocationCid = ap.stakeAllocationCid
+      payoutAllocationCid = ap.payoutAllocationCid
+      stakeExtraArgs = noExtraArgs
+      payoutExtraArgs = noExtraArgs
+      reason = "operator never resolved"
+
+  aliceAfter <- unlockedBalance alice
+  assertMsg "Alice refunded her stake after grace" (aliceAfter == 2000.0)
+  opAfter <- unlockedBalance operator
+  assertMsg "Operator reclaimed its escrowed payout reserve" (opAfter == 5000.0)
+  receipts <- query @PositionExpired alice
+  assertMsg "expiry receipt exists" (length receipts == 1)

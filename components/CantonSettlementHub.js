@@ -365,7 +365,7 @@ export default function CantonSettlementHub() {
   const [resolutions, setResolutions] = useState([]);
   const [positions, setPositions] = useState([]);
   const [settledPositions, setSettledPositions] = useState([]);
-  const [obligations, setObligations] = useState([]);
+  const [escrow, setEscrow] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
@@ -393,23 +393,23 @@ export default function CantonSettlementHub() {
     setError(null);
     try {
       const partyQuery = `?partyId=${encodeURIComponent(selectedPartyId)}`;
-      const [marketsRes, resolutionsRes, positionsRes, settledRes, obligationsRes] = await Promise.all([
+      const [marketsRes, resolutionsRes, positionsRes, settledRes, escrowRes] = await Promise.all([
         fetch(`/api/canton/markets${partyQuery}`),
         fetch(`/api/canton/positions${partyQuery}&type=resolutions`),
         fetch(`/api/canton/positions${partyQuery}&type=open`),
         fetch(`/api/canton/positions${partyQuery}&type=settled`),
-        fetch(`/api/canton/positions${partyQuery}&type=obligations`),
+        fetch(`/api/canton/settle-transfer`),
       ]);
 
-      const [marketsData, resolutionsData, positionsData, settledData, obligationsData] = await Promise.all([
-        marketsRes.json(), resolutionsRes.json(), positionsRes.json(), settledRes.json(), obligationsRes.json(),
+      const [marketsData, resolutionsData, positionsData, settledData, escrowData] = await Promise.all([
+        marketsRes.json(), resolutionsRes.json(), positionsRes.json(), settledData, escrowRes.json ? escrowRes.json() : Promise.resolve({}),
       ]);
 
       setMarkets(marketsData.markets || []);
       setResolutions(resolutionsData.positions || []);
       setPositions(positionsData.positions || []);
       setSettledPositions(settledData.positions || []);
-      setObligations(obligationsData.positions || []);
+      setEscrow(escrowData.escrow || []);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -487,7 +487,7 @@ export default function CantonSettlementHub() {
           <MetricCell label="Active" value={activeMarkets.length} />
           <MetricCell label="Open positions" value={positions.length} />
           <MetricCell label="Settled" value={settledPositions.length} accent={settledPositions.length > 0} />
-          <MetricCell label="Pending payouts" value={obligations.length} accent={obligations.length > 0} />
+          <MetricCell label="Escrow ready" value={escrow.filter((e) => e.readyToSettle).length} accent={escrow.some((e) => e.readyToSettle)} />
         </div>
       </div>
 
@@ -625,48 +625,39 @@ export default function CantonSettlementHub() {
         </section>
       )}
 
-      {/* Pending Obligations */}
-      {obligations.length > 0 && (
-        <section className="platform-open-section" aria-label="Pending settlement obligations">
+      {/* Escrow status (v2 atomic settlement) */}
+      {escrow.length > 0 && (
+        <section className="platform-open-section" aria-label="Escrow status">
           <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
             <div className="flex items-center gap-2">
               <Coins className="h-3.5 w-3.5 text-[var(--color-sealed)]/60" />
-              <span className="mc-kicker">Pending payouts · {obligations.length}</span>
+              <span className="mc-kicker">Escrow status · {escrow.length} positions</span>
             </div>
           </div>
-          {obligations.map((ob) => {
-            const o = ob.payload || ob;
-            const assetMeta = ASSETS[o.settlementAsset] || ASSETS.CBTC;
+          {escrow.map((e) => {
             return (
-              <div key={ob.contractId} className="border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5">
+              <div key={e.positionContractId} className="border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5">
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="text-xs text-[var(--color-ink)]">
-                      <span className={assetMeta.color}>{o.amount} {assetMeta.symbol}</span>
-                      <span className="text-[var(--color-ink-faint)] ml-2">to {o.winner?.split('::')[0] || '—'}</span>
+                      {e.marketId} <span className="text-[var(--color-ink-faint)] ml-2">holder {e.holder?.split('::')[0] || '—'}</span>
                     </div>
-                    <div className="mt-0.5 text-[10px] text-[var(--color-ink-faint)] font-mono">
-                      {o.memo || o.marketId}
+                    <div className="mt-0.5 text-[10px] text-[var(--color-ink-faint)]">
+                      stake leg {e.stakeLegAllocated ? <span className="text-[var(--color-accent)]">✓ locked</span> : <span>pending</span>}
+                      {' · '}
+                      payout leg {e.payoutLegAllocated ? <span className="text-[var(--color-accent)]">✓ locked</span> : <span>pending</span>}
+                      {e.readyToSettle && <span className="text-[var(--color-accent)]"> · settle-ready</span>}
                     </div>
                   </div>
-                  <a
-                    href="https://consolewallet.io/develop/ledger"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mc-action text-[10px]"
-                  >
-                    Pay via Console Wallet
-                  </a>
                 </div>
               </div>
             );
           })}
           <div className="px-4 py-3 sm:px-5">
             <p className="text-[10px] text-[var(--color-ink-faint)] leading-5">
-              Each row is a <span className="text-[var(--color-ink-muted)]">SettlementObligation</span> — an on-ledger,
-              machine-verifiable instruction to pay the winner. The final cBTC/cETH transfer is a manual step in
-              this demo (via NODERS Console Wallet); automated CIP-56 payout is the coded Phase-2 step in
-              docs/CANTON_WALLET_ROADMAP.md.
+              Stakes and payouts are <span className="text-[var(--color-ink-muted)]">CIP-56 allocations</span> locked in escrow.
+              Settlement executes cancels them in the same transaction that archives the position —
+              no manual payout step, no obligations, nothing outstanding. See docs/CANTON_ATOMIC_SETTLEMENT.md.
             </p>
           </div>
         </section>

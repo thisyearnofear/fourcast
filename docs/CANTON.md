@@ -1,5 +1,7 @@
 # HackCanton S2 — Fourcast Opportunity
 
+> **v2 note (July 31, 2026):** The contract set described below as "completed" is the **v1 (IOU-bookkeeping)** integration. It is superseded by the **canton-2.0.0 atomic-settlement** contracts: stakes escrowed as CIP-56 allocations, holder-signed consent, attestation-anchored resolution, settlement inside one transaction — package `fourcast` `550828d2…930a`, **live-verified on DevNet** (`scripts/canton-v2-preflight.mjs` → PASS). Authoritative docs: `docs/CANTON_ATOMIC_SETTLEMENT.md` (model + proofs) and `docs/CANTON_V2_DEPLOY.md` (deploy runbook). V1 detail kept below for history.
+
 **Event**: HackCanton League Season 2  
 **Host**: NODERS & Canton Foundation  
 **Duration**: 5 weeks (June 2026)  
@@ -168,7 +170,7 @@ Whales come for privacy. Settled P&L is still publishable via `PositionSettled` 
 - API routes: `/api/canton/markets` (GET/POST), `/api/canton/markets/resolve` (POST), `/api/canton/positions` (GET), `/api/canton/settle` (POST), `/api/canton/balance` (GET), `/api/canton/settle-transfer` (GET)
 - Market lifecycle: `createMarket`, `resolveMarket`, `getOpenMarkets`, `getMarketResolutions`
 - Position lifecycle: `createPosition`, `settlePosition`, `getOpenPositions`, `getSettledPositions`
-- CIP-56 settlement transfer: `getPendingObligations` (transfer execution via NODERS wallet UI)
+- CIP-56 settlement transfer (v1): `getPendingObligations`, manual transfer via NODERS wallet UI — **superseded in v2** by atomic allocation execute/cancel inside the settlement transaction
 - **Verified end-to-end on Devnet**: create market (offset 340860) → query (2 markets) → resolve (offset 340865) → MarketResolution created → resolved market archived
 - **Privacy test passed** (July 23, 2026): Created market with 4 positions across 2 parties (Alice, Bob). Operator view shows 6 positions (all), Alice sees 2 (her own), Bob sees 2 (his own). Daml signatory/observer system enforces structural privacy correctly — each party only sees contracts where they are a signatory or observer.
 - **Health check API**: `GET /api/canton/health` verifies env vars, OIDC auth, ledger queries, and DAR package — used by the /canton page to show honest outage messaging if Devnet is unreachable.
@@ -227,7 +229,7 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 - [x] Run preflight script — market + 4 positions created at ledger offset 401652
 - [x] Run actual privacy test on Canton Devnet — **PASSED**: Operator sees 6 positions, Alice sees 2, Bob sees 2. Daml enforces structural privacy correctly.
 - [x] TxLINE replay mode verification (July 23, 2026) — Verifier now handles both live API format (hex strings) and cached replay format (byte arrays). All proof checks pass: inputs-present, proof-well-formed (14 hashes), stat-roots-present, stat-proof-count (2 stats). On-chain PDA mismatch is expected for historical data.
-- [ ] CIP-56 token transfer test (via NODERS wallet UI)
+- [x] CIP-56 token settlement — no longer manual/n.a.: v2 settles atomic via allocations; live-run via `node scripts/canton-v2-preflight.mjs` after the v2 DAR is uploaded
 
 ### Documentation
 - [ ] 1-page business brief (ICP, use case, who pays, why Canton)
@@ -253,8 +255,8 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 6. **Build the deck** — Problem (whales get copied on Polymarket), Solution (Canton's Daml contracts enforce privacy), Demo (show the UI), Market (30k traders, $39B volume), Ask (funding to build out)
 
 ### Post-Submission
-1. **Multi-party flow** — Holder dashboard (`/canton/holder`) with Console Wallet connect is live. Remaining: implement the full consent-based position creation flow (currently the operator creates positions on behalf of holders after off-chain consent)
-2. **CIP-56 automation** — Currently settlement transfers are manual via NODERS wallet UI. Need to automate via Wallet SDK token transfer API
+1. **Multi-party flow** — Holder dashboard (`/canton/holder`) with Console Wallet connect is live. On-ledger consent is **delivered in v2** (holder-signed PositionOffer → operator AcceptOffer; unilateral creation provably impossible). Remaining: wallet-EXTERNAL signing so holders sign offers with their own keys (roadmap Phase 1)
+2. ~~**CIP-56 automation**~~ — **delivered as v2**: no "automated transfer" needed; settlement itself moves the funds atomically (allocations execute/cancel in-transaction). See docs/CANTON_ATOMIC_SETTLEMENT.md
 3. **Position creation UI** — Currently positions are created via API call. Need a form in the SettlementHub for users to place positions
 4. **Settled P&L leaderboard** — Show verified results without leaked entries (whales keep clout, privacy preserved)
 5. **Telegram bot integration** — Push private settlement confirmations to whale channels

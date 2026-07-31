@@ -1,0 +1,354 @@
+-- | Fourcast reference CIP-56 (token standard V1) registry for Canton DevNet.
+--
+--   This registry exists so the market contracts — which consume ONLY the
+--   standard interfaces vendored under `vendor/cip-0056` (from
+--   canton-network/splice) — can be exercised end-to-end without waiting on
+--   BitSafe/OnRails mint permissions. Swapping to production cBTC/cETH
+--   requires no change to the market contracts: the client passes different
+--   `InstrumentId`s, factory contract ids and `expectedAdmin` parties.
+--
+--   Modeled on `Splice.Testing.Tokens.TestTokenV1` (Apache-2.0), trimmed to
+--   avoid the splice-token-standard-utils dependency, with two deliberate
+--   divergences:
+--     * `TokenAllocation` also observes the transfer-leg RECEIVER, so a
+--       position holder can fetch both escrow legs and settle in a single
+--       holder-submitted transaction.
+--     * Owner-intiated `MintRequest` / `AcceptMint` plus operator-only
+--       `TokenRules_Mint` exist so devnet parties can fund themselves against
+--       a reference instrument (`cBTC`/`cETH` labels, admin = FourcastOperator).
+module Fourcast.Token where
+
+import DA.Optional (isNone, optionalToList)
+
+import Splice.Api.Token.MetadataV1
+import Splice.Api.Token.HoldingV1 as H
+import Splice.Api.Token.TransferInstructionV1 as TI
+import Splice.Api.Token.AllocationV1 as A
+import Splice.Api.Token.AllocationInstructionV1 as AI
+
+-- | A token holding. Stores the holding data using the type from the
+--   interface definition (test-registry trade-off, as in TestTokenV1).
+template Token
+  with
+    holding : H.HoldingView
+  where
+    signatory holding.owner, holding.instrumentId.admin
+
+    ensure
+      holding.amount > 0.0 && -- positive amounts
+      isNone holding.lock     -- no locked holdings
+
+    interface instance H.Holding for Token where
+      view = holding
+
+-- | Owner-initiated mint request. The registry admin fulfills it after
+--   checking funding off-ledger (faucet analog for the reference instrument).
+template MintRequest
+  with
+    owner : Party
+    admin : Party
+  where
+    signatory owner
+    observer admin
+
+    choice AcceptMint : ContractId Token
+      with
+        amount : Decimal
+        instrumentId : H.InstrumentId
+      controller admin
+      do
+        assertMsg "Mint amount must be positive" (amount > 0.0)
+        assertMsg "Instrument is not administered by this registry" (instrumentId.admin == admin)
+        let hv = H.HoldingView with
+              owner = owner
+              instrumentId = instrumentId
+              amount = amount
+              lock = None
+              meta = emptyMetadata
+        create Token with holding = hv
+
+    choice RejectMint : ()
+      controller admin
+      do
+        return ()
+
+-- | Transfer instruction for Token, representing a Token offer. Functions as
+--   both the instruction and a locked holding for the offered amount.
+--   (As in TestTokenV1: this shortcut is fine for a reference registry.)
+template TokenTransferOffer
+  with
+    transfer : TI.Transfer
+  where
+    ensure transfer.amount > 0.0 && transfer.requestedAt <= transfer.executeBefore
+
+    signatory transfer.sender, transfer.instrumentId.admin
+    observer transfer.receiver
+
+    interface instance H.Holding for TokenTransferOffer where
+      view = transferHoldingView transfer
+
+    interface instance TI.TransferInstruction for TokenTransferOffer where
+      view = TI.TransferInstructionView with
+        originalInstructionCid = None
+        transfer = transfer
+        status = TI.TransferPendingReceiverAcceptance
+        meta = emptyMetadata
+
+      transferInstruction_withdrawImpl _self _arg = do
+        tokenCid <- create Token with
+          holding = (transferHoldingView transfer) with lock = None
+        pure TI.TransferInstructionResult with
+          output = TI.TransferInstructionResult_Failed
+          senderChangeCids = [toInterfaceContractId tokenCid]
+          meta = emptyMetadata
+
+      transferInstruction_rejectImpl _self _arg = do
+        tokenCid <- create Token with
+          holding = (transferHoldingView transfer) with lock = None
+        pure TI.TransferInstructionResult with
+          output = TI.TransferInstructionResult_Failed
+          senderChangeCids = [toInterfaceContractId tokenCid]
+          meta = emptyMetadata
+
+      transferInstruction_updateImpl _self _arg =
+        fail "TransferInstruction_Update: not supported by TokenTransferOffer"
+
+      transferInstruction_acceptImpl _self _arg = do
+        tokenCid <- create Token with
+          holding = (transferHoldingView transfer) with
+            owner = transfer.receiver
+            lock = None
+        pure TI.TransferInstructionResult with
+          senderChangeCids = []
+          output = TI.TransferInstructionResult_Completed with
+            receiverHoldingCids = [toInterfaceContractId tokenCid]
+          meta = emptyMetadata
+
+-- | Allocation of locked tokens to a settlement leg. Functions as both the
+--   allocation and a locked holding for the allocated amount.
+--
+--   Divergence from TestTokenV1: the transfer-leg receiver is also an
+--   observer, so the receiver can fetch the allocation and execute it as part
+--   of a receiver-submitted settlement.
+template TokenAllocation
+  with
+    allocation : A.AllocationSpecification
+  where
+    ensure isValidAllocationSpecification allocation
+
+    signatory allocation.transferLeg.sender, allocation.transferLeg.instrumentId.admin
+    observer allocation.settlement.executor, allocation.transferLeg.receiver
+
+    interface instance H.Holding for TokenAllocation where
+      view = allocationHoldingView allocation
+
+    interface instance A.Allocation for TokenAllocation where
+      view = A.AllocationView with
+        allocation = allocation
+        holdingCids = []
+        meta = emptyMetadata
+
+      allocation_withdrawImpl _self _arg = do
+        tokenCid <- create Token with
+          holding = (allocationHoldingView allocation) with lock = None
+        pure A.Allocation_WithdrawResult with
+          senderHoldingCids = [toInterfaceContractId tokenCid]
+          meta = emptyMetadata
+
+      allocation_cancelImpl _self _arg = do
+        tokenCid <- create Token with
+          holding = (allocationHoldingView allocation) with lock = None
+        pure A.Allocation_CancelResult with
+          senderHoldingCids = [toInterfaceContractId tokenCid]
+          meta = emptyMetadata
+
+      allocation_executeTransferImpl _self _arg = do
+        assertWithinDeadline "Allocation.settlement.settleBefore" allocation.settlement.settleBefore
+        tokenCid <- create Token with
+          holding = (allocationHoldingView allocation) with
+            owner = allocation.transferLeg.receiver
+            lock = None
+        pure A.Allocation_ExecuteTransferResult with
+          senderHoldingCids = []
+          receiverHoldingCids = [toInterfaceContractId tokenCid]
+          meta = emptyMetadata
+
+-- | Token rules: the choices provided by the token standard V1 factories,
+--   plus an operator self-mint for the reference instrument.
+template TokenRules
+  with
+    admin : Party
+  where
+    signatory admin
+
+    -- | Self-mint for the registry operator (devnet funding). Users mint via
+    --   MintRequest/AcceptMint so that every Token carries its owner's consent.
+    nonconsuming choice Mint : ContractId Token
+      with
+        owner : Party
+        amount : Decimal
+        instrumentId : H.InstrumentId
+      controller admin
+      do
+        assertMsg "TokenRules.Mint is self-mint only; users go through MintRequest" (owner == admin)
+        assertMsg "Mint amount must be positive" (amount > 0.0)
+        assertMsg "Instrument is not administered by this registry" (instrumentId.admin == admin)
+        let hv = H.HoldingView with
+              owner = owner
+              instrumentId = instrumentId
+              amount = amount
+              lock = None
+              meta = emptyMetadata
+        create Token with holding = hv
+
+    interface instance TI.TransferFactory for TokenRules where
+      view = TI.TransferFactoryView with
+        admin = admin
+        meta = emptyMetadata
+
+      transferFactory_publicFetchImpl _self _arg = pure TI.TransferFactoryView with
+        admin = admin
+        meta = emptyMetadata
+
+      transferFactory_transferImpl _self arg = do
+        requireMatchExpected ("expectedAdmin", admin) arg.expectedAdmin
+        let transfer = arg.transfer
+
+        -- == validate each field of the transfer specification ==
+        assertMsg "Instrument is not administered by this factory" (transfer.instrumentId.admin == admin)
+        assertMsg "Amount must be positive" (transfer.amount > 0.0)
+        assertDeadlineExceeded "Transfer.requestedAt" transfer.requestedAt
+        assertWithinDeadline "Transfer.executeBefore" transfer.executeBefore
+
+        -- split off transfer amount and create self-transfer or offer
+        optSenderChangeCid <- consumeHoldingAmount transfer.sender transfer.inputHoldingCids transfer.amount transfer.instrumentId
+        let senderChangeCids = optionalToList (toInterfaceContractId <$> optSenderChangeCid)
+        if transfer.receiver == transfer.sender
+          then do
+            splitCid <- create Token with
+              holding = (transferHoldingView transfer) with lock = None
+            pure TI.TransferInstructionResult with
+              senderChangeCids = senderChangeCids
+              output = TI.TransferInstructionResult_Completed with
+                receiverHoldingCids = [toInterfaceContractId splitCid]
+              meta = emptyMetadata
+          else do
+            instrCid <- create TokenTransferOffer with
+              transfer = transfer
+            pure TI.TransferInstructionResult with
+              senderChangeCids = senderChangeCids
+              output = TI.TransferInstructionResult_Pending with
+                transferInstructionCid = toInterfaceContractId instrCid
+              meta = emptyMetadata
+
+    interface instance AI.AllocationFactory for TokenRules where
+      view = AI.AllocationFactoryView with
+        admin = admin
+        meta = emptyMetadata
+
+      allocationFactory_publicFetchImpl _self _arg = pure AI.AllocationFactoryView with
+        admin = admin
+        meta = emptyMetadata
+
+      allocationFactory_allocateImpl _self arg = do
+        requireMatchExpected ("expectedAdmin", admin) arg.expectedAdmin
+        let alloc = arg.allocation
+        let settlement = alloc.settlement
+        let transferLeg = alloc.transferLeg
+
+        -- == validate the requested allocation ==
+        assertDeadlineExceeded "Allocation.settlement.requestedAt" settlement.requestedAt
+        assertWithinDeadline "Allocation.settlement.allocateBefore" settlement.allocateBefore
+        assertMsg "Allocation.settlement.allocateBefore must be <= settleBefore"
+          (settlement.allocateBefore <= settlement.settleBefore)
+        assertMsg "Transfer amount must be positive" (transferLeg.amount > 0.0)
+        assertMsg "Instrument is not administered by this factory" (transferLeg.instrumentId.admin == admin)
+        assertDeadlineExceeded "requestedAt" arg.requestedAt
+        assertMsg "At least one input holding must be provided" (not $ null arg.inputHoldingCids)
+
+        -- split off the required amount and create the allocation
+        optSenderChangeCid <- consumeHoldingAmount transferLeg.sender arg.inputHoldingCids transferLeg.amount transferLeg.instrumentId
+        allocationCid <- toInterfaceContractId <$> create TokenAllocation with
+          allocation = arg.allocation
+
+        pure AI.AllocationInstructionResult with
+          senderChangeCids = optionalToList (toInterfaceContractId <$> optSenderChangeCid)
+          output = AI.AllocationInstructionResult_Completed with
+            allocationCid = allocationCid
+          meta = emptyMetadata
+
+-- Utils
+--------
+
+requireMatchExpected : (Eq a, Show a) => (Text, a) -> a -> Update ()
+requireMatchExpected (name, expected) actual =
+  assertMsg (name <> ": expected " <> show expected <> ", got " <> show actual) (expected == actual)
+
+assertWithinDeadline : Text -> Time -> Update ()
+assertWithinDeadline name t = do
+  now <- getTime
+  assertMsg (name <> " must be in the future") (t > now)
+
+assertDeadlineExceeded : Text -> Time -> Update ()
+assertDeadlineExceeded name t = do
+  now <- getTime
+  assertMsg (name <> " must be in the past") (t < now)
+
+isValidAllocationSpecification : A.AllocationSpecification -> Bool
+isValidAllocationSpecification alloc =
+  alloc.transferLeg.amount > 0.0
+  && alloc.settlement.allocateBefore <= alloc.settlement.settleBefore
+
+-- | Consume unlocked holdings of `sender` to cover `amount`, archiving the
+--   inputs and creating a change holding if needed.
+consumeHoldingAmount : Party -> [ContractId H.Holding] -> Decimal -> H.InstrumentId -> Update (Optional (ContractId H.Holding))
+consumeHoldingAmount sender inputCids amount instrumentId = do
+  inputAmounts <- forA inputCids $ \cid -> do
+    holding <- fetch cid
+    let holdingView = view holding
+    requireMatchExpected ("holding owner", sender) holdingView.owner
+    requireMatchExpected ("holding instrument", instrumentId) holdingView.instrumentId
+    requireMatchExpected ("holding must be unlocked", (None : Optional H.Lock)) holdingView.lock
+    archive cid
+    pure holdingView.amount
+  let totalAmount = sum inputAmounts
+  assertMsg ("Insufficient unlocked balance: need " <> show amount <> ", have " <> show totalAmount)
+    (totalAmount >= amount)
+  let remainder = totalAmount - amount
+  if remainder == 0.0
+    then pure None
+    else (Some . toInterfaceContractId) <$> create Token with
+      holding = (H.HoldingView with
+        owner = sender
+        amount = remainder
+        instrumentId = instrumentId
+        lock = None
+        meta = emptyMetadata)
+
+-- | V1 view of an allocation as a locked holding.
+allocationHoldingView : A.AllocationSpecification -> H.HoldingView
+allocationHoldingView (A.AllocationSpecification with settlement; transferLeg) =
+  H.HoldingView with
+    owner = transferLeg.sender
+    amount = transferLeg.amount
+    instrumentId = transferLeg.instrumentId
+    lock = Some H.Lock with
+      holders = [transferLeg.sender, transferLeg.instrumentId.admin]
+      expiresAt = Some settlement.settleBefore
+      expiresAfter = None
+      context = Some $ "allocation for settlement of " <> settlement.settlementRef.id
+    meta = emptyMetadata
+
+-- | V1 view of a pending transfer as a locked holding.
+transferHoldingView : TI.Transfer -> H.HoldingView
+transferHoldingView transfer =
+  H.HoldingView with
+    owner = transfer.sender
+    amount = transfer.amount
+    instrumentId = transfer.instrumentId
+    lock = Some H.Lock with
+      holders = [transfer.sender, transfer.instrumentId.admin]
+      expiresAt = Some transfer.executeBefore
+      expiresAfter = None
+      context = Some $ "transfer to " <> show transfer.receiver
+    meta = emptyMetadata

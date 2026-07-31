@@ -18,29 +18,28 @@ function truncateCid(cid) {
 export default function CantonHolderDashboard() {
   const {
     connected, accounts, primary, error, loading,
-    connect, disconnect, refreshAccounts, queryContracts, disputeTransfer,
+    connect, disconnect, refreshAccounts, queryContracts,
   } = useCantonHolderWallet();
 
   const [positions, setPositions] = useState([]);
   const [settled, setSettled] = useState([]);
-  const [obligations, setObligations] = useState([]);
+  const [allocations, setAllocations] = useState([]);
   const [queryLoading, setQueryLoading] = useState(false);
   const [queryError, setQueryError] = useState(null);
-  const [disputing, setDisputing] = useState({});
 
   const loadAll = useCallback(async () => {
     if (!connected) return;
     setQueryLoading(true);
     setQueryError(null);
     try {
-      const [p, s, o] = await Promise.all([
+      const [p, s, a] = await Promise.all([
         queryContracts([{ module: 'Fourcast.PredictionPosition', name: 'PredictionPosition' }]),
         queryContracts([{ module: 'Fourcast.PredictionPosition', name: 'PositionSettled' }]),
-        queryContracts([{ module: 'Fourcast.PredictionPosition', name: 'SettlementObligation' }]),
+        queryContracts([{ module: 'Fourcast.Token', name: 'TokenAllocation' }]),
       ]);
       setPositions(p);
       setSettled(s);
-      setObligations(o);
+      setAllocations(a);
     } catch (e) {
       setQueryError(e?.message || 'Failed to query holder contracts');
     } finally {
@@ -51,20 +50,6 @@ export default function CantonHolderDashboard() {
   useEffect(() => {
     if (connected) loadAll();
   }, [connected, primary?.partyId, loadAll]);
-
-  const canDispute = Boolean(process.env.NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID);
-
-  const handleDispute = async (contractId) => {
-    setDisputing((prev) => ({ ...prev, [contractId]: true }));
-    try {
-      await disputeTransfer(contractId, 'Winner disputes unpaid settlement');
-      await loadAll();
-    } catch (e) {
-      setQueryError(e?.message || 'Dispute failed');
-    } finally {
-      setDisputing((prev) => ({ ...prev, [contractId]: false }));
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -151,7 +136,7 @@ export default function CantonHolderDashboard() {
                   Holder view is read-only
                 </p>
                 <p>
-                  Because the Daml contracts keep market creation, resolution, and settlement under operator control, a connected holder can only view their own private positions and dispute an unpaid settlement obligation.
+                  Holders co-sign their positions (offer/accept consent), see only their own contracts, and can settle their own wins — the economics are fixed by the contract, not by whoever presses the button.
                 </p>
                 {primary && (
                   <p className="mt-2 font-mono text-[var(--color-ink-faint)]">
@@ -161,7 +146,7 @@ export default function CantonHolderDashboard() {
               </div>
             </div>
           </div>
-          <Metrics positions={positions} settled={settled} obligations={obligations} />
+          <Metrics positions={positions} settled={settled} allocations={allocations} />
 
           {queryError && (
             <div className="border border-[var(--color-breach)]/20 bg-[var(--color-breach)]/5 p-3 text-[11px] text-[var(--color-breach)]">
@@ -234,39 +219,41 @@ export default function CantonHolderDashboard() {
 
           <ContractSection
             icon={<Coins className="h-3.5 w-3.5 text-[var(--color-sealed)]" />}
-            title="Pending payouts"
-            empty="No pending obligations visible to this party."
+            title="Escrowed funds"
+            empty="No locked escrow visible to this party."
           >
-            {obligations.map((ob) => {
-              const o = ob.payload || {};
-              const asset = ASSETS[o.settlementAsset] || ASSETS.CBTC;
+            {allocations.map((al) => {
+              const a = al.payload?.allocation || al.payload || {};
+              const leg = a.transferLeg || {};
+              const mine = leg.sender === primary?.partyId;
               return (
                 <div
-                  key={ob.contractId}
+                  key={al.contractId}
                   className="border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-xs text-[var(--color-ink)]">
-                        {o.amount} {asset.symbol}
+                        {leg.amount} {leg.instrumentId?.id || 'token'}
+                        <span className="text-[var(--color-ink-faint)] ml-2">{mine ? 'your stake (locked)' : 'counterparty payout (locked)'}</span>
                       </div>
                       <div className="mt-0.5 text-[10px] text-[var(--color-ink-faint)] font-mono">
-                        {o.memo || o.marketId}
+                        {a.settlement?.settlementRef?.id}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDispute(ob.contractId)}
-                      disabled={!canDispute || disputing[ob.contractId]}
-                      className="mc-action text-[10px] disabled:opacity-50"
-                      title={!canDispute ? 'Set NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID to enable disputes' : ''}
-                    >
-                      {disputing[ob.contractId] ? 'Disputing…' : 'Dispute'}
-                    </button>
+                    <span className="text-[10px] text-[var(--color-accent)]">locked in escrow</span>
                   </div>
                 </div>
               );
             })}
+            <div className="px-4 py-3 sm:px-5">
+              <p className="text-[10px] text-[var(--color-ink-faint)] leading-5">
+                Stakes and payouts are CIP-56 allocations locked in escrow. Settlement executes or
+                returns them in the same transaction that archives the position — winners are paid
+                in-transaction; if a market is never resolved, ExpirePositionAsHolder refunds you
+                after the settlement window. There is nothing left to dispute.
+              </p>
+            </div>
           </ContractSection>
         </>
       )}
@@ -292,12 +279,12 @@ export default function CantonHolderDashboard() {
   );
 }
 
-function Metrics({ positions, settled, obligations }) {
+function Metrics({ positions, settled, allocations }) {
   return (
     <div className="grid grid-cols-3 gap-px overflow-hidden bg-[var(--color-paper-soft)]">
       <Metric label="Open" value={positions.length} />
       <Metric label="Settled" value={settled.length} />
-      <Metric label="Payouts" value={obligations.length} />
+      <Metric label="Escrowed" value={allocations.length} />
     </div>
   );
 }

@@ -157,6 +157,8 @@ bin/
 # Deploy artifacts
 .prediction-receipt-address
 .env*
+!.env.example
+!.env.local.example
 OPS.md
 .fourcast-agent/
 
@@ -166,6 +168,11 @@ OPS.md
 # ============================================
 # Daml / Canton build artifacts
 # ============================================
-canton/.daml/
+# All dpm/daml build outputs (top-level project AND vendored packages under
+# canton/vendor/cip-0056/*/.daml/) — reproducible from sources.
+**/.daml/
 canton/dist/
+# NOTE: canton/vendor/network-cip-0056/dars/*.dar ARE committed on purpose —
+# they are the DevNet-vetted CIP-56 interface DARs fetched from the participant
+# (not regenerable offline; see vendor/network-cip-0056/manifest.json).
 docs/OPS.md

@@ -1,7 +1,14 @@
 sdk-version: 3.5.2
-name: canton
-version: 1.0.0
-source: daml/Main.daml
+# NOTE: package name is `fourcast`, NOT an upgrade of the legacy `canton` v1
+# package. v2 restructures templates/choices contrary to SCU upgrade rules
+# (older LF gate and template-level rules), so it deliberately starts a new
+# package lineage. Legacy v1 stays resolvable at #canton; v2 at #fourcast.
+name: fourcast
+version: 2.0.0
+# v2: atomic settlement on the CIP-56 token standard. Interface packages are
+# vendored (source, Apache-2.0) under vendor/cip-0056 — pinned to the CIP-56 V1
+# interfaces used by cBTC (BitSafe) / cETH (OnRails) on DevNet.
+source: daml
 parties:
 - Alice
 - Bob
@@ -9,3 +16,18 @@ dependencies:
 - daml-prim
 - daml-stdlib
 - daml-script
+data-dependencies:
+# CIP-56 interface packages as vetted on the NODERS DevNet (fetched from the
+# participant, package IDs in vendor/network-cip-0056/manifest.json). These are
+# what the real cBTC/cETH registries implement.
+- vendor/network-cip-0056/dars/splice-api-token-metadata-v1-1.0.0-network.dar
+- vendor/network-cip-0056/dars/splice-api-token-holding-v1-1.0.0-network.dar
+- vendor/network-cip-0056/dars/splice-api-token-transfer-instruction-v1-1.0.0-network.dar
+- vendor/network-cip-0056/dars/splice-api-token-allocation-v1-1.0.0-network.dar
+- vendor/network-cip-0056/dars/splice-api-token-allocation-instruction-v1-1.0.0-network.dar
+- vendor/network-cip-0056/dars/splice-api-token-allocation-request-v1-1.0.0-network.dar
+build-options:
+# LF 2.2 — same target as the v1 build (SDK 3.5.2 default), per NODERS's env
+# requirement. Data-deps are the network's LF 1.x interface dalfs (allowed:
+# LF version of data-deps may be older than the target).
+- --target=2.2

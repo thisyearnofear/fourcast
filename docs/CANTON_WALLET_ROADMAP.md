@@ -62,6 +62,17 @@
 
 **Why second:** high demo impact, but touches Daml contracts and working settlement logic.
 
+### Status: **Daml layer delivered (v2.0.0), client wiring pending**
+
+The contract rework is done and verified — see `docs/CANTON_ATOMIC_SETTLEMENT.md`
+and `canton/daml/Fourcast/PredictionPosition.daml`. Instead of automating a
+post-hoc transfer, v2 eliminated the obligation entirely: stakes are locked as
+CIP-56 allocations at position entry, and `Settle`/`SettleAsHolder` execute /
+cancel the escrow legs inside the settlement transaction itself. 7/7 Daml
+Scripts pass (`dpm test` in `canton/`, SDK 3.5.2).
+
+Remaining items below are the app-side wiring:
+
 ### Scope
 - Replace the manual “Pay via Console Wallet” link in `CantonSettlementHub` with an automated on-ledger token transfer.
 - The `Settle` choice should atomically transfer cBTC/cETH from the operator to the winner and archive the obligation.

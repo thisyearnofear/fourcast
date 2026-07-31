@@ -122,7 +122,7 @@ export function useCantonHolderWallet() {
       identifierFilter: {
         TemplateFilter: {
           value: {
-          templateId: `#canton:${module}:${name}`,
+          templateId: `#fourcast:${module}:${name}`,
           includeCreatedEventBlob: false,
         },
         },
@@ -151,18 +151,18 @@ export function useCantonHolderWallet() {
   }, [sdk, connected, accounts, primary]);
 
   /**
-   * Exercise SettlementObligation.DisputeTransfer from the connected wallet.
-   * Only the winner (holder) can dispute.
+   * LEGACY v1 only: SettlementObligation.DisputeTransfer. The template no
+   * longer exists in fourcast 2.0.0 (atomic settlement replaces obligations);
+   * kept dormant for contracts created by the legacy canton 1.0.0 package.
+   * Do not call for v2 obligations — there are none.
    */
   const disputeTransfer = useCallback(async (contractId, reason = 'Winner disputes non-payment') => {
     if (!sdk || !connected) throw new Error('Wallet not connected');
     const partyId = primary?.partyId || accounts[0]?.partyId;
     if (!partyId) throw new Error('No party selected');
 
-    const packageId = process.env.NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID || '';
-    const templateId = packageId
-      ? `${packageId}:Fourcast.PredictionPosition:SettlementObligation`
-      : '#canton:Fourcast.PredictionPosition:SettlementObligation';
+    // Deliberately the LEGACY package-name, not NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID
+    const templateId = '#canton:Fourcast.PredictionPosition:SettlementObligation';
 
     await sdk.prepareExecuteAndWait({
       actAs: [partyId],

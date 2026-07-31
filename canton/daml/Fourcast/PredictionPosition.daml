@@ -1,145 +1,374 @@
--- | Prediction position contract — the private execution layer.
+-- | Prediction position contracts — the private execution layer, v2.
 --
---   This is the core differentiator of Fourcast on Canton. Each position
---   is a Daml contract with `signatory operator, holder` — meaning ONLY
---   the operator (Fourcast) and the holder (user) can see the position
---   details: side, stake, and size. No other party, validator, or observer
---   can query this contract. This is structurally impossible on EVM where
---   every transaction is public.
+--   v1 critique (paraphrasing reviewer feedback): stakes were a Decimal in a
+--   database-shaped contract; the holder never signed anything; settlement
+--   produced an IOU ("SettlementObligation") that a human paid out later from
+--   a wallet UI; only the operator could settle; the operator could resolve to
+--   any outcome at any time; positions never expired meaningfully.
 --
---   Settlement flow:
---   1. User takes a position → operator + holder co-sign a PredictionPosition
---   2. Actual cBTC/cETH stake transfer happens via CIP-56 (through Console Wallet)
---   3. Market resolves → MarketResolution contract is created
---   4. Holder (or operator) exercises Settle → position is archived,
---      a PositionSettled receipt is created, and a SettlementObligation
---      instructs the operator to transfer winnings via CIP-56
+--   v2 replaces all of that with the CIP-56 allocation pattern (the same
+--   shape as the token standard's own reference trading app):
+--
+--     1. CONSENT: the holder signs a `PositionOffer`. The operator accepts it,
+--        which creates the `PredictionPosition` with BOTH parties as
+--        signatories. A position can never exist without the holder's
+--        on-ledger authorization.
+--
+--     2. ESCROW: the position implements the CIP-56 `AllocationRequest`
+--        interface, declaring two transfer legs:
+--          - "stake":  holder   -> operator, amount = stake
+--          - "payout": operator -> holder,  amount = stake * (oddsMultiplier - 1)
+--        Each side locks its side by allocating holdings (CIP-56
+--        `AllocationFactory_Allocate`). Locked allocations are real holdings —
+--        visible and inspectable in the holder's wallet as locked funds.
+--
+--     3. ATOMIC SETTLEMENT: `Settle`/`SettleAsHolder` fetch the market's
+--        attestation-anchored resolution, validate both allocations against
+--        the position's expected legs, and execute/cancel them *in the same
+--        transaction that archives the position*:
+--          - holder wins : stake leg cancelled (stake returned), payout leg
+--                          executed (operator pays the holder)
+--          - holder loses: stake leg executed (holder pays), payout cancelled
+--          - market void : both cancelled (everyone refunded)
+--        Either the operator OR THE HOLDER can settle (two thin choices with
+--        identical bodies — a holder can claim a win without any operator
+--        cooperation, and the contract code fixes the economics regardless of
+--        who settles).
+--
+--     4. REFUND ESCAPE: after `settleBefore`, `ExpirePosition`/
+--        `ExpirePositionAsHolder` cancel both legs and refund everyone,
+--        atomically. No obligations, no manual wallet transfers, no dispute
+--        contracts — there is nothing left outstanding once a position leaves
+--        the ledger.
 module Fourcast.PredictionPosition where
 
+import DA.TextMap as TextMap
+import DA.Time (addRelTime)
+
 import Fourcast.Types
-import Fourcast.PredictionMarket (MarketResolution)
+import Fourcast.PredictionMarket (PredictionMarket(..), MarketResolution(..))
 
--- | A private prediction position. Only operator + holder can see this.
-template PredictionPosition
+import Splice.Api.Token.MetadataV1
+import Splice.Api.Token.HoldingV1 (InstrumentId)
+import Splice.Api.Token.AllocationV1
+import Splice.Api.Token.AllocationRequestV1
+
+-- | ExtraArgs with no context and no metadata (reference registries ignore it;
+--   production registries may route context data here).
+noExtraArgs : ExtraArgs
+noExtraArgs = ExtraArgs with context = emptyChoiceContext, meta = emptyMetadata
+
+-- | Signed request by a holder to take a position. Operator accepts or rejects.
+--   This is the holder's on-ledger consent: the resulting position carries the
+--   holder as a signatory, whose authorization comes from signing this offer.
+template PositionOffer
   with
-    operator : Party
     holder : Party
-    marketId : Text
-    side : Side               -- YES or NO
-    stake : Decimal           -- Amount of cBTC/cETH locked
-    settlementAsset : SettlementAsset
-    status : PositionStatus
-    createdAt : Time
+    operator : Party
+    marketCid : ContractId PredictionMarket
+    side : Side
+    stake : Decimal
+    oddsMultiplier : Decimal  -- gross payout = stake * oddsMultiplier if the holder wins (2.0 = double)
+    proposedAt : Time
   where
-    -- CRITICAL: Only operator + holder can see this contract.
-    -- The operator authorizes creation (on behalf of the user via Console Wallet).
-    -- The holder observes — they can see and exercise choices.
-    -- No third party, no public explorer, no competing trader can view it.
-    signatory operator
-    observer holder
+    signatory holder
+    observer operator
+    ensure stake > 0.0 && oddsMultiplier > 1.0
 
-    -- | Settle the position after market resolution.
-    --   The caller must provide the contract ID of the MarketResolution
-    --   contract. The choice fetches it to verify the outcome — this
-    --   prevents any party from settling with a fabricated outcome.
-    --   Creates a PositionSettled receipt and, if the holder won, a
-    --   SettlementObligation that authorizes the operator to transfer
-    --   winnings via CIP-56 through Console Wallet.
-    choice Settle : ContractId PositionSettled
-      with
-        resolutionCid : ContractId MarketResolution
+    -- | Operator accepts: fetch the market, enforce its terms, create the
+    --   position. Holder consent comes from the offer's signatory.
+    choice AcceptOffer : ContractId PredictionPosition
       controller operator
       do
-        resolution <- fetch resolutionCid
-        assert (resolution.marketId == marketId)
-        let outcome = resolution.outcome
-        let isWinner = sideMatches side outcome
-        let isVoided = outcome == Voided
-        let winner = if isVoided
-                     then None
-                     else Some (if isWinner then holder else operator)
-        let payout = if isVoided then stake else if isWinner then stake * 2.0 else 0.0
+        market <- fetch marketCid
         now <- getTime
-        settledCid <- create PositionSettled with
+        assertMsg "Market is closed for new positions" (now < market.deadline)
+        assertMsg "Offer targets a different operator" (market.operator == operator)
+        create PredictionPosition with
           operator = operator
           holder = holder
-          marketId = marketId
+          offerCid = self
+          marketCid = marketCid
+          marketId = market.marketId
+          settlementAsset = market.settlementAsset
+          instrument = market.instrument
+          attester = market.attester
           side = side
           stake = stake
-          settlementAsset = settlementAsset
-          outcome = outcome
-          winner = winner
-          payout = payout
-          settledAt = now
-        if payout > 0.0
-          then do
-            create SettlementObligation with
-              operator = operator
-              winner = (case winner of Some w -> w; None -> holder)
-              amount = payout
-              settlementAsset = settlementAsset
-              marketId = marketId
-              memo = "Fourcast settlement: " <> marketId
-              createdAt = now
-            return settledCid
-          else return settledCid
+          oddsMultiplier = oddsMultiplier
+          createdAt = now
+          allocateBefore = market.deadline
+          settleBefore = addRelTime market.deadline settlementGrace
 
-    -- | Expire the position if the market deadline passed without resolution.
-    choice ExpirePosition : ()
-      with
-        reason : Text
+    -- | Operator declines. Nothing was ever locked; the offer simply archives.
+    choice RejectOffer : ()
       controller operator
       do
         return ()
 
--- | Receipt proving a position was settled. Visible to operator + holder.
---   This is the audit trail — it records the outcome and payout without
---   revealing the stake to anyone else.
+-- | A private prediction position with escrowed stakes. Only the operator and
+--   the holder can see this contract — structural privacy via Daml's
+--   signatory model, identical guarantee to v1.
+template PredictionPosition
+  with
+    operator : Party
+    holder : Party
+    offerCid : ContractId PositionOffer
+    marketCid : ContractId PredictionMarket
+    marketId : Text
+    settlementAsset : SettlementAsset
+    instrument : InstrumentId
+    attester : Party
+    side : Side
+    stake : Decimal
+    oddsMultiplier : Decimal
+    createdAt : Time
+    allocateBefore : Time   -- allocations must exist before this (== market deadline)
+    settleBefore : Time     -- settlement window ends; afterwards expiry refunds both sides
+  where
+    signatory operator, holder
+    ensure stake > 0.0 && oddsMultiplier > 1.0
+
+    -- | Wallets discover what to lock through this CIP-56 interface: viewing
+    --   the position as an AllocationRequest yields the settlement info + legs.
+    interface instance AllocationRequest for PredictionPosition where
+      view = AllocationRequestView with
+        settlement = positionSettlement this
+        transferLegs = TextMap.fromList
+          [ (stakeLegId, positionStakeLeg this)
+          , (payoutLegId, positionPayoutLeg this) ]
+        meta = emptyMetadata
+
+      -- The holder rejects = they will not fund their side; position archives.
+      allocationRequest_RejectImpl _self AllocationRequest_Reject{..} = do
+        assertMsg "Only the holder can reject their own position request" (actor == holder)
+        pure ChoiceExecutionMetadata with meta = emptyMetadata
+
+      -- The executor (operator) withdraws = position aborted before funding.
+      allocationRequest_WithdrawImpl _self _args =
+        pure ChoiceExecutionMetadata with meta = emptyMetadata
+
+    -- | Atomically settle the position against the market resolution —
+    --   OPERATOR lane. (SettleAsHolder is the identical holder lane.)
+    choice Settle : ContractId PositionSettled
+      with
+        params : SettleParams
+      controller operator
+      do
+        doSettle this params
+
+    -- | Atomically settle the position — HOLDER lane. The holder can claim a
+    --   win (or refund on void) without any operator cooperation; the contract
+    --   code fixes the economics irrespective of who settles.
+    choice SettleAsHolder : ContractId PositionSettled
+      with
+        params : SettleParams
+      controller holder
+      do
+        doSettle this params
+
+    -- | Refund path, OPERATOR lane: only after settleBefore (the market never
+    --   resolved/settled in time). Cancels both legs atomically. Unlike v1,
+    --   the deadline is enforced by the contract.
+    choice ExpirePosition : ContractId PositionExpired
+      with
+        params : ExpireParams
+      controller operator
+      do
+        doExpire this params
+
+    -- | Refund path, HOLDER lane — the common case: holder reclaims an
+    --   abandoned escrow without operator cooperation.
+    choice ExpirePositionAsHolder : ContractId PositionExpired
+      with
+        params : ExpireParams
+      controller holder
+      do
+        doExpire this params
+
+-- | Shared parameters for the two Settlement choices.
+data SettleParams = SettleParams
+  with
+    resolutionCid : ContractId MarketResolution
+    stakeAllocationCid : ContractId Allocation
+    payoutAllocationCid : ContractId Allocation
+    stakeExtraArgs : ExtraArgs
+    payoutExtraArgs : ExtraArgs
+  deriving (Eq, Show)
+
+-- | Shared parameters for the two Expiry choices.
+data ExpireParams = ExpireParams
+  with
+    stakeAllocationCid : ContractId Allocation
+    payoutAllocationCid : ContractId Allocation
+    stakeExtraArgs : ExtraArgs
+    payoutExtraArgs : ExtraArgs
+    reason : Text
+  deriving (Eq, Show)
+
+-- | The settlement logic shared by Settle and SettleAsHolder:
+--     1. fetch the resolution (outcome + evidence commitment)
+--     2. fetch both escrowed allocations, validated byte-for-byte against
+--        this position's expected legs
+--     3. move funds: exactly one execute + one cancel per outcome
+--     4. emit the settlement receipt; the position archives with this choice
+doSettle : PredictionPosition -> SettleParams -> Update (ContractId PositionSettled)
+doSettle pos params = do
+  resolution <- fetch params.resolutionCid
+  assertMsg "Resolution belongs to a different market" (resolution.marketId == pos.marketId)
+  let outcome = resolution.outcome
+
+  stakeAlloc <- fetch params.stakeAllocationCid
+  payoutAlloc <- fetch params.payoutAllocationCid
+  assertMsg "Stake allocation does not match this position"
+    ((view stakeAlloc).allocation == positionAllocationSpec pos stakeLegId (positionStakeLeg pos))
+  assertMsg "Payout allocation does not match this position"
+    ((view payoutAlloc).allocation == positionAllocationSpec pos payoutLegId (positionPayoutLeg pos))
+
+  now <- getTime
+  assertMsg "Settlement window has closed — use ExpirePosition" (now < pos.settleBefore)
+
+  holderPayout <-
+    if outcome == Voided
+      then do
+        _ <- exercise params.stakeAllocationCid (Allocation_Cancel params.stakeExtraArgs)
+        _ <- exercise params.payoutAllocationCid (Allocation_Cancel params.payoutExtraArgs)
+        pure pos.stake  -- stake returned
+      else if sideMatches pos.side outcome
+        then do
+          _ <- exercise params.stakeAllocationCid (Allocation_Cancel params.stakeExtraArgs)
+          _ <- exercise params.payoutAllocationCid (Allocation_ExecuteTransfer params.payoutExtraArgs)
+          pure (pos.stake * pos.oddsMultiplier)
+        else do
+          _ <- exercise params.stakeAllocationCid (Allocation_ExecuteTransfer params.stakeExtraArgs)
+          _ <- exercise params.payoutAllocationCid (Allocation_Cancel params.payoutExtraArgs)
+          pure 0.0
+
+  create PositionSettled with
+    operator = pos.operator
+    holder = pos.holder
+    marketId = pos.marketId
+    settlementAsset = pos.settlementAsset
+    instrument = pos.instrument
+    side = pos.side
+    stake = pos.stake
+    oddsMultiplier = pos.oddsMultiplier
+    outcome = outcome
+    evidenceHash = resolution.evidenceHash
+    evidenceUri = resolution.evidenceUri
+    payout = holderPayout
+    settledAt = now
+
+-- | The expiry logic shared by the two expiry choices.
+doExpire : PredictionPosition -> ExpireParams -> Update (ContractId PositionExpired)
+doExpire pos params = do
+  now <- getTime
+  assertMsg "Settlement window is still open — positions cannot be expired yet"
+    (now >= pos.settleBefore)
+
+  stakeAlloc <- fetch params.stakeAllocationCid
+  payoutAlloc <- fetch params.payoutAllocationCid
+  assertMsg "Stake allocation does not match this position"
+    ((view stakeAlloc).allocation == positionAllocationSpec pos stakeLegId (positionStakeLeg pos))
+  assertMsg "Payout allocation does not match this position"
+    ((view payoutAlloc).allocation == positionAllocationSpec pos payoutLegId (positionPayoutLeg pos))
+
+  _ <- exercise params.stakeAllocationCid (Allocation_Cancel params.stakeExtraArgs)
+  _ <- exercise params.payoutAllocationCid (Allocation_Cancel params.payoutExtraArgs)
+
+  create PositionExpired with
+    operator = pos.operator
+    holder = pos.holder
+    marketId = pos.marketId
+    side = pos.side
+    stake = pos.stake
+    reason = params.reason
+    holderRefund = pos.stake
+    operatorRefund = pos.stake * (pos.oddsMultiplier - 1.0)
+    expiredAt = now
+
+-- | Receipt proving a position was settled, with the evidence that anchored
+--   the outcome. Visible only to operator + holder — the holder may choose to
+--   reveal it (e.g. leaderboard) without anyone else ever learning the stake.
 template PositionSettled
+  with
+    operator : Party
+    holder : Party
+    marketId : Text
+    settlementAsset : SettlementAsset
+    instrument : InstrumentId
+    side : Side
+    stake : Decimal
+    oddsMultiplier : Decimal
+    outcome : Outcome
+    evidenceHash : Text
+    evidenceUri : Text
+    payout : Decimal  -- gross value now in the holder's wallet (0 on a loss)
+    settledAt : Time
+  where
+    signatory operator, holder
+
+-- | Receipt proving a position expired unresolved and both escrowed legs were
+--   refunded in the expiry transaction.
+template PositionExpired
   with
     operator : Party
     holder : Party
     marketId : Text
     side : Side
     stake : Decimal
-    settlementAsset : SettlementAsset
-    outcome : Outcome
-    winner : Optional Party    -- None if voided (refund to both)
-    payout : Decimal           -- Amount to transfer via CIP-56
-    settledAt : Time
+    reason : Text
+    holderRefund : Decimal
+    operatorRefund : Decimal
+    expiredAt : Time
   where
-    signatory operator
-    observer holder
+    signatory operator, holder
 
--- | Settlement obligation — instructs the operator to transfer
---   cBTC/cETH to the winner via CIP-56 TransferInstruction.
---   The operator's wallet (Console Wallet) executes the actual transfer.
---   This contract is the on-ledger authorization for that transfer.
-template SettlementObligation
-  with
-    operator : Party
-    winner : Party
-    amount : Decimal
-    settlementAsset : SettlementAsset
-    marketId : Text
-    memo : Text
-    createdAt : Time
-  where
-    signatory operator
-    observer winner
+-- Settlement internals (the expected escrow contents of every position)
+-------------------------------------------------------------------------
 
-    -- | Operator confirms the CIP-56 transfer was executed.
-    choice ConfirmTransfer : ()
-      with
-        transferTxId : Text
-      controller operator
-      do
-        return ()
+stakeLegId : Text
+stakeLegId = "stake"
 
-    -- | Winner can dispute if the operator fails to transfer.
-    choice DisputeTransfer : ()
-      with
-        reason : Text
-      controller winner
-      do
-        return ()
+payoutLegId : Text
+payoutLegId = "payout"
+
+-- | The settlement context both legs are allocated against. The settlementRef
+--   commits to the position's originating offer, so allocations created for
+--   anything else cannot be substituted in.
+positionSettlement : PredictionPosition -> SettlementInfo
+positionSettlement pos = SettlementInfo with
+  executor = pos.operator
+  settlementRef = Reference with
+    id = "position:" <> pos.marketId
+    cid = Some (coerceContractId pos.offerCid)
+  requestedAt = pos.createdAt
+  allocateBefore = pos.allocateBefore
+  settleBefore = pos.settleBefore
+  meta = emptyMetadata
+
+-- | Holder's side of the escrow: stake holder -> operator, executed on a loss,
+--   cancelled (returned) otherwise.
+positionStakeLeg : PredictionPosition -> TransferLeg
+positionStakeLeg pos = TransferLeg with
+  sender = pos.holder
+  receiver = pos.operator
+  amount = pos.stake
+  instrumentId = pos.instrument
+  meta = emptyMetadata
+
+-- | Operator's side of the escrow: net payout operator -> holder, executed on
+--   a win, cancelled (returned to operator) otherwise.
+positionPayoutLeg : PredictionPosition -> TransferLeg
+positionPayoutLeg pos = TransferLeg with
+  sender = pos.operator
+  receiver = pos.holder
+  amount = pos.stake * (pos.oddsMultiplier - 1.0)
+  instrumentId = pos.instrument
+  meta = emptyMetadata
+
+positionAllocationSpec : PredictionPosition -> Text -> TransferLeg -> AllocationSpecification
+positionAllocationSpec pos transferLegId transferLeg = AllocationSpecification with
+  settlement = positionSettlement pos
+  transferLegId = transferLegId
+  transferLeg = transferLeg

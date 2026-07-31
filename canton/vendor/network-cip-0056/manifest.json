@@ -1,0 +1,21 @@
+{
+  "_comment": "CIP-56 interface package IDs as vetted on the NODERS HackCanton DevNet. Discovered read-only from the participant (scripts/canton-package-analyze.mjs). fourcast-2.0.0.dar (package name `fourcast`) is built against these DARs (dars/), wrapped from the participant's own dalfs, so its interface references are byte-identical to what the cBTC (BitSafe) / cETH (OnRails) registries implement.",
+  "participant": "https://ledger-api-json.participant.hackcanton-01.devnet.naas.noders.services",
+  "discoveredAt": "2026-07-31",
+  "networkCantonVersion": "3.5.x (splice v1+v2 token standard both present)",
+  "interfacePackages": {
+    "splice-api-token-metadata-v1": "4ded6b668cb3b64f7a88a30874cd41c75829f5e064b3fbbadf41ec7e8363354f",
+    "splice-api-token-holding-v1": "718a0f77e505a8de22f188bd4c87fe74101274e9d4cb1bfac7d09aec7158d35b",
+    "splice-api-token-transfer-instruction-v1": "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281",
+    "splice-api-token-allocation-v1": "93c942ae2b4c2ba674fb152fe38473c507bda4e82b4e4c5da55a552a9d8cce1d",
+    "splice-api-token-allocation-instruction-v1": "275064aacfe99cea72ee0c80563936129563776f67415ef9f13e4297eecbc520",
+    "splice-api-token-allocation-request-v1": "6fe848530b2404017c4a12874c956ad7d5c8a419ee9b040f96b5c13172d2e193"
+  },
+  "fourcastDar": {
+    "packageId": "550828d219effd88bc03fadd856403ab42795e33c185cbea4ff2e055a2ed930a",
+    "name": "fourcast",
+    "version": "2.0.0",
+    "note": "NEW package lineage (deliberately not an upgrade of canton 1.0.0). Built with the SAME toolchain + target as the v1 DAR (SDK 3.5.2, LF 2.2) per NODERS env requirement; legacy v1 stays resolvable at #canton, v2 at #fourcast.",
+    "lfTarget": "2.2"
+  }
+}

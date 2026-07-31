@@ -1,45 +1,77 @@
 -- | Prediction market contract — created by the Fourcast operator.
---   This contract is visible to anyone who needs to discover and
---   trade on the market. Individual positions are NOT visible here;
---   they live in PredictionPosition contracts with restricted visibility.
+--   This contract is discovered off-ledger via the Fourcast API and shared
+--   with traders; individual positions are NOT visible here. They live in
+--   PredictionPosition contracts with restricted (operator + holder) visibility.
+--
+--   v2 changes vs the original model:
+--   * Resolution is anchored to a `ResolutionAttestation` issued by the
+--     attester party named at market creation. The operator can only resolve
+--     a market by presenting an attestation it cannot fabricate (unless the
+--     operator names itself attester — explicitly a devnet configuration).
+--   * `ResolveMarket` is gated on the market deadline and records auditable
+--     evidence (hash + URI) on the resolution.
+--   * The market binds the exact CIP-56 `InstrumentId` used for escrow and
+--     settlement (cBTC / cETH), so positions, allocations and payouts all
+--     reference the same on-ledger instrument.
+--   * The no-op `observer operator` is removed.
 module Fourcast.PredictionMarket where
 
 import Fourcast.Types
+import Splice.Api.Token.HoldingV1 (InstrumentId)
 
 -- | A prediction market on Canton. Created by the operator (Fourcast).
---   Signatory is the operator only — they authorize creation and resolution.
---   Observers are anyone the operator shares the market with (all potential traders).
 template PredictionMarket
   with
     operator : Party
-    marketId : Text           -- External reference to the Fourcast app market
-    question : Text           -- The prediction question
-    settlementAsset : SettlementAsset  -- CBTC or CETH for payouts
+    marketId : Text              -- External reference to the Fourcast app market
+    question : Text              -- The prediction question
+    settlementAsset : SettlementAsset  -- UI label for the settlement instrument
+    instrument : InstrumentId    -- CIP-56 instrument used for escrow + settlement
+    attester : Party             -- Designated issuer of resolution attestations
     createdAt : Time
-    deadline : Time           -- Market closes / resolves by this time
+    deadline : Time              -- Positions close at this time; resolution only after
   where
     signatory operator
-    observer operator
 
-    -- | Operator resolves the market with an outcome.
-    --   This archives the market and creates a MarketResolution
-    --   that position holders can observe to settle their positions.
+    -- | Resolve the market using an attestation issued by the designated
+    --   attester. The attestation outcome, evidence hash and evidence URI are
+    --   stamped onto the resolution verbatim — the operator cannot resolve to
+    --   an outcome the attester did not sign off on.
+    --
+    --   `viewers` names the parties that may see the resolution (typically the
+    --   market's position holders, provided by the operator's off-ledger API).
+    --   It determines visibility only, never the outcome.
     choice ResolveMarket : ContractId MarketResolution
       with
-        outcome : Outcome
+        attestationCid : ContractId ResolutionAttestation
+        viewers : [Party]
       controller operator
       do
         now <- getTime
+        assertMsg "Market cannot be resolved before its deadline" (now >= deadline)
+        attestation <- fetch attestationCid
+        assertMsg "Attestation was not issued by the market's designated attester"
+          (attestation.attester == attester)
+        assertMsg "Attestation does not belong to this market"
+          (attestation.marketId == marketId)
+        assertMsg "Voided outcomes must use VoidMarket"
+          (attestation.outcome /= Voided)
         create MarketResolution with
           operator = operator
           marketId = marketId
-          outcome = outcome
+          outcome = attestation.outcome
+          evidenceHash = attestation.evidenceHash
+          evidenceUri = attestation.evidenceUri
           resolvedAt = now
+          viewers = viewers
 
-    -- | Operator voids the market (refund scenario).
+    -- | Operator voids the market (refund scenario). All positions settle by
+    --   cancelling their escrowed legs — every party gets their funds back
+    --   atomically in one transaction per position.
     choice VoidMarket : ContractId MarketResolution
       with
         reason : Text
+        viewers : [Party]
       controller operator
       do
         now <- getTime
@@ -47,19 +79,42 @@ template PredictionMarket
           operator = operator
           marketId = marketId
           outcome = Voided
+          evidenceHash = ""
+          evidenceUri = "fourcast:void:" <> reason
           resolvedAt = now
+          viewers = viewers
 
--- | Proof of market resolution. Visible to all parties who hold positions
---   on this market (they are added as observers when positions are settled).
+-- | Attestation of a market outcome, issued by the market's designated
+--   attester. Today on DevNet the attester may be the operator itself
+--   (self-attested, same trust as v1). Producion: the attester is an
+--   independent oracle/attestation service (e.g. the attestation identity
+--   backing Fourcast's TxLINE receipts); the market contract does not change.
+template ResolutionAttestation
+  with
+    attester : Party
+    marketId : Text
+    outcome : Outcome
+    evidenceHash : Text   -- sha256 commitment of the evidence payload
+    evidenceUri : Text    -- where auditors retrieve the evidence
+    issuedAt : Time
+  where
+    signatory attester
+
+-- | Proof of market resolution. Visible to the operator plus the `viewers`
+--   named at resolution time (the market's holders), so holders can fetch it
+--   themselves when settling their own positions.
 template MarketResolution
   with
     operator : Party
     marketId : Text
     outcome : Outcome
+    evidenceHash : Text
+    evidenceUri : Text
     resolvedAt : Time
+    viewers : [Party]
   where
     signatory operator
-    observer operator
+    observer viewers
 
 -- | Proposal for a new market — sent by a user to the operator.
 --   The operator can accept (creating a PredictionMarket) or reject.
@@ -78,6 +133,8 @@ template MarketProposal
     choice AcceptProposal : ContractId PredictionMarket
       with
         marketId : Text
+        instrument : InstrumentId
+        attester : Party
       controller operator
       do
         now <- getTime
@@ -86,6 +143,8 @@ template MarketProposal
           marketId = marketId
           question = question
           settlementAsset = settlementAsset
+          instrument = instrument
+          attester = attester
           createdAt = now
           deadline = deadline
 

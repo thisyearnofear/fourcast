@@ -1,0 +1,10 @@
+# Vendored from canton-network/splice (Apache-2.0) — CIP-0056 token standard interfaces.
+sdk-version: 3.5.2
+name: splice-api-token-metadata-v1
+version: 1.0.0
+source: daml
+dependencies:
+- daml-prim
+- daml-stdlib
+build-options:
+- --target=2.1

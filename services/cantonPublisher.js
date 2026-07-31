@@ -1,6 +1,14 @@
 /**
  * Canton (Daml) signal publishing via Console Wallet.
  *
+ * ⚠ INCOMPLETE MIGRATION (canton-2.0.0): this module still speaks the v1
+ * contract surface (unilateral operator-created PredictionPosition). V2
+ * positions require holder-signed PositionOffer → operator AcceptOffer →
+ * CIP-56 escrow allocations. The primary demo path is now server-side
+ * (services/cantonLedgerClient.js + scripts/canton-v2-preflight.mjs).
+ * Rewiring this wallet-side lane to the v2 offer flow is Phase 1 scope in
+ * docs/CANTON_WALLET_ROADMAP.md (holder keys sign their own offers).
+ *
  * Submits Daml commands to create a PredictionPosition on Canton,
  * enabling private settlement with cBTC/cETH. Position sizes are
  * visible only to the operator and the holder — no public explorer,
