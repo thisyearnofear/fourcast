@@ -62,6 +62,9 @@ export default function PositionsPage() {
     >
       {view === "private" ? (
         <Reveal>
+          <p className="fc-market-slide mb-6 border-l-2 border-[var(--color-accent)]/40 bg-[var(--color-accent-quiet)] px-3 py-2 text-xs leading-5 text-[var(--color-ink-muted)]">
+            Your private positions on Canton — visible only to you and the operator. The same diligence lens, applied to positions the public ledger can never see.
+          </p>
           <CantonHolderDashboard />
         </Reveal>
       ) : (
