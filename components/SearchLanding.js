@@ -19,8 +19,8 @@ import TrustStatsStrip from '@/components/TrustStatsStrip';
 // The ALLOCATE receipt itself was a dry-run (execution.dryRun: true); a
 // separate 0.1 SOL escrow policy on the same fixture settled on-chain via
 // the match-escrow program CPI-calling txoracle::validate_stat (see
-// TXLINE_SUBMISSION.md). Deep-linking /world-cup?fixture=<id> opens the
-// Proof Theatre on it.
+// TXLINE_SUBMISSION.md). Deep-linking /proof?fixture=<id> opens the Proof
+// Theatre on it.
 const VERIFIED_RECEIPT = {
   fixtureId: '18175981',
   home: 'France',
@@ -339,7 +339,7 @@ export default function SearchLanding() {
                     </a>
                   </p>
                   <Link
-                    href={`/world-cup?fixture=${VERIFIED_RECEIPT.fixtureId}`}
+                    href={`/proof?fixture=${VERIFIED_RECEIPT.fixtureId}`}
                     className="fc-action px-3 py-2 text-xs"
                   >
                     Open Proof Theatre
@@ -438,7 +438,7 @@ export default function SearchLanding() {
                   style={{ display: 'inline-block' }}
                 >
                   <Link
-                    href={`/world-cup?fixture=${VERIFIED_RECEIPT.fixtureId}`}
+                    href={`/proof?fixture=${VERIFIED_RECEIPT.fixtureId}`}
                     className="fc-action mc-action--primary inline-flex items-center justify-center gap-1.5 px-5 py-3 text-sm"
                   >
                     <Fingerprint className="h-3.5 w-3.5" />

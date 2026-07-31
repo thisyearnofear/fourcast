@@ -578,7 +578,7 @@ function ProofLoopStrip({ fixtures }) {
 
 /* --------------------------------- page --------------------------------- */
 
-export default function WorldCupClient() {
+export default function WorldCupClient({ bare = false }) {
   const [fixtures, setFixtures] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -743,111 +743,131 @@ export default function WorldCupClient() {
     return null;
   })();
 
+  const subnav = (
+    <SecondaryNav
+      items={[
+        { id: 'all', label: 'All fixtures' },
+        { id: 'live', label: 'Live' },
+        { id: 'scheduled', label: 'Upcoming' },
+        { id: 'final', label: 'Final' },
+      ]}
+      activeItem={tab}
+      onChange={setTab}
+    />
+  );
+
+  const statusRow = (
+    <div className="flex items-center gap-2">
+      {streamBadge && (
+        <div
+          data-testid="stream-badge"
+          className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${streamBadge.color}`}
+        >
+          <streamBadge.icon size={12} />
+          {streamBadge.label}
+        </div>
+      )}
+      {status && (
+        <div className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${
+          isReplayMode
+            ? 'border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/10 text-[var(--color-sealed)]'
+            : 'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
+        }`}>
+          {isReplayMode ? <AlertTriangle size={12} /> : <Zap size={12} />}
+          {isReplayMode ? 'Replay mode (cached TxLINE)' : 'Live TxLINE'}
+        </div>
+      )}
+    </div>
+  );
+
+  const content = (
+    <div className="space-y-10">
+      {selectedFixture && (
+        <ProofTheatre fixture={selectedFixture} onClose={() => setSelectedFixture(null)} />
+      )}
+
+      <RouteGuide route="world-cup" />
+
+      <ProofLoopStrip fixtures={fixtures} />
+
+      {isReplayMode && (
+        <div className="border border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/[0.06] p-4 flex items-start gap-3">
+          <AlertTriangle size={18} className="text-[var(--color-sealed)] mt-0.5 shrink-0" />
+          <div className="text-sm text-[var(--color-sealed)]/90">
+            <strong className="font-semibold">Replay mode active.</strong>{' '}
+            {cutoffPassed
+              ? 'TxLINE hackathon access ended on July 19, 2026. The app is serving cached, cryptographically-verified snapshots of completed matches so the product experience remains intact.'
+              : 'TxLINE token is not configured, so we are showing cached snapshots until live credentials are provided.'}
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="border border-[var(--color-breach)]/30 bg-[var(--color-breach)]/[0.08] p-4 text-sm text-[var(--color-breach)]">
+          {error}
+        </div>
+      )}
+
+      {replay && (
+        <ReplayViewer replay={replay} onClose={() => setReplay(null)} />
+      )}
+
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse border border-[var(--color-rule)] bg-white/[0.04] p-5 h-32" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="border border-[var(--color-rule)] bg-white/[0.03] p-12 text-center">
+          <Activity size={32} className="mx-auto text-[var(--color-ink-faint)] mb-3" />
+          <div className="text-sm text-[var(--color-ink-muted)]">
+            {fixtures.length === 0
+              ? 'No World Cup fixtures available yet. Complete TxLINE onboarding to seed live data, or add cached replays under cache/txline/replays/.'
+              : 'No fixtures match the selected filter.'}
+          </div>
+        </div>
+      ) : (
+        <div className="fixture-ledger border-t border-[var(--mc-rule-strong)]">
+          {filtered.map((fixture, index) => (
+            <Reveal key={fixture.id} delay={Math.min(index * 40, 240)} className="fixture-ledger__item">
+              <FixtureCard
+                fixture={fixture}
+                onReplay={handleReplay}
+                onVerify={handleVerify}
+                onOpenTheatre={setSelectedFixture}
+                replaying={replayingId === fixture.id}
+                verifying={verifyingId === fixture.id}
+                proofResult={verifications[fixture.id]}
+              />
+            </Reveal>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  if (bare) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">{subnav}</div>
+          {statusRow}
+        </div>
+        {content}
+      </div>
+    );
+  }
+
   return (
     <AppShell
       wallet={true}
       title="Proof Theatre"
       subtitle="Decision proofs archived on Solana from the World Cup 2026 season: sealed evidence, seeded simulation, versioned policy gates, an immutable receipt, and TxLINE-Merkle anchoring. The verification pipeline is the product — these fixtures are the canonical dataset."
-      actions={
-        <div className="flex items-center gap-2">
-          {streamBadge && (
-            <div
-              data-testid="stream-badge"
-              className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${streamBadge.color}`}
-            >
-              <streamBadge.icon size={12} />
-              {streamBadge.label}
-            </div>
-          )}
-          {status && (
-            <div className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${
-              isReplayMode
-                ? 'border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/10 text-[var(--color-sealed)]'
-                : 'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
-            }`}>
-              {isReplayMode ? <AlertTriangle size={12} /> : <Zap size={12} />}
-              {isReplayMode ? 'Replay mode (cached TxLINE)' : 'Live TxLINE'}
-            </div>
-          )}
-        </div>
-      }
-      subheader={
-        <SecondaryNav
-          items={[
-            { id: 'all', label: 'All fixtures' },
-            { id: 'live', label: 'Live' },
-            { id: 'scheduled', label: 'Upcoming' },
-            { id: 'final', label: 'Final' },
-          ]}
-          activeItem={tab}
-          onChange={setTab}
-        />
-      }
+      actions={statusRow}
+      subheader={subnav}
     >
-      <div className="space-y-10">
-        {selectedFixture && (
-          <ProofTheatre fixture={selectedFixture} onClose={() => setSelectedFixture(null)} />
-        )}
-
-        <RouteGuide route="world-cup" />
-
-        <ProofLoopStrip fixtures={fixtures} />
-
-        {isReplayMode && (
-          <div className="border border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/[0.06] p-4 flex items-start gap-3">
-            <AlertTriangle size={18} className="text-[var(--color-sealed)] mt-0.5 shrink-0" />
-            <div className="text-sm text-[var(--color-sealed)]/90">
-              <strong className="font-semibold">Replay mode active.</strong>{' '}
-              {cutoffPassed
-                ? 'TxLINE hackathon access ended on July 19, 2026. The app is serving cached, cryptographically-verified snapshots of completed matches so the product experience remains intact.'
-                : 'TxLINE token is not configured, so we are showing cached snapshots until live credentials are provided.'}
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="border border-[var(--color-breach)]/30 bg-[var(--color-breach)]/[0.08] p-4 text-sm text-[var(--color-breach)]">
-            {error}
-          </div>
-        )}
-
-        {replay && (
-          <ReplayViewer replay={replay} onClose={() => setReplay(null)} />
-        )}
-
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse border border-[var(--color-rule)] bg-white/[0.04] p-5 h-32" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="border border-[var(--color-rule)] bg-white/[0.03] p-12 text-center">
-            <Activity size={32} className="mx-auto text-[var(--color-ink-faint)] mb-3" />
-            <div className="text-sm text-[var(--color-ink-muted)]">
-              {fixtures.length === 0
-                ? 'No World Cup fixtures available yet. Complete TxLINE onboarding to seed live data, or add cached replays under cache/txline/replays/.'
-                : 'No fixtures match the selected filter.'}
-            </div>
-          </div>
-        ) : (
-          <div className="fixture-ledger border-t border-[var(--mc-rule-strong)]">
-            {filtered.map((fixture, index) => (
-              <Reveal key={fixture.id} delay={Math.min(index * 40, 240)} className="fixture-ledger__item">
-                <FixtureCard
-                  fixture={fixture}
-                  onReplay={handleReplay}
-                  onVerify={handleVerify}
-                  onOpenTheatre={setSelectedFixture}
-                  replaying={replayingId === fixture.id}
-                  verifying={verifyingId === fixture.id}
-                  proofResult={verifications[fixture.id]}
-                />
-              </Reveal>
-            ))}
-          </div>
-        )}
-      </div>
+      {content}
     </AppShell>
   );
 }

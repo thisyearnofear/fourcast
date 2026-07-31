@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { AppShell, SecondaryNav } from '@/app/components/PageNav';
 import CantonProof from './CantonProof';
-import SolanaProofSummary from './SolanaProofSummary';
+import WorldCupClient from '@/app/world-cup/WorldCupClient';
 
 /**
  * Proof Theatre — the unified, chain-agnostic evidence surface.
@@ -52,7 +52,7 @@ export default function ProofTheatreShell() {
         />
       }
     >
-      {chain === 'canton' ? <CantonProof /> : <SolanaProofSummary />}
+      {chain === 'canton' ? <CantonProof /> : <WorldCupClient bare />}
     </AppShell>
   );
 }
