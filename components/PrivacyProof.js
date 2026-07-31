@@ -8,15 +8,17 @@ import { Eye, EyeOff, RefreshCw } from 'lucide-react';
  *
  * Two real ledger queries run automatically on mount and every 10s (paused
  * when the tab is hidden), no button required:
- *   LEFT  signatory (operator, as counterparty) → full position data
- *   RIGHT non-signatory (observer party)        → a REAL empty result set
+ *   LEFT  signatory (operator)        → open + settled positions (real data)
+ *   RIGHT non-signatory (observer)    → the query is REFUSED by the ledger
  *
- * The contrast IS the product: same ledger, same query, two identities,
- * different worlds. This is structural privacy performed, not described.
+ * The contrast IS the product: the operator reads position history; a
+ * non-signatory party can't even query the contracts — Canton refuses the
+ * read, not merely returns an empty list. That refusal is structural privacy
+ * performed, not described.
  *
- * The observer party ID comes from /api/canton/parties (CANTON_OBSERVER_PARTY_ID);
- * when none is allocated we query with an unallocated party ID, which on
- * Canton still yields a genuine live empty result — the filter matches nothing.
+ * The panes are independent: a refused observer query no longer hides the
+ * operator's result. When no observer party is allocated we query as an
+ * unallocated party, which the ledger refuses — exactly the point.
  */
 
 const POLL_MS = 10_000;
@@ -32,7 +34,7 @@ function previewJson(obj, n = 240) {
 }
 
 export default function PrivacyProof() {
-  const [results, setResults] = useState(null);
+  const [state, setState] = useState(null); // { operator, observer, observerPartyId, observerIsConfigured }
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -40,7 +42,9 @@ export default function PrivacyProof() {
 
   const runQuery = useCallback(async ({ manual = false } = {}) => {
     if (manual) setRefreshing(true);
-    // Resolve the observer party; fall back to an unallocated party ID.
+
+    // Resolve an observer party; fall back to an unallocated party (the
+    // ledger will refuse it — which is the demonstration).
     let observerPartyId = null;
     let observerIsConfigured = false;
     try {
@@ -56,28 +60,50 @@ export default function PrivacyProof() {
       observerPartyId = 'ExternalObserver::1220non-signatory-demo-party';
     }
 
-    try {
-      const [holderRes, observerRes] = await Promise.all([
-        fetch('/api/canton/positions?type=open'),
-        fetch(`/api/canton/positions?type=open&partyId=${encodeURIComponent(observerPartyId)}`),
-      ]);
-      const holderData = await holderRes.json();
-      const observerData = await observerRes.json();
-      if (!observerData.success) {
-        throw new Error(observerData.error || 'Observer query failed');
-      }
-      if (mountedRef.current) {
-        setResults({ holder: holderData, observer: observerData, observerPartyId, observerIsConfigured });
-        setLastUpdated(new Date());
-        setLoading(false);
-        setRefreshing(false);
-      }
-    } catch (err) {
-      if (mountedRef.current) {
-        setResults({ error: err.message });
-        setLoading(false);
-        setRefreshing(false);
-      }
+    // Three independent queries — a refused observer read no longer hides
+    // the operator result. Open + settled give the operator real history
+    // even when the ledger has no open positions.
+    const [openRes, settledRes, observerRes] = await Promise.allSettled([
+      fetch('/api/canton/positions?type=open'),
+      fetch('/api/canton/positions?type=settled'),
+      fetch(`/api/canton/positions?type=open&partyId=${encodeURIComponent(observerPartyId)}`),
+    ]);
+
+    const read = (r) =>
+      r.status === 'fulfilled' && r.value.ok ? r.value.json().catch(() => null) : null;
+
+    const [openData, settledData, observerData] = await Promise.all([
+      read(openRes),
+      read(settledRes),
+      read(observerRes),
+    ]);
+
+    if (mountedRef.current) {
+      const operatorOpen = openData?.positions || [];
+      const operatorSettled = settledData?.positions || [];
+      const observerOk = observerData?.success === true;
+      const observerErr = observerData?.error || null;
+      const sample = operatorOpen[0]?.payload || operatorSettled[0]?.payload || null;
+
+      setState({
+        operator: {
+          openCount: openData?.count ?? operatorOpen.length,
+          settledCount: settledData?.count ?? operatorSettled.length,
+          sample,
+          error: openData?.success === false ? openData.error : null,
+        },
+        observer: {
+          refused: !observerOk,
+          error: observerErr,
+          count: observerOk ? (observerData.count ?? observerData.positions?.length ?? 0) : 0,
+          positions: observerOk ? observerData.positions || [] : [],
+        },
+        observerPartyId,
+        observerIsConfigured,
+      });
+      setLastUpdated(new Date());
+      setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -85,7 +111,6 @@ export default function PrivacyProof() {
     mountedRef.current = true;
     runQuery();
     const id = setInterval(() => {
-      // Don't hammer the ledger when nobody's looking.
       if (typeof document !== 'undefined' && document.hidden) return;
       runQuery();
     }, POLL_MS);
@@ -95,9 +120,8 @@ export default function PrivacyProof() {
     };
   }, [runQuery]);
 
-  const holderCount = results?.holder?.count ?? results?.holder?.positions?.length ?? 0;
-  const observerCount = results?.observer?.count ?? results?.observer?.positions?.length ?? 0;
-  const firstPos = results?.holder?.positions?.[0]?.payload;
+  const op = state?.operator;
+  const obs = state?.observer;
 
   return (
     <section className="platform-open-section" aria-labelledby="privacy-proof-heading">
@@ -126,7 +150,7 @@ export default function PrivacyProof() {
       </div>
 
       <div className="px-4 py-5 sm:px-5">
-        {loading && !results ? (
+        {loading && !state ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="border border-dashed border-[var(--color-rule)] bg-white/[0.02] p-6 text-center text-xs text-[var(--color-ink-faint)]">
               Querying signatory view…
@@ -134,10 +158,6 @@ export default function PrivacyProof() {
             <div className="border border-dashed border-[var(--color-rule)] bg-white/[0.02] p-6 text-center text-xs text-[var(--color-ink-faint)]">
               Querying non-signatory view…
             </div>
-          </div>
-        ) : results?.error ? (
-          <div className="border border-[var(--color-breach)]/20 bg-[var(--color-breach)]/10 p-4 text-xs text-[var(--color-breach)]">
-            Privacy query failed: {results.error}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -152,19 +172,26 @@ export default function PrivacyProof() {
               <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-2">
                 Party: <span className="font-mono text-[var(--color-ink)]">FourcastOperator</span>
               </div>
-              <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-3">
-                Result: <span className="text-[var(--color-accent)]">{holderCount} positions</span>
-              </div>
-              {firstPos ? (
-                <pre className="overflow-x-auto rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-muted)] font-mono">
-                  {previewJson(firstPos)}
-                </pre>
+              {op?.error ? (
+                <p className="text-[10px] text-[var(--color-breach)]/80">Operator query failed: {op.error}</p>
               ) : (
-                <p className="text-[10px] text-[var(--color-ink-faint)]">
-                  No open positions. Create one in the{' '}
-                  <a href="/labs/canton" className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-2 hover:text-[var(--color-ink)]">operator console</a>{' '}
-                  to see data appear here — and stay empty on the right.
-                </p>
+                <>
+                  <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-3">
+                    Open: <span className="text-[var(--color-accent)]">{op?.openCount ?? 0}</span>
+                    {' · '}Settled: <span className="text-[var(--color-accent)]">{op?.settledCount ?? 0}</span>
+                  </div>
+                  {op?.sample ? (
+                    <pre className="overflow-x-auto rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-muted)] font-mono">
+                      {previewJson(op.sample)}
+                    </pre>
+                  ) : (
+                    <p className="text-[10px] text-[var(--color-ink-faint)]">
+                      No position contracts visible right now. Create one in the{' '}
+                      <a href="/labs/canton" className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-2 hover:text-[var(--color-ink)]">operator console</a>{' '}
+                      to see data appear here — and stay unreadable on the right.
+                    </p>
+                  )}
+                </>
               )}
             </div>
 
@@ -179,19 +206,35 @@ export default function PrivacyProof() {
               <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-2">
                 Party:{' '}
                 <span className="font-mono text-[var(--color-ink-muted)]">
-                  {results?.observerIsConfigured ? 'Public Observer' : 'ExternalObserver (unallocated)'}
+                  {state?.observerIsConfigured ? 'Public Observer' : 'ExternalObserver (unallocated)'}
                 </span>
               </div>
-              <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-3">
-                Result: <span className="text-[var(--color-ink-muted)]">{observerCount} positions</span>
-              </div>
-              <pre className="overflow-x-auto rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-faint)] font-mono">
-                {previewJson(results?.observer?.positions ?? [])}
-              </pre>
-              <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
-                Real ledger response — the filter matched nothing, because this party is not a
-                signatory or observer on any position contract.
-              </p>
+              {obs?.refused ? (
+                <div className="space-y-2">
+                  <div className="text-xs leading-5 text-[var(--color-breach)]/90">
+                    Result: <span className="font-medium">query refused</span>
+                  </div>
+                  <p className="text-[10px] leading-5 text-[var(--color-ink-faint)]">
+                    The ledger refused the read — this party has no visibility on any position
+                    contract. On Canton a non-signatory can&rsquo;t even query the data, not just
+                    see an empty list. That refusal is structural privacy enforced by Daml&rsquo;s
+                    signatory system.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-3">
+                    Result: <span className="text-[var(--color-ink-muted)]">{obs?.count ?? 0} positions</span>
+                  </div>
+                  <pre className="overflow-x-auto rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-faint)] font-mono">
+                    {previewJson(obs?.positions ?? [])}
+                  </pre>
+                  <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
+                    Real ledger response — the filter matched nothing, because this party is not a
+                    signatory or observer on any position contract.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -199,7 +242,7 @@ export default function PrivacyProof() {
         <div className="mt-4 border-t border-[var(--mc-rule)] pt-3">
           <p className="text-[10px] leading-5 text-[var(--color-ink-faint)]">
             On public chains every position is visible to everyone. Here, structural privacy is
-            enforced by Daml's signatory system — same query, two identities, different worlds.{' '}
+            enforced by Daml&rsquo;s signatory system — same ledger, two identities, different worlds.{' '}
             <a href="/docs/CANTON_ATOMIC_SETTLEMENT.md" className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-2 hover:text-[var(--color-ink)]">How it works →</a>
           </p>
         </div>
