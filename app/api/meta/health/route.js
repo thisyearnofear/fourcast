@@ -8,6 +8,8 @@
 
 export const runtime = 'nodejs';
 
+import { isCantonConfigured, PACKAGE_ID, OPERATOR_PARTY_ID } from '@/services/cantonLedgerClient';
+
 /**
  * Ping an HTTP endpoint and return (status, latencyMs).
  * Returns 'unreachable' on any failure.
@@ -68,8 +70,21 @@ export async function GET() {
     db = { status: 'healthy', latencyMs: 0, type: 'sqlite' }; // SQLite doesn't need a ping
   }
 
+  // ── Canton Devnet (private settlement layer) ─────────────────────────
+  // A first-class plumbing layer — surface it on /status like the venues.
+  // Config-presence check only (env + package + operator): an OIDC token
+  // fetch + ledger query every 30s would be the wrong granularity for a
+  // status poll. Live ledger state (balances, escrow, health) is on /proof.
+  const cantonConfigured = isCantonConfigured();
+  const canton = {
+    status: cantonConfigured && PACKAGE_ID && OPERATOR_PARTY_ID ? 'healthy' : 'disabled',
+    latencyMs: 0,
+    httpStatus: null,
+    type: cantonConfigured ? 'configured' : 'unconfigured',
+  };
+
   // ── Aggregate ─────────────────────────────────────────────────────────
-  const allUp = [pm, ks, venice, synth].every(
+  const allUp = [pm, ks, venice, synth, canton].every(
     (p) => p.status === 'healthy' || p.status === 'disabled'
   );
 
@@ -103,6 +118,11 @@ export async function GET() {
         label: 'Database',
         description: 'Forecasts, signals, track record storage',
         ...db,
+      },
+      canton: {
+        label: 'Canton Devnet',
+        description: 'Private settlement layer — integration configured (live ledger state on /proof)',
+        ...canton,
       },
     },
   };

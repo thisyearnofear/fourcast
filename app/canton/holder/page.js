@@ -1,25 +1,9 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import dynamic from 'next/dynamic';
-import { AppShell } from '@/app/components/PageNav';
-
-const CantonHolderDashboard = dynamic(() => import('@/components/CantonHolderDashboard'), {
-  ssr: false,
-  loading: () => (
-    <div className="platform-open-section p-8 text-center text-xs text-[var(--color-ink-faint)]">
-      Loading holder wallet…
-    </div>
-  ),
-});
-
-export default function CantonHolderPage() {
-  return (
-    <AppShell
-      title="Holder Wallet"
-      subtitle="Connect your Console Wallet to view private positions and dispute unsettled obligations on Canton Devnet."
-      maxWidth="max-w-4xl"
-    >
-      <CantonHolderDashboard />
-    </AppShell>
-  );
+// /canton/holder dissolved into /positions as the "Private (Canton)" view —
+// all of a user's positions (public Arc + private Canton) in one diligence
+// surface, the chain a property not a page. The stale "dispute unsettled
+// obligations" framing is gone: v2 atomic settlement removed obligations.
+export default function CantonHolderRedirect() {
+  redirect('/positions?view=private');
 }

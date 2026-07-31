@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Bot, Hammer, MessageCircle, FlaskConical, ArrowUpRight, ArrowRight } from 'lucide-react';
+import { Bot, Hammer, MessageCircle, FlaskConical, ArrowUpRight, ArrowRight, Zap } from 'lucide-react';
 import { AppShell } from '@/app/components/PageNav';
 import { BRAND } from '@/constants/brand';
 
@@ -13,6 +13,14 @@ const LAB_FEATURES = [
  href: '/labs/autopilot',
  icon: Bot,
  status: BRAND.labs.autopilot.status,
+ },
+ {
+ id: 'canton',
+ title: 'Canton Operator Console',
+ description: 'Create, resolve, and atomically settle private prediction markets on Canton Devnet — server-side, no wallet extension.',
+ href: '/labs/canton',
+ icon: Zap,
+ status: 'core',
  },
  {
  id: 'builder',

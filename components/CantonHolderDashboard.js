@@ -270,7 +270,7 @@ export default function CantonHolderDashboard() {
             The Console Wallet extension lets the dApp query the ledger as your specific party.
           </p>
           <p className="mt-4 text-[11px] text-[var(--color-ink-faint)] leading-5 max-w-md mx-auto">
-            No extension? The <Link href="/canton" className="text-[var(--color-accent)] underline-offset-2 hover:underline">operator workbench</Link> runs
+            No extension? The <Link href="/proof?chain=canton" className="text-[var(--color-accent)] underline-offset-2 hover:underline">Proof Theatre</Link> runs
             a live two-party privacy query server-side — no wallet needed.
           </p>
         </div>

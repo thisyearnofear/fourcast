@@ -97,6 +97,7 @@ export default function StatusPage() {
  venice: '🤖',
  synthdata: '🧠',
  database: '🗄️',
+ canton: '◈',
  };
  return icons[key] || '🔌';
  };

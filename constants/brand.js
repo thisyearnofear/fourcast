@@ -98,14 +98,14 @@ export const BRAND = {
 
   /** Wallet explainer — show everywhere users connect */
   walletExplainer: {
-    headline: 'Fourcast uses four layers:',
+    headline: 'Fourcast does four jobs:',
     layers: [
-      { icon: '◆', name: 'Arc', detail: 'Public reputation — USDC settlement for signals, subscriptions, tips (~$0.01/tx)' },
-      { icon: '◈', name: 'Canton', detail: 'Private settlement — cBTC/cETH positions with hidden sizes via Daml smart contracts' },
-      { icon: 'Ξ', name: 'EVM (Polygon)', detail: 'Venue execution — Polymarket & Kalshi order placement' },
-      { icon: '◎', name: 'Solana', detail: 'Proof anchoring — decision receipts verified on-chain via TxLINE & match-escrow' },
+      { icon: '◆', name: 'Public reputation', detail: 'Arc (USDC) — settle signals, subscriptions, tips (~$0.01/tx)' },
+      { icon: '◈', name: 'Private settlement', detail: 'Canton (cBTC/cETH) — positions with hidden sizes via Daml smart contracts' },
+      { icon: 'Ξ', name: 'Venue execution', detail: 'EVM (Polygon) — Polymarket & Kalshi order placement' },
+      { icon: '◎', name: 'Proof anchoring', detail: 'Solana — decision receipts verified on-chain via TxLINE & match-escrow' },
     ],
-    cta: 'Connect an EVM wallet for Arc + venues. Connect Console Wallet for private Canton settlement. Phantom for Solana proof inspection.',
+    cta: 'Connect an EVM wallet for public reputation + venue orders. Connect Console Wallet for private settlement. Phantom for proof inspection.',
   },
 
   publish: {
