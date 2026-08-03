@@ -151,7 +151,7 @@ function queryTemplateId(module, name) {
 
 // ── Command submission ──────────────────────────────────────────────────
 
-export async function submitCommands({ actAs, readAs = [], commands, userId }) {
+export async function submitCommands({ actAs, readAs = [], commands, userId, disclosedContracts }) {
   if (!isCantonConfigured()) {
     throw new Error('Canton ledger not configured — set CANTON_JSON_API_URL and OIDC env vars');
   }
@@ -166,6 +166,7 @@ export async function submitCommands({ actAs, readAs = [], commands, userId }) {
     actAs,
     readAs,
   };
+  if (disclosedContracts?.length) body.disclosedContracts = disclosedContracts;
 
   const result = await ledgerCall('POST', '/v2/commands/submit-and-wait', body);
   return {
@@ -268,6 +269,102 @@ export async function queryActiveContracts(partyId, templates = []) {
   });
 }
 
+/**
+ * Query active contracts by CIP-56 *interface* (e.g. Splice.Api.Token.HoldingV1),
+ * not by template. Real CBTC holdings/allocations live behind these interfaces
+ * regardless of the underlying registry template, so this is the only way to
+ * see BitSafe CBTC (the Fourcast.Token:Template query above sees only the
+ * reference-registry demo token). `interfaceId` is the full
+ * "<pkg-hash>:<module>:<iface>" id (see IFACE_PKG).
+ */
+export async function queryInterfaceContracts(partyId, interfaceIds = []) {
+  if (!isCantonConfigured()) return [];
+  if (!partyId || !interfaceIds.length) return [];
+
+  const end = await ledgerCall('GET', '/v2/state/ledger-end');
+  const activeAtOffset = end.offset ?? 0;
+
+  const cumulative = interfaceIds.map((interfaceId) => ({
+    identifierFilter: {
+      InterfaceFilter: {
+        value: { interfaceId, includeCreatedEventBlob: false },
+      },
+    },
+  }));
+
+  const eventFormat = {
+    filtersByParty: { [partyId]: { cumulative } },
+    verbose: false,
+  };
+
+  const result = await ledgerCall('POST', '/v2/state/active-contracts', {
+    activeAtOffset,
+    eventFormat,
+  });
+
+  if (!Array.isArray(result)) return [];
+
+  return result.flatMap((item) => {
+    const ev = item.contractEntry?.JsActiveContract?.createdEvent;
+    if (!ev) return [];
+    return [{
+      contractId: ev.contractId,
+      templateId: ev.templateId,
+      interfaceId: ev.interfaceId,
+      payload: ev.createArgument,
+    }];
+  });
+}
+
+/**
+ * Query ALL active contracts visible to a party (no template/interface filter —
+ * empty cumulative matches everything). Used for discovery: e.g. finding pending
+ * CBTC transfer offers whose template/interface isn't known ahead of time.
+ */
+export async function queryAllActiveContracts(partyId) {
+  if (!isCantonConfigured()) return [];
+  if (!partyId) return [];
+
+  const end = await ledgerCall('GET', '/v2/state/ledger-end');
+  const activeAtOffset = end.offset ?? 0;
+
+  const eventFormat = {
+    filtersByParty: { [partyId]: { cumulative: [] } },
+    verbose: false,
+  };
+
+  const result = await ledgerCall('POST', '/v2/state/active-contracts', {
+    activeAtOffset,
+    eventFormat,
+  });
+
+  if (!Array.isArray(result)) return [];
+
+  return result.flatMap((item) => {
+    const ev = item.contractEntry?.JsActiveContract?.createdEvent;
+    if (!ev) return [];
+    return [{
+      contractId: ev.contractId,
+      templateId: ev.templateId,
+      payload: ev.createArgument,
+    }];
+  });
+}
+
+/** Interface id for a CIP-56 token interface, in Canton's #<pkg-name> reference
+ *  form (InterfaceFilter rejects bare package hashes). pkgName is the
+ *  supportedApis key from the registry metadata (e.g. splice-api-token-holding-v1). */
+function ifaceId(pkgName, ifaceName) {
+  return `#${pkgName}:${ifaceName}`;
+}
+
+/** HoldingV1 interface id (CIP-56 token holdings — real CBTC lives here). */
+export const HOLDING_V1_IFACE = ifaceId('splice-api-token-holding-v1', 'Splice.Api.Token.HoldingV1:Holding');
+/** AllocationV1 interface id (locked escrow allocations). */
+export const ALLOCATION_V1_IFACE = ifaceId('splice-api-token-allocation-v1', 'Splice.Api.Token.AllocationV1:Allocation');
+/** AllocationInstructionV1 interface id (the AllocationFactory choice surface). */
+export const ALLOCATION_INSTRUCTION_V1_IFACE = ifaceId('splice-api-token-allocation-instruction-v1', 'Splice.Api.Token.AllocationInstructionV1:AllocationFactory');
+
 // ── Value helpers (JSON API v2 encodings, same conventions v1 verified) ──
 
 const EMPTY_META = { values: {} };
@@ -302,6 +399,83 @@ export function registryFactory() {
   const cid = BTC_REGISTRY_CID || REFERENCE_RULES_CID;
   const admin = BTC_INSTRUMENT_ADMIN || OPERATOR_PARTY_ID;
   return { cid, admin, isBitSafe: Boolean(BTC_REGISTRY_CID) };
+}
+
+// BitSafe API base (per-network; devnet default). Hosts /cbtc/v1/* endpoints
+// that return the on-ledger contract ids + createdEventBlobs needed as
+// disclosedContracts for AllocationFactory_Allocate and TransferOffer_Accept.
+const BITSAFE_API_URL = process.env.CANTON_BITSAFE_API_URL || 'https://api.devnet.bitsafe.finance';
+
+let _bitsafeContractsCache = null;
+
+/**
+ * Fetch the BitSafe registry's token-standard contracts (AllocationFactory,
+ * InstrumentConfiguration, issuer credential) as a Canton `disclosedContracts`
+ * array. These MUST be attached to any command exercising the BitSafe
+ * AllocationFactory or accepting a CBTC transfer — the contracts aren't
+ * otherwise visible to app parties. Cached for the process.
+ */
+export async function getBitsafeDisclosedContracts() {
+  if (_bitsafeContractsCache) return _bitsafeContractsCache;
+  const res = await fetch(`${BITSAFE_API_URL}/cbtc/v1/token-standard-contracts`);
+  if (!res.ok) throw new Error(`BitSafe token-standard-contracts fetch failed: ${res.status}`);
+  const data = await res.json();
+  const entries = Object.values(data).filter((v) => v && v.template_id && v.contract_id && v.created_event_blob);
+  _bitsafeContractsCache = entries.map((v) => ({
+    templateId: v.template_id,
+    contractId: v.contract_id,
+    createdEventBlob: v.created_event_blob,
+    synchronizerId: '',
+  }));
+  return _bitsafeContractsCache;
+}
+
+// DA Registry Utility base (per-network; devnet default). Serves the CIP-56
+// choice-contexts endpoints that return the context + disclosedContracts
+// required to exercise TransferInstruction_Accept / AllocationFactory_Allocate.
+const REGISTRY_URL = process.env.CANTON_REGISTRY_URL || 'https://api.utilities.digitalasset-dev.com';
+
+/** Fetch the accept choice-context (context + disclosedContracts) for a pending
+ *  CBTC TransferInstruction from the DA Registry Utility. */
+async function getTransferAcceptContext(offerCid) {
+  const admin = BTC_INSTRUMENT_ADMIN || 'cbtc-network::12202a83c6f4082217c175e29bc53da5f2703ba2675778ab99217a5a881a949203ff';
+  const url = `${REGISTRY_URL}/api/token-standard/v0/registrars/${admin}/registry/transfer-instruction/v1/${offerCid}/choice-contexts/accept`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ meta: {}, excludeDebugFields: true }),
+  });
+  if (!res.ok) throw new Error(`registry accept-contexts fetch failed: ${res.status} ${await res.text().catch(() => '')}`);
+  return res.json();
+}
+
+/**
+ * Accept a pending CBTC TransferInstruction (two-phase transfer receiver step).
+ * Fetches the accept choice-context + disclosedContracts from the DA Registry
+ * Utility, then exercises `TransferInstruction_Accept` as the receiver. On
+ * success the receiver owns a new CBTC Holding.
+ */
+export async function acceptTransferOffer(offerCid, receiverPartyId) {
+  const ctx = await getTransferAcceptContext(offerCid);
+  const disclosedContracts = ctx.disclosedContracts || [];
+  return submitCommands({
+    actAs: [receiverPartyId],
+    readAs: [],
+    disclosedContracts,
+    commands: [{
+      ExerciseCommand: {
+        templateId: '#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction',
+        contractId: offerCid,
+        choice: 'TransferInstruction_Accept',
+        choiceArgument: {
+          extraArgs: {
+            context: ctx.choiceContextData || { values: {} },
+            meta: { values: {} },
+          },
+        },
+      },
+    }],
+  });
 }
 
 // ── Markets ─────────────────────────────────────────────────────────────
