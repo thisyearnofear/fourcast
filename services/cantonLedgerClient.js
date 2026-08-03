@@ -921,12 +921,13 @@ export async function allocateLeg(positionPayload, legId, senderPartyId) {
     };
     const ctx = await getAllocationFactoryContext(choiceArgument);
     choiceArgument.extraArgs.context = ctx.choiceContextData;
-    // Always include the BitSafe factory + instrument-config + issuer
-    // credential (the factory contract isn't visible to app parties by
-    // default — it MUST be disclosed). Merge with any per-allocation extras.
+    // Prefer the allocation-factory endpoint's FRESH disclosed contracts (the
+    // attestor's cached set may lag a factory recreation); top up with the
+    // BitSafe set for the issuer credential etc.
     const base = await getBitsafeDisclosedContracts();
-    const seen = new Set(base.map((d) => d.contractId));
-    const disclosed = [...base, ...(ctx.disclosedContracts || []).filter((d) => !seen.has(d.contractId))];
+    const ctxDc = ctx.disclosedContracts || [];
+    const seen = new Set(ctxDc.map((d) => d.contractId));
+    const disclosed = [...ctxDc, ...base.filter((d) => !seen.has(d.contractId))];
     // Fill the real synchronizer id (empty is rejected for contracts the
     // party can't otherwise see — the BitSafe factory lives on the global domain).
     const syncId = await getCbtcSynchronizerId(senderPartyId);
