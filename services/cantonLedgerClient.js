@@ -341,11 +341,13 @@ export async function queryAllActiveContracts(partyId) {
   if (!Array.isArray(result)) return [];
 
   return result.flatMap((item) => {
-    const ev = item.contractEntry?.JsActiveContract?.createdEvent;
+    const entry = item.contractEntry?.JsActiveContract;
+    const ev = entry?.createdEvent;
     if (!ev) return [];
     return [{
       contractId: ev.contractId,
       templateId: ev.templateId,
+      synchronizerId: ev.synchronizerId || entry?.synchronizerId || item.synchronizerId || '',
       payload: ev.createArgument,
     }];
   });
@@ -662,6 +664,92 @@ export async function rejectOffer(offerContractId) {
   });
 }
 
+/** Check whether a Daml package is uploaded on this participant (GET /v2/packages/{id}). */
+export async function isPackageUploaded(pkgId) {
+  try {
+    const r = await ledgerCall('GET', `/v2/packages/${pkgId}`);
+    return Boolean(r);
+  } catch (e) {
+    return false;
+  }
+}
+
+// ── BitSafe CBTC holdings + allocation contexts ─────────────────────────
+
+/**
+ * Read a party's OWNED CBTC holdings (real BitSafe CBTC, not the reference
+ * Fourcast.Token). Uses the broad active-contracts query filtered to the
+ * Utility.Registry Holding template + owner + instrument id. Returns
+ * [{ contractId, amount, payload }].
+ */
+export async function getCbtcHoldings(partyId) {
+  const all = await queryAllActiveContracts(partyId);
+  return all.filter((x) => {
+    const p = x.payload;
+    const inst = p?.instrument;
+    const tpl = x.templateId || '';
+    return tpl.includes('Utility.Registry')
+      && tpl.endsWith(':Holding')
+      && p?.owner === partyId
+      && inst && String(inst.id) === String(BTC_INSTRUMENT_ID || 'CBTC');
+  }).map((x) => ({ contractId: x.contractId, amount: Number(x.payload?.amount ?? 0), payload: x.payload, synchronizerId: x.synchronizerId }));
+}
+
+/** The synchronizer id of a party's CBTC holding (the global domain the
+ *  BitSafe factory + instrument-config contracts live on). Needed to fill
+ *  disclosedContracts.synchronizerId (empty is rejected). */
+export async function getCbtcSynchronizerId(partyId = OPERATOR_PARTY_ID) {
+  const cbtc = await getCbtcHoldings(partyId);
+  return cbtc[0]?.synchronizerId || '';
+}
+
+/**
+ * Fetch the allocation-factory choice context for a specific allocation. The
+ * DA Registry Utility validates the FULL choiceArguments shape (expectedAdmin,
+ * allocation, requestedAt, inputHoldingCids, extraArgs) to return the
+ * per-allocation choiceContextData + disclosedContracts. Returns
+ * { factoryId, choiceContextData, disclosedContracts }.
+ */
+async function getAllocationFactoryContext(choiceArgument) {
+  const expectedAdmin = choiceArgument.expectedAdmin;
+  const url = `${REGISTRY_URL}/api/token-standard/v0/registrars/${encodeURIComponent(expectedAdmin)}/registry/allocation-instruction/v1/allocation-factory`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ choiceArguments: choiceArgument, excludeDebugFields: true }),
+  });
+  if (!res.ok) throw new Error(`allocation-factory context fetch failed: ${res.status} ${await res.text().catch(() => '')}`);
+  const data = await res.json();
+  const cc = data.choiceContext || {};
+  return {
+    factoryId: data.factoryId || BTC_REGISTRY_CID,
+    choiceContextData: cc.choiceContextData || { values: {} },
+    disclosedContracts: (cc.disclosedContracts || []).map((d) => ({
+      templateId: d.templateId, contractId: d.contractId,
+      createdEventBlob: d.createdEventBlob, synchronizerId: d.synchronizerId || '',
+    })),
+  };
+}
+
+/** Fetch the per-allocation withdraw choice-context (for settle/expire). */
+async function getAllocationWithdrawContext(allocationCid, expectedAdmin) {
+  const url = `${REGISTRY_URL}/api/token-standard/v0/registrars/${encodeURIComponent(expectedAdmin)}/registry/allocations/v1/${encodeURIComponent(allocationCid)}/choice-contexts/withdraw`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ choiceArguments: {}, excludeDebugFields: true }),
+  });
+  if (!res.ok) throw new Error(`allocation withdraw-context fetch failed: ${res.status} ${await res.text().catch(() => '')}`);
+  const data = await res.json();
+  return {
+    choiceContextData: data.choiceContextData || { values: {} },
+    disclosedContracts: (data.disclosedContracts || []).map((d) => ({
+      templateId: d.templateId, contractId: d.contractId,
+      createdEventBlob: d.createdEventBlob, synchronizerId: d.synchronizerId || '',
+    })),
+  };
+}
+
 // ── Reference registry (Fourcast.Token) — escrow + demo funding ─────────
 
 export function isReferenceRegistryConfigured() {
@@ -732,19 +820,42 @@ export async function acceptMint(mintRequestCid, { amount, instrumentId }) {
 
 /** Unlocked reference holdings of a party (Fourcast.Token:Token). */
 export async function getHoldings(partyId) {
+  if (isBitSafeConfigured()) {
+    const all = await queryAllActiveContracts(partyId);
+    return all.filter((x) => {
+      const tpl = x.templateId || '';
+      return tpl.includes('Utility.Registry') && tpl.endsWith(':Holding');
+    });
+  }
   return queryActiveContracts(partyId, [
     { module: 'Fourcast.Token', name: 'Token' },
   ]);
 }
 
-/** Locked escrow allocations visible to a party (Fourcast.Token:TokenAllocation). */
+/** Locked escrow allocations visible to a party. */
 export async function getAllocations(partyId = OPERATOR_PARTY_ID) {
+  if (isBitSafeConfigured()) {
+    const all = await queryAllActiveContracts(partyId);
+    return all.filter((x) => {
+      const tpl = x.templateId || '';
+      return tpl.includes('Utility.Registry') && tpl.endsWith(':Allocation');
+    });
+  }
   return queryActiveContracts(partyId, [
     { module: 'Fourcast.Token', name: 'TokenAllocation' },
   ]);
 }
 
 export async function getBalances(partyId) {
+  if (isBitSafeConfigured()) {
+    const cbtc = await getCbtcHoldings(partyId);
+    const unlocked = cbtc.reduce((acc, h) => acc + Number(h.amount || 0), 0);
+    const allocations = (await getAllocations(partyId))
+      .filter((a) => a.payload?.transferLeg?.sender === partyId);
+    const locked = allocations
+      .reduce((acc, a) => acc + Number(a.payload?.transferLeg?.amount ?? 0), 0);
+    return { partyId, unlocked, locked, holdings: cbtc, allocations };
+  }
   const [holdings, allocations] = await Promise.all([getHoldings(partyId), getAllocations(partyId)]);
   // NB: party visibility ≠ ownership — the registry admin sees everyone's
   // tokens (it's a signatory), so filter by owner/sender explicitly.
@@ -794,6 +905,50 @@ export async function allocateLeg(positionPayload, legId, senderPartyId) {
     throw new Error('registry not configured — set CANTON_BTC_REGISTRY_CID (BitSafe) or CANTON_REFERENCE_RULES_CID (reference, run canton-v2-preflight)');
   }
   const spec = allocationSpecFor(positionPayload, legId);
+
+  // ── BitSafe CBTC path: real CIP-56 AllocationFactory, disclosed contracts,
+  // per-allocation choice context, and CBTC holdings as escrow inputs. ──
+  if (factory.isBitSafe) {
+    const cbtc = await getCbtcHoldings(senderPartyId);
+    const inputHoldingCids = cbtc.map((h) => h.contractId);
+    const requestedAt = new Date().toISOString();
+    const choiceArgument = {
+      expectedAdmin: factory.admin,
+      allocation: spec,
+      requestedAt,
+      inputHoldingCids,
+      extraArgs: { context: { values: {} }, meta: { values: {} } },
+    };
+    const ctx = await getAllocationFactoryContext(choiceArgument);
+    choiceArgument.extraArgs.context = ctx.choiceContextData;
+    // Always include the BitSafe factory + instrument-config + issuer
+    // credential (the factory contract isn't visible to app parties by
+    // default — it MUST be disclosed). Merge with any per-allocation extras.
+    const base = await getBitsafeDisclosedContracts();
+    const seen = new Set(base.map((d) => d.contractId));
+    const disclosed = [...base, ...(ctx.disclosedContracts || []).filter((d) => !seen.has(d.contractId))];
+    // Fill the real synchronizer id (empty is rejected for contracts the
+    // party can't otherwise see — the BitSafe factory lives on the global domain).
+    const syncId = await getCbtcSynchronizerId(senderPartyId);
+    if (syncId) for (const d of disclosed) if (!d.synchronizerId) d.synchronizerId = syncId;
+    // The factory isn't in our ACS — exercise via the CIP-56 AllocationInstruction
+    // interface id (Canton resolves it to the disclosed factory contract).
+    return submitForContractId({
+      actAs: [senderPartyId],
+      readAs: senderPartyId === OPERATOR_PARTY_ID ? [] : [OPERATOR_PARTY_ID],
+      disclosedContracts: disclosed,
+      commands: [{
+        ExerciseCommand: {
+          templateId: '#splice-api-token-allocation-instruction-v1:Splice.Api.Token.AllocationInstructionV1:AllocationFactory',
+          contractId: ctx.factoryId || factory.cid,
+          choice: 'AllocationFactory_Allocate',
+          choiceArgument,
+        },
+      }],
+    }).then((allocationCid) => ({ allocationCid, spec }));
+  }
+
+  // ── Reference registry path (Fourcast.Token) ──
   const holdings = await getHoldings(senderPartyId);
   const inputHoldingCids = holdings
     .filter((h) => h.payload?.holding?.owner === senderPartyId)
@@ -829,7 +984,9 @@ export async function allocateLeg(positionPayload, legId, senderPartyId) {
 export async function findPositionAllocations(positionPayload) {
   const allocations = await getAllocations(OPERATOR_PARTY_ID);
   const matchLeg = (legId) => allocations.find((a) => {
-    const alloc = a.payload?.allocation;
+    // Reference nests under .allocation; BitSafe (CIP-56 AllocationV1 template)
+    // exposes the record at the payload top level.
+    const alloc = a.payload?.allocation || a.payload;
     return alloc?.transferLegId === legId
       && alloc?.settlement?.settlementRef?.cid === positionPayload.offerCid
       && String(alloc?.transferLeg?.instrumentId?.id) === String(positionPayload.instrument?.id);
@@ -897,16 +1054,33 @@ export async function settlePositionV2(positionContractId, { resolutionCid, lane
     }
   }
 
+  const factory = registryFactory();
+  let stakeExtraArgs = NO_EXTRA_ARGS;
+  let payoutExtraArgs = NO_EXTRA_ARGS;
+  let disclosedContracts;
+  // BitSafe: the Settle choice internally exercises Allocation withdraws, which
+  // require per-allocation choice-context + disclosed contracts.
+  if (factory.isBitSafe) {
+    const [sCtx, pCtx] = await Promise.all([
+      getAllocationWithdrawContext(stakeAllocationCid, factory.admin),
+      getAllocationWithdrawContext(payoutAllocationCid, factory.admin),
+    ]);
+    stakeExtraArgs = { context: sCtx.choiceContextData, meta: { values: {} } };
+    payoutExtraArgs = { context: pCtx.choiceContextData, meta: { values: {} } };
+    disclosedContracts = [...(sCtx.disclosedContracts || []), ...(pCtx.disclosedContracts || [])];
+  }
+
   const params = {
     resolutionCid,
     stakeAllocationCid,
     payoutAllocationCid,
-    stakeExtraArgs: NO_EXTRA_ARGS,
-    payoutExtraArgs: NO_EXTRA_ARGS,
+    stakeExtraArgs,
+    payoutExtraArgs,
   };
 
   return submitCommands({
     actAs: [lane === 'holder' ? holderPartyId : OPERATOR_PARTY_ID],
+    disclosedContracts,
     commands: [{
       ExerciseCommand: {
         templateId: templateId('Fourcast.PredictionPosition', 'PredictionPosition'),
@@ -931,16 +1105,31 @@ export async function expirePosition(positionContractId, { lane = 'operator', ho
     throw new Error('escrow legs not fully allocated — expire must cancel both');
   }
 
+  const factory = registryFactory();
+  let stakeExtraArgs = NO_EXTRA_ARGS;
+  let payoutExtraArgs = NO_EXTRA_ARGS;
+  let disclosedContracts;
+  if (factory.isBitSafe) {
+    const [sCtx, pCtx] = await Promise.all([
+      getAllocationWithdrawContext(found.stakeAllocationCid, factory.admin),
+      getAllocationWithdrawContext(found.payoutAllocationCid, factory.admin),
+    ]);
+    stakeExtraArgs = { context: sCtx.choiceContextData, meta: { values: {} } };
+    payoutExtraArgs = { context: pCtx.choiceContextData, meta: { values: {} } };
+    disclosedContracts = [...(sCtx.disclosedContracts || []), ...(pCtx.disclosedContracts || [])];
+  }
+
   const params = {
     stakeAllocationCid: found.stakeAllocationCid,
     payoutAllocationCid: found.payoutAllocationCid,
-    stakeExtraArgs: NO_EXTRA_ARGS,
-    payoutExtraArgs: NO_EXTRA_ARGS,
+    stakeExtraArgs,
+    payoutExtraArgs,
     reason: String(reason),
   };
 
   return submitCommands({
     actAs: [lane === 'holder' ? holderPartyId : OPERATOR_PARTY_ID],
+    disclosedContracts,
     commands: [{
       ExerciseCommand: {
         templateId: templateId('Fourcast.PredictionPosition', 'PredictionPosition'),

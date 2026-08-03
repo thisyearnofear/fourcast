@@ -47,7 +47,7 @@ try {
 const client = await import('../services/cantonLedgerClient.js');
 const operator = process.env.CANTON_OPERATOR_PARTY_ID;
 const alice = process.env.CANTON_ALICE_PARTY_ID;
-const STAKE = Number(process.env.BITSAFE_DEMO_STAKE || 500);
+const STAKE = Number(process.env.BITSAFE_DEMO_STAKE || 0.4);
 const MULT = Number(process.env.BITSAFE_DEMO_MULT || 2);
 
 const step = (n, s) => console.log(`\n── Step ${n}: ${s}`);
@@ -134,9 +134,12 @@ await client.allocateLeg(position, 'payout', operator);
 
 const lockedFor = async (partyId, senderPartyId) =>
   (await client.getAllocations(partyId))
-    .filter((a) => a.payload?.allocation?.settlement?.settlementRef?.cid === offerContractId
-      && a.payload?.allocation?.transferLeg?.sender === senderPartyId)
-    .reduce((acc, a) => acc + Number(a.payload?.allocation?.transferLeg?.amount ?? 0), 0);
+    .filter((a) => {
+      const alloc = a.payload?.allocation || a.payload;
+      return alloc?.settlement?.settlementRef?.cid === offerContractId
+        && alloc?.transferLeg?.sender === senderPartyId;
+    })
+    .reduce((acc, a) => { const alloc = a.payload?.allocation || a.payload; return acc + Number(alloc?.transferLeg?.amount ?? 0); }, 0);
 const aliceEscPre = await lockedFor(alice, alice);
 const opEscPre = await lockedFor(operator, operator);
 const alicePre = await client.getBalances(alice);
@@ -196,8 +199,8 @@ try {
 console.log(`             non-signatory query: ${nonSig}`);
 
 const checks = [
-  ['alice unlocked += stake + payout', Math.abs((aliceAfter.unlocked - alicePre.unlocked) - (STAKE + STAKE * (MULT - 1))) < 1e-9],
-  ['operator net paid the payout from escrow', Math.abs((opAfter.unlocked + opAfter.locked) - (opPre.unlocked + opPre.locked - STAKE * (MULT - 1))) < 1e-9],
+  ['alice net += winnings (stake*(mult-1))', Math.abs((aliceAfter.unlocked - alicePre.unlocked) - STAKE * (MULT - 1)) < 1e-9],
+  ['operator net -= payout (stake*(mult-1))', Math.abs((opAfter.unlocked + opAfter.locked) - (opPre.unlocked + opPre.locked - STAKE * (MULT - 1))) < 1e-9],
   ['both escrow legs cleared', aliceEscPost === 0 && opEscPost === 0],
   ['settled receipt exists with payout', Boolean(receipt) && Number(receipt?.payout) > 0],
   ['receipt instrument is the real CBTC id', String(receipt?.instrument?.id) === process.env.CANTON_BTC_INSTRUMENT_ID],
