@@ -1,5 +1,19 @@
 # Canton v2 — Atomic Settlement Upgrade
 
+## Current implementation status
+
+This document is the source of truth for the HackCanton claim set.
+
+| Capability | Status |
+|---|---|
+| Private Daml positions | Implemented and DevNet-tested |
+| Holder-signed consent | Implemented and script-tested |
+| CIP-56 atomic escrow/settlement | Implemented with Fourcast's reference registry |
+| Actual BitSafe CBTC registry settlement | Pending registry/instrument verification |
+| External holder-wallet signing | Partial; operator flow remains the judge path |
+| Independent attestation | Configurable; current DevNet demo is operator-attested |
+| Mainnet deployment | Not deployed |
+
 > Responds to reviewer feedback on the v1 integration. The v1 Daml model tracked
 > IOUs and required manual wallet payouts. v2 locks real token holdings in
 > escrow at position-entry and settles them **atomically** — stake and payout
@@ -64,8 +78,9 @@
 `Fourcast.Token` is a **reference CIP-56 registry** (admin = `FourcastOperator`)
 so the whole lifecycle runs on DevNet without BitSafe/OnRails mint permissions.
 The market contracts never touch its concrete templates — they consume only the
-standard interfaces — which is exactly what makes the production swap a
-client-side parameter change (see below).
+standard interfaces. The production swap still requires registry discovery,
+instrument configuration, allocation-factory context, funding, and a complete
+live lifecycle run against BitSafe's contracts (see below).
 
 ---
 
@@ -130,8 +145,8 @@ through `Splice.Api.Token.{HoldingV1, AllocationV1, AllocationInstructionV1}`.
 | Layer | Reference (today) | Production |
 |---|---|---|
 | Interface packages | DONE — built against the DevNet-vetted DALFs fetched from the participant itself, wrapped as data-dependency DARs (`vendor/network-cip-0056/`, IDs in `manifest.json`). Verified present with `node scripts/canton-package-check.mjs`. | same (the rows below are what still changes) |
-| Registry contracts | `Fourcast.Token` (`TokenRules`, admin = FourcastOperator) | BitSafe cBTC / OnRails cETH registry factories (discovered via the registry API / wallet scan) |
-| Instrument | `InstrumentId{admin = FourcastOperator, id = "cBTC"}` | real `InstrumentId`s from BitSafe / OnRails docs |
+| Registry contracts | `Fourcast.Token` (`TokenRules`, admin = FourcastOperator) | BitSafe cBTC / OnRails cETH registry factories, to be discovered and verified |
+| Instrument | `InstrumentId{admin = FourcastOperator, id = "cBTC"}` | real `InstrumentId` returned by BitSafe's registry |
 | Minting | `MintRequest` on the reference registry | faucet-issued holdings (already have 0.01 cBTC) |
 | Allocation factory | `toInterfaceCid rulesCid` | registry-provided factory cid; client submits with `expectedAdmin = <registry admin>` |
 

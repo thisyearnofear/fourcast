@@ -4,18 +4,17 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 
 ## Opening (15s)
 
-> "A whale can take a massive position without exposing it to the market. On Polymarket, that position is public within seconds — copied, front-run, front-paged on tracker sites. On Canton, it doesn't exist for anyone but the holder. Watch."
+> "A large position can leak strategy as soon as it is placed on a public venue. On Canton, the position is visible to its stakeholders but not to unrelated parties. Watch."
 
-**Show:** Markets page — AI analysis with Kelly-sized recommendation and confidence score. Settlement-layer selector visible (Arc vs Canton).
+**Show:** Canton proof surface — the private-position demo, not the earlier AI/Arc market flow.
 
 ---
 
 ## Act 1 — Take a private position · 60s
 
-1. **Select a signal** on the markets page (e.g. "Will BTC exceed $150K by end of 2026?").
-2. **Click publish** → settlement-layer modal appears.
-3. **Select Canton** (private settlement).
-4. **Confirm position** — the app calls `/api/canton/markets` (POST), which submits a Daml `CreateCommand` to Canton Devnet via the server-side ledger client.
+1. Open the prepared DevNet market and position.
+2. Show the holder/operator view of the position.
+3. Explain that the current judge flow is an operator console; external holder signing is still partial.
 
 **Say:** "This position is now on-ledger. The stake, the side, the entry — visible only to the operator and this holder. No other party, no tracker, no explorer can see it."
 
@@ -25,7 +24,7 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 
 ## Act 2 — The absence · 45s
 
-1. **On the same page**, scroll to the PrivacyProof section and click "Run privacy test."
+1. Open the PrivacyProof section and click "Run privacy test."
 2. The component fires **two live ledger queries in parallel** — one as the operator (signatory), one as a non-signatory party — and renders both results side-by-side.
 
 **Show:** Signatory cell returns full position data. Non-signatory cell returns a real empty result set from the ledger — not simulated, not hardcoded.
@@ -38,26 +37,26 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 
 1. **Switch back to the holder's browser.**
 2. **Operator resolves the market** — exercise `ResolveMarket` with outcome `ResolvedYes`.
-3. **Holder exercises Settle** — the choice fetches `MarketResolution` by contract ID, verifies `marketId` matches, calculates payout.
-4. **Show:** `PositionSettled` receipt — winner: holder, payout: 1000 cBTC.
-5. **Show:** `SettlementObligation` created — instructs operator to transfer winnings via CIP-56.
+3. **Holder or operator exercises Settle** — the choice fetches `MarketResolution`, verifies the market, and validates both allocation legs.
+4. **Show:** `PositionSettled` receipt — winner: holder, payout: 1000 reference-token units.
+5. **Show:** both escrow allocations are archived by the same settlement transaction.
 
-**Say:** "The Settle choice fetches the resolution contract by ID — no party can settle with a fabricated outcome. The payout is derived from the on-ledger resolution, not from caller input."
+**Say:** "The Settle choice fetches the attestation-backed resolution and executes or cancels both escrow legs atomically. There is no manual payout or outstanding obligation."
 
 ---
 
-## Act 4 — The leaderboard that can't be copied · 15s
+## Act 4 — Why CBTC and Canton · 15s
 
-1. **Show:** Fourcast leaderboard — settled P&L ranked, verified by on-ledger `PositionSettled` receipts.
-2. **Note:** entries are private, results are public. No tracker can reproduce this because the entries never existed publicly.
+1. **Show:** the implementation status: private positions, CIP-56 escrow, atomic settlement.
+2. **Note:** the current proof uses a reference registry; BitSafe registry integration is the remaining CBTC step.
 
-**Say:** "Whales get verified track records without leaking entries. That's the privacy premium — and it only works on Canton."
+**Say:** "Canton keeps position details visible only to stakeholders, while CIP-56 gives us an atomic settlement primitive. We are validating the final registry swap with BitSafe."
 
 ---
 
 ## Close (15s)
 
-> "Live on Canton Devnet. Repo on GitHub. The position you just saw exist and not exist at the same time — that's the demo. No public-chain venue can reproduce it."
+> "This DevNet prototype proves private positions and atomic token settlement on Canton. The remaining path is the real BitSafe registry, external holder signing, independent attestation, and mainnet hardening."
 
 ---
 
@@ -71,11 +70,11 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 - [x] Contract queries use `eventFormat` + `activeAtOffset` + `#canton:` package name format
 - [x] Market + position lifecycle functions implemented (`services/cantonLedgerClient.js`)
 - [x] API routes: `/api/canton/markets`, `/api/canton/markets/resolve`, `/api/canton/positions`, `/api/canton/settle`
-- [x] End-to-end verified on Devnet: create market → query → resolve → query resolutions
+- [x] End-to-end v2 lifecycle verified on DevNet: offer → accept → escrow → resolve → atomic settle
 - [x] Deployed URL loads (not localhost) — verified live after env fix & redeploy
 - [x] Two-view privacy test (holder sees position, observer sees empty result set) — live in-page PrivacyProof component, both cells are real ledger queries
 - [ ] CC funded via NODERS wallet tap — reported done by operator, not re-tested this session
-- [ ] cBTC funded via https://cbtc-faucet.bitsafe.finance/ — reported done by operator, not re-tested this session
+- [ ] Real BitSafe CBTC registry/instrument settlement verified — reference registry currently used
 - [ ] Venice API key for live AI analysis — reported done by operator, not re-tested this session
 - [ ] Form: GitHub URL, video link, demo URL — reported submitted by operator, not verified
 

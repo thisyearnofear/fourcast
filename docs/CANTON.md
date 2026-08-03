@@ -1,5 +1,12 @@
 # HackCanton S2 — Fourcast Opportunity
 
+> **Current pitch wedge:** Fourcast is a private prediction-market settlement
+> layer for high-volume traders. AI agents, Solana receipts, allocator
+> diligence, cETH, and leaderboards are out of scope for the HackCanton pitch.
+> The current DevNet proof uses a reference CIP-56 registry. Do not claim
+> BitSafe CBTC settlement until the real BitSafe registry and instrument have
+> completed the lifecycle.
+
 > **v2 note (July 31, 2026):** The contract set described below as "completed" is the **v1 (IOU-bookkeeping)** integration. It is superseded by the **canton-2.0.0 atomic-settlement** contracts: stakes escrowed as CIP-56 allocations, holder-signed consent, attestation-anchored resolution, settlement inside one transaction — package `fourcast` `550828d2…930a`, **live-verified on DevNet** (`scripts/canton-v2-preflight.mjs` → PASS). Authoritative docs: `docs/CANTON_ATOMIC_SETTLEMENT.md` (model + proofs) and `docs/CANTON_V2_DEPLOY.md` (deploy runbook). V1 detail kept below for history.
 
 **Event**: HackCanton League Season 2  
@@ -7,7 +14,7 @@
 **Duration**: 5 weeks (June 2026)  
 **Prize Pool**: Up to $50,000 in cash & credits  
 **Settlement**: Canton Network (privacy-enabled institutional L1)  
-**Supported Assets**: CC (Canton Coin) for devnet gas · cBTC (BitSafe) · cETH (OnRails/Digital Asset)
+**Supported Assets**: CC for DevNet gas · reference CIP-56 token today · BitSafe CBTC pending verification
 
 ---
 
@@ -124,7 +131,7 @@ Fourcast shipped a live product on Arc testnet in the Agora Agents Hackathon (Ca
 
 ### Key success metric (hackathon demo)
 
-> A PredictionPosition created on Canton Devnet returns an empty result set when queried by a non-signatory party, while the same query from the holder returns the full position — and the holder successfully settles and receives a cBTC payout.
+> A PredictionPosition created on Canton DevNet returns an empty result set when queried by a non-stakeholder, while the same query from a stakeholder returns the full position — and the escrow legs settle atomically through the reference CIP-56 registry.
 
 Binary pass/fail. Measurable by running two queries against the live Devnet ledger. If the non-signatory sees nothing and the holder sees everything and gets paid, the privacy claim is proven, not asserted.
 
@@ -143,9 +150,11 @@ When whales migrate, their positions vanish from Polycopy/Stand feeds. The copy-
 - **Farcaster frames** — public frame showing settled P&L with entries private
 - **Leaderboard** — rank by settled P&L on Canton, not visible positions
 
-### Growth lever — the privacy premium
+### Post-hackathon idea — optional privacy premium
 
-Whales come for privacy. Settled P&L is still publishable via `PositionSettled` receipts (holder chooses to reveal). This creates a leaderboard of verified results without leaked entries — structurally impossible on any public-chain venue. Flywheel: whales migrate for privacy → settled P&L attracts retail → retail liquidity lets whales take bigger size → bigger size attracts more attention.
+If later validated with users, settled P&L could be publishable via
+`PositionSettled` receipts while entries remain private. This is not implemented
+as a current HackCanton product claim and is excluded from the demo.
 
 ### One-liners
 
@@ -225,11 +234,11 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 
 ### Manual Tasks
 - [x] Fund `FourcastOperator` with CC (devnet gas) — funded via @mrlp8
-- [x] Fund `FourcastOperator` with cBTC — 0.01 cBTC from BitSafe faucet
+- [ ] Verify the BitSafe CBTC registry and instrument end-to-end — reference registry currently used
 - [x] Run preflight script — market + 4 positions created at ledger offset 401652
 - [x] Run actual privacy test on Canton Devnet — **PASSED**: Operator sees 6 positions, Alice sees 2, Bob sees 2. Daml enforces structural privacy correctly.
 - [x] TxLINE replay mode verification (July 23, 2026) — Verifier now handles both live API format (hex strings) and cached replay format (byte arrays). All proof checks pass: inputs-present, proof-well-formed (14 hashes), stat-roots-present, stat-proof-count (2 stats). On-chain PDA mismatch is expected for historical data.
-- [x] CIP-56 token settlement — no longer manual/n.a.: v2 settles atomic via allocations; live-run via `node scripts/canton-v2-preflight.mjs` after the v2 DAR is uploaded
+- [x] CIP-56 atomic settlement against the reference registry — live-run via `node scripts/canton-v2-preflight.mjs`
 
 ### Documentation
 - [ ] 1-page business brief (ICP, use case, who pays, why Canton)

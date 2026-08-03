@@ -16,8 +16,8 @@
 - **Allocator Diligence** — `/positions` reports policy adherence, discipline rate, verdict mix, and allocation bounds from receipt-backed runs as the hero; positions/P&L demoted to a secondary section
 
 #### Prediction Markets Distribution
-- **Three-Tab Markets Page** — Sports & Events (Polymarket/Kalshi), Crypto/Finance & More (discovery), and Canton Markets (private settlement showcase)
-- **Canton Markets Showcase** — Transparent demo of Canton-native prediction markets with CBTC/cETH settlement. Clearly marked as "preview" with live devnet status for cBTC and "coming soon" for cETH. Includes "Why Canton?" callout explaining privacy, atomic settlement, Daml contracts, and institutional custody.
+- **Markets Page** — Sports & Events (Polymarket/Kalshi) and Crypto/Finance & More (discovery). A former Canton-markets tab was removed; private Canton positions live under `/proof` and the operator console at `/labs/canton`.
+- **Private Canton settlement** — DevNet prototype: private Daml positions and CIP-56 atomic settlement against a **reference registry**. BitSafe CBTC registry integration is pending verification; cETH is not validated. See the implementation matrix in `docs/CANTON_ATOMIC_SETTLEMENT.md`.
 - **Progressive Disclosure** — Market lists show first 10 items with "Load More" button to reveal additional markets in batches
 - **One-Click Prediction Deep-Linking** — Shareable, pre-analyzed market links that hydrate state automatically
 - **Frictionless Capital Flow** — Integrated "Quick Swap" (ETH to USDC) for users with insufficient liquidity

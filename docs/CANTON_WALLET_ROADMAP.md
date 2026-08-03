@@ -1,13 +1,16 @@
 # Canton Wallet & Settlement UX Roadmap
 
-> Status: Phase 1 partially implemented. The holder dashboard (`/canton/holder`) with Console Wallet connect, private position queries, and dispute flow is live. The operator server-side ledger client remains the primary settlement path. This plan tracks the remaining work.
+> Status: DevNet prototype. The holder dashboard (`/canton/holder`) has
+> Console Wallet connection and private queries, but external holder signing
+> and self-service position creation are incomplete. The operator server-side
+> ledger client remains the primary judge-demo path.
 
 ---
 
 ## Goals
 
 1. Move from a **server-only operator model** to a **true multi-party Canton dApp** where end users connect their own wallets.
-2. Automate the settlement/payout flow so the demo does not rely on manual Console Wallet transfers.
+2. Use the v2 atomic allocation flow so the demo does not rely on manual payout transfers.
 3. Improve security of operator authentication without risking the live demo.
 
 ---
@@ -62,7 +65,7 @@
 
 **Why second:** high demo impact, but touches Daml contracts and working settlement logic.
 
-### Status: **Daml layer delivered (v2.0.0), client wiring pending**
+### Status: **Daml layer and DevNet reference-registry flow delivered (v2.0.0)**
 
 The contract rework is done and verified — see `docs/CANTON_ATOMIC_SETTLEMENT.md`
 and `canton/daml/Fourcast/PredictionPosition.daml`. Instead of automating a
@@ -71,22 +74,23 @@ CIP-56 allocations at position entry, and `Settle`/`SettleAsHolder` execute /
 cancel the escrow legs inside the settlement transaction itself. 7/7 Daml
 Scripts pass (`dpm test` in `canton/`, SDK 3.5.2).
 
-Remaining items below are the app-side wiring:
+The remaining production work is registry-specific integration and evidence
+capture; the reference-registry lifecycle is already wired and tested.
 
 ### Scope
-- Replace the manual “Pay via Console Wallet” link in `CantonSettlementHub` with an automated on-ledger token transfer.
-- The `Settle` choice should atomically transfer cBTC/cETH from the operator to the winner and archive the obligation.
+- Verify the same flow against BitSafe's real CBTC registry and instrument.
+- Keep the manual Console Wallet fallback only for operational recovery, not as the product settlement path.
 
 ### Implementation steps
 1. Add the CIP-56 token DAR to the Daml project in `canton/daml/`.
 2. Extend the `PredictionPosition` Daml model so that `Settle` exercises a token transfer choice.
 3. Update `services/cantonLedgerClient.js::settlePosition()` to submit the transfer command.
-4. Update `components/CantonSettlementHub.js` to call the updated settle endpoint and remove the external Console Wallet link.
+4. Capture transaction IDs and before/after balances for the real BitSafe registry run.
 
 ### Acceptance criteria
-- A resolved market can be settled with one click.
-- The winner’s balance increases without a manual transfer.
-- `SettlementObligation` contracts are consumed after payout.
+- A resolved reference-registry market can be settled with one command.
+- Escrow legs execute or cancel atomically and no obligation remains.
+- The real BitSafe CBTC registry flow is separately verified before claiming CBTC integration.
 
 ### Risks & mitigations
 - **Risk:** Token transfer DAR may require different party permissions. **Mitigation:** test on Canton Devnet with pre-funded parties before touching main code.
@@ -121,9 +125,10 @@ Remaining items below are the app-side wiring:
 
 | Order | Phase | Effort | Risk | Hackathon Value |
 |-------|-------|--------|------|-----------------|
-| 1 | Console Wallet connect | Medium | Low | Very High |
-| 2 | Automate CIP-56 settlement | Medium-High | Medium | High |
-| 3 | OAuth/Wallet Gateway auth | Medium | High | Low |
+| 1 | Verify BitSafe CBTC registry swap | Medium | Medium | Critical |
+| 2 | Complete external holder signing | Medium | Medium | High |
+| 3 | Independent attestation | Low | Low | Medium |
+| 4 | OAuth/Wallet Gateway auth | Medium | High | Low |
 
 ---
 
