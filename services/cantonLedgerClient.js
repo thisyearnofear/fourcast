@@ -47,6 +47,17 @@ const ATTESTER_PARTY_ID = process.env.CANTON_ATTESTER_PARTY_ID || '';
 // instrument. Created once by scripts/canton-v2-preflight.mjs.
 const REFERENCE_RULES_CID = process.env.CANTON_REFERENCE_RULES_CID || '';
 
+// Production CBTC (BitSafe) registry swap — config-only, no Daml change.
+// When set, allocateLeg targets the BitSafe AllocationFactory (not the
+// reference TokenRules) and the instrument carries BitSafe's admin + id.
+// Leave unset to keep the reference-registry demo path.
+//   CANTON_BTC_REGISTRY_CID     — BitSafe AllocationFactory contract id
+//   CANTON_BTC_INSTRUMENT_ADMIN  — BitSafe registry admin party
+//   CANTON_BTC_INSTRUMENT_ID     — real CBTC instrument id from BitSafe's registry
+const BTC_REGISTRY_CID = process.env.CANTON_BTC_REGISTRY_CID || '';
+const BTC_INSTRUMENT_ADMIN = process.env.CANTON_BTC_INSTRUMENT_ADMIN || '';
+const BTC_INSTRUMENT_ID = process.env.CANTON_BTC_INSTRUMENT_ID || '';
+
 // Network-vetted CIP-56 interface package ids (vendor/network-cip-0056/manifest.json).
 const IFACE_PKG = {
   metadata: process.env.CANTON_IFACE_PKG_METADATA_V1
@@ -269,10 +280,28 @@ function dec(x) {
   return n.toFixed(10).replace(/\.?0+$/, '') || '0';
 }
 
-/** Reference-registry instrument for the demo (admin = registry operator). */
+/**
+ * Instrument for the settlement asset. Defaults to the reference-registry
+ * demo instrument (admin = operator, id = "cBTC"/"cETH"). When BitSafe CBTC
+ * envs are set, returns the real BitSafe instrument (admin + id) instead —
+ * the Daml code is unchanged, only the instrument identity swaps.
+ */
 function referenceInstrumentId(settlementAsset, admin) {
   const asset = String(settlementAsset || 'CBTC').toUpperCase() === 'CETH' ? 'CETH' : 'CBTC';
-  return { admin, id: asset === 'CETH' ? 'cETH' : 'cBTC' };
+  if (asset === 'CETH') return { admin, id: 'cETH' };
+  return { admin: BTC_INSTRUMENT_ADMIN || admin, id: BTC_INSTRUMENT_ID || 'cBTC' };
+}
+
+/** True when the BitSafe CBTC registry swap is configured (production path). */
+export function isBitSafeConfigured() {
+  return Boolean(BTC_REGISTRY_CID && BTC_INSTRUMENT_ADMIN && BTC_INSTRUMENT_ID);
+}
+
+/** The AllocationFactory contract id + expected admin to submit against. */
+export function registryFactory() {
+  const cid = BTC_REGISTRY_CID || REFERENCE_RULES_CID;
+  const admin = BTC_INSTRUMENT_ADMIN || OPERATOR_PARTY_ID;
+  return { cid, admin, isBitSafe: Boolean(BTC_REGISTRY_CID) };
 }
 
 // ── Markets ─────────────────────────────────────────────────────────────
@@ -586,8 +615,9 @@ export function allocationSpecFor(pos, legId) {
  * unlocked holdings of the leg's instrument.
  */
 export async function allocateLeg(positionPayload, legId, senderPartyId) {
-  if (!REFERENCE_RULES_CID) {
-    throw new Error('reference registry not configured — set CANTON_REFERENCE_RULES_CID (run canton-v2-preflight)');
+  const factory = registryFactory();
+  if (!factory.cid) {
+    throw new Error('registry not configured — set CANTON_BTC_REGISTRY_CID (BitSafe) or CANTON_REFERENCE_RULES_CID (reference, run canton-v2-preflight)');
   }
   const spec = allocationSpecFor(positionPayload, legId);
   const holdings = await getHoldings(senderPartyId);
@@ -603,10 +633,10 @@ export async function allocateLeg(positionPayload, legId, senderPartyId) {
     commands: [{
       ExerciseCommand: {
         templateId: `${IFACE_PKG.allocationInstruction}:Splice.Api.Token.AllocationInstructionV1:AllocationFactory`,
-        contractId: REFERENCE_RULES_CID,
+        contractId: factory.cid,
         choice: 'AllocationFactory_Allocate',
         choiceArgument: {
-          expectedAdmin: OPERATOR_PARTY_ID,
+          expectedAdmin: factory.admin,
           allocation: spec,
           requestedAt: new Date().toISOString(),
           inputHoldingCids,
