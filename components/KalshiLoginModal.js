@@ -14,7 +14,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
 
  // Glass CSS classes (DRY)
  const glassPanel = 'mc-panel';
- const glassInput = 'glass-input';
+ const glassInput = 'mc-input';
  const textColor = 'text-[var(--color-ink)]';
 
  const handleLogin = async (e) => {

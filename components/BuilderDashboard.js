@@ -171,7 +171,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
 
 function MetricCard({ label, value, isNight }) {
  return (
- <div className={` p-3 text-center glass-input`}>
+ <div className={` p-3 text-center mc-input`}>
  <div className={`text-xs font-light text-[var(--color-ink-muted)]`}>
  {label}
  </div>

@@ -532,19 +532,20 @@ export default function MarketsPage() {
  ? "Live sports markets → ML fair odds → detect edge → prove your call."
  : "Scan live markets, run ML fair-odds analysis, and surface mispricings worth trading."}
  actions={
- <div className="flex items-center gap-3">
- <div className="hidden items-center sm:flex">
- <label className="mr-2 text-xs text-[var(--color-ink-muted)]">Analysis Mode</label>
+ <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+ <div className="flex items-center gap-2">
+ <label className="text-xs text-[var(--color-ink-muted)] hidden sm:inline">Mode</label>
  <select
  value={analysisMode}
  onChange={(e) => setAnalysisMode(e.target.value)}
- className=" border border-[var(--color-rule)] bg-[var(--color-paper-soft)] px-3 py-1.5 text-xs text-[var(--color-ink)]"
+ className="border border-[var(--color-rule)] bg-[var(--color-paper-soft)] px-2 py-1.5 text-xs text-[var(--color-ink)]"
+ aria-label="Analysis mode"
  >
  <option value="basic">Basic (Free)</option>
  <option value="deep">Deep (Research)</option>
  </select>
  </div>
- {/* Analysis Factor Toggles - Compact inline mode */}
+ {/* Analysis Factor Toggles - Compact inline mode (desktop only — dense) */}
  <div className="hidden items-center lg:flex">
  <AnalysisOptions
  marketType={selectedMarket?.eventType || activeTab === 'sports' ? 'sports' : 'crypto'}
@@ -552,7 +553,7 @@ export default function MarketsPage() {
  />
  </div>
  {canPublish && (
- <span ref={mySignalsRef} className=" border border-[var(--color-rule)] bg-[var(--color-paper-soft)] px-2 py-1 text-[10px] text-[var(--color-ink)] tabular-nums">
+ <span ref={mySignalsRef} className="border border-[var(--color-rule)] bg-[var(--color-paper-soft)] px-2 py-1 text-[10px] text-[var(--color-ink)] tabular-nums">
  My signals: {mySignalCount != null ? Math.round(mySignalsDisplay) : "—"}
  </span>
  )}

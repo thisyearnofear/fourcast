@@ -485,7 +485,7 @@ body { overflow-x: clip; }
 @media (max-width: 767px) {
   .platform-header { align-items: center; }
   .platform-header > div:last-child { min-width: 0; }
-  .platform-nav .mc-nav-link { padding-inline: 0.38rem; font-size: 8px; }
+  .platform-nav .mc-nav-link { padding-inline: 0.45rem; font-size: 11px; }
   .narrative-rail > div:nth-child(2),
   .narrative-rail > div:nth-child(3) { display: none; }
 }
@@ -777,123 +777,6 @@ body { overflow-x: clip; }
   /* Dynamic viewport height for mobile */
 }
 
-/* Glassmorphism Components — DEPRECATED. Aliased to mc-* squared panels.
-   The flight-recorder aesthetic uses hairline borders and solid backgrounds,
-   not backdrop-blur. These aliases keep existing components rendering without
-   a hard break while they migrate to mc-* classes directly.
-
-   Tailwind v4 forbids @apply of custom component classes, so each alias
-   inlines the base styles instead of referencing them. */
-@layer components {
-  .glass-surface,
-  .glass-heavy,
-  .glass-subtle,
-  .glass-heavy-light,
-  .glass-subtle-light {
-    border: 1px solid var(--mc-rule);
-    background: var(--mc-panel);
-    transition: border-color 0.18s ease, background 0.18s ease;
-  }
-  .glass-input,
-  .glass-input-light {
-    border: 1px solid var(--mc-rule);
-    background: var(--mc-panel);
-    padding: 0.5rem 1rem;
-    color: var(--ink);
-    transition: border-color 0.18s ease;
-  }
-  .glass-input:focus,
-  .glass-input-light:focus { border-color: var(--mc-reconciled); outline: none; }
-
-  /* Button utilities — aliased to mc-action (squared, no rounded-2xl). */
-  .btn-base {
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    border: 1px solid var(--mc-rule-strong);
-    background: transparent;
-    color: var(--ink);
-    padding: 0.6rem 1rem;
-    font: 600 12px/1 var(--font-mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
-    cursor: pointer;
-  }
-  .btn-base:active { transform: scale(0.97); }
-  .btn-sm { padding: 0.4rem 0.75rem; font-size: 11px; }
-  .btn-md { padding: 0.6rem 1rem; }
-
-  .btn-primary,
-  .btn-primary-light {
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    border: 1px solid rgba(91, 156, 255, 0.4);
-    background: rgba(91, 156, 255, 0.06);
-    color: var(--mc-evidence);
-    padding: 0.6rem 1rem;
-    font: 600 12px/1 var(--font-mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
-    cursor: pointer;
-  }
-  .btn-primary:hover,
-  .btn-primary-light:hover { background: rgba(91, 156, 255, 0.12); border-color: var(--mc-evidence); }
-  .btn-primary:active,
-  .btn-primary-light:active { transform: scale(0.97); }
-
-  .btn-success,
-  .btn-success-light,
-  .btn-gradient,
-  .btn-gradient-light {
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    border: 1px solid rgba(121, 245, 183, 0.4);
-    background: rgba(121, 245, 183, 0.06);
-    color: var(--mc-reconciled);
-    padding: 0.6rem 1rem;
-    font: 600 12px/1 var(--font-mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
-    cursor: pointer;
-  }
-  .btn-success:hover,
-  .btn-success-light:hover,
-  .btn-gradient:hover,
-  .btn-gradient-light:hover { background: rgba(121, 245, 183, 0.12); border-color: var(--mc-reconciled); }
-  .btn-success:active,
-  .btn-success-light:active,
-  .btn-gradient:active,
-  .btn-gradient-light:active { transform: scale(0.97); }
-
-  .btn-tab {
-    padding: 0.4rem 1rem;
-    border: 1px solid transparent;
-    background: transparent;
-    color: rgba(243, 240, 231, 0.55);
-    font: 600 11px/1 var(--font-mono);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
-    white-space: nowrap;
-    cursor: pointer;
-  }
-  .btn-tab:hover { color: var(--ink); border-color: var(--mc-rule); }
-
-  .btn-toggle {
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    border: 1px solid var(--mc-rule);
-    background: transparent;
-    color: var(--ink);
-    padding: 0.4rem 0.75rem;
-    font: 600 11px/1 var(--font-mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
-    cursor: pointer;
-  }
-  .btn-toggle:active { transform: scale(0.97); }
-}
-
-/* Custom animations and utilities for weather app */
 @layer utilities {
   .animate-fade-in {
     animation: fadeIn 0.5s ease-in-out;
@@ -1364,6 +1247,28 @@ code {
   .mc-card:hover, .fc-position-record:hover { transform: translateY(-1px); }
   .fc-market-price:hover { transform: translateY(-1px); }
   .fc-door:hover::before { transform: scaleX(1); }
+  /* Desktop pointer delight on app-route records — a subtle accent sheen
+     follows the cursor across the row, the same vocabulary as the landing
+     doors but lighter (no tilt). CSS-only via a radial-gradient mask so it
+     costs no JS per row. Fine-pointer only; reduced motion strips it. */
+  .position-record,
+  .mc-card {
+    position: relative;
+  }
+  .position-record::after,
+  .mc-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--dur-state) linear;
+    background: radial-gradient(180px circle at var(--cursor-x, 50%) var(--cursor-y, 50%), rgba(121, 245, 183, 0.05), transparent 70%);
+  }
+  .position-record:hover::after,
+  .mc-card:hover::after {
+    opacity: 1;
+  }
 }
 
 /* Replay pulse — the one calm animated detail. The timeline visibly

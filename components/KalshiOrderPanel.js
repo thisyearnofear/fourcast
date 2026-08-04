@@ -26,7 +26,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  const glassPanel = 'mc-panel';
  const textColor = 'text-[var(--color-ink)]';
  const borderColor = 'border-[var(--color-rule)]';
- const glassInput = 'glass-input';
+ const glassInput = 'mc-input';
  const inputBg = 'bg-[var(--color-paper-raised)]';
 
  const yesOdds = market.currentOdds?.yes || market.odds_yes || 0.5;

@@ -45,7 +45,7 @@ const LocationSelector = ({ onLocationChange, currentLocation, isLoading, isNigh
  value={searchQuery}
  onChange={(e) => setSearchQuery(e.target.value)}
  placeholder="Search..."
- className={`glass-input text-[var(--color-ink)] placeholder-white/40 text-sm md:text-base font-light focus:outline-none w-32 md:w-48 tracking-wide`}
+ className={`mc-input text-[var(--color-ink)] placeholder-white/40 text-sm md:text-base font-light focus:outline-none w-32 md:w-48 tracking-wide`}
  disabled={isLoading || isSearching}
  />
  <button 

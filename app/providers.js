@@ -6,6 +6,7 @@ import { ToastProvider } from '@/components/ToastProvider';
 import WalletLayer from './WalletLayer';
 import SolanaWalletLayer from './SolanaWalletLayer';
 import { CantonWalletProvider } from './CantonWalletLayer';
+import { useCursorGlow } from '@/hooks/useCursorGlow';
 
 /**
  * Always mount WagmiProvider + ConnectKitProvider + CantonWalletProvider +
@@ -20,6 +21,7 @@ import { CantonWalletProvider } from './CantonWalletLayer';
  */
 export function Providers({ children }) {
   const [queryClient] = useState(() => new QueryClient());
+  useCursorGlow();
 
   return (
     <QueryClientProvider client={queryClient}>

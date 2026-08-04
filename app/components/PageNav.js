@@ -246,15 +246,15 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
         {(title || subtitle || actions || subheader) && (
           <div className="platform-page-head pb-4 pt-10 sm:pt-14">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 {title && (
-                  <h1 className="fc-display max-w-3xl font-display text-3xl font-semibold leading-[1.02] text-[var(--color-ink)] sm:text-5xl">{title}</h1>
+                  <h1 className="fc-display max-w-3xl font-display text-2xl font-semibold leading-[1.05] text-[var(--color-ink)] sm:text-5xl">{title}</h1>
                 )}
                 {subtitle && (
-                  <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--color-ink-muted)] sm:text-base sm:leading-7">{subtitle}</p>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-ink-muted)] sm:mt-4 sm:text-base sm:leading-7">{subtitle}</p>
                 )}
               </div>
-              {actions && <div className="flex items-center gap-2">{actions}</div>}
+              {actions && <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">{actions}</div>}
             </div>
             {subheader && <div className="mt-4">{subheader}</div>}
           </div>

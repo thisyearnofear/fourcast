@@ -188,7 +188,7 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
 function StatCard({ label, value, subtext, isNight, info }) {
  const textColor = 'text-[var(--color-ink)]';
  return (
- <div className={`glass-input p-3 text-center`}>
+ <div className={`mc-input p-3 text-center`}>
  <p className={`text-xs ${textColor} opacity-60 mb-1`}>
  {label}
  {info && <InfoTip term={info} isNight={isNight} className="ml-1" />}
