@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, RefreshCw, Zap } from 'lucide-react';
 
 /**
  * PrivacyProof — the live, always-on dual-view privacy proof.
@@ -160,10 +160,10 @@ export default function PrivacyProof() {
       <div className="px-4 py-5 sm:px-5">
         {loading && !state ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="border border-dashed border-[var(--color-rule)] bg-white/[0.02] p-6 text-center text-xs text-[var(--color-ink-faint)]">
+            <div className="border border-dashed border-[var(--color-rule)] bg-white/[0.02] p-4 text-center text-xs text-[var(--color-ink-faint)] sm:p-6">
               Querying signatory view…
             </div>
-            <div className="border border-dashed border-[var(--color-rule)] bg-white/[0.02] p-6 text-center text-xs text-[var(--color-ink-faint)]">
+            <div className="border border-dashed border-[var(--color-rule)] bg-white/[0.02] p-4 text-center text-xs text-[var(--color-ink-faint)] sm:p-6">
               Querying non-signatory view…
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function PrivacyProof() {
                     {' · '}Settled: <span className="text-[var(--color-accent)]">{op?.settledCount ?? 0}</span>
                   </div>
                   {op?.sample ? (
-                    <pre className="w-full overflow-x-auto whitespace-pre-wrap break-all rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-muted)] font-mono">
+                    <pre className="w-full max-h-28 overflow-hidden whitespace-pre-wrap break-all rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-muted)] font-mono sm:max-h-none sm:overflow-x-auto">
                       {previewJson(op.sample)}
                     </pre>
                   ) : (
@@ -206,8 +206,16 @@ export default function PrivacyProof() {
               )}
             </div>
 
+            {/* Mobile bridge — the two reads are ONE ledger */}
+            <div className="flex items-center justify-center gap-2.5 sm:hidden" aria-hidden="true">
+              <span className="h-px w-10 bg-[var(--color-rule)]" />
+              <Zap className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink-faint)]">same ledger</span>
+              <span className="h-px w-10 bg-[var(--color-rule)]" />
+            </div>
+
             {/* Non-signatory view — live */}
-            <div className="border border-[var(--color-rule)] bg-white/[0.02] p-4">
+            <div className={`border border-[var(--color-rule)] bg-white/[0.02] p-4 ${state?.observer ? 'mc-proof-flash' : ''}`}>
               <div className="flex items-center gap-2 mb-3">
                 <EyeOff className="h-4 w-4 text-[var(--color-ink-faint)]" />
                 <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">

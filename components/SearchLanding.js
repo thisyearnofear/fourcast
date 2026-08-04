@@ -57,6 +57,7 @@ const AUDIENCE_DOORS = [
     title: 'Mandate Control',
     body: 'An autonomous decision engine operating under a versioned policy, sealing each decision into a SHA-256 receipt before the outcome is known. Self-serve: configure your mandate, run a dry-run, get a public Track Record URL.',
     preview: 'Historical replay · dry-run available',
+    short: 'Policy-bound agent; every decision sealed to a receipt before outcomes.',
   },
   {
     id: 'allocator',
@@ -66,6 +67,7 @@ const AUDIENCE_DOORS = [
     title: 'Allocator Diligence',
     body: 'Policy adherence, receipt coverage, discipline rate, and calibration — computed from the same public receipts, not self-reported.',
     preview: 'Receipts verified on-chain',
+    short: 'Discipline and calibration from public receipts, not self-reports.',
   },
   {
     id: 'analyst',
@@ -75,6 +77,7 @@ const AUDIENCE_DOORS = [
     title: 'Analyst Markets',
     body: 'Discover edge across active prediction markets. Filter by category, scan a curated set, and follow live reasoning before a mandate commits capital.',
     preview: 'Polymarket + Kalshi · live odds',
+    short: 'Live edge scan across Polymarket + Kalshi.',
   },
 ];
 
@@ -110,7 +113,8 @@ function DoorCard({ door, isLead, spanClass, delay }) {
       <h3 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-2xl">
         {door.title}
       </h3>
-      <p className="text-sm leading-6 text-[var(--color-ink-muted)]">{door.body}</p>
+      <p className="hidden text-sm leading-6 text-[var(--color-ink-muted)] sm:block">{door.body}</p>
+      {door.short && <p className="text-sm leading-6 text-[var(--color-ink-muted)] sm:hidden">{door.short}</p>}
       <span className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${isLead ? 'text-[var(--color-accent)]' : 'text-[var(--color-accent)]/80'}`}>
         Enter
         <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
@@ -205,16 +209,24 @@ function CantonHero() {
   return (
     <section className="mt-6 sm:mt-10" aria-label="Private prediction markets on Canton">
       <div className="border border-[var(--color-accent)]/25 bg-gradient-to-b from-[var(--color-accent)]/[0.07] to-transparent p-5 sm:p-8">
-        <p className="fc-kicker fc-print text-[var(--color-accent)]">
-          HackCanton S2 Grand Final · live on Canton DevNet
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="fc-kicker fc-print text-[var(--color-accent)]">
+            HackCanton S2 Grand Final · live on Canton DevNet
+          </p>
+          <span className="font-mono text-[10px] text-[var(--color-ink-faint)]">
+            <LiveUTCClock />
+          </span>
+        </div>
 
-        <h1 className="fc-display fc-print mt-4 text-4xl font-extrabold leading-[0.95] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-6xl" style={{ '--print-delay': '70ms' }}>
+        <h1 className="fc-display fc-print mt-4 text-3xl font-extrabold leading-[0.98] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-6xl" style={{ '--print-delay': '70ms' }}>
           Every size bet in public is a confession.
           <span className="text-[var(--color-accent)]"> Not here.</span>
         </h1>
 
-        <p className="fc-print mt-5 max-w-2xl text-base leading-7 text-[var(--color-ink-muted)] sm:text-lg" style={{ '--print-delay': '140ms' }}>
+        <p className="fc-print mt-5 max-w-2xl text-base leading-7 text-[var(--color-ink-muted)] sm:hidden" style={{ '--print-delay': '140ms' }}>
+          The ledger itself cannot show your position to anyone but its stakeholders. Atomic settlement in real CBTC.
+        </p>
+        <p className="fc-print mt-5 hidden max-w-2xl text-base leading-7 text-[var(--color-ink-muted)] sm:block sm:text-lg" style={{ '--print-delay': '140ms' }}>
           On Fourcast, the ledger itself cannot show your position to anyone but its stakeholders.
           Protocol-level privacy — not a privacy policy — with atomic settlement in real CBTC.
           Below: the proof, running live. Two identities, one ledger, two very different answers.
@@ -230,15 +242,19 @@ function CantonHero() {
           </Link>
           <Link
             href="/canton/holder"
-            className="inline-flex items-center gap-1.5 border border-[var(--color-rule)] px-4 py-2.5 text-sm text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-rule-strong)] hover:text-[var(--color-ink)]"
+            className="hidden items-center gap-1.5 border border-[var(--color-rule)] px-4 py-2.5 text-sm text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-rule-strong)] hover:text-[var(--color-ink)] sm:inline-flex"
           >
             Holder dashboard
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
+          <Link href="/canton/holder" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-accent)] sm:hidden">
+            Holder dashboard
+            <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
 
         {dossier && (
-          <div className="fc-print mt-6 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--color-accent)]/15 pt-4 font-mono text-[10px] text-[var(--color-ink-faint)]" style={{ '--print-delay': '280ms' }}>
+          <div className="fc-print mt-6 hidden flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--color-accent)]/15 pt-4 font-mono text-[10px] text-[var(--color-ink-faint)] sm:flex" style={{ '--print-delay': '280ms' }}>
             <span className="inline-flex items-center gap-1.5">
               <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
               latest lifecycle run
@@ -257,6 +273,23 @@ function CantonHero() {
               settle {String(dossier.settle?.updateId || '').slice(0, 18)}…
             </span>
             <span>{dossier.capturedAt ? `captured ${new Date(dossier.capturedAt).toUTCString().slice(5, 22)}` : ''}</span>
+          </div>
+        )}
+        {dossier && (
+          <div
+            className="fc-print mt-6 overflow-hidden border-t border-[var(--color-accent)]/15 pt-3 font-mono text-[10px] text-[var(--color-ink-faint)] sm:hidden"
+            style={{ '--print-delay': '280ms', maskImage: 'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)', WebkitMaskImage: 'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)' }}
+          >
+            <div className="inline-flex items-center gap-6 whitespace-nowrap" style={{ animation: 'fc-marquee 24s linear infinite' }}>
+              {[0, 1].map((half) => (
+                <span key={half} className="inline-flex items-center gap-6" aria-hidden={half === 1}>
+                  <span className="inline-flex items-center gap-1.5"><span className="mc-lamp mc-lamp--live" aria-hidden="true" /> live lifecycle</span>
+                  <span>payout <span className="text-[var(--color-accent)]">{Number(dossier.receiptPayload?.payout ?? 0).toFixed(2)} {dossier.instrument?.id || 'CBTC'}</span></span>
+                  <span>checks <span className="text-[var(--color-accent)]">{checksPassed}/{checksTotal} ✓</span></span>
+                  <span>settle {String(dossier.settle?.updateId || '').slice(0, 12)}…</span>
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>
