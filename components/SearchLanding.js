@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Compass, Lock, FileCheck, Scale } from 'lucide-react';
+import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Compass, Lock, FileCheck, Scale, Menu, X } from 'lucide-react';
 import PageNav, { HomeLink } from '@/app/components/PageNav';
 import { useAudience } from '@/hooks/useAudience';
 import { useInView } from '@/hooks/useInView';
@@ -125,6 +125,60 @@ function DoorCard({ door, isLead, spanClass, delay }) {
   );
 }
 
+// Mobile nav for the landing — the landing hides PageNav below sm, so this
+// disclosure menu is the only way to reach other routes on a phone. Mirrors
+// the PRIMARY_NAV + OVERFLOW_NAV link set from PageNav without importing it.
+const LANDING_NAV = [
+  { name: 'Mandate', href: '/agent' },
+  { name: 'Proof Theatre', href: '/proof' },
+  { name: 'Diligence', href: '/positions' },
+  { name: 'Markets', href: '/markets' },
+  { name: 'Signals', href: '/signals' },
+  { name: 'Labs', href: '/labs' },
+  { name: 'Status', href: '/status' },
+];
+
+function LandingMobileNav() {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+  return (
+    <div className="sm:hidden relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? 'Close navigation' : 'Open navigation'}
+        aria-expanded={open}
+        className="mc-nav-link no-underline inline-flex items-center gap-1 px-2.5 py-2"
+      >
+        {open ? <X className="h-4 w-4" aria-hidden /> : <Menu className="h-4 w-4" aria-hidden />}
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-[60] mt-1.5 w-56 border border-[var(--color-rule)] bg-[var(--color-paper-glass)] backdrop-blur-[18px] backdrop-saturate-[1.2] p-1 shadow-xl"
+        >
+          {LANDING_NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex w-full px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.1em] no-underline text-[var(--color-ink)] hover:bg-white/[0.04] transition-colors"
+            >
+              {item.name}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SearchLanding() {
   const { mode } = useAudience();
 
@@ -192,15 +246,19 @@ export default function SearchLanding() {
           <div className="hidden sm:block">
             <PageNav />
           </div>
-          {/* On the landing page, replace wallet connect with a proof CTA.
-              WalletConnect remains on all other routes via AppShell. */}
-          <a
-            href="#verify-receipt"
-            className="fc-action inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-sm"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            View verified receipt
-          </a>
+          <div className="flex items-center gap-2">
+            <LandingMobileNav />
+            {/* On the landing page, replace wallet connect with a proof CTA.
+                WalletConnect remains on all other routes via AppShell. */}
+            <a
+              href="#verify-receipt"
+              className="fc-action inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-sm"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">View verified receipt</span>
+              <span className="sm:hidden">Receipt</span>
+            </a>
+          </div>
         </header>
 
         {/* Hero — outcome-led headline + the canonical 4-stage receipt flow.

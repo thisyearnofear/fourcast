@@ -69,7 +69,7 @@ export default function RootLayout({ children }) {
         <Providers>
           {children}
           <ConditionalChrome />
-          <footer className="platform-footer w-full px-5 py-8">
+          <footer className="platform-footer w-full px-5 py-8" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
             <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
               <div className="flex items-center gap-4 flex-wrap justify-center">
                 <Link href="/agent" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.agent ?? 'Mandate'}</Link>

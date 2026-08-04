@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity } from 'lucide-react';
+import { Activity, BarChart3, LineChart, Bot, Brain, Database, Zap } from 'lucide-react';
 import {
  getProviderStatusAppearance,
  getSummaryAppearance,
@@ -92,14 +92,15 @@ export default function StatusPage() {
 
  const providerIcon = (key) => {
  const icons = {
- polymarket: '📊',
- kalshi: '📈',
- venice: '🤖',
- synthdata: '🧠',
- database: '🗄️',
- canton: '◈',
+ polymarket: BarChart3,
+ kalshi: LineChart,
+ venice: Bot,
+ synthdata: Brain,
+ database: Database,
+ canton: Zap,
  };
- return icons[key] || '🔌';
+ const Icon = icons[key] || Activity;
+ return <Icon className="h-5 w-5 text-[var(--color-ink-muted)]" aria-hidden="true" />;
  };
 
  // Derived — hoisted out of JSX so the render body doesn't need an IIFE.
@@ -170,7 +171,7 @@ export default function StatusPage() {
  <div className="flex items-start justify-between">
  {/* Left: Icon + Info */}
  <div className="flex gap-3 items-start">
- <Activity className="h-5 w-5 text-[var(--color-ink-muted)]" aria-hidden="true" />
+ {providerIcon(key)}
  <div>
  <div className="flex items-center gap-2 flex-wrap">
  <span className="text-[14px] font-medium text-[var(--color-ink)]">{provider.label}</span>

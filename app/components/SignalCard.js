@@ -30,7 +30,7 @@ export default function SignalCard({ signal }) {
  };
 
  return (
- <div className={`${glassClass} p-5 transition-all hover:scale-[1.02]`}>
+ <div className={`${glassClass} p-5 transition-colors`}>
  {/* Header: Domain + Confidence */}
  <div className="flex justify-between items-start mb-3">
  <div className={`flex items-center space-x-2 px-2 py-1 border text-xs font-medium ${badgeStyle}`}>

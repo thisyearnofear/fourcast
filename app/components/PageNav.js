@@ -178,7 +178,7 @@ export default function PageNav() {
             aria-label={item.name}
             aria-current={isActive(item.href) ? "page" : undefined}
             className={`mc-nav-link no-underline ${isActive(item.href) ? "is-active" : ""}`}
-            style={{ padding: "0.3rem 0.4rem", fontSize: "9px" }}
+            style={{ padding: "0.4rem 0.5rem", fontSize: "11px" }}
           >
             {item.name}
           </Link>

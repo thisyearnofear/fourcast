@@ -349,7 +349,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  disabled={userBalance <= 0}
  className={`px-3 py-1 text-[11px] font-medium transition-all border ${
  userBalance > 0
- ? 'bg-[var(--color-review)]/20 hover:bg-[var(--color-review)]/30 border-[var(--color-review)]/30 text-[var(--color-review)] hover:scale-105'
+ ? 'bg-[var(--color-review)]/20 hover:bg-[var(--color-review)]/30 border-[var(--color-review)]/30 text-[var(--color-review)]'
  : 'bg-[var(--color-paper-soft)] border-[var(--color-rule)] text-[var(--color-ink-faint)] cursor-not-allowed'
  }`}
  >

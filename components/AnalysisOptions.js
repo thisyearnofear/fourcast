@@ -322,7 +322,7 @@ function ToggleButton({ label, isActive, onClick, autoDetected = false, compact 
  : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)] border border-[var(--color-rule)]'
  }
  ${autoDetected && isActive ? 'ring-1 ring-[var(--color-accent)]/30' : ''}
- hover:scale-105 active:scale-95
+ active:scale-95
  `}
  >
  {label}

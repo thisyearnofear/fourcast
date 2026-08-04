@@ -9,7 +9,7 @@ export default function LocationSettingsButton({ currentLocationName }) {
  <>
  <button
  onClick={() => setShowSettings(true)}
- className="fixed bottom-20 md:bottom-4 right-20 z-50 mc-panel p-3 transition-all duration-300 hover:scale-110 active:scale-95"
+ className="fixed bottom-20 md:bottom-4 right-20 z-50 mc-panel p-3 transition-colors duration-300 hover:border-[var(--color-accent)]/40 active:scale-95"
  aria-label="Weather location settings"
  title="Weather location settings"
  >

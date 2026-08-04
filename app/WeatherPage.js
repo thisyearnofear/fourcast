@@ -6,8 +6,7 @@ import LocationSelector from '@/components/LocationSelector';
 import WalletConnect from '@/app/components/WalletConnect';
 import useHUDStore from '@/hooks/useHUDStore';
 import { weatherService } from '@/services/weatherService';
-import { WinCelebration } from '@/components/WinCelebration';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Bot, CloudSun, Satellite, Zap, TrendingUp, Activity } from 'lucide-react';
 import { useCountUp } from '@/hooks/useCountUp';
 
 export default function WeatherPage() {
@@ -19,8 +18,7 @@ export default function WeatherPage() {
  const [currentLocationName, setCurrentLocationName] = useState('');
  const [errorSearchQuery, setErrorSearchQuery] = useState('');
  
- const [showCelebration, setShowCelebration] = useState(false);
- const [winningSignal, setWinningSignal] = useState(null);
+
 
  // Count up the temperature from 0 when data loads or location changes.
  // useCountUp animates once the element scrolls into view; the target
@@ -94,17 +92,7 @@ export default function WeatherPage() {
  }
  };
 
- // Callback to trigger celebration from child components (e.g. OrderSigningPanel)
- // To be passed down via Context or Props if we were rendering OrderSigningPanel here.
- // For now, we simulate it for the demo or when a trade confirms.
- const handleTradeSuccess = (orderData) => {
- setWinningSignal({
- marketTitle: orderData.marketTitle || "Your Prediction Market",
- side: orderData.side || "YES",
- confidence: "high"
- });
- setShowCelebration(true);
- };
+
 
  // Memoized calculated values
  const isNight = useMemo(() => isNightTime(), [weatherData?.location?.localtime]);
@@ -150,8 +138,9 @@ export default function WeatherPage() {
  <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-[var(--color-evidence)]/20 text-[var(--color-evidence)] border border-[var(--color-evidence)]/30">
  Polymarket
  </span>
- <span className="px-2 py-0.5 text-[10px] font-medium bg-[var(--color-review)]/20 text-[var(--color-review)] border border-[var(--color-review)]/30">
- 🤖 ML
+ <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-[var(--color-review)]/20 text-[var(--color-review)] border border-[var(--color-review)]/30">
+ <Bot className="w-3 h-3" aria-hidden="true" />
+ ML
  </span>
  </div>
  
@@ -173,11 +162,11 @@ export default function WeatherPage() {
  {/* Weather Impact */}
  <div className="flex items-center gap-4 mb-3 text-xs">
  <div className="flex items-center gap-1.5">
- <span>☀️</span>
+ <CloudSun className="w-3.5 h-3.5 text-[var(--color-ink-muted)]" aria-hidden="true" />
  <span className="text-[var(--color-ink-muted)]">Weather: Favorable</span>
  </div>
  <div className="flex items-center gap-1.5">
- <span className="text-[var(--color-accent)]">⚡</span>
+ <Zap className="w-3.5 h-3.5 text-[var(--color-accent)]" aria-hidden="true" />
  <span className="text-[var(--color-ink-muted)]">Edge: +8%</span>
  </div>
  </div>
@@ -198,22 +187,22 @@ export default function WeatherPage() {
  {/* Feature Pills - Quick value props */}
  <div className="flex flex-wrap gap-2 mb-6">
  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-xs text-[var(--color-ink-muted)]">
- <span>🤖</span>
+ <Bot className="w-3.5 h-3.5" aria-hidden="true" />
  <span>200+ ML Models</span>
  </div>
  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-xs text-[var(--color-ink-muted)]">
- <span>🌤️</span>
+ <CloudSun className="w-3.5 h-3.5" aria-hidden="true" />
  <span>Live Weather</span>
  </div>
  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-xs text-[var(--color-ink-muted)]">
- <span>📡</span>
+ <Satellite className="w-3.5 h-3.5" aria-hidden="true" />
  <span>On-Chain Proofs</span>
  </div>
  </div>
 
  <button
  onClick={dismissHero}
- className="w-full py-3 bg-[var(--color-paper-soft)] hover:bg-white/20 border border-[var(--color-rule-strong)] text-[var(--color-ink)] font-medium transition-all transform hover:scale-[1.02]"
+ className="w-full py-3 bg-[var(--color-paper-soft)] hover:bg-white/[0.08] border border-[var(--color-rule-strong)] text-[var(--color-ink)] font-medium transition-colors active:scale-[0.98]"
  >
  Explore Markets →
  </button>
@@ -227,12 +216,7 @@ export default function WeatherPage() {
  </div>
  </div>
  )}
- {/* Celebration Overlay */}
- <WinCelebration 
- isOpen={showCelebration}
- signal={winningSignal}
- onClose={() => setShowCelebration(false)}
- />
+
  {/* UI Container */}
  <div className="relative z-10 flex flex-col flex-grow p-4 sm:p-6 pointer-events-none">
  
@@ -294,35 +278,31 @@ export default function WeatherPage() {
  {/* Centered Floating Navigation - Icons on mobile, full labels on desktop */}
  {weatherData && !isLoading && (
  <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto transition-opacity duration-500 ${isHUDVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
- <div className={`-md border px-2 sm:px-6 py-2 sm:py-3 transition-all duration-300 bg-[var(--color-paper-soft)] border-[var(--color-rule-strong)] hover:bg-[var(--color-paper-soft)]`}>
+ <div className="mc-panel border-[var(--color-rule-strong)] px-2 sm:px-6 py-2 sm:py-3 transition-colors duration-300">
  <div className="flex items-center space-x-1 sm:space-x-6">
  <button
  onClick={() => router.push('/markets')}
- className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 transition-all hover:scale-105 text-[var(--color-ink)] hover:bg-[var(--color-paper-soft)]`}
+ className="group flex items-center space-x-2 px-3 sm:px-4 py-2 transition-colors text-[var(--color-ink)] hover:bg-[var(--color-paper-soft)] active:scale-[0.98]"
  title="Markets - Browse & trade predictions"
  >
- <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
- </svg>
+ <TrendingUp className="w-5 h-5" aria-hidden="true" />
  <div className="hidden sm:flex flex-col items-start">
  <span className="text-sm font-medium leading-tight">Markets</span>
- <span className={`text-[10px] leading-tight text-[var(--color-ink-faint)]`}>Browse & trade predictions</span>
+ <span className="text-[10px] leading-tight text-[var(--color-ink-faint)]">Browse & trade predictions</span>
  </div>
  </button>
 
- <div className={`w-px h-6 sm:h-8 bg-[var(--color-paper-soft)]`}></div>
+ <div className="w-px h-6 sm:h-8 bg-[var(--color-rule)]"></div>
 
  <button
  onClick={() => router.push('/signals')}
- className={`group flex items-center space-x-2 px-3 sm:px-4 py-2 transition-all hover:scale-105 text-[var(--color-ink)] hover:bg-[var(--color-paper-soft)]`}
+ className="group flex items-center space-x-2 px-3 sm:px-4 py-2 transition-colors text-[var(--color-ink)] hover:bg-[var(--color-paper-soft)] active:scale-[0.98]"
  title="Signals - Predictions & track records"
  >
- <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
- </svg>
+ <Activity className="w-5 h-5" aria-hidden="true" />
  <div className="hidden sm:flex flex-col items-start">
  <span className="text-sm font-medium leading-tight">Signals</span>
- <span className={`text-[10px] leading-tight text-[var(--color-ink-faint)]`}>Predictions & track records</span>
+ <span className="text-[10px] leading-tight text-[var(--color-ink-faint)]">Predictions & track records</span>
  </div>
  </button>
  </div>
@@ -439,7 +419,7 @@ export default function WeatherPage() {
  <div className="flex space-x-3">
  <button
  onClick={loadCurrentLocationWeather}
- className="flex-1 bg-white/20 hover:bg-white/30 px-4 py-3 text-[var(--color-ink)] font-light transition-all duration-300 border border-white/30 hover:scale-105 text-sm"
+ className="flex-1 bg-white/20 hover:bg-white/30 px-4 py-3 text-[var(--color-ink)] font-light transition-colors duration-300 border border-white/30 active:scale-[0.98] text-sm"
  disabled={isLoading}
  >
  Try Location Again

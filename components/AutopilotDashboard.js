@@ -905,7 +905,7 @@ function ExecutionCard({ exec, isNight, textColor, subtleText }) {
  const kellyPct = exec.kelly_pct != null ? `${(exec.kelly_pct * 100).toFixed(1)}%` : '—';
 
  return (
- <div className={`mc-panel p-4 transition-all hover:scale-[1.005] ${
+ <div className={`mc-panel p-4 transition-colors ${
  isSuccess ? ('border-[var(--color-accent)]/20') : ''
  }`}>
  {/* Header */}

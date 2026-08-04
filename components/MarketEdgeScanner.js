@@ -190,7 +190,7 @@ function MarketEdgeScannerInner({
 
  <button
  onClick={() => onAnalyze(currentMarket, 'basic')}
- className={`px-6 py-3 text-sm font-medium transition-all hover:scale-105 active:scale-95 bg-[var(--color-review)] text-[var(--color-ink)] shadow-lg shadow-[var(--color-review)]/20`}
+ className={`px-6 py-3 text-sm font-medium transition-colors active:scale-95 bg-[var(--color-review)] text-[var(--color-ink)] shadow-lg shadow-[var(--color-review)]/20`}
  >
  {edge !== null ? 'View Analysis' : 'Reveal Edge'}
  </button>
