@@ -34,21 +34,25 @@ const STEPS = [
     label: 'SHA-256 receipt',
     detail: 'Decision sealed into an immutable hash before the outcome is known.',
     icon: '◓',
+    anchor: 'verify-receipt',
   },
   {
     label: 'TxLINE Merkle proof',
     detail: 'TxLINE supplies the outcome Merkle proof. The receipt is independently SHA-256 sealed and optionally committed on-chain.',
     icon: '●',
+    anchor: 'verify-receipt',
   },
   {
     label: 'Solana validation',
     detail: 'match-escrow CPI calls txoracle::validate_stat on-chain. No intermediary.',
     icon: '◆',
+    anchor: 'verify-receipt',
   },
   {
     label: 'Reconciliation',
     detail: 'Receipt and verified outcome are reconciled. Reputation derived from the same proofs.',
     icon: '✓',
+    anchor: 'verify-receipt',
   },
 ];
 
@@ -106,6 +110,19 @@ export default function ProofChain() {
 
   const goTo = (idx) => setActive(idx);
 
+  // Proof-chain-as-nav: clicking a node scrolls to the corresponding
+  // evidence section if it exists on the page (e.g. the verify-receipt
+  // block on the landing). Falls back to the detail panel on routes without
+  // a matching anchor.
+  const nodeClick = (idx) => {
+    goTo(idx);
+    const step = STEPS[idx];
+    if (step?.anchor && typeof document !== 'undefined') {
+      const el = document.getElementById(step.anchor);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -126,6 +143,7 @@ export default function ProofChain() {
             <button
               key={step.label}
               type="button"
+              onClick={() => nodeClick(i)}
               onMouseEnter={() => goTo(i)}
               onFocus={() => goTo(i)}
               style={{ '--node-delay': `${i * 60}ms` }}

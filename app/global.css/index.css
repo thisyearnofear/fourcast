@@ -1409,6 +1409,62 @@ code {
 }
 .mc-seal-animate { animation: mc-seal-flash 0.6s ease-out; }
 
+/* ── SealMoment — the signature viral artifact ──
+   The hash rolls in like a departure-board split-flap, the border flashes
+   sealed-amber, and a single "click" scale pulse lands. Reduced motion
+   shows the final hash immediately (handled in JS). */
+.fc-seal-moment {
+  position: relative;
+  transition: border-color var(--dur-state) linear, background var(--dur-state) linear;
+}
+.fc-seal-moment.is-sealed {
+  border-color: var(--color-sealed);
+  background: rgba(245, 197, 107, 0.04);
+}
+/* The hash characters get a subtle monospace tabular feel + a one-shot
+   glow as they settle. */
+.fc-seal-moment__hash {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.fc-seal-moment.is-sealed .fc-seal-moment__hash {
+  animation: fc-seal-glow 0.9s var(--ease-out) both;
+}
+@keyframes fc-seal-glow {
+  0% { text-shadow: 0 0 0 rgba(245, 197, 107, 0); }
+  40% { text-shadow: 0 0 12px rgba(245, 197, 107, 0.45); }
+  100% { text-shadow: 0 0 0 rgba(245, 197, 107, 0); }
+}
+/* The sealed dot — a single calm lamp that lights when sealed. */
+.fc-seal-moment__dot {
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0 rgba(245, 197, 107, 0);
+  animation: fc-seal-dot 1.2s var(--ease-out) both;
+}
+@keyframes fc-seal-dot {
+  0% { box-shadow: 0 0 0 0 rgba(245, 197, 107, 0); transform: scale(0.6); opacity: 0; }
+  30% { box-shadow: 0 0 0 4px rgba(245, 197, 107, 0.18), 0 0 10px rgba(245, 197, 107, 0.6); transform: scale(1); opacity: 1; }
+  100% { box-shadow: 0 0 0 0 rgba(245, 197, 107, 0); transform: scale(1); opacity: 1; }
+}
+/* The "click" — a 1-frame scale pulse on the whole block when it seals. */
+.fc-seal-moment.is-sealed {
+  animation: fc-seal-click 0.34s var(--ease-out) both;
+}
+@keyframes fc-seal-click {
+  0% { transform: scale(1); }
+  18% { transform: scale(0.992); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-seal-moment.is-sealed,
+  .fc-seal-moment.is-sealed .fc-seal-moment__hash,
+  .fc-seal-moment__dot { animation: none !important; }
+}
+
 /* Signal handshake — the CPI call between Solana programs. */
 @keyframes mc-signal-pulse {
   0%, 100% { opacity: 0.4; transform: scaleX(1); }
@@ -1422,12 +1478,45 @@ code {
   background: var(--mc-rule);
   transform-origin: left center;
 }
+.mc-timeline-track.is-crossed {
+  background: rgba(121, 245, 183, 0.25);
+}
 .mc-timeline-track__progress {
   position: absolute;
   inset: 0;
   background: var(--mc-reconciled);
   transform-origin: left center;
   animation: mc-timeline-advance 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* The reconciliation crossing — a brighter emerald sweep that travels
+   left-to-right once when the proof lands. The product's emotional climax:
+   outcome-withheld (sealed amber) visibly becomes proof-available (emerald). */
+.mc-timeline-crossing {
+  position: absolute;
+  inset: -1px 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(121, 245, 183, 0.9) 50%, transparent 100%);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: mc-timeline-crossing-sweep 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  box-shadow: 0 0 8px rgba(121, 245, 183, 0.5);
+}
+@keyframes mc-timeline-crossing-sweep {
+  0% { background-position: -50% 0; opacity: 0; }
+  20% { opacity: 1; }
+  100% { background-position: 150% 0; opacity: 0; }
+}
+/* The reconciled stamp — a brief emerald glow on the "proof available" label. */
+.fc-reconciled-stamp {
+  animation: fc-reconciled-glow 1.2s var(--ease-out) both;
+}
+@keyframes fc-reconciled-glow {
+  0% { text-shadow: 0 0 0 rgba(121, 245, 183, 0); }
+  40% { text-shadow: 0 0 10px rgba(121, 245, 183, 0.6); }
+  100% { text-shadow: 0 0 0 rgba(121, 245, 183, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-timeline-crossing,
+  .fc-reconciled-stamp { animation: none !important; }
 }
 
 /* Drawer — right-side decision dossier, document-rule framed. */
@@ -1462,7 +1551,37 @@ code {
   .mc-drawer { width: 100vw; border-left: 0; border-top: 1px solid var(--mc-rule-strong); }
 }
 
-/* ── Range slider (MandateBuilder knobs) ── */
+/* ── AgentPulse — the live "agent is alive" lamp ──
+   A breathing dot that sweeps while scanning and dims when idle. The
+   retention signal: the product is alive and worth checking back on. */
+.fc-agent-pulse__lamp {
+  position: relative;
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--lamp-color, var(--color-accent));
+  box-shadow: 0 0 0 0 transparent;
+  flex-shrink: 0;
+}
+.fc-agent-pulse__lamp[data-sweep='on'] {
+  animation: fc-agent-sweep 2.4s ease-in-out infinite;
+}
+.fc-agent-pulse__lamp[data-sweep='off'] {
+  animation: fc-agent-breathe 3.2s ease-in-out infinite;
+}
+@keyframes fc-agent-sweep {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(121, 245, 183, 0.04), 0 0 6px rgba(121, 245, 183, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(121, 245, 183, 0.08), 0 0 16px rgba(121, 245, 183, 0.7); }
+}
+@keyframes fc-agent-breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-agent-pulse__lamp[data-sweep='on'],
+  .fc-agent-pulse__lamp[data-sweep='off'] { animation: none !important; opacity: 0.7; }
+}
 .mc-range {
   -webkit-appearance: none;
   appearance: none;

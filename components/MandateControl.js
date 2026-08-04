@@ -5,6 +5,8 @@ import { ArrowUpRight, FileSearch, Lock, Radio, RefreshCw, ShieldCheck } from 'l
 import { DecisionDossier } from '@/components/DecisionDossier';
 import ShareReceiptButton from '@/components/ShareReceiptButton';
 import Ripple from '@/components/canvasui/Ripple';
+import SealMoment from '@/components/motion/SealMoment';
+import AgentPulse from '@/components/motion/AgentPulse';
 
 /* --------------------------------------------------------------------------
    Mandate Control — flagship surface for /agent.
@@ -152,14 +154,18 @@ export function MandateControl() {
       <div className="relative flex flex-wrap items-center justify-between gap-3 border-b border-[var(--mc-rule)] px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
           <span className="mc-kicker">Mandate Control</span>
-          <span
-            className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em] ${
-              lab.status ? 'text-[var(--mc-reconciled)]' : 'text-[var(--color-ink-faint)]'
-            }`}
-          >
-            <Radio className={`h-3 w-3 ${lab.status ? 'animate-pulse' : ''}`} />
-            {lab.status ? (lab.status.dryRun ? 'Agent live · historical replay' : 'Agent live') : 'Agent offline'}
-          </span>
+          {lab.status ? (
+            <AgentPulse
+              agentTime={lab.status.agentTime}
+              phase={latest?.reconciliationStatus === 'reconciled' ? 'reconciled' : latest?.receiptHash ? 'sealed' : 'scanning'}
+              dryRun={lab.status.dryRun}
+            />
+          ) : (
+            <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
+              <Radio className="h-3 w-3" />
+              Agent offline
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 font-mono text-[10px] text-[var(--color-ink-faint)]">
           <span>replay clock {formatTime(lab.status?.agentTime)}</span>
@@ -238,6 +244,20 @@ export function MandateControl() {
               <Lock className="mr-1.5 inline h-3.5 w-3.5 -translate-y-px text-[var(--mc-sealed)]" />
               Outcome withheld at decision time; proof revealed after settlement.
             </p>
+
+            {/* The signature artifact — the sealed receipt hash, staged.
+                This is the "tx confirmed" of prediction markets: the hash
+                rolls in like a departure-board flap, the border flashes
+                sealed-amber, and the stamp lands. */}
+            {latest?.receiptHash && (
+              <div className="mt-8">
+                <SealMoment
+                  hash={latest.receiptHash}
+                  sealed={true}
+                  label="SHA-256 receipt · sealed before outcome"
+                />
+              </div>
+            )}
 
             {/* Proof timeline — the one memorable composition */}
             <div className="mt-8">
@@ -341,6 +361,16 @@ function resolveStages({ latest, timeline, reconciled, verificationVerdict, veri
 }
 
 function ProofTimeline({ stages, livePct, timeline, reconciled }) {
+  const [crossed, setCrossed] = useState(false);
+  // Fire the crossing animation once when reconciliation lands.
+  useEffect(() => {
+    if (reconciled) {
+      const id = requestAnimationFrame(() => setCrossed(true));
+      return () => cancelAnimationFrame(id);
+    }
+    setCrossed(false);
+  }, [reconciled]);
+
   return (
     <div className="evidence-strip p-4 sm:p-5">
       {/* Horizontal stage rail */}
@@ -362,23 +392,26 @@ function ProofTimeline({ stages, livePct, timeline, reconciled }) {
         ))}
       </ol>
 
-      {/* The crossing — outcome withheld → proof available */}
+      {/* The crossing — outcome withheld → proof available.
+          When reconciled, the track fills emerald and a brighter sweep
+          travels left-to-right once. This is the product's emotional climax. */}
       <div className="mt-5">
-        <div className="mc-timeline-track">
+        <div className={`mc-timeline-track ${crossed ? 'is-crossed' : ''}`}>
           <div className="mc-timeline-track__progress" style={{ width: `${livePct}%` }} />
           {reconciled && <div className="mc-proof-flash absolute inset-0" />}
+          {crossed && <div className="mc-timeline-crossing" aria-hidden />}
         </div>
         <div className="mt-2 flex items-center justify-between font-mono text-[9px] uppercase tracking-wider">
-          <span className="text-[var(--mc-sealed)]/80">
+          <span className={crossed ? 'text-[var(--color-ink-faint)]' : 'text-[var(--mc-sealed)]/80'}>
             <Lock className="mr-1 inline h-2.5 w-2.5" />
-            outcome withheld
+            {crossed ? 'sealed · pre-outcome' : 'outcome withheld'}
           </span>
           <span className={reconciled ? 'text-[var(--mc-reconciled)]/90' : 'text-[var(--color-ink-faint)]'}>
             {reconciled ? (
-              <>
+              <span className={crossed ? 'fc-reconciled-stamp' : ''}>
                 <ShieldCheck className="mr-1 inline h-2.5 w-2.5" />
                 proof available · reconciled
-              </>
+              </span>
             ) : (
               'proof available pending'
             )}

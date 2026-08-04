@@ -13,6 +13,7 @@ import Reveal from '@/components/motion/Reveal';
 import ProofChain from '@/components/ProofChain';
 import TweenNumber from '@/components/motion/TweenNumber';
 import LiveUTCClock from '@/components/motion/LiveUTCClock';
+import SealMoment from '@/components/motion/SealMoment';
 import TrustStatsStrip from '@/components/TrustStatsStrip';
 
 // The canonical real receipt — France 3-0 Sweden, World Cup Round of 32.
@@ -378,6 +379,17 @@ export default function SearchLanding() {
                 <p className="fc-print mt-2 font-mono text-[9px] leading-4 tracking-[0.04em] text-[var(--color-ink-faint)]" style={{ '--print-delay': '780ms' }}>
                   Mandate = the rules · Kelly = how much to stake · SHA-256 = tamper-proof fingerprint · TxLINE = outcome check
                 </p>
+
+                {/* The sealed settlement tx — the signature artifact. The hash
+                    rolls in like a departure-board flap once the hero prints. */}
+                <div className="fc-print mt-4" style={{ '--print-delay': '820ms' }}>
+                  <SealMoment
+                    hash={VERIFIED_RECEIPT.settlementTx}
+                    sealed={heroPrinted}
+                    label="Settlement tx · Solana devnet"
+                    compact
+                  />
+                </div>
 
                 <div className="fc-print mt-5 flex items-center justify-between gap-3 border-t border-[var(--color-rule)] pt-4" style={{ '--print-delay': '800ms' }}>
                   <p className="text-xs leading-5 text-[var(--color-ink-faint)]">
