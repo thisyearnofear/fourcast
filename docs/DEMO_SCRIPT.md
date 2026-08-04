@@ -87,8 +87,9 @@ with their own key, no operator involved. Those two moments are the pitch.
 - [x] Settlement hub TDZ crash fixed (loadAll ReferenceError); known-good commit tagged `finals-known-good`
 - [ ] **Wallet gateway URL confirmed with organizers** — verified 2026-08-04: the dApp SDK (CIP-0103) is vendor-neutral with a built-in picker that accepts custom gateway URLs; NODERS hosts a splice Wallet UI at `wallet.validator.hackcanton-01.devnet.naas.noders.services` (Keycloak `noders-appsfactory`) but does NOT expose the dApp JSON-RPC gateway at `/api/json-rpc` (405 on POST; no gateway subdomain resolves). Ask organizers for the CIP-0103 gateway URL, or whether finalists should use PixelPlex Console Wallet instead. Once known, wallet must control the holder party used for staging (`node scripts/canton-stage-demo.mjs --resolve --holder=<that party>`)
 - [ ] **Holder wallet-signed settle verified live on DevNet** — run tonight; if not green by cutoff, use the Act 3 fallback path and hide nothing else
-- [ ] Fresh dossier captured tonight: `node scripts/canton-bitsafe-lifecycle.mjs` → `public/proof/canton-receipts.json` → deployed (receipt wall renders it)
-- [ ] Demo market + position pre-staged after the dossier run (so Act 1 opens with live state)
+- [x] Fresh dossier captured: `canton-bitsafe-lifecycle.mjs` PASSED 6/6 (real CBTC, settle update id `1220f9fd…`), pinned to `public/proof/canton-receipts.json`, deployed + verified live (200) — receipt wall renders it
+- [x] One resolved, escrowed, settle-ready position staged on DevNet (`demo-1785870515670`) — reserved for the wallet-settle click if the gateway unblocks
+- [ ] Morning-of: run `node scripts/canton-stage-demo.mjs` (no `--resolve`) ~10 min before the pitch so Act 3 can do resolve → settle live (Alice 3.8 / operator 1.2 CBTC — ample; script prints the faucet link if short)
 - [ ] Console Wallet connected on the demo machine, holder party active, before walking on stage
 - [ ] CC funded via NODERS wallet tap — reported done by operator, not re-tested this session
 - [ ] Venice API key for live AI analysis — reported done by operator, not re-tested this session
