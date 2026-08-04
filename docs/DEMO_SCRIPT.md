@@ -48,15 +48,15 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 ## Act 4 — Why CBTC and Canton · 15s
 
 1. **Show:** the implementation status: private positions, CIP-56 escrow, atomic settlement.
-2. **Note:** the current proof uses a reference registry; BitSafe registry integration is the remaining CBTC step.
+2. **Show:** `canton-bitsafe-lifecycle.mjs` output — real CBTC settled atomically, receipt shows `instrument.id = CBTC`.
 
-**Say:** "Canton keeps position details visible only to stakeholders, while CIP-56 gives us an atomic settlement primitive. We are validating the final registry swap with BitSafe."
+**Say:** "Canton keeps position details visible only to stakeholders, while CIP-56 gives us an atomic settlement primitive. Real BitSafe CBTC settlement is proven end-to-end on DevNet."
 
 ---
 
 ## Close (15s)
 
-> "This DevNet prototype proves private positions and atomic token settlement on Canton. The remaining path is the real BitSafe registry, external holder signing, independent attestation, and mainnet hardening."
+> "This DevNet prototype proves private positions and atomic token settlement on Canton — against both a reference registry and real BitSafe CBTC. The remaining path is external holder signing, independent attestation, and mainnet hardening."
 
 ---
 
@@ -74,7 +74,7 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 - [x] Deployed URL loads (not localhost) — verified live after env fix & redeploy
 - [x] Two-view privacy test (holder sees position, observer sees empty result set) — live in-page PrivacyProof component, both cells are real ledger queries
 - [ ] CC funded via NODERS wallet tap — reported done by operator, not re-tested this session
-- [ ] Real BitSafe CBTC registry/instrument settlement verified — reference registry currently used
+- [x] Real BitSafe CBTC registry/instrument settlement verified — `canton-bitsafe-lifecycle.mjs` passes end-to-end (receipt `instrument.id = CBTC`)
 - [ ] Venice API key for live AI analysis — reported done by operator, not re-tested this session
 - [ ] Form: GitHub URL, video link, demo URL — reported submitted by operator, not verified
 

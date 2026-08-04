@@ -8,8 +8,8 @@ This document is the source of truth for the HackCanton claim set.
 |---|---|
 | Private Daml positions | Implemented and DevNet-tested |
 | Holder-signed consent | Implemented and script-tested |
-| CIP-56 atomic escrow/settlement | Implemented with Fourcast's reference registry |
-| Actual BitSafe CBTC registry settlement | Pending registry/instrument verification |
+| CIP-56 atomic escrow/settlement | Implemented with Fourcast's reference registry + real BitSafe CBTC |
+| Actual BitSafe CBTC registry settlement | ✅ Proven end-to-end (`canton-bitsafe-lifecycle.mjs`) |
 | External holder-wallet signing | Partial; operator flow remains the judge path |
 | Independent attestation | Configurable; current DevNet demo is operator-attested |
 | Mainnet deployment | Not deployed |
@@ -142,13 +142,20 @@ export PATH="$JAVA_HOME/bin:$PATH"
 The Daml code **does not change**. The v2 DAR references token contracts only
 through `Splice.Api.Token.{HoldingV1, AllocationV1, AllocationInstructionV1}`.
 
-| Layer | Reference (today) | Production |
+**BitSafe CBTC is proven end-to-end.** `scripts/canton-bitsafe-lifecycle.mjs`
+runs the full lifecycle (allocate → settle → verify balances + privacy) against
+real BitSafe CBTC on Canton DevNet. See
+[`docs/BITSAFE_INTEGRATION.md`](./BITSAFE_INTEGRATION.md) for the full
+integration record.
+
+| Layer | Reference | BitSafe CBTC (proven) |
 |---|---|---|
-| Interface packages | DONE — built against the DevNet-vetted DALFs fetched from the participant itself, wrapped as data-dependency DARs (`vendor/network-cip-0056/`, IDs in `manifest.json`). Verified present with `node scripts/canton-package-check.mjs`. | same (the rows below are what still changes) |
-| Registry contracts | `Fourcast.Token` (`TokenRules`, admin = FourcastOperator) | BitSafe cBTC / OnRails cETH registry factories, to be discovered and verified |
-| Instrument | `InstrumentId{admin = FourcastOperator, id = "cBTC"}` | real `InstrumentId` returned by BitSafe's registry |
-| Minting | `MintRequest` on the reference registry | faucet-issued holdings (already have 0.01 cBTC) |
-| Allocation factory | `toInterfaceCid rulesCid` | registry-provided factory cid; client submits with `expectedAdmin = <registry admin>` |
+| Interface packages | DONE — built against the DevNet-vetted DALFs (`vendor/network-cip-0056/`, IDs in `manifest.json`) | same |
+| Registry contracts | `Fourcast.Token` (`TokenRules`, admin = FourcastOperator) | BitSafe cBTC registry factories (`00d58a5f…`, package `82798df0`) |
+| Instrument | `InstrumentId{admin = FourcastOperator, id = "cBTC"}` | `InstrumentId{admin = cbtc-network::…, id = "CBTC"}` |
+| Minting | `MintRequest` on the reference registry | faucet-issued holdings (two-phase `TransferInstruction_Accept`) |
+| Allocation factory | `toInterfaceCid rulesCid` | registry-provided factory cid; client submits with `expectedAdmin = <BitSafe admin>` |
+| Utility DARs | N/A | `utility-registry-app-v0-0.2.0.dar` + `utility-registry-v0-0.4.0.dar` (uploaded by operator) |
 
 Known integration nuances for the client (honest list):
 

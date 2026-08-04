@@ -16,12 +16,16 @@ The focused HackCanton wedge is:
 - CIP-56 allocation escrow and atomic execute/cancel settlement.
 - Resolution attestations with committed evidence hash and URI.
 - Live DevNet privacy and seven Daml script checks.
+- **BitSafe CBTC settlement proven end-to-end on Canton DevNet** — real CBTC
+  escrowed, settled atomically, and verified via
+  `scripts/canton-bitsafe-lifecycle.mjs`. See
+  [`docs/BITSAFE_INTEGRATION.md`](docs/BITSAFE_INTEGRATION.md).
 
-The current proof uses Fourcast's **reference CIP-56 registry**. It is not yet
-proof of settlement against BitSafe's production CBTC registry. External wallet
-signing, independent attestation, and mainnet deployment are also incomplete.
-See the implementation matrix in
-[`docs/CANTON_ATOMIC_SETTLEMENT.md`](docs/CANTON_ATOMIC_SETTLEMENT.md).
+The proof runs against both Fourcast's **reference CIP-56 registry** (via
+`scripts/canton-v2-preflight.mjs`) and **real BitSafe CBTC** (via
+`scripts/canton-bitsafe-lifecycle.mjs`). External wallet signing, independent
+attestation, and mainnet deployment are still incomplete. See the implementation
+matrix in [`docs/CANTON_ATOMIC_SETTLEMENT.md`](docs/CANTON_ATOMIC_SETTLEMENT.md).
 
 ## Judge path
 
