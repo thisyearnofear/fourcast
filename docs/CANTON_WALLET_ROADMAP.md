@@ -1,9 +1,13 @@
 # Canton Wallet & Settlement UX Roadmap
 
 > Status: DevNet prototype. The holder dashboard (`/canton/holder`) has
-> Console Wallet connection and private queries, but external holder signing
-> and self-service position creation are incomplete. The operator server-side
-> ledger client remains the primary judge-demo path.
+> Console Wallet connection, private queries, and a **holder-signed settlement
+> lane**: `/api/canton/settle/prepare` assembles exact unsigned `SettleAsHolder`
+> payloads (resolution + escrow legs + BitSafe disclosed contracts) and
+> `useCantonHolderWallet.settleAsHolder` signs them with the holder's own key.
+> The server never signs. Remaining: holder-signed position creation (offer
+> signing) and independent attesters. The operator server-side ledger client
+> remains the fallback judge-demo path.
 
 ---
 
@@ -21,9 +25,10 @@
 
 ### Status: Partially implemented
 - [x] Holder / Trader view at `/canton/holder` (was `/canton/trader` in the original plan)
-- [x] `components/CantonHolderDashboard.js` — wallet connect, private position queries, dispute flow
-- [x] `hooks/useCantonHolderWallet.js` — Console Wallet connection + contract queries + dispute
+- [x] `components/CantonHolderDashboard.js` — wallet connect, private position queries, dispute flow, **"Settle with my wallet" sovereignty lane**
+- [x] `hooks/useCantonHolderWallet.js` — Console Wallet connection + contract queries + dispute + `settleAsHolder`
 - [x] Connected party sees only contracts they are a signatory/observer on
+- [x] Holder-signed `SettleAsHolder`: `services/cantonLedgerClient.prepareSettleSubmission()` builds the exact payload; `POST /api/canton/settle/prepare` serves it unsigned; wallet signs and submits via `prepareExecuteAndWait`
 - [ ] "Take position" form (YES/NO, stake, asset) — currently the operator creates positions on behalf of holders
 - [ ] `POST /api/canton/positions` (holder takes a position) — not yet wired
 - [ ] Update `components/CantonMarkets.js` CTA to route to `/canton/holder`
@@ -126,7 +131,7 @@ capture; the reference-registry lifecycle is already wired and tested.
 | Order | Phase | Effort | Risk | Hackathon Value |
 |-------|-------|--------|------|-----------------|
 | 1 | Verify BitSafe CBTC registry swap | Medium | Medium | Critical |
-| 2 | Complete external holder signing | Medium | Medium | High |
+| ~~2~~ | ~~Complete external holder signing~~ — **DELIVERED for settlement** (`SettleAsHolder` via `/api/canton/settle/prepare` + dashboard). Position *creation* signing remains open (Phase 1) | Medium | Medium | High |
 | 3 | Independent attestation | Low | Low | Medium |
 | 4 | OAuth/Wallet Gateway auth | Medium | High | Low |
 

@@ -194,6 +194,24 @@ Known integration nuances for the client (honest list):
 - Components: `CantonSettlementHub` (escrow status panel replaces "pending
   payouts" + the Console-Wallet payment detour); `CantonHolderDashboard`
   (escrowed-funds view replaces obligations + the dispute flow).
+
+## Holder-keyed settlement + proof dossier (Grand Final cut)
+
+- `prepareSettleSubmission()` splits payload assembly from submission, so an
+  external holder wallet can sign `SettleAsHolder` itself: the server
+  assembles the exact payload (resolution cid, both escrow allocation cids,
+  CIP-56 choice-context extraArgs, BitSafe disclosed contracts); the holder's
+  Console Wallet key authorizes it. The server never signs.
+- `POST /api/canton/settle/prepare` serves that unsigned payload (package-name
+  template ref `#fourcast:...`, surviving DAR re-uploads); `settlePositionV2`
+  still submits the identical payload server-side for the operator lane.
+- Holder dashboard: "Settle with my wallet" per open position
+  (`useCantonHolderWallet.settleAsHolder`), with busy/error/receipt states.
+- Proof dossier: `scripts/canton-bitsafe-lifecycle.mjs` pins
+  `public/proof/canton-receipts.json` (all cids, settle update id, receipt
+  payload, balance deltas, privacy observation, per-check results); the Proof
+  Theatre renders it as the "Pinned settlement receipts" wall. Re-running the
+  script refreshes the wall — nothing is mocked.
 - Deployment: `docs/CANTON_V2_DEPLOY.md` runbook + `scripts/canton-v2-preflight.mjs`
   (package check/upload attempt → registry provision → mints → full live
   lifecycle with asserts).

@@ -698,6 +698,45 @@ Generate OpenGraph image for sharing.
 
 ---
 
+## Canton Ledger Endpoints (HackCanton DevNet)
+
+Private prediction markets on Canton: Daml-enforced stakeholder privacy, holder-consent
+positions, CIP-56 escrow, attestation-bound resolution, atomic settlement.
+See `docs/CANTON_ATOMIC_SETTLEMENT.md` for the full model.
+
+### GET /api/canton/health
+Ledger connectivity + configuration status.
+
+### GET /api/canton/parties
+Known demo parties (operator, Alice, Bob) for the "view as" selector.
+
+### GET /api/canton/balance
+Operator balances: `unlocked` vs `lockedInEscrow` (conservation invariant).
+
+### GET /api/canton/markets · POST /api/canton/markets
+List markets as a party (`?partyId=`); create a market (`{ question, settlementAsset, deadline }`).
+
+### POST /api/canton/markets/resolve
+Issues an evidence attestation and resolves the market (`{ marketContractId, outcome }` in `ResolvedYes|ResolvedNo|Voided`).
+
+### GET /api/canton/positions?partyId=<id>&type=<open|offers|allocations|resolutions|settled|expired>
+Position views per party; POST actions: `create-offer` / `accept` / `reject` / `allocate` (holder-consent flow).
+
+### POST /api/canton/settle
+Atomic settlement, server-signed. `{ positionContractId, resolutionContractId?, lane?: 'operator'|'holder', holderPartyId? }`.
+Resolution + escrow allocation cids auto-discovered. Both CIP-56 legs execute/cancel in the same transaction that archives the position.
+
+### POST /api/canton/settle/prepare
+**Holder sovereignty lane.** Builds the exact same settlement payload but returns it UNSIGNED
+(`{ actAs, commands, disclosedContracts }`) for the holder's Console Wallet to sign via
+`prepareExecuteAndWait`. The server never signs — the holder's key authorizes the payout.
+`{ positionContractId, resolutionContractId?, holderPartyId }`.
+
+### GET /api/canton/settle-transfer
+Escrow surface report: per-position leg allocation state + settle-readiness (v1 SettlementObligation contracts no longer exist).
+
+---
+
 ## Error Responses
 
 All endpoints return consistent error format:
