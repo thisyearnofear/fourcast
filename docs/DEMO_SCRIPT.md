@@ -85,6 +85,7 @@ with their own key, no operator involved. Those two moments are the pitch.
 - [x] Real BitSafe CBTC registry/instrument settlement verified — `canton-bitsafe-lifecycle.mjs` passes end-to-end (receipt `instrument.id = CBTC`)
 - [x] Holder-signed settle path implemented: `SettleAsHolder` via Console Wallet (`useCantonHolderWallet.settleAsHolder` + `/api/canton/settle/prepare` + dashboard button)
 - [x] Settlement hub TDZ crash fixed (loadAll ReferenceError); known-good commit tagged `finals-known-good`
+- [ ] **Wallet product confirmed for DevNet signing** — Console Wallet (PixelPlex, consolewallet.io/develop/ledger) vs NODERS hosted wallet UI on the hackathon validator; ask the HackCanton channel if unclear. Whichever wallet, it must control the holder party used for staging (`node scripts/canton-stage-demo.mjs --resolve --holder=<that party>`)
 - [ ] **Holder wallet-signed settle verified live on DevNet** — run tonight; if not green by cutoff, use the Act 3 fallback path and hide nothing else
 - [ ] Fresh dossier captured tonight: `node scripts/canton-bitsafe-lifecycle.mjs` → `public/proof/canton-receipts.json` → deployed (receipt wall renders it)
 - [ ] Demo market + position pre-staged after the dossier run (so Act 1 opens with live state)

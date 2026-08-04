@@ -37,9 +37,12 @@ try {
 } catch { /* .env.local optional when env is provided another way */ }
 
 const RESOLVE = process.argv.includes('--resolve');
+const holderArg = process.argv.find((a) => a.startsWith('--holder='))?.slice('--holder='.length);
 const client = await import('../services/cantonLedgerClient.js');
 const operator = process.env.CANTON_OPERATOR_PARTY_ID;
-const alice = process.env.CANTON_ALICE_PARTY_ID;
+// The holder is whichever party the demo wallet can sign for. Override with
+// --holder=<partyId> or CANTON_DEMO_HOLDER; defaults to the pre-seeded Alice.
+const alice = holderArg || process.env.CANTON_DEMO_HOLDER || process.env.CANTON_ALICE_PARTY_ID;
 const STAKE = Number(process.env.BITSAFE_DEMO_STAKE || 0.4);
 const MULT = Number(process.env.BITSAFE_DEMO_MULT || 2);
 
