@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Fourcast — Private Prediction Markets on Canton</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --font-display: "Syne", "Trebuchet MS", "Segoe UI", sans-serif;
+        --font-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+        --font-mono: "JetBrains Mono", "Menlo", "Consolas", monospace;
+        --paper: oklch(18% 0.014 166);
+        --paper-deep: oklch(14% 0.012 166);
+        --paper-raised: oklch(22% 0.016 166);
+        --ink: oklch(95% 0.015 90);
+        --ink-muted: oklch(76% 0.014 120);
+        --ink-faint: oklch(61% 0.012 140);
+        --rule: oklch(95% 0.015 90 / 0.12);
+        --rule-strong: oklch(95% 0.015 90 / 0.22);
+        --accent: oklch(86% 0.16 158);
+        --accent-soft: oklch(86% 0.16 158 / 0.1);
+        --evidence: oklch(72% 0.15 252);
+        --sealed: oklch(84% 0.13 80);
+        --breach: oklch(72% 0.17 28);
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: oklch(18% 0.014 166);
+        font-family: var(--font-body);
+        color: var(--ink);
+      }
+
+      #root {
+        position: relative; width: 1920px; height: 1080px; overflow: hidden;
+        background:
+          radial-gradient(circle at 78% -12%, oklch(86% 0.16 158 / 0.08), transparent 34rem),
+          radial-gradient(circle at 2% 38%, oklch(84% 0.13 80 / 0.04), transparent 30rem),
+          oklch(18% 0.014 166);
+      }
+
+      .clip { position: absolute; inset: 0; }
+
+      /* ── Camera world ── */
+      #world {
+        position: absolute; inset: 0; overflow: hidden;
+        transform-origin: 50% 50%;
+        will-change: transform;
+      }
+
+      /* ── Background ── */
+      .bg-grid {
+        position: absolute; inset: 0; pointer-events: none;
+        background-image:
+          linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), oklch(95% 0.015 90 / 0.03) calc(100% - 1px)),
+          repeating-linear-gradient(180deg, transparent 0, transparent 5.7rem, oklch(95% 0.015 90 / 0.03) 5.75rem, oklch(95% 0.015 90 / 0.03) 5.8rem);
+        background-size: min(16vw, 14rem) 100%, 100% 100%;
+        mask-image: linear-gradient(180deg, black, transparent 74%);
+        -webkit-mask-image: linear-gradient(180deg, black, transparent 74%);
+      }
+      .bg-glow { position: absolute; border-radius: 50%; pointer-events: none; will-change: transform, opacity; }
+      .ghost-text {
+        position: absolute; font-family: var(--font-display); font-weight: 800;
+        color: oklch(95% 0.015 90 / 0.035); letter-spacing: -0.05em;
+        pointer-events: none; will-change: opacity; user-select: none;
+      }
+
+      /* ── Typography ── */
+      .kicker { font-family: var(--font-body); font-weight: 600; font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: oklch(86% 0.16 158 / 0.78); }
+      .display { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.045em; line-height: 1.02; color: var(--ink); }
+      .mono { font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.06em; }
+      .accent-text { color: var(--accent); }
+      .breach-text { color: oklch(72% 0.17 28); }
+
+      /* Word-cascade spans: binary 0→1 opacity via tl.set, whip via transform */
+      .wf-word {
+        display: inline-block; opacity: 0;
+        margin-right: 0.24em; will-change: transform;
+      }
+      .wf-word:last-child { margin-right: 0; }
+
+      /* Karaoke settle: stacked base + hot gradient copy in one grid cell */
+      .word-stack { display: inline-grid; }
+      .w-base, .w-hot { grid-area: 1 / 1; white-space: pre; }
+      .w-hot {
+        opacity: 0;
+        background-image: linear-gradient(100deg, oklch(86% 0.16 158), oklch(95% 0.015 90) 45%, oklch(86% 0.16 158) 90%);
+        background-size: 320% 100%;
+        background-position: 100% 50%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      /* ── Scene ── */
+      .scene { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 100px 140px 80px; }
+
+      /* ── Ticker ── */
+      .ticker-bar {
+        position: absolute; top: 0; left: 0; right: 0; height: 36px;
+        overflow: hidden; border-bottom: 1px solid var(--rule);
+        background: oklch(14% 0.012 166 / 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        z-index: 10; display: flex; align-items: center;
+      }
+      .ticker-live {
+        display: flex; align-items: center; gap: 6px; padding: 0 16px; height: 100%;
+        border-right: 1px solid var(--rule); font-family: var(--font-mono); font-size: 11px;
+        font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--accent); background: oklch(86% 0.16 158 / 0.06); flex-shrink: 0; z-index: 2;
+      }
+      .ticker-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px oklch(86% 0.16 158 / 0.6); }
+      .ticker-track { display: flex; align-items: center; gap: 32px; white-space: nowrap; font-family: var(--font-mono); font-size: 13px; color: var(--ink-faint); will-change: transform; }
+      .ticker-item { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
+      .ticker-item .label { color: var(--ink-muted); }
+      .ticker-item .value { color: var(--ink); }
+      .ticker-item .tag-exposed { color: oklch(72% 0.17 28); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; }
+      .ticker-item .tag-private { color: var(--accent); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; }
+      .ticker-item .tag-sealed { color: var(--sealed); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; }
+      .ticker-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--rule-strong); flex-shrink: 0; }
+      .ticker-dot.accent { background: var(--accent); box-shadow: 0 0 6px oklch(86% 0.16 158 / 0.4); }
+      .ticker-dot.breach { background: oklch(72% 0.17 28); }
+
+      /* ── Right-side proof chain panel ── */
+      .proof-panel {
+        position: absolute; top: 80px; right: 80px; width: 420px;
+        display: flex; flex-direction: column; gap: 0; z-index: 5;
+      }
+      .proof-panel-header {
+        font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+        text-transform: uppercase; color: var(--ink-faint); margin-bottom: 16px;
+        display: flex; align-items: center; gap: 8px;
+      }
+      .proof-chain { display: flex; flex-direction: column; gap: 0; }
+      .proof-node {
+        display: flex; align-items: center; gap: 16px; padding: 14px 0;
+        position: relative;
+      }
+      .proof-node-icon {
+        width: 32px; height: 32px; display: grid; place-items: center; flex-shrink: 0;
+        border: 1px solid var(--rule); background: oklch(14% 0.012 166 / 0.8);
+        font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+        color: var(--ink-faint); overflow: hidden;
+      }
+      .proof-node-text { display: flex; flex-direction: column; gap: 2px; }
+      .proof-node-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+      .proof-node-value { font-family: var(--font-mono); font-size: 14px; color: var(--ink); font-weight: 500; will-change: transform, filter; }
+      .proof-node-status { margin-left: auto; font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+      .proof-node.active .proof-node-icon {
+        border-color: var(--accent); background: oklch(86% 0.16 158 / 0.12);
+        color: var(--accent); box-shadow: 0 0 12px oklch(86% 0.16 158 / 0.4);
+      }
+      .proof-node.active .proof-node-value { color: var(--accent); }
+      .proof-node.breach .proof-node-icon {
+        border-color: oklch(72% 0.17 28 / 0.5); background: oklch(72% 0.17 28 / 0.08);
+        color: oklch(72% 0.17 28);
+      }
+      .proof-node.breach .proof-node-value { color: oklch(72% 0.17 28); }
+      .proof-line {
+        width: 1px; height: 20px; margin-left: 15.5px;
+        background: var(--rule); position: relative;
+        transform-origin: top center; will-change: transform;
+      }
+      .proof-line.active { background: oklch(86% 0.16 158 / 0.45); }
+      .proof-line.breach { background: oklch(72% 0.17 28 / 0.2); }
+
+      /* Shimmer sweep component (registry: shimmer-sweep), applied to proof-node icons */
+      .shimmer-sweep-target { position: relative; }
+      .shimmer-sweep-target .shimmer-mask {
+        position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(
+          var(--shimmer-angle, 115deg),
+          transparent 0%,
+          transparent calc(var(--shimmer-pos, -20%) - var(--shimmer-width, 24%) / 2),
+          var(--shimmer-color, oklch(86% 0.16 158 / 0.7)) var(--shimmer-pos, -20%),
+          transparent calc(var(--shimmer-pos, -20%) + var(--shimmer-width, 24%) / 2),
+          transparent 100%
+        );
+        mix-blend-mode: screen;
+      }
+
+      /* ── Bottom bar ── */
+      .bottom-bar {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 48px;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 140px; border-top: 1px solid var(--rule);
+        background: oklch(14% 0.012 166 / 0.6); font-family: var(--font-mono);
+        font-size: 12px; color: var(--ink-faint); letter-spacing: 0.08em; z-index: 10;
+      }
+      .bottom-bar .live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: middle; }
+      .wordmark { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: var(--ink); }
+      .wordmark .dot { color: var(--accent); }
+
+      /* ── Pain beats (kinetic-beat-slam layout) ── */
+      .beat-line { display: flex; align-items: center; gap: 20px; will-change: transform, filter, opacity; }
+      .beat-dash { width: 32px; height: 2px; background: oklch(72% 0.17 28); display: block; flex-shrink: 0; }
+
+      /* ── Reveal lines ── */
+      .reveal-line { display: flex; align-items: center; gap: 16px; will-change: transform, opacity; }
+      .reveal-bar { width: 3px; height: 36px; background: var(--accent); display: block; flex-shrink: 0; }
+
+      /* ── Vignette (registry: vignette) ── */
+      #hf-vignette {
+        position: absolute; inset: 0; pointer-events: none; z-index: 90;
+        background: radial-gradient(ellipse at center, transparent 52%, rgba(9, 14, 11, 0.5) 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+
+      <!-- Streak filters for motion-blur entrances -->
+      <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+        <filter id="fx-streak-1" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur id="fx-streak-1-b" in="SourceGraphic" stdDeviation="0 0" />
+        </filter>
+        <filter id="fx-streak-2" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur id="fx-streak-2-b" in="SourceGraphic" stdDeviation="0 0" />
+        </filter>
+      </svg>
+
+      <!-- Background (fixed plane — never moves with the camera) -->
+      <div class="bg-grid" id="bg-grid"></div>
+      <div class="bg-glow" id="bg-glow-1" style="width: 600px; height: 600px; top: -200px; right: -150px; background: radial-gradient(circle, oklch(86% 0.16 158 / 0.06), transparent 70%);"></div>
+      <div class="bg-glow" id="bg-glow-2" style="width: 500px; height: 500px; bottom: -150px; left: -100px; background: radial-gradient(circle, oklch(84% 0.13 80 / 0.04), transparent 70%);"></div>
+
+      <!-- ═══ Camera world (acts + ghosts) ═══ -->
+      <div id="world">
+
+        <!-- ═══ ACT 1 — THE PAIN (0–11.2s) ═══ -->
+        <section class="clip scene" id="act1" data-start="0" data-duration="11.2" data-track-index="1" data-layout-allow-overlap data-layout-allow-occlusion>
+          <div class="ghost-text" id="ghost-1" style="top: 60px; left: 80px; font-size: 200px; opacity: 0;">PUBLIC</div>
+          <div style="margin-top: 20px; max-width: 1100px;">
+            <div class="display" id="a1-line1" style="font-size: 68px;">
+              <span class="wf-word" data-w="heavy">Every</span><span class="wf-word">size</span><span class="wf-word" data-w="heavy">bet</span><span class="wf-word" data-w="light">you</span><span class="wf-word">place</span><span class="wf-word" data-w="light">in</span><span class="wf-word" data-w="heavy">public</span><span class="wf-word" data-w="light">is&nbsp;a</span>
+            </div>
+            <div class="display breach-text" id="a1-confess" style="font-size: 96px; opacity: 0; margin-top: 8px; will-change: transform, filter;">confession.</div>
+          </div>
+          <div id="a1-beats" style="margin-top: 56px; display: flex; flex-direction: column; gap: 18px; will-change: transform;">
+            <div id="a1-beat1" class="display beat-line" style="font-size: 48px; opacity: 0; filter: url(#fx-streak-1);">
+              <span class="beat-dash"></span>
+              <span>Copied on <span class="breach-text">entry.</span></span>
+            </div>
+            <div id="a1-beat2" class="display beat-line" style="font-size: 48px; opacity: 0; filter: url(#fx-streak-2);">
+              <span class="beat-dash"></span>
+              <span>Front-run on <span class="breach-text">exit.</span></span>
+            </div>
+            <div id="a1-beat3" class="display beat-line" style="font-size: 48px; opacity: 0;">
+              <span class="beat-dash"></span>
+              <span>Limited when you're <span class="breach-text">right</span>.</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ ACT 2 — THE REVEAL (11.2–20.2s) ═══ -->
+        <section class="clip scene" id="act2" data-start="11.2" data-duration="9" data-track-index="2" data-layout-allow-overlap data-layout-allow-occlusion>
+          <div class="ghost-text" id="ghost-2" style="top: 80px; left: 80px; font-size: 180px; opacity: 0;">PRIVATE</div>
+          <div id="a2-kicker" class="kicker" style="position: absolute; top: 120px; left: 140px; opacity: 0;">THE FIX</div>
+          <div style="margin-top: 20px; max-width: 1150px;">
+            <div class="display" id="a2-headline" style="font-size: 64px;">
+              <div>
+                <span class="wf-word">What</span><span class="wf-word" data-w="light">if</span><span class="wf-word" data-w="light">the</span><span class="wf-word" data-w="heavy">market</span><span class="wf-word" data-w="heavy">structure</span>
+              </div>
+              <div>
+                <span class="wf-word" data-w="heavy"><span class="word-stack"><span class="w-base">couldn't</span><span class="w-hot" data-layout-allow-occlusion>couldn't</span></span></span><span class="wf-word" data-w="heavy"><span class="word-stack"><span class="w-base">see</span><span class="w-hot" data-layout-allow-occlusion>see</span></span></span><span class="wf-word" data-w="light">your</span><span class="wf-word">position?</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 52px; display: flex; flex-direction: column; gap: 16px;">
+            <div id="a2-line1" class="display reveal-line" style="font-size: 36px; opacity: 0;">
+              <span class="reveal-bar"></span>
+              <span>Privacy at the <span class="accent-text">ledger</span>, not the policy layer.</span>
+            </div>
+            <div id="a2-line2" class="display reveal-line" style="font-size: 36px; opacity: 0;">
+              <span class="reveal-bar"></span>
+              <span>Atomic <span class="accent-text">CBTC</span> settlement.</span>
+            </div>
+            <div id="a2-line3" class="display reveal-line" style="font-size: 36px; opacity: 0;">
+              <span class="reveal-bar"></span>
+              <span>Receipts you can <span class="accent-text">verify</span>.</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ ACT 3 — THE CALL (20.2–24.4s) ═══ -->
+        <section class="clip scene" id="act3" data-start="20.2" data-duration="4.2" data-track-index="3" data-layout-allow-overlap data-layout-allow-occlusion>
+          <div style="margin-top: 20px; max-width: 1150px;">
+            <div class="display" id="a3-headline" style="font-size: 84px;">
+              <div>
+                <span class="wf-word" data-w="heavy">Does</span><span class="wf-word">visibility</span>
+              </div>
+              <div>
+                <span class="wf-word" data-w="heavy" style="color: var(--breach);">tax</span><span class="wf-word" data-w="light">your</span><span class="wf-word" data-w="heavy">P&amp;L?</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ═══ Proof chain panel (HUD, camera-locked) ═══ -->
+      <div class="proof-panel" id="proof-panel" style="opacity: 0;" data-layout-allow-overlap data-layout-allow-occlusion>
+        <div class="proof-panel-header" id="proof-header">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: oklch(72% 0.17 28); display: inline-block;" id="proof-header-dot"></span>
+          <span id="proof-header-text">POSITION LEDGER — EXPOSED</span>
+        </div>
+        <div class="proof-chain" id="proof-chain">
+          <div class="proof-node breach" id="pn1" style="opacity: 0;">
+            <div class="proof-node-icon shimmer-sweep-target">01</div>
+            <div class="proof-node-text">
+              <span class="proof-node-label">WALLET</span>
+              <span class="proof-node-value" id="pn1-val">0x7a3f...e8b2</span>
+            </div>
+            <span class="proof-node-status" id="pn1-status" style="color: oklch(72% 0.17 28);">EXPOSED</span>
+          </div>
+          <div class="proof-line breach" id="pl1"></div>
+          <div class="proof-node breach" id="pn2" style="opacity: 0;">
+            <div class="proof-node-icon shimmer-sweep-target">02</div>
+            <div class="proof-node-text">
+              <span class="proof-node-label">POSITION</span>
+              <span class="proof-node-value" id="pn2-val">YES · $12,400</span>
+            </div>
+            <span class="proof-node-status" id="pn2-status" style="color: oklch(72% 0.17 28);">COPIED</span>
+          </div>
+          <div class="proof-line breach" id="pl2"></div>
+          <div class="proof-node breach" id="pn3" style="opacity: 0;">
+            <div class="proof-node-icon shimmer-sweep-target">03</div>
+            <div class="proof-node-text">
+              <span class="proof-node-label">EXIT</span>
+              <span class="proof-node-value" id="pn3-val">FRONT-RUN</span>
+            </div>
+            <span class="proof-node-status" id="pn3-status" style="color: oklch(72% 0.17 28);">LEAKED</span>
+          </div>
+          <div class="proof-line" id="pl3"></div>
+          <div class="proof-node" id="pn4" style="opacity: 0;">
+            <div class="proof-node-icon shimmer-sweep-target" id="pn4-icon">04</div>
+            <div class="proof-node-text">
+              <span class="proof-node-label">SETTLEMENT</span>
+              <span class="proof-node-value" id="pn4-val">— pending</span>
+            </div>
+            <span class="proof-node-status" id="pn4-status" style="color: var(--ink-faint);">—</span>
+          </div>
+          <!-- Settlement stamp: the chain's final state, in place -->
+          <div id="stamp" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--rule); opacity: 0;">
+            <div class="mono" style="font-size: 11px; color: var(--ink-faint); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;">
+              SETTLEMENT VERIFIED
+            </div>
+            <div class="display" id="stamp-text" style="font-size: 24px; color: var(--accent);">
+              Both escrow legs executed.
+            </div>
+            <div class="mono" style="font-size: 13px; color: var(--ink-muted); margin-top: 6px;">
+              No payout step. Nothing outstanding.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ticker (HUD) -->
+      <div class="ticker-bar" id="ticker-bar" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="ticker-live" data-layout-allow-occlusion>
+          <span class="ticker-live-dot" id="ticker-dot"></span>
+          <span id="ticker-label">LEDGER · EXPOSED</span>
+        </div>
+        <div class="ticker-track" id="ticker-track" data-layout-allow-overflow data-layout-allow-occlusion>
+          <span class="ticker-item"><span class="ticker-dot breach"></span><span class="label">WALLET</span> <span class="value">0x7a3f...e8b2</span> <span class="tag-exposed">EXPOSED</span></span>
+          <span class="ticker-dot"></span>
+          <span class="ticker-item"><span class="ticker-dot breach"></span><span class="label">POS</span> <span class="value">YES · $12,400</span> <span class="tag-exposed">COPIED</span></span>
+          <span class="ticker-dot"></span>
+          <span class="ticker-item"><span class="ticker-dot breach"></span><span class="label">WALLET</span> <span class="value">0x4b9c...1f2e</span> <span class="tag-exposed">FRONT-RUN</span></span>
+          <span class="ticker-dot"></span>
+          <span class="ticker-item"><span class="ticker-dot breach"></span><span class="label">POS</span> <span class="value">NO · $8,900</span> <span class="tag-exposed">LIMITED</span></span>
+          <span class="ticker-dot"></span>
+          <span class="ticker-item"><span class="ticker-dot accent"></span><span class="label">WALLET</span> <span class="value">— private</span> <span class="tag-private">SEALED</span></span>
+          <span class="ticker-dot"></span>
+          <span class="ticker-item"><span class="ticker-dot accent"></span><span class="label">CBTC</span> <span class="value">ATOMIC</span> <span class="tag-sealed">SETTLED</span></span>
+          <span class="ticker-dot"></span>
+          <span class="ticker-item"><span class="ticker-dot accent"></span><span class="label">ID</span> <span class="value">#a8e3f1</span> <span class="tag-private">RECONCILED</span></span>
+          <span class="ticker-dot"></span>
+          <span class="ticker-item"><span class="ticker-dot accent"></span><span class="label">DAML</span> <span class="value">SIGNATORY</span> <span class="tag-sealed">VERIFIED</span></span>
+          <span class="ticker-dot"></span>
+        </div>
+      </div>
+
+      <!-- Bottom bar (HUD) -->
+      <div class="bottom-bar" id="bottom-bar" style="opacity: 0;" data-layout-allow-overlap data-layout-allow-occlusion>
+        <div><span class="live-dot"></span><span class="wordmark">Fourcast<span class="dot">.</span></span></div>
+        <div id="bar-status">CANTON DEVNET · PRIVATE SETTLEMENT</div>
+        <div id="bar-tx">fourcastapp.vercel.app/proof?chain=canton</div>
+      </div>
+
+      <!-- Word-wall transition 1: PUBLIC (covers the problem→fix cut) -->
+      <div id="wall-public"
+        class="clip"
+        data-composition-src="compositions/mk-wall-public.html"
+        data-composition-id="mk-wall-public"
+        data-start="10.6" data-duration="2.4" data-track-index="7"
+        data-width="1920" data-height="1080"
+        style="opacity: 0;"
+        data-layout-allow-overflow data-layout-allow-occlusion></div>
+
+      <!-- Word-wall transition 2: SEALED (covers the reveal→call cut) -->
+      <div id="wall-sealed"
+        class="clip"
+        data-composition-src="compositions/mk-wall-sealed.html"
+        data-composition-id="mk-wall-sealed"
+        data-start="19.6" data-duration="2.4" data-track-index="7"
+        data-width="1920" data-height="1080"
+        style="opacity: 0;"
+        data-layout-allow-overflow data-layout-allow-occlusion></div>
+
+      <!-- Logo outro (restyled registry block) -->
+      <div id="outro-clip"
+        class="clip"
+        data-composition-src="compositions/logo-outro.html"
+        data-composition-id="logo-outro"
+        data-start="24.2" data-duration="5.8" data-track-index="8"
+        data-width="1920" data-height="1080"
+        style="opacity: 0;"
+        data-layout-allow-overflow data-layout-allow-occlusion></div>
+
+      <!-- Vignette -->
+      <div id="hf-vignette"></div>
+
+      <!-- Audio -->
+      <audio id="narration" src="assets/narration-v3.mp3" data-start="0.5" data-duration="26" data-track-index="10" data-volume="1"></audio>
+      <audio id="bgm" src="assets/bgm-elevenlabs.mp3" data-start="0" data-duration="30" data-track-index="11" data-volume="1"></audio>
+    </div>
+
+    <script>
+      // Shimmer sweep component (registry) — inject masks into targets
+      document.querySelectorAll(".shimmer-sweep-target").forEach((el) => {
+        if (!el.querySelector(".shimmer-mask")) {
+          const mask = document.createElement("div");
+          mask.className = "shimmer-mask";
+          el.appendChild(mask);
+        }
+      });
+
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const F = 1 / 60;
+
+      // ═══ Virtual camera (viewport-change, single-wrapper composite) ═══
+      const world = document.getElementById("world");
+      const cam = { scale: 1, x: 0, y: 0 };
+      function applyCamera() {
+        world.style.transform = `translate(${cam.x}px, ${cam.y}px) scale(${cam.scale})`;
+      }
+      applyCamera();
+
+      // Continuous lateral micro-drift (finite)
+      tl.to(cam, { x: 10, duration: 7.5, ease: "sine.inOut", yoyo: true, repeat: 3, onUpdate: applyCamera }, 0);
+      // Act 1: slow push-in
+      tl.to(cam, { scale: 1.03, y: -10, duration: 10.6, ease: "sine.inOut", onUpdate: applyCamera }, 0);
+      // Hidden repose under wall 1
+      tl.to(cam, { scale: 1.02, y: 12, duration: 0.6, ease: "power2.inOut", onUpdate: applyCamera }, 11.3);
+      // Act 2: slow push
+      tl.to(cam, { scale: 1.05, y: -4, duration: 7.7, ease: "sine.inOut", onUpdate: applyCamera }, 12.5);
+      // Hidden repose under wall 2
+      tl.to(cam, { scale: 1.04, y: 0, duration: 0.6, ease: "power2.inOut", onUpdate: applyCamera }, 20.3);
+      // Act 3: final push toward the question
+      tl.to(cam, { scale: 1.07, y: -6, duration: 2.4, ease: "sine.inOut", onUpdate: applyCamera }, 21.8);
+
+      // ═══ Ambient ═══
+      tl.fromTo("#bg-grid", { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "power1.out" }, 0);
+      tl.to("#bg-glow-1", { scale: 1.15, duration: 4, ease: "sine.inOut", yoyo: true, repeat: 6 }, 0);
+      tl.to("#bg-glow-2", { scale: 1.1, duration: 5, ease: "sine.inOut", yoyo: true, repeat: 5 }, 0);
+
+      // ═══ HUD chrome ═══
+      tl.fromTo("#bottom-bar", { y: 48, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 0);
+      tl.fromTo("#ticker-bar", { y: -36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 0.2);
+      tl.fromTo("#proof-panel", { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 0.9);
+      tl.to("#ticker-dot", { boxShadow: "0 0 14px oklch(86% 0.16 158 / 0.8)", duration: 1.5, ease: "sine.inOut", yoyo: true, repeat: 11 }, 0);
+
+      // Continuous ticker loop (no resets): duplicate the content, scroll exactly half
+      const tickerTrack = document.getElementById("ticker-track");
+      tickerTrack.innerHTML = tickerTrack.innerHTML + tickerTrack.innerHTML;
+      let halfTicker = tickerTrack.scrollWidth / 2;
+      if (halfTicker < 100) halfTicker = 2000;
+      tl.fromTo("#ticker-track", { x: 0 }, { x: -halfTicker, duration: 30, ease: "none" }, 0);
+      tl.set("#ticker-label", { textContent: "LEDGER · SEALED" }, 11.2);
+      tl.set("#ticker-label", { textContent: "LEDGER · VERIFIED" }, 20.2);
+
+      // ═══ Streak proxies (motion-blur-streak) ═══
+      const blur1Node = document.getElementById("fx-streak-1-b");
+      const blur1 = { v: 20 };
+      const writeBlur1 = () => blur1Node.setAttribute("stdDeviation", `${blur1.v} 0`);
+      writeBlur1();
+      const blur2Node = document.getElementById("fx-streak-2-b");
+      const blur2 = { v: 18 };
+      const writeBlur2 = () => blur2Node.setAttribute("stdDeviation", `${blur2.v} 0`);
+      writeBlur2();
+
+      // ═══ Waterfall cascade helper (waterfall-entry) ═══
+      function cascade(sel, t0) {
+        const words = document.querySelectorAll(sel + " .wf-word");
+        let t = t0;
+        words.forEach((w) => {
+          const heavy = w.dataset.w === "heavy";
+          const light = w.dataset.w === "light";
+          const yOff = heavy ? 78 : light ? 34 : 48;
+          const dur = heavy ? 0.19 : light ? 0.12 : 0.15;
+          tl.set(w, { opacity: 1, y: yOff }, t);
+          tl.to(w, { y: 0, duration: dur, ease: "power4.out" }, t);
+          t = t + dur - 1.5 * F;
+        });
+      }
+
+      // ═══ Proof-chain flip helper ═══
+      function flipNode(id, t, val, status, statusColor) {
+        tl.to(`#${id}-val`, { y: -8, opacity: 0, filter: "blur(5px)", duration: 0.22, ease: "power2.in" }, t);
+        tl.set(`#${id}-val`, { textContent: val }, t + 0.22);
+        tl.fromTo(`#${id}-val`, { y: 10, opacity: 0, filter: "blur(6px)" }, { y: 0, opacity: 1, filter: "blur(0px)", duration: 0.32, ease: "power3.out" }, t + 0.24);
+        tl.to(`#${id}-status`, { opacity: 0, duration: 0.15, ease: "power1.in" }, t);
+        tl.set(`#${id}-status`, { textContent: status, color: statusColor }, t + 0.22);
+        tl.fromTo(`#${id}-status`, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, t + 0.26);
+        tl.set(`#${id}`, { className: "proof-node active" }, t + 0.22);
+        // shimmer pass across the icon as the state flips
+        tl.fromTo(`#${id} .proof-node-icon`, { "--shimmer-pos": "-20%" }, { "--shimmer-pos": "120%", duration: 0.9, ease: "power2.inOut" }, t + 0.1);
+        // ring pulse
+        tl.fromTo(`#${id} .proof-node-icon`,
+          { boxShadow: "0 0 0 0 oklch(86% 0.16 158 / 0.45)" },
+          { boxShadow: "0 0 0 14px oklch(86% 0.16 158 / 0)", duration: 0.8, ease: "power2.out" }, t + 0.24);
+      }
+      function drawLine(id, t) {
+        tl.set(`#${id}`, { className: "proof-line active" }, t);
+        tl.fromTo(`#${id}`, { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: "power2.out" }, t);
+      }
+
+      // ════════════════════════════════════════════
+      // ═══ ACT 1 — THE PAIN (0 → 11.2)
+      // ════════════════════════════════════════════
+      tl.to("#ghost-1", { opacity: 0.05, duration: 1.5, ease: "power2.out" }, 0.6);
+      tl.to("#ghost-1", { x: -24, duration: 9, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0.6);
+
+      // Headline cascade — "Every size bet you place in public is a"
+      cascade("#a1-line1", 0.7);
+
+      // "confession." — scale slam with motion-blur streak
+      tl.fromTo("#a1-confess",
+        { scale: 1.5, filter: "blur(16px) url(#fx-streak-1)", opacity: 0 },
+        { scale: 1, filter: "blur(0px) url(#fx-streak-1)", opacity: 1, duration: 0.5, ease: "power4.out" }, 2.0);
+      tl.to(blur1, { v: 0, duration: 0.5, ease: "power4.out", onUpdate: writeBlur1 }, 2.0);
+
+      // Ledger nodes wait in the wings
+      tl.fromTo("#pn1", { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 2.8);
+      tl.fromTo("#pn2", { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 3.2);
+      tl.fromTo("#pn3", { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 3.6);
+
+      // Kinetic beat slam — ONE tempo grid, three DISTINCT entrances
+      const PULSE = 0.4;
+      const BEATS = [PULSE * 12, PULSE * 16, PULSE * 20]; // 4.8 / 6.4 / 8.0
+
+      // Beat 1: scale+blur slam (hard), paired with the wallet node flashing exposed
+      tl.fromTo("#a1-beat1",
+        { scale: 1.3, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "power4.out" }, BEATS[0]);
+      tl.to(blur1, { v: 16, duration: 0.001, onUpdate: writeBlur1 }, BEATS[0] - 0.001);
+      tl.to(blur1, { v: 0, duration: 0.5, ease: "power4.out", onUpdate: writeBlur1 }, BEATS[0]);
+      tl.fromTo("#pn1 .proof-node-icon",
+        { boxShadow: "0 0 0 0 oklch(72% 0.17 28 / 0.5)" },
+        { boxShadow: "0 0 0 12px oklch(72% 0.17 28 / 0)", duration: 0.7, ease: "power2.out" }, BEATS[0]);
+
+      // Beat 2: side snap (hardest), paired with the position node
+      tl.fromTo("#a1-beat2", { x: -320, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "expo.out" }, BEATS[1]);
+      tl.to(blur2, { v: 0, duration: 0.45, ease: "expo.out", onUpdate: writeBlur2 }, BEATS[1]);
+      tl.fromTo("#pn2 .proof-node-icon",
+        { boxShadow: "0 0 0 0 oklch(72% 0.17 28 / 0.5)" },
+        { boxShadow: "0 0 0 12px oklch(72% 0.17 28 / 0)", duration: 0.7, ease: "power2.out" }, BEATS[1]);
+
+      // Beat 3: heavy rise with momentum, paired with the exit node
+      tl.fromTo("#a1-beat3", { y: 90, rotation: 5, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.55, ease: "circ.out" }, BEATS[2]);
+      tl.fromTo("#pn3 .proof-node-icon",
+        { boxShadow: "0 0 0 0 oklch(72% 0.17 28 / 0.5)" },
+        { boxShadow: "0 0 0 12px oklch(72% 0.17 28 / 0)", duration: 0.7, ease: "power2.out" }, BEATS[2]);
+
+      // Finale breath (finite hold, never a dead frame)
+      tl.to("#a1-beats", { scale: 1.008, duration: 0.8, ease: "sine.inOut", yoyo: true, repeat: 1 }, 8.8);
+
+      // Walls gate on/off around their clips (opacity-guarded so layout
+      // checks never see covered content)
+      tl.fromTo("#wall-public", { opacity: 0 }, { opacity: 1, duration: 0.08, ease: "none" }, 10.6);
+      tl.to("#wall-public", { opacity: 0, duration: 0.2, ease: "power1.in" }, 12.8);
+      tl.fromTo("#wall-sealed", { opacity: 0 }, { opacity: 1, duration: 0.08, ease: "none" }, 19.6);
+      tl.to("#wall-sealed", { opacity: 0, duration: 0.2, ease: "power1.in" }, 21.8);
+
+      // ════════════════════════════════════════════
+      // ═══ ACT 2 — THE REVEAL (11.2 → 20.2)
+      // ════════════════════════════════════════════
+      tl.to("#ghost-2", { opacity: 0.05, duration: 1.0, ease: "power2.out" }, 12.6);
+      tl.to("#ghost-2", { x: 20, duration: 7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 12.6);
+      tl.fromTo("#a2-kicker", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 12.4);
+      cascade("#a2-headline", 12.6);
+
+      // Karaoke settle — the emerald travels into "couldn't see" and STAYS
+      tl.fromTo("#a2-headline .w-hot",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: "power2.out", stagger: 0.4 }, 14.2);
+      tl.fromTo("#a2-headline .w-hot",
+        { backgroundPosition: "100% 50%" },
+        { backgroundPosition: "0% 50%", duration: 1.4, ease: "none", stagger: 0.4 }, 14.2);
+
+      // Reveal lines drive the chain flips — each claim sealed on the ledger
+      // Line 1: privacy at the ledger → wallet seals
+      tl.fromTo("#a2-line1", { x: -140, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "expo.out" }, 15.4);
+      flipNode("pn1", 15.6, "— private", "SEALED", "var(--accent)");
+      drawLine("pl1", 15.9);
+      tl.to("#proof-header-text", { opacity: 0, duration: 0.15, ease: "power1.in" }, 15.4);
+      tl.set("#proof-header-text", { textContent: "POSITION LEDGER — SEALING" }, 15.55);
+      tl.fromTo("#proof-header-text", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, 15.6);
+      tl.set("#proof-header-dot", { background: "var(--accent)" }, 15.55);
+
+      // Line 2: atomic CBTC → position + exit resolve
+      tl.fromTo("#a2-line2", { x: -140, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "expo.out" }, 16.6);
+      flipNode("pn2", 16.8, "— private", "RESOLVED", "var(--accent)");
+      drawLine("pl2", 17.0);
+      flipNode("pn3", 17.2, "ATOMIC CBTC", "SETTLED", "var(--sealed)");
+      drawLine("pl3", 17.4);
+
+      // Line 3: receipts → the chain completes
+      tl.fromTo("#a2-line3", { x: -140, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "expo.out" }, 17.8);
+      flipNode("pn4", 18.1, "RECONCILED", "VERIFIED", "var(--accent)");
+      tl.fromTo("#pn4", { opacity: 0.35 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 18.1);
+
+      // ════════════════════════════════════════════
+      // ═══ ACT 3 — THE CALL (20.2 → 24.4)
+      // ════════════════════════════════════════════
+      cascade("#a3-headline", 21.2);
+
+      // Chain finale: shimmer runs the whole proof panel
+      tl.fromTo(".proof-node-icon",
+        { "--shimmer-pos": "-20%" },
+        { "--shimmer-pos": "120%", duration: 1.1, ease: "power2.inOut", stagger: 0.12 }, 22.6);
+
+      // Stamp lands in place (no bounce — success shown in place)
+      tl.fromTo("#stamp", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 23.2);
+      tl.fromTo("#stamp-text",
+        { textShadow: "0 0 0 oklch(86% 0.16 158 / 0)" },
+        { textShadow: "0 0 14px oklch(86% 0.16 158 / 0.55)", duration: 0.6, ease: "power2.out" }, 23.4);
+
+      // ═══ Logo outro — dissolve into the lockup ═══
+      tl.fromTo("#outro-clip", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power1.out" }, 24.2);
+
+      // ═══ BGM mix ═══
+      tl.to("#bgm", { volume: 0.3, duration: 0.8 }, 0);
+      tl.to("#bgm", { volume: 0.45, duration: 0.6 }, 10.6);  // swell under wall 1
+      tl.to("#bgm", { volume: 0.24, duration: 0.5 }, 12.8);
+      tl.to("#bgm", { volume: 0.45, duration: 0.6 }, 19.6);  // swell under wall 2
+      tl.to("#bgm", { volume: 0.26, duration: 0.5 }, 21.8);
+      tl.to("#bgm", { volume: 0.5, duration: 0.8 }, 24.2);   // outro swell
+      tl.to("#bgm", { volume: 0, duration: 1.6, ease: "power1.in" }, 28.4);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

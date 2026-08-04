@@ -1,0 +1,149 @@
+<!-- hyperframes-registry-item: mk-clone-wall-transition (restyled: Fourcast breach wall) -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: transparent;
+        overflow: hidden;
+      }
+      #mk-cw-root {
+        /* Fourcast skin: warm ink on lifted charcoal-green, breach accents */
+        --mk-font: "Syne", "Trebuchet MS", sans-serif;
+        --mk-ink: oklch(95% 0.015 90 / 0.62);
+        --mk-paper: oklch(16% 0.013 166);
+
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: transparent;
+      }
+      #mk-cw-wall {
+        position: absolute;
+        inset: 0;
+        background: var(--mk-paper);
+        isolation: isolate;
+      }
+      .mk-cw-row {
+        position: absolute;
+        white-space: nowrap;
+        font-family: var(--mk-font);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        color: var(--mk-ink);
+        line-height: 1;
+      }
+      .mk-cw-tile {
+        display: inline-block;
+      }
+      /* inversion sweep: paper-colored rect in difference blend flips ink<->paper */
+      #mk-cw-invert {
+        position: absolute;
+        inset: 0;
+        background: var(--mk-paper);
+        mix-blend-mode: difference;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="mk-cw-root"
+      data-composition-id="mk-wall-public"
+      data-start="0"
+      data-duration="2.4"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="mk-cw-wall" data-layout-allow-overflow>
+        <div id="mk-cw-tiles" data-layout-allow-overflow></div>
+        <div id="mk-cw-invert" data-layout-allow-overflow></div>
+      </div>
+      <div
+        id="mk-cw-drv"
+        class="clip"
+        data-start="0"
+        data-duration="2.4"
+        data-track-index="0"
+        style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none"
+      ></div>
+    </div>
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+
+        // No outgoing-frame card: the wall covers the frame from t=0 (the host
+        // clips this block so t=0 IS cover-onset). The cut beneath happens
+        // anywhere in ~0.0–1.9 local; inversion sweeps 0.85–1.5; wall clears 1.9–2.35.
+        var CONFIG = {
+          word: "PUBLIC",
+          fontSize: 220,
+          spreadX: 90,
+          spreadY: 56,
+          brickOffset: true,
+          driftX: -46,
+        };
+
+        var W = 1920,
+          H = 1080;
+
+        var root = document.getElementById("mk-cw-root");
+        var wall = document.getElementById("mk-cw-wall");
+        var tilesBox = document.getElementById("mk-cw-tiles");
+        var invert = document.getElementById("mk-cw-invert");
+
+        var rowH = CONFIG.fontSize + CONFIG.spreadY;
+        var rows = Math.ceil(H / rowH) + 1;
+        var tileW = CONFIG.word.length * CONFIG.fontSize * 0.58 + CONFIG.spreadX;
+        var perRow = Math.ceil(W / tileW) + 2;
+        for (var r = 0; r < rows; r++) {
+          var row = document.createElement("div");
+          row.id = "mk-cw-row-" + r;
+          row.className = "mk-cw-row";
+          row.setAttribute("data-layout-allow-overflow", "");
+          row.setAttribute("data-layout-allow-occlusion", "");
+          row.style.fontSize = CONFIG.fontSize + "px";
+          row.style.top = r * rowH - CONFIG.fontSize * 0.35 + "px";
+          var offset = CONFIG.brickOffset && r % 2 === 1 ? -Math.round(tileW / 2) : 0;
+          row.style.left = offset - tileW + "px";
+          for (var c = 0; c < perRow + 1; c++) {
+            var tile = document.createElement("span");
+            tile.className = "mk-cw-tile";
+            tile.textContent = CONFIG.word;
+            tile.style.marginRight = CONFIG.spreadX + "px";
+            row.appendChild(tile);
+          }
+          tilesBox.appendChild(row);
+        }
+
+        var tl = gsap.timeline({ paused: true });
+
+        /* slow drift keeps the wall alive during the hold */
+        tl.to(tilesBox, { x: CONFIG.driftX, duration: 1.8, ease: "sine.inOut" }, 0.3);
+
+        /* 0.85–1.5  inversion sweeps in and STAYS — wall flips ink<->paper */
+        gsap.set(invert, { x: -W });
+        tl.to(invert, { x: 0, duration: 0.65, ease: "power3.inOut" }, 0.85);
+
+        /* 1.9–2.35  the inverted wall fades off, revealing the cut beneath */
+        tl.to(wall, { opacity: 0, duration: 0.45, ease: "power2.inOut" }, 1.9);
+
+        tl.set(root, { visibility: "hidden" }, 2.36);
+
+        window.__timelines["mk-wall-public"] = tl;
+      })();
+    </script>
+  </body>
+</html>

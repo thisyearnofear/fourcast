@@ -1,0 +1,217 @@
+<!-- hyperframes-registry-item: logo-outro (restyled: Fourcast lockup) -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Fourcast — Logo Outro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: oklch(14% 0.012 166);
+      }
+      [data-composition-id="logo-outro"] .canvas {
+        width: 1920px;
+        height: 1080px;
+        background:
+          radial-gradient(circle at 50% 42%, oklch(86% 0.16 158 / 0.07), transparent 30rem),
+          oklch(14% 0.012 166);
+        position: relative;
+        overflow: hidden;
+        font-family: "DM Sans", sans-serif;
+      }
+
+      [data-composition-id="logo-outro"] .logo-glow {
+        position: absolute;
+        left: 760px;
+        top: 240px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, oklch(86% 0.16 158 / 0.22), transparent 70%);
+        border-radius: 50%;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      [data-composition-id="logo-outro"] .wm {
+        position: absolute;
+        top: 400px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        z-index: 2;
+      }
+      [data-composition-id="logo-outro"] .wm-letter {
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 132px;
+        letter-spacing: -0.03em;
+        color: oklch(95% 0.015 90);
+        opacity: 0;
+        will-change: transform, filter;
+      }
+      [data-composition-id="logo-outro"] .wm-letter.dot {
+        color: oklch(86% 0.16 158);
+      }
+
+      [data-composition-id="logo-outro"] .kicker-line {
+        position: absolute;
+        top: 340px;
+        width: 100%;
+        text-align: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: oklch(61% 0.012 140);
+        opacity: 0;
+        z-index: 3;
+      }
+
+      [data-composition-id="logo-outro"] .tagline {
+        position: absolute;
+        top: 590px;
+        width: 100%;
+        text-align: center;
+        font-family: "Syne", sans-serif;
+        font-weight: 600;
+        font-size: 34px;
+        letter-spacing: -0.02em;
+        color: oklch(76% 0.014 120);
+        opacity: 0;
+        z-index: 3;
+      }
+
+      [data-composition-id="logo-outro"] .url-row {
+        position: absolute;
+        top: 680px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        opacity: 0;
+        z-index: 3;
+      }
+      /* square profile — no pills, per Fourcast design system */
+      [data-composition-id="logo-outro"] .url-chip {
+        border: 1px solid oklch(95% 0.015 90 / 0.22);
+        background: oklch(95% 0.015 90 / 0.025);
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 500;
+        font-size: 16px;
+        letter-spacing: 0.06em;
+        color: oklch(76% 0.014 120);
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      [data-composition-id="logo-outro"] .url-chip .dot {
+        color: oklch(86% 0.16 158);
+      }
+      [data-composition-id="logo-outro"] .hash {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        color: oklch(86% 0.16 158);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="logo-outro"
+      data-composition-id="logo-outro"
+      data-width="1920"
+      data-height="1080"
+      data-start="0"
+      data-duration="6"
+    >
+      <div class="canvas">
+        <div class="logo-glow"></div>
+        <div class="kicker-line">CANTON DEVNET · PRIVATE SETTLEMENT</div>
+        <div class="wm">
+          <span class="wm-letter">F</span><span class="wm-letter">o</span><span class="wm-letter">u</span><span class="wm-letter">r</span><span class="wm-letter">c</span><span class="wm-letter">a</span><span class="wm-letter">s</span><span class="wm-letter">t</span><span class="wm-letter dot">.</span>
+        </div>
+        <div class="tagline">Markets that can’t see your size.</div>
+        <div class="url-row">
+          <span class="url-chip"><span class="dot">●</span> fourcastapp.vercel.app/proof?chain=canton</span>
+          <span class="hash">#HackCanton</span>
+        </div>
+      </div>
+
+      <script>
+        (function () {
+          const tl = gsap.timeline({ paused: true });
+          const q = (s) => `[data-composition-id="logo-outro"] ${s}`;
+          const letters = "[data-composition-id='logo-outro'] .wm-letter";
+
+          // 1. Wordmark assembles — letters snap in from the right, ripple stagger
+          tl.fromTo(
+            letters,
+            { x: 220, opacity: 0, filter: "blur(8px)" },
+            { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.55, ease: "power4.out", stagger: 0.06 },
+            0.25,
+          );
+
+          // 2. The emerald dot lands last, with the glow bloom behind it
+          tl.fromTo(
+            q(".logo-glow"),
+            { opacity: 0, scale: 0.6 },
+            { opacity: 1, scale: 1.15, duration: 0.5, ease: "power2.out" },
+            0.9,
+          );
+          tl.to(q(".logo-glow"), { opacity: 0.35, scale: 1.6, duration: 1.4, ease: "power2.out" }, 1.4);
+
+          // 3. Kicker, tagline, URL — rise and hold
+          tl.fromTo(
+            q(".kicker-line"),
+            { opacity: 0, y: -10 },
+            { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+            1.1,
+          );
+          tl.fromTo(
+            q(".tagline"),
+            { opacity: 0, y: 18 },
+            { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" },
+            1.6,
+          );
+          tl.fromTo(
+            q(".url-row"),
+            { opacity: 0, y: 14 },
+            { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+            2.1,
+          );
+
+          // 4. Gentle lockup breath for the remaining hold (finite)
+          tl.to(
+            q(".wm"),
+            { scale: 1.008, duration: 1.2, ease: "sine.inOut", yoyo: true, repeat: 2, transformOrigin: "50% 50%" },
+            3.0,
+          );
+
+          window.__timelines = window.__timelines || {};
+          window.__timelines["logo-outro"] = tl;
+        })();
+      </script>
+    </div>
+  </body>
+</html>

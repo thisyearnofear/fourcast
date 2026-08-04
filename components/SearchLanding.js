@@ -15,6 +15,7 @@ import TweenNumber from '@/components/motion/TweenNumber';
 import LiveUTCClock from '@/components/motion/LiveUTCClock';
 import SealMoment from '@/components/motion/SealMoment';
 import TrustStatsStrip from '@/components/TrustStatsStrip';
+import PrivacyProof from '@/components/PrivacyProof';
 
 // The canonical real receipt — France 3-0 Sweden, World Cup Round of 32.
 // The ALLOCATE receipt itself was a dry-run (execution.dryRun: true); a
@@ -180,6 +181,93 @@ function LandingMobileNav() {
   );
 }
 
+/**
+ * CantonHero — the opening act for Canton traffic and judges.
+ *
+ * Visceral problem framing (size = signal in public venues) followed
+ * immediately by the LIVE privacy duel running inline: two real ledger
+ * queries, two identities, one ledger. The dossier ticker pins tonight's
+ * real BitSafe CBTC settlement under it. The agent/TxLINE story continues
+ * below as the second act.
+ */
+function CantonHero() {
+  const [dossier, setDossier] = useState(null);
+  useEffect(() => {
+    fetch('/proof/canton-receipts.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setDossier(d); })
+      .catch(() => {});
+  }, []);
+
+  const checksPassed = dossier?.checks?.filter((c) => c.pass).length;
+  const checksTotal = dossier?.checks?.length;
+
+  return (
+    <section className="mt-6 sm:mt-10" aria-label="Private prediction markets on Canton">
+      <div className="border border-[var(--color-accent)]/25 bg-gradient-to-b from-[var(--color-accent)]/[0.07] to-transparent p-5 sm:p-8">
+        <p className="fc-kicker fc-print text-[var(--color-accent)]">
+          HackCanton S2 Grand Final · live on Canton DevNet
+        </p>
+
+        <h1 className="fc-display fc-print mt-4 text-4xl font-extrabold leading-[0.95] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-6xl" style={{ '--print-delay': '70ms' }}>
+          Every size bet in public is a confession.
+          <span className="text-[var(--color-accent)]"> Not here.</span>
+        </h1>
+
+        <p className="fc-print mt-5 max-w-2xl text-base leading-7 text-[var(--color-ink-muted)] sm:text-lg" style={{ '--print-delay': '140ms' }}>
+          On Fourcast, the ledger itself cannot show your position to anyone but its stakeholders.
+          Protocol-level privacy — not a privacy policy — with atomic settlement in real CBTC.
+          Below: the proof, running live. Two identities, one ledger, two very different answers.
+        </p>
+
+        <div className="fc-print mt-7 flex flex-wrap items-center gap-3" style={{ '--print-delay': '210ms' }}>
+          <Link
+            href="/proof?chain=canton"
+            className="fc-action inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm"
+          >
+            Run the privacy duel
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+          <Link
+            href="/canton/holder"
+            className="inline-flex items-center gap-1.5 border border-[var(--color-rule)] px-4 py-2.5 text-sm text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-rule-strong)] hover:text-[var(--color-ink)]"
+          >
+            Holder dashboard
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        {dossier && (
+          <div className="fc-print mt-6 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--color-accent)]/15 pt-4 font-mono text-[10px] text-[var(--color-ink-faint)]" style={{ '--print-delay': '280ms' }}>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
+              latest lifecycle run
+            </span>
+            <span>
+              payout{' '}
+              <span className="text-[var(--color-accent)]">
+                {Number(dossier.receiptPayload?.payout ?? 0).toFixed(2)} {dossier.instrument?.id || 'CBTC'}
+              </span>
+            </span>
+            <span>
+              checks{' '}
+              <span className="text-[var(--color-accent)]">{checksPassed}/{checksTotal} ✓</span>
+            </span>
+            <span className="truncate" title={dossier.settle?.updateId}>
+              settle {String(dossier.settle?.updateId || '').slice(0, 18)}…
+            </span>
+            <span>{dossier.capturedAt ? `captured ${new Date(dossier.capturedAt).toUTCString().slice(5, 22)}` : ''}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4">
+        <PrivacyProof />
+      </div>
+    </section>
+  );
+}
+
 export default function SearchLanding() {
   const { mode } = useAudience();
 
@@ -262,22 +350,7 @@ export default function SearchLanding() {
           </div>
         </header>
 
-        <Link
-          href="/proof?chain=canton"
-          className="group mt-4 flex flex-wrap items-center justify-between gap-3 border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/[0.05] px-4 py-3 no-underline transition hover:border-[var(--color-accent)]/45 hover:bg-[var(--color-accent)]/[0.08]"
-        >
-          <span className="flex items-center gap-3">
-            <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
-            <span>
-              <span className="block font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--color-accent)]">Canton DevNet · live proof</span>
-              <span className="mt-0.5 block text-xs text-[var(--color-ink-muted)] sm:text-sm">One private position. Two identities. Only its stakeholders can read it.</span>
-            </span>
-          </span>
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-accent)]">
-            Watch the privacy duel
-            <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
-          </span>
-        </Link>
+        <CantonHero />
 
         {/* Hero — outcome-led headline + the canonical 4-stage receipt flow.
             The receipt flow is deterministic and always present; it never
@@ -288,9 +361,9 @@ export default function SearchLanding() {
               Flight recorder for autonomous capital
             </p>
 
-            <h1 className="fc-display fc-print mt-4 text-4xl font-extrabold leading-[0.95] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-[3.75rem]" style={{ '--print-delay': '70ms' }}>
+            <h2 className="fc-display fc-print mt-4 text-4xl font-extrabold leading-[0.95] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-[3.75rem]" style={{ '--print-delay': '70ms' }}>
               Know what your agent knew before it risked capital.
-            </h1>
+            </h2>
 
             <p className="fc-print mt-5 max-w-md text-lg leading-7 text-[var(--color-ink-muted)] sm:text-xl" style={{ '--print-delay': '140ms' }}>
               An auditable record for every autonomous capital decision — what the agent knew, which policy constrained it, what it decided before the outcome, and how that decision performed.

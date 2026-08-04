@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "x-feed",
+      "confirmed_in": [
+        "fourcast-trailer"
+      ],
+      "updated_at": "2026-08-04T20:28:26.765Z"
+    },
+    "aspect": {
+      "value": "1920x1080",
+      "confirmed_in": [
+        "fourcast-trailer"
+      ],
+      "updated_at": "2026-08-04T20:28:26.813Z"
+    },
+    "language": {
+      "value": "en",
+      "confirmed_in": [
+        "fourcast-trailer"
+      ],
+      "updated_at": "2026-08-04T20:28:26.859Z"
+    },
+    "flow": {
+      "value": "automation",
+      "confirmed_in": [
+        "fourcast-trailer"
+      ],
+      "updated_at": "2026-08-04T20:28:26.903Z"
+    },
+    "storyboard": {
+      "value": "no",
+      "confirmed_in": [
+        "fourcast-trailer"
+      ],
+      "updated_at": "2026-08-04T20:28:26.948Z"
+    }
+  },
+  "sightings": {}
+}
