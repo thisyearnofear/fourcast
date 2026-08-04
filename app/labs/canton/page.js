@@ -16,13 +16,13 @@ import CantonSettlementHub from '@/components/CantonSettlementHub';
 export default function LabsCantonPage() {
   return (
     <AppShell
-      title="Canton Operator Console"
-      subtitle="Create, resolve, and atomically settle private prediction markets on Canton Devnet. Server-side ledger client — no wallet extension required."
+      title="Canton ops"
+      subtitle="Create · resolve · settle private CBTC markets"
       maxWidth="max-w-5xl"
       actions={
         <span className="inline-flex items-center gap-1.5 border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--color-accent)]">
           <Zap className="h-3 w-3" />
-          Ops · not a product surface
+          Ops
         </span>
       }
     >

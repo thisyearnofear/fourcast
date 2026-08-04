@@ -4,18 +4,22 @@ The judge watches a position exist and not exist simultaneously, from two
 perspectives, on the same ledger — then watches the winner collect the payout
 with their own key, no operator involved. Those two moments are the pitch.
 
+**Nav after venue redesign:** Markets · Positions · Private (primary).
+Private → `/proof?chain=canton`. Holder settle → `/positions?view=private`.
+
 ## Opening (15s)
 
 > "A large position can leak strategy as soon as it is placed on a public venue. On Canton, the position is visible to its stakeholders and invisible to everyone else. Watch."
 
-**Show:** `/proof?chain=canton` — the proof surface, not the older AI/Arc flow.
+**Show:** `/` (Canton hero + live privacy check) or jump to `/proof?chain=canton`
+via nav **Private**. Title: **Private position · live**.
 
 ---
 
 ## Act 1 — Take a private position · 45s
 
 1. Open the prepared DevNet market and position (pre-staged the night before).
-2. Show the holder/operator view of the position.
+2. Show the holder/operator view — **You see it** pane (stake / side).
 
 **Say:** "This position is on-ledger. The stake, the side, the entry — visible only to the operator and this holder. The stake is locked as a CIP-56 allocation the wallet itself can discover."
 
@@ -23,12 +27,14 @@ with their own key, no operator involved. Those two moments are the pitch.
 
 ## Act 2 — The absence · 45s
 
-1. In the PrivacyProof section, click "Run privacy test."
+1. In Privacy check, click **"Run privacy check"**.
 2. **Two live ledger queries fire in parallel** — one as a stakeholder, one as an allocated non-stakeholder party.
 
-**Show:** Stakeholder cell returns full position data. Non-stakeholder cell returns a real empty result set from the ledger — not simulated.
+**Show:** **You see it** returns stake/side. **They don't** returns empty / refused — real ledger, not simulated. Optional: expand **Raw ledger**.
 
 **Say:** "Same ledger, same market, same contract space. This party sees nothing. The position is structurally invisible — not hidden by a frontend, enforced by Daml's signatory model at the protocol level. Both cells are live API calls."
+
+**Optional (5s):** Point at **Talk to us** under the privacy check — operator interview intake for people who size into public books and care about leakage. Not a vanity waitlist.
 
 ---
 
@@ -36,16 +42,16 @@ with their own key, no operator involved. Those two moments are the pitch.
 
 **Primary path (wallet lane — run only if tonight's live verification passed):**
 
-1. Operator resolves the market (`ResolvedYes`) from the settlement hub.
-2. Switch to the holder dashboard, connected Console Wallet.
-3. Click **"Settle with my wallet"** — the wallet popup asks the holder to sign.
-4. One signature: position archived, stake leg cancelled, payout leg executed — in the same transaction. The `PositionSettled` receipt appears, update id on screen.
+1. Operator resolves the market (`ResolvedYes`) from Canton ops (`/labs/canton`).
+2. Open **Positions → Private** (`/positions?view=private`), Console Wallet connected.
+3. Click **"Settle"** — the wallet popup asks the holder to sign.
+4. One signature: position archived, stake leg cancelled, payout leg executed — in the same transaction. Receipt / update id on screen.
 
 **Say:** "The server never touched that money. It can assemble the payload, but the authorization came from the holder's own key — SettleAsHolder is holder-controlled in the Daml code. The contract fixed the economics; the holder's key moved the money."
 
 **Fallback path (if the wallet lane was cut at the gate):**
 
-1. Operator resolves, then settles from the hub (server lane, `Settle` choice).
+1. Operator resolves, then settles from the hub (server lane, `Settle` choice) at `/labs/canton`.
 2. Show the settle update id and the archived escrow legs.
 
 **Say:** "Settlement is atomic either way — the Daml offers an operator lane and a holder lane with identical economics; external wallet signing is on the deployed DAR and wiring into the dApp SDK now."
@@ -56,8 +62,8 @@ with their own key, no operator involved. Those two moments are the pitch.
 
 ## Act 4 — Receipts: real CBTC, queryable · 20s
 
-1. Scroll to **Pinned settlement receipts** in the Proof Theatre.
-2. Point at the settle update id, the contract ids, `instrument.id = CBTC`, the balance deltas, the checks — all green.
+1. Back on `/proof?chain=canton`, scroll to **Settled · CBTC**.
+2. Point at payout, holder Δ, settle update id, checks — all green. Optional: **Raw ledger** for contract ids.
 
 **Say:** "This wall is real DevNet state captured by our lifecycle script tonight. Re-running the script refreshes it — nothing is mocked. The settled payout moved real BitSafe CBTC, atomically."
 
@@ -94,10 +100,12 @@ with their own key, no operator involved. Those two moments are the pitch.
 - [ ] CC funded via NODERS wallet tap — reported done by operator, not re-tested this session
 - [ ] Venice API key for live AI analysis — reported done by operator, not re-tested this session
 - [ ] Form: GitHub URL, video link, demo URL — reported submitted by operator, not verified
+- [x] Operator **Talk to us** capture under PrivacyProof (`POST /api/talk` → `operator_leads`; Telegram notify when configured)
 
 ## Copy source of truth
 
 All UI strings: `constants/brand.js`
+Talk to us: `components/TalkToUs.js` · `app/api/talk/route.js` · `migrations/0012_operator_leads.sql`
 Daml contracts: `canton/daml/Fourcast/`
 Server-side ledger client: `services/cantonLedgerClient.js`
 Wallet-signing prepare route: `app/api/canton/settle/prepare/route.js`

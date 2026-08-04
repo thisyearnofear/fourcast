@@ -22,35 +22,35 @@ import { dismissGuide, isGuideDismissed, resetTour } from '@/lib/tourState';
 /**
  * Per-route guide content. Each entry is a 3-step "what this page proves in
  * 30 seconds" tour — the same shape as FirstRunBanner but scoped to the
- * flagship narrative (Mandate → Proof Theatre → Diligence).
+ * Venue narrative (Markets → act → Positions; Private for Canton).
  */
 const ROUTE_GUIDES = {
   agent: {
-    title: 'Mandate Control — 30 seconds',
+    title: 'Mandate — 30 seconds',
     steps: [
-      'The hero shows the agent’s current mandate: a versioned policy, a live decision, and the proof timeline crossing from "outcome withheld" into "proof available".',
-      'The proof timeline is real — it eagerly fetches the canonical verification chain so the on-chain Solana verdict is shown, not a placeholder.',
-      'Operator controls are demoted to a drawer. The autonomous system is the protagonist; the manual runner is a capability for investigation.',
+      'See the current mandate: versioned policy, live decision, proof timeline.',
+      'The proof timeline fetches the real verification chain — Solana verdict when available.',
+      'Operator controls sit in a drawer; the agent loop is the protagonist.',
     ],
-    footnote: 'Every decision — manual or autonomous — is sealed into a hash-bound receipt in the ledger below.',
+    footnote: 'Every decision seals into a hash-bound receipt below.',
   },
   'world-cup': {
-    title: 'Proof Theatre — 30 seconds',
+    title: 'Decision receipts — 30 seconds',
     steps: [
-      'Pick any finalised fixture to open the vertical 6-stage evidence timeline: pre-match evidence → seeded simulation → versioned policy gates → immutable receipt → TxLINE Merkle proof + Solana validation → reconciliation.',
-      '“Verify proof” walks the full chain in one call via /api/worldcup/verify — receipt integrity, Merkle root, PDA derivation, and on-chain root compare.',
-      'Finalised matches with a proof also surface on-chain settlement via the match-escrow program (CPI → txoracle::validate_stat).',
+      'Pick a finalised fixture for the 6-stage evidence timeline.',
+      'Verify walks the full chain in one call — receipt, Merkle, PDA, on-chain root.',
+      'Settled fixtures surface match-escrow CPI settlement when available.',
     ],
-    footnote: 'No wallet needed to audit. The proof chain is the product.',
+    footnote: 'No wallet needed to audit.',
   },
   positions: {
-    title: 'Allocator Diligence — 30 seconds',
+    title: 'Positions — 30 seconds',
     steps: [
-      'The hero is behaviour, not performance: mandate adherence, receipt coverage, decision discipline rate, and calibration after resolution.',
-      'Every number recomputes from the same public decision receipts the operator sealed pre-outcome — not self-reported P&L.',
-      'Positions and P&L are demoted to a secondary section. An allocator’s first question is “is this operator disciplined?”, not “did they make money?”',
+      'Public tab: track record from sealed receipts.',
+      'Private tab: Canton positions — connect wallet to settle.',
+      'Settle is holder-signed when a market resolves.',
     ],
-    footnote: 'This is the surface an allocator audits before letting an operator touch capital.',
+    footnote: 'Public reputation and private CBTC in one place.',
   },
 };
 

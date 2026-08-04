@@ -29,12 +29,15 @@ matrix in [`docs/CANTON_ATOMIC_SETTLEMENT.md`](docs/CANTON_ATOMIC_SETTLEMENT.md)
 
 ## Judge path
 
-1. Open `/proof?chain=canton`.
-2. Query the same position as a stakeholder and a non-stakeholder.
-3. Show the non-stakeholder receives no position, allocation, or receipt.
-4. Resolve with an attestation.
-5. Settle and show both escrow legs disappear atomically.
-6. Show the resulting balances and transaction evidence.
+Primary nav: **Markets · Positions · Private**. Private opens `/proof?chain=canton`.
+
+1. Open `/` or **Private** — Canton hero + live privacy check.
+2. Click **Run privacy check** — stakeholder vs non-stakeholder, same ledger.
+3. Show the non-stakeholder receives no position (empty / refused).
+4. Scroll to **Settled · CBTC** (pinned DevNet dossier) or settle from **Positions → Private**.
+5. Optional: **Talk to us** under the privacy check — operator interview intake (`POST /api/talk`).
+
+Full script: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
 
 ## Canton documentation
 

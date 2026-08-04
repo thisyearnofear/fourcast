@@ -53,7 +53,7 @@ If you don't have 5 named candidates by Day 7, the strategy is **not yet testabl
 2. **Polymarket Discord `general-trader` channel** — read the last 30 days of messages for anyone complaining about execution schlep. DM them.
 3. **Warpcast / Farcaster `predictions` channel** — find accounts that post verified fills with reasoning. DM the top 10 by post engagement.
 4. **X / Twitter** — search `"polymarket autopilot"` and `"kalshi bot"`. DM anyone running a public bot with intent to scale.
-5. **The Fourcast waitlist / existing Telegram bot** — outbound to anyone who already voted with their attention.
+5. **Talk to us / Telegram** — `POST /api/talk` (under Privacy check) and the existing Telegram bot; outbound to anyone who already voted with their attention.
 
 **Day-by-day deliverable for the zero-pipeline case:**
 

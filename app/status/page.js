@@ -109,8 +109,8 @@ export default function StatusPage() {
 
  return (
  <AppShell
- title="System Status"
- subtitle="Real-time health of the providers powering Fourcast predictions, signals, and analysis. Data refreshes automatically every 30 seconds."
+      title="Status"
+      subtitle="Provider health · refreshes every 30s"
  maxWidth="max-w-3xl"
  wallet={false}
  >

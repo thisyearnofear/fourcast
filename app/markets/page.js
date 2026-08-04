@@ -528,9 +528,7 @@ export default function MarketsPage() {
  return (
  <AppShell
  title="Markets"
- subtitle={activeTab === "sports"
- ? "Live sports markets → ML fair odds → detect edge → prove your call."
- : "Scan live markets, run ML fair-odds analysis, and surface mispricings worth trading."}
+ subtitle={BRAND.pages.markets}
  actions={
  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
  <div className="flex items-center gap-2">
@@ -545,7 +543,6 @@ export default function MarketsPage() {
  <option value="deep">Deep (Research)</option>
  </select>
  </div>
- {/* Analysis Factor Toggles - Compact inline mode (desktop only — dense) */}
  <div className="hidden items-center lg:flex">
  <AnalysisOptions
  marketType={selectedMarket?.eventType || activeTab === 'sports' ? 'sports' : 'crypto'}
@@ -560,20 +557,14 @@ export default function MarketsPage() {
  </div>
  }
  subheader={
- <div className="space-y-2">
  <SecondaryNav
  items={[
- { id: "sports", label: "Sports & Events", icon: "◆" },
- { id: "discovery", label: "Crypto, Finance & More", icon: "▲" },
+ { id: "sports", label: "Sports", icon: "◆" },
+ { id: "discovery", label: "Crypto & more", icon: "▲" },
  ]}
  activeItem={activeTab}
  onChange={setActiveTab}
  />
- <p className="text-[11px] leading-relaxed text-[var(--color-ink-faint)] max-w-2xl">
- <span className="text-[var(--color-accent)]">Sports</span> — live, fast-resolving, narrow edges ·{' '}
- <span className="text-[var(--color-accent)]">Discovery</span> — long-tail, deeper edges, longer horizons.
- </p>
- </div>
  }
  >
  {/* Analysis Config Modal */}
@@ -587,10 +578,9 @@ export default function MarketsPage() {
  />
 
  <div>
- <FirstRunBanner searchQuery={landingQuery} />
+ {landingQuery ? <FirstRunBanner searchQuery={landingQuery} /> : null}
 
- {/* Active Chain Indicators */}
- <div className="platform-open-section mb-10">
+ <div className="platform-open-section mb-6">
  {/* Live Edge Scanner - Discovery Hook */}
  <MarketEdgeScanner
  markets={markets}

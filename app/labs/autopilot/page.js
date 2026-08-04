@@ -8,7 +8,7 @@ export default function LabsAutopilotPage() {
   return (
     <AppShell
       title="Autopilot"
-      subtitle="Kelly-sized edges with Builder-attributed fills."
+      subtitle="Kelly size · Builder fills"
       maxWidth="max-w-4xl"
     >
       <OperatorMath />

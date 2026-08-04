@@ -205,12 +205,12 @@ Known integration nuances for the client (honest list):
 - `POST /api/canton/settle/prepare` serves that unsigned payload (package-name
   template ref `#fourcast:...`, surviving DAR re-uploads); `settlePositionV2`
   still submits the identical payload server-side for the operator lane.
-- Holder dashboard: "Settle with my wallet" per open position
+- Holder dashboard (Positions → Private): "Settle" per resolved open position
   (`useCantonHolderWallet.settleAsHolder`), with busy/error/receipt states.
 - Proof dossier: `scripts/canton-bitsafe-lifecycle.mjs` pins
   `public/proof/canton-receipts.json` (all cids, settle update id, receipt
   payload, balance deltas, privacy observation, per-check results); the Proof
-  Theatre renders it as the "Pinned settlement receipts" wall. Re-running the
+  Private proof surface renders it as the "Settled · CBTC" wall. Re-running the
   script refreshes the wall — nothing is mocked.
 - Deployment: `docs/CANTON_V2_DEPLOY.md` runbook + `scripts/canton-v2-preflight.mjs`
   (package check/upload attempt → registry provision → mints → full live

@@ -153,7 +153,7 @@ export function MandateControl() {
       {/* Header row */}
       <div className="relative flex flex-wrap items-center justify-between gap-3 border-b border-[var(--mc-rule)] px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
-          <span className="mc-kicker">Mandate Control</span>
+          <span className="mc-kicker">Mandate</span>
           {lab.status ? (
             <AgentPulse
               agentTime={lab.status.agentTime}
@@ -287,7 +287,7 @@ export function MandateControl() {
                     onClick={() => setDossier({ fixtureId: latest.fixtureId })}
                   >
                     <FileSearch className="h-3.5 w-3.5" />
-                    Inspect decision dossier
+                    Open dossier
                   </button>
                 </Ripple>
                 <a

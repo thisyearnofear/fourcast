@@ -40,8 +40,8 @@ export const GLOSSARY = {
  body: 'Do stated probabilities match real-world frequency? An analyst who says 70% should be right about 7 times out of 10. Good calibration means you can trust the number, not just the narrative.',
  },
  diligence: {
- title: 'Diligence',
- body: 'The audited behaviour record an allocator reviews: policy adherence, receipt coverage, and calibration — computed from public receipts, not self-reported P&L.',
+ title: 'Track record',
+ body: 'The audited behaviour record: policy adherence, receipt coverage, and calibration — computed from public receipts, not self-reported P&L.',
  },
  arbitrage: {
  title: 'Arbitrage',

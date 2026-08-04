@@ -8,9 +8,16 @@ https://yourdomain.com/api # Production
 
 ---
 
-## Flagship Endpoints — Mandate Control, Proof Theatre, Diligence
+## Operator intake
 
-These endpoints drive the flagship route: Mandate Control (`/agent`) → Proof Theatre (`/world-cup`) → Diligence (`/positions`).
+### POST /talk
+Operator **Talk to us** capture (under Privacy check). Body: `{ email, sizes?, note?, source? }`. Stores in `operator_leads`; optional Telegram notify to `TELEGRAM_ADMIN_CHAT_ID`. Honeypot field `website` must be empty.
+
+---
+
+## Decision-receipt endpoints (supporting — Mandate / world-cup / positions)
+
+HackCanton wedge APIs are under `/api/canton/*` (see Canton section below). The routes here power Mandate (`/agent`), decision receipts (`/world-cup`), and public track record (`/positions`).
 
 ### GET /worldcup/fixtures
 Fetch World Cup fixtures (live TxLINE or cached replay).

@@ -2,9 +2,9 @@ import { routeMetadata } from '@/lib/routeMetadata';
 import ProofTheatreShell from './ProofTheatreShell';
 
 export const metadata = routeMetadata({
-  title: 'Proof Theatre · Fourcast',
+  title: 'Private · Fourcast',
   description:
-    'One audit trail across chains — Solana-anchored decision receipts and Canton atomic settlement, auditable side by side. The chain is a badge on each proof, not a section.',
+    'Stake and side hidden. Same ledger, two views — Canton privacy check and CBTC settlement receipts.',
   path: '/proof',
   ogType: 'route',
   ogName: 'proof',

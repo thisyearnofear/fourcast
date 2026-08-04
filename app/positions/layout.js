@@ -2,11 +2,11 @@ import { BRAND } from '@/constants/brand';
 import { routeMetadata } from '@/lib/routeMetadata';
 
 export const metadata = routeMetadata({
-  title: 'Diligence — Fourcast',
+  title: 'Positions — Fourcast',
   description: BRAND.pages.positions,
   path: '/positions',
   ogType: 'route',
-  ogName: 'diligence',
+  ogName: 'positions',
 });
 
 export default function PositionsLayout({ children }) {

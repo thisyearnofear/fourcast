@@ -133,7 +133,7 @@ export default function AnalysisOptions({
  {/* Weather toggle - show for sports markets */}
  {isWeatherMarket && (
  <ToggleButton
- label="🌤️ Weather"
+ label="Weather"
  isActive={options.includeWeather}
  onClick={() => toggleOption('includeWeather')}
  autoDetected={isWeatherMarket}
@@ -145,20 +145,20 @@ export default function AnalysisOptions({
  {isFinanceMarket && (
  <>
  <ToggleButton
- label="📊 Fund."
+ label="Fund."
  isActive={options.analysisTypes?.includes('fundamental')}
  onClick={() => toggleAnalysisType('fundamental')}
  autoDetected={true}
  compact
  />
  <ToggleButton
- label="📈 Tech."
+ label="Tech."
  isActive={options.analysisTypes?.includes('technical')}
  onClick={() => toggleAnalysisType('technical')}
  compact
  />
  <ToggleButton
- label="💬 Sent."
+ label="Sent."
  isActive={options.analysisTypes?.includes('sentiment')}
  onClick={() => toggleAnalysisType('sentiment')}
  compact
@@ -169,7 +169,7 @@ export default function AnalysisOptions({
  {/* ML toggle - show for non-finance markets */}
  {!isFinanceMarket && (
  <ToggleButton
- label="🤖 ML Models"
+ label="ML"
  isActive={options.includeSynthData}
  onClick={() => toggleOption('includeSynthData')}
  autoDetected={isSynthMarket}
@@ -178,7 +178,7 @@ export default function AnalysisOptions({
  )}
  
  <ToggleButton
- label="📅 Futures"
+ label="Futures"
  isActive={options.includeFutures}
  onClick={() => toggleOption('includeFutures')}
  compact
@@ -223,19 +223,19 @@ export default function AnalysisOptions({
  <p className="text-xs text-[var(--color-ink-faint)] uppercase tracking-wider">Finance Analysis</p>
  </div>
  <ToggleRow
- label="📊 Fundamental"
+ label="Fundamental"
  description="Earnings, macro factors, financials"
  isActive={options.analysisTypes?.includes('fundamental')}
  onClick={() => toggleAnalysisType('fundamental')}
  />
  <ToggleRow
- label="📈 Technical"
+ label="Technical"
  description="Price patterns, trends, support/resistance"
  isActive={options.analysisTypes?.includes('technical')}
  onClick={() => toggleAnalysisType('technical')}
  />
  <ToggleRow
- label="💬 Sentiment"
+ label="Sentiment"
  description="Social media, news, community mood"
  isActive={options.analysisTypes?.includes('sentiment')}
  onClick={() => toggleAnalysisType('sentiment')}

@@ -4,6 +4,11 @@ This document records validation for the private CBTC settlement wedge. No
 interviews have been recorded in the repository yet; do not present the
 thresholds below as achieved evidence.
 
+**Intake (live):** Privacy check → **Talk to us** (`components/TalkToUs.js`).
+Leads land in Turso `operator_leads` via `POST /api/talk` and optionally ping
+`TELEGRAM_ADMIN_CHAT_ID`. Use that pipeline to book the interviews below — a
+form submission is not validation until the call happens and this log is filled.
+
 ## Target participants
 
 Interview both sides of the workflow:

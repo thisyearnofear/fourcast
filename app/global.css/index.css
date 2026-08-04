@@ -770,6 +770,14 @@ body { overflow-x: clip; }
   .fc-door__preview { max-height: 3rem !important; opacity: 1 !important; }
   button:active:not(:disabled),
   :where(a.fc-door, a.fc-action, a.mc-action, .fc-chip, .fc-market-price, summary):active { transform: none !important; }
+  .fc-life-stage::before { animation: none !important; opacity: 0.55 !important; }
+  .fc-pane--react,
+  .fc-pane--blind.fc-pane--react,
+  .fc-duel-pulse,
+  .fc-settle-stamp,
+  .fc-view-swap { animation: none !important; }
+  .fc-pane--see,
+  .fc-pane--blind { box-shadow: none !important; transform: none !important; }
 }
 
 #root {
@@ -1598,4 +1606,181 @@ code {
   transform: translateX(-50%);
   border: 4px solid transparent;
   border-top-color: var(--color-rule-strong);
+}
+
+/* ── Life pass — reaction, live chroma, depth ──
+   Venue density stays; these classes add instrument feel on Canton surfaces.
+   Prefer state reaction over scroll theater. */
+
+.fc-life-stage {
+  position: relative;
+  isolation: isolate;
+}
+.fc-life-stage::before {
+  content: '';
+  position: absolute;
+  inset: -8% -4% -4%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 50% at 18% 28%, var(--color-accent-atmosphere), transparent 70%),
+    radial-gradient(ellipse 50% 45% at 88% 72%, oklch(72% 0.17 28 / 0.08), transparent 68%),
+    radial-gradient(ellipse 40% 35% at 55% 100%, var(--color-sealed-atmosphere), transparent 70%);
+  animation: fc-life-breathe 10s ease-in-out infinite;
+}
+@keyframes fc-life-breathe {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+.fc-pane--see {
+  position: relative;
+  border: 1px solid color-mix(in oklch, var(--color-accent) 40%, transparent);
+  background:
+    linear-gradient(145deg, var(--color-accent-atmosphere), transparent 55%),
+    var(--color-paper-raised);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--color-accent) 12%, transparent),
+    0 12px 40px var(--color-shadow);
+  transition:
+    border-color var(--dur-state) linear,
+    box-shadow var(--dur-panel) var(--ease-out),
+    transform var(--dur-panel) var(--ease-out);
+}
+.fc-pane--see:hover {
+  border-color: color-mix(in oklch, var(--color-accent) 55%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--color-accent) 18%, transparent),
+    0 16px 48px var(--color-shadow);
+}
+
+.fc-pane--blind {
+  position: relative;
+  border: 1px solid color-mix(in oklch, var(--color-breach) 28%, var(--color-rule));
+  background:
+    linear-gradient(145deg, oklch(72% 0.17 28 / 0.06), transparent 55%),
+    var(--color-paper-deep);
+  box-shadow: inset 0 0 0 1px oklch(72% 0.17 28 / 0.04);
+  transition:
+    border-color var(--dur-state) linear,
+    box-shadow var(--dur-panel) var(--ease-out);
+}
+
+@keyframes fc-pane-react {
+  0% { box-shadow: 0 0 0 0 transparent; }
+  25% {
+    box-shadow:
+      0 0 0 3px color-mix(in oklch, var(--color-accent) 28%, transparent),
+      0 0 28px color-mix(in oklch, var(--color-accent) 22%, transparent);
+  }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes fc-pane-react-blind {
+  0% { box-shadow: inset 0 0 0 1px transparent; }
+  30% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklch, var(--color-breach) 35%, transparent),
+      0 0 24px oklch(72% 0.17 28 / 0.18);
+  }
+  100% { box-shadow: inset 0 0 0 1px oklch(72% 0.17 28 / 0.04); }
+}
+.fc-pane--see.fc-pane--react { animation: fc-pane-react 0.7s var(--ease-out); }
+.fc-pane--blind.fc-pane--react { animation: fc-pane-react-blind 0.75s var(--ease-out); }
+
+@keyframes fc-duel-pulse {
+  0% { opacity: 0.35; transform: scaleX(0.4); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0.55; transform: scaleX(1); }
+}
+.fc-duel-pulse {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--color-accent),
+    var(--color-sealed),
+    var(--color-breach)
+  );
+  transform-origin: center;
+  animation: fc-duel-pulse 0.65s var(--ease-out) both;
+}
+
+.fc-settle-stamp {
+  border: 1px solid color-mix(in oklch, var(--color-sealed) 45%, transparent);
+  background:
+    linear-gradient(145deg, var(--color-sealed-atmosphere), transparent 60%),
+    var(--color-paper-raised);
+  animation: mc-seal-flash 0.65s var(--ease-out), fc-ledger-enter 0.55s var(--ease-out) both;
+}
+
+.fc-receipt-wall {
+  border-color: color-mix(in oklch, var(--color-sealed) 30%, var(--color-rule));
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--color-sealed) 8%, transparent);
+}
+
+.fc-hero-depth {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--color-accent) 30%, transparent);
+  background:
+    radial-gradient(ellipse 80% 60% at 12% 0%, var(--color-accent-atmosphere), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 80%, var(--color-sealed-atmosphere), transparent 60%),
+    linear-gradient(180deg, color-mix(in oklch, var(--color-accent) 7%, transparent), transparent 70%),
+    var(--color-paper-deep);
+  box-shadow: 0 20px 60px var(--color-shadow);
+}
+.fc-hero-depth::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), var(--color-grid) calc(100% - 1px)),
+    repeating-linear-gradient(180deg, transparent 0, transparent 2.8rem, var(--color-grid) 2.85rem);
+  opacity: 0.45;
+  mask-image: linear-gradient(180deg, black, transparent 85%);
+}
+
+.fc-view-swap {
+  animation: fc-view-swap 0.28s var(--ease-out) both;
+}
+@keyframes fc-view-swap {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fc-live-rail {
+  position: relative;
+}
+.fc-live-rail::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-accent);
+  box-shadow: 0 0 12px color-mix(in oklch, var(--color-accent) 50%, transparent);
+  animation: mc-pulse 2.4s ease-in-out infinite;
+}
+
+.fc-action.fc-action--pulse {
+  box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-accent) 40%, transparent);
+  animation: fc-cta-pulse 2.8s ease-in-out infinite;
+}
+@keyframes fc-cta-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-accent) 35%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in oklch, var(--color-accent) 0%, transparent); }
+}
+
+/* Educational wait — one line while a real wait is in flight */
+.fc-edu-wait {
+  animation: fc-view-swap 0.22s var(--ease-out) both;
+}
+.fc-edu-wait--block {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding: 1.75rem 1rem;
+  border: 1px dashed color-mix(in oklch, var(--color-accent) 25%, var(--color-rule));
+  background: color-mix(in oklch, var(--color-accent) 4%, transparent);
 }

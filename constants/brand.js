@@ -1,6 +1,6 @@
 /**
  * Fourcast brand & product narrative — single source of truth.
- * Core story: evidence → policy-bound decision → receipt → reconciled reputation.
+ * Venue loop: Markets → act → Positions, with Canton privacy as differentiator.
  * Bright Data scrape enrichment is optional when credits/keys are available.
  */
 
@@ -16,15 +16,13 @@ export const BRAND = {
   /** The fall-back customer if the test fails on custody. */
   fallbackCustomer: 'Signal Analyst / Reputation Climber',
 
-  /** Positioning — single source of truth for everyone (UI + docs + tests).
-   * Every line below should read as: Fourcast verifies both the decisions an
-   * agent made and the reputation it earned before capital is allocated. */
+  /** Positioning — single source of truth for everyone (UI + docs + tests). */
   positioning: {
     headline:
-      'Fourcast is the verification and reputation layer for agent-managed prediction-market capital.',
+      'Prediction markets with private size — settle in CBTC, prove what the public ledger cannot see.',
     promise:
-      'Policy-bound decisions · evidence receipts · Kelly-sized risk · a track record capital can verify.',
-    excludeRetailLead: false, // keep free-tier acquisition open, but never as the lead
+      'Browse · trade or publish · track · private settle when size must stay hidden.',
+    excludeRetailLead: false,
     primaryRfb: '02 — Prediction Market Trader Intelligence',
     secondaryRfb: '05 — Cross-Platform Arbitrage (execution layer)',
     acquisitionRfb: '06 — Social Trading Intelligence (acquisition loop)',
@@ -38,21 +36,20 @@ export const BRAND = {
     },
   },
 
-  /** One line — hero, OG, pitch. Reads "this is for operators" on second pass. */
-  tagline:
-    'An auditable record for every autonomous capital decision.',
+  /** One line — hero, OG, pitch. */
+  tagline: 'Private size. Public markets. Atomic CBTC settle.',
 
-  /** Supporting line — subheads, metadata. Speaks to the operator's daily job. */
+  /** Supporting line — subheads, metadata. */
   subhead:
-    'Fourcast records what an agent knew, which risk policy constrained it, and why it allocated or passed—then builds a decision history that operators and allocators can independently audit.',
+    'Trade and publish like a venue you know. When size must stay hidden, settle privately on Canton — same ledger, two views.',
 
-  /** Footer / trust strip — operator language; avoids the "edge detection" framing. */
-  footerStrip: 'Polymarket · Kalshi · decision receipts · verified reputation',
+  /** Footer / trust strip */
+  footerStrip: 'Polymarket · Kalshi · Canton CBTC · decision receipts',
 
   /** Demo CTA */
-  demoTitle: 'Audit an agent decision in under a minute',
+  demoTitle: 'See private settlement in under a minute',
   demoSubcopy:
-    'Inspect the evidence, risk gates, and allocation posture behind an agent decision. Autopilot execution remains safety-gated — see /autopilot.',
+    'Run the privacy check, then settle a position. Autopilot execution remains safety-gated — see /autopilot.',
 
   /** Product loop (NarrativeSteps) */
   loop: {
@@ -61,80 +58,75 @@ export const BRAND = {
     publish: { label: 'Publish / Trade', short: 'Publish', icon: '3' },
     scored: { label: 'Track Record', short: 'Track', icon: '4' },
   },
-  /** Page subtitles */
+
+  /** Page subtitles — max ~12 words; prefer none when tabs explain. */
   pages: {
-    markets: 'Browse prediction markets, run AI analysis, and find mispricings',
-    signals: 'Signal marketplace — the social acquisition layer that surfaces verified Quant Operators',
-    agent: 'Evidence → risk policy → allocation or pass → decision receipt',
-    positions: 'Your auditable reputation — decisions, outcomes, calibration, and policy adherence',
-    labs: 'Execution layer — Autopilot, Builder attribution, Telegram bot',
+    markets: 'Odds, edge, and one action.',
+    signals: 'Verified calls from analysts you can follow.',
+    agent: 'Policy, dry-run, sealed decision.',
+    positions: 'Public track record and private CBTC positions.',
+    proof: 'Stake and side hidden. Same ledger, two views.',
+    labs: 'Autopilot, Builder, operator tools.',
   },
 
-  /** Nav labels + tooltips. Renamed "Positions" → "Track Record" so the
-   *  primary-customer language is visible without scrolling.                 */
+  /** Nav tooltips — short venue phrases. */
   nav: {
-    markets: 'Browse & analyze prediction markets',
-    signals: 'Signal marketplace — verified analysts on the acquisition path',
-    agent: 'Autonomous agent loop — operator mode',
-    positions: 'Your on-chain track record',
-    canton: 'Private positions with hidden sizes, settled in cBTC/cETH',
-    labs: 'Autopilot & Builder program tools',
+    markets: 'Browse and act on markets',
+    signals: 'Follow verified analyst calls',
+    agent: 'Mandate and agent loop',
+    positions: 'Your positions and track record',
+    canton: 'Private CBTC privacy proof',
+    labs: 'Autopilot and builder tools',
+    alerts: 'Alerts from analysts you follow',
   },
 
-  /** Nav label overrides (string shown in the nav bar).
-   *  The flagship story leads: Mandate → Proof Theatre → Diligence is one
-   *  unfolding system, not five peer products. Markets/Signals/Labs remain
-   *  as supporting capability. */
+  /** Nav label overrides.
+   *  Primary: Markets · Positions · Private
+   *  Overflow: Signals · Mandate · Labs · Alerts */
   navLabels: {
     markets: 'Markets',
     signals: 'Signals',
     agent: 'Mandate',
-    positions: 'Diligence',
+    positions: 'Positions',
     labs: 'Labs',
-    worldCup: 'Proof Theatre',
+    worldCup: 'Private',
     alerts: 'Alerts',
-    canton: 'Private Markets',
+    canton: 'Private',
   },
 
-  /** Wallet explainer — show everywhere users connect */
+  /** Wallet explainer — progressive; show the chain needed for the action. */
   walletExplainer: {
-    headline: 'Fourcast does four jobs:',
+    headline: 'Connect for the action you need:',
     layers: [
-      { icon: '◆', name: 'Public reputation', detail: 'Arc (USDC) — settle signals, subscriptions, tips (~$0.01/tx)' },
-      { icon: '◈', name: 'Private settlement', detail: 'Canton (cBTC/cETH) — positions with hidden sizes via Daml smart contracts' },
-      { icon: 'Ξ', name: 'Venue execution', detail: 'EVM (Polygon) — Polymarket & Kalshi order placement' },
-      { icon: '◎', name: 'Proof anchoring', detail: 'Solana — decision receipts verified on-chain via TxLINE & match-escrow' },
+      { icon: 'Ξ', name: 'Trade / publish', detail: 'EVM wallet — Polymarket, Kalshi, Arc reputation' },
+      { icon: '◈', name: 'Private settle', detail: 'Console Wallet — Canton CBTC positions' },
+      { icon: '◎', name: 'Inspect proofs', detail: 'Phantom — Solana receipt anchoring' },
     ],
-    cta: 'Connect an EVM wallet for public reputation + venue orders. Connect Console Wallet for private settlement. Phantom for proof inspection.',
+    cta: 'Connect only what the next action requires.',
   },
 
   publish: {
     arcPreferred: { chain: 'Arc (USDC)', gas: '~$0.01 USDC' },
     cantonPrivate: { chain: 'Canton (cBTC/cETH)', gas: 'sub-cent', privacy: 'Position sizes hidden from all third parties' },
-    footnote: 'Arc publishes public reputation receipts. Canton creates private positions with hidden sizes. EVM wallets handle venue order placement. Solana anchors the proof receipts on the /world-cup surface.',
+    footnote: 'Arc = public receipt. Canton = private position. EVM = venue orders.',
   },
 
   agent: {
-    title: 'Intelligence Agent',
-    subtitle: 'Discover → filter → forecast → size with Kelly · cross-venue arb when edge clears fees',
-    badge: 'Built for the operator loop',
+    title: 'Mandate',
+    subtitle: 'Policy · dry-run · sealed decision',
+    badge: 'Operator loop',
     runCta: 'Run Agent',
-    labsCta: 'Enable Autopilot execution →',
+    labsCta: 'Enable Autopilot →',
   },
 
-  /** The headline loop from the operator's seat. Order matters — discovery
-   *  only matters because it leads to attributed capital at risk. Used by
-   *  landing hero, market-edge copy, and Autopilot onboarding.             */
   operatorLoop: {
     discover: { label: 'Discover', short: 'Discover', icon: '1' },
     forecast: { label: 'Forecast', short: 'Forecast', icon: '2' },
     size:     { label: 'Size with Kelly', short: 'Size', icon: '3' },
     execute:  { label: 'Execute / Publish', short: 'Execute', icon: '4' },
-    track:    { label: 'Audited Track Record', short: 'Track', icon: '5' },
+    track:    { label: 'Track Record', short: 'Track', icon: '5' },
   },
 
-  /** Who Fourcast is for / who it's not — the "quad" is what users hear
-   *  in conversations, sales copy, and the /pricing-equivalent surface.    */
   quad: {
     forOperators: 'Polymarket & Kalshi operators running real capital who need verified attribution, not vibes.',
     forAnalysts:  'Signal publishers who want their calls surfaced to operator-tier followers, not retail engagement.',
@@ -142,7 +134,7 @@ export const BRAND = {
   },
 
   labs: {
-    subtitle: 'Execution capability — policy-bound Autopilot, Builder attribution, and operator tools',
+    subtitle: 'Autopilot, Builder, Canton ops',
     autopilot: {
       title: 'Autopilot',
       description:
@@ -151,11 +143,10 @@ export const BRAND = {
     },
     builder: {
       description:
-        'Polymarket Builder Program — earn USDC per fill from attributed orders. Each Autopilot fill contributes.',
+        'Polymarket Builder Program — earn USDC per fill from attributed orders.',
     },
   },
 
-  /** Optional enrichment — never required for core product */
   webIntel: {
     label: 'Deep web scrape',
     shortLabel: 'Web scrape',
@@ -163,62 +154,59 @@ export const BRAND = {
     unavailableNote: 'Deep web scrape is offline. Analysis uses AI + market data.',
   },
 
-  /** Hackathon — subtle, optional in UI */
   hackathon: {
     label: 'Bright Data · Web Data UNLOCKED',
     track: 'Track 2: Finance & Market Intelligence',
   },
 
   metadata: {
-    title: 'Fourcast — Verifiable reputation for prediction-market agents',
+    title: 'Fourcast — Private prediction-market settlement',
     description:
-      'Verification and reputation for agent-managed prediction-market capital: evidence, risk policy, allocation decisions, and outcomes that can be audited.',
+      'Prediction markets with private size and atomic CBTC settlement on Canton — plus verified decision receipts operators can audit.',
   },
 };
 
 /**
- * Onboarding copy — kept neutral so first-time users don't get bounced off.
- * The Quant-Operator narrative is delivered through BRAND.positioning,
- * BRAND.navLabels and the Landing hero, not through this intro list.
+ * Onboarding copy — venue-first, short.
  */
 export const ONBOARDING_COPY = [
   {
     id: 'welcome',
     title: 'Welcome to Fourcast',
     description:
-      'Verification and reputation for prediction-market agents: evidence, risk gates, allocation decisions, and track record. Free to audit. Autopilot execution is safety-gated — see /autopilot.',
+      'Browse markets, act, and track. Private CBTC settle when size must stay hidden.',
     icon: '1',
     target: null,
   },
   {
     id: 'markets',
-    title: 'Pick a market worth sizing',
+    title: 'Pick a market',
     description:
-      'Filter for markets where edge ≥ 5% — our lower bound for Kelly sizing. Free-tier audit is open to all; live Autopilot execution is gated on the concierge path (see docs/GO_TO_MARKET.md).',
+      'Scan odds and edge. One action: analyze, trade, or publish.',
     icon: '2',
     target: '[data-onboard="markets"]',
   },
   {
     id: 'publish',
-    title: 'Run analysis, size with Kelly',
+    title: 'Act on edge',
     description:
-      'AI fair-odds vs market, Kelly-Criterion sizing, and Builder attribution in one block. Publishable as a free-tier public signal or as a Premium Autopilot fill.',
+      'Fair odds vs market, Kelly size, then trade or publish a receipt.',
     icon: '3',
     target: '[data-onboard="publish"]',
   },
   {
     id: 'agent',
-    title: 'Run the agent loop',
+    title: 'Run under a mandate',
     description:
-      'The agent scans, sizes, and routes Kelly recommendations to the Autopilot. Above Premium, every fill executes via Polymarket Builder attribution and lands in your Audited Track Record on Arc.',
+      'Policy-bound agent decisions seal to a receipt before the outcome.',
     icon: '4',
     target: '[data-onboard="agent"]',
   },
   {
     id: 'positions',
-    title: 'Build your Audited Track Record',
+    title: 'Track positions',
     description:
-      'Decision receipts, outcomes, and Brier scores build an auditable record. Proof-backed and on-chain references appear when the relevant integration is available.',
+      'Public track record and private Canton positions in one place.',
     icon: '5',
     target: '[data-onboard="positions"]',
   },

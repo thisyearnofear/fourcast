@@ -145,7 +145,7 @@ export default function NotificationsPage() {
  return (
  <AppShell
  title="Notifications"
- subtitle="New signals from analysts you follow"
+ subtitle="Alerts from analysts you follow"
  maxWidth="max-w-[720px]"
  actions={
  <div className="flex items-center gap-4">

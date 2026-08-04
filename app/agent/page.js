@@ -115,12 +115,12 @@ export default function AgentPage() {
 
   return (
     <AppShell
-      title="Mandate Control"
-      subtitle="An agent is alive, operating under a mandate, making constrained decisions, and leaving behind evidence nobody — including its operator — can rewrite."
+      title={BRAND.agent.title}
+      subtitle={BRAND.agent.subtitle}
       maxWidth="max-w-4xl"
       actions={
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
-          mode · {modeMeta.label.toLowerCase()}
+          {modeMeta.label.toLowerCase()}
         </span>
       }
     >

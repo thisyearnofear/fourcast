@@ -131,12 +131,12 @@ export function ProofTheatre({ fixture, onClose }) {
       {/* Header */}
       <div className="relative flex flex-wrap items-start justify-between gap-3 border-b border-[var(--mc-rule)] px-4 py-3 sm:px-6">
         <div className="min-w-0">
-          <span className="mc-kicker">Proof theatre · {fixture?.id}</span>
+          <span className="mc-kicker">Decision receipt · {fixture?.id}</span>
           <h2 id="proof-theatre-heading" className="fc-display mt-2 font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-2xl">
             {fixture ? `${fixture.home?.name} v ${fixture.away?.name}` : 'Selected fixture'}
           </h2>
           <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--color-ink-faint)]">
-            The final act of an autonomous decision — from sealed evidence to independently verifiable outcome. Fourcast doesn&apos;t ask you to trust a chart; it asks you to recompute the receipt.
+            Sealed evidence → independently verifiable outcome. Recompute the receipt — don&apos;t trust a chart.
           </p>
         </div>
         <div className="flex shrink-0 items-start gap-2">

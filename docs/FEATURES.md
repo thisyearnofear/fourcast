@@ -2,25 +2,28 @@
 
 ## What Works Today
 
-### 🎯 Core Features
+### Venue loop + Canton privacy (HackCanton wedge)
 
-#### Search-First Intelligence
-- **AI-Powered Search Landing** — Instant analysis entry with "Quick Search" and category navigation
-- **Deep Reasoning Visualizer** — Real-time "thinking" overlay for AI analysis, showing provenance and provenance-backed logic
-- **Evidence-Based UI** — Explicit data provenance for AI predictions, citing data sources (SynthData, OpenMeteo, Venice AI)
-- **Operator Pulse** — Real persisted agent/autopilot activity in the landing page and app chrome: mode, latest sweep, markets scanned, fresh edges, and execution status
-- **Mandate Control** — `/agent` flagship hero: live VPS worker state, current mandate decision (ALLOCATE/PASS/REVIEW), proof timeline crossing from "outcome withheld" to "proof available," and on-chain Solana verdict. Manual runner demoted to an Operator Controls drawer.
-- **Decision Dossier** — Right-side drawer on `/agent`: five allocator questions answered in order from the canonical receipt (what it knew / decided / what prevented overreaching / when the result was unavailable / what later verified it). Raw JSON toggle.
-- **Proof Theatre** — `/world-cup` vertical 6-stage evidence timeline for any fixture: pre-match evidence → seeded simulation → versioned policy gates → immutable receipt → TxLINE Merkle proof + Solana validation → reconciliation. Deep-linkable via `?fixture=<id>`.
-- **Autonomous Historical Lab** — VPS worker telemetry on `/agent` (supporting surface below the hero): replay-only clock, pre-outcome receipt hash, proof visibility, and direct TxLINE verification link
-- **Allocator Diligence** — `/positions` reports policy adherence, discipline rate, verdict mix, and allocation bounds from receipt-backed runs as the hero; positions/P&L demoted to a secondary section
+Primary nav: **Markets · Positions · Private**. Overflow: Signals · Mandate · Labs · Alerts.
 
-#### Prediction Markets Distribution
-- **Markets Page** — Sports & Events (Polymarket/Kalshi) and Crypto/Finance & More (discovery). A former Canton-markets tab was removed; private Canton positions live under `/proof` and the operator console at `/labs/canton`.
-- **Private Canton settlement** — DevNet prototype: private Daml positions and CIP-56 atomic settlement against a **reference registry**. BitSafe CBTC registry integration is pending verification; cETH is not validated. See the implementation matrix in `docs/CANTON_ATOMIC_SETTLEMENT.md`.
-- **Progressive Disclosure** — Market lists show first 10 items with "Load More" button to reveal additional markets in batches
-- **One-Click Prediction Deep-Linking** — Shareable, pre-analyzed market links that hydrate state automatically
-- **Frictionless Capital Flow** — Integrated "Quick Swap" (ETH to USDC) for users with insufficient liquidity
+- **Landing / Private** — Canton-first hero; live dual-view **privacy check** (stakeholder vs outsider, same ledger); **Settled · CBTC** receipt wall from DevNet dossier
+- **Talk to us** — operator interview intake under the privacy check (`POST /api/talk` → `operator_leads`). Not a vanity waitlist; feeds [`docs/HACKCANTON_VALIDATION.md`](HACKCANTON_VALIDATION.md)
+- **Markets** — Polymarket/Kalshi browse; densified analyze → act (odds / fair / edge, Trade · Publish · Share). No emoji essay expand
+- **Positions** — Public track record + **Private** Canton holder settle (Console Wallet when gateway available; operator fallback at `/labs/canton`)
+- **Private Canton settlement** — DevNet: private Daml positions, CIP-56 escrow, **BitSafe CBTC atomic settle proven** (`canton-bitsafe-lifecycle.mjs`). External wallet gateway + mainnet incomplete — see `docs/CANTON_ATOMIC_SETTLEMENT.md`
+
+### Supporting surfaces (not the HackCanton pitch)
+
+- **Mandate** (`/agent`) — policy / dry-run / sealed decision; decision dossier drawer; historical lab telemetry
+- **Decision receipts** (`/world-cup`) — 6-stage evidence timeline for fixtures (overflow Labs path)
+- **Signals / Labs / Alerts** — verified calls, autopilot/builder/Canton ops, notifications
+
+### Markets intelligence
+
+- **Evidence-Based UI** — provenance for AI predictions (SynthData, OpenMeteo, Venice AI when configured)
+- **Progressive Disclosure** — market lists batch-load; analysis factors as compact toggles
+- **One-Click Prediction Deep-Linking** — shareable pre-analyzed market links
+- **Frictionless Capital Flow** — Quick Swap (ETH → USDC) when liquidity is short
 
 #### Unified Wallet Connection
 - **Single Connect Wallet button** — Hides EVM/Aptos/Arc chain complexity

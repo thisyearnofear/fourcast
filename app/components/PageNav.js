@@ -9,45 +9,45 @@ import WalletConnect from "@/app/components/WalletConnect";
 import StatusBadge from "@/components/StatusBadge";
 import OperatorPulse from "@/components/OperatorPulse";
 import AudienceSwitcher from "@/app/components/AudienceSwitcher";
-import { TourLink, replayTour } from "@/components/RouteGuide";
+import { replayTour } from "@/components/RouteGuide";
 
 /**
  * Navigation + AppShell — the single source of truth for the app chrome.
  *
- * Design language mirrors the landing page (the highest-spec surface):
- * floating glass header card, slate/white-alpha text, emerald accents,
- * flat --app-bg backdrop. Dark-first: there is no light theme.
- *
- * Core loop: Search → Analyze → Publish/Trade → Track (matches BRAND.loop)
+ * Venue loop: Markets → act → Positions, with Private (Canton) as differentiator.
+ * Design language: floating glass header, charcoal/emerald tokens, dark-first.
  */
 
 /**
- * Nav architecture (kept tight to honour the Workbench macrostructure):
- *  - PRIMARY_NAV: the flagship route — Mandate → Proof Theatre → Diligence
- *    is one unfolding system, so those three are always visible.
- *  - OVERFLOW_NAV: supporting capability (Markets, Private Markets, Signals,
- *    Labs, Alerts) hidden behind a "More" menu.
- *  - UTILITY controls: audience switcher (icon popover) and tour replay
- *    (icon-only Sparkles), each separated from the nav cluster by whitespace.
+ * Nav architecture:
+ *  - PRIMARY_NAV: Markets · Positions · Private (always visible)
+ *  - OVERFLOW_NAV: Signals · Mandate · Labs · Alerts
+ *  - UTILITY: tour replay + audience switcher
  *
- * Labels can be overridden via BRAND.navLabels in constants/brand.js.
+ * Labels overridden via BRAND.navLabels in constants/brand.js.
  */
 const PRIMARY_NAV = [
-  { name: BRAND.navLabels.agent ?? "Mandate", href: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
-  { name: BRAND.navLabels.worldCup ?? "Proof Theatre", href: "/proof", description: "One audit trail across chains — Solana receipts + Canton atomic settlement", onboardId: "world-cup" },
-  { name: BRAND.navLabels.positions ?? "Diligence", href: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
+  { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", match: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
+  { name: BRAND.navLabels.positions ?? "Positions", href: "/positions", match: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
+  { name: BRAND.navLabels.canton ?? "Private", href: "/proof?chain=canton", match: "/proof", description: BRAND.nav.canton, onboardId: "world-cup" },
 ];
 
 const OVERFLOW_NAV = [
-  { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
-  { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
-  { name: BRAND.navLabels.labs ?? "Labs", href: "/labs", description: BRAND.nav.labs },
-  { name: BRAND.navLabels.alerts ?? "Alerts", href: "/notifications", description: "Notifications from analysts you follow" },
+  { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", match: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
+  { name: BRAND.navLabels.agent ?? "Mandate", href: "/agent", match: "/agent", description: BRAND.nav.agent, onboardId: "agent" },
+  { name: BRAND.navLabels.labs ?? "Labs", href: "/labs", match: "/labs", description: BRAND.nav.labs },
+  { name: BRAND.navLabels.alerts ?? "Alerts", href: "/notifications", match: "/notifications", description: BRAND.nav.alerts },
 ];
+
+function pathMatches(pathname, item) {
+  const match = item.match || item.href.split("?")[0];
+  if (match === "/") return pathname === "/";
+  return pathname?.startsWith(match);
+}
 
 function useIsActive() {
   const pathname = usePathname();
-  return (href) => (href === "/" ? pathname === "/" : pathname?.startsWith(href));
+  return (item) => pathMatches(pathname, typeof item === "string" ? { href: item } : item);
 }
 
 function MoreMenu({ items, isActive }) {
@@ -70,14 +70,12 @@ function MoreMenu({ items, isActive }) {
     };
   }, [open]);
 
-  // Close on route change — pathname change means the user navigated, so
-  // the dropdown should not linger open across routes.
   const pathname = usePathname();
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  const active = items.find((i) => isActive(i.href));
+  const active = items.find((i) => isActive(i));
 
   return (
     <div ref={rootRef} className="relative">
@@ -102,7 +100,7 @@ function MoreMenu({ items, isActive }) {
         <div
           role="menu"
           aria-label="More navigation"
-          className="absolute right-0 top-full z-[60] mt-1.5 w-60 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] backdrop-blur-[18px] backdrop-saturate-[1.2] p-1 shadow-xl"
+          className="absolute right-0 top-full z-[60] mt-1.5 w-56 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] backdrop-blur-[18px] backdrop-saturate-[1.2] p-1 shadow-xl"
         >
           {items.map((item) => (
             <Link
@@ -111,10 +109,10 @@ function MoreMenu({ items, isActive }) {
               role="menuitem"
               data-onboard={item.onboardId}
               title={item.description}
-              aria-current={isActive(item.href) ? "page" : undefined}
+              aria-current={isActive(item) ? "page" : undefined}
               onClick={() => setOpen(false)}
               className={`flex w-full flex-col gap-0.5 px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.1em] no-underline transition ${
-                isActive(item.href)
+                isActive(item)
                   ? "bg-[var(--color-accent-quiet)] text-[var(--color-accent)]"
                   : "text-[var(--color-ink)] hover:bg-white/[0.04]"
               }`}
@@ -148,8 +146,8 @@ export default function PageNav() {
             href={item.href}
             data-onboard={item.onboardId}
             title={item.description}
-            aria-current={isActive(item.href) ? "page" : undefined}
-            className={`mc-nav-link no-underline ${isActive(item.href) ? "is-active" : ""}`}
+            aria-current={isActive(item) ? "page" : undefined}
+            className={`mc-nav-link no-underline ${isActive(item) ? "is-active" : ""}`}
           >
             {item.name}
           </Link>
@@ -159,7 +157,7 @@ export default function PageNav() {
         <Link
           href="/agent"
           onClick={replayTour}
-          title="Replay the route guides on /agent, /world-cup, and /positions"
+          title="Replay the route guides"
           aria-label="Replay the tour"
           className="mc-nav-link no-underline inline-flex items-center"
         >
@@ -176,8 +174,8 @@ export default function PageNav() {
             key={item.name}
             href={item.href}
             aria-label={item.name}
-            aria-current={isActive(item.href) ? "page" : undefined}
-            className={`mc-nav-link no-underline ${isActive(item.href) ? "is-active" : ""}`}
+            aria-current={isActive(item) ? "page" : undefined}
+            className={`mc-nav-link no-underline ${isActive(item) ? "is-active" : ""}`}
             style={{ padding: "0.4rem 0.5rem", fontSize: "11px" }}
           >
             {item.name}
@@ -215,10 +213,8 @@ export function HomeLink({ showLabel = true }) {
  * AppShell — the one page chrome every route uses (except the landing hero,
  * which shares HomeLink/PageNav but owns its own layout).
  *
- * Replaces the six hand-rolled per-page headers.
- *
  * @param {string}  title     - Page heading
- * @param {string}  subtitle  - One-line description under the heading
+ * @param {node}    subtitle  - Short line under the heading (≤ ~12 words)
  * @param {node}    actions   - Right side of the title row (buttons, badges)
  * @param {node}    subheader - Below the title row (tabs, breadcrumbs)
  * @param {string}  maxWidth  - Tailwind max-w class for header + content
@@ -228,8 +224,6 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
   return (
     <div className="platform-shell flex min-h-screen flex-col text-[var(--color-ink)]">
       <div className="platform-atmosphere" aria-hidden="true" />
-      {/* Header always spans the full app width so nav never cramps on
-          narrow-content pages; only <main> respects maxWidth. */}
       <div className="platform-frame mx-auto w-full max-w-7xl px-4 pt-3 sm:px-6 sm:pt-4">
         <header className="operator-header platform-header sticky top-3 z-50 flex items-center justify-between gap-4 px-3 py-2.5 sm:top-4">
           <HomeLink />
@@ -244,24 +238,24 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
 
       <div className={`${maxWidth} platform-stage mx-auto w-full px-4 sm:px-6`}>
         {(title || subtitle || actions || subheader) && (
-          <div className="platform-page-head pb-4 pt-10 sm:pt-14">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="platform-page-head pb-3 pt-7 sm:pt-9">
+            <div className="flex flex-wrap items-end justify-between gap-3">
               <div className="min-w-0 flex-1">
                 {title && (
-                  <h1 className="fc-display max-w-3xl font-display text-2xl font-semibold leading-[1.05] text-[var(--color-ink)] sm:text-5xl">{title}</h1>
+                  <h1 className="fc-display max-w-3xl font-display text-2xl font-semibold leading-[1.05] text-[var(--color-ink)] sm:text-4xl">{title}</h1>
                 )}
                 {subtitle && (
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-ink-muted)] sm:mt-4 sm:text-base sm:leading-7">{subtitle}</p>
+                  <p className="mt-1.5 max-w-xl text-sm leading-5 text-[var(--color-ink-muted)]">{subtitle}</p>
                 )}
               </div>
               {actions && <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">{actions}</div>}
             </div>
-            {subheader && <div className="mt-4">{subheader}</div>}
+            {subheader && <div className="mt-3">{subheader}</div>}
           </div>
         )}
       </div>
 
-      <main className={`${maxWidth} platform-main platform-stage mx-auto w-full flex-1 px-4 pb-16 pt-5 sm:px-6 sm:pb-24`}>
+      <main className={`${maxWidth} platform-main platform-stage mx-auto w-full flex-1 px-4 pb-16 pt-4 sm:px-6 sm:pb-24`}>
         {children}
       </main>
     </div>
@@ -287,3 +281,6 @@ export function SecondaryNav({ items, activeItem, onChange }) {
     </div>
   );
 }
+
+// Re-export for landing mobile nav sync — consumers that need the link set.
+export { PRIMARY_NAV, OVERFLOW_NAV };

@@ -16,8 +16,8 @@ const LAB_FEATURES = [
  },
  {
  id: 'canton',
- title: 'Canton Operator Console',
- description: 'Create, resolve, and atomically settle private prediction markets on Canton Devnet — server-side, no wallet extension.',
+ title: 'Canton ops',
+ description: 'Create, resolve, settle private CBTC markets.',
  href: '/labs/canton',
  icon: Zap,
  status: 'core',
@@ -33,7 +33,7 @@ const LAB_FEATURES = [
  {
  id: 'telegram',
  title: 'Telegram Bot',
- description: '@fourcasterbot — query /edge commands via messaging without a wallet.',
+ description: '@fourcasterbot — /edge without a wallet.',
  href: 'https://t.me/fourcasterbot',
  icon: MessageCircle,
  status: 'stable',
@@ -44,18 +44,17 @@ const LAB_FEATURES = [
 export default function LabsPage() {
  return (
  <AppShell title="Labs" subtitle={BRAND.labs.subtitle} maxWidth="max-w-5xl">
- {/* Labs Notice */}
- <div className="mb-10 border border-[var(--color-rule)] bg-[var(--color-wash)] p-5">
+ <div className="mb-6 border border-[var(--color-rule)] bg-[var(--color-wash)] p-4">
  <div className="flex items-start gap-3">
  <div className="flex-shrink-0 flex h-8 w-8 items-center justify-center bg-[var(--color-accent)]/15 text-[var(--color-accent)]">
  <FlaskConical className="h-4 w-4" strokeWidth={2} />
  </div>
  <div>
- <h3 className="mb-1 text-sm font-medium text-[var(--color-ink)]">
- Execution &amp; monetization
+ <h3 className="mb-0.5 text-sm font-medium text-[var(--color-ink)]">
+ Execution tools
  </h3>
- <p className="text-xs leading-relaxed text-white/[0.55]">
- Autopilot executes trades; Builder Program attributes fills; Telegram is supporting.
+ <p className="text-xs text-white/[0.55]">
+ Autopilot, Builder attribution, Canton ops.
  </p>
  </div>
  </div>

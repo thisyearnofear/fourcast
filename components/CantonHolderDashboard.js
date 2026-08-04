@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Wallet, LogOut, RefreshCw, Shield, AlertCircle, Eye, EyeOff, Coins, CheckCircle2, FileCheck, Hash } from 'lucide-react';
 import { useCantonHolderWallet } from '@/hooks/useCantonHolderWallet';
+import EduWait from '@/components/EduWait';
 
 const ASSETS = {
   CBTC: { symbol: 'cBTC', name: 'Canton Bitcoin' },
@@ -78,14 +79,14 @@ export default function CantonHolderDashboard() {
               <Wallet className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-sm font-medium text-[var(--color-ink)]">Holder Wallet</h2>
+              <h2 className="text-sm font-medium text-[var(--color-ink)]">Private · Canton</h2>
               {connected && primary ? (
-                <p className="text-[11px] text-[var(--color-ink-faint)] font-mono">
-                  {primary.partyId}
+                <p className="text-[11px] text-[var(--color-ink-faint)] font-mono truncate max-w-[240px]" title={primary.partyId}>
+                  {primary.hint || primary.partyId}
                 </p>
               ) : (
                 <p className="text-[11px] text-[var(--color-ink-faint)]">
-                  Connect Console Wallet to view private positions
+                  Connect to view and claim private positions
                 </p>
               )}
             </div>
@@ -99,7 +100,7 @@ export default function CantonHolderDashboard() {
                 disabled={loading}
                 className="mc-action disabled:opacity-50"
               >
-                {loading ? 'Connecting…' : 'Connect Console Wallet'}
+                {loading ? 'Connecting…' : 'Connect wallet'}
               </button>
             ) : (
               <>
@@ -145,24 +146,6 @@ export default function CantonHolderDashboard() {
 
       {connected && (
         <>
-          <div className="platform-open-section p-4 text-xs leading-5 text-[var(--color-ink-muted)]">
-            <div className="flex items-start gap-3">
-              <Shield className="h-4 w-4 shrink-0 text-[var(--color-accent)]" />
-              <div>
-                <p className="font-medium text-[var(--color-ink)]">
-                  Your key moves the money
-                </p>
-                <p>
-                  Holders co-sign their positions (offer/accept consent) and see only their own contracts. When a market resolves, you settle with your own wallet signature — the server can assemble the payload, but only your key authorizes the payout. The economics are fixed by the contract, not by whoever operates the platform.
-                </p>
-                {primary && (
-                  <p className="mt-2 font-mono text-[var(--color-ink-faint)]">
-                    Active party: {primary.hint || primary.partyId}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
           <Metrics positions={positions} settled={settled} allocations={allocations} />
 
           {queryError && (
@@ -184,58 +167,60 @@ export default function CantonHolderDashboard() {
               return (
                 <div
                   key={pos.contractId}
-                  className="fc-ledger-enter border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5"
+                  className={`fc-ledger-enter border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5 ${resolved ? 'fc-live-rail bg-[var(--color-accent)]/[0.03]' : ''}`}
                 >
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-3 pl-1">
                     <div>
-                      <div className="text-xs text-[var(--color-ink)]">
-                        {p.side} · {p.stake} {asset.symbol}
+                      <div className="text-sm text-[var(--color-ink)]">
+                        <span className="font-mono text-[var(--color-sealed)]">{p.side}</span>
+                        {' · '}
+                        <span className="font-mono text-[var(--color-accent)]">{p.stake} {asset.symbol}</span>
                       </div>
                       <div className="mt-0.5 text-[10px] text-[var(--color-ink-faint)] font-mono">
                         {p.marketId}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-mono text-[var(--color-ink-faint)]">
+                      <span className="text-[10px] font-mono text-[var(--color-ink-faint)] hidden sm:inline">
                         {truncateCid(pos.contractId)}
                       </span>
-                      <span className={`inline-flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono ${resolved ? 'border-[var(--color-accent)]/25 text-[var(--color-accent)]' : 'border-[var(--color-rule)] text-[var(--color-ink-faint)]'}`}>
-                        <span className={`h-1 w-1 rounded-full ${resolved ? 'bg-[var(--color-accent)]' : 'bg-white/25'}`} />
+                      <span className={`inline-flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono ${resolved ? 'border-[var(--color-accent)]/35 text-[var(--color-accent)]' : 'border-[var(--color-rule)] text-[var(--color-ink-faint)]'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${resolved ? 'bg-[var(--color-accent)] mc-lamp--live' : 'bg-white/25'}`} style={resolved ? { display: 'inline-block', boxShadow: '0 0 8px var(--color-accent)' } : undefined} />
                         {resolved ? 'resolved' : 'awaiting resolution'}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleSettle(pos.contractId)}
-                        disabled={st?.status === 'busy'}
-                        className="mc-action text-[10px] disabled:opacity-40"
-                        title="Only your wallet key can settle this position"
+                        disabled={st?.status === 'busy' || !resolved}
+                        className={`mc-action text-[10px] disabled:opacity-40 ${resolved && st?.status !== 'busy' ? 'fc-action--pulse' : ''}`}
+                        title={resolved ? 'Settle with your wallet key' : 'Awaiting market resolution'}
                       >
-                        {st?.status === 'busy' ? 'Wallet signing…' : 'Settle with my wallet'}
+                        {st?.status === 'busy' ? 'Signing…' : resolved ? 'Settle' : 'Awaiting resolve'}
                       </button>
                     </div>
                   </div>
                   {st?.status === 'busy' && (
-                    <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
-                      Confirm in Console Wallet — one signature executes both escrow legs and pays out in the same transaction.
-                    </p>
+                    <EduWait
+                      active
+                      delayMs={0}
+                      line="One signature · atomic payout"
+                      className="mt-2 pl-1 text-[var(--color-sealed)]"
+                    />
                   )}
                   {st?.status === 'error' && (
-                    <p className="mt-2 text-[10px] text-[var(--color-breach)]">{st.error}</p>
+                    <p className="mt-2 pl-1 text-[10px] text-[var(--color-breach)]">{st.error}</p>
                   )}
                   {st?.status === 'done' && (
-                    <div className="fc-ledger-enter mc-proof-flash mt-3 border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/5 p-3">
+                    <div className="fc-settle-stamp mt-3 p-3">
                       <div className="flex items-start gap-2.5">
-                        <FileCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]" />
+                        <FileCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-sealed)]" />
                         <div className="min-w-0">
-                          <p className="text-[11px] font-medium text-[var(--color-accent)]">
-                            Settled — signed by your wallet
-                          </p>
-                          <p className="mt-0.5 text-[10px] leading-4 text-[var(--color-ink-faint)]">
-                            Both escrow legs executed/cancelled in the same transaction that archived the position. No payout step, nothing outstanding.
+                          <p className="text-[11px] font-medium text-[var(--color-sealed)]">
+                            Settled · atomic
                           </p>
                           {st.receipt && (
-                            <p className="mt-1.5 font-mono text-[10px] text-[var(--color-ink-muted)] break-all">
-                              <Hash className="mr-1 inline h-3 w-3 text-[var(--color-accent)]/70" />
+                            <p className="mt-1 font-mono text-[10px] text-[var(--color-ink-muted)] break-all">
+                              <Hash className="mr-1 inline h-3 w-3 text-[var(--color-sealed)]/70" />
                               <span className="fc-reconciled-stamp">{st.receipt}</span>
                             </p>
                           )}
@@ -309,32 +294,23 @@ export default function CantonHolderDashboard() {
                 </div>
               );
             })}
-            <div className="px-4 py-3 sm:px-5">
-              <p className="text-[10px] text-[var(--color-ink-faint)] leading-5">
-                Stakes and payouts are CIP-56 allocations locked in escrow. Settlement executes or
-                returns them in the same transaction that archives the position — winners are paid
-                in-transaction; if a market is never resolved, ExpirePositionAsHolder refunds you
-                after the settlement window. There is nothing left to dispute.
-              </p>
-            </div>
           </ContractSection>
         </>
       )}
 
       {!connected && !loading && (
-        <div className="platform-open-section p-6 text-center">
-          <Shield className="h-6 w-6 mx-auto mb-3 text-[var(--color-accent)]/60" />
-          <h3 className="text-sm font-medium text-[var(--color-ink)] mb-2">
-            Why a wallet is required
+        <div className="platform-open-section p-5 text-center">
+          <Shield className="h-5 w-5 mx-auto mb-2 text-[var(--color-accent)]/60" />
+          <h3 className="text-sm font-medium text-[var(--color-ink)] mb-1">
+            Connect to claim
           </h3>
-          <p className="text-xs text-[var(--color-ink-faint)] max-w-md mx-auto leading-5">
-            Canton's private prediction positions are only visible to their signatories.
-            Without connecting a wallet, this page has no way to prove which contracts belong to you.
-            The Console Wallet extension lets the dApp query the ledger as your specific party.
+          <p className="text-xs text-[var(--color-ink-faint)] max-w-sm mx-auto leading-5">
+            Private positions are only visible to signatories.
           </p>
-          <p className="mt-4 text-[11px] text-[var(--color-ink-faint)] leading-5 max-w-md mx-auto">
-            No extension? The <Link href="/proof?chain=canton" className="text-[var(--color-accent)] underline-offset-2 hover:underline">Proof Theatre</Link> runs
-            a live two-party privacy query server-side — no wallet needed.
+          <p className="mt-3 text-[11px] text-[var(--color-ink-faint)]">
+            Or run the{' '}
+            <Link href="/proof?chain=canton" className="text-[var(--color-accent)] underline-offset-2 hover:underline">privacy check</Link>
+            {' '}— no wallet needed.
           </p>
         </div>
       )}
@@ -344,19 +320,24 @@ export default function CantonHolderDashboard() {
 
 function Metrics({ positions, settled, allocations }) {
   return (
-    <div className="grid grid-cols-3 gap-px overflow-hidden bg-[var(--color-paper-soft)]">
-      <Metric label="Open" value={positions.length} />
-      <Metric label="Settled" value={settled.length} />
-      <Metric label="Escrowed" value={allocations.length} />
+    <div className="grid grid-cols-3 gap-px overflow-hidden border border-[var(--color-rule)] bg-[var(--color-paper-soft)]">
+      <Metric label="Open" value={positions.length} tone="accent" />
+      <Metric label="Settled" value={settled.length} tone="sealed" />
+      <Metric label="Escrowed" value={allocations.length} tone="evidence" />
     </div>
   );
 }
 
-function Metric({ label, value }) {
+function Metric({ label, value, tone = 'accent' }) {
+  const color = {
+    accent: 'text-[var(--color-accent)]',
+    sealed: 'text-[var(--color-sealed)]',
+    evidence: 'text-[var(--color-evidence)]',
+  }[tone] || 'text-[var(--color-accent)]';
   return (
     <div className="bg-[var(--color-paper)] p-3">
       <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">{label}</div>
-      <div className="text-lg font-light font-mono text-[var(--color-accent)]">{value}</div>
+      <div className={`text-lg font-light font-mono tabular-nums ${color}`}>{value}</div>
     </div>
   );
 }

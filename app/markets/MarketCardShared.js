@@ -3,12 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useChainConnections } from "@/hooks/useChainConnections";
 import { CHAINS } from "@/constants/appConstants";
-import { getRecommendationExplanation } from "@/utils/chainUtils";
 import BottomSheet from "@/components/BottomSheet";
 import EvidenceBlock from "@/components/EvidenceBlock";
-import InfoTip from "@/components/InfoTip";
-import { useBrightDataStatus } from "@/hooks/useBrightDataStatus";
 import TweenNumber from "@/components/motion/TweenNumber";
+import EduWait from "@/components/EduWait";
 import useChangeFlash from "@/hooks/useChangeFlash";
 
 // Token-vocabulary tints (tokens.css) — replaces ad-hoc blue/purple/green
@@ -72,42 +70,26 @@ export function ChainActionWidget({
  const shouldPublish = rec === "PUBLISH" || rec === "BOTH";
  const shouldTrade = rec === "TRADE" || rec === "BOTH";
 
- const publishButtonText = shouldTrade ? "Also Publish Receipt" : "Publish My Receipt";
- const tradeButtonText = shouldPublish ? "Also Trade" : "Trade This Market";
+ const publishButtonText = shouldTrade ? "Also publish" : "Publish";
+ const tradeButtonText = shouldPublish ? "Also trade" : "Trade";
 
- // Get explanation for why this action is recommended
- const explanation = getRecommendationExplanation(
- rec,
- analysis.assessment?.confidence,
- analysis.assessment?.odds_efficiency
- );
-
- // Helper to render chain action with smart wallet validation and network switching
- const renderChainAction = (chainDef, chainState, isPrimary, buttonText, actionFn, contextMsg, needsNetworkSwitch = false, onSwitchNetwork = null) => {
+ const renderChainAction = (chainDef, chainState, isPrimary, buttonText, actionFn, needsNetworkSwitch = false, onSwitchNetwork = null) => {
  const isDisabled = !chainState.connected || needsNetworkSwitch;
  const buttonLabel = !chainState.connected
  ? `Connect ${chainDef.name}`
  : needsNetworkSwitch
- ? `Switch to ${chainState.currentNetwork?.display || 'correct network'}`
+ ? `Switch network`
  : buttonText;
 
  return (
- <div className={`flex items-start gap-3 pb-3 border-b border-[var(--color-rule)] last:pb-0 last:border-0 ${isPrimary ? "bg-[var(--color-wash-soft)]" : ""
- } px-3 py-2`}>
- <span className="text-xl flex-shrink-0">{chainDef.icon}</span>
- <div className="flex-1">
- <h5 className={`text-sm font-medium ${textColor} mb-1`}>
+ <div className={`flex items-center gap-3 border-b border-[var(--color-rule)] last:border-0 ${isPrimary ? "bg-[var(--color-wash-soft)]" : ""} px-3 py-2.5`}>
+ <span className="text-lg flex-shrink-0" aria-hidden>{chainDef.icon}</span>
+ <div className="flex-1 min-w-0">
+ <h5 className={`text-sm font-medium ${textColor}`}>
  {chainDef.display}
- {isPrimary && <span className={`ml-2 text-xs opacity-60 text-[var(--color-sealed)]`}>← Recommended</span>}
+ {isPrimary && <span className="ml-2 text-[10px] text-[var(--color-sealed)]">recommended</span>}
  </h5>
- <p className={`text-xs ${textColor} opacity-60 mb-3 leading-relaxed`}>
- {contextMsg}
- </p>
- {needsNetworkSwitch && chainState.currentNetwork && (
- <p className={`text-xs mb-2 text-[var(--color-sealed)]/70`}>
- Currently on: {chainState.currentNetwork.display}
- </p>
- )}
+ </div>
  <button
  onClick={() => {
  if (needsNetworkSwitch && onSwitchNetwork) {
@@ -117,7 +99,7 @@ export function ChainActionWidget({
  }
  }}
  disabled={isDisabled}
- className={`px-4 py-2 text-xs font-light transition-all border ${!isDisabled
+ className={`shrink-0 px-3 py-1.5 text-xs font-light transition-all border ${!isDisabled
  ? `${chainDef.color === 'purple'
  ? `${TINT.review} hover:bg-review/25`
  : `${TINT.evidence} hover:bg-evidence/25`}`
@@ -127,26 +109,15 @@ export function ChainActionWidget({
  {buttonLabel}
  </button>
  </div>
- </div>
  );
  };
 
  return (
- <div className={`${cardBgColor} border p-5`}>
- <h4 className={`text-xs font-light ${textColor} opacity-70 mb-4 uppercase tracking-wider`}>
- Recommended Actions
+ <div className={`${cardBgColor} border p-4`}>
+ <h4 className={`text-[10px] font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}>
+ Act
  </h4>
- <div className="space-y-1">
- {/* Explanation Header */}
- <div className={`mb-3 p-3 bg-[var(--color-paper-raised)] border border-[var(--color-rule)]`}>
- <p className={`text-xs ${textColor} font-medium mb-1`}>
- {explanation.title}
- </p>
- <p className={`text-xs ${textColor} opacity-60`}>
- {explanation.reason}
- </p>
- </div>
-
+ <div className="space-y-0">
  {shouldPublish && renderChainAction(
  CHAINS.ARC,
  chains.arc,
@@ -155,7 +126,6 @@ export function ChainActionWidget({
  () => {
  if (chains.arc.connected) onPublishSignal(market, analysis);
  },
- "Seal your call as a public, timestamped receipt on Arc — the first entry of your auditable track record"
  )}
 
  {shouldTrade && (
@@ -170,20 +140,9 @@ export function ChainActionWidget({
  setShowOrderPanel(true);
  }
  },
- analysis.assessment?.odds_efficiency === "UNDERPRICED"
- ? "Market odds are underpriced. Place a position to capture value."
- : "Participate in the market based on your analysis and risk tolerance.",
- !chains.evm.isCorrectNetwork, // needsNetworkSwitch
- !chains.evm.isCorrectNetwork ? () => switchToEvmNetwork('polygon') : null // onSwitchNetwork
+ !chains.evm.isCorrectNetwork,
+ !chains.evm.isCorrectNetwork ? () => switchToEvmNetwork('polygon') : null
  )
- )}
-
- {rec === "BOTH" && (
- <div className={`mt-4 p-3 bg-accent/10 border border-accent/20`}>
- <p className={`text-xs ${textColor} leading-relaxed`}>
- <span className="font-medium">💡 Pro Tip:</span> {explanation.benefit}
- </p>
- </div>
  )}
  </div>
  </div>
@@ -224,6 +183,164 @@ export function StaggeredMarketCard({
  );
 }
 
+/**
+ * DenseAnalysisPanel — venue-voice analysis body shared by desktop expand + sheet.
+ * Act-first: odds + edge + Act widget; reasoning one tap away.
+ */
+function DenseAnalysisPanel({
+ market,
+ analysis,
+ isNight,
+ textColor,
+ cardBgColor,
+ onPublishSignal,
+ chains,
+ canPublish,
+ setShowOrderPanel,
+ setSelectedMarketForOrder,
+ setSelectedKalshiMarket,
+ agentBrierScore,
+ calibrationScore,
+ compact = false,
+}) {
+ const isKalshi = (market.platform || "polymarket") === "kalshi";
+ const edge = analysis?.synthData?.polymarketEdge;
+ const edgePct = edge != null ? Math.abs(edge.edge * 100) : null;
+ const hasEdge = edgePct != null && edgePct > 3;
+ const reasoning = analysis.reasoning || analysis.analysis || null;
+
+ return (
+ <div className={compact ? "space-y-4" : "mt-6 space-y-4 border-t border-[var(--color-rule)] pt-6"}>
+ <div className="evidence-strip grid grid-cols-2 gap-px bg-[var(--color-paper-soft)] sm:grid-cols-4">
+ <div className="bg-[var(--color-paper)] p-3">
+ <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">YES</div>
+ <div className="font-mono text-2xl text-[var(--color-accent)] tabular-nums">
+ {market.ask != null ? <TweenNumber value={market.ask * 100} format={(v) => `${v.toFixed(0)}%`} /> : "—"}
+ </div>
+ </div>
+ <div className="bg-[var(--color-paper)] p-3">
+ <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">NO</div>
+ <div className="font-mono text-2xl text-[var(--color-breach)] tabular-nums">
+ {market.bid != null ? <TweenNumber value={market.bid * 100} format={(v) => `${v.toFixed(0)}%`} /> : "—"}
+ </div>
+ </div>
+ <div className="bg-[var(--color-paper)] p-3">
+ <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">Fair</div>
+ <div className="font-mono text-2xl text-[var(--color-review)] tabular-nums">
+ {edge ? <TweenNumber value={edge.synthFairProb * 100} format={(v) => `${v.toFixed(0)}%`} /> : "—"}
+ </div>
+ </div>
+ <div className={`bg-[var(--color-paper)] p-3 ${hasEdge ? "fc-live-rail" : ""}`}>
+ <div className={`text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1 ${hasEdge ? "pl-2" : ""}`}>Edge</div>
+ <div className={`font-mono text-2xl tabular-nums ${hasEdge ? "pl-2 text-[var(--color-accent)]" : "text-[var(--color-ink-faint)]"}`}>
+ {edgePct != null ? `${edge?.edge > 0 ? "+" : "−"}${edgePct.toFixed(1)}%` : "—"}
+ </div>
+ </div>
+ </div>
+
+ {analysis.recommended_action && (
+ <p className="text-sm font-medium text-[var(--color-ink)]">
+ {analysis.recommended_action}
+ </p>
+ )}
+
+ <ChainActionWidget
+ analysis={analysis}
+ market={market}
+ isNight={isNight}
+ textColor={textColor}
+ cardBgColor={cardBgColor}
+ onPublishSignal={onPublishSignal}
+ chains={chains}
+ setShowOrderPanel={setShowOrderPanel}
+ setSelectedMarketForOrder={setSelectedMarketForOrder}
+ />
+
+ {reasoning && (
+ <details className="group border-t border-[var(--color-rule)] pt-3">
+ <summary className="cursor-pointer list-none text-[10px] font-mono uppercase tracking-wider text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]">
+ Reasoning
+ </summary>
+ <p className="mt-2 text-sm leading-5 text-[var(--color-ink-muted)] line-clamp-6 group-open:line-clamp-none">
+ {reasoning}
+ </p>
+ {analysis.thinking && (
+ <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words bg-[var(--color-paper-deep)] p-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
+ {analysis.thinking}
+ </pre>
+ )}
+ </details>
+ )}
+
+ <EvidenceBlock
+ signal={{
+ source: analysis.source || "llm",
+ confidence: analysis.assessment?.confidence || "LOW",
+ market_title: market.title || market.question,
+ odds_efficiency: analysis.assessment?.odds_efficiency,
+ venue: market.event_location || market.location || "",
+ timestamp: Math.floor(Date.now() / 1000),
+ synth_ml_percentile: analysis.synthData?.percentiles?.p50 != null
+ ? Math.round(analysis.synthData.percentiles.p50)
+ : null,
+ event_id: isKalshi
+ ? `kalshi:${market.marketID || market.id}`
+ : `polymarket:${market.marketID || market.id}`,
+ }}
+ isNight={isNight}
+ textColor={textColor}
+ agentBrierScore={agentBrierScore}
+ calibrationScore={calibrationScore}
+ />
+
+ {!canPublish && (
+ <p className="border-l-2 border-[var(--color-sealed)]/40 pl-3 text-xs text-[var(--color-ink-muted)]">
+ Connect wallet to publish a receipt.
+ </p>
+ )}
+
+ <div className="flex flex-wrap gap-2 pt-1">
+ <button
+ type="button"
+ onClick={() => {
+ if (isKalshi) {
+ setSelectedKalshiMarket(market);
+ } else {
+ setSelectedMarketForOrder(market);
+ setShowOrderPanel(true);
+ }
+ }}
+ className="fc-action flex-1 px-4 py-2.5 text-sm"
+ >
+ {isKalshi ? "Trade on Kalshi" : "Trade"}
+ </button>
+ <button
+ type="button"
+ onClick={onPublishSignal}
+ className={`flex-1 border px-4 py-2.5 text-sm transition-colors ${
+ canPublish
+ ? "border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20"
+ : "border-[var(--color-sealed)]/35 bg-[var(--color-sealed)]/10 text-[var(--color-sealed)]"
+ }`}
+ >
+ {canPublish ? "Publish" : "Connect & publish"}
+ </button>
+ <button
+ type="button"
+ onClick={() => {
+ const shareUrl = `${window.location.origin}/markets?share_id=${market.marketID || market.id}`;
+ navigator.clipboard.writeText(shareUrl);
+ }}
+ className="border border-[var(--color-rule)] px-3 py-2.5 text-xs text-[var(--color-ink-muted)] hover:border-[var(--color-rule-strong)] hover:text-[var(--color-ink)]"
+ title="Copy link"
+ >
+ Share
+ </button>
+ </div>
+ </div>
+ );
+}
+
 export function MarketCard({
  market,
  onAnalyze,
@@ -259,6 +376,17 @@ export function MarketCard({
  // Live odds change — the price cell washes once so the update is legible.
  const askFlashing = useChangeFlash(market.ask);
  const bidFlashing = useChangeFlash(market.bid);
+
+ // Sheet only below sm — desktop expands inline so the modal never doubles up.
+ const [sheetMode, setSheetMode] = useState(false);
+ useEffect(() => {
+ if (typeof window === "undefined") return undefined;
+ const mq = window.matchMedia("(max-width: 639px)");
+ const sync = () => setSheetMode(mq.matches);
+ sync();
+ mq.addEventListener("change", sync);
+ return () => mq.removeEventListener("change", sync);
+ }, []);
 
  return (
  <>
@@ -404,7 +532,7 @@ export function MarketCard({
  <span
  className={`px-3 py-1 font-light border cursor-help ${TINT.evidence}`}
  >
- 🌤️ Weather
+ Weather
  </span>
  <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 bg-[var(--color-paper-deep)] text-[var(--color-ink)] border border-[var(--color-rule-strong)]`}>
  Event location: {market.event_location}
@@ -417,7 +545,7 @@ export function MarketCard({
  <span
  className={`px-3 py-1 font-light border bg-review/10 text-review/60 border-review/25`}
  >
- 🔍 Analyze
+ Analyze
  </span>
  )}
  {/* Quick Publish CTA - Show when ML edge detected (even in collapsed state) */}
@@ -468,639 +596,71 @@ export function MarketCard({
  : "bg-accent/15 hover:bg-accent/25 text-accent border-accent/40"
  }`}
  >
- {isAnalyzing && isCurrentMarket ? "Analyzing..." : market.isMLReady ? "🤖 Analyze with ML" : "🔍 Analyze"}
+ {isAnalyzing && isCurrentMarket ? "Fair odds…" : market.isMLReady ? "Analyze" : "Analyze"}
  </button>
  )}
  </div>
  </div>
 
- {/* Dynamic Loading State in Expanded View */}
+ {/* Desktop expand — hidden on small screens (sheet handles those). */}
+ <div className="hidden sm:block">
  {isExpanded && isAnalyzing && (
  <LoadingAnalysisState isNight={isNight} textColor={textColor} stage={analysisStage} />
  )}
-
- {/* Expanded Analysis View */}
  {isExpanded && analysis && (
- <div className="mt-8 pt-8 border-t border-[var(--color-rule)]">
- <h2 className={`text-2xl font-light ${textColor} mb-6`}>Analysis</h2>
-
- <div className="space-y-0">
- {/* SynthData ML Forecast — open section */}
- {analysis?.synthData && (
- <div className="platform-open-section">
- <div className="flex items-center gap-2 mb-4">
- <span className="text-xl">🤖</span>
- <h4 className={`text-sm font-medium ${textColor}`}>
- SynthData ML Forecast
- </h4>
- <span className={`ml-auto px-2 py-0.5 text-[10px] font-medium bg-review/15 text-review`}>
- 200+ MODELS
- </span>
- </div>
- 
- <div className="space-y-4">
- {/* Current Price - Large Visual Hierarchy */}
- <div className="text-center pb-3 border-b border-[var(--color-rule)]">
- <div className={`text-xs ${textColor} opacity-50 mb-1`}>{analysis.synthData.asset}</div>
- <div className={`text-4xl font-light ${textColor}`}>
- ${analysis.synthData.currentPrice?.toLocaleString()}
- </div>
- <div className={`text-xs ${textColor} opacity-40 mt-1`}>Current Price</div>
- </div>
-
- {/* Percentile Range with Mini Chart */}
- {analysis.synthData.percentiles?.p5 && analysis.synthData.percentiles?.p95 && (
- <div>
- <div className="flex justify-between items-end mb-2">
- <div>
- <div className={`text-xs ${textColor} opacity-50 mb-1`}>P5 (Bear)</div>
- <div className={`text-xl font-light text-breach`}>
- ${analysis.synthData.percentiles.p5.toLocaleString()}
- </div>
- </div>
- <div className="text-right">
- <div className={`text-xs ${textColor} opacity-50 mb-1`}>P95 (Bull)</div>
- <div className={`text-xl font-light text-accent`}>
- ${analysis.synthData.percentiles.p95.toLocaleString()}
- </div>
- </div>
- </div>
- 
- {/* Percentile Visualization Bar */}
- <div className="relative h-2 overflow-hidden border border-[var(--color-rule)] bg-[var(--color-wash-soft)]">
- <div 
- className={`absolute top-0 h-full w-1 bg-[var(--color-accent)]`}
- style={{
- left: `${((analysis.synthData.currentPrice - analysis.synthData.percentiles.p5) / (analysis.synthData.percentiles.p95 - analysis.synthData.percentiles.p5)) * 100}%`
- }}
- title="Current price position"
- />
- </div>
- <div className={`text-xs ${textColor} opacity-40 text-center mt-1`}>
- Price Distribution (P5 → P95)
- </div>
- </div>
- )}
- </div>
-
- {analysis.synthData.polymarketEdge && (
- <div className={`mt-4 pt-4 border-t border-[var(--color-rule)]`}>
- {/* Edge Detection Summary */}
- <div className="flex items-center justify-between mb-4">
- <div className="flex items-center gap-2">
- <span className="text-xl">⚖️</span>
- <h5 className={`text-sm font-medium ${textColor}`}>
- Edge Analysis
- </h5>
- <InfoTip term="edge" isNight={isNight} />
- </div>
- <div className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter ${
- Math.abs(analysis.synthData.polymarketEdge.edge) > 0.05
- ? 'bg-accent text-accent-ink animate-pulse'
- : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)]'
- }`}>
- {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}% {analysis.synthData.polymarketEdge.edge > 0 ? 'Undervalued' : 'Overvalued'}
- </div>
- </div>
-
- {/* Tug-of-War Visualizer */}
- <div className="relative h-10 mb-6 px-1">
- {/* Central Axis */}
- <div className={`absolute left-1/2 top-0 bottom-0 w-px bg-white/20 z-10`} />
- 
- {/* Labels */}
- <div className="flex justify-between text-[10px] uppercase tracking-widest opacity-40 mb-1">
- <span>Market</span>
- <span>ML Fair Odds</span>
- </div>
-
- <div className="flex items-center h-4 w-full bg-[var(--color-paper-deep)] overflow-hidden">
- {/* Market Probability Bar (Left) */}
- <div 
- className="h-full bg-evidence/40 transition-all duration-1000"
- style={{ width: `${analysis.synthData.polymarketEdge.polymarketProb * 100}%` }}
- />
- {/* ML Probability Bar (Right - overlay or different color) */}
- <div 
- className="h-full bg-review transition-all duration-1000"
- style={{ width: `${analysis.synthData.polymarketEdge.synthFairProb * 100}%` }}
- />
- </div>
-
- {/* Detailed Odds Comparison */}
- <div className="flex justify-between items-center mt-2">
- <div className="flex flex-col">
- <span className={`text-[10px] ${textColor} opacity-50`}>Live Price</span>
- <span className={`text-lg font-light text-evidence`}>
- <TweenNumber value={analysis.synthData.polymarketEdge.polymarketProb * 100} format={(v) => `${v.toFixed(1)}%`} />
- </span>
- </div>
-
- {/* Edge Visual Indicator */}
- <div className="flex flex-col items-center">
- <div className={`text-[10px] font-bold ${
- analysis.synthData.polymarketEdge.edge > 0 
- ? 'text-accent'
- : 'text-breach'
- }`}>
- {analysis.synthData.polymarketEdge.edge > 0 ? '▲' : '▼'} {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}%
- </div>
- <div className={`text-[9px] uppercase opacity-40 ${textColor}`}>ML Edge</div>
- </div>
-
- <div className="flex flex-col text-right">
- <span className={`text-[10px] ${textColor} opacity-50`}>Fair Value</span>
- <span className={`text-lg font-light text-review`}>
- <TweenNumber value={analysis.synthData.polymarketEdge.synthFairProb * 100} format={(v) => `${v.toFixed(1)}%`} />
- </span>
- </div>
- </div>
- </div>
-
- {/* Edge Detection Badge - Prominent when edge exists */}
- {Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03 && (
- <div className={`flex items-center gap-3 px-3 py-3 bg-accent/10 border border-accent/25`}>
- <div className="flex-shrink-0 w-8 h-8 bg-accent/15 flex items-center justify-center text-accent animate-pulse">
- ⚡
- </div>
- <div>
- <p className={`text-sm font-medium text-accent`}>
- Edge Detected: {Math.abs(analysis.synthData.polymarketEdge.edge * 100).toFixed(1)}%
- </p>
- <p className={`text-xs text-[var(--color-ink-faint)]`}>
- ML ensemble identifies {analysis.synthData.polymarketEdge.edge > 0 ? 'undervalued' : 'overvalued'} contract
- </p>
- </div>
- </div>
- )}
- </div>
- )}
- </div>
- )}
-
- {/* Market Context & Odds — evidence strip, not card grid */}
- <div className="evidence-strip grid grid-cols-1 gap-px bg-[var(--color-paper-soft)] sm:grid-cols-2">
- <div className="bg-[var(--color-paper)] p-4">
- <h4
- className={`text-xs font-light ${textColor} opacity-70 mb-3 uppercase tracking-wider`}
- >
- Market Odds
- </h4>
- <div className="flex justify-between items-center">
- <div className="flex flex-col">
- <span className={`text-xs ${textColor} opacity-50 mb-1`}>
- YES
- </span>
- <span
- className={`text-3xl font-light text-accent`}
- >
- {market.ask ? <TweenNumber value={market.ask * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
- </span>
- </div>
- <div className="flex flex-col text-right">
- <span className={`text-xs ${textColor} opacity-50 mb-1`}>
- NO
- </span>
- <span
- className={`text-3xl font-light text-breach`}
- >
- {market.bid ? <TweenNumber value={market.bid * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
- </span>
- </div>
- </div>
- </div>
-
- <div className="bg-[var(--color-paper)] p-4">
- <h4
- className={`text-xs font-light ${textColor} opacity-70 mb-3 uppercase tracking-wider`}
- >
- Weather @ {analysis.weather_conditions?.location || "Venue"}
- </h4>
- <div className="grid grid-cols-2 gap-2 text-sm">
- <div className="flex items-center gap-2">
- <span className="opacity-60">🌡️</span>
- <span className={textColor}>
- {analysis.weather_conditions?.temperature || "N/A"}
- </span>
- </div>
- <div className="flex items-center gap-2">
- <span className="opacity-60">☁️</span>
- <span className={textColor}>
- {analysis.weather_conditions?.condition || "N/A"}
- </span>
- </div>
- <div className="flex items-center gap-2">
- <span className="opacity-60">💨</span>
- <span className={textColor}>
- {analysis.weather_conditions?.wind || "N/A"}
- </span>
- </div>
- <div className="flex items-center gap-2">
- <span className="opacity-60">💧</span>
- <span className={textColor}>
- {analysis.weather_conditions?.precipitation || "0%"}
- </span>
- </div>
- </div>
- </div>
- </div>
-
- {/* Chain Action Widget - Elevated for prominence */}
- <ChainActionWidget
- analysis={analysis}
+ <DenseAnalysisPanel
  market={market}
+ analysis={analysis}
  isNight={isNight}
  textColor={textColor}
  cardBgColor={cardBgColor}
  onPublishSignal={onPublishSignal}
  chains={chains}
+ canPublish={canPublish}
  setShowOrderPanel={setShowOrderPanel}
  setSelectedMarketForOrder={setSelectedMarketForOrder}
- />
-
- {/* Analysis Text — open section */}
- <div className="platform-open-section">
- <h4
- className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}
- >
- AI Reasoning
- </h4>
- <p
- className={`text-base ${textColor} opacity-90 leading-relaxed font-light`}
- >
- {analysis.reasoning ||
- analysis.analysis ||
- "No analysis available"}
- </p>
-
- {/* Deep Reasoning (Thinking) Toggle */}
- {analysis.thinking && (
- <div className="mt-4 pt-4 border-t border-[var(--color-rule)]">
- <details className="group">
- <summary className="flex items-center gap-2 text-xs font-light text-review cursor-pointer hover:text-review/80 transition-colors list-none">
- <span className="group-open:rotate-180 transition-transform">▼</span>
- <span>View Deep Reasoning Process</span>
- </summary>
- <div className="mt-3 p-4 bg-[var(--color-paper-deep)] border border-review/20 text-xs font-mono text-[var(--color-ink-faint)] leading-relaxed whitespace-pre-wrap">
- {analysis.thinking}
- </div>
- </details>
- </div>
- )}
- 
- {/* Analysis Factor Badges - show which analysis types were used */}
- {analysis.analysisTypes && analysis.analysisTypes.length > 0 && (
- <div className="mt-3 flex flex-wrap gap-2">
- {analysis.analysisTypes.map((type, idx) => {
- const labels = {
- fundamental: { emoji: '📊', label: 'Fundamental' },
- technical: { emoji: '📈', label: 'Technical' },
- sentiment: { emoji: '💬', label: 'Sentiment' },
- weather: { emoji: '🌤️', label: 'Weather' },
- futures: { emoji: '📅', label: 'Futures' },
- news: { emoji: '📰', label: 'News' },
- };
- const info = labels[type] || { emoji: '🔍', label: type };
- return (
- <span
- key={idx}
- className={`px-2 py-1 text-xs border ${TINT.evidenceSoft}`}
- >
- {info.emoji} {info.label}
- </span>
- );
- })}
- </div>
- )}
- </div>
-
- {/* Evidence & Provenance — shows data sources, confidence methodology, counter-signals */}
- <EvidenceBlock
- signal={{
- source: analysis.source || 'llm',
- confidence: analysis.assessment?.confidence || 'LOW',
- market_title: market.title || market.question,
- odds_efficiency: analysis.assessment?.odds_efficiency,
- venue: market.event_location || market.location || '',
- timestamp: Math.floor(Date.now() / 1000),
- synth_ml_percentile: analysis.synthData?.percentiles?.p50 != null
- ? Math.round(analysis.synthData.percentiles.p50)
- : null,
- event_id: market.platform === 'kalshi'
- ? `kalshi:${market.marketID || market.id}`
- : `polymarket:${market.marketID || market.id}`,
- }}
- isNight={isNight}
- textColor={textColor}
+ setSelectedKalshiMarket={setSelectedKalshiMarket}
  agentBrierScore={agentBrierScore}
  calibrationScore={calibrationScore}
- className="mb-4"
  />
-
- {/* Recommendation — open section */}
- {analysis.recommended_action && (
- <div className="platform-open-section">
- <h4
- className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}
- >
- Recommendation
- </h4>
- <p className={`text-base font-medium ${textColor}`}>
- {analysis.recommended_action}
- </p>
- </div>
- )}
-
- {/* Disclaimer — open section, quiet */}
- <div className="platform-open-section">
- <div className="flex items-start gap-3">
- <div
- className={`mt-0.5 w-1 h-1 bg-white/40`}
- ></div>
- <div>
- <p
- className={`text-xs ${textColor} opacity-60 font-light leading-relaxed`}
- >
- <span className="opacity-80">
- Informational purposes only.
- </span>{" "}
- This analysis is not financial advice. Weather-based
- predictions are probabilistic and should be combined with
- your own research. Trade responsibly.
- </p>
- </div>
- </div>
- </div>
-
- {/* Prove Your Edge — open section */}
- <div className="platform-open-section">
- <div className="flex items-center gap-2 mb-3">
- <span className="text-xl">🎯</span>
- <h4 className={`text-sm font-medium ${textColor}`}>
- Prove Your Edge
- </h4>
- </div>
- <p
- className={`text-sm ${textColor} opacity-80 font-light leading-relaxed mb-3`}
- >
- Not ready to trade yet? Make your call anyway. Every prediction
- is recorded on-chain — timestamped, immutable, and publicly
- verifiable. Build a provable track record before risking capital.
- </p>
- <div className="grid grid-cols-1 gap-2">
- <div className="flex items-start gap-2">
- <span className={`text-xs ${textColor} opacity-60`}>✓</span>
- <p className={`text-xs ${textColor} opacity-70 font-light`}>
- <strong className="font-medium">
- Paper trade with proof
- </strong>{" "}
- - No capital needed, full accountability
- </p>
- </div>
- <div className="flex items-start gap-2">
- <span className={`text-xs ${textColor} opacity-60`}>✓</span>
- <p className={`text-xs ${textColor} opacity-70 font-light`}>
- <strong className="font-medium">
- Can’t fake your record
- </strong>{" "}
- - No backdating, no deleting bad calls
- </p>
- </div>
- <div className="flex items-start gap-2">
- <span className={`text-xs ${textColor} opacity-60`}>✓</span>
- <p className={`text-xs ${textColor} opacity-70 font-light`}>
- <strong className="font-medium">Earn as you grow</strong> -
- Top analysts earn tips from the community
- </p>
- </div>
- </div>
- </div>
-
- {/* Wallet Connection Prompt — open section */}
- {!canPublish && (
- <div
- className="platform-open-section flex items-center gap-3 border-l-2 border-sealed/30 pl-4"
- >
- <span className="text-2xl">🎯</span>
- <div className="flex-1">
- <p className={`text-sm ${textColor} font-medium mb-1`}>
- Connect a wallet to publish your first receipt
- </p>
- <p className={`text-xs ${textColor} opacity-70 font-light`}>
- One wallet, one signature (~2 seconds, ~$0.01). Your call is sealed
- on Arc and starts a public, verifiable track record.
- </p>
- </div>
- </div>
- )}
-
- {/* ML Edge Detected — workbench CTA */}
- {analysis?.synthData?.polymarketEdge && Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03 && (
- <div className="platform-workbench p-5">
- <div className="flex items-center gap-3 mb-4">
- <span className="text-2xl">⚡</span>
- <div>
- <h4 className={`text-sm font-medium text-accent`}>
- ML Edge Detected
- <InfoTip term="fairProbability" isNight={isNight} className="ml-1.5" />
- </h4>
- <p className={`text-xs ${textColor} opacity-60`}>
- Fair odds: {(analysis.synthData.polymarketEdge.synthFairProb * 100).toFixed(1)}% vs Market: {(analysis.synthData.polymarketEdge.polymarketProb * 100).toFixed(1)}%
- </p>
- </div>
- </div>
- <button
- onClick={onPublishSignal}
- className={`w-full px-6 py-4 font-medium text-sm transition-all border ${
- canPublish
- ? "bg-accent/20 hover:bg-accent/30 text-accent border-accent/50"
- : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/30"
- }`}
- >
- {canPublish ? "Publish My Receipt" : "Connect Wallet to Publish My Receipt"}
- </button>
- </div>
- )}
-
- {/* Action Buttons: Trade + Publish */}
- <div className="flex gap-3 pt-2">
- <button
- onClick={() => {
- if (isKalshi) {
- setSelectedKalshiMarket(market);
- } else {
- setSelectedMarketForOrder(market);
- setShowOrderPanel(true);
- }
- }}
- className={`flex-1 px-6 py-3 font-light text-sm transition-all border text-center ${isKalshi
- ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
- : "bg-evidence/15 hover:bg-evidence/25 text-evidence border-evidence/35"
- }`}
- >
- {isKalshi ? "Trade on Kalshi ↗" : "Trade Here"}
- </button>
-
- {/* Hide regular publish button if edge section is shown */}
- {!(analysis?.synthData?.polymarketEdge && Math.abs(analysis.synthData.polymarketEdge.edge) > 0.03) && (
- <button
- onClick={onPublishSignal}
- className={`flex-1 px-6 py-3 font-light text-sm transition-all border relative ${canPublish
- ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
- : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/35"
- }`}
- >
- {canPublish
- ? "Publish My Receipt"
- : "Connect & Publish My Receipt"}
- </button>
- )}
-
- {/* Share Button */}
- <button
- onClick={() => {
- const shareUrl = `${window.location.origin}/markets?share_id=${market.marketID || market.id}`;
- navigator.clipboard.writeText(shareUrl);
- }}
- className={`px-6 py-3 font-light text-sm transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] border-[var(--color-rule)]`}
- title="Copy shareable link"
- >
- 🔗
- </button>
- </div>
- </div>
- </div>
  )}
  </div>
- {/* BottomSheet for Expanded Market Analysis */}
+ </div>
+ {/* Mobile sheet — same dense panel; desktop uses inline expand above. */}
  <BottomSheet
- isOpen={isExpanded}
+ isOpen={isExpanded && sheetMode}
  onClose={() => setExpandedMarketId(null)}
  title={market.title || market.question}
  isNight={isNight}
  fullHeight={false}
  >
- <div className="p-6 space-y-6">
- {/* Platform Badge */}
+ <div className="space-y-4 p-4">
  <span
- className={`inline-flex px-3 py-1 text-xs font-medium uppercase tracking-wider border ${isKalshi
+ className={`inline-flex px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider border ${isKalshi
  ? TINT.accent
  : TINT.evidence
  }`}
  >
  {isKalshi ? "Kalshi" : "Polymarket"}
  </span>
-
- {/* Dynamic Loading State */}
  {isAnalyzing && <LoadingAnalysisState isNight={isNight} textColor={textColor} stage={analysisStage} />}
-
- {/* Analysis Content */}
  {analysis && (
- <div className="space-y-4">
- {/* SynthData ML Forecast */}
- {analysis?.synthData && (
- <div className={`mc-panel border-2 border-review/30 p-5`}>
- <div className="flex items-center gap-2 mb-4">
- <span className="text-xl">🤖</span>
- <h4 className={`text-sm font-medium ${textColor}`}>SynthData ML Forecast</h4>
- <span className={`ml-auto px-2 py-0.5 text-[10px] font-medium bg-review/15 text-review`}>
- 200+ MODELS
- </span>
- </div>
- <div className="text-center pb-3 border-b border-[var(--color-rule)]">
- <div className={`text-xs ${textColor} opacity-50 mb-1`}>{analysis.synthData.asset}</div>
- <div className={`text-4xl font-light ${textColor}`}>${analysis.synthData.currentPrice?.toLocaleString()}</div>
- </div>
- </div>
- )}
-
- {/* Market Odds */}
- <div className="grid grid-cols-2 gap-4">
- <div className={`border border-[var(--color-rule)] bg-[var(--color-paper-soft)] p-4 text-center`}>
- <span className={`text-xs ${textColor} opacity-50`}>YES</span>
- <div className={`text-3xl font-light text-accent`}>
- {market.ask ? <TweenNumber value={market.ask * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
- </div>
- </div>
- <div className={`border border-[var(--color-rule)] bg-[var(--color-paper-soft)] p-4 text-center`}>
- <span className={`text-xs ${textColor} opacity-50`}>NO</span>
- <div className={`text-3xl font-light text-breach`}>
- {market.bid ? <TweenNumber value={market.bid * 100} format={(v) => `${v.toFixed(0)}%`} /> : "N/A"}
- </div>
- </div>
- </div>
-
- {/* Data Provenance (Evidence) */}
- {analysis && (
- <div className="mt-6 pt-6 border-t border-[var(--color-rule)]">
- <h4 className={`text-xs font-light ${textColor} opacity-40 uppercase tracking-widest mb-3`}>Data Provenance</h4>
- <div className="flex flex-wrap gap-2">
- {[
- { name: 'Polymarket/Kalshi' },
- analysis.synthData ? { name: 'SynthData ML' } : null,
- analysis.weather_conditions ? { name: 'OpenMeteo' } : null,
- { name: 'Venice AI Mesh' }
- ].filter(Boolean).map((source) => (
- <div key={source.name} className="flex items-center gap-2 px-3 py-1.5 bg-[var(--color-paper-raised)] border border-[var(--color-rule)]">
- <span className={`text-[10px] ${textColor} opacity-60 font-medium`}>{source.name}</span>
- </div>
- ))}
- </div>
- </div>
- )}
- 
- {/* AI Reasoning */}
- <div className={`mc-panel p-5`}>
- <h4 className={`text-xs font-light ${textColor} opacity-70 mb-2 uppercase tracking-wider`}>AI Reasoning</h4>
- <p className={`text-base ${textColor} opacity-90 leading-relaxed font-light`}>
- {analysis.reasoning || analysis.analysis || "No analysis available"}
- </p>
-
- {/* Deep Reasoning (Thinking) Toggle */}
- {analysis.thinking && (
- <div className="mt-4 pt-4 border-t border-[var(--color-rule)]">
- <details className="group">
- <summary className="flex items-center gap-2 text-xs font-light text-review cursor-pointer hover:text-review/80 transition-colors list-none">
- <span className="group-open:rotate-180 transition-transform">▼</span>
- <span>View Deep Reasoning Process</span>
- </summary>
- <div className="mt-3 p-4 bg-[var(--color-paper-deep)] border border-review/20 text-xs font-mono text-[var(--color-ink-faint)] leading-relaxed whitespace-pre-wrap">
- {analysis.thinking}
- </div>
- </details>
- </div>
- )}
- </div>
-
- {/* Action Buttons */}
- <div className="flex gap-3 pt-2">
- <button
- onClick={() => {
- if (isKalshi) {
- setSelectedKalshiMarket(market);
- } else {
- setSelectedMarketForOrder(market);
- setShowOrderPanel(true);
- }
- }}
- className={`flex-1 px-6 py-3 font-light text-sm transition-all border text-center ${isKalshi
- ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
- : "bg-evidence/15 hover:bg-evidence/25 text-evidence border-evidence/35"
- }`}
- >
- {isKalshi ? "Trade on Kalshi ↗" : "Trade Here"}
- </button>
- <button
- onClick={onPublishSignal}
- className={`flex-1 px-6 py-3 font-light text-sm transition-all border ${canPublish
- ? "bg-accent/15 hover:bg-accent/25 text-accent border-accent/35"
- : "bg-sealed/15 hover:bg-sealed/25 text-sealed border-sealed/35"
- }`}
- >
- {canPublish ? "Publish My Receipt" : "Connect & Publish My Receipt"}
- </button>
- </div>
- </div>
+ <DenseAnalysisPanel
+ market={market}
+ analysis={analysis}
+ isNight={isNight}
+ textColor={textColor}
+ cardBgColor={cardBgColor}
+ onPublishSignal={onPublishSignal}
+ chains={chains}
+ canPublish={canPublish}
+ setShowOrderPanel={setShowOrderPanel}
+ setSelectedMarketForOrder={setSelectedMarketForOrder}
+ setSelectedKalshiMarket={setSelectedKalshiMarket}
+ agentBrierScore={agentBrierScore}
+ calibrationScore={calibrationScore}
+ compact
+ />
  )}
  </div>
  </BottomSheet>
@@ -1108,91 +668,21 @@ export function MarketCard({
  );
 }
 
-// Dynamic Loading State Component
-// Dynamic Loading State Component
-export function LoadingAnalysisState({ isNight, textColor, webIntelAvailable = false, stage = 0 }) {
- const webIntel = useBrightDataStatus();
- const useWeb = webIntelAvailable || webIntel.available;
+/** One-line educational wait while analysis streams — stage advances the line. */
+const ANALYSIS_EDU_LINES = [
+ "Reading market context",
+ "Estimating fair odds",
+ "Fair odds vs market",
+ "Sizing the call",
+];
 
- const steps = useWeb
- ? [
- {
- icon: "◆",
- text: "Searching live web sources",
- sub: "Optional deep scrape enrichment",
- },
- {
- icon: "◎",
- text: "Reading top sources",
- sub: "Pulling evidence for this market",
- },
- {
- icon: "◇",
- text: "AI synthesizing evidence",
- sub: "Estimating a fair probability",
- },
- {
- icon: "▣",
- text: "Detecting market edge",
- sub: "Comparing fair value to live odds",
- },
- ]
- : [
- {
- icon: "◇",
- text: "Reading market context",
- sub: "Odds, volume, and related history",
- },
- {
- icon: "◎",
- text: "AI estimating fair odds",
- sub: "Reasoning over available intelligence",
- },
- {
- icon: "▣",
- text: "Detecting market edge",
- sub: "Fair value vs current market price",
- },
- {
- icon: "→",
- text: "Sizing the call",
- sub: "Direction, confidence, and risk cues",
- },
- ];
-
- const step = Math.min(Math.max(stage, 0), steps.length - 1);
+export function LoadingAnalysisState({ stage = 0 }) {
+ const step = Math.min(Math.max(stage, 0), ANALYSIS_EDU_LINES.length - 1);
+ const line = ANALYSIS_EDU_LINES[step];
 
  return (
- <div 
- className="fc-analysis-rail mt-8 pt-8"
- role="status"
- aria-live="polite"
- aria-label="Analyzing market"
- >
- <div className="fc-analysis-rail__head">
- <div>
- <p className="fc-kicker">Evidence pipeline</p>
- <p className="mt-2 text-base font-medium text-[var(--color-ink)]">No recommendation until the record is assembled.</p>
- </div>
- <span className="fc-status fc-status--positive px-2 py-1">in progress</span>
- </div>
- <ol className="fc-analysis-rail__steps">
- {steps.map((item, index) => {
- const complete = index < step;
- const current = index === step;
- return (
- <li key={item.text} className={`${complete ? 'is-complete' : ''} ${current ? 'is-current' : ''}`}>
- <span className="fc-analysis-rail__index">{complete ? '✓' : String(index + 1).padStart(2, '0')}</span>
- <div>
- <p>{item.text}</p>
- <span>{item.sub}</span>
- </div>
- {current && <span className="fc-analysis-rail__active" aria-label="Current analysis stage" />}
- </li>
- );
- })}
- </ol>
- <p className="fc-analysis-rail__note">Fair probability, edge, and sizing appear only after this pipeline completes.</p>
+ <div className="mt-6" role="status" aria-live="polite" aria-label="Analyzing market">
+ <EduWait active delayMs={200} line={line} className="fc-edu-wait--block" />
  </div>
  );
 }

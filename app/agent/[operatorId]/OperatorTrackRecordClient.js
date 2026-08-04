@@ -87,7 +87,7 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
       <div className="mb-6">
         <Link href="/agent" className="mc-nav-link no-underline inline-flex items-center gap-1.5 text-xs">
           <ArrowLeft className="h-3 w-3" />
-          Back to Mandate Control
+          Back to Mandate
         </Link>
       </div>
 

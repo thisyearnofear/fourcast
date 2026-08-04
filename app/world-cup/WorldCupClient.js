@@ -288,7 +288,7 @@ function FixtureCard({ fixture, onReplay, onVerify, onOpenTheatre, replaying, ve
                 className="mc-action mc-action--primary"
               >
                 <Fingerprint size={12} />
-                Open proof theatre
+                Open receipt
               </button>
             )}
             {hasProof && (
@@ -862,8 +862,8 @@ export default function WorldCupClient({ bare = false }) {
   return (
     <AppShell
       wallet={true}
-      title="Proof Theatre"
-      subtitle="Decision proofs archived on Solana from the World Cup 2026 season: sealed evidence, seeded simulation, versioned policy gates, an immutable receipt, and TxLINE-Merkle anchoring. The verification pipeline is the product — these fixtures are the canonical dataset."
+      title="Decision receipts"
+      subtitle="Sealed decisions anchored on Solana"
       actions={statusRow}
       subheader={subnav}
     >

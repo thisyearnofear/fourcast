@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import WorldCupClient from './WorldCupClient';
 
-const TITLE = 'Proof Theatre · Fourcast';
+const TITLE = 'Decision receipts · Fourcast';
 const DESCRIPTION =
   'Archived World Cup 2026 fixture set: sealed decision receipts, TxLINE-Merkle proofs, and on-chain settlement — all auditable on Solana.';
 

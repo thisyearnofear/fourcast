@@ -1119,5 +1119,28 @@ function safeJsonParse(value, fallback) {
   }
 }
 
+/**
+ * Operator lead capture — Talk to us (privacy wedge interview pipeline).
+ */
+export async function saveOperatorLead({ email, sizes = false, note = null, source = 'privacy' }) {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!normalized || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+    return { success: false, error: 'Valid email required' };
+  }
+  const cleanNote = note ? String(note).trim().slice(0, 500) : null;
+  const cleanSource = source ? String(source).trim().slice(0, 64) : 'privacy';
+  try {
+    await migrationsReady;
+    await execute(
+      `INSERT INTO operator_leads (email, sizes, note, source, created_at)
+       VALUES (?, ?, ?, ?, strftime('%s', 'now'))`,
+      [normalized, sizes ? 1 : 0, cleanNote, cleanSource]
+    );
+    return { success: true, email: normalized };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 // Export db instance, helpers, and migrations readiness
 export { db, execute, query, migrationsReady };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { ChainNetworkBadge, ConfidenceBadge, QualityBadge, EfficiencyBadge, OnChainBadge } from './SignalBadges';
-import { generateXUrl, generateFarcasterUrl, generateSignalUrl, copySignalLink } from '@/utils/shareSignal';
+import { generateXUrl, generateFarcasterUrl, copySignalLink } from '@/utils/shareSignal';
 import EvidenceBlock from '@/components/EvidenceBlock';
 import ReputationBadge from '@/components/ReputationBadge';
 import FollowButton from '@/components/FollowButton';
@@ -20,40 +20,48 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
 
  return (
  <div
- className="position-record border-b border-[var(--color-rule)] px-1 py-5 cursor-pointer transition-colors hover:bg-white/[0.03] sm:px-3"
+ className="position-record border-b border-[var(--color-rule)] px-1 py-4 cursor-pointer transition-colors hover:bg-white/[0.03] sm:px-3"
  onClick={handleToggle}
  >
- <div className="flex flex-wrap items-center gap-2 mb-2">
- <ChainNetworkBadge signal={signal} isNight={isNight} />
+ <div className="flex flex-wrap items-center gap-2 mb-1.5">
+ {/* Collapsed: ≤2 badges; rest on expand */}
  <ConfidenceBadge confidence={signal.confidence} isNight={isNight} />
+ {signal.tx_hash ? (
+ <OnChainBadge txHash={signal.tx_hash} isNight={isNight} />
+ ) : (
+ <ChainNetworkBadge signal={signal} isNight={isNight} />
+ )}
+ {isExpanded && (
+ <>
  <QualityBadge signal={signal} isNight={isNight} />
  {signal.odds_efficiency && (
  <EfficiencyBadge efficiency={signal.odds_efficiency} isNight={isNight} />
  )}
+ {signal.tx_hash && (
+ <ChainNetworkBadge signal={signal} isNight={isNight} />
+ )}
+ </>
+ )}
  <span className={`text-xs ${textColor} opacity-50`}>
  {formatTimestamp(signal.timestamp)}
  </span>
- {signal.tx_hash && (
- <OnChainBadge txHash={signal.tx_hash} isNight={isNight} />
- )}
  <span className={`ml-auto text-xs opacity-40 ${isExpanded ? 'rotate-180' : ''} transition-transform`}>▼</span>
  </div>
  {signal.ai_digest && (
- <p className={`text-sm ${textColor} opacity-70 ${isExpanded ? '' : 'line-clamp-2'} transition-all`}>
+ <p className={`text-sm ${textColor} opacity-70 ${isExpanded ? '' : 'line-clamp-1'} transition-all`}>
  {signal.ai_digest}
  </p>
  )}
  {isExpanded && (
- <div className="fc-decision-chain mt-4" aria-label="Signal proof path">
+ <div className="fc-decision-chain mt-3" aria-label="Signal proof path">
  <span className="is-complete">Evidence</span>
  <span className="is-complete">Call recorded</span>
  <span className={signal.tx_hash ? 'is-complete' : ''}>Arc receipt</span>
  <span className={signal.outcome ? 'is-complete' : ''}>{signal.outcome ? 'Outcome logged' : 'Awaiting outcome'}</span>
  </div>
  )}
- {/* Evidence Block — shown when expanded */}
  {isExpanded && (
- <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+ <div className="mt-3" onClick={(e) => e.stopPropagation()}>
  <EvidenceBlock
  signal={signal}
  isNight={isNight}
@@ -85,7 +93,6 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  </div>
 
  <div className="flex items-center gap-2 ml-auto">
- {/* Follow analyst — converts one-shot share virality into compounding retention */}
  <span onClick={(e) => e.stopPropagation()}>
  <FollowButton authorAddress={signal.author_address} currentAddress={address} />
  </span>
@@ -101,10 +108,9 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  </div>
  </div>
  )}
- {/* Share Menu — open section */}
  {shareOpen && (
  <div
- className="mt-4 flex flex-col gap-2 border-t border-[var(--color-rule)] pt-4"
+ className="mt-3 flex flex-col gap-2 border-t border-[var(--color-rule)] pt-3"
  onClick={(e) => e.stopPropagation()}
  >
  <div className="flex gap-2">

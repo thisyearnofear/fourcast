@@ -14,7 +14,6 @@ import OperatorSpotlight from '@/app/components/signals/OperatorSpotlight';
 import MySignalsTab from '@/app/components/signals/MySignalsTab';
 import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ChainSelector } from '@/components/ChainSelector';
-import NarrativeSteps from '@/components/NarrativeSteps';
 import Reveal from '@/components/motion/Reveal';
 import { useCountUp } from '@/hooks/useCountUp';
 import { BRAND } from '@/constants/brand';
@@ -209,38 +208,27 @@ export default function SignalsPage() {
  title="Signals"
  subtitle={BRAND.pages.signals}
  subheader={
- <div className="space-y-3">
- <NarrativeSteps currentStep="scored" />
  <SecondaryNav
  items={[
- { id: 'feed', label: 'Signal Feed', icon: '📡' },
- { id: 'defi', label: 'DeFi Arbs', icon: '💱' },
- ...(connected ? [{ id: 'my-signals', label: 'My Track Record', icon: '🎯' }] : []),
- { id: 'leaderboard', label: 'Top Analysts', icon: '🏆' },
+ { id: 'feed', label: 'Feed', icon: '◆' },
+ { id: 'defi', label: 'DeFi', icon: '▲' },
+ ...(connected ? [{ id: 'my-signals', label: 'Mine', icon: '◎' }] : []),
+ { id: 'leaderboard', label: 'Leaders', icon: '◇' },
  ]}
  activeItem={activeTab}
  onChange={setActiveTab}
  />
- </div>
  }
  >
  <>
- {/* Operator Spotlight — framing line + 3-analyst proof strip.
- Surfaces the highest-tracked authors so first-time visitors
- see "this is a feed of verified operators" within 5 seconds
- of landing. Renders above every tab so the acquisition-loop
- promise isn't gated on which tab the visitor opens. */}
- <div className="mb-8">
- <p className="mb-4 max-w-2xl text-sm font-light leading-relaxed text-white/[0.55]">
- Verified Quant Operators with <span className="text-[var(--color-accent)]">Audited Track Records</span> on Arc.
- </p>
  {leaderboard.length > 0 && activeTab !== 'leaderboard' && (
+ <div className="mb-6">
  <OperatorSpotlight
  operators={leaderboard}
  onProfileClick={handleProfileClick}
  />
- )}
  </div>
+ )}
 
  {/* EVM Network Selector (Trading chains) */}
  {chains?.evm?.connected && (

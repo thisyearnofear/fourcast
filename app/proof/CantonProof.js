@@ -1,23 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowDown, Eye, EyeOff, FileCheck, Zap } from 'lucide-react';
+import Link from 'next/link';
+import { FileCheck, Zap } from 'lucide-react';
 import PrivacyProof from '@/components/PrivacyProof';
+import EduWait from '@/components/EduWait';
 import useChangeFlash from '@/hooks/useChangeFlash';
 
 /**
- * Canton proof module — the live, atomic-settlement evidence surface.
- *
- * Lives inside /proof (Proof Theatre) rather than at /canton, so Canton
- * proof sits beside its Solana peer under one chain-agnostic audit trail.
- * The operator console (create/resolve/settle) does NOT live here — it moved
- * to /labs as ops tooling. This module is proof, not operation.
- *
- * Three live signals, auto-refreshing every 15s:
- *  - health dot (is the devnet live)
- *  - operator balances (unlocked / locked) — conservation invariant
- *  - escrow surface (empty = clean atomic settlement, no outstanding legs)
- * Plus the dual-party privacy proof below (the binary demo).
+ * Canton proof — privacy check, ledger metrics, CBTC receipts.
+ * Ops (create/resolve/settle) live at /labs/canton.
  */
 
 function formatNum(n) {
@@ -71,6 +63,7 @@ export default function CantonProof() {
   const [balance, setBalance] = useState(null);
   const [escrow, setEscrow] = useState(null);
   const [error, setError] = useState(null);
+  const [ledgerReady, setLedgerReady] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -83,8 +76,10 @@ export default function CantonProof() {
       if (b?.success) setBalance(b.canton?.balances || null);
       if (e?.success) setEscrow(e);
       setError(null);
+      setLedgerReady(true);
     } catch (err) {
       setError(err.message);
+      setLedgerReady(true);
     }
   }, []);
 
@@ -99,39 +94,28 @@ export default function CantonProof() {
   const clean = escrow && escrowCount === 0 && activeAllocations === 0;
 
   return (
-    <div className="space-y-10">
-      <section aria-labelledby="canton-proof-story" className="border-y border-[var(--color-rule)] py-5 sm:py-7">
-        <div className="grid items-center gap-3 sm:grid-cols-[1fr_auto_1fr_auto_1fr]">
-          <div className="bg-[var(--color-accent)]/5 p-4">
-            <Eye className="h-4 w-4 text-[var(--color-accent)]" aria-hidden="true" />
-            <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--color-accent)]">Stakeholder</p>
-            <p className="mt-1 font-display text-lg font-semibold text-[var(--color-ink)]">Position visible</p>
-          </div>
-          <ArrowDown className="mx-auto h-4 w-4 text-[var(--color-ink-faint)] sm:-rotate-90" aria-hidden="true" />
-          <div className="p-2 text-center">
-            <p className="mc-kicker" id="canton-proof-story">Same Canton ledger</p>
-            <p className="mt-2 text-xs leading-5 text-[var(--color-ink-muted)]">Two live queries. Privacy enforced by the contract, not the interface.</p>
-          </div>
-          <ArrowDown className="mx-auto h-4 w-4 text-[var(--color-ink-faint)] sm:-rotate-90" aria-hidden="true" />
-          <div className="bg-white/[0.02] p-4">
-            <EyeOff className="h-4 w-4 text-[var(--color-ink-faint)]" aria-hidden="true" />
-            <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--color-ink-faint)]">Non-signatory</p>
-            <p className="mt-1 font-display text-lg font-semibold text-[var(--color-ink)]">Nothing visible</p>
-          </div>
-        </div>
-      </section>
+    <div className="space-y-6 fc-life-stage">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="inline-flex items-center gap-2 text-xs text-[var(--color-ink-muted)]">
+          <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
+          Same ledger. Two identities. Protocol privacy.
+        </p>
+        <Link
+          href="/positions?view=private"
+          className="fc-action fc-action--pulse inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
+        >
+          Claim / settle →
+        </Link>
+      </div>
 
-      {/* The binary privacy contrast is the pitch, so it appears before
-          supporting balance and escrow telemetry. */}
       <PrivacyProof />
 
-      {/* Ledger state — live, the conservation invariant + escrow surface */}
-      <section className="platform-open-section" aria-label="Canton ledger state">
-        <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
+      <section className="platform-open-section" aria-label="Ledger">
+        <div className="border-b border-[var(--mc-rule)] px-4 py-2.5 sm:px-5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Zap className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
-              <span className="mc-kicker">Canton ledger state · live</span>
+              <span className="mc-kicker">Ledger · live</span>
             </div>
             <HealthDot status={health.status} />
           </div>
@@ -143,24 +127,32 @@ export default function CantonProof() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-px overflow-hidden bg-[var(--color-paper-soft)] sm:grid-cols-4">
-          <LedgerCell label="Operator unlocked" value={formatNum(balance?.unlocked)} accent />
-          <LedgerCell label="Operator locked" value={formatNum(balance?.lockedInEscrow)} />
-          <LedgerCell label="Escrow legs" value={escrowCount} accent={escrowCount > 0} />
-          <LedgerCell label="Active allocations" value={activeAllocations} accent={activeAllocations > 0} />
-        </div>
+        {!ledgerReady ? (
+          <EduWait
+            active
+            line="Reading live DevNet state"
+            className="fc-edu-wait--block"
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-px overflow-hidden bg-[var(--color-paper-soft)] sm:grid-cols-4">
+              <LedgerCell label="Unlocked" value={formatNum(balance?.unlocked)} accent />
+              <LedgerCell label="Locked" value={formatNum(balance?.lockedInEscrow)} />
+              <LedgerCell label="Escrow legs" value={escrowCount} accent={escrowCount > 0} />
+              <LedgerCell label="Allocations" value={activeAllocations} accent={activeAllocations > 0} />
+            </div>
 
-        <div className="px-4 py-3 sm:px-5">
-          <p className="text-[11px] leading-5 text-[var(--color-ink-faint)]">
-            {clean ? (
-              <span className="text-[var(--color-accent)]">Escrow empty — no outstanding legs.</span>
-            ) : (
-              <span>Escrow holds locked CIP-56 allocations awaiting settlement.</span>
-            )}
-            {' '}Funds move inside the Settle transaction — no manual payout, no obligations outstanding. See{' '}
-            <a href="https://github.com/thisyearnofear/fourcast/blob/main/docs/CANTON_ATOMIC_SETTLEMENT.md" target="_blank" rel="noreferrer" className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-2 hover:text-[var(--color-ink)]">atomic-settlement model ↗</a>.
-          </p>
-        </div>
+            <div className="px-4 py-2.5 sm:px-5">
+              <p className="text-[11px] text-[var(--color-ink-faint)]">
+                {clean ? (
+                  <span className="text-[var(--color-accent)]">Escrow empty — settled clean.</span>
+                ) : (
+                  <span>Escrow awaiting settle.</span>
+                )}
+              </p>
+            </div>
+          </>
+        )}
       </section>
 
       <ReceiptWall />
@@ -168,20 +160,28 @@ export default function CantonProof() {
   );
 }
 
-/**
- * ReceiptWall — pinned artifacts from the latest BitSafe CBTC lifecycle run
- * (scripts/canton-bitsafe-lifecycle.mjs writes public/proof/canton-receipts.json).
- * Renders nothing until a capture exists: it is evidence, never decoration.
- */
 function ReceiptWall() {
   const [r, setR] = useState(null);
+  const [showContracts, setShowContracts] = useState(false);
+  const [tried, setTried] = useState(false);
 
   useEffect(() => {
     fetch('/proof/canton-receipts.json')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => { if (data) setR(data); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setTried(true));
   }, []);
+
+  if (!tried && !r) {
+    return (
+      <EduWait
+        active
+        line="Loading CBTC settlement"
+        className="fc-edu-wait--block"
+      />
+    );
+  }
 
   if (!r) return null;
 
@@ -192,22 +192,22 @@ function ReceiptWall() {
 
   const contractRows = [
     ['Market', r.contracts?.market],
-    ['Position offer (holder-signed)', r.contracts?.offer],
+    ['Offer', r.contracts?.offer],
     ['Position', r.contracts?.position],
     ['Attestation', r.contracts?.attestation],
     ['Resolution', r.contracts?.resolution],
   ].filter(([, v]) => v);
 
   return (
-    <section className="platform-open-section" aria-label="Pinned settlement receipts">
-      <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
+    <section className="platform-open-section fc-receipt-wall" aria-label="Settled CBTC">
+      <div className="border-b border-[var(--color-sealed)]/20 px-4 py-2.5 sm:px-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <FileCheck className="h-3.5 w-3.5 text-[var(--color-sealed)]/80" />
-            <span className="mc-kicker">Pinned settlement receipts</span>
+            <FileCheck className="h-3.5 w-3.5 text-[var(--color-sealed)]" />
+            <span className="mc-kicker" style={{ color: 'var(--color-sealed)' }}>Settled · CBTC</span>
           </div>
-          <span className="text-[10px] font-mono text-[var(--color-ink-faint)]">
-            {r.passed ? '✓ lifecycle passed' : 'run had failures'} · {r.capturedAt ? new Date(r.capturedAt).toUTCString() : ''}
+          <span className="text-[10px] font-mono text-[var(--color-sealed)]/80">
+            {r.passed ? '✓ passed' : 'failures'} · {r.capturedAt ? new Date(r.capturedAt).toUTCString().slice(5, 22) : ''}
           </span>
         </div>
       </div>
@@ -216,67 +216,59 @@ function ReceiptWall() {
         <div className="bg-[var(--color-paper)] p-3">
           <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">Instrument</div>
           <div className="text-sm font-mono text-[var(--color-sealed)]">{r.instrument?.id || '—'}</div>
-          <div className="mt-0.5 text-[9px] font-mono text-[var(--color-ink-faint)]" title={r.instrument?.admin}>admin {trimMid(r.instrument?.admin, 12, 8)}</div>
         </div>
-        <LedgerCell label="Holder Δ unlocked" value={holderDelta != null ? `+${formatNum(holderDelta)}` : '—'} accent />
-        <LedgerCell label="Operator Δ unlocked" value={opDelta != null ? formatNum(opDelta) : '—'} />
-        <div className="bg-[var(--color-paper)] p-3">
-          <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">Settle update id</div>
-          <div className="text-[10px] font-mono text-[var(--color-accent)] break-all">{trimMid(r.settle?.updateId, 20, 14)}</div>
-          <div className="mt-0.5 text-[9px] text-[var(--color-ink-faint)]">{r.settle?.lane || ''}</div>
+        <LedgerCell label="Holder Δ" value={holderDelta != null ? `+${formatNum(holderDelta)}` : '—'} accent />
+        <LedgerCell label="Operator Δ" value={opDelta != null ? formatNum(opDelta) : '—'} />
+        <div className="bg-[var(--color-paper)] p-3 fc-live-rail">
+          <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1 pl-2">Payout</div>
+          <div className="pl-2 text-lg font-mono text-[var(--color-sealed)]">
+            {r.receiptPayload?.payout != null ? formatNum(Number(r.receiptPayload.payout)) : '—'}
+          </div>
         </div>
       </div>
 
-      {contractRows.length > 0 && (
-        <div className="border-t border-white/[0.06] px-4 py-3 sm:px-5 space-y-1.5">
-          {contractRows.map(([label, cid]) => (
-            <div key={label} className="flex items-center gap-2 text-[11px]">
-              <span className="w-44 shrink-0 text-[var(--color-ink-faint)]">{label}</span>
-              <span className="font-mono text-[10px] text-[var(--color-ink-muted)] truncate" title={cid}>{trimMid(cid)}</span>
-            </div>
-          ))}
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="w-44 shrink-0 text-[var(--color-ink-faint)]">Market id</span>
-            <span className="font-mono text-[10px] text-[var(--color-ink-muted)]">{r.marketId}</span>
-          </div>
-        </div>
-      )}
-
-      {r.receiptPayload && (
-        <div className="border-t border-white/[0.06] px-4 py-3 sm:px-5">
-          <p className="text-[11px] leading-5 text-[var(--color-ink-muted)]">
-            Settled receipt on-ledger:{' '}
-            <span className="font-mono text-[var(--color-accent)]">payout {r.receiptPayload.payout} {r.instrument?.id}</span>
-            {r.receiptPayload.evidenceHash && (
-              <span className="font-mono text-[var(--color-ink-faint)]"> · evidence {trimMid(r.receiptPayload.evidenceHash, 16, 8)}</span>
-            )}
+      {r.settle?.updateId && (
+        <div className="border-t border-white/[0.06] px-4 py-2.5 sm:px-5">
+          <p className="text-[11px] font-mono text-[var(--color-ink-muted)]">
+            settle {trimMid(r.settle.updateId, 20, 14)}
+            {r.settle.lane ? ` · ${r.settle.lane}` : ''}
           </p>
         </div>
       )}
 
       {Array.isArray(r.checks) && r.checks.length > 0 && (
-        <div className="border-t border-white/[0.06] px-4 py-3 sm:px-5">
-          <div className="grid gap-1 sm:grid-cols-2">
+        <div className="border-t border-white/[0.06] px-4 py-2.5 sm:px-5">
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
             {r.checks.map(({ label, pass }) => (
               <div key={label} className={`text-[10px] font-mono ${pass ? 'text-[var(--color-accent)]' : 'text-[var(--color-breach)]'}`}>
                 {pass ? '✓' : '✗'} {label}
               </div>
             ))}
           </div>
-          {r.privacy?.nonSignatoryObservation && (
-            <p className="mt-2 text-[10px] font-mono text-[var(--color-ink-faint)]">
-              non-signatory observation: {r.privacy.nonSignatoryObservation}
-            </p>
-          )}
         </div>
       )}
 
-      <div className="px-4 py-3 sm:px-5 border-t border-white/[0.06]">
-        <p className="text-[10px] leading-5 text-[var(--color-ink-faint)]">
-          Every identifier above is real {r.network || 'Canton DevNet'} state, captured by{' '}
-          <span className="font-mono">scripts/canton-bitsafe-lifecycle.mjs</span>. Re-running the script refreshes this wall — nothing here is mocked.
-        </p>
-      </div>
+      {contractRows.length > 0 && (
+        <div className="border-t border-white/[0.06] px-4 py-2.5 sm:px-5">
+          <button
+            type="button"
+            onClick={() => setShowContracts((v) => !v)}
+            className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
+          >
+            {showContracts ? 'Hide raw ledger' : 'Raw ledger'}
+          </button>
+          {showContracts && (
+            <div className="mt-2 space-y-1">
+              {contractRows.map(([label, cid]) => (
+                <div key={label} className="flex items-center gap-2 text-[11px]">
+                  <span className="w-28 shrink-0 text-[var(--color-ink-faint)]">{label}</span>
+                  <span className="font-mono text-[10px] text-[var(--color-ink-muted)] truncate" title={cid}>{trimMid(cid)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

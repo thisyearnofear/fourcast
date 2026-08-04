@@ -6,14 +6,32 @@ unrelated themes.
 
 ## Genre
 
-Modern-minimal with an editorial diligence layer. The product should feel like
-an institutional evidence workspace: precise, calm, independently auditable.
+Modern-minimal venue with an evidence layer on demand. The product should feel
+like a prediction-market workbench you already know — act first, prove second —
+precise, calm, independently auditable.
 
 ## Macrostructure family
 
-- Marketing pages: Marquee Hero with a proof-chain narrative.
-- App pages: Workbench with open sections, evidence rails, and inspectable rows.
+- Marketing pages: Canton wedge hero, then compact venue doors.
+- App pages: Workbench with open sections, dense rows, evidence on expand.
 - Content and status pages: Long Document with tabular operational sections.
+
+## Density & venue voice
+
+Act → confirm → prove. Primary number and primary CTA above the fold; evidence
+one tap away. Trade language leads (`Markets`, `Positions`, `Private`, `Settle`,
+`Claim`); proof language appears on demand (`Privacy check`, `Receipt`,
+`Raw ledger`).
+
+1. One job per section — no duplicate kickers, mode hints, or step rails on
+   default views.
+2. Subtitle budget — max ~12 words; omit when tabs already explain.
+3. Badges ≤ 2 per row until expand; rest in detail.
+4. JSON / hashes collapsed by default behind “Raw ledger”.
+5. Mobile — one primary CTA under the hero metric; no multi-paragraph helpers
+   in the first viewport.
+6. Primary nav — Markets · Positions · Private. Overflow holds Signals,
+   Mandate, Labs, Alerts.
 
 ## Theme
 
