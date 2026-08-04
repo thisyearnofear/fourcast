@@ -1,0 +1,91 @@
+{
+  "passed": true,
+  "capturedAt": "2026-08-04T19:08:30.547Z",
+  "network": "Canton DevNet (HackCanton · NODERS validator)",
+  "packageRef": "#fourcast (uploaded DAR)",
+  "instrument": {
+    "admin": "cbtc-network::12202a83c6f4082217c175e29bc53da5f2703ba2675778ab99217a5a881a949203ff",
+    "id": "CBTC"
+  },
+  "stake": {
+    "amount": 0.4,
+    "oddsMultiplier": 2
+  },
+  "parties": {
+    "holder": "AliceHolder::122003aa7c491e00a453145c4d2cd3dbf5db8908b4e663c9944baed57fd66effa668",
+    "operator": "FourcastOperator::122003aa7c491e00a453145c4d2cd3dbf5db8908b4e663c9944baed57fd66effa668"
+  },
+  "marketId": "bitsafe-1785870434090",
+  "contracts": {
+    "market": "00b260b6f525f8e442a450211915a84fdebdb755e7c6e931114ce041168e808ba0ca1212206166cbf48cbd40fa4d16464b5b41f11a23cf329b25c817ecb07f40bbd031ff50",
+    "offer": "00a680b5d374dcda8598814f3681aa297e843b6637569570767ec1de22fe538c65ca12122012e9db9531d43a611ea6bd27aa8745b27f667b89a26acdc103b22b20bbd2ba7f",
+    "position": "007fadde9a84f6a3804d879123d76b0010a3e5cccdaafdf84bb57f1f77dc1262d7ca121220bc5690218c737e744cbb8d72d2fb27f21499ab168c2c7328d5527209b8242f15",
+    "attestation": "00dbc748e0fd1ae05500b7fbcca72ebdc3d7b2ecad03f05f7d6816f71dea2a592cca1212209d3c8d9b75cca6b324b4f254e34ea405cce90bab758a9c2aed1bba1f77f96d0b",
+    "resolution": "00b91a680fc754b3a6032e403e63d064f16a7da1d3d40f24bd166ac66bddb89c5bca121220c3032c456859cddcdf25788e4b258b8724e5c44e85bb81c880af95ee5a466a4e"
+  },
+  "settle": {
+    "lane": "holder (SettleAsHolder)",
+    "updateId": "1220f9fd97d39aa68dced33117264838e09a49f9fc7a6d6f6e09c2f0fd8dd3fb8075"
+  },
+  "receiptPayload": {
+    "operator": "FourcastOperator::122003aa7c491e00a453145c4d2cd3dbf5db8908b4e663c9944baed57fd66effa668",
+    "holder": "AliceHolder::122003aa7c491e00a453145c4d2cd3dbf5db8908b4e663c9944baed57fd66effa668",
+    "marketId": "bitsafe-1785870434090",
+    "settlementAsset": "CBTC",
+    "instrument": {
+      "admin": "cbtc-network::12202a83c6f4082217c175e29bc53da5f2703ba2675778ab99217a5a881a949203ff",
+      "id": "CBTC"
+    },
+    "side": "Yes",
+    "stake": "0.4000000000",
+    "oddsMultiplier": "2.0000000000",
+    "outcome": "ResolvedYes",
+    "evidenceHash": "sha256:bitsafe-attestation",
+    "evidenceUri": "https://fourcast.app/txline/receipts/bitsafe-1785870434090",
+    "payout": "0.8000000000",
+    "settledAt": "2026-08-04T19:08:24.469143Z"
+  },
+  "deltas": {
+    "holderUnlocked": {
+      "before": 3.4,
+      "after": 3.8
+    },
+    "operatorUnlocked": {
+      "before": 1.6,
+      "after": 1.2
+    },
+    "escrowAfter": {
+      "holder": 0,
+      "operator": 0
+    }
+  },
+  "privacy": {
+    "nonSignatoryObservation": "refused (Canton Ledger API POST /v2/state/active-contracts failed: A )"
+  },
+  "checks": [
+    {
+      "label": "alice net += winnings (stake*(mult-1))",
+      "pass": true
+    },
+    {
+      "label": "operator net -= payout (stake*(mult-1))",
+      "pass": true
+    },
+    {
+      "label": "both escrow legs cleared",
+      "pass": true
+    },
+    {
+      "label": "settled receipt exists with payout",
+      "pass": true
+    },
+    {
+      "label": "receipt instrument is the real CBTC id",
+      "pass": true
+    },
+    {
+      "label": "non-signatory cannot read the position",
+      "pass": true
+    }
+  ]
+}
