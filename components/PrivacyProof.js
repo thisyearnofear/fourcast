@@ -9,12 +9,12 @@ import { Eye, EyeOff, RefreshCw } from 'lucide-react';
  * Two real ledger queries run automatically on mount and every 10s (paused
  * when the tab is hidden), no button required:
  *   LEFT  signatory (operator)        → open + settled positions (real data)
- *   RIGHT non-signatory (observer)    → the query is REFUSED by the ledger
+ *   RIGHT non-signatory (observer)    → zero position contracts are visible
  *
- * The contrast IS the product: the operator reads position history; a
- * non-signatory party can't even query the contracts — Canton refuses the
- * read, not merely returns an empty list. That refusal is structural privacy
- * performed, not described.
+ * The contrast IS the product: the operator reads position history while an
+ * allocated non-signatory receives no position contracts. In an incomplete
+ * environment where no second party is configured, the ledger instead
+ * refuses the unallocated-party fallback.
  *
  * The panes are independent: a refused observer query no longer hides the
  * operator's result. When no observer party is allocated we query as an
@@ -43,15 +43,22 @@ export default function PrivacyProof() {
   const runQuery = useCallback(async ({ manual = false } = {}) => {
     if (manual) setRefreshing(true);
 
-    // Resolve an observer party; fall back to an unallocated party (the
-    // ledger will refuse it — which is the demonstration).
+    // Resolve an allocated non-stakeholder; fall back to an unallocated party
+    // only when the demo environment has no second party configured.
     let observerPartyId = null;
+    let observerPartyName = null;
     let observerIsConfigured = false;
     try {
       const partiesRes = await fetch('/api/canton/parties');
       const partiesData = await partiesRes.json();
-      const observer = partiesData.parties?.find((p) => p.role === 'observer');
+      // Prefer a dedicated observer, then Bob: the seeded lifecycle uses
+      // Alice as its holder, so Bob is an allocated, authenticated party who
+      // is not a stakeholder on that position. This proves contract privacy;
+      // an invalid-party auth failure is only a last-resort fallback.
+      const observer = partiesData.parties?.find((p) => p.role === 'observer')
+        || partiesData.parties?.find((p) => p.name === 'Bob');
       observerPartyId = observer?.id || null;
+      observerPartyName = observer?.name || null;
       observerIsConfigured = !!observerPartyId;
     } catch {
       /* fall through to the unallocated-party fallback */
@@ -99,6 +106,7 @@ export default function PrivacyProof() {
           positions: observerOk ? observerData.positions || [] : [],
         },
         observerPartyId,
+        observerPartyName,
         observerIsConfigured,
       });
       setLastUpdated(new Date());
@@ -168,6 +176,9 @@ export default function PrivacyProof() {
                 <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-accent)]">
                   Signatory view · live
                 </div>
+                <span className="ml-auto border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--color-accent)]">
+                  Visible
+                </span>
               </div>
               <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-2">
                 Party: <span className="font-mono text-[var(--color-ink)]">FourcastOperator</span>
@@ -202,11 +213,14 @@ export default function PrivacyProof() {
                 <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)]">
                   Non-signatory view · live
                 </div>
+                <span className="ml-auto border border-[var(--color-breach)]/25 bg-[var(--color-breach)]/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--color-breach)]">
+                  {obs?.refused ? 'Refused' : 'No access'}
+                </span>
               </div>
               <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-2">
                 Party:{' '}
                 <span className="font-mono text-[var(--color-ink-muted)]">
-                  {state?.observerIsConfigured ? 'Public Observer' : 'ExternalObserver (unallocated)'}
+                  {state?.observerIsConfigured ? state.observerPartyName : 'ExternalObserver (unallocated fallback)'}
                 </span>
               </div>
               {obs?.refused ? (
@@ -243,7 +257,7 @@ export default function PrivacyProof() {
           <p className="text-[10px] leading-5 text-[var(--color-ink-faint)]">
             On public chains every position is visible to everyone. Here, structural privacy is
             enforced by Daml&rsquo;s signatory system — same ledger, two identities, different worlds.{' '}
-            <a href="/docs/CANTON_ATOMIC_SETTLEMENT.md" className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-2 hover:text-[var(--color-ink)]">How it works →</a>
+            <a href="https://github.com/thisyearnofear/fourcast/blob/main/docs/CANTON_ATOMIC_SETTLEMENT.md" target="_blank" rel="noreferrer" className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-2 hover:text-[var(--color-ink)]">How it works ↗</a>
           </p>
         </div>
       </div>

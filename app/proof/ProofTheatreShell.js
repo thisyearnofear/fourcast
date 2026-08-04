@@ -39,20 +39,33 @@ export default function ProofTheatreShell() {
     }
   }, []);
 
+  const selectChain = (nextChain) => {
+    setChain(nextChain);
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('chain', nextChain);
+    if (nextChain === 'canton') url.searchParams.delete('fixture');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  };
+
+  const isCanton = chain === 'canton';
+
   return (
     <AppShell
-      title="Proof Theatre"
-      subtitle="One audit trail across chains. A Solana-anchored decision receipt and a Canton atomic-settlement proof are both proof — the chain is a badge on each, not a section."
+      title={isCanton ? 'Private positions. Publicly demonstrable privacy.' : 'Proof of decision, anchored on Solana.'}
+      subtitle={isCanton
+        ? 'Watch the same Canton ledger answer two identities differently, then inspect the atomic settlement invariant behind the position.'
+        : 'Audit what an agent knew, which policy constrained it, and how the sealed decision reconciled against a TxLINE outcome proof.'}
       maxWidth="max-w-5xl"
       subheader={
         <SecondaryNav
           items={CHAINS}
           activeItem={chain}
-          onChange={setChain}
+          onChange={selectChain}
         />
       }
     >
-      {chain === 'canton' ? <CantonProof /> : <WorldCupClient bare />}
+      {isCanton ? <CantonProof /> : <WorldCupClient bare />}
     </AppShell>
   );
 }

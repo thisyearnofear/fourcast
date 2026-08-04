@@ -402,7 +402,7 @@ export default function CantonSettlementHub() {
       ]);
 
       const [marketsData, resolutionsData, positionsData, settledData, escrowData] = await Promise.all([
-        marketsRes.json(), resolutionsRes.json(), positionsRes.json(), settledData, escrowRes.json ? escrowRes.json() : Promise.resolve({}),
+        marketsRes.json(), resolutionsRes.json(), positionsRes.json(), settledRes.json(), escrowRes.json(),
       ]);
 
       setMarkets(marketsData.markets || []);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Zap } from 'lucide-react';
+import { ArrowDown, Eye, EyeOff, Zap } from 'lucide-react';
 import PrivacyProof from '@/components/PrivacyProof';
 import useChangeFlash from '@/hooks/useChangeFlash';
 
@@ -73,7 +73,7 @@ export default function CantonProof() {
         fetch('/api/canton/settle-transfer').then((r) => r.json()).catch(() => null),
       ]);
       if (h) setHealth(h);
-      if (b?.success) setBalance(b);
+      if (b?.success) setBalance(b.canton?.balances || null);
       if (e?.success) setEscrow(e);
       setError(null);
     } catch (err) {
@@ -93,6 +93,31 @@ export default function CantonProof() {
 
   return (
     <div className="space-y-10">
+      <section aria-labelledby="canton-proof-story" className="border-y border-[var(--color-rule)] py-5 sm:py-7">
+        <div className="grid items-center gap-3 sm:grid-cols-[1fr_auto_1fr_auto_1fr]">
+          <div className="bg-[var(--color-accent)]/5 p-4">
+            <Eye className="h-4 w-4 text-[var(--color-accent)]" aria-hidden="true" />
+            <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--color-accent)]">Stakeholder</p>
+            <p className="mt-1 font-display text-lg font-semibold text-[var(--color-ink)]">Position visible</p>
+          </div>
+          <ArrowDown className="mx-auto h-4 w-4 text-[var(--color-ink-faint)] sm:-rotate-90" aria-hidden="true" />
+          <div className="p-2 text-center">
+            <p className="mc-kicker" id="canton-proof-story">Same Canton ledger</p>
+            <p className="mt-2 text-xs leading-5 text-[var(--color-ink-muted)]">Two live queries. Privacy enforced by the contract, not the interface.</p>
+          </div>
+          <ArrowDown className="mx-auto h-4 w-4 text-[var(--color-ink-faint)] sm:-rotate-90" aria-hidden="true" />
+          <div className="bg-white/[0.02] p-4">
+            <EyeOff className="h-4 w-4 text-[var(--color-ink-faint)]" aria-hidden="true" />
+            <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--color-ink-faint)]">Non-signatory</p>
+            <p className="mt-1 font-display text-lg font-semibold text-[var(--color-ink)]">Nothing visible</p>
+          </div>
+        </div>
+      </section>
+
+      {/* The binary privacy contrast is the pitch, so it appears before
+          supporting balance and escrow telemetry. */}
+      <PrivacyProof />
+
       {/* Ledger state — live, the conservation invariant + escrow surface */}
       <section className="platform-open-section" aria-label="Canton ledger state">
         <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
@@ -112,8 +137,8 @@ export default function CantonProof() {
         )}
 
         <div className="grid grid-cols-2 gap-px overflow-hidden bg-[var(--color-paper-soft)] sm:grid-cols-4">
-          <LedgerCell label="Operator unlocked" value={formatNum(balance?.operator?.unlocked)} accent />
-          <LedgerCell label="Operator locked" value={formatNum(balance?.operator?.locked)} />
+          <LedgerCell label="Operator unlocked" value={formatNum(balance?.unlocked)} accent />
+          <LedgerCell label="Operator locked" value={formatNum(balance?.lockedInEscrow)} />
           <LedgerCell label="Escrow legs" value={escrowCount} accent={escrowCount > 0} />
           <LedgerCell label="Active allocations" value={activeAllocations} accent={activeAllocations > 0} />
         </div>
@@ -126,13 +151,10 @@ export default function CantonProof() {
               <span>Escrow holds locked CIP-56 allocations awaiting settlement.</span>
             )}
             {' '}Funds move inside the Settle transaction — no manual payout, no obligations outstanding. See{' '}
-            <a href="/docs/CANTON_ATOMIC_SETTLEMENT.md" className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-2 hover:text-[var(--color-ink)]">atomic-settlement model</a>.
+            <a href="https://github.com/thisyearnofear/fourcast/blob/main/docs/CANTON_ATOMIC_SETTLEMENT.md" target="_blank" rel="noreferrer" className="text-[var(--color-ink-muted)] underline decoration-[var(--color-rule-strong)] underline-offset-2 hover:text-[var(--color-ink)]">atomic-settlement model ↗</a>.
           </p>
         </div>
       </section>
-
-      {/* Dual-party privacy proof — the binary demo */}
-      <PrivacyProof />
     </div>
   );
 }

@@ -262,6 +262,23 @@ export default function SearchLanding() {
           </div>
         </header>
 
+        <Link
+          href="/proof?chain=canton"
+          className="group mt-4 flex flex-wrap items-center justify-between gap-3 border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/[0.05] px-4 py-3 no-underline transition hover:border-[var(--color-accent)]/45 hover:bg-[var(--color-accent)]/[0.08]"
+        >
+          <span className="flex items-center gap-3">
+            <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
+            <span>
+              <span className="block font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--color-accent)]">Canton DevNet · live proof</span>
+              <span className="mt-0.5 block text-xs text-[var(--color-ink-muted)] sm:text-sm">One private position. Two identities. Only its stakeholders can read it.</span>
+            </span>
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-accent)]">
+            Watch the privacy duel
+            <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
+          </span>
+        </Link>
+
         {/* Hero — outcome-led headline + the canonical 4-stage receipt flow.
             The receipt flow is deterministic and always present; it never
             depends on an upstream API being available. */}
