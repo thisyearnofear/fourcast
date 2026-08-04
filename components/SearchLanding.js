@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Lock, FileCheck, Menu, X } from 'lucide-react';
 import PageNav, { HomeLink, PRIMARY_NAV, OVERFLOW_NAV } from '@/app/components/PageNav';
@@ -83,46 +84,99 @@ function DoorCard({ door, delay }) {
 
 function LandingMobileNav() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState(null);
+  const rootRef = useRef(null);
+  const menuRef = useRef(null);
   const links = [
     ...PRIMARY_NAV.map((i) => ({ name: i.name, href: i.href })),
     ...OVERFLOW_NAV.map((i) => ({ name: i.name, href: i.href })),
     { name: 'Status', href: '/status' },
   ];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const placeMenu = useCallback(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setCoords({
+      top: Math.round(r.bottom + 6),
+      right: Math.round(Math.max(8, window.innerWidth - r.right)),
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    placeMenu();
+    window.addEventListener('resize', placeMenu);
+    window.addEventListener('scroll', placeMenu, true);
+    return () => {
+      window.removeEventListener('resize', placeMenu);
+      window.removeEventListener('scroll', placeMenu, true);
+    };
+  }, [open, placeMenu]);
+
   useEffect(() => {
     if (!open) return undefined;
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    const onDocClick = (e) => {
+      if (rootRef.current?.contains(e.target)) return;
+      if (menuRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('click', onDocClick);
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
+
+  const menu =
+    open && mounted && coords
+      ? createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={{ top: coords.top, right: coords.right }}
+            className="fixed z-[200] w-56 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] p-1 shadow-xl backdrop-blur-[18px] backdrop-saturate-[1.2]"
+          >
+            {links.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex w-full px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.1em] text-[var(--color-ink)] no-underline transition-colors hover:bg-white/[0.04]"
+              >
+                {item.name}
+              </Link>
+            ))}
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
-    <div className="sm:hidden relative">
+    <div ref={rootRef} className="relative sm:hidden">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
         aria-label={open ? 'Close navigation' : 'Open navigation'}
         aria-expanded={open}
         className="mc-nav-link no-underline inline-flex items-center gap-1 px-2.5 py-2"
       >
         {open ? <X className="h-4 w-4" aria-hidden /> : <Menu className="h-4 w-4" aria-hidden />}
       </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-[60] mt-1.5 w-56 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] backdrop-blur-[18px] backdrop-saturate-[1.2] p-1 shadow-xl"
-        >
-          {links.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex w-full px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.1em] no-underline text-[var(--color-ink)] hover:bg-white/[0.04] transition-colors"
-            >
-              {item.name}
-            </Link>
-          ))}
-        </div>
-      )}
+      {menu}
     </div>
   );
 }
