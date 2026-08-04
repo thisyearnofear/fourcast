@@ -196,8 +196,8 @@ export async function getTransactionById(updateId, requestingParties) {
  * CreatedEvent in the transaction (allocation impls create change first, the
  * target contract last); (4) the first CreatedEvent.
  */
-async function submitForContractId({ actAs, readAs = [], commands }) {
-  const { raw } = await submitCommands({ actAs, readAs, commands });
+async function submitForContractId({ actAs, readAs = [], commands, disclosedContracts }) {
+  const { raw } = await submitCommands({ actAs, readAs, commands, disclosedContracts });
   const updateId = raw?.updateId;
   if (!updateId) throw new Error(`submission returned no updateId: ${JSON.stringify(raw).slice(0, 300)}`);
   const tx = await getTransactionById(updateId, [...new Set([...actAs, ...readAs, OPERATOR_PARTY_ID])]);
@@ -366,6 +366,48 @@ export const HOLDING_V1_IFACE = ifaceId('splice-api-token-holding-v1', 'Splice.A
 export const ALLOCATION_V1_IFACE = ifaceId('splice-api-token-allocation-v1', 'Splice.Api.Token.AllocationV1:Allocation');
 /** AllocationInstructionV1 interface id (the AllocationFactory choice surface). */
 export const ALLOCATION_INSTRUCTION_V1_IFACE = ifaceId('splice-api-token-allocation-instruction-v1', 'Splice.Api.Token.AllocationInstructionV1:AllocationFactory');
+
+/** Fetch contracts by interface id WITH createdEventBlob (for building disclosedContracts).
+ *  Used to disclose allocation contracts during settle/expire. */
+export async function queryInterfaceContractsWithBlob(partyId, interfaceIds = []) {
+  if (!isCantonConfigured()) return [];
+  if (!partyId || !interfaceIds.length) return [];
+
+  const end = await ledgerCall('GET', '/v2/state/ledger-end');
+  const activeAtOffset = end.offset ?? 0;
+
+  const cumulative = interfaceIds.map((interfaceId) => ({
+    identifierFilter: {
+      InterfaceFilter: {
+        value: { interfaceId, includeCreatedEventBlob: true },
+      },
+    },
+  }));
+
+  const eventFormat = {
+    filtersByParty: { [partyId]: { cumulative } },
+    verbose: false,
+  };
+
+  const result = await ledgerCall('POST', '/v2/state/active-contracts', {
+    activeAtOffset,
+    eventFormat,
+  });
+
+  if (!Array.isArray(result)) return [];
+
+  return result.flatMap((item) => {
+    const ev = item.contractEntry?.JsActiveContract?.createdEvent;
+    if (!ev) return [];
+    return [{
+      contractId: ev.contractId,
+      templateId: ev.templateId,
+      synchronizerId: ev.synchronizerId || '',
+      createdEventBlob: ev.createdEventBlob || '',
+      payload: ev.createArgument,
+    }];
+  });
+}
 
 // ── Value helpers (JSON API v2 encodings, same conventions v1 verified) ──
 
@@ -737,9 +779,31 @@ async function getAllocationWithdrawContext(allocationCid, expectedAdmin) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ choiceArguments: {}, excludeDebugFields: true }),
+    body: JSON.stringify({ meta: {}, excludeDebugFields: true }),
   });
   if (!res.ok) throw new Error(`allocation withdraw-context fetch failed: ${res.status} ${await res.text().catch(() => '')}`);
+  const data = await res.json();
+  return {
+    choiceContextData: data.choiceContextData || { values: {} },
+    disclosedContracts: (data.disclosedContracts || []).map((d) => ({
+      templateId: d.templateId, contractId: d.contractId,
+      createdEventBlob: d.createdEventBlob, synchronizerId: d.synchronizerId || '',
+    })),
+  };
+}
+
+/** Fetch the per-allocation execute-transfer choice-context (for settle — the
+ *  Settle choice internally executes a transfer on each allocation, which
+ *  requires the instrument-configuration context the withdraw endpoint doesn't
+ *  return). */
+async function getAllocationExecuteTransferContext(allocationCid, expectedAdmin) {
+  const url = `${REGISTRY_URL}/api/token-standard/v0/registrars/${encodeURIComponent(expectedAdmin)}/registry/allocations/v1/${encodeURIComponent(allocationCid)}/choice-contexts/execute-transfer`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ meta: {}, excludeDebugFields: true }),
+  });
+  if (!res.ok) throw new Error(`allocation execute-transfer context fetch failed: ${res.status} ${await res.text().catch(() => '')}`);
   const data = await res.json();
   return {
     choiceContextData: data.choiceContextData || { values: {} },
@@ -838,7 +902,7 @@ export async function getAllocations(partyId = OPERATOR_PARTY_ID) {
     const all = await queryAllActiveContracts(partyId);
     return all.filter((x) => {
       const tpl = x.templateId || '';
-      return tpl.includes('Utility.Registry') && tpl.endsWith(':Allocation');
+      return tpl.includes('Utility.Registry') && (tpl.endsWith(':Allocation') || tpl.endsWith(':DvpLegAllocation'));
     });
   }
   return queryActiveContracts(partyId, [
@@ -851,9 +915,9 @@ export async function getBalances(partyId) {
     const cbtc = await getCbtcHoldings(partyId);
     const unlocked = cbtc.reduce((acc, h) => acc + Number(h.amount || 0), 0);
     const allocations = (await getAllocations(partyId))
-      .filter((a) => a.payload?.transferLeg?.sender === partyId);
+      .filter((a) => (a.payload?.allocation || a.payload)?.transferLeg?.sender === partyId);
     const locked = allocations
-      .reduce((acc, a) => acc + Number(a.payload?.transferLeg?.amount ?? 0), 0);
+      .reduce((acc, a) => acc + Number((a.payload?.allocation || a.payload)?.transferLeg?.amount ?? 0), 0);
     return { partyId, unlocked, locked, holdings: cbtc, allocations };
   }
   const [holdings, allocations] = await Promise.all([getHoldings(partyId), getAllocations(partyId)]);
@@ -1059,16 +1123,28 @@ export async function settlePositionV2(positionContractId, { resolutionCid, lane
   let stakeExtraArgs = NO_EXTRA_ARGS;
   let payoutExtraArgs = NO_EXTRA_ARGS;
   let disclosedContracts;
-  // BitSafe: the Settle choice internally exercises Allocation withdraws, which
-  // require per-allocation choice-context + disclosed contracts.
+  // BitSafe: the Settle choice internally exercises Allocation_ExecuteTransfer
+  // on both legs, which requires the execute-transfer choice-context (not
+  // withdraw) + disclosed contracts.
   if (factory.isBitSafe) {
     const [sCtx, pCtx] = await Promise.all([
-      getAllocationWithdrawContext(stakeAllocationCid, factory.admin),
-      getAllocationWithdrawContext(payoutAllocationCid, factory.admin),
+      getAllocationExecuteTransferContext(stakeAllocationCid, factory.admin),
+      getAllocationExecuteTransferContext(payoutAllocationCid, factory.admin),
     ]);
     stakeExtraArgs = { context: sCtx.choiceContextData, meta: { values: {} } };
     payoutExtraArgs = { context: pCtx.choiceContextData, meta: { values: {} } };
     disclosedContracts = [...(sCtx.disclosedContracts || []), ...(pCtx.disclosedContracts || [])];
+    // The allocation contracts themselves must be disclosed — the Settle
+    // choice internally exercises Allocation_Withdraw on them, and the
+    // participant may not otherwise see them without the blob.
+    const syncId = await getCbtcSynchronizerId(OPERATOR_PARTY_ID);
+    const allocsWithBlob = await queryInterfaceContractsWithBlob(OPERATOR_PARTY_ID, [ALLOCATION_V1_IFACE]);
+    for (const cid of [stakeAllocationCid, payoutAllocationCid]) {
+      const a = allocsWithBlob.find((x) => x.contractId === cid);
+      if (a && a.createdEventBlob && !disclosedContracts.some((d) => d.contractId === cid)) {
+        disclosedContracts.push({ templateId: a.templateId, contractId: a.contractId, createdEventBlob: a.createdEventBlob, synchronizerId: a.synchronizerId || syncId });
+      }
+    }
   }
 
   const params = {
@@ -1118,6 +1194,15 @@ export async function expirePosition(positionContractId, { lane = 'operator', ho
     stakeExtraArgs = { context: sCtx.choiceContextData, meta: { values: {} } };
     payoutExtraArgs = { context: pCtx.choiceContextData, meta: { values: {} } };
     disclosedContracts = [...(sCtx.disclosedContracts || []), ...(pCtx.disclosedContracts || [])];
+    // The allocation contracts themselves must be disclosed (same as settle).
+    const syncId = await getCbtcSynchronizerId(OPERATOR_PARTY_ID);
+    const allocsWithBlob = await queryInterfaceContractsWithBlob(OPERATOR_PARTY_ID, [ALLOCATION_V1_IFACE]);
+    for (const cid of [found.stakeAllocationCid, found.payoutAllocationCid]) {
+      const a = allocsWithBlob.find((x) => x.contractId === cid);
+      if (a && a.createdEventBlob && !disclosedContracts.some((d) => d.contractId === cid)) {
+        disclosedContracts.push({ templateId: a.templateId, contractId: a.contractId, createdEventBlob: a.createdEventBlob, synchronizerId: a.synchronizerId || syncId });
+      }
+    }
   }
 
   const params = {

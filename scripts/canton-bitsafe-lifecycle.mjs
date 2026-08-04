@@ -198,9 +198,13 @@ try {
 }
 console.log(`             non-signatory query: ${nonSig}`);
 
+// opPre is captured AFTER allocation (locked CBTC is already deducted from
+// unlocked), so the expected post-settle net is opPre.unlocked - payout.
+const opExpectedNet = opPre.unlocked - STAKE * (MULT - 1);
+const opActualNet = opAfter.unlocked + opAfter.locked;
 const checks = [
   ['alice net += winnings (stake*(mult-1))', Math.abs((aliceAfter.unlocked - alicePre.unlocked) - STAKE * (MULT - 1)) < 1e-9],
-  ['operator net -= payout (stake*(mult-1))', Math.abs((opAfter.unlocked + opAfter.locked) - (opPre.unlocked + opPre.locked - STAKE * (MULT - 1))) < 1e-9],
+  ['operator net -= payout (stake*(mult-1))', Math.abs(opActualNet - opExpectedNet) < 1e-8],
   ['both escrow legs cleared', aliceEscPost === 0 && opEscPost === 0],
   ['settled receipt exists with payout', Boolean(receipt) && Number(receipt?.payout) > 0],
   ['receipt instrument is the real CBTC id', String(receipt?.instrument?.id) === process.env.CANTON_BTC_INSTRUMENT_ID],
