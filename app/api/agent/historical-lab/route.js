@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 // SHA-256 commitment to the private bearer token stored only on the VPS.
 // The endpoint never needs the bearer value itself (or a Vercel runtime secret)
 // to authenticate a heartbeat.
-const WORKER_TOKEN_HASH = 'ad9a9e881fb70bb56555b68a26f944876cdd3f0aa71492aff9fc6dd1807777b5';
+const WORKER_TOKEN_HASH = '3047fc6f256243c933710ced5b5b1599f4bcb00e3e8d36f6b029630ea45bc1cb';
 
 export async function GET() {
   try {
