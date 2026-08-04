@@ -181,7 +181,7 @@ export default function PrivacyProof() {
                     {' · '}Settled: <span className="text-[var(--color-accent)]">{op?.settledCount ?? 0}</span>
                   </div>
                   {op?.sample ? (
-                    <pre className="overflow-x-auto rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-muted)] font-mono">
+                    <pre className="w-full overflow-x-auto whitespace-pre-wrap break-all rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-muted)] font-mono">
                       {previewJson(op.sample)}
                     </pre>
                   ) : (
@@ -226,7 +226,7 @@ export default function PrivacyProof() {
                   <div className="text-xs leading-5 text-[var(--color-ink-muted)] mb-3">
                     Result: <span className="text-[var(--color-ink-muted)]">{obs?.count ?? 0} positions</span>
                   </div>
-                  <pre className="overflow-x-auto rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-faint)] font-mono">
+                  <pre className="w-full overflow-x-auto whitespace-pre-wrap break-all rounded bg-[var(--color-paper-deep)] p-2 text-[10px] leading-4 text-[var(--color-ink-faint)] font-mono">
                     {previewJson(obs?.positions ?? [])}
                   </pre>
                   <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">

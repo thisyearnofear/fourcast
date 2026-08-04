@@ -102,7 +102,7 @@ function MoreMenu({ items, isActive }) {
         <div
           role="menu"
           aria-label="More navigation"
-          className="absolute right-0 top-full z-[60] mt-1.5 w-60 border border-[var(--color-rule)] bg-[var(--color-paper-glass)] backdrop-blur-[18px] backdrop-saturate-[1.2] p-1 shadow-xl"
+          className="absolute right-0 top-full z-[60] mt-1.5 w-60 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] backdrop-blur-[18px] backdrop-saturate-[1.2] p-1 shadow-xl"
         >
           {items.map((item) => (
             <Link

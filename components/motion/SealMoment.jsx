@@ -135,11 +135,12 @@ export default function SealMoment({
   const hasHash = Boolean(hash);
   const showSealed = armed && sealed && hasHash;
 
-  // Truncate for display: show first 10 … last 8 for the compact strip,
-  // full hash for the block. The flap plays across the visible chars.
+  // Truncate for display: compact mode shows first 12 … last 8 so a long
+  // Solana tx signature (88 chars) never overflows its container. The flap
+  // plays across the full hash internally; only the visible slice is short.
   const visible = useMemo(() => {
     if (!rolled) return '';
-    if (compact) return rolled;
+    if (compact && rolled.length > 24) return `${rolled.slice(0, 12)}…${rolled.slice(-8)}`;
     return rolled;
   }, [rolled, compact]);
 
@@ -147,7 +148,7 @@ export default function SealMoment({
     return (
       <span
         ref={rootRef}
-        className={`fc-seal-moment fc-seal-moment--compact font-mono text-[11px] tracking-[0.04em] ${showSealed ? 'is-sealed' : ''} ${className}`}
+        className={`fc-seal-moment fc-seal-moment--compact inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.04em] ${showSealed ? 'is-sealed' : ''} ${className}`}
       >
         <span className="fc-seal-moment__hash text-[var(--color-ink-muted)]">
           {hasHash ? visible : 'pending…'}
