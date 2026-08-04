@@ -18,7 +18,7 @@ function truncateCid(cid) {
 export default function CantonHolderDashboard() {
   const {
     connected, accounts, primary, error, loading,
-    connect, disconnect, refreshAccounts, queryContracts,
+    connect, disconnect, refreshAccounts, queryContracts, settleAsHolder,
   } = useCantonHolderWallet();
 
   const [positions, setPositions] = useState([]);
@@ -26,6 +26,8 @@ export default function CantonHolderDashboard() {
   const [allocations, setAllocations] = useState([]);
   const [queryLoading, setQueryLoading] = useState(false);
   const [queryError, setQueryError] = useState(null);
+  // Per-position wallet-settle state: cid -> { status: 'busy'|'done'|'error', error?, receipt? }
+  const [settleState, setSettleState] = useState({});
 
   const loadAll = useCallback(async () => {
     if (!connected) return;
@@ -50,6 +52,18 @@ export default function CantonHolderDashboard() {
   useEffect(() => {
     if (connected) loadAll();
   }, [connected, primary?.partyId, loadAll]);
+
+  const handleSettle = useCallback(async (contractId) => {
+    setSettleState((s) => ({ ...s, [contractId]: { status: 'busy' } }));
+    try {
+      const result = await settleAsHolder(contractId);
+      const receiptId = result?.updateId || result?.transaction?.updateId || result?.completionOffset || null;
+      setSettleState((s) => ({ ...s, [contractId]: { status: 'done', receipt: receiptId ? String(receiptId) : null } }));
+      await loadAll();
+    } catch (e) {
+      setSettleState((s) => ({ ...s, [contractId]: { status: 'error', error: e?.message || 'Settlement failed' } }));
+    }
+  }, [settleAsHolder, loadAll]);
 
   return (
     <div className="space-y-6">
@@ -133,10 +147,10 @@ export default function CantonHolderDashboard() {
               <Shield className="h-4 w-4 shrink-0 text-[var(--color-accent)]" />
               <div>
                 <p className="font-medium text-[var(--color-ink)]">
-                  Holder view is read-only
+                  Your key moves the money
                 </p>
                 <p>
-                  Holders co-sign their positions (offer/accept consent), see only their own contracts, and can settle their own wins — the economics are fixed by the contract, not by whoever presses the button.
+                  Holders co-sign their positions (offer/accept consent) and see only their own contracts. When a market resolves, you settle with your own wallet signature — the server can assemble the payload, but only your key authorizes the payout. The economics are fixed by the contract, not by whoever operates the platform.
                 </p>
                 {primary && (
                   <p className="mt-2 font-mono text-[var(--color-ink-faint)]">
@@ -162,6 +176,7 @@ export default function CantonHolderDashboard() {
             {positions.map((pos) => {
               const p = pos.payload || {};
               const asset = ASSETS[p.settlementAsset] || ASSETS.CBTC;
+              const st = settleState[pos.contractId];
               return (
                 <div
                   key={pos.contractId}
@@ -176,10 +191,36 @@ export default function CantonHolderDashboard() {
                         {p.marketId}
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono text-[var(--color-ink-faint)]">
-                      {truncateCid(pos.contractId)}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-[var(--color-ink-faint)]">
+                        {truncateCid(pos.contractId)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleSettle(pos.contractId)}
+                        disabled={st?.status === 'busy'}
+                        className="mc-action text-[10px] disabled:opacity-40"
+                        title="Only your wallet key can settle this position"
+                      >
+                        {st?.status === 'busy' ? 'Wallet signing…' : 'Settle with my wallet'}
+                      </button>
+                    </div>
                   </div>
+                  {st?.status === 'busy' && (
+                    <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
+                      Confirm in Console Wallet — one signature executes both escrow legs and pays out in the same transaction.
+                    </p>
+                  )}
+                  {st?.status === 'error' && (
+                    <p className="mt-2 text-[10px] text-[var(--color-breach)]">{st.error}</p>
+                  )}
+                  {st?.status === 'done' && (
+                    <p className="mt-2 inline-flex items-center gap-1 text-[10px] text-[var(--color-accent)]">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Settled — signed by your wallet
+                      {st.receipt && <span className="font-mono opacity-70"> · {truncateCid(st.receipt)}</span>}
+                    </p>
+                  )}
                 </div>
               );
             })}

@@ -213,6 +213,43 @@ const checks = [
 let ok = true;
 for (const [label, pass] of checks) { console.log(`   ${pass ? '✓' : '✗'} ${label}`); if (!pass) ok = false; }
 
+// ── Proof dossier: pin the artifacts the Proof Theatre renders ──────────
+// Everything below is real DevNet state captured during this run — contract
+// ids, the settle update id, the on-ledger receipt and balance deltas.
+try {
+  const fs = await import('node:fs');
+  fs.mkdirSync('public/proof', { recursive: true });
+  fs.writeFileSync('public/proof/canton-receipts.json', JSON.stringify({
+    passed: ok,
+    capturedAt: new Date().toISOString(),
+    network: 'Canton DevNet (HackCanton · NODERS validator)',
+    packageRef: '#fourcast (uploaded DAR)',
+    instrument,
+    stake: { amount: STAKE, oddsMultiplier: MULT },
+    parties: { holder: alice, operator },
+    marketId,
+    contracts: {
+      market: marketCid,
+      offer: offerContractId,
+      position: positionContractId,
+      attestation: attestationContractId,
+      resolution: resolutionCid,
+    },
+    settle: { lane: 'holder (SettleAsHolder)', updateId: String(settleUpdateId) },
+    receiptPayload: receipt || null,
+    deltas: {
+      holderUnlocked: { before: alicePre.unlocked, after: aliceAfter.unlocked },
+      operatorUnlocked: { before: opPre.unlocked, after: opAfter.unlocked },
+      escrowAfter: { holder: aliceEscPost, operator: opEscPost },
+    },
+    privacy: { nonSignatoryObservation: nonSig },
+    checks: checks.map(([label, pass]) => ({ label, pass })),
+  }, null, 2));
+  console.log('   📄 pinned dossier → public/proof/canton-receipts.json');
+} catch (e) {
+  console.log(`   (dossier write skipped: ${e.message || e})`);
+}
+
 console.log('');
 if (ok) {
   console.log('✅ BITSAFE LIFECYCLE PASSED — real CBTC settled atomically on Canton DevNet.');

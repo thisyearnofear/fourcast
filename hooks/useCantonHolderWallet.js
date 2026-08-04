@@ -177,6 +177,42 @@ export function useCantonHolderWallet() {
     });
   }, [sdk, connected, accounts, primary]);
 
+  /**
+   * Settle one of the holder's own positions WITH THE HOLDER'S OWN KEY
+   * (v2 sovereignty lane — Daml choice SettleAsHolder).
+   *
+   * The server assembles the exact command payload (resolution cid, both
+   * escrowed CIP-56 allocation cids, choice contexts, disclosed contracts);
+   * this wallet signs and submits it. The server never signs — the economic
+   * authorization comes from the holder's key, which is the whole point.
+   *
+   * resolutionContractId may be omitted; the prepare endpoint discovers it
+   * from the position's market. Resolves to the ledger completion
+   * (updateId / completionOffset) on success.
+   */
+  const settleAsHolder = useCallback(async (positionContractId, resolutionContractId) => {
+    if (!sdk || !connected) throw new Error('Wallet not connected');
+    const partyId = primary?.partyId || accounts[0]?.partyId;
+    if (!partyId) throw new Error('No party selected');
+
+    const res = await fetch('/api/canton/settle/prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ positionContractId, resolutionContractId, holderPartyId: partyId }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to prepare settlement');
+
+    const { actAs, commands, disclosedContracts } = data.submission;
+    return sdk.prepareExecuteAndWait({
+      actAs,
+      commands,
+      ...(Array.isArray(disclosedContracts) && disclosedContracts.length
+        ? { disclosedContracts }
+        : {}),
+    });
+  }, [sdk, connected, accounts, primary]);
+
   return {
     connected,
     accounts,
@@ -188,5 +224,6 @@ export function useCantonHolderWallet() {
     refreshAccounts,
     queryContracts,
     disputeTransfer,
+    settleAsHolder,
   };
 }

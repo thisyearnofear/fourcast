@@ -1099,11 +1099,17 @@ export async function withdrawAllocation(allocationContractId, senderPartyId) {
 // ── Settlement + expiry (atomic) ────────────────────────────────────────
 
 /**
- * Settle a position atomically. If allocation cids are not provided, they are
- * discovered from the position's settlementRef. `lane`: 'operator' (Settle)
- * or 'holder' (SettleAsHolder; needs holder actAs rights).
+ * Build (WITHOUT submitting) the exact atomic-settlement submission for a
+ * position — allocation discovery, CIP-56 choice-context extraArgs and, on
+ * the BitSafe CBTC path, the disclosed contracts the participant needs.
+ * Splitting this out lets an external holder wallet sign and submit the
+ * payload with its own key: the server assembles, the holder authorizes.
+ * `lane`: 'operator' (Settle) or 'holder' (SettleAsHolder).
  */
-export async function settlePositionV2(positionContractId, { resolutionCid, lane = 'operator', holderPartyId, stakeAllocationCid, payoutAllocationCid } = {}) {
+export async function prepareSettleSubmission(positionContractId, { resolutionCid, lane = 'operator', holderPartyId, stakeAllocationCid, payoutAllocationCid } = {}) {
+  if (!resolutionCid) {
+    throw new Error('resolutionCid is required — the market must be resolved before settling');
+  }
   if (lane === 'holder' && !holderPartyId) {
     throw new Error('holder lane requires holderPartyId (SettleAsHolder is holder-controlled)');
   }
@@ -1155,7 +1161,7 @@ export async function settlePositionV2(positionContractId, { resolutionCid, lane
     payoutExtraArgs,
   };
 
-  return submitCommands({
+  return {
     actAs: [lane === 'holder' ? holderPartyId : OPERATOR_PARTY_ID],
     disclosedContracts,
     commands: [{
@@ -1166,7 +1172,16 @@ export async function settlePositionV2(positionContractId, { resolutionCid, lane
         choiceArgument: { params },
       },
     }],
-  });
+  };
+}
+
+/**
+ * Settle a position atomically. If allocation cids are not provided, they are
+ * discovered from the position's settlementRef. `lane`: 'operator' (Settle)
+ * or 'holder' (SettleAsHolder; needs holder actAs rights).
+ */
+export async function settlePositionV2(positionContractId, opts = {}) {
+  return submitCommands(await prepareSettleSubmission(positionContractId, opts));
 }
 
 /** Expire an unresolved position after settleBefore; refunds both legs. */

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowDown, Eye, EyeOff, Zap } from 'lucide-react';
+import { ArrowDown, Eye, EyeOff, FileCheck, Zap } from 'lucide-react';
 import PrivacyProof from '@/components/PrivacyProof';
 import useChangeFlash from '@/hooks/useChangeFlash';
 
@@ -23,6 +23,13 @@ import useChangeFlash from '@/hooks/useChangeFlash';
 function formatNum(n) {
   if (n == null || !Number.isFinite(n)) return '—';
   return Number(n).toLocaleString();
+}
+
+function trimMid(s, head = 18, tail = 10) {
+  if (!s) return '—';
+  const str = String(s);
+  if (str.length <= head + tail + 1) return str;
+  return `${str.slice(0, head)}…${str.slice(-tail)}`;
 }
 
 function LedgerCell({ label, value, accent }) {
@@ -155,6 +162,121 @@ export default function CantonProof() {
           </p>
         </div>
       </section>
+
+      <ReceiptWall />
     </div>
+  );
+}
+
+/**
+ * ReceiptWall — pinned artifacts from the latest BitSafe CBTC lifecycle run
+ * (scripts/canton-bitsafe-lifecycle.mjs writes public/proof/canton-receipts.json).
+ * Renders nothing until a capture exists: it is evidence, never decoration.
+ */
+function ReceiptWall() {
+  const [r, setR] = useState(null);
+
+  useEffect(() => {
+    fetch('/proof/canton-receipts.json')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (data) setR(data); })
+      .catch(() => {});
+  }, []);
+
+  if (!r) return null;
+
+  const holderDelta = r.deltas?.holderUnlocked
+    ? r.deltas.holderUnlocked.after - r.deltas.holderUnlocked.before : null;
+  const opDelta = r.deltas?.operatorUnlocked
+    ? r.deltas.operatorUnlocked.after - r.deltas.operatorUnlocked.before : null;
+
+  const contractRows = [
+    ['Market', r.contracts?.market],
+    ['Position offer (holder-signed)', r.contracts?.offer],
+    ['Position', r.contracts?.position],
+    ['Attestation', r.contracts?.attestation],
+    ['Resolution', r.contracts?.resolution],
+  ].filter(([, v]) => v);
+
+  return (
+    <section className="platform-open-section" aria-label="Pinned settlement receipts">
+      <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <FileCheck className="h-3.5 w-3.5 text-[var(--color-sealed)]/80" />
+            <span className="mc-kicker">Pinned settlement receipts</span>
+          </div>
+          <span className="text-[10px] font-mono text-[var(--color-ink-faint)]">
+            {r.passed ? '✓ lifecycle passed' : 'run had failures'} · {r.capturedAt ? new Date(r.capturedAt).toUTCString() : ''}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-px overflow-hidden bg-[var(--color-paper-soft)] sm:grid-cols-4">
+        <div className="bg-[var(--color-paper)] p-3">
+          <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">Instrument</div>
+          <div className="text-sm font-mono text-[var(--color-sealed)]">{r.instrument?.id || '—'}</div>
+          <div className="mt-0.5 text-[9px] font-mono text-[var(--color-ink-faint)]" title={r.instrument?.admin}>admin {trimMid(r.instrument?.admin, 12, 8)}</div>
+        </div>
+        <LedgerCell label="Holder Δ unlocked" value={holderDelta != null ? `+${formatNum(holderDelta)}` : '—'} accent />
+        <LedgerCell label="Operator Δ unlocked" value={opDelta != null ? formatNum(opDelta) : '—'} />
+        <div className="bg-[var(--color-paper)] p-3">
+          <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">Settle update id</div>
+          <div className="text-[10px] font-mono text-[var(--color-accent)] break-all">{trimMid(r.settle?.updateId, 20, 14)}</div>
+          <div className="mt-0.5 text-[9px] text-[var(--color-ink-faint)]">{r.settle?.lane || ''}</div>
+        </div>
+      </div>
+
+      {contractRows.length > 0 && (
+        <div className="border-t border-white/[0.06] px-4 py-3 sm:px-5 space-y-1.5">
+          {contractRows.map(([label, cid]) => (
+            <div key={label} className="flex items-center gap-2 text-[11px]">
+              <span className="w-44 shrink-0 text-[var(--color-ink-faint)]">{label}</span>
+              <span className="font-mono text-[10px] text-[var(--color-ink-muted)] truncate" title={cid}>{trimMid(cid)}</span>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 text-[11px]">
+            <span className="w-44 shrink-0 text-[var(--color-ink-faint)]">Market id</span>
+            <span className="font-mono text-[10px] text-[var(--color-ink-muted)]">{r.marketId}</span>
+          </div>
+        </div>
+      )}
+
+      {r.receiptPayload && (
+        <div className="border-t border-white/[0.06] px-4 py-3 sm:px-5">
+          <p className="text-[11px] leading-5 text-[var(--color-ink-muted)]">
+            Settled receipt on-ledger:{' '}
+            <span className="font-mono text-[var(--color-accent)]">payout {r.receiptPayload.payout} {r.instrument?.id}</span>
+            {r.receiptPayload.evidenceHash && (
+              <span className="font-mono text-[var(--color-ink-faint)]"> · evidence {trimMid(r.receiptPayload.evidenceHash, 16, 8)}</span>
+            )}
+          </p>
+        </div>
+      )}
+
+      {Array.isArray(r.checks) && r.checks.length > 0 && (
+        <div className="border-t border-white/[0.06] px-4 py-3 sm:px-5">
+          <div className="grid gap-1 sm:grid-cols-2">
+            {r.checks.map(({ label, pass }) => (
+              <div key={label} className={`text-[10px] font-mono ${pass ? 'text-[var(--color-accent)]' : 'text-[var(--color-breach)]'}`}>
+                {pass ? '✓' : '✗'} {label}
+              </div>
+            ))}
+          </div>
+          {r.privacy?.nonSignatoryObservation && (
+            <p className="mt-2 text-[10px] font-mono text-[var(--color-ink-faint)]">
+              non-signatory observation: {r.privacy.nonSignatoryObservation}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="px-4 py-3 sm:px-5 border-t border-white/[0.06]">
+        <p className="text-[10px] leading-5 text-[var(--color-ink-faint)]">
+          Every identifier above is real {r.network || 'Canton DevNet'} state, captured by{' '}
+          <span className="font-mono">scripts/canton-bitsafe-lifecycle.mjs</span>. Re-running the script refreshes this wall — nothing here is mocked.
+        </p>
+      </div>
+    </section>
   );
 }

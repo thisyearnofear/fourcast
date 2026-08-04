@@ -1,62 +1,71 @@
-# Fourcast — 3-Minute Demo Script (HackCanton S2)
+# Fourcast — 3-Minute Demo Script (HackCanton S2 Grand Final)
 
-The judge watches a position exist and not exist simultaneously, from two perspectives, on the same ledger. That contrast is the entire pitch in one frame.
+The judge watches a position exist and not exist simultaneously, from two
+perspectives, on the same ledger — then watches the winner collect the payout
+with their own key, no operator involved. Those two moments are the pitch.
 
 ## Opening (15s)
 
-> "A large position can leak strategy as soon as it is placed on a public venue. On Canton, the position is visible to its stakeholders but not to unrelated parties. Watch."
+> "A large position can leak strategy as soon as it is placed on a public venue. On Canton, the position is visible to its stakeholders and invisible to everyone else. Watch."
 
-**Show:** Canton proof surface — the private-position demo, not the earlier AI/Arc market flow.
+**Show:** `/proof?chain=canton` — the proof surface, not the older AI/Arc flow.
 
 ---
 
-## Act 1 — Take a private position · 60s
+## Act 1 — Take a private position · 45s
 
-1. Open the prepared DevNet market and position.
+1. Open the prepared DevNet market and position (pre-staged the night before).
 2. Show the holder/operator view of the position.
-3. Explain that the current judge flow is an operator console; external holder signing is still partial.
 
-**Say:** "This position is now on-ledger. The stake, the side, the entry — visible only to the operator and this holder. No other party, no tracker, no explorer can see it."
-
-**Show:** Holder's view — `/api/canton/positions` returns the full position (side: YES, stake: 500 cBTC, marketId, status: Open).
+**Say:** "This position is on-ledger. The stake, the side, the entry — visible only to the operator and this holder. The stake is locked as a CIP-56 allocation the wallet itself can discover."
 
 ---
 
 ## Act 2 — The absence · 45s
 
-1. Open the PrivacyProof section and click "Run privacy test."
-2. The component fires **two live ledger queries in parallel** — one as the operator (signatory), one as a non-signatory party — and renders both results side-by-side.
+1. In the PrivacyProof section, click "Run privacy test."
+2. **Two live ledger queries fire in parallel** — one as a stakeholder, one as an allocated non-stakeholder party.
 
-**Show:** Signatory cell returns full position data. Non-signatory cell returns a real empty result set from the ledger — not simulated, not hardcoded.
+**Show:** Stakeholder cell returns full position data. Non-stakeholder cell returns a real empty result set from the ledger — not simulated.
 
-**Say:** "Same ledger, same market, same contract ID space. This trader sees nothing. The position is structurally invisible — not hidden by a frontend, not obfuscated by a mixer, enforced by Daml's signatory/observer model at the protocol level. Both cells are live API calls."
-
----
-
-## Act 3 — Settle and payout · 45s
-
-1. **Switch back to the holder's browser.**
-2. **Operator resolves the market** — exercise `ResolveMarket` with outcome `ResolvedYes`.
-3. **Holder or operator exercises Settle** — the choice fetches `MarketResolution`, verifies the market, and validates both allocation legs.
-4. **Show:** `PositionSettled` receipt — winner: holder, payout: 1000 reference-token units.
-5. **Show:** both escrow allocations are archived by the same settlement transaction.
-
-**Say:** "The Settle choice fetches the attestation-backed resolution and executes or cancels both escrow legs atomically. There is no manual payout or outstanding obligation."
+**Say:** "Same ledger, same market, same contract space. This party sees nothing. The position is structurally invisible — not hidden by a frontend, enforced by Daml's signatory model at the protocol level. Both cells are live API calls."
 
 ---
 
-## Act 4 — Why CBTC and Canton · 15s
+## Act 3 — The climax: the holder's own key · 60s
 
-1. **Show:** the implementation status: private positions, CIP-56 escrow, atomic settlement.
-2. **Show:** `canton-bitsafe-lifecycle.mjs` output — real CBTC settled atomically, receipt shows `instrument.id = CBTC`.
+**Primary path (wallet lane — run only if tonight's live verification passed):**
 
-**Say:** "Canton keeps position details visible only to stakeholders, while CIP-56 gives us an atomic settlement primitive. Real BitSafe CBTC settlement is proven end-to-end on DevNet."
+1. Operator resolves the market (`ResolvedYes`) from the settlement hub.
+2. Switch to the holder dashboard, connected Console Wallet.
+3. Click **"Settle with my wallet"** — the wallet popup asks the holder to sign.
+4. One signature: position archived, stake leg cancelled, payout leg executed — in the same transaction. The `PositionSettled` receipt appears, update id on screen.
+
+**Say:** "The server never touched that money. It can assemble the payload, but the authorization came from the holder's own key — SettleAsHolder is holder-controlled in the Daml code. The contract fixed the economics; the holder's key moved the money."
+
+**Fallback path (if the wallet lane was cut at the gate):**
+
+1. Operator resolves, then settles from the hub (server lane, `Settle` choice).
+2. Show the settle update id and the archived escrow legs.
+
+**Say:** "Settlement is atomic either way — the Daml offers an operator lane and a holder lane with identical economics; external wallet signing is on the deployed DAR and wiring into the dApp SDK now."
+
+*Never improvise between paths. Decide before walking on stage.*
 
 ---
 
-## Close (15s)
+## Act 4 — Receipts: real CBTC, queryable · 20s
 
-> "This DevNet prototype proves private positions and atomic token settlement on Canton — against both a reference registry and real BitSafe CBTC. The remaining path is external holder signing, independent attestation, and mainnet hardening."
+1. Scroll to **Pinned settlement receipts** in the Proof Theatre.
+2. Point at the settle update id, the contract ids, `instrument.id = CBTC`, the balance deltas, the checks — all green.
+
+**Say:** "This wall is real DevNet state captured by our lifecycle script tonight. Re-running the script refreshes it — nothing is mocked. The settled payout moved real BitSafe CBTC, atomically."
+
+---
+
+## Close (10s)
+
+> "Private by construction, settled atomically, collected by the holder's own key — on Canton DevNet today. Next: independent attesters onboarded through the attester role already in the contract, and mainnet hardening."
 
 ---
 
@@ -67,14 +76,20 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 - [x] `CANTON_OPERATOR_PARTY_ID` set — `FourcastOperator::122003aa7c...`
 - [x] Server-side direct ledger API access (OIDC password grant)
 - [x] Daml commands formatted to JSON Ledger API spec (`CreateCommand` / `ExerciseCommand` with `choiceArgument`)
-- [x] Contract queries use `eventFormat` + `activeAtOffset` + `#canton:` package name format
+- [x] Contract queries use `eventFormat` + `activeAtOffset` + `#fourcast:` package name format
 - [x] Market + position lifecycle functions implemented (`services/cantonLedgerClient.js`)
-- [x] API routes: `/api/canton/markets`, `/api/canton/markets/resolve`, `/api/canton/positions`, `/api/canton/settle`
+- [x] API routes: `/api/canton/markets`, `/api/canton/markets/resolve`, `/api/canton/positions`, `/api/canton/settle`, `/api/canton/settle/prepare` (wallet-signing payload assembly)
 - [x] End-to-end v2 lifecycle verified on DevNet: offer → accept → escrow → resolve → atomic settle
 - [x] Deployed URL loads (not localhost) — verified live after env fix & redeploy
-- [x] Two-view privacy test (holder sees position, observer sees empty result set) — live in-page PrivacyProof component, both cells are real ledger queries
-- [ ] CC funded via NODERS wallet tap — reported done by operator, not re-tested this session
+- [x] Two-view privacy test (stakeholder sees position, non-stakeholder sees empty result set) — live in-page PrivacyProof component, both cells real ledger queries
 - [x] Real BitSafe CBTC registry/instrument settlement verified — `canton-bitsafe-lifecycle.mjs` passes end-to-end (receipt `instrument.id = CBTC`)
+- [x] Holder-signed settle path implemented: `SettleAsHolder` via Console Wallet (`useCantonHolderWallet.settleAsHolder` + `/api/canton/settle/prepare` + dashboard button)
+- [x] Settlement hub TDZ crash fixed (loadAll ReferenceError); known-good commit tagged `finals-known-good`
+- [ ] **Holder wallet-signed settle verified live on DevNet** — run tonight; if not green by cutoff, use the Act 3 fallback path and hide nothing else
+- [ ] Fresh dossier captured tonight: `node scripts/canton-bitsafe-lifecycle.mjs` → `public/proof/canton-receipts.json` → deployed (receipt wall renders it)
+- [ ] Demo market + position pre-staged after the dossier run (so Act 1 opens with live state)
+- [ ] Console Wallet connected on the demo machine, holder party active, before walking on stage
+- [ ] CC funded via NODERS wallet tap — reported done by operator, not re-tested this session
 - [ ] Venice API key for live AI analysis — reported done by operator, not re-tested this session
 - [ ] Form: GitHub URL, video link, demo URL — reported submitted by operator, not verified
 
@@ -83,8 +98,8 @@ The judge watches a position exist and not exist simultaneously, from two perspe
 All UI strings: `constants/brand.js`
 Daml contracts: `canton/daml/Fourcast/`
 Server-side ledger client: `services/cantonLedgerClient.js`
-Legacy publisher (reference): `services/cantonPublisher.js`
-Wallet context: `app/CantonWalletLayer.js`
-Wallet hook: `hooks/useCantonWallet.js`
+Wallet-signing prepare route: `app/api/canton/settle/prepare/route.js`
 Holder wallet hook: `hooks/useCantonHolderWallet.js`
-Holder dashboard: `components/CantonHolderDashboard.js`
+Holder dashboard (wallet lane): `components/CantonHolderDashboard.js`
+Operator hub (fallback lane): `components/CantonSettlementHub.js`
+Proof dossier capture: `scripts/canton-bitsafe-lifecycle.mjs` → `public/proof/canton-receipts.json`
