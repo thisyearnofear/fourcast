@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Wallet, LogOut, RefreshCw, Shield, AlertCircle, Eye, EyeOff, Coins, CheckCircle2 } from 'lucide-react';
+import { Wallet, LogOut, RefreshCw, Shield, AlertCircle, Eye, EyeOff, Coins, CheckCircle2, FileCheck, Hash } from 'lucide-react';
 import { useCantonHolderWallet } from '@/hooks/useCantonHolderWallet';
 
 const ASSETS = {
@@ -26,6 +26,7 @@ export default function CantonHolderDashboard() {
   const [allocations, setAllocations] = useState([]);
   const [queryLoading, setQueryLoading] = useState(false);
   const [queryError, setQueryError] = useState(null);
+  const [resolutions, setResolutions] = useState([]);
   // Per-position wallet-settle state: cid -> { status: 'busy'|'done'|'error', error?, receipt? }
   const [settleState, setSettleState] = useState({});
 
@@ -34,14 +35,16 @@ export default function CantonHolderDashboard() {
     setQueryLoading(true);
     setQueryError(null);
     try {
-      const [p, s, a] = await Promise.all([
+      const [p, s, a, res] = await Promise.all([
         queryContracts([{ module: 'Fourcast.PredictionPosition', name: 'PredictionPosition' }]),
         queryContracts([{ module: 'Fourcast.PredictionPosition', name: 'PositionSettled' }]),
         queryContracts([{ module: 'Fourcast.Token', name: 'TokenAllocation' }]),
+        queryContracts([{ module: 'Fourcast.PredictionMarket', name: 'MarketResolution' }]),
       ]);
       setPositions(p);
       setSettled(s);
       setAllocations(a);
+      setResolutions(res);
     } catch (e) {
       setQueryError(e?.message || 'Failed to query holder contracts');
     } finally {
@@ -171,16 +174,17 @@ export default function CantonHolderDashboard() {
           <ContractSection
             icon={<Eye className="h-3.5 w-3.5 text-[var(--color-accent)]" />}
             title="Open positions"
-            empty="No open positions visible to this party."
+            empty="Nothing open. Positions you take land here — visible only to you and the operator."
           >
             {positions.map((pos) => {
               const p = pos.payload || {};
               const asset = ASSETS[p.settlementAsset] || ASSETS.CBTC;
               const st = settleState[pos.contractId];
+              const resolved = resolutions.some((r2) => r2.payload?.marketId === p.marketId);
               return (
                 <div
                   key={pos.contractId}
-                  className="border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5"
+                  className="fc-ledger-enter border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -194,6 +198,10 @@ export default function CantonHolderDashboard() {
                     <div className="flex items-center gap-3">
                       <span className="text-[10px] font-mono text-[var(--color-ink-faint)]">
                         {truncateCid(pos.contractId)}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 border px-1.5 py-0.5 text-[9px] font-mono ${resolved ? 'border-[var(--color-accent)]/25 text-[var(--color-accent)]' : 'border-[var(--color-rule)] text-[var(--color-ink-faint)]'}`}>
+                        <span className={`h-1 w-1 rounded-full ${resolved ? 'bg-[var(--color-accent)]' : 'bg-white/25'}`} />
+                        {resolved ? 'resolved' : 'awaiting resolution'}
                       </span>
                       <button
                         type="button"
@@ -215,11 +223,25 @@ export default function CantonHolderDashboard() {
                     <p className="mt-2 text-[10px] text-[var(--color-breach)]">{st.error}</p>
                   )}
                   {st?.status === 'done' && (
-                    <p className="mt-2 inline-flex items-center gap-1 text-[10px] text-[var(--color-accent)]">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Settled — signed by your wallet
-                      {st.receipt && <span className="font-mono opacity-70"> · {truncateCid(st.receipt)}</span>}
-                    </p>
+                    <div className="fc-ledger-enter mc-proof-flash mt-3 border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/5 p-3">
+                      <div className="flex items-start gap-2.5">
+                        <FileCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]" />
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-medium text-[var(--color-accent)]">
+                            Settled — signed by your wallet
+                          </p>
+                          <p className="mt-0.5 text-[10px] leading-4 text-[var(--color-ink-faint)]">
+                            Both escrow legs executed/cancelled in the same transaction that archived the position. No payout step, nothing outstanding.
+                          </p>
+                          {st.receipt && (
+                            <p className="mt-1.5 font-mono text-[10px] text-[var(--color-ink-muted)] break-all">
+                              <Hash className="mr-1 inline h-3 w-3 text-[var(--color-accent)]/70" />
+                              <span className="fc-reconciled-stamp">{st.receipt}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               );
@@ -229,7 +251,7 @@ export default function CantonHolderDashboard() {
           <ContractSection
             icon={<CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-evidence)]" />}
             title="Settled positions"
-            empty="No settled positions visible to this party."
+            empty="No settled positions yet. Winning receipts land here — with on-ledger update ids."
           >
             {settled.map((pos) => {
               const p = pos.payload || {};
@@ -261,7 +283,7 @@ export default function CantonHolderDashboard() {
           <ContractSection
             icon={<Coins className="h-3.5 w-3.5 text-[var(--color-sealed)]" />}
             title="Escrowed funds"
-            empty="No locked escrow visible to this party."
+            empty="Nothing locked. CIP-56 escrow allocations appear here as stake and payout legs are funded."
           >
             {allocations.map((al) => {
               const a = al.payload?.allocation || al.payload || {};

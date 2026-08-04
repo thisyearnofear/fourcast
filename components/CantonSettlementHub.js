@@ -159,7 +159,7 @@ function MarketRow({ market, resolution, onResolve }) {
   const payload = market.payload || market;
 
   return (
-    <div className="border-b border-white/[0.06] last:border-b-0">
+    <div className="fc-ledger-enter border-b border-white/[0.06] last:border-b-0">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -307,7 +307,7 @@ function PositionRow({ position, resolutions, onSettled }) {
   const assetMeta = ASSETS[payload.settlementAsset] || ASSETS.CBTC;
 
   return (
-    <div className="border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5">
+    <div className="fc-ledger-enter border-b border-white/[0.06] last:border-b-0 px-4 py-3 sm:px-5">
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -325,7 +325,7 @@ function PositionRow({ position, resolutions, onSettled }) {
           </div>
         </div>
 
-        {matchingResolution && (
+        {matchingResolution ? (
           <button
             type="button"
             onClick={handleSettle}
@@ -334,6 +334,11 @@ function PositionRow({ position, resolutions, onSettled }) {
           >
             {settling ? 'Settling...' : 'Settle'}
           </button>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-[var(--color-ink-faint)]">
+            <Clock className="h-3 w-3" />
+            awaiting resolution
+          </span>
         )}
       </div>
       {error && <p className="mt-2 text-[10px] text-[var(--color-breach)]">{error}</p>}
@@ -526,7 +531,9 @@ export default function CantonSettlementHub() {
           <div className="px-4 py-6 text-center text-xs text-[var(--color-ink-faint)]">Loading markets...</div>
         ) : activeMarkets.length === 0 ? (
           <div className="px-4 py-6 text-center text-xs text-[var(--color-ink-faint)]">
-            {markets.length > 0 ? 'All markets have been resolved' : 'No markets created yet. Create one above to get started.'}
+            {markets.length > 0
+              ? 'All markets have been resolved.'
+              : 'No markets yet. Create one above — it exists only for its stakeholders from the moment it lands on-ledger.'}
           </div>
         ) : (
           <div>
@@ -572,7 +579,7 @@ export default function CantonSettlementHub() {
         </div>
         {positions.length === 0 ? (
           <div className="px-4 py-6 text-center text-xs text-[var(--color-ink-faint)]">
-            No open positions. Positions are created when a trader takes a side on a market.
+            No open positions. When a trader takes a side, the position lands here — private to operator and holder, escrowed by CIP-56 allocations.
           </div>
         ) : (
           positions.map((pos) => (
