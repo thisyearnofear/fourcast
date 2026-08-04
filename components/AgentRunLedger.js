@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Activity, ArrowUpRight, Check, CircleAlert, Database, Fingerprint, RefreshCw, ShieldCheck, SlidersHorizontal, X } from 'lucide-react';
 import { canonicalize } from '@/services/domain/decision/receiptCanonical';
 
@@ -191,7 +191,7 @@ function DecisionCard({ decision, index }) {
 
 /* -------------------------------- run card -------------------------------- */
 
-function RunCard({ run, expanded, onToggle }) {
+function RunCard({ run, expanded, isNew, onToggle }) {
  const summary = run.summary || {};
  const config = run.config || {};
  const proof = summary.proof || null;
@@ -203,7 +203,7 @@ function RunCard({ run, expanded, onToggle }) {
  const actions = summary.recommendations?.actionable || 0;
 
  return (
- <article className="relative overflow-hidden border border-[var(--color-rule)] bg-[var(--color-paper-deep)] px-4 py-4 transition hover:border-[var(--color-rule-strong)] sm:px-5">
+ <article className={`relative overflow-hidden border border-[var(--color-rule)] bg-[var(--color-paper-deep)] px-4 py-4 transition hover:border-[var(--color-rule-strong)] sm:px-5 ${isNew ? 'fc-ledger-enter' : ''}`}>
  <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-[var(--color-accent)]/0 via-[var(--color-accent)]/70 to-[var(--color-accent)]/0" />
  <button
  type="button"
@@ -288,6 +288,8 @@ export function AgentRunLedger() {
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState(null);
  const [expanded, setExpanded] = useState(null);
+ const knownIds = useRef(new Set());
+ const [newIds, setNewIds] = useState(new Set());
 
  const loadRuns = useCallback(async () => {
  setError(null);
@@ -295,8 +297,19 @@ export function AgentRunLedger() {
  const response = await fetch('/api/agent/runs?limit=8', { cache: 'no-store' });
  const data = await response.json();
  if (!response.ok || !data.success) throw new Error(data.error || 'Unable to load run ledger');
- setRuns(data.runs || []);
- setExpanded((current) => current || data.runs?.[0]?.id || null);
+ const next = data.runs || [];
+ // Detect runs that are new since the last poll so they can animate in
+ // as a live tail (the "something just happened" pull). The first load
+ // seeds knownIds without flagging everything as new.
+ if (knownIds.current.size === 0) {
+ next.forEach((r) => knownIds.current.add(r.id));
+ } else {
+ const fresh = new Set();
+ next.forEach((r) => { if (!knownIds.current.has(r.id)) { fresh.add(r.id); knownIds.current.add(r.id); } });
+ if (fresh.size > 0) setNewIds(fresh);
+ }
+ setRuns(next);
+ setExpanded((current) => current || next[0]?.id || null);
  } catch (loadError) {
  setError(loadError.message);
  } finally {
@@ -334,7 +347,7 @@ export function AgentRunLedger() {
  {loading && runs.length === 0 && <p className="py-6 text-center font-mono text-xs text-[var(--color-ink-faint)]">Loading decision receipts…</p>}
  {error && <p className="flex items-center gap-2 border border-[var(--color-breach)]/20 bg-[var(--color-breach)]/10 p-3 text-xs text-[var(--color-breach)]"><X className="h-3.5 w-3.5" />{error}</p>}
  {!loading && !error && runs.length === 0 && <p className="border border-dashed border-[var(--color-rule)] px-4 py-8 text-center text-xs leading-5 text-[var(--color-ink-faint)]">No recorded runs yet. Start an agent run above; its observations, risk gates, and allocation verdicts will appear here.</p>}
- {runs.map((run) => <RunCard key={run.id} run={run} expanded={expanded === run.id} onToggle={() => setExpanded((current) => current === run.id ? null : run.id)} />)}
+ {runs.map((run) => <RunCard key={run.id} run={run} expanded={expanded === run.id} isNew={newIds.has(run.id)} onToggle={() => setExpanded((current) => current === run.id ? null : run.id)} />)}
  </div>
  </div>
  </section>

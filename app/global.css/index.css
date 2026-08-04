@@ -1582,11 +1582,35 @@ code {
   .fc-agent-pulse__lamp[data-sweep='on'],
   .fc-agent-pulse__lamp[data-sweep='off'] { animation: none !important; opacity: 0.7; }
 }
+
+/* ── Ledger live-tail — new receipt entrance ──
+   When a new run appends to the ledger, it slides in with an accent rail
+   flash so the "something just happened" pull is visible. One-shot,
+   interruptible, reduced-motion-safe. */
+.fc-ledger-enter {
+  animation: fc-ledger-enter 0.6s var(--ease-out) both;
+}
+@keyframes fc-ledger-enter {
+  0% { opacity: 0; transform: translateY(-6px); border-color: var(--color-accent); box-shadow: -3px 0 0 0 var(--color-accent); }
+  40% { opacity: 1; box-shadow: -3px 0 0 0 var(--color-accent); }
+  100% { opacity: 1; transform: translateY(0); box-shadow: -3px 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-ledger-enter { animation: none !important; opacity: 1 !important; transform: none !important; }
+}
 .mc-range {
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
-  background: var(--color-rule-strong);
+  /* Fill track — shows where the current value sits in its range, like a
+     calibrated dial. --knob-fill is set inline per-knob (0–100%). */
+  background: linear-gradient(
+    to right,
+    var(--color-accent) 0%,
+    var(--color-accent) var(--knob-fill, 0%),
+    var(--color-rule-strong) var(--knob-fill, 0%),
+    var(--color-rule-strong) 100%
+  );
   outline: none;
   cursor: pointer;
 }

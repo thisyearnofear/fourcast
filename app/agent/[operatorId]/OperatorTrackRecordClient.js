@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Scale, ShieldCheck, ExternalLink, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Scale, ShieldCheck, ExternalLink, Copy, Check, Fingerprint } from 'lucide-react';
 import { AppShell } from '@/app/components/PageNav';
 import RouteGuide from '@/components/RouteGuide';
 import { BRAND } from '@/constants/brand';
+import TweenNumber from '@/components/motion/TweenNumber';
 
 /**
  * /agent/[operatorId] — the public Track Record URL for a single operator.
@@ -105,6 +106,16 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
 
       {!loading && !error && (
         <>
+          {/* Operator card — the designed sports-card hero. This is the
+              shareable artifact: identity, calibration, and mandate in one
+              glance. */}
+          <OperatorCard
+            name={mandate?.displayName || `Operator ${operatorId?.slice(0, 8) ?? ''}`}
+            operatorId={operatorId}
+            stats={stats}
+            mandate={mandate}
+          />
+
           {/* Mandate the track record was produced under */}
           <section className="platform-open-section mb-8" aria-label="Operator mandate">
             <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
@@ -219,6 +230,110 @@ function StatCell({ label, value, detail }) {
     <div className="bg-[var(--color-paper-deep)] px-3 py-3">
       <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-[var(--color-ink-faint)]">{label}</p>
       <p className="mt-1 font-mono text-xl text-[var(--color-ink)]">{value}</p>
+      {detail && <p className="mt-0.5 text-[10px] text-[var(--color-ink-faint)]">{detail}</p>}
+    </div>
+  );
+}
+
+/* OperatorCard — the designed sports-card hero for a public track record.
+   Identity, calibration, and mandate in one glance. This is what a prospect
+   sees when they click a shared track-record URL — the viral surface. */
+function OperatorCard({ name, operatorId, stats, mandate }) {
+  const total = stats.total_forecasts ?? 0;
+  const resolved = stats.resolved_forecasts ?? 0;
+  const brier = stats.avg_brier_score != null ? Number(stats.avg_brier_score) : null;
+  // Calibration: a Brier score of 0 is perfect; 0.33 is random for a binary
+  // market. Map 0..0.5 to 100..0 so a lower Brier reads as higher calibration.
+  const calibration = brier != null ? Math.max(0, Math.min(100, Math.round((1 - brier / 0.5) * 100))) : null;
+  const calibrationTone = calibration == null ? 'var(--color-ink-faint)' : calibration >= 70 ? 'var(--color-accent)' : calibration >= 50 ? 'var(--color-sealed)' : 'var(--color-breach)';
+
+  return (
+    <section className="relative overflow-hidden border border-[var(--color-rule)] bg-[var(--color-paper-deep)] mb-8" aria-label="Operator card">
+      {/* Sparse hairline grid — mission-control graph paper. */}
+      <div className="pointer-events-none absolute inset-0 mc-grid--sparse opacity-[0.3]" aria-hidden />
+      <div className="relative p-5 sm:p-7">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Fingerprint className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
+              <span className="mc-kicker">Operator track record</span>
+            </div>
+            <h2 className="fc-display mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-[var(--color-ink)] sm:text-4xl">
+              {name}
+            </h2>
+            <p className="mt-1.5 font-mono text-[10px] tracking-[0.04em] text-[var(--color-ink-faint)]">
+              operator {operatorId?.slice(0, 10)}…
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="mc-stamp mc-stamp--allocate">
+              <ShieldCheck className="h-3 w-3" />
+              Mandate-bound
+            </span>
+          </div>
+        </div>
+
+        {/* Calibration + headline stats */}
+        <div className="mt-6 grid gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+          {/* Calibration bar — the "is this operator any good?" answer at a glance. */}
+          <div>
+            <div className="flex items-baseline justify-between">
+              <span className="font-mono text-[10px] uppercase tracking-[0.13em] text-[var(--color-ink-faint)]">Calibration</span>
+              <span className="font-mono text-[10px] text-[var(--color-ink-faint)]">from Brier {brier != null ? brier.toFixed(3) : '—'}</span>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span style={{ color: calibrationTone }}>
+                <TweenNumber
+                  value={calibration ?? 0}
+                  duration={900}
+                  format={(v) => `${Math.round(v)}`}
+                  className="font-display text-4xl font-bold tracking-tight"
+                />
+              </span>
+              <span className="text-2xl font-light" style={{ color: calibrationTone }}>%</span>
+            </div>
+            <div className="mt-2 h-1.5 w-full bg-[var(--color-paper-soft)] overflow-hidden">
+              <div
+                className="h-full transition-[width] duration-700"
+                style={{ width: `${calibration ?? 0}%`, background: calibrationTone }}
+              />
+            </div>
+            <p className="mt-1.5 text-[10px] leading-4 text-[var(--color-ink-faint)]">
+              Lower Brier = better calibration. 100% means every probability matched the outcome frequency.
+            </p>
+          </div>
+
+          {/* Headline stats */}
+          <div className="grid grid-cols-3 gap-px overflow-hidden bg-[var(--color-rule)]">
+            <OperatorStat label="Forecasts" value={total} />
+            <OperatorStat label="Resolved" value={resolved} />
+            <OperatorStat label="High-conf Brier" value={stats.high_conf_brier != null ? Number(stats.high_conf_brier).toFixed(3) : '—'} detail={`${stats.high_conf_count ?? 0} resolved`} />
+          </div>
+        </div>
+
+        {/* Mandate strip — the policy every decision was gated by. */}
+        {mandate && (
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[var(--color-rule)] pt-4 font-mono text-[11px] text-[var(--color-ink-faint)]">
+            <span className="inline-flex items-center gap-1.5 text-[var(--color-ink-muted)]">
+              <Scale className="h-3 w-3 text-[var(--color-accent)]/70" />
+              Mandate {mandate.policyVersion}
+            </span>
+            <span>min edge <span className="text-[var(--color-ink)]">{pct(mandate.minAbsoluteEdge, 0)}</span></span>
+            <span>max alloc <span className="text-[var(--color-ink)]">{pct(mandate.maxAllocationPct, 1)}</span></span>
+            <span>tail ≤ <span className="text-[var(--color-ink)]">{pct(mandate.maxLossProbability, 0)}</span></span>
+            <span>{mandate.simulationRuns?.toLocaleString()} paths</span>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function OperatorStat({ label, value, detail }) {
+  return (
+    <div className="bg-[var(--color-paper-deep)] px-3 py-4">
+      <p className="font-mono text-[9px] uppercase tracking-[0.13em] text-[var(--color-ink-faint)]">{label}</p>
+      <p className="mt-1 font-mono text-2xl text-[var(--color-ink)]">{value}</p>
       {detail && <p className="mt-0.5 text-[10px] text-[var(--color-ink-faint)]">{detail}</p>}
     </div>
   );

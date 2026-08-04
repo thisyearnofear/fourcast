@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { FlaskConical, Loader2, Lock, ShieldCheck, Save, ExternalLink, Check, ChevronDown } from 'lucide-react';
 import InfoTip from '@/components/InfoTip';
+import TweenNumber from '@/components/motion/TweenNumber';
 
 /**
  * MandateBuilder — self-serve mandate config + dry-run preview.
@@ -198,28 +199,7 @@ export default function MandateBuilder() {
         {/* Knobs */}
         <div className="space-y-5">
           {KNOBS.map((knob) => (
-            <div key={knob.key}>
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-ink)]/80">
-                  {knob.label}
-                  <span className="mc-tooltip" tabIndex={0} role="button" aria-label={knob.hint}>
-                    ?
-                    <span className="mc-tooltip__bubble">{knob.hint}</span>
-                  </span>
-                </span>
-                <span className="font-mono text-sm text-[var(--color-accent)]">{knob.format(draft[knob.key])}</span>
-              </div>
-              <input
-                id={`knob-${knob.key}`}
-                type="range"
-                min={knob.min}
-                max={knob.max}
-                step={knob.step}
-                value={draft[knob.key]}
-                onChange={(e) => updateKnob(knob.key, Number(e.target.value))}
-                className="mc-range mt-2 w-full"
-              />
-            </div>
+            <MandateKnob key={knob.key} knob={knob} value={draft[knob.key]} onChange={(v) => updateKnob(knob.key, v)} />
           ))}
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -295,6 +275,46 @@ export default function MandateBuilder() {
         </div>
       </div>
     </section>
+  );
+}
+
+/* MandateKnob — a policy slider that feels like a real instrument.
+   The value rolls via TweenNumber as you drag (not a static label), and
+   the track fills to show where the current value sits in its range. The
+   fill uses the accent so the knob reads as a calibrated dial, not a bare
+   HTML range input. */
+function MandateKnob({ knob, value, onChange }) {
+  const pct = Math.round(((value - knob.min) / (knob.max - knob.min)) * 100);
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-ink)]/80">
+          {knob.label}
+          <span className="mc-tooltip" tabIndex={0} role="button" aria-label={knob.hint}>
+            ?
+            <span className="mc-tooltip__bubble">{knob.hint}</span>
+          </span>
+        </span>
+        <TweenNumber
+          value={value}
+          duration={180}
+          format={knob.format}
+          className="font-mono text-sm text-[var(--color-accent)]"
+        />
+      </div>
+      <input
+        id={`knob-${knob.key}`}
+        type="range"
+        min={knob.min}
+        max={knob.max}
+        step={knob.step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="mc-range mt-2 w-full"
+        style={{ '--knob-fill': `${pct}%` }}
+        aria-label={knob.label}
+      />
+    </div>
   );
 }
 

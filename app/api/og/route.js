@@ -237,6 +237,7 @@ async function renderReceiptOG(searchParams) {
   const hash = searchParams.get("hash");
   const stage = searchParams.get("stage") || "World Cup";
   const verdictStyle = RECEIPT_VERDICT_STYLES[verdict] || RECEIPT_VERDICT_STYLES.REVIEW;
+  const hashDisplay = hash ? (hash.length > 24 ? `${hash.slice(0, 12)}…${hash.slice(-8)}` : hash) : null;
 
   return new ImageResponse(
     (
@@ -251,15 +252,16 @@ async function renderReceiptOG(searchParams) {
           fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
-          padding: "56px 64px",
+          padding: "48px 56px",
         }}
       >
+        {/* Atmosphere — emerald radial + hairline grid (the flight-recorder field) */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 85% 10%, rgba(16,185,129,0.16), transparent 40%), radial-gradient(circle at 10% 90%, rgba(59,130,246,0.08), transparent 40%)",
+              "radial-gradient(circle at 88% 8%, rgba(16,185,129,0.18), transparent 38%), radial-gradient(circle at 8% 92%, rgba(245,158,11,0.08), transparent 36%)",
           }}
         />
         <div
@@ -271,6 +273,7 @@ async function renderReceiptOG(searchParams) {
             backgroundSize: "44px 44px",
           }}
         />
+        {/* Top accent rule — emerald, the verification color */}
         <div
           style={{
             position: "absolute",
@@ -282,60 +285,79 @@ async function renderReceiptOG(searchParams) {
           }}
         />
 
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: "24px", color: "rgba(255,255,255,0.7)" }}>fourcast</div>
-          <div
-            style={{
-              fontSize: "12px",
-              padding: "6px 12px",
-              borderRadius: "999px",
-              background: "rgba(16,185,129,0.15)",
-              color: "#6ee7b7",
-              border: "1px solid rgba(16,185,129,0.3)",
-              textTransform: "uppercase",
-              letterSpacing: "0.12em",
-              fontFamily: "'DM Sans', system-ui",
-              fontWeight: 600,
-            }}
-          >
-            Sealed decision receipt
-          </div>
-          {verdict && (
-            <div
+        {/* Header — brand + the hero stamp */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "24px", color: "rgba(255,255,255,0.7)", fontFamily: "Syne, 'DM Sans', system-ui", fontWeight: 700 }}>fourcast</span>
+            <span
               style={{
-                fontSize: "12px",
-                padding: "6px 12px",
-                borderRadius: "999px",
-                background: verdictStyle.bg,
-                color: verdictStyle.color,
-                border: `1px solid ${verdictStyle.border}`,
+                fontSize: "11px",
+                padding: "5px 11px",
+                background: "rgba(16,185,129,0.12)",
+                color: "#6ee7b7",
+                border: "1px solid rgba(16,185,129,0.3)",
                 textTransform: "uppercase",
-                letterSpacing: "0.12em",
+                letterSpacing: "0.14em",
                 fontFamily: "'DM Sans', system-ui",
                 fontWeight: 600,
               }}
             >
-              {verdict}
-            </div>
-          )}
-        </div>
-
-        <div style={{ marginTop: "auto", position: "relative", zIndex: 1, display: "flex", flexDirection: "column" }}>
+              Decision receipt
+            </span>
+          </div>
+          {/* The hero stamp — SEALED BEFORE OUTCOME. This is the claim no competitor can make. */}
           <div
             style={{
-              fontSize: "15px",
-              color: "rgba(255,255,255,0.45)",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 14px",
+              border: "1.5px solid rgba(245,158,11,0.5)",
+              background: "rgba(245,158,11,0.08)",
+            }}
+          >
+            <div
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                background: "#fcd34d",
+                boxShadow: "0 0 8px rgba(245,158,11,0.6)",
+              }}
+            />
+            <span
+              style={{
+                fontSize: "12px",
+                color: "#fcd34d",
+                fontFamily: "'DM Sans', system-ui",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.16em",
+              }}
+            >
+              Sealed before outcome
+            </span>
+          </div>
+        </div>
+
+        {/* Fixture — the slip headline */}
+        <div style={{ marginTop: "40px", position: "relative", zIndex: 1, display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              fontSize: "13px",
+              color: "rgba(255,255,255,0.4)",
               textTransform: "uppercase",
-              letterSpacing: "0.14em",
+              letterSpacing: "0.16em",
               fontFamily: "'DM Sans', system-ui",
+              fontWeight: 600,
             }}
           >
             {stage}
           </div>
           <div
             style={{
-              marginTop: "12px",
-              fontSize: "68px",
+              marginTop: "10px",
+              fontSize: "64px",
               fontWeight: 700,
               lineHeight: 1.02,
               letterSpacing: "-0.02em",
@@ -343,61 +365,119 @@ async function renderReceiptOG(searchParams) {
               color: "white",
               display: "flex",
               alignItems: "baseline",
-              gap: "20px",
+              gap: "18px",
               flexWrap: "wrap",
             }}
           >
             <span>{home}</span>
-            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "44px" }}>v</span>
+            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "40px", fontWeight: 400 }}>v</span>
             <span>{away}</span>
             {score && (
-              <span style={{ color: "#6ee7b7", fontSize: "44px", fontFamily: "'DM Sans', system-ui", fontWeight: 600 }}>
+              <span style={{ color: "#6ee7b7", fontSize: "40px", fontFamily: "'DM Sans', system-ui", fontWeight: 600 }}>
                 {score}
               </span>
             )}
           </div>
-          <div
+        </div>
+
+        {/* Verdict stamp + the proof chain one-liner */}
+        <div style={{ marginTop: "24px", display: "flex", alignItems: "center", gap: "14px", position: "relative", zIndex: 1 }}>
+          {verdict && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "7px 13px",
+                border: `1.5px solid ${verdictStyle.border}`,
+                background: verdictStyle.bg,
+              }}
+            >
+              <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: verdictStyle.color }} />
+              <span
+                style={{
+                  fontSize: "13px",
+                  color: verdictStyle.color,
+                  fontFamily: "'DM Sans', system-ui",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.14em",
+                }}
+              >
+                {verdict}
+              </span>
+            </div>
+          )}
+          <span
             style={{
-              marginTop: "22px",
-              fontSize: "20px",
-              lineHeight: 1.4,
-              color: "rgba(255,255,255,0.6)",
-              maxWidth: "880px",
+              fontSize: "15px",
+              color: "rgba(255,255,255,0.5)",
               fontFamily: "'DM Sans', system-ui",
             }}
           >
-            Decided from pre-match evidence, sealed into a SHA-256 receipt before the outcome, reconciled against a Solana-anchored Merkle proof.
-          </div>
-          {hash && (
-            <div
-              style={{
-                marginTop: "18px",
-                fontSize: "16px",
-                color: "rgba(255,255,255,0.42)",
-                fontFamily: "monospace",
-                letterSpacing: "0.02em",
-              }}
-            >
-              receipt {hash}
-            </div>
-          )}
+            Mandate → Decision → SHA-256 → TxLINE proof
+          </span>
+        </div>
+
+        {/* The hash block — the cryptographic fingerprint, front and center */}
+        {hashDisplay && (
           <div
             style={{
-              marginTop: "28px",
-              paddingTop: "22px",
-              borderTop: "1px solid rgba(255,255,255,0.08)",
+              marginTop: "auto",
+              padding: "18px 20px",
+              border: "1px solid rgba(245,158,11,0.25)",
+              background: "rgba(245,158,11,0.04)",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              flexDirection: "column",
+              gap: "6px",
+              position: "relative",
+              zIndex: 1,
             }}
           >
-            <span style={{ fontSize: "15px", color: "rgba(255,255,255,0.4)", fontFamily: "'DM Sans', system-ui" }}>
-              Public · verifiable on-chain
+            <span
+              style={{
+                fontSize: "10px",
+                color: "rgba(245,158,11,0.7)",
+                fontFamily: "'DM Sans', system-ui",
+                textTransform: "uppercase",
+                letterSpacing: "0.16em",
+                fontWeight: 600,
+              }}
+            >
+              SHA-256 receipt · tamper-proof
             </span>
-            <span style={{ fontSize: "18px", color: "#6ee7b7", fontFamily: "'DM Sans', system-ui" }}>
-              Audit the proof chain →
+            <span
+              style={{
+                fontSize: "18px",
+                color: "rgba(255,255,255,0.85)",
+                fontFamily: "monospace",
+                letterSpacing: "0.04em",
+              }}
+            >
+              {hashDisplay}
             </span>
           </div>
+        )}
+
+        {/* Footer — the distribution CTA */}
+        <div
+          style={{
+            marginTop: "20px",
+            paddingTop: "18px",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", fontFamily: "'DM Sans', system-ui" }}>
+            Public · verifiable on-chain · no trust required
+          </span>
+          <span style={{ fontSize: "17px", color: "#6ee7b7", fontFamily: "'DM Sans', system-ui", fontWeight: 600 }}>
+            Audit the proof chain →
+          </span>
         </div>
       </div>
     ),
