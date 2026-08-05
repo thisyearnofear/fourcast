@@ -13,7 +13,6 @@ import ProofChain from '@/components/ProofChain';
 import TweenNumber from '@/components/motion/TweenNumber';
 import LiveUTCClock from '@/components/motion/LiveUTCClock';
 import TrustStatsStrip from '@/components/TrustStatsStrip';
-import PrivacyProof from '@/components/PrivacyProof';
 import { usePointerGlow } from '@/hooks/usePointerGlow';
 
 // Canonical Solana receipt — kept below the fold as depth, not competing hero.
@@ -182,7 +181,7 @@ function LandingMobileNav() {
 }
 
 /**
- * CantonHero — first viewport for the room: problem, CTAs, live privacy duel.
+ * CantonHero — wound + door. The felt arc lives on Private; home does not restage it.
  */
 function CantonHero() {
   const [dossier, setDossier] = useState(null);
@@ -194,8 +193,9 @@ function CantonHero() {
       .catch(() => {});
   }, []);
 
-  const checksPassed = dossier?.checks?.filter((c) => c.pass).length;
-  const checksTotal = dossier?.checks?.length;
+  const payout = dossier?.receiptPayload?.payout != null
+    ? Number(dossier.receiptPayload.payout)
+    : null;
 
   return (
     <section className="mt-5 sm:mt-8 fc-life-stage" aria-label="Private prediction markets on Canton">
@@ -204,7 +204,7 @@ function CantonHero() {
           <div className="flex items-center justify-between gap-3">
             <p className="fc-kicker fc-print text-[var(--color-accent)] inline-flex items-center gap-2">
               <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
-              Private size · Canton DevNet
+              Fourcast · Canton
             </p>
             <span className="font-mono text-[10px] text-[var(--color-ink-faint)] tabular-nums">
               <LiveUTCClock />
@@ -216,8 +216,8 @@ function CantonHero() {
             <span className="text-[var(--color-accent)]"> Not here.</span>
           </h1>
 
-          <p className="fc-print mt-3 max-w-xl text-sm leading-6 text-[var(--color-ink-muted)] sm:text-base" style={{ '--print-delay': '140ms' }}>
-            Markets → act → Positions. When size must stay hidden: hide it, see escrow, settle CBTC — no wallet to watch.
+          <p className="fc-print mt-3 max-w-lg text-sm leading-6 text-[var(--color-ink-muted)] sm:text-base" style={{ '--print-delay': '140ms' }}>
+            They see your size on a public book. Here they don&apos;t — then CBTC moves.
           </p>
 
           <div className="fc-print mt-5 flex flex-wrap items-center gap-3" style={{ '--print-delay': '210ms' }}>
@@ -236,7 +236,7 @@ function CantonHero() {
                 href="/proof?chain=canton"
                 className="fc-action mc-action--primary fc-action--pulse inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm"
               >
-                Run the three beats
+                See Private
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Ripple>
@@ -244,41 +244,31 @@ function CantonHero() {
               href="/markets"
               className="inline-flex items-center gap-1.5 border border-[var(--color-rule-strong)] bg-white/[0.03] px-4 py-2.5 text-sm text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-ink)]"
             >
-              Open markets
+              Browse markets
               <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-            <Link
-              href="/positions"
-              className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-ink-faint)] hover:text-[var(--color-accent)]"
-            >
-              Your book
-              <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
 
           {dossier && (
-            <div className="fc-print mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--color-accent)]/20 pt-3 font-mono text-[10px] text-[var(--color-ink-faint)]" style={{ '--print-delay': '280ms' }}>
+            <Link
+              href="/proof?chain=canton#settled-cbtc"
+              className="fc-print mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--color-accent)]/20 pt-3 font-mono text-[10px] text-[var(--color-ink-faint)] no-underline transition-colors hover:text-[var(--color-ink-muted)]"
+              style={{ '--print-delay': '280ms' }}
+            >
               <span className="inline-flex items-center gap-1.5 text-[var(--color-sealed)]">
                 <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
-                settled
+                settled · CBTC
               </span>
-              <span>
-                payout{' '}
-                <span className="text-[var(--color-sealed)]">
-                  {Number(dossier.receiptPayload?.payout ?? 0).toFixed(2)} {dossier.instrument?.id || 'CBTC'}
+              {payout != null && (
+                <span>
+                  payout{' '}
+                  <span className="text-[var(--color-sealed)]">{payout.toFixed(1)}</span>
                 </span>
-              </span>
-              <span>
-                checks{' '}
-                <span className="text-[var(--color-accent)]">{checksPassed}/{checksTotal} ✓</span>
-              </span>
-            </div>
+              )}
+              <span className="text-[var(--color-accent)]">Feel the proof →</span>
+            </Link>
           )}
         </div>
-      </div>
-
-      <div className="mt-3" id="privacy-check">
-        <PrivacyProof />
       </div>
     </section>
   );

@@ -31,10 +31,10 @@ matrix in [`docs/CANTON_ATOMIC_SETTLEMENT.md`](docs/CANTON_ATOMIC_SETTLEMENT.md)
 
 Primary nav: **Markets · Positions · Private**. Private opens `/proof?chain=canton`.
 
-1. Open `/` or **Private** — Canton hero + live privacy check.
-2. Click **Run privacy check** — stakeholder vs non-stakeholder, same ledger.
+1. Open **Private** (`/proof?chain=canton`) — or `/` → **See Private**.
+2. Click **Run the check** — stakeholder vs non-stakeholder, same ledger.
 3. Show the non-stakeholder receives no position (empty / refused).
-4. Scroll to **Settled · CBTC** (pinned DevNet dossier) or settle from **Positions → Private**.
+4. Follow Hide · Lock · Paid to **Settled · CBTC** (pinned DevNet dossier).
 5. Optional: **Talk to us** under the privacy check — operator interview intake (`POST /api/talk`).
 
 Full script: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).

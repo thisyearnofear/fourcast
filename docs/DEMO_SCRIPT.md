@@ -11,8 +11,9 @@ Private → `/proof?chain=canton`. Holder settle → `/positions?view=private`.
 
 > "A large position can leak strategy as soon as it is placed on a public venue. On Canton, the position is visible to its stakeholders and invisible to everyone else. Watch."
 
-**Show:** `/` or nav **Private** → `/proof?chain=canton`.
+**Show:** nav **Private** → `/proof?chain=canton` (or `/` → **See Private**).
 Title: **They can't see your size**. Sticky rail: Hide · Lock · Paid.
+Home is the wound + door — the felt arc is only on Private.
 
 ### Mute test (60–90s, no narration)
 
