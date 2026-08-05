@@ -79,29 +79,37 @@ export default function CantonHolderDashboard() {
               <Wallet className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-sm font-medium text-[var(--color-ink)]">Private · Canton</h2>
+              <p className="mc-kicker">Private · Canton</p>
               {connected && primary ? (
-                <p className="text-[11px] text-[var(--color-ink-faint)] font-mono truncate max-w-[240px]" title={primary.partyId}>
+                <p className="mt-1 text-[11px] text-[var(--color-ink-faint)] font-mono truncate max-w-[240px]" title={primary.partyId}>
                   {primary.hint || primary.partyId}
                 </p>
               ) : (
-                <p className="text-[11px] text-[var(--color-ink-faint)]">
-                  Connect to view and claim private positions
+                <p className="mt-1 text-xs text-[var(--color-ink-muted)] max-w-sm">
+                  Console Wallet for CBTC positions — settle with your key. Not the EVM header wallet.
                 </p>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {!connected ? (
-              <button
-                type="button"
-                onClick={connect}
-                disabled={loading}
-                className="mc-action disabled:opacity-50"
-              >
-                {loading ? 'Connecting…' : 'Connect wallet'}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={connect}
+                  disabled={loading}
+                  className="fc-action px-3 py-2 text-xs disabled:opacity-50"
+                >
+                  {loading ? 'Connecting…' : 'Connect Console Wallet'}
+                </button>
+                <Link
+                  href="/proof?chain=canton"
+                  className="border border-[var(--color-rule)] px-3 py-2 text-xs text-[var(--color-ink-muted)] no-underline hover:text-[var(--color-ink)]"
+                >
+                  Privacy check
+                </Link>
+              </>
             ) : (
               <>
                 <button

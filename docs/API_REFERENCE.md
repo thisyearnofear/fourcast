@@ -230,6 +230,11 @@ The following endpoints support the `/markets`, `/signals`, and `/labs` routes. 
 
 ## Analysis Endpoints
 
+**Auth:** When `BOT_API_SECRET` is set, Telegram/external callers must send
+`x-fourcast-auth: <secret>`. Same-origin browser requests from the Markets UI
+are allowed without that header. `/api/analyze/stream` authenticates the
+*inbound* request (reconstructed inner Requests drop `Sec-Fetch-*` headers).
+
 ### POST /analyze
 Generate AI analysis for a market.
 

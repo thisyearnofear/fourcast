@@ -6,10 +6,10 @@
 
 Primary nav: **Markets · Positions · Private**. Overflow: Signals · Mandate · Labs · Alerts.
 
-- **Landing / Private** — Canton-first hero; live dual-view **privacy check** (stakeholder vs outsider, same ledger); **Settled · CBTC** receipt wall from DevNet dossier
+- **Landing / Private** — Canton-first hero; live dual-view **privacy check** (stakeholder vs outsider, same ledger; compact stake/side so long decimals don’t collide); **Settled · CBTC** receipt wall from DevNet dossier
 - **Talk to us** — operator interview intake under the privacy check (`POST /api/talk` → `operator_leads`). Not a vanity waitlist; feeds [`docs/HACKCANTON_VALIDATION.md`](HACKCANTON_VALIDATION.md)
-- **Markets** — Polymarket/Kalshi browse; densified analyze → act (odds / fair / edge, Trade · Publish · Share). No emoji essay expand
-- **Positions** — Public track record + **Private** Canton holder settle (Console Wallet when gateway available; operator fallback at `/labs/canton`)
+- **Markets** — Polymarket/Kalshi browse; densified analyze → act (odds / fair / edge, Trade · Publish · Share). Analyze works with `BOT_API_SECRET` set (same-origin UI allowed; bots still send `x-fourcast-auth`)
+- **Positions** — **Public** tab: EVM wallet for venue positions (clear empty state + Markets / Private links). **Private** tab: Console Wallet for Canton CBTC settle (not the header EVM wallet); privacy-check link when disconnected
 - **Private Canton settlement** — DevNet: private Daml positions, CIP-56 escrow, **BitSafe CBTC atomic settle proven** (`canton-bitsafe-lifecycle.mjs`). External wallet gateway + mainnet incomplete — see `docs/CANTON_ATOMIC_SETTLEMENT.md`
 
 ### Supporting surfaces (not the HackCanton pitch)

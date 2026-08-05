@@ -201,8 +201,10 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 2. **PrivacyProof** — Live dual-party ledger query proving the binary privacy guarantee
    - Side-by-side: signatory query returns full position data; non-signatory query returns a real empty result set from the ledger
    - Both cells are live API calls — the observer party ID is resolved from `/api/canton/parties` (or an unallocated fallback), then queried in parallel
+   - Stake/side formatted compactly in the Visible pane (trailing zeros trimmed) so long decimals don’t overlap Side
    - Demonstrates structural privacy enforced by Daml signatory/observer system
    - Explains why this matters: whales can take real size without being copied or front-run
+   - **Talk to us** under the proof — operator interview intake (`POST /api/talk`)
 
 3. **CantonSettlementHub** — Full market lifecycle UI
    - Create market (question, settlement asset cBTC/cETH, duration)

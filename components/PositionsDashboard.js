@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useAccount } from 'wagmi';
-import { Briefcase, Wallet } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import { ARC_EXPLORER_TX } from '@/constants/appConstants';
 
 const PAGE_SIZE = 10;
@@ -90,20 +91,48 @@ export function PositionsDashboard({ isNight = false }) {
   const visiblePositions = positions.slice(0, visibleCount);
   const hasMore = visibleCount < positions.length;
 
-  return (
-    <div className="positions-workbench space-y-7">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className={`flex items-center gap-2 text-xl font-medium ${textColor}`}>
-            <Briefcase className="h-5 w-5 text-[var(--color-accent)]" />
-            Positions
-          </h2>
-          <p className={`text-xs ${subtleText} mt-1`}>
-            Manage your open and closed trading positions
+  // No-wallet: one clear empty — skip filter chrome and duplicate page title.
+  if (!walletAddress && !loading) {
+    return (
+      <div className="positions-workbench border-t border-[var(--color-rule)] pt-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 max-w-md">
+            <p className="mc-kicker">Public book</p>
+            <p className={`mt-1.5 text-sm ${textColor}`}>
+              Connect an EVM wallet to see venue positions tied to this address.
+            </p>
+            <p className={`mt-2 text-xs ${subtleText}`}>
+              Private CBTC size lives under the Private tab — different wallet.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/markets" className="fc-action px-3 py-2 text-xs no-underline">
+              Browse markets
+            </Link>
+            <Link
+              href="/positions?view=private"
+              className="border border-[var(--color-rule)] px-3 py-2 text-xs text-[var(--color-ink-muted)] no-underline transition-colors hover:border-[var(--color-rule-strong)] hover:text-[var(--color-ink)]"
+            >
+              Private · Canton
+            </Link>
+          </div>
+        </div>
+        <div className="mt-6 flex items-center gap-3 border border-[var(--color-rule)] bg-[var(--color-paper-deep)] px-4 py-4">
+          <Wallet className="h-4 w-4 shrink-0 text-[var(--color-ink-faint)]" aria-hidden />
+          <p className={`text-xs ${subtleText}`}>
+            Use <span className="text-[var(--color-ink)]">Connect Wallet</span> in the header, then return here.
           </p>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="positions-workbench space-y-5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="mc-kicker">Public book</p>
         <button
+          type="button"
           onClick={fetchPositions}
           disabled={loading}
           className="flex-shrink-0 border border-[var(--color-rule-strong)] bg-[var(--color-paper-soft)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
@@ -131,6 +160,7 @@ export function PositionsDashboard({ isNight = false }) {
         {filters.map((f) => (
           <button
             key={f}
+            type="button"
             onClick={() => setSelectedFilter(f)}
             className={`px-4 py-1.5 text-xs font-medium transition-colors ${
               selectedFilter === f
@@ -148,18 +178,6 @@ export function PositionsDashboard({ isNight = false }) {
           {error}
         </div>
       )}
-      {/* No Wallet Connected */}
-      {!walletAddress && !loading && (
-        <div className={`text-center py-12 px-4 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
-          <div className="flex justify-center mb-3 opacity-40">
-            <Wallet className="h-10 w-10 text-[var(--color-ink-muted)]" />
-          </div>
-          <p className={`text-sm ${textColor} opacity-70 mb-1`}>Connect your wallet</p>
-          <p className={`text-xs ${subtleText}`}>
-            Connect your wallet to view and manage your trading positions
-          </p>
-        </div>
-      )}
       {/* Loading */}
       {loading && walletAddress && (
         <div className="space-y-3">
@@ -170,16 +188,24 @@ export function PositionsDashboard({ isNight = false }) {
       )}
       {/* Empty State */}
       {!loading && !error && walletAddress && positions.length === 0 && (
-        <div className={`text-center py-12 px-4 border bg-[var(--color-paper-raised)] border-[var(--color-rule)]`}>
-          <div className="flex justify-center mb-3 opacity-40">
-            <Briefcase className="h-10 w-10 text-[var(--color-ink-muted)]" />
-          </div>
-          <p className={`text-sm ${textColor} opacity-70 mb-1`}>No {selectedFilter !== 'all' ? selectedFilter.toLowerCase() + ' ' : ''}positions yet</p>
-          <p className={`text-xs ${subtleText}`}>
-            {selectedFilter === 'OPEN'
-              ? 'Open positions will appear here when the autopilot executes trades'
-              : 'Switch to Open tab to see active positions'}
+        <div className="border border-[var(--color-rule)] bg-[var(--color-paper-deep)] px-4 py-6">
+          <p className={`text-sm ${textColor}`}>
+            No {selectedFilter !== 'all' ? `${selectedFilter.toLowerCase()} ` : ''}positions on this address.
           </p>
+          <p className={`mt-1 text-xs ${subtleText}`}>
+            Trade from Markets, or open Private for Canton CBTC size.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href="/markets" className="fc-action px-3 py-2 text-xs no-underline">
+              Markets
+            </Link>
+            <Link
+              href="/positions?view=private"
+              className="border border-[var(--color-rule)] px-3 py-2 text-xs text-[var(--color-ink-muted)] no-underline hover:text-[var(--color-ink)]"
+            >
+              Private · Canton
+            </Link>
+          </div>
         </div>
       )}
       {/* Position Cards */}

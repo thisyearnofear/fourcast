@@ -40,6 +40,27 @@ function extractPositionSummary(sample) {
   return { stake, side, market };
 }
 
+/** Compact stake for the dual-view pane — avoid "0.4000000000" colliding with Side. */
+function formatStake(value) {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) {
+    const s = String(value);
+    return s.length > 12 ? `${s.slice(0, 10)}…` : s;
+  }
+  if (Math.abs(n) >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  // Sub-unit stakes: trim trailing zeros, cap length
+  const fixed = n.toFixed(6).replace(/\.?0+$/, '');
+  return fixed || '0';
+}
+
+function formatSide(value) {
+  if (value == null || value === '') return null;
+  const s = String(value);
+  if (/^(yes|no)$/i.test(s)) return s.toUpperCase() === 'YES' ? 'Yes' : 'No';
+  return s.length > 10 ? `${s.slice(0, 8)}…` : s;
+}
+
 export default function PrivacyProof() {
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -219,17 +240,20 @@ export default function PrivacyProof() {
                 <p className="text-xs text-[var(--color-breach)]">{op.error}</p>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div>
+                  <div className="mb-3 flex items-start gap-4">
+                    <div className="min-w-0 flex-1">
                       <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">Stake</div>
-                      <div className="mt-0.5 font-mono text-2xl font-medium text-[var(--color-accent)] tabular-nums">
-                        {summary?.stake != null ? String(summary.stake) : (op?.openCount || op?.settledCount ? '·' : '—')}
+                      <div
+                        className="mt-0.5 font-mono text-xl font-medium leading-tight text-[var(--color-accent)] tabular-nums sm:text-2xl"
+                        title={summary?.stake != null ? String(summary.stake) : undefined}
+                      >
+                        {formatStake(summary?.stake) ?? (op?.openCount || op?.settledCount ? '·' : '—')}
                       </div>
                     </div>
-                    <div>
+                    <div className="w-14 shrink-0 text-right sm:w-16">
                       <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">Side</div>
-                      <div className="mt-0.5 font-mono text-2xl font-medium text-[var(--color-sealed)] tabular-nums">
-                        {summary?.side != null ? String(summary.side) : (op?.openCount || op?.settledCount ? '·' : '—')}
+                      <div className="mt-0.5 font-mono text-xl font-medium leading-tight text-[var(--color-sealed)] sm:text-2xl">
+                        {formatSide(summary?.side) ?? (op?.openCount || op?.settledCount ? '·' : '—')}
                       </div>
                     </div>
                   </div>

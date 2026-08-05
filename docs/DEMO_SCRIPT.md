@@ -43,7 +43,7 @@ via nav **Private**. Title: **Private position · live**.
 **Primary path (wallet lane — run only if tonight's live verification passed):**
 
 1. Operator resolves the market (`ResolvedYes`) from Canton ops (`/labs/canton`).
-2. Open **Positions → Private** (`/positions?view=private`), Console Wallet connected.
+2. Open **Positions → Private** (`/positions?view=private`). Connect **Console Wallet** (not the EVM header wallet).
 3. Click **"Settle"** — the wallet popup asks the holder to sign.
 4. One signature: position archived, stake leg cancelled, payout leg executed — in the same transaction. Receipt / update id on screen.
 
