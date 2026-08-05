@@ -659,7 +659,7 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-[10px] text-[var(--color-ink-faint)]">
-              Protocol privacy — not a hidden UI.
+              Protocol privacy — enforced by the ledger's party model, not by trusting an operator's database.
             </p>
             {(chromeOpen || !!verdict) && (
               <button

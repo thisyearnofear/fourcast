@@ -385,10 +385,37 @@ export default function CantonProof({ present = false, flow = 'auto' }) {
             </p>
           </div>
         </div>
-        <p className="mt-7 pb-2 text-center font-display text-base font-semibold tracking-tight text-[var(--color-ink)] sm:text-lg">
+        <p className="mt-7 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-faint)]">
+          Settlement rail, not another venue — built to be integrated.
+        </p>
+        <p className="mt-2 pb-2 text-center font-display text-base font-semibold tracking-tight text-[var(--color-ink)] sm:text-lg">
           Built for operators whose size is part of their strategy.
         </p>
       </section>
+
+      {/* Judge Q&A in compressed form — diligence context only; never in
+          present mode, collapsed by default. */}
+      {!present && (
+        <details className="fc-eval-note border-t border-[var(--color-rule)] pt-5">
+          <summary className="cursor-pointer select-none font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)] transition-colors hover:text-[var(--color-ink-muted)]">
+            For evaluators
+          </summary>
+          <div className="mt-3 grid gap-4 pb-2 sm:grid-cols-2">
+            <p className="text-xs leading-5 text-[var(--color-ink-muted)]">
+              <span className="font-semibold text-[var(--color-ink)]">vs centralized venues (Kalshi):</span>{' '}
+              they hide positions inside a private database — the venue still sees every position.
+              Here privacy is the ledger's data model: query the same contract as a non-signatory
+              and it isn't there. Policy vs protocol.
+            </p>
+            <p className="text-xs leading-5 text-[var(--color-ink-muted)]">
+              <span className="font-semibold text-[var(--color-ink)]">vs Canton venues (unhedged.gg):</span>{' '}
+              they run public books by design — public price discovery is the product. Fourcast is
+              the private settlement rail a venue integrates: signatory-only positions, atomic
+              BitSafe CBTC settle. Their success creates demand for this.
+            </p>
+          </div>
+        </details>
+      )}
     </div>
   );
 }
