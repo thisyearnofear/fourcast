@@ -99,7 +99,7 @@ export const BRAND = {
     headline: 'Connect for the action you need:',
     layers: [
       { icon: 'Ξ', name: 'Trade / publish', detail: 'EVM wallet — Polymarket, Kalshi, Arc reputation' },
-      { icon: '◈', name: 'Private settle', detail: 'Console Wallet — Canton CBTC positions' },
+      { icon: '◈', name: 'Private settle', detail: 'Canton CBTC — CIP-0103 when gateway available' },
       { icon: '◎', name: 'Inspect proofs', detail: 'Phantom — Solana receipt anchoring' },
     ],
     cta: 'Connect only what the next action requires.',

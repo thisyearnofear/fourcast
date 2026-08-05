@@ -95,27 +95,58 @@ export default function CantonProof() {
 
   return (
     <div className="space-y-6 fc-life-stage">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="inline-flex items-center gap-2 text-xs text-[var(--color-ink-muted)]">
-          <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
-          Same ledger. Two identities. Protocol privacy.
+      {/* Story spine — judge path in three beats, no wallet required */}
+      <div className="border border-[var(--color-rule)] bg-[var(--color-paper-deep)] px-4 py-3 sm:px-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 max-w-2xl">
+            <p className="mc-kicker">The proof in three beats</p>
+            <ol className="mt-2 grid gap-2 text-xs leading-5 text-[var(--color-ink-muted)] sm:grid-cols-3">
+              <li>
+                <span className="font-mono text-[10px] text-[var(--color-accent)]">1</span>
+                {' '}
+                <span className="text-[var(--color-ink)]">Hide size</span>
+                {' — '}ask the ledger as you, then as the book.
+              </li>
+              <li>
+                <span className="font-mono text-[10px] text-[var(--color-accent)]">2</span>
+                {' '}
+                <span className="text-[var(--color-ink)]">See live escrow</span>
+                {' — '}stake locked on DevNet right now.
+              </li>
+              <li>
+                <span className="font-mono text-[10px] text-[var(--color-sealed)]">3</span>
+                {' '}
+                <span className="text-[var(--color-ink)]">Atomic CBTC</span>
+                {' — '}real BitSafe settle, update id on-ledger.
+              </li>
+            </ol>
+          </div>
+          <button
+            type="button"
+            onClick={() => document.getElementById('settled-cbtc')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="fc-action fc-action--pulse shrink-0 px-3 py-1.5 text-xs"
+          >
+            Jump to CBTC settle
+          </button>
+        </div>
+        <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
+          No wallet to watch this page. Holder-signed settle is CIP-0103-ready; Noders DevNet doesn&apos;t host that gateway — we prove economics server-side + pinned receipt.
         </p>
-        <Link
-          href="/positions?view=private"
-          className="fc-action fc-action--pulse inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
-        >
-          Claim / settle →
-        </Link>
       </div>
 
       <PrivacyProof />
 
       <section className="platform-open-section" aria-label="Ledger">
         <div className="border-b border-[var(--mc-rule)] px-4 py-2.5 sm:px-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Zap className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
-              <span className="mc-kicker">Ledger · live</span>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Zap className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
+                <span className="mc-kicker">Beat 2 · live escrow</span>
+              </div>
+              <p className="mt-1 text-[11px] text-[var(--color-ink-faint)]">
+                Same DevNet the privacy check just queried — value locked until settle.
+              </p>
             </div>
             <HealthDot status={health.status} />
           </div>
@@ -199,12 +230,17 @@ function ReceiptWall() {
   ].filter(([, v]) => v);
 
   return (
-    <section className="platform-open-section fc-receipt-wall" aria-label="Settled CBTC">
-      <div className="border-b border-[var(--color-sealed)]/20 px-4 py-2.5 sm:px-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <FileCheck className="h-3.5 w-3.5 text-[var(--color-sealed)]" />
-            <span className="mc-kicker" style={{ color: 'var(--color-sealed)' }}>Settled · CBTC</span>
+    <section id="settled-cbtc" className="platform-open-section fc-receipt-wall fc-settle-stamp scroll-mt-24" aria-label="Settled CBTC">
+      <div className="border-b border-[var(--color-sealed)]/20 px-4 py-3 sm:px-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <FileCheck className="h-3.5 w-3.5 text-[var(--color-sealed)]" />
+              <span className="mc-kicker" style={{ color: 'var(--color-sealed)' }}>Beat 3 · Settled · CBTC</span>
+            </div>
+            <p className="mt-1.5 max-w-xl text-sm text-[var(--color-ink)]">
+              The money moved — stake cancelled, payout executed, same transaction. Real BitSafe CBTC on DevNet.
+            </p>
           </div>
           <span className="text-[10px] font-mono text-[var(--color-sealed)]/80">
             {r.passed ? '✓ passed' : 'failures'} · {r.capturedAt ? new Date(r.capturedAt).toUTCString().slice(5, 22) : ''}

@@ -2,13 +2,12 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { RefreshCw, Plus, CheckCircle2, Clock, AlertCircle, ChevronDown, ChevronRight, Hash, Eye, EyeOff, Shield, Zap, ArrowRight, Lock, Unlock, X, FileCheck, Coins } from 'lucide-react';
-import { useCantonWalletContext } from '@/app/CantonWalletLayer';
-
 /**
  * CantonSettlementHub — the operator workbench for private prediction markets.
  *
  * Shows the full lifecycle: markets → positions → resolution → settlement.
- * All operations go through the server-side ledger client (no browser extension needed).
+ * All operations go through the server-side ledger client (no browser extension /
+ * Console Wallet). Noders DevNet does not expose a CIP-0103 gateway.
  *
  * Design follows the platform workbench pattern: open sections with evidence rails,
  * no cards unless actionable. The settlement flow is the protagonist.
@@ -362,8 +361,6 @@ function DetailRow({ label, value, mono }) {
 /* ───────────────────── Settlement Hub ───────────────────── */
 
 export default function CantonSettlementHub() {
-  const canton = useCantonWalletContext();
-
   const [parties, setParties] = useState([]);
   const [selectedPartyId, setSelectedPartyId] = useState(null);
   const [markets, setMarkets] = useState([]);
@@ -371,7 +368,7 @@ export default function CantonSettlementHub() {
   const [positions, setPositions] = useState([]);
   const [settledPositions, setSettledPositions] = useState([]);
   const [escrow, setEscrow] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -393,7 +390,12 @@ export default function CantonSettlementHub() {
   }, []);
 
   const loadAll = useCallback(async () => {
-    if (!canton.connected || !selectedPartyId) return;
+    // Server-side ledger APIs — do NOT gate on browser Console Wallet.
+    // Noders DevNet has no CIP-0103 gateway; ops runs via operator OIDC.
+    if (!selectedPartyId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -420,7 +422,7 @@ export default function CantonSettlementHub() {
     } finally {
       setLoading(false);
     }
-  }, [canton.connected, selectedPartyId]);
+  }, [selectedPartyId]);
 
   useEffect(() => {
     loadAll();
@@ -437,6 +439,16 @@ export default function CantonSettlementHub() {
 
   return (
     <div className="space-y-8">
+      <div className="border border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/[0.06] px-4 py-3">
+        <p className="mc-kicker" style={{ color: 'var(--color-sealed)' }}>Ops console · not the judge path</p>
+        <p className="mt-1.5 text-xs text-[var(--color-ink-muted)]">
+          Server-side create / resolve / settle. For the pitch, use{' '}
+          <a href="/proof?chain=canton" className="text-[var(--color-accent)] underline-offset-2 hover:underline">
+            Private
+          </a>
+          {' '}— privacy check + Settled · CBTC. No Console Wallet required here (Noders has no CIP-0103 gateway).
+        </p>
+      </div>
 
       {/* Status strip */}
       <div className="platform-open-section">
@@ -468,9 +480,9 @@ export default function CantonSettlementHub() {
                 <span className="text-[10px] text-[var(--color-accent)]/70 font-mono">{status}</span>
               )}
               <div className="flex items-center gap-1.5">
-                <span className={`h-1.5 w-1.5 rounded-full ${canton.connected ? 'bg-[var(--color-accent)]' : 'bg-white/20'}`} />
+                <span className={`h-1.5 w-1.5 rounded-full ${selectedPartyId ? 'bg-[var(--color-accent)]' : 'bg-white/20'}`} />
                 <span className="text-[10px] text-[var(--color-ink-faint)]">
-                  {canton.connected ? 'Connected' : 'Disconnected'}
+                  {selectedPartyId ? 'Server ledger' : 'No party'}
                 </span>
               </div>
               <button type="button" onClick={loadAll} disabled={loading} className="inline-flex h-7 w-7 items-center justify-center border border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] hover:border-[var(--color-rule-strong)] transition-colors disabled:opacity-40" aria-label="Refresh">
@@ -670,17 +682,6 @@ export default function CantonSettlementHub() {
         </section>
       )}
 
-      {/* Not connected fallback */}
-      {!canton.connected && !loading && (
-        <div className="platform-open-section px-4 py-8 text-center">
-          <p className="text-xs text-[var(--color-ink-faint)] mb-3">
-            Canton ledger not connected. The operator needs server-side OIDC credentials to access the Canton Devnet.
-          </p>
-          <p className="text-[10px] text-[var(--color-ink-faint)] font-mono">
-            Set CANTON_JSON_API_URL + OIDC credentials in .env.local
-          </p>
-        </div>
-      )}
     </div>
   );
 }

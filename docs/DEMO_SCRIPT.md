@@ -41,23 +41,19 @@ via nav **Private**. Title: **Private position · live**.
 
 ## Act 3 — The climax: the holder's own key · 60s
 
-**Primary path (wallet lane — run only if tonight's live verification passed):**
+**Judge path (recommended — Noders has no CIP-0103 gateway; Console Wallet is PixelPlex, not Noders):**
 
-1. Operator resolves the market (`ResolvedYes`) from Canton ops (`/labs/canton`).
-2. Open **Positions → Private** (`/positions?view=private`). Connect **Console Wallet** (not the EVM header wallet).
-3. Click **"Settle"** — the wallet popup asks the holder to sign.
-4. One signature: position archived, stake leg cancelled, payout leg executed — in the same transaction. Receipt / update id on screen.
+1. After privacy check, scroll to **Beat 3 · Settled · CBTC** on `/proof?chain=canton`.
+2. Point at instrument CBTC, holder/operator Δ, payout, settle update id, green checks.
 
-**Say:** "The server never touched that money. It can assemble the payload, but the authorization came from the holder's own key — SettleAsHolder is holder-controlled in the Daml code. The contract fixed the economics; the holder's key moved the money."
+**Say:** "Atomic settle on real BitSafe CBTC — stake cancelled and payout executed in one transaction. Holder-signed SettleAsHolder is in the DAR and CIP-0103-ready; on this NaaS we prove the economics with the pinned DevNet dossier."
 
-**Fallback path (if the wallet lane was cut at the gate):**
+**Ops path (only if asked — `/labs/canton`, server OIDC, not a product surface):**
 
-1. Operator resolves, then settles from the hub (server lane, `Settle` choice) at `/labs/canton`.
-2. Show the settle update id and the archived escrow legs.
+1. Operator resolve + server `Settle` in the hub.
+2. Show settle update id.
 
-**Say:** "Settlement is atomic either way — the Daml offers an operator lane and a holder lane with identical economics; external wallet signing is on the deployed DAR and wiring into the dApp SDK now."
-
-*Never improvise between paths. Decide before walking on stage.*
+*Do not lead with Console Wallet on a Noders stage — it reads as the wrong vendor stack.*
 
 ---
 

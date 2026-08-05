@@ -86,7 +86,7 @@ export default function CantonHolderDashboard() {
                 </p>
               ) : (
                 <p className="mt-1 text-xs text-[var(--color-ink-muted)] max-w-sm">
-                  Console Wallet for CBTC positions — settle with your key. Not the EVM header wallet.
+                  Judge path is privacy check + Settled · CBTC (no wallet). Holder-sign is CIP-0103 when a gateway is available — Noders DevNet doesn&apos;t expose one.
                 </p>
               )}
             </div>
@@ -95,20 +95,21 @@ export default function CantonHolderDashboard() {
           <div className="flex flex-wrap items-center gap-2">
             {!connected ? (
               <>
+                <Link
+                  href="/proof?chain=canton"
+                  className="fc-action px-3 py-2 text-xs no-underline"
+                >
+                  Open privacy proof
+                </Link>
                 <button
                   type="button"
                   onClick={connect}
                   disabled={loading}
-                  className="fc-action px-3 py-2 text-xs disabled:opacity-50"
+                  className="border border-[var(--color-rule)] px-3 py-2 text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] disabled:opacity-50"
+                  title="PixelPlex Console Wallet / CIP-0103 — optional; not hosted by Noders"
                 >
-                  {loading ? 'Connecting…' : 'Connect Console Wallet'}
+                  {loading ? 'Connecting…' : 'Optional: CIP-0103 wallet'}
                 </button>
-                <Link
-                  href="/proof?chain=canton"
-                  className="border border-[var(--color-rule)] px-3 py-2 text-xs text-[var(--color-ink-muted)] no-underline hover:text-[var(--color-ink)]"
-                >
-                  Privacy check
-                </Link>
               </>
             ) : (
               <>
@@ -144,7 +145,7 @@ export default function CantonHolderDashboard() {
                 <p className="font-medium">Wallet connection failed</p>
                 <p className="mt-0.5 opacity-80">{error}</p>
                 <p className="mt-2">
-                  Make sure the Console Wallet extension is installed and pointed at the HackCanton Devnet.
+                  Optional only — PixelPlex Console Wallet (CIP-0103), not Noders. Prefer the privacy proof path without a wallet.
                 </p>
               </div>
             </div>

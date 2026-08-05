@@ -290,10 +290,10 @@ export default function PrivacyProof() {
             <div className="flex items-center gap-2">
               <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
               <Eye className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
-              <span className="mc-kicker" id="privacy-proof-heading">Privacy check · live</span>
+              <span className="mc-kicker" id="privacy-proof-heading">Beat 1 · Privacy check · live</span>
             </div>
             <p className="mt-1.5 text-sm leading-5 text-[var(--color-ink-muted)]">
-              On a public book, size telegraphs. Here we ask the ledger twice — as you, then as the crowd.
+              On a public book, size telegraphs. Ask the ledger twice — as you, then as the crowd. No wallet.
             </p>
           </div>
           <div className="flex flex-col items-end gap-1">
@@ -352,13 +352,29 @@ export default function PrivacyProof() {
               <p className="fc-privacy-act__line">{currentBeat.line}</p>
             )}
             {verdict && !inAct && (
-              <div
-                className={`fc-privacy-verdict mt-3 ${
-                  verdict.tone === 'ok' ? 'fc-privacy-verdict--ok' : 'fc-privacy-verdict--warn'
-                }`}
-              >
-                <Zap className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                <p>{verdict.line}</p>
+              <div className="mt-3 space-y-2">
+                <div
+                  className={`fc-privacy-verdict ${
+                    verdict.tone === 'ok' ? 'fc-privacy-verdict--ok' : 'fc-privacy-verdict--warn'
+                  }`}
+                >
+                  <Zap className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <p>{verdict.line}</p>
+                </div>
+                {verdict.tone === 'ok' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById('settled-cbtc')?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                      })
+                    }
+                    className="fc-action fc-action--pulse w-full px-3 py-2 text-xs sm:w-auto"
+                  >
+                    Next · Beat 3 · Settled CBTC →
+                  </button>
+                )}
               </div>
             )}
           </div>
