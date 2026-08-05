@@ -209,7 +209,7 @@ export function useMarketsData({
  } catch (err) {
  console.error('Analysis failed:', err);
  if (err.status === 429) setShowPricing(true);
- setError('Failed to analyze market');
+ setError(err.message || 'Failed to analyze market');
  } finally {
  setIsLoadingAnalysis(false);
  }
@@ -301,7 +301,7 @@ export function useMarketsData({
  } catch (err) {
  console.error('Analysis failed:', err);
  if (err.status === 429) setShowPricing(true);
- setError('Failed to analyze market');
+ setError(err.message || 'Failed to analyze market');
  } finally {
  setIsLoadingAnalysis(false);
  setPendingMarket(null);

@@ -1,4 +1,4 @@
-import { executeAnalysis } from '../route.js';
+import { executeAnalysis, isAuthorized } from '../route.js';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -15,6 +15,12 @@ function event(controller, payload) {
  * return, so market callers do not lose any existing analysis fields.
  */
 export async function POST(request) {
+  // Auth against the inbound browser/bot request — headers like Sec-Fetch-Site
+  // are stripped if we rebuild a Request for executeAnalysis.
+  if (!isAuthorized(request)) {
+    return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   let body;
   try {
     body = await request.json();
@@ -29,10 +35,10 @@ export async function POST(request) {
         event(controller, { type: 'stage', stage: 'accepted', label: 'Analysis request accepted' });
         const analysisRequest = new Request(new URL('/api/analyze', request.url), {
           method: 'POST',
-          headers: request.headers,
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-        const response = await executeAnalysis(analysisRequest, report);
+        const response = await executeAnalysis(analysisRequest, report, { skipAuth: true });
         const result = await response.json();
         event(controller, {
           type: result.success ? 'complete' : 'error',

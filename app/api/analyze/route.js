@@ -9,10 +9,43 @@ export const maxDuration = 60;
 
 const BOT_API_SECRET = process.env.BOT_API_SECRET || '';
 
-function isAuthorized(request) {
+/**
+ * Bot/Telegram callers must send `x-fourcast-auth: BOT_API_SECRET`.
+ * The Markets UI is same-origin and never sends that header — allow those
+ * through when the secret is set, otherwise every Analyze click 401s.
+ *
+ * Exported so /api/analyze/stream can auth the *inbound* browser request
+ * (reconstructed Requests drop Sec-Fetch-* and fail this check).
+ */
+export function isAuthorized(request) {
+  if (!BOT_API_SECRET) return true;
+
   const auth = request.headers.get('x-fourcast-auth');
-  if (!BOT_API_SECRET) return true; // No secret set = open access
-  return auth === BOT_API_SECRET;
+  if (auth && auth === BOT_API_SECRET) return true;
+
+  const secFetchSite = request.headers.get('sec-fetch-site');
+  if (secFetchSite === 'same-origin' || secFetchSite === 'same-site') return true;
+
+  const host = request.headers.get('host');
+  const origin = request.headers.get('origin');
+  if (host && origin) {
+    try {
+      if (new URL(origin).host === host) return true;
+    } catch {
+      /* ignore bad Origin */
+    }
+  }
+
+  const referer = request.headers.get('referer');
+  if (host && referer) {
+    try {
+      if (new URL(referer).host === host) return true;
+    } catch {
+      /* ignore bad Referer */
+    }
+  }
+
+  return false;
 }
 
 // Rate limiting for AI analysis
@@ -49,13 +82,13 @@ function getClientIdentifier(request) {
          'unknown';
 }
 
-export async function executeAnalysis(request, onStage = () => {}) {
+export async function executeAnalysis(request, onStage = () => {}, { skipAuth = false } = {}) {
   try {
     const report = (stage, label) => {
       try { onStage({ stage, label, at: Date.now() }); } catch { /* progress must never break analysis */ }
     };
-    // Auth check
-    if (!isAuthorized(request)) {
+    // Auth check (stream route auths the browser request, then passes skipAuth)
+    if (!skipAuth && !isAuthorized(request)) {
       return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
