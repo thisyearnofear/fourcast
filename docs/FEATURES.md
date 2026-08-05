@@ -16,7 +16,7 @@ Primary nav: **Markets · Positions · Private**. Overflow: Signals · Mandate �
 
 - **Mandate** (`/agent`) — policy / dry-run / sealed decision; decision dossier drawer; historical lab telemetry
 - **Decision receipts** (`/world-cup`) — 6-stage evidence timeline for fixtures (overflow Labs path)
-- **Signals / Labs / Alerts** — verified calls, autopilot/builder/Canton ops, notifications
+- **Signals / Labs / Alerts** — Signals & Leaders are **WIP** (early seed data; banner on `/signals`). Labs = autopilot/builder/Canton ops. Alerts = notifications.
 
 ### Markets intelligence
 

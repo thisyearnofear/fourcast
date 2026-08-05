@@ -27,12 +27,13 @@ via nav **Private**. Title: **Private position · live**.
 
 ## Act 2 — The absence · 45s
 
-1. In Privacy check, click **"Run privacy check"**.
-2. **Two live ledger queries fire in parallel** — one as a stakeholder, one as an allocated non-stakeholder party.
+1. In Privacy check, click **"Run the check"** (no wallet).
+2. Watch the 3-beat act: **As you** → **As the book** → **Compare**, then the panes uncurtain.
+3. **Two live ledger queries** — holder seat vs public seat — real DevNet, not simulated.
 
-**Show:** **You see it** returns stake/side. **They don't** returns empty / refused — real ledger, not simulated. Optional: expand **Raw ledger**.
+**Show:** **You see it** (Holder) has stake/side. **The book doesn't** is Blind/Blocked. Verdict stamp: size stays private. Optional: **Raw ledger**.
 
-**Say:** "Same ledger, same market, same contract space. This party sees nothing. The position is structurally invisible — not hidden by a frontend, enforced by Daml's signatory model at the protocol level. Both cells are live API calls."
+**Say:** "On Polymarket your size telegraphs. Here we ask the same ledger twice — as the holder, then as everyone else. Stake and side for you; nothing for the crowd. Protocol privacy, not a UI filter."
 
 **Optional (5s):** Point at **Talk to us** under the privacy check — operator interview intake for people who size into public books and care about leakage. Not a vanity waitlist.
 

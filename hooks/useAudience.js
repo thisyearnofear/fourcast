@@ -26,21 +26,21 @@ export const AUDIENCE_MODES = ['analyst', 'operator', 'allocator'];
 export const AUDIENCE_META = {
   analyst: {
     label: 'Analyst',
-    description: 'Discovery, edge, probability',
+    description: 'Lead with evidence & edge',
     homeOrder: ['audience-doors', 'verified-receipt', 'operator-math'],
     agentOrder: ['mandate-control', 'operator-controls', 'historical-lab', 'run-ledger', 'mandate-builder'],
     dossierLead: 'evidence',
   },
   operator: {
     label: 'Operator',
-    description: 'Mandate, receipt, policy gates',
+    description: 'Lead with mandate & policy',
     homeOrder: ['audience-doors', 'verified-receipt', 'operator-math'],
     agentOrder: ['mandate-builder', 'mandate-control', 'operator-controls', 'historical-lab', 'run-ledger'],
     dossierLead: 'decision',
   },
   allocator: {
     label: 'Allocator',
-    description: 'Calibration, adherence, reconciliation',
+    description: 'Lead with calibration & adherence',
     homeOrder: ['audience-doors', 'verified-receipt', 'operator-math'],
     agentOrder: ['run-ledger', 'mandate-control', 'historical-lab', 'operator-controls', 'mandate-builder'],
     dossierLead: 'verification',

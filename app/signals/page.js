@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useSignalPublisher } from '@/hooks/useSignalPublisher';
 import { useChainConnections } from '@/hooks/useChainConnections';
 import useFilterStore from '@/hooks/useFilterStore';
@@ -221,6 +222,26 @@ export default function SignalsPage() {
  }
  >
  <>
+ <div className="mb-6 border border-[var(--color-sealed)]/35 bg-[var(--color-sealed)]/[0.07] px-4 py-3">
+ <p className="mc-kicker" style={{ color: 'var(--color-sealed)' }}>Work in progress</p>
+ <p className="mt-1.5 text-sm text-[var(--color-ink)]">
+ Signals &amp; Leaders are early — seed wallets and thin stats, not a live reputation product yet.
+ </p>
+ <p className="mt-1 text-xs text-[var(--color-ink-muted)]">
+ Publish a receipt from Markets. For the Canton wedge, use Private.
+ </p>
+ <div className="mt-3 flex flex-wrap gap-2">
+ <Link href="/markets" className="fc-action px-3 py-1.5 text-xs no-underline">
+ Markets
+ </Link>
+ <Link
+ href="/proof?chain=canton"
+ className="border border-[var(--color-rule)] px-3 py-1.5 text-xs text-[var(--color-ink-muted)] no-underline hover:text-[var(--color-ink)]"
+ >
+ Private
+ </Link>
+ </div>
+ </div>
  {leaderboard.length > 0 && activeTab !== 'leaderboard' && (
  <div className="mb-6">
  <OperatorSpotlight
@@ -314,12 +335,14 @@ export default function SignalsPage() {
 
  {/* Signals List */}
  {!isLoading && !error && filteredSignals.length === 0 && (
- <div className={`mc-panel p-12 text-center`}>
- <div className="text-6xl mb-4">🎯</div>
- <h3 className={`text-xl font-light ${textColor} mb-2`}>No Predictions Yet</h3>
- <p className={`${textColor} opacity-60 text-sm`}>
- Head to Markets, analyze an event, and make your first call to start building a track record
+ <div className="border border-[var(--color-rule)] bg-[var(--color-paper-deep)] px-4 py-8">
+ <p className={`text-sm ${textColor}`}>No published calls in this feed yet.</p>
+ <p className={`mt-1 text-xs ${textColor} opacity-60`}>
+ Analyze a market and publish a receipt — reputation scoring here is still early.
  </p>
+ <Link href="/markets" className="fc-action mt-4 inline-flex px-3 py-2 text-xs no-underline">
+ Open Markets
+ </Link>
  </div>
  )}
 

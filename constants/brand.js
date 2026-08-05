@@ -62,7 +62,7 @@ export const BRAND = {
   /** Page subtitles — max ~12 words; prefer none when tabs explain. */
   pages: {
     markets: 'Odds, edge, and one action.',
-    signals: 'Verified calls from analysts you can follow.',
+    signals: 'Publish from Markets — follow & reputation still early.',
     agent: 'Policy, dry-run, sealed decision.',
     positions: 'Public track record and private CBTC positions.',
     proof: 'Stake and side hidden. Same ledger, two views.',
