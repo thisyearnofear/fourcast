@@ -174,6 +174,25 @@ function LandingMobileNav() {
  * the full act plays on Private.
  */
 function CantonHero() {
+  // Canonical pinned lifecycle — the fragment must match the proof the
+  // Private page demonstrates (stake 0.4 · YES → payout 0.8 CBTC).
+  const [receipt, setReceipt] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetch('/proof/canton-receipts.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && d) setReceipt(d); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const payload = receipt?.receiptPayload;
+  const heroStake = payload ? Number(payload.stake) : null;
+  const heroSide = payload?.side ? String(payload.side).trim().toUpperCase() : '';
+  const seatValue = Number.isFinite(heroStake) && heroSide
+    ? `${heroStake} · ${heroSide}`
+    : 'STAKE · YES';
+
   return (
     <section className="fc-hero-stage fc-life-stage" aria-label="Private prediction markets on Canton">
       <p className="fc-kicker fc-print text-[var(--color-accent)] inline-flex items-center gap-2">
@@ -189,7 +208,7 @@ function CantonHero() {
       <div className="fc-hero-fragment fc-print mt-9" style={{ '--print-delay': '160ms' }} aria-hidden="true">
         <div className="fc-hero-fragment__seat">
           <span className="fc-hero-fragment__label">Your seat</span>
-          <span className="fc-hero-fragment__value fc-hero-fragment__value--see">500 · YES</span>
+          <span className="fc-hero-fragment__value fc-hero-fragment__value--see">{seatValue}</span>
         </div>
         <div className="fc-hero-fragment__seat fc-hero-fragment__seat--blind">
           <span className="fc-hero-fragment__label inline-flex items-center gap-1.5">

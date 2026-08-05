@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileCheck, Lock, Zap } from 'lucide-react';
 import PrivacyProof from '@/components/PrivacyProof';
 import EduWait from '@/components/EduWait';
@@ -24,6 +24,11 @@ function formatNum(n) {
   return Number(n).toLocaleString();
 }
 
+function formatFixed1(n) {
+  if (n == null || !Number.isFinite(n)) return '—';
+  return Number(n).toFixed(1).replace(/\.0$/, '');
+}
+
 function trimMid(s, head = 18, tail = 10) {
   if (!s) return '—';
   const str = String(s);
@@ -35,7 +40,7 @@ function scrollToBeat(target) {
   document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function WeightCell({ label, value, accent, pulse }) {
+function WeightCell({ label, value, accent, pulse, decimals = 0 }) {
   const flashing = useChangeFlash(value);
   const n = typeof value === 'number' ? value : Number(String(value).replace(/,/g, ''));
   const numeric = Number.isFinite(n);
@@ -52,7 +57,11 @@ function WeightCell({ label, value, accent, pulse }) {
         }`}
       >
         {numeric ? (
-          <TweenNumber value={n} duration={700} format={(v) => Math.round(v).toLocaleString()} />
+          <TweenNumber
+            value={n}
+            duration={700}
+            format={(v) => (decimals > 0 ? v.toFixed(decimals) : Math.round(v).toLocaleString())}
+          />
         ) : (
           value
         )}
@@ -107,7 +116,7 @@ function BeatProgress({ active, completed }) {
   );
 }
 
-export default function CantonProof({ present = false }) {
+export default function CantonProof({ present = false, flow = 'auto' }) {
   const [health, setHealth] = useState({ status: 'checking' });
   const [balance, setBalance] = useState(null);
   const [escrow, setEscrow] = useState(null);
@@ -115,6 +124,11 @@ export default function CantonProof({ present = false }) {
   const [ledgerReady, setLedgerReady] = useState(false);
   const [activeBeat, setActiveBeat] = useState(1);
   const [completed, setCompleted] = useState(() => new Set());
+  const scrollTimers = useRef([]);
+  // Present mode pins the Lock beat to the settled lifecycle — the live
+  // ledger legitimately reads 0/0 there because settle already cleared it.
+  const [pinned, setPinned] = useState(null);
+  const [pinnedTried, setPinnedTried] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -139,6 +153,16 @@ export default function CantonProof({ present = false }) {
     const id = setInterval(load, 15_000);
     return () => clearInterval(id);
   }, [load]);
+
+  useEffect(() => {
+    if (!present) return undefined;
+    let alive = true;
+    fetch('/proof/canton-receipts.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive) { setPinned(d); setPinnedTried(true); } })
+      .catch(() => { if (alive) setPinnedTried(true); });
+    return () => { alive = false; };
+  }, [present]);
 
   // Sticky rail tracks scroll position across beats (retry until ReceiptWall mounts).
   useEffect(() => {
@@ -173,42 +197,61 @@ export default function CantonProof({ present = false }) {
     };
   }, [ledgerReady]);
 
-  // Privacy check completion → mark beat 1 done, nudge toward lock then paid.
-  // Present mode holds each beat for the audience; production nudges briskly.
+  // Privacy check completion → mark beat 1 done, then (automatic flow only)
+  // advance Lock then Paid on deterministic holds. Manual flow (?flow=manual)
+  // leaves progression to the presenter; timers and buttons never coexist,
+  // and a manual jump cancels any chain already scheduled.
   useEffect(() => {
+    const clearScrollTimers = () => {
+      scrollTimers.current.forEach((t) => window.clearTimeout(t));
+      scrollTimers.current = [];
+    };
     const holdPrivacy = present ? 3800 : 900;
     const holdEscrow = present ? 3000 : 1900;
     const onVerdict = (ev) => {
       const tone = ev.detail?.tone;
       setCompleted((prev) => new Set([...prev, 1]));
+      clearScrollTimers();
       if (tone === 'ok') {
         setActiveBeat(2);
-        window.setTimeout(() => {
+        if (flow === 'manual') return;
+        scrollTimers.current.push(window.setTimeout(() => {
           scrollToBeat('beat-2');
-        }, holdPrivacy);
-        window.setTimeout(() => {
+        }, holdPrivacy));
+        scrollTimers.current.push(window.setTimeout(() => {
           setCompleted((prev) => new Set([...prev, 1, 2]));
           setActiveBeat(3);
           scrollToBeat('settled-cbtc');
-        }, holdPrivacy + holdEscrow);
+        }, holdPrivacy + holdEscrow));
       }
     };
     window.addEventListener('fc:privacy-verdict', onVerdict);
-    return () => window.removeEventListener('fc:privacy-verdict', onVerdict);
-  }, [present]);
+    window.addEventListener('fc:privacy-jump', clearScrollTimers);
+    return () => {
+      window.removeEventListener('fc:privacy-verdict', onVerdict);
+      window.removeEventListener('fc:privacy-jump', clearScrollTimers);
+      clearScrollTimers();
+    };
+  }, [present, flow]);
 
   const escrowCount = escrow?.escrow?.length ?? 0;
   const activeAllocations = escrow?.activeAllocations ?? 0;
   const locked = balance?.lockedInEscrow ?? 0;
   const clean = escrow && escrowCount === 0 && activeAllocations === 0;
-  const weightPulse = escrowCount > 0 || locked > 0;
+  const weightPulse = !present && (escrowCount > 0 || locked > 0);
+
+  // Pinned pre-settlement escrow: two legs — holder stake + operator payout
+  // exposure — cleared atomically at settle (see dossier checks/deltas).
+  const pinnedStake = pinned?.receiptPayload?.stake != null ? Number(pinned.receiptPayload.stake) : null;
+  const pinnedLocked = pinned?.receiptPayload?.payout != null ? Number(pinned.receiptPayload.payout) : null;
+  const showPinned = present && pinned != null && pinnedLocked != null;
 
   return (
     <div className="space-y-6 fc-life-stage">
       <BeatProgress active={activeBeat} completed={completed} />
 
       <div id="beat-1" className="fc-beat-section scroll-mt-28">
-        <PrivacyProof present={present} />
+        <PrivacyProof present={present} flow={flow} />
       </div>
 
       <section
@@ -243,12 +286,37 @@ export default function CantonProof({ present = false }) {
           </div>
         )}
 
-        {!ledgerReady ? (
+        {!ledgerReady || (present && !pinnedTried) ? (
           <EduWait
             active
-            line="Reading live DevNet state"
+            line={present ? 'Loading pinned settlement state' : 'Reading live DevNet state'}
             className="fc-edu-wait--block"
           />
+        ) : showPinned ? (
+          <>
+            <div className="grid grid-cols-1 gap-px overflow-hidden bg-[var(--color-paper-soft)] sm:grid-cols-2">
+              <WeightCell
+                label="Escrow legs · at settlement"
+                value={2}
+                accent
+                pulse={false}
+              />
+              <WeightCell
+                label="CBTC locked · before atomic settle"
+                value={pinnedLocked}
+                decimals={1}
+                accent
+                pulse={false}
+              />
+            </div>
+            <div className="px-4 py-3 sm:px-5">
+              <p className="text-xs text-[var(--color-ink-muted)]">
+                At settlement: {formatFixed1(pinnedStake)} holder stake +{' '}
+                {formatFixed1(pinnedLocked - (pinnedStake ?? 0))} operator exposure locked on-ledger —
+                both legs cleared by one atomic transaction. Live escrow now reads 0 / 0.
+              </p>
+            </div>
+          </>
         ) : (
           <>
             <div className="grid grid-cols-1 gap-px overflow-hidden bg-[var(--color-paper-soft)] sm:grid-cols-2">
@@ -359,6 +427,10 @@ function ReceiptWall({ onSeen, present = false }) {
     ? r.deltas.operatorUnlocked.after - r.deltas.operatorUnlocked.before : null;
   const payout = r.receiptPayload?.payout != null ? Number(r.receiptPayload.payout) : null;
   const settleId = r.settle?.updateId || '';
+  // Gross payout = holder stake returned + winnings (operator exposure).
+  // Holder net == winnings; make the economics explicit on stage.
+  const stakeAmt = r.receiptPayload?.stake != null ? Number(r.receiptPayload.stake) : null;
+  const winningsAmt = payout != null && stakeAmt != null ? payout - stakeAmt : null;
 
   const contractRows = [
     ['Market', r.contracts?.market],
@@ -395,13 +467,10 @@ function ReceiptWall({ onSeen, present = false }) {
             {r.passed ? 'PAID — ONE CANTON TRANSACTION' : 'SETTLEMENT RECORDED'}
           </p>
           <p className="fc-climax__detail">
-            Stake cancelled{' · '}Holder{' '}
+            {formatFixed1(stakeAmt)} stake returned{' · '}{formatFixed1(winningsAmt)} winnings{' · '}
+            Holder{' '}
             <span className="font-mono text-[var(--color-accent)]">
-              {holderDelta != null ? `+${formatNum(holderDelta)}` : '—'}
-            </span>
-            {' · '}Operator{' '}
-            <span className="font-mono text-[var(--color-ink)]">
-              {opDelta != null ? formatNum(opDelta) : '—'}
+              {holderDelta != null ? `+${formatNum(holderDelta)}` : '—'} net
             </span>
           </p>
         </div>

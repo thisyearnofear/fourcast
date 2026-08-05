@@ -68,7 +68,7 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-export default function PrivacyProof({ present = false }) {
+export default function PrivacyProof({ present = false, flow = 'auto' }) {
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -177,20 +177,30 @@ export default function PrivacyProof({ present = false }) {
       observerPartyId = 'ExternalObserver::1220non-signatory-demo-party';
     }
 
-    const [openRes, settledRes, observerRes] = await Promise.allSettled([
+    // Holder seat first: the outsider query must target the SAME contract
+    // type the holder pane displays, or the duel compares different state.
+    const [openRes, settledRes] = await Promise.allSettled([
       fetch('/api/canton/positions?type=open'),
       fetch('/api/canton/positions?type=settled'),
-      fetch(`/api/canton/positions?type=open&partyId=${encodeURIComponent(observerPartyId)}`),
     ]);
 
     const read = (r) =>
       r.status === 'fulfilled' && r.value.ok ? r.value.json().catch(() => null) : null;
 
-    const [openData, settledData, observerData] = await Promise.all([
-      read(openRes),
-      read(settledRes),
-      read(observerRes),
-    ]);
+    const [openData, settledData] = await Promise.all([read(openRes), read(settledRes)]);
+
+    // Duel type: open when a live position exists, otherwise the settled
+    // receipt (mirrors the holder sample fallback open→settled).
+    const settledCount = settledData?.count ?? settledData?.positions?.length ?? 0;
+    const openCountRaw = openData?.count ?? openData?.positions?.length ?? 0;
+    const duelType = openCountRaw > 0 ? 'open' : settledCount > 0 ? 'settled' : 'open';
+
+    const observerRes = await fetch(
+      `/api/canton/positions?type=${duelType}&partyId=${encodeURIComponent(observerPartyId)}`,
+    )
+      .then((res) => ({ status: 'fulfilled', value: res }))
+      .catch((reason) => ({ status: 'rejected', reason }));
+    const observerData = await read(observerRes);
 
     return {
       openData,
@@ -198,6 +208,7 @@ export default function PrivacyProof({ present = false }) {
       observerData,
       openRes,
       observerRes,
+      duelType,
       observerPartyId,
       observerPartyName,
       observerIsConfigured,
@@ -297,6 +308,8 @@ export default function PrivacyProof({ present = false }) {
   const currentBeat = ACT_BEATS.find((b) => b.id === actBeat) || null;
   /** Present staging: question + trigger only until the first click. */
   const sealed = present && !inAct && !verdict && !reveal.see && !reveal.blind;
+  /** Present preflight: no position staged → keep the trigger disarmed. */
+  const missingDuel = present && !!state && !summary && !op?.openCount && !op?.settledCount;
 
   return (
     <section className="platform-open-section fc-life-stage" aria-label="Privacy check">
@@ -389,12 +402,14 @@ export default function PrivacyProof({ present = false }) {
                 {verdict.tone === 'ok' && (
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      // Cancel any scheduled Hide→Lock→Paid auto-scroll.
+                      window.dispatchEvent(new CustomEvent('fc:privacy-jump'));
                       document.getElementById('settled-cbtc')?.scrollIntoView({
                         behavior: 'smooth',
                         block: 'start',
-                      })
-                    }
+                      });
+                    }}
                     className="fc-action fc-action--pulse w-full px-3 py-2 text-xs sm:w-auto"
                   >
                     See CBTC settlement →
@@ -423,7 +438,7 @@ export default function PrivacyProof({ present = false }) {
               <button
                 type="button"
                 onClick={() => runQuery({ manual: true })}
-                disabled={refreshing || inAct || (loading && !state)}
+                disabled={refreshing || inAct || (loading && !state) || missingDuel}
                 className="fc-action mc-action--primary fc-action--pulse inline-flex items-center gap-2 px-6 py-3 text-sm disabled:animate-none disabled:opacity-40 sm:text-base"
                 aria-label="Run the privacy check"
               >
@@ -434,6 +449,11 @@ export default function PrivacyProof({ present = false }) {
             {loading && !state && (
               <p className="font-mono text-[10px] text-[var(--color-ink-faint)]">
                 warming the ledger…
+              </p>
+            )}
+            {missingDuel && (
+              <p className="font-mono text-[10px] text-[var(--color-ink-faint)]">
+                Pinned proof unavailable — reload before recording.
               </p>
             )}
           </div>
@@ -493,11 +513,16 @@ export default function PrivacyProof({ present = false }) {
                       <TweenNumber value={op?.settledCount ?? 0} duration={400} format={(v) => String(Math.round(v))} />
                     </span>
                   </p>
-                  {!op?.sample && (
+                  {!op?.sample && !present && (
                     <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
                       No open position staged —{' '}
                       <a href="/labs/canton" className="underline underline-offset-2 hover:text-[var(--color-ink)]">ops console</a>
                       {' '}can place one for the demo.
+                    </p>
+                  )}
+                  {!op?.sample && present && (
+                    <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
+                      Pinned proof unavailable — reload before recording.
                     </p>
                   )}
                 </>
@@ -566,29 +591,35 @@ export default function PrivacyProof({ present = false }) {
               <Zap className="h-3.5 w-3.5 shrink-0" aria-hidden />
               <p>{verdict.line}</p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              {verdict.tone === 'ok' && (
+            {/* Automatic flow plays the timed Hide→Lock→Paid sequence with no
+                competing controls; manual flow (?flow=manual) hands progression
+                to the presenter. Never both at once. */}
+            {flow === 'manual' && (
+              <div className="flex flex-wrap items-center gap-3">
+                {verdict.tone === 'ok' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('fc:privacy-jump'));
+                      document.getElementById('settled-cbtc')?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                      });
+                    }}
+                    className="fc-action fc-action--pulse px-4 py-2 text-xs"
+                  >
+                    See CBTC settlement →
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() =>
-                    document.getElementById('settled-cbtc')?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'start',
-                    })
-                  }
-                  className="fc-action fc-action--pulse px-4 py-2 text-xs"
+                  onClick={() => runQuery({ manual: true })}
+                  className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] transition-colors hover:text-[var(--color-ink)]"
                 >
-                  See CBTC settlement →
+                  Re-run the check
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => runQuery({ manual: true })}
-                className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] transition-colors hover:text-[var(--color-ink)]"
-              >
-                Re-run the check
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         )}
 

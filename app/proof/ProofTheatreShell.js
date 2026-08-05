@@ -11,6 +11,7 @@ import { BRAND } from '@/constants/brand';
  * Private / Proof — chain-agnostic evidence surface.
  * Default: Canton. Solana receipts available via tab.
  * ?present=1 (Canton only): finals recording surface — no app chrome.
+ * &flow=manual: presenter-driven progression instead of timed auto-advance.
  */
 const CHAINS = [
   { id: 'canton', label: 'Canton', icon: '◈' },
@@ -47,6 +48,8 @@ function PresentShell({ children }) {
       <main className="relative z-10 mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-8 sm:px-6">
         {children}
       </main>
+      {/* Presenter-only escape hatch: invisible in recordings, appears on
+          keyboard focus (Tab). Browser back also exits. */}
       <Link href="/proof?chain=canton" className="fc-present__exit">
         Exit present
       </Link>
@@ -58,11 +61,13 @@ export default function ProofTheatreShell() {
   const [chain, setChain] = useState('canton');
   /** null = URL not read yet; keeps first paint free of app chrome. */
   const [present, setPresent] = useState(null);
+  const [flow, setFlow] = useState('auto');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     setPresent(params.get('present') === '1');
+    if (params.get('flow') === 'manual') setFlow('manual');
     const c = params.get('chain');
     if (c === 'solana' || c === 'canton') {
       setChain(c);
@@ -89,7 +94,7 @@ export default function ProofTheatreShell() {
   if (present && isCanton) {
     return (
       <PresentShell>
-        <CantonProof present />
+        <CantonProof present flow={flow} />
       </PresentShell>
     );
   }

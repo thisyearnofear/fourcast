@@ -2057,10 +2057,18 @@ body[data-fc-present='1'] .fc-weight-cell--pulse { animation: none; }
   text-transform: uppercase;
   text-decoration: none;
   color: var(--color-ink-faint);
-  opacity: 0.35;
+  /* Presenter escape hatch: invisible in recordings until keyboard focus. */
+  opacity: 0;
+  pointer-events: none;
   transition: opacity var(--dur-state) linear, color var(--dur-state) linear;
 }
-.fc-present__exit:hover { opacity: 1; color: var(--color-ink-muted); }
+.fc-present__exit:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  color: var(--color-ink-muted);
+  outline: 1px solid var(--color-rule-strong);
+  outline-offset: 3px;
+}
 
 /* Sealed pre-check state — the answer stays shut until the click */
 .fc-present-seal {
