@@ -99,10 +99,10 @@ export function PositionsDashboard({ isNight = false }) {
           <div className="min-w-0 max-w-md">
             <p className="mc-kicker">Public book</p>
             <p className={`mt-1.5 text-sm ${textColor}`}>
-              Connect an EVM wallet to see venue positions tied to this address.
+              Connect an EVM wallet to see venue positions after you act on Markets.
             </p>
             <p className={`mt-2 text-xs ${subtleText}`}>
-              Private CBTC size lives under the Private tab — different wallet.
+              Size that must stay hidden → nav Private (privacy proof · CBTC). Not this wallet.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -110,10 +110,10 @@ export function PositionsDashboard({ isNight = false }) {
               Browse markets
             </Link>
             <Link
-              href="/positions?view=private"
+              href="/proof?chain=canton"
               className="border border-[var(--color-rule)] px-3 py-2 text-xs text-[var(--color-ink-muted)] no-underline transition-colors hover:border-[var(--color-rule-strong)] hover:text-[var(--color-ink)]"
             >
-              Private · Canton
+              See privacy proof
             </Link>
           </div>
         </div>
@@ -193,17 +193,17 @@ export function PositionsDashboard({ isNight = false }) {
             No {selectedFilter !== 'all' ? `${selectedFilter.toLowerCase()} ` : ''}positions on this address.
           </p>
           <p className={`mt-1 text-xs ${subtleText}`}>
-            Trade from Markets, or open Private for Canton CBTC size.
+            Act on Markets first. Hidden size and CBTC settle live on Private.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link href="/markets" className="fc-action px-3 py-2 text-xs no-underline">
               Markets
             </Link>
             <Link
-              href="/positions?view=private"
+              href="/proof?chain=canton"
               className="border border-[var(--color-rule)] px-3 py-2 text-xs text-[var(--color-ink-muted)] no-underline hover:text-[var(--color-ink)]"
             >
-              Private · Canton
+              See privacy proof
             </Link>
           </div>
         </div>

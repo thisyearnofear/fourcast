@@ -6,8 +6,8 @@ import { RefreshCw, Plus, CheckCircle2, Clock, AlertCircle, ChevronDown, Chevron
  * CantonSettlementHub — the operator workbench for private prediction markets.
  *
  * Shows the full lifecycle: markets → positions → resolution → settlement.
- * All operations go through the server-side ledger client (no browser extension /
- * Console Wallet). Noders DevNet does not expose a CIP-0103 gateway.
+ * All operations go through the server-side ledger client (no browser wallet).
+ * Noders DevNet does not expose a CIP-0103 gateway.
  *
  * Design follows the platform workbench pattern: open sections with evidence rails,
  * no cards unless actionable. The settlement flow is the protagonist.
@@ -390,7 +390,7 @@ export default function CantonSettlementHub() {
   }, []);
 
   const loadAll = useCallback(async () => {
-    // Server-side ledger APIs — do NOT gate on browser Console Wallet.
+    // Server-side ledger APIs — do NOT gate on a browser holder wallet.
     // Noders DevNet has no CIP-0103 gateway; ops runs via operator OIDC.
     if (!selectedPartyId) {
       setLoading(false);
@@ -446,7 +446,7 @@ export default function CantonSettlementHub() {
           <a href="/proof?chain=canton" className="text-[var(--color-accent)] underline-offset-2 hover:underline">
             Private
           </a>
-          {' '}— privacy check + Settled · CBTC. No Console Wallet required here (Noders has no CIP-0103 gateway).
+          {' '}— hide size, live escrow, Settled · CBTC. No browser wallet required.
         </p>
       </div>
 

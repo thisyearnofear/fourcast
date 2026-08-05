@@ -342,7 +342,7 @@ export default function MarketsPage() {
  const handlePublishSignal = useCallback(async (settlementLayer = 'arc') => {
  if (!selectedMarket || !analysis) return;
 
- // Canton path: private settlement via Console Wallet
+ // Canton path: private settlement via holder wallet (when gateway available)
  if (settlementLayer === 'canton') {
  try {
  // Save signal to DB with Canton origin
@@ -364,7 +364,7 @@ export default function MarketsPage() {
  return;
  }
 
- // Submit Daml command via Console Wallet (client-side)
+ // Submit Daml command via holder wallet (client-side)
  const { publishPositionOnCanton } = await import('@/services/cantonPublisher');
  const operatorPartyId = process.env.NEXT_PUBLIC_CANTON_OPERATOR_PARTY_ID || '';
  if (!operatorPartyId) {
@@ -393,7 +393,7 @@ export default function MarketsPage() {
  window.dispatchEvent(cantonEvent);
 
  addToast(
- 'Canton position submitted — check Console Wallet to approve',
+ 'Canton position submitted — approve in your holder wallet if prompted',
  'success',
  5000,
  '/signals',

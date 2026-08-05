@@ -93,7 +93,7 @@ via nav **Private**. Title: **Private position · live**.
 - [x] Fresh dossier captured: `canton-bitsafe-lifecycle.mjs` PASSED 6/6 (real CBTC, settle update id `1220f9fd…`), pinned to `public/proof/canton-receipts.json`, deployed + verified live (200) — receipt wall renders it
 - [x] One resolved, escrowed, settle-ready position staged on DevNet (`demo-1785870515670`) — reserved for the wallet-settle click if the gateway unblocks
 - [ ] Morning-of: run `node scripts/canton-stage-demo.mjs` (no `--resolve`) ~10 min before the pitch so Act 3 can do resolve → settle live (Alice 3.8 / operator 1.2 CBTC — ample; script prints the faucet link if short)
-- [ ] Console Wallet connected on the demo machine, holder party active, before walking on stage
+- [ ] ~~Console Wallet on demo machine~~ — skip; judge path is privacy proof + pinned CBTC (no wallet)
 - [ ] CC funded via NODERS wallet tap — reported done by operator, not re-tested this session
 - [ ] Venice API key for live AI analysis — reported done by operator, not re-tested this session
 - [ ] Form: GitHub URL, video link, demo URL — reported submitted by operator, not verified

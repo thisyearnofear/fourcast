@@ -12,7 +12,7 @@ import { createContext, useContext, useState, useCallback } from 'react';
  *
  * The operator must explicitly connect by clicking the operator-ledger button;
  * the server then verifies the backend credentials. End-user holder parties use
- * the separate Console Wallet flow at /canton/holder.
+ * the separate holder-wallet flow at /canton/holder (CIP-0103 when available).
  *
  * Canton provides private settlement (cBTC/cETH) with Daml smart contracts,
  * complementing Arc's public reputation layer and EVM venue execution.

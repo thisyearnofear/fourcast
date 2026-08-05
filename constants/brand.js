@@ -61,21 +61,21 @@ export const BRAND = {
 
   /** Page subtitles — max ~12 words; prefer none when tabs explain. */
   pages: {
-    markets: 'Odds, edge, and one action.',
+    markets: 'Find the edge. Act. Then track it.',
     signals: 'Publish from Markets — follow & reputation still early.',
     agent: 'Policy, dry-run, sealed decision.',
-    positions: 'Public track record and private CBTC positions.',
-    proof: 'Stake and side hidden. Same ledger, two views.',
+    positions: 'Your book — public venues, then private size.',
+    proof: 'Hide size. See escrow. Atomic CBTC.',
     labs: 'Autopilot, Builder, operator tools.',
   },
 
-  /** Nav tooltips — short venue phrases. */
+  /** Nav tooltips — short venue phrases that chain Markets → Positions → Private. */
   nav: {
-    markets: 'Browse and act on markets',
+    markets: 'Find edge · trade or publish',
     signals: 'Follow verified analyst calls',
     agent: 'Mandate and agent loop',
-    positions: 'Your positions and track record',
-    canton: 'Private CBTC privacy proof',
+    positions: 'Your book after you act',
+    canton: 'Private size · CBTC settle',
     labs: 'Autopilot and builder tools',
     alerts: 'Alerts from analysts you follow',
   },
@@ -99,7 +99,7 @@ export const BRAND = {
     headline: 'Connect for the action you need:',
     layers: [
       { icon: 'Ξ', name: 'Trade / publish', detail: 'EVM wallet — Polymarket, Kalshi, Arc reputation' },
-      { icon: '◈', name: 'Private settle', detail: 'Canton CBTC — CIP-0103 when gateway available' },
+      { icon: '◈', name: 'Private settle', detail: 'No wallet needed for the privacy proof — see Private' },
       { icon: '◎', name: 'Inspect proofs', detail: 'Phantom — Solana receipt anchoring' },
     ],
     cta: 'Connect only what the next action requires.',

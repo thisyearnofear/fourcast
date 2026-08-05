@@ -303,11 +303,11 @@ export default function WalletConnect({ isNight = false }) {
  Connected to the server-managed operator ledger.
  </p>
  <Link
- href="/canton/holder"
+ href="/proof?chain=canton"
  onClick={() => setShowDropdown(false)}
  className="inline-flex items-center gap-1 text-[11px] text-[var(--color-accent)] hover:text-[var(--color-accent)]/80 transition-colors"
  >
- Open Console Wallet holder view →
+ See privacy proof →
  </Link>
  </>
  ) : (
@@ -324,11 +324,11 @@ export default function WalletConnect({ isNight = false }) {
  <p className="text-[11px] text-[var(--color-breach)] mt-2">{canton.error}</p>
  )}
  <Link
- href="/canton/holder"
+ href="/proof?chain=canton"
  onClick={() => setShowDropdown(false)}
  className="mt-2 inline-flex w-full items-center justify-center gap-1 px-3 py-2 text-[11px] border border-[var(--color-rule)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] hover:border-[var(--color-accent)]/30 transition-colors"
  >
- Console Wallet holder view →
+ See privacy proof →
  </Link>
  </>
  )}

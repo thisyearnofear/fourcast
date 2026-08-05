@@ -217,7 +217,7 @@ function CantonHero() {
           </h1>
 
           <p className="fc-print mt-3 max-w-xl text-sm leading-6 text-[var(--color-ink-muted)] sm:text-base" style={{ '--print-delay': '140ms' }}>
-            Stake and side hidden from the public book. Atomic settlement in real CBTC.
+            Markets → act → Positions. When size must stay hidden: hide it, see escrow, settle CBTC — no wallet to watch.
           </p>
 
           <div className="fc-print mt-5 flex flex-wrap items-center gap-3" style={{ '--print-delay': '210ms' }}>
@@ -236,7 +236,7 @@ function CantonHero() {
                 href="/proof?chain=canton"
                 className="fc-action mc-action--primary fc-action--pulse inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm"
               >
-                Privacy check
+                Run the three beats
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Ripple>
@@ -248,10 +248,10 @@ function CantonHero() {
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
             <Link
-              href="/positions?view=private"
-              className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-sealed)] hover:text-[var(--color-accent)]"
+              href="/positions"
+              className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-ink-faint)] hover:text-[var(--color-accent)]"
             >
-              Positions · Private
+              Your book
               <ArrowRight className="h-3 w-3" />
             </Link>
           </div>

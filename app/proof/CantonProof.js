@@ -130,7 +130,7 @@ export default function CantonProof() {
           </button>
         </div>
         <p className="mt-2 text-[10px] text-[var(--color-ink-faint)]">
-          No wallet to watch this page. Holder-signed settle is CIP-0103-ready; Noders DevNet doesn&apos;t host that gateway — we prove economics server-side + pinned receipt.
+          No wallet to watch this page. Economics proven on DevNet + pinned CBTC receipt. Holder-signed settle when a gateway is available.
         </p>
       </div>
 

@@ -1,5 +1,5 @@
 /**
- * Canton (Daml) signal publishing via Console Wallet.
+ * Canton (Daml) signal publishing via CIP-0103 holder wallet.
  *
  * ⚠ INCOMPLETE MIGRATION (canton-2.0.0): this module still speaks the v1
  * contract surface (unilateral operator-created PredictionPosition). V2
@@ -67,7 +67,7 @@ export function mapMarketToCantonCommand(marketData, operatorPartyId) {
 }
 
 /**
- * Create a prediction market on Canton via Console Wallet (operator action).
+ * Create a prediction market on Canton via holder wallet (operator action).
  *
  * @param {object} opts
  * @param {object} opts.cantonWallet  The operator's Canton wallet context
@@ -137,7 +137,7 @@ export async function resolveMarketOnCanton({ cantonWallet, marketContractId, ou
  *
  * @param {object} signalData  The signal/prediction data
  * @param {string} operatorPartyId  Canton party ID of the Fourcast operator
- * @param {string} holderPartyId  Canton party ID of the user (from Console Wallet)
+ * @param {string} holderPartyId  Canton party ID of the user (from holder wallet)
  * @returns {object} Daml create command for PredictionPosition
  */
 export function mapSignalToCantonCommand(signalData, operatorPartyId, holderPartyId) {
@@ -173,18 +173,18 @@ export function mapSignalToCantonCommand(signalData, operatorPartyId, holderPart
 }
 
 /**
- * Publish a prediction position on Canton via Console Wallet.
+ * Publish a prediction position on Canton via holder wallet.
  *
  * @param {object} opts
  * @param {object} opts.cantonWallet  The Canton wallet context value (from useCantonWalletContext)
  * @param {object} opts.signalData    The signal/prediction data
  * @param {string} opts.operatorPartyId  Canton party ID of the Fourcast operator
  * @param {boolean} [opts.wait]  If true, wait for transaction finalization
- * @returns {Promise<object>} Transaction result from Console Wallet
+ * @returns {Promise<object>} Transaction result from holder wallet
  */
 export async function publishPositionOnCanton({ cantonWallet, signalData, operatorPartyId, wait = true }) {
   if (!cantonWallet?.connected || !cantonWallet?.account?.partyId) {
-    throw new Error('Connect a Canton wallet (Console Wallet) first');
+    throw new Error('Connect a Canton holder wallet first');
   }
   if (!operatorPartyId) {
     throw new Error('Fourcast operator party ID not configured');
@@ -217,7 +217,7 @@ export async function publishPositionOnCanton({ cantonWallet, signalData, operat
  */
 export async function settlePositionOnCanton({ cantonWallet, positionContractId, resolutionContractId, wait = true }) {
   if (!cantonWallet?.connected || !cantonWallet?.account?.partyId) {
-    throw new Error('Connect a Canton wallet (Console Wallet) first');
+    throw new Error('Connect a Canton holder wallet first');
   }
   if (!resolutionContractId) {
     throw new Error('MarketResolution contract ID is required — cannot settle without proof of resolution');

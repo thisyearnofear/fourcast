@@ -76,7 +76,7 @@ export async function POST(request) {
 
     // Wallet-facing commands reference the package by name (#fourcast:...),
     // which wallet gateways resolve — this is the same format the proven
-    // Console Wallet path already uses, and it survives DAR re-uploads whose
+    // Holder-wallet path already uses, and it survives DAR re-uploads whose
     // package ids change.
     submission.commands[0].ExerciseCommand.templateId =
       queryTemplateId('Fourcast.PredictionPosition', 'PredictionPosition');

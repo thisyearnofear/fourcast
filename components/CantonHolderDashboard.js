@@ -86,7 +86,7 @@ export default function CantonHolderDashboard() {
                 </p>
               ) : (
                 <p className="mt-1 text-xs text-[var(--color-ink-muted)] max-w-sm">
-                  Judge path is privacy check + Settled · CBTC (no wallet). Holder-sign is CIP-0103 when a gateway is available — Noders DevNet doesn&apos;t expose one.
+                  Privacy proof needs no wallet — open Private in the nav. Holder signing lands when a CIP-0103 gateway is available.
                 </p>
               )}
             </div>
@@ -101,15 +101,19 @@ export default function CantonHolderDashboard() {
                 >
                   Open privacy proof
                 </Link>
-                <button
-                  type="button"
-                  onClick={connect}
-                  disabled={loading}
-                  className="border border-[var(--color-rule)] px-3 py-2 text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] disabled:opacity-50"
-                  title="PixelPlex Console Wallet / CIP-0103 — optional; not hosted by Noders"
-                >
-                  {loading ? 'Connecting…' : 'Optional: CIP-0103 wallet'}
-                </button>
+                <details className="text-xs text-[var(--color-ink-faint)]">
+                  <summary className="cursor-pointer list-none underline-offset-2 hover:underline [&::-webkit-details-marker]:hidden">
+                    Advanced
+                  </summary>
+                  <button
+                    type="button"
+                    onClick={connect}
+                    disabled={loading}
+                    className="mt-2 border border-[var(--color-rule)] px-3 py-2 text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] disabled:opacity-50"
+                  >
+                    {loading ? 'Connecting…' : 'Connect holder wallet'}
+                  </button>
+                </details>
               </>
             ) : (
               <>
@@ -145,7 +149,11 @@ export default function CantonHolderDashboard() {
                 <p className="font-medium">Wallet connection failed</p>
                 <p className="mt-0.5 opacity-80">{error}</p>
                 <p className="mt-2">
-                  Optional only — PixelPlex Console Wallet (CIP-0103), not Noders. Prefer the privacy proof path without a wallet.
+                  Holder wallet is optional. Prefer{' '}
+                  <Link href="/proof?chain=canton" className="underline underline-offset-2">
+                    privacy proof
+                  </Link>
+                  {' '}— no wallet required.
                 </p>
               </div>
             </div>

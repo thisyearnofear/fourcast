@@ -111,7 +111,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  <span>◈</span> Canton (Private)
  </div>
  <div className="text-[10px] opacity-60 mt-1">
- {canton?.connected ? 'cBTC/cETH · hidden sizes' : 'Connect Console Wallet first'}
+ {canton?.connected ? 'cBTC/cETH · hidden sizes' : 'Connect Canton holder wallet first'}
  </div>
  </button>
  )}
