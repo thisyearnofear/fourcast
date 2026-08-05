@@ -16,12 +16,19 @@ import TalkToUs from '@/components/TalkToUs';
 
 const POLL_MS = 10_000;
 
-/** One line each — PM voice, not protocol jargon. */
-const ACT_BEATS = [
-  { id: 1, label: 'As you', line: 'Ask the ledger as the holder…' },
-  { id: 2, label: 'As the book', line: 'Ask again as everyone else…' },
-  { id: 3, label: 'Compare', line: 'Same market. Two answers.' },
-];
+/**
+ * One line each — Alice takes the position; Bob queries the same contract
+ * as a non-signatory. Names come from real configured parties when known.
+ */
+function actBeats(holderName, outsiderName) {
+  const holder = holderName || 'the holder';
+  const outsider = outsiderName || 'everyone else';
+  return [
+    { id: 1, label: `As ${holderName || 'you'}`, line: `Ask the ledger as ${holder} — the position holder…` },
+    { id: 2, label: `As ${outsiderName || 'the book'}`, line: `Ask the same contract as ${outsider} — not a signatory…` },
+    { id: 3, label: 'Compare', line: 'Same market. Two answers.' },
+  ];
+}
 
 function formatTime(d) {
   if (!d) return '—';
@@ -99,6 +106,7 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
       observerPartyId,
       observerPartyName,
       observerIsConfigured,
+      holderPartyName,
     } = payload;
 
     const operatorOpen = openData?.positions || [];
@@ -134,6 +142,7 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
       observerPartyId,
       observerPartyName,
       observerIsConfigured,
+      holderPartyName,
     });
     setLastUpdated(new Date());
     setLoading(false);
@@ -148,7 +157,9 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
         ? `Ledger error — ${opError}`
         : 'Could not reach Canton DevNet — try again in a moment.';
     } else if (outsiderBlind && (openCount > 0 || settledCount > 0 || sample)) {
-      line = 'Same market. Your size stays private — the public book sees nothing.';
+      line = holderPartyName && observerPartyName
+        ? `Same market. ${holderPartyName}'s size stays private — ${observerPartyName} sees nothing.`
+        : 'Same market. Your size stays private — the public book sees nothing.';
     } else if (outsiderBlind) {
       line = 'Public book is empty. Stakeholder side blank? Stage a position in ops.';
     } else {
@@ -162,14 +173,24 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
     let observerPartyId = null;
     let observerPartyName = null;
     let observerIsConfigured = false;
+    /** The holder seat asks as Alice (a configured holder party) — never the
+     * operator — so the names on screen are honest. Falls back to the API's
+     * operator default only when no holder party is configured. */
+    let holderPartyId = null;
+    let holderPartyName = null;
     try {
       const partiesRes = await fetch('/api/canton/parties');
       const partiesData = await partiesRes.json();
-      const observer = partiesData.parties?.find((p) => p.role === 'observer')
-        || partiesData.parties?.find((p) => p.name === 'Bob');
+      const partiesList = partiesData.parties || [];
+      const observer = partiesList.find((p) => p.role === 'observer')
+        || partiesList.find((p) => p.name === 'Bob');
       observerPartyId = observer?.id || null;
       observerPartyName = observer?.name || null;
       observerIsConfigured = !!observerPartyId;
+      const holder = partiesList.find((p) => p.role === 'holder' && p.name === 'Alice')
+        || partiesList.find((p) => p.role === 'holder');
+      holderPartyId = holder?.id || null;
+      holderPartyName = holder?.name || null;
     } catch {
       /* fall through */
     }
@@ -179,9 +200,10 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
 
     // Holder seat first: the outsider query must target the SAME contract
     // type the holder pane displays, or the duel compares different state.
+    const holderParam = holderPartyId ? `&partyId=${encodeURIComponent(holderPartyId)}` : '';
     const [openRes, settledRes] = await Promise.allSettled([
-      fetch('/api/canton/positions?type=open'),
-      fetch('/api/canton/positions?type=settled'),
+      fetch(`/api/canton/positions?type=open${holderParam}`),
+      fetch(`/api/canton/positions?type=settled${holderParam}`),
     ]);
 
     const read = (r) =>
@@ -212,6 +234,7 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
       observerPartyId,
       observerPartyName,
       observerIsConfigured,
+      holderPartyName,
     };
   }, []);
 
@@ -303,9 +326,12 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
   const op = state?.operator;
   const obs = state?.observer;
   const summary = op?.summary;
+  const holderName = state?.holderPartyName || null;
+  const outsiderName = state?.observerPartyName || null;
+  const beats = actBeats(holderName, outsiderName);
   const reacting = reactKey > 0 && actBeat === 0;
   const inAct = actBeat > 0;
-  const currentBeat = ACT_BEATS.find((b) => b.id === actBeat) || null;
+  const currentBeat = beats.find((b) => b.id === actBeat) || null;
   /** Present staging: question + trigger only until the first click. */
   const sealed = present && !inAct && !verdict && !reveal.see && !reveal.blind;
   /** Present preflight: no position staged → keep the trigger disarmed. */
@@ -373,7 +399,7 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
         {!present && (inAct || verdict) && (
           <div className="fc-privacy-act mb-4" aria-live="polite">
             <div className="fc-privacy-act__rail" role="list">
-              {ACT_BEATS.map((b) => (
+              {beats.map((b) => (
                 <span
                   key={b.id}
                   role="listitem"
@@ -476,11 +502,11 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
                   YOU SEE IT
                 </h3>
                 <span className="ml-auto border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--color-accent)]">
-                  Holder
+                  {holderName ? `${holderName} · Position holder` : 'Holder'}
                 </span>
               </div>
               <p className="mb-4 text-[11px] leading-4 text-[var(--color-ink-faint)]">
-                Your seat — stake and side.
+                {holderName ? `${holderName}'s seat — stake and side, as a signatory.` : 'Your seat — stake and side.'}
               </p>
               {op?.error ? (
                 <p className="text-xs text-[var(--color-breach)]">{op.error}</p>
@@ -556,11 +582,13 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
                   THE BOOK DOESN&rsquo;T
                 </h3>
                 <span className="ml-auto border border-[var(--color-breach)]/30 bg-[var(--color-breach)]/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--color-breach)]">
-                  {obs?.refused ? 'Blocked' : 'Blind'}
+                  {obs?.refused ? 'Blocked' : outsiderName ? `${outsiderName} · Not a signatory` : 'Blind'}
                 </span>
               </div>
               <p className="mb-4 text-[11px] leading-4 text-[var(--color-ink-faint)]">
-                Rivals. Copy-traders. The tape.
+                {outsiderName
+                  ? `${outsiderName} represents the public book — rivals, copy-traders, everyone outside the trade.`
+                  : 'Rivals. Copy-traders. The tape.'}
               </p>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
@@ -574,8 +602,8 @@ export default function PrivacyProof({ present = false, flow = 'auto' }) {
               </div>
               <p className="text-xs text-[var(--color-ink-muted)]">
                 {obs?.refused
-                  ? 'Ledger refused the read — not a party to the trade.'
-                  : `${obs?.count ?? 0} positions on this seat.`}
+                  ? 'Ledger refused the read — not a signatory to the trade.'
+                  : `Ledger returned no position visible to ${outsiderName || 'this seat'}.`}
               </p>
             </div>
           </div>

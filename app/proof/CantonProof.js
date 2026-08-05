@@ -245,6 +245,8 @@ export default function CantonProof({ present = false, flow = 'auto' }) {
   const pinnedStake = pinned?.receiptPayload?.stake != null ? Number(pinned.receiptPayload.stake) : null;
   const pinnedLocked = pinned?.receiptPayload?.payout != null ? Number(pinned.receiptPayload.payout) : null;
   const showPinned = present && pinned != null && pinnedLocked != null;
+  // Human name for the holder when the pinned party is Alice's demo party.
+  const holderPossessive = pinned?.parties?.holder?.split('::')[0] === 'AliceHolder' ? "Alice's" : 'Holder';
 
   return (
     <div className="space-y-6 fc-life-stage">
@@ -311,8 +313,8 @@ export default function CantonProof({ present = false, flow = 'auto' }) {
             </div>
             <div className="px-4 py-3 sm:px-5">
               <p className="text-xs text-[var(--color-ink-muted)]">
-                At settlement: {formatFixed1(pinnedStake)} holder stake +{' '}
-                {formatFixed1(pinnedLocked - (pinnedStake ?? 0))} operator exposure locked on-ledger —
+                At settlement: {holderPossessive} {formatFixed1(pinnedStake)} stake + operator's{' '}
+                {formatFixed1(pinnedLocked - (pinnedStake ?? 0))} exposure locked on-ledger —
                 both legs cleared by one atomic transaction. Live escrow now reads 0 / 0.
               </p>
             </div>
@@ -365,6 +367,28 @@ export default function CantonProof({ present = false, flow = 'auto' }) {
       </section>
 
       <ReceiptWall present={present} onSeen={() => setCompleted((prev) => new Set([...prev, 1, 2, 3]))} />
+
+      {/* Closing strip — trajectory, not features. Never auto-scrolled:
+          Paid stays the climax; this is read only after. */}
+      <section className="fc-next-strip" aria-label="Live today and what comes next">
+        <div className="grid gap-6 border-t border-[var(--color-rule)] pt-7 sm:grid-cols-2">
+          <div>
+            <p className="mc-kicker">Live today</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
+              Private positions and atomic BitSafe CBTC settlement on Canton DevNet.
+            </p>
+          </div>
+          <div>
+            <p className="mc-kicker">Next</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
+              More attesters · Mainnet hardening · Holder-signed settlement when a CIP-0103 gateway is available.
+            </p>
+          </div>
+        </div>
+        <p className="mt-7 pb-2 text-center font-display text-base font-semibold tracking-tight text-[var(--color-ink)] sm:text-lg">
+          Built for operators whose size is part of their strategy.
+        </p>
+      </section>
     </div>
   );
 }
@@ -431,6 +455,7 @@ function ReceiptWall({ onSeen, present = false }) {
   // Holder net == winnings; make the economics explicit on stage.
   const stakeAmt = r.receiptPayload?.stake != null ? Number(r.receiptPayload.stake) : null;
   const winningsAmt = payout != null && stakeAmt != null ? payout - stakeAmt : null;
+  const holderLabel = r.parties?.holder?.split('::')[0] === 'AliceHolder' ? 'Alice' : 'Holder';
 
   const contractRows = [
     ['Market', r.contracts?.market],
@@ -468,7 +493,7 @@ function ReceiptWall({ onSeen, present = false }) {
           </p>
           <p className="fc-climax__detail">
             {formatFixed1(stakeAmt)} stake returned{' · '}{formatFixed1(winningsAmt)} winnings{' · '}
-            Holder{' '}
+            {holderLabel}{' '}
             <span className="font-mono text-[var(--color-accent)]">
               {holderDelta != null ? `+${formatNum(holderDelta)}` : '—'} net
             </span>
