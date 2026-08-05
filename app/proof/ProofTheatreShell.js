@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AppShell, SecondaryNav } from '@/app/components/PageNav';
 import CantonProof from './CantonProof';
@@ -9,18 +10,59 @@ import { BRAND } from '@/constants/brand';
 /**
  * Private / Proof — chain-agnostic evidence surface.
  * Default: Canton. Solana receipts available via tab.
+ * ?present=1 (Canton only): finals recording surface — no app chrome.
  */
 const CHAINS = [
   { id: 'canton', label: 'Canton', icon: '◈' },
   { id: 'solana', label: 'Solana', icon: '◎' },
 ];
 
+/**
+ * PresentShell — the stage. Identity, evidence, climax. Nothing else:
+ * no nav, wallet, status, chain switcher, or footer (footer hidden via
+ * body[data-fc-present] in global CSS while mounted).
+ */
+function PresentShell({ children }) {
+  useEffect(() => {
+    document.body.dataset.fcPresent = '1';
+    return () => {
+      delete document.body.dataset.fcPresent;
+    };
+  }, []);
+
+  return (
+    <div className="fc-present relative flex min-h-screen flex-col text-[var(--color-ink)]">
+      <div className="platform-atmosphere" aria-hidden="true" />
+      <header className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-6 sm:px-6">
+        <span className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/5 font-display text-sm text-[var(--color-accent)]">
+            {BRAND.emoji}
+          </span>
+          <span className="font-display text-base tracking-tight">{BRAND.name}</span>
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-faint)]">
+          Canton · BitSafe
+        </span>
+      </header>
+      <main className="relative z-10 mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-8 sm:px-6">
+        {children}
+      </main>
+      <Link href="/proof?chain=canton" className="fc-present__exit">
+        Exit present
+      </Link>
+    </div>
+  );
+}
+
 export default function ProofTheatreShell() {
   const [chain, setChain] = useState('canton');
+  /** null = URL not read yet; keeps first paint free of app chrome. */
+  const [present, setPresent] = useState(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
+    setPresent(params.get('present') === '1');
     const c = params.get('chain');
     if (c === 'solana' || c === 'canton') {
       setChain(c);
@@ -39,6 +81,18 @@ export default function ProofTheatreShell() {
   };
 
   const isCanton = chain === 'canton';
+
+  if (present === null) {
+    return <div className="min-h-screen" aria-hidden="true" />;
+  }
+
+  if (present && isCanton) {
+    return (
+      <PresentShell>
+        <CantonProof present />
+      </PresentShell>
+    );
+  }
 
   return (
     <AppShell

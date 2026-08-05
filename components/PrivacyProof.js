@@ -68,7 +68,7 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-export default function PrivacyProof() {
+export default function PrivacyProof({ present = false }) {
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -78,7 +78,9 @@ export default function PrivacyProof() {
   /** 0 = idle; 1–3 = act beats; 4 = curtain / verdict */
   const [actBeat, setActBeat] = useState(0);
   const [verdict, setVerdict] = useState(null);
-  const [reveal, setReveal] = useState({ see: true, blind: true });
+  // Present mode starts sealed: data preloads invisibly, the visual answer
+  // stays shut until "Run the check" is pressed.
+  const [reveal, setReveal] = useState(() => (present ? { see: false, blind: false } : { see: true, blind: true }));
   /** Raw ledger / Talk to us stay muted until the duel lands. */
   const [chromeOpen, setChromeOpen] = useState(false);
   const mountedRef = useRef(true);
@@ -239,8 +241,10 @@ export default function PrivacyProof() {
       setRefreshing(false);
 
       if (!manual) {
-        setReveal({ see: true, blind: true });
-        setChromeOpen(true);
+        if (!present) {
+          setReveal({ see: true, blind: true });
+          setChromeOpen(true);
+        }
         return;
       }
 
@@ -291,9 +295,12 @@ export default function PrivacyProof() {
   const reacting = reactKey > 0 && actBeat === 0;
   const inAct = actBeat > 0;
   const currentBeat = ACT_BEATS.find((b) => b.id === actBeat) || null;
+  /** Present staging: question + trigger only until the first click. */
+  const sealed = present && !inAct && !verdict && !reveal.see && !reveal.blind;
 
   return (
-    <section className="platform-open-section fc-life-stage" aria-labelledby="privacy-proof-heading">
+    <section className="platform-open-section fc-life-stage" aria-label="Privacy check">
+      {!present && (
       <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 max-w-xl">
@@ -335,14 +342,22 @@ export default function PrivacyProof() {
           </div>
         </div>
       </div>
+      )}
 
       {reacting && (
         <div key={`duel-${reactKey}`} className="fc-duel-pulse mx-4 sm:mx-5" aria-hidden="true" />
       )}
 
       <div ref={duelRef} className="px-4 py-4 sm:px-5">
+        {/* Present mode: one narrator line while the act plays. */}
+        {present && inAct && currentBeat && (
+          <p className="fc-privacy-act__line mb-4" aria-live="polite">
+            {currentBeat.line}
+          </p>
+        )}
+
         {/* Act rail — three beats, one active line */}
-        {(inAct || verdict) && (
+        {!present && (inAct || verdict) && (
           <div className="fc-privacy-act mb-4" aria-live="polite">
             <div className="fc-privacy-act__rail" role="list">
               {ACT_BEATS.map((b) => (
@@ -382,7 +397,7 @@ export default function PrivacyProof() {
                     }
                     className="fc-action fc-action--pulse w-full px-3 py-2 text-xs sm:w-auto"
                   >
-                    Feel the settle →
+                    See CBTC settlement →
                   </button>
                 )}
               </div>
@@ -390,7 +405,39 @@ export default function PrivacyProof() {
           </div>
         )}
 
-        {loading && !state ? (
+        {sealed ? (
+          <div className="fc-present-seal" role="group" aria-label="Privacy check staged — run on cue">
+            <p className="mc-kicker">Same market</p>
+            <p className="fc-present-seal__line">Ask the ledger twice.</p>
+            <Ripple
+              options={{
+                amplitude: 0.32,
+                refraction: 55,
+                shine: 0.4,
+                dispersion: 0.28,
+                decay: 1.35,
+                wavelength: 70,
+              }}
+              style={{ display: 'inline-block' }}
+            >
+              <button
+                type="button"
+                onClick={() => runQuery({ manual: true })}
+                disabled={refreshing || inAct || (loading && !state)}
+                className="fc-action mc-action--primary fc-action--pulse inline-flex items-center gap-2 px-6 py-3 text-sm disabled:animate-none disabled:opacity-40 sm:text-base"
+                aria-label="Run the privacy check"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing || inAct ? 'animate-spin' : ''}`} />
+                {inAct || refreshing ? 'Running…' : 'Run the check'}
+              </button>
+            </Ripple>
+            {loading && !state && (
+              <p className="font-mono text-[10px] text-[var(--color-ink-faint)]">
+                warming the ledger…
+              </p>
+            )}
+          </div>
+        ) : loading && !state ? (
           <p className="fc-edu-wait fc-edu-wait--block text-xs text-[var(--color-ink-muted)]" role="status">
             <span className="mc-lamp mc-lamp--live shrink-0" aria-hidden="true" />
             Loading two ledger seats…
@@ -509,6 +556,43 @@ export default function PrivacyProof() {
           </div>
         )}
 
+        {present && verdict && !inAct && (
+          <div className="mt-5 space-y-3" aria-live="polite">
+            <div
+              className={`fc-privacy-verdict ${
+                verdict.tone === 'ok' ? 'fc-privacy-verdict--ok' : 'fc-privacy-verdict--warn'
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <p>{verdict.line}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {verdict.tone === 'ok' && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    document.getElementById('settled-cbtc')?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'start',
+                    })
+                  }
+                  className="fc-action fc-action--pulse px-4 py-2 text-xs"
+                >
+                  See CBTC settlement →
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => runQuery({ manual: true })}
+                className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] transition-colors hover:text-[var(--color-ink)]"
+              >
+                Re-run the check
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!present && (
         <div
           className={`fc-privacy-chrome mt-3 border-t border-[var(--mc-rule)] pt-3 transition-opacity duration-500 ${
             chromeOpen || (!inAct && !reacting && !!state) ? 'opacity-100' : 'opacity-30'
@@ -552,6 +636,7 @@ export default function PrivacyProof() {
 
           {(chromeOpen || !!verdict) && <TalkToUs source="privacy" />}
         </div>
+        )}
       </div>
     </section>
   );

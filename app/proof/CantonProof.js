@@ -107,7 +107,7 @@ function BeatProgress({ active, completed }) {
   );
 }
 
-export default function CantonProof() {
+export default function CantonProof({ present = false }) {
   const [health, setHealth] = useState({ status: 'checking' });
   const [balance, setBalance] = useState(null);
   const [escrow, setEscrow] = useState(null);
@@ -174,7 +174,10 @@ export default function CantonProof() {
   }, [ledgerReady]);
 
   // Privacy check completion → mark beat 1 done, nudge toward lock then paid.
+  // Present mode holds each beat for the audience; production nudges briskly.
   useEffect(() => {
+    const holdPrivacy = present ? 3800 : 900;
+    const holdEscrow = present ? 3000 : 1900;
     const onVerdict = (ev) => {
       const tone = ev.detail?.tone;
       setCompleted((prev) => new Set([...prev, 1]));
@@ -182,17 +185,17 @@ export default function CantonProof() {
         setActiveBeat(2);
         window.setTimeout(() => {
           scrollToBeat('beat-2');
-        }, 900);
+        }, holdPrivacy);
         window.setTimeout(() => {
           setCompleted((prev) => new Set([...prev, 1, 2]));
           setActiveBeat(3);
           scrollToBeat('settled-cbtc');
-        }, 2800);
+        }, holdPrivacy + holdEscrow);
       }
     };
     window.addEventListener('fc:privacy-verdict', onVerdict);
     return () => window.removeEventListener('fc:privacy-verdict', onVerdict);
-  }, []);
+  }, [present]);
 
   const escrowCount = escrow?.escrow?.length ?? 0;
   const activeAllocations = escrow?.activeAllocations ?? 0;
@@ -205,7 +208,7 @@ export default function CantonProof() {
       <BeatProgress active={activeBeat} completed={completed} />
 
       <div id="beat-1" className="fc-beat-section scroll-mt-28">
-        <PrivacyProof />
+        <PrivacyProof present={present} />
       </div>
 
       <section
@@ -216,15 +219,21 @@ export default function CantonProof() {
         <div className="border-b border-[var(--mc-rule)] px-4 py-3 sm:px-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <Lock className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
-                <span className="mc-kicker">Locked on the ledger</span>
-              </div>
-              <p className="mt-1.5 max-w-md text-sm text-[var(--color-ink)]">
+              {!present && (
+                <div className="flex items-center gap-2">
+                  <Lock className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
+                  <span className="mc-kicker">Locked on the ledger</span>
+                </div>
+              )}
+              <p className={
+                present
+                  ? 'font-display text-lg font-semibold leading-snug text-[var(--color-ink)] sm:text-xl'
+                  : 'mt-1.5 max-w-md text-sm text-[var(--color-ink)]'
+              }>
                 Stake is weight — not a UI toggle. Same DevNet. Value held until settle.
               </p>
             </div>
-            <HealthDot status={health.status} />
+            {!present && <HealthDot status={health.status} />}
           </div>
         </div>
 
@@ -287,12 +296,12 @@ export default function CantonProof() {
         )}
       </section>
 
-      <ReceiptWall onSeen={() => setCompleted((prev) => new Set([...prev, 1, 2, 3]))} />
+      <ReceiptWall present={present} onSeen={() => setCompleted((prev) => new Set([...prev, 1, 2, 3]))} />
     </div>
   );
 }
 
-function ReceiptWall({ onSeen }) {
+function ReceiptWall({ onSeen, present = false }) {
   const [r, setR] = useState(null);
   const [showContracts, setShowContracts] = useState(false);
   const [showChecks, setShowChecks] = useState(false);
@@ -367,49 +376,84 @@ function ReceiptWall({ onSeen }) {
       }`}
       aria-label="Settled CBTC"
     >
-      <div className="border-b border-[var(--color-sealed)]/20 px-4 py-4 sm:px-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <FileCheck className="h-3.5 w-3.5 text-[var(--color-sealed)]" />
-              <span className="mc-kicker" style={{ color: 'var(--color-sealed)' }}>The money moved</span>
-            </div>
-            <p className="mt-2 max-w-lg font-display text-xl font-semibold leading-tight text-[var(--color-ink)] sm:text-2xl">
-              Stake cancelled. Payout executed.
-              <span className="text-[var(--color-sealed)]"> Same transaction.</span>
-            </p>
-          </div>
-          <span className="text-[10px] font-mono text-[var(--color-sealed)]/80">
-            {r.passed ? '✓ passed' : 'failures'} · {r.capturedAt ? new Date(r.capturedAt).toUTCString().slice(5, 22) : ''}
-          </span>
-        </div>
-      </div>
-
-      <div className="fc-cbtc-hero px-4 py-6 sm:px-6">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">Payout · BitSafe CBTC</p>
-        <p className="mt-2 font-mono text-5xl font-light leading-none text-[var(--color-sealed)] tabular-nums sm:text-6xl">
-          {stampIn && payout != null ? (
-            <TweenNumber value={payout} duration={900} format={(v) => v.toFixed(1)} />
-          ) : (
-            payout != null ? formatNum(payout) : '—'
-          )}
-        </p>
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-[var(--color-ink-muted)]">
-          <span>
-            Holder{' '}
+      {present ? (
+        /* Climax: one number, one sponsor, one transaction. */
+        <div className="fc-climax px-4 py-14 text-center sm:px-6 sm:py-20">
+          <p className="fc-climax__amount font-mono tabular-nums">
+            <span className="fc-climax__number">
+              {stampIn && payout != null ? (
+                <TweenNumber value={payout} duration={1100} format={(v) => v.toFixed(1)} />
+              ) : (
+                payout != null ? formatNum(payout) : '—'
+              )}
+            </span>
+            <span className="fc-climax__unit">
+              BITSAFE {r.instrument?.id || 'CBTC'}
+            </span>
+          </p>
+          <p className="fc-climax__state">
+            {r.passed ? 'PAID — ONE CANTON TRANSACTION' : 'SETTLEMENT RECORDED'}
+          </p>
+          <p className="fc-climax__detail">
+            Stake cancelled{' · '}Holder{' '}
             <span className="font-mono text-[var(--color-accent)]">
               {holderDelta != null ? `+${formatNum(holderDelta)}` : '—'}
             </span>
-          </span>
-          <span>
-            Operator{' '}
+            {' · '}Operator{' '}
             <span className="font-mono text-[var(--color-ink)]">
               {opDelta != null ? formatNum(opDelta) : '—'}
             </span>
-          </span>
-          <span className="font-mono text-[var(--color-sealed)]">{r.instrument?.id || 'CBTC'}</span>
+          </p>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="border-b border-[var(--color-sealed)]/20 px-4 py-4 sm:px-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <FileCheck className="h-3.5 w-3.5 text-[var(--color-sealed)]" />
+                  <span className="mc-kicker" style={{ color: 'var(--color-sealed)' }}>The money moved</span>
+                </div>
+                <p className="mt-2 max-w-lg font-display text-xl font-semibold leading-tight text-[var(--color-ink)] sm:text-2xl">
+                  Stake cancelled. Payout executed.
+                  <span className="text-[var(--color-sealed)]"> Same transaction.</span>
+                </p>
+              </div>
+              <span className="text-[10px] font-mono text-[var(--color-sealed)]/80">
+                {r.passed ? '✓ passed' : 'failures'} · {r.capturedAt ? new Date(r.capturedAt).toUTCString().slice(5, 22) : ''}
+              </span>
+            </div>
+          </div>
+
+          <div className="fc-cbtc-hero px-4 py-6 sm:px-6">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">Payout</p>
+            <p className="mt-2 flex flex-wrap items-baseline gap-x-3 font-mono text-5xl font-light leading-none text-[var(--color-sealed)] tabular-nums sm:text-6xl">
+              {stampIn && payout != null ? (
+                <TweenNumber value={payout} duration={900} format={(v) => v.toFixed(1)} />
+              ) : (
+                payout != null ? formatNum(payout) : '—'
+              )}
+              <span className="text-lg tracking-wide text-[var(--color-sealed)]/80 sm:text-xl">
+                BitSafe {r.instrument?.id || 'CBTC'}
+              </span>
+            </p>
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-[var(--color-ink-muted)]">
+              <span>
+                Holder{' '}
+                <span className="font-mono text-[var(--color-accent)]">
+                  {holderDelta != null ? `+${formatNum(holderDelta)}` : '—'}
+                </span>
+              </span>
+              <span>
+                Operator{' '}
+                <span className="font-mono text-[var(--color-ink)]">
+                  {opDelta != null ? formatNum(opDelta) : '—'}
+                </span>
+              </span>
+            </div>
+          </div>
+        </>
+      )}
 
       {settleId && (
         <div className="border-t border-white/[0.06] px-4 py-4 sm:px-5">
@@ -423,7 +467,7 @@ function ReceiptWall({ onSeen }) {
         </div>
       )}
 
-      {Array.isArray(r.checks) && r.checks.length > 0 && checksReady && (
+      {!present && Array.isArray(r.checks) && r.checks.length > 0 && checksReady && (
         <div className="fc-checks-reveal border-t border-white/[0.06] px-4 py-2.5 sm:px-5">
           <button
             type="button"
@@ -444,7 +488,7 @@ function ReceiptWall({ onSeen }) {
         </div>
       )}
 
-      {contractRows.length > 0 && (
+      {!present && contractRows.length > 0 && (
         <div className="border-t border-white/[0.06] px-4 py-2.5 sm:px-5">
           <button
             type="button"

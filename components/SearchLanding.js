@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { ArrowRight, Fingerprint, ShieldCheck, LineChart, Lock, FileCheck, Menu, X } from 'lucide-react';
+import { ArrowRight, Fingerprint, Lock, EyeOff, FileCheck, Menu, X } from 'lucide-react';
 import PageNav, { HomeLink, PRIMARY_NAV, OVERFLOW_NAV } from '@/app/components/PageNav';
 import { useInView } from '@/hooks/useInView';
 import { useParallax } from '@/hooks/useParallax';
@@ -11,9 +11,7 @@ import Ripple from '@/components/canvasui/Ripple';
 import Reveal from '@/components/motion/Reveal';
 import ProofChain from '@/components/ProofChain';
 import TweenNumber from '@/components/motion/TweenNumber';
-import LiveUTCClock from '@/components/motion/LiveUTCClock';
 import TrustStatsStrip from '@/components/TrustStatsStrip';
-import { usePointerGlow } from '@/hooks/usePointerGlow';
 
 // Canonical Solana receipt — kept below the fold as depth, not competing hero.
 const VERIFIED_RECEIPT = {
@@ -26,29 +24,18 @@ const VERIFIED_RECEIPT = {
   settlementTx: '3W6Y7rtQGgcBuD8ih8hUK2pZTSFZM4yDwXRfAudxmhdzDDjDnpNqEN2TZzGBW6F4PEKhmUbfv2NWXWAQf8wwhduB',
 };
 
-// Compact venue doors — one line each.
-const VENUE_DOORS = [
-  {
-    id: 'markets',
-    href: '/markets',
-    icon: LineChart,
-    title: 'Markets',
-    short: 'Odds, edge, one action.',
-  },
-  {
-    id: 'private',
-    href: '/proof?chain=canton',
-    icon: Lock,
-    title: 'Private settle',
-    short: 'Hidden size. Atomic CBTC.',
-  },
-  {
-    id: 'positions',
-    href: '/positions',
-    icon: ShieldCheck,
-    title: 'Track record',
-    short: 'Public + private positions.',
-  },
+// Asymmetric venue doors: Private is the differentiator, markets/positions
+// are reduced to a compact secondary line.
+const PRIVATE_DOOR = {
+  href: '/proof?chain=canton',
+  title: 'Private settle',
+  short: 'Hidden size. Escrow-locked stake. Atomic CBTC payout.',
+  cta: 'Run the privacy check',
+};
+
+const SECONDARY_VENUES = [
+  { href: '/markets', title: 'Markets', short: 'odds, edge, one action' },
+  { href: '/positions', title: 'Positions', short: 'public + private track record' },
 ];
 
 const SUPPORTING_CAPS = [
@@ -58,24 +45,25 @@ const SUPPORTING_CAPS = [
   { href: '/positions?view=private', label: 'Claim win', desc: 'Holder settle on Canton' },
 ];
 
-function DoorCard({ door, delay }) {
-  const Icon = door.icon;
+function PrivateDoor() {
   return (
     <Link
-      href={door.href}
-      style={{ '--door-delay': `${delay}ms` }}
-      className="fc-door group relative flex flex-col gap-1.5 overflow-hidden border border-[var(--color-rule)] bg-white/[0.02] p-4 transition hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-accent)]/[0.04] sm:p-5"
+      href={PRIVATE_DOOR.href}
+      style={{ '--door-delay': '0ms' }}
+      className="fc-door fc-door--primary group relative flex flex-col gap-2 overflow-hidden border border-[var(--color-accent)]/35 p-6 transition hover:border-[var(--color-accent)]/60 sm:p-8"
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg font-semibold tracking-tight text-[var(--color-ink)]">
-          {door.title}
+        <h3 className="font-display text-2xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-3xl">
+          {PRIVATE_DOOR.title}
         </h3>
-        <Icon className="h-4 w-4 text-[var(--color-ink-faint)] transition group-hover:text-[var(--color-accent)]" />
+        <Lock className="h-5 w-5 text-[var(--color-accent)]/70 transition group-hover:text-[var(--color-accent)]" />
       </div>
-      <p className="text-sm leading-5 text-[var(--color-ink-muted)]">{door.short}</p>
-      <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-[var(--color-accent)]">
-        Open
-        <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
+      <p className="max-w-md text-sm leading-6 text-[var(--color-ink-muted)] sm:text-base">
+        {PRIVATE_DOOR.short}
+      </p>
+      <span className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-accent)]">
+        {PRIVATE_DOOR.cta}
+        <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
       </span>
     </Link>
   );
@@ -181,94 +169,57 @@ function LandingMobileNav() {
 }
 
 /**
- * CantonHero — wound + door. The felt arc lives on Private; home does not restage it.
+ * CantonHero — the confession line owns the canvas. No card, no clock, one
+ * doorway. A single fragment of the holder/book duet sits under the claim;
+ * the full act plays on Private.
  */
 function CantonHero() {
-  const [dossier, setDossier] = useState(null);
-  const heroGlowRef = usePointerGlow({ tilt: 1.5 });
-  useEffect(() => {
-    fetch('/proof/canton-receipts.json')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setDossier(d); })
-      .catch(() => {});
-  }, []);
-
-  const payout = dossier?.receiptPayload?.payout != null
-    ? Number(dossier.receiptPayload.payout)
-    : null;
-
   return (
-    <section className="mt-5 sm:mt-8 fc-life-stage" aria-label="Private prediction markets on Canton">
-      <div ref={heroGlowRef} className="fc-hero-depth fc-glow fc-tilt relative p-5 sm:p-7">
-        <div className="relative z-[1]">
-          <div className="flex items-center justify-between gap-3">
-            <p className="fc-kicker fc-print text-[var(--color-accent)] inline-flex items-center gap-2">
-              <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
-              Fourcast · Canton
-            </p>
-            <span className="font-mono text-[10px] text-[var(--color-ink-faint)] tabular-nums">
-              <LiveUTCClock />
-            </span>
-          </div>
+    <section className="fc-hero-stage fc-life-stage" aria-label="Private prediction markets on Canton">
+      <p className="fc-kicker fc-print text-[var(--color-accent)] inline-flex items-center gap-2">
+        <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
+        Fourcast · Canton
+      </p>
 
-          <h1 className="fc-display fc-print mt-3 text-3xl font-extrabold leading-[0.98] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-[3.5rem]" style={{ '--print-delay': '70ms' }}>
-            Every size bet in public is a confession.
-            <span className="text-[var(--color-accent)]"> Not here.</span>
-          </h1>
+      <h1 className="fc-display fc-print mt-4 max-w-5xl text-4xl font-extrabold leading-[1.0] tracking-tight text-[var(--color-ink)] sm:text-6xl lg:text-7xl" style={{ '--print-delay': '70ms' }}>
+        Every size bet in public is a confession.
+        <span className="text-[var(--color-accent)]"> Not here.</span>
+      </h1>
 
-          <p className="fc-print mt-3 max-w-lg text-sm leading-6 text-[var(--color-ink-muted)] sm:text-base" style={{ '--print-delay': '140ms' }}>
-            They see your size on a public book. Here they don&apos;t — then CBTC moves.
-          </p>
-
-          <div className="fc-print mt-5 flex flex-wrap items-center gap-3" style={{ '--print-delay': '210ms' }}>
-            <Ripple
-              options={{
-                amplitude: 0.32,
-                refraction: 55,
-                shine: 0.4,
-                dispersion: 0.28,
-                decay: 1.35,
-                wavelength: 70,
-              }}
-              style={{ display: 'inline-block' }}
-            >
-              <Link
-                href="/proof?chain=canton"
-                className="fc-action mc-action--primary fc-action--pulse inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm"
-              >
-                See Private
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Ripple>
-            <Link
-              href="/markets"
-              className="inline-flex items-center gap-1.5 border border-[var(--color-rule-strong)] bg-white/[0.03] px-4 py-2.5 text-sm text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-ink)]"
-            >
-              Browse markets
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-
-          {dossier && (
-            <Link
-              href="/proof?chain=canton#settled-cbtc"
-              className="fc-print mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--color-accent)]/20 pt-3 font-mono text-[10px] text-[var(--color-ink-faint)] no-underline transition-colors hover:text-[var(--color-ink-muted)]"
-              style={{ '--print-delay': '280ms' }}
-            >
-              <span className="inline-flex items-center gap-1.5 text-[var(--color-sealed)]">
-                <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
-                settled · CBTC
-              </span>
-              {payout != null && (
-                <span>
-                  payout{' '}
-                  <span className="text-[var(--color-sealed)]">{payout.toFixed(1)}</span>
-                </span>
-              )}
-              <span className="text-[var(--color-accent)]">Feel the proof →</span>
-            </Link>
-          )}
+      <div className="fc-hero-fragment fc-print mt-9" style={{ '--print-delay': '160ms' }} aria-hidden="true">
+        <div className="fc-hero-fragment__seat">
+          <span className="fc-hero-fragment__label">Your seat</span>
+          <span className="fc-hero-fragment__value fc-hero-fragment__value--see">500 · YES</span>
         </div>
+        <div className="fc-hero-fragment__seat fc-hero-fragment__seat--blind">
+          <span className="fc-hero-fragment__label inline-flex items-center gap-1.5">
+            <EyeOff className="h-3 w-3" aria-hidden="true" />
+            The public book
+          </span>
+          <span className="fc-hero-fragment__value">— · —</span>
+        </div>
+      </div>
+
+      <div className="fc-print mt-9" style={{ '--print-delay': '250ms' }}>
+        <Ripple
+          options={{
+            amplitude: 0.32,
+            refraction: 55,
+            shine: 0.4,
+            dispersion: 0.28,
+            decay: 1.35,
+            wavelength: 70,
+          }}
+          style={{ display: 'inline-block' }}
+        >
+          <Link
+            href="/proof?chain=canton"
+            className="fc-action mc-action--primary fc-action--pulse inline-flex items-center justify-center gap-2 px-6 py-3 text-sm sm:text-base"
+          >
+            See Private
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Ripple>
       </div>
     </section>
   );
@@ -315,28 +266,30 @@ export default function SearchLanding() {
           </div>
           <div className="flex items-center gap-2">
             <LandingMobileNav />
-            <Link
-              href="/proof?chain=canton"
-              className="fc-action inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-sm"
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Private proof</span>
-              <span className="sm:hidden">Private</span>
-            </Link>
           </div>
         </header>
 
         <CantonHero />
 
-        {/* Compact venue doors — below the Canton first viewport */}
+        {/* Asymmetric venue doors: Private dominant, others a quiet line */}
         <section
           ref={doorsRef}
-          className={`fc-doors mt-8 grid gap-3 sm:grid-cols-3 ${doorsIn ? 'fc-doors--in' : ''}`}
+          className={`fc-doors mt-4 ${doorsIn ? 'fc-doors--in' : ''}`}
           aria-label="Venue entry points"
         >
-          {VENUE_DOORS.map((door, i) => (
-            <DoorCard key={door.id} door={door} delay={i * 60} />
-          ))}
+          <PrivateDoor />
+          <p className="fc-venue-line">
+            <span>Also:</span>
+            {SECONDARY_VENUES.map((v, i) => (
+              <span key={v.href} className="inline-flex items-baseline gap-2">
+                {i > 0 && <span aria-hidden="true">·</span>}
+                <Link href={v.href}>
+                  {v.title}
+                  <span className="fc-venue-line__desc"> — {v.short}</span>
+                </Link>
+              </span>
+            ))}
+          </p>
         </section>
 
         <TrustStatsStrip />
