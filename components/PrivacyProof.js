@@ -79,6 +79,8 @@ export default function PrivacyProof() {
   const [actBeat, setActBeat] = useState(0);
   const [verdict, setVerdict] = useState(null);
   const [reveal, setReveal] = useState({ see: true, blind: true });
+  /** Raw ledger / Talk to us stay muted until the duel lands. */
+  const [chromeOpen, setChromeOpen] = useState(false);
   const mountedRef = useRef(true);
   const duelRef = useRef(null);
   const verdictTimerRef = useRef(null);
@@ -206,6 +208,7 @@ export default function PrivacyProof() {
       busyRef.current = true;
       setRefreshing(true);
       setVerdict(null);
+      setChromeOpen(false);
       setReveal({ see: false, blind: false });
       setActBeat(1);
       if (verdictTimerRef.current) {
@@ -220,13 +223,13 @@ export default function PrivacyProof() {
 
     try {
       if (manual) {
-        await sleep(650);
+        await sleep(780);
         if (!mountedRef.current) return;
         setActBeat(2);
-        await sleep(700);
+        await sleep(900);
         if (!mountedRef.current) return;
         setActBeat(3);
-        await sleep(550);
+        await sleep(620);
       }
 
       const payload = await ledgerPromise;
@@ -237,24 +240,31 @@ export default function PrivacyProof() {
 
       if (!manual) {
         setReveal({ see: true, blind: true });
+        setChromeOpen(true);
         return;
       }
 
-      // Curtain: holder pane, then public book, then punchline stamp.
+      // Curtain: holder pops hard; blind stays empty longer; then wipe.
       setReactKey((k) => k + 1);
       setActBeat(4);
       setReveal({ see: true, blind: false });
-      await sleep(420);
+      await sleep(720);
       if (!mountedRef.current) return;
       setReveal({ see: true, blind: true });
-      await sleep(380);
+      await sleep(520);
       if (!mountedRef.current) return;
 
       setVerdict({ tone: result.tone, line: result.line });
       setActBeat(0);
+      setChromeOpen(true);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('fc:privacy-verdict', { detail: { tone: result.tone } }),
+        );
+      }
       verdictTimerRef.current = window.setTimeout(() => {
         if (mountedRef.current) setVerdict(null);
-      }, 10000);
+      }, 12000);
     } finally {
       if (manual) busyRef.current = false;
     }
@@ -290,10 +300,10 @@ export default function PrivacyProof() {
             <div className="flex items-center gap-2">
               <span className="mc-lamp mc-lamp--live" aria-hidden="true" />
               <Eye className="h-3.5 w-3.5 text-[var(--color-accent)]/80" />
-              <span className="mc-kicker" id="privacy-proof-heading">Beat 1 · Privacy check · live</span>
+              <span className="mc-kicker" id="privacy-proof-heading">The secret</span>
             </div>
-            <p className="mt-1.5 text-sm leading-5 text-[var(--color-ink-muted)]">
-              On a public book, size telegraphs. Ask the ledger twice — as you, then as the crowd. No wallet.
+            <p className="mt-1.5 font-display text-lg font-semibold leading-snug text-[var(--color-ink)] sm:text-xl">
+              Ask the ledger twice. Only one seat answers.
             </p>
           </div>
           <div className="flex flex-col items-end gap-1">
@@ -372,7 +382,7 @@ export default function PrivacyProof() {
                     }
                     className="fc-action fc-action--pulse w-full px-3 py-2 text-xs sm:w-auto"
                   >
-                    Next · Beat 3 · Settled CBTC →
+                    Feel the settle →
                   </button>
                 )}
               </div>
@@ -386,42 +396,42 @@ export default function PrivacyProof() {
             Loading two ledger seats…
           </p>
         ) : (
-          <div className={`grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-stretch ${inAct ? 'fc-privacy-duel--acting' : ''}`}>
+          <div className={`fc-privacy-duel grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-stretch ${inAct ? 'fc-privacy-duel--acting' : ''} ${reacting ? 'fc-privacy-duel--curtain' : ''}`}>
             <div
               key={reactKey > 0 ? `see-${reactKey}` : 'see'}
-              className={`fc-pane--see p-4 sm:p-5 ${
+              className={`fc-pane--see fc-privacy-clip p-5 sm:p-6 ${
                 reveal.see ? 'fc-privacy-pane--in' : 'fc-privacy-pane--out'
               } ${reacting ? 'fc-pane--react' : ''}`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <Eye className="h-4 w-4 text-[var(--color-accent)]" />
-                <h3 className="font-display text-base font-semibold text-[var(--color-ink)] sm:text-lg">
-                  You see it
+                <h3 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-2xl">
+                  YOU SEE IT
                 </h3>
                 <span className="ml-auto border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--color-accent)]">
                   Holder
                 </span>
               </div>
-              <p className="mb-3 text-[11px] leading-4 text-[var(--color-ink-faint)]">
-                Your seat — stake and side, as on any book you trade.
+              <p className="mb-4 text-[11px] leading-4 text-[var(--color-ink-faint)]">
+                Your seat — stake and side.
               </p>
               {op?.error ? (
                 <p className="text-xs text-[var(--color-breach)]">{op.error}</p>
               ) : (
                 <>
-                  <div className="mb-3 flex items-start gap-4">
+                  <div className="mb-4 flex items-start gap-5">
                     <div className="min-w-0 flex-1">
                       <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">Stake</div>
                       <div
-                        className="mt-0.5 font-mono text-xl font-medium leading-tight text-[var(--color-accent)] tabular-nums sm:text-2xl"
+                        className="mt-1 font-mono text-3xl font-medium leading-none text-[var(--color-accent)] tabular-nums sm:text-4xl"
                         title={summary?.stake != null ? String(summary.stake) : undefined}
                       >
                         {formatStake(summary?.stake) ?? (op?.openCount || op?.settledCount ? '·' : '—')}
                       </div>
                     </div>
-                    <div className="w-14 shrink-0 text-right sm:w-16">
+                    <div className="w-16 shrink-0 text-right sm:w-20">
                       <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">Side</div>
-                      <div className="mt-0.5 font-mono text-xl font-medium leading-tight text-[var(--color-sealed)] sm:text-2xl">
+                      <div className="mt-1 font-mono text-3xl font-medium leading-none text-[var(--color-sealed)] sm:text-4xl">
                         {formatSide(summary?.side) ?? (op?.openCount || op?.settledCount ? '·' : '—')}
                       </div>
                     </div>
@@ -449,43 +459,45 @@ export default function PrivacyProof() {
 
             <div className="fc-privacy-vs hidden sm:flex" aria-hidden="true">
               <span className="fc-privacy-vs__rule" />
-              <span className="fc-privacy-vs__label">same market</span>
+              <span className="fc-privacy-vs__label">{inAct || reacting ? 'gotcha' : 'same market'}</span>
               <span className="fc-privacy-vs__rule" />
             </div>
 
             <div className="flex items-center justify-center gap-2.5 sm:hidden" aria-hidden="true">
               <span className="h-px w-10 bg-[var(--color-rule)]" />
               <Zap className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink-faint)]">same market</span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink-faint)]">
+                {inAct || reacting ? 'gotcha' : 'same market'}
+              </span>
               <span className="h-px w-10 bg-[var(--color-rule)]" />
             </div>
 
             <div
               key={reactKey > 0 ? `blind-${reactKey}` : 'blind'}
-              className={`fc-pane--blind p-4 sm:p-5 ${
+              className={`fc-pane--blind fc-privacy-clip p-5 sm:p-6 ${
                 reveal.blind ? 'fc-privacy-pane--in' : 'fc-privacy-pane--out'
-              } ${reacting ? 'fc-pane--react' : ''}`}
+              } ${reacting ? 'fc-pane--react' : ''} ${!reveal.blind && inAct ? 'fc-privacy-blind--hold' : ''}`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <EyeOff className="h-4 w-4 text-[var(--color-breach)]/80" />
-                <h3 className="font-display text-base font-semibold text-[var(--color-ink)] sm:text-lg">
-                  The book doesn&rsquo;t
+                <h3 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-2xl">
+                  THE BOOK DOESN&rsquo;T
                 </h3>
                 <span className="ml-auto border border-[var(--color-breach)]/30 bg-[var(--color-breach)]/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--color-breach)]">
                   {obs?.refused ? 'Blocked' : 'Blind'}
                 </span>
               </div>
-              <p className="mb-3 text-[11px] leading-4 text-[var(--color-ink-faint)]">
-                Everyone else — rivals, copy-traders, the tape.
+              <p className="mb-4 text-[11px] leading-4 text-[var(--color-ink-faint)]">
+                Rivals. Copy-traders. The tape.
               </p>
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
                   <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">Stake</div>
-                  <div className="mt-0.5 font-mono text-2xl font-medium text-[var(--color-breach)]/50">—</div>
+                  <div className="mt-1 font-mono text-3xl font-medium leading-none text-[var(--color-breach)]/45 sm:text-4xl">—</div>
                 </div>
                 <div>
                   <div className="text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">Side</div>
-                  <div className="mt-0.5 font-mono text-2xl font-medium text-[var(--color-breach)]/50">—</div>
+                  <div className="mt-1 font-mono text-3xl font-medium leading-none text-[var(--color-breach)]/45 sm:text-4xl">—</div>
                 </div>
               </div>
               <p className="text-xs text-[var(--color-ink-muted)]">
@@ -497,41 +509,49 @@ export default function PrivacyProof() {
           </div>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--mc-rule)] pt-3">
-          <p className="text-[10px] text-[var(--color-ink-faint)]">
-            Protocol privacy — not a hidden UI. No wallet to watch.
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowRaw((v) => !v)}
-            className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
-          >
-            {showRaw ? 'Hide raw ledger' : 'Raw ledger'}
-          </button>
-        </div>
-
-        {showRaw && state && (
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 fc-view-swap">
-            <div>
-              <p className="mb-1 font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">
-                Holder seat
-              </p>
-              <pre className="max-h-36 overflow-auto whitespace-pre-wrap break-all bg-[var(--color-paper-deep)] p-2 font-mono text-[10px] leading-4 text-[var(--color-ink-muted)]">
-                {op?.sample ? previewJson(op.sample) : '[]'}
-              </pre>
-            </div>
-            <div>
-              <p className="mb-1 font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">
-                Public seat · {state?.observerIsConfigured ? state.observerPartyName : 'outsider'}
-              </p>
-              <pre className="max-h-36 overflow-auto whitespace-pre-wrap break-all bg-[var(--color-paper-deep)] p-2 font-mono text-[10px] leading-4 text-[var(--color-ink-faint)]">
-                {obs?.refused ? (obs.error || 'query refused') : previewJson(obs?.positions ?? [])}
-              </pre>
-            </div>
+        <div
+          className={`fc-privacy-chrome mt-3 border-t border-[var(--mc-rule)] pt-3 transition-opacity duration-500 ${
+            chromeOpen || (!inAct && !reacting && !!state) ? 'opacity-100' : 'opacity-30'
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[10px] text-[var(--color-ink-faint)]">
+              Protocol privacy — not a hidden UI.
+            </p>
+            {(chromeOpen || !!verdict) && (
+              <button
+                type="button"
+                onClick={() => setShowRaw((v) => !v)}
+                className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
+              >
+                {showRaw ? 'Hide raw ledger' : 'Raw ledger'}
+              </button>
+            )}
           </div>
-        )}
 
-        <TalkToUs source="privacy" />
+          {showRaw && state && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 fc-view-swap">
+              <div>
+                <p className="mb-1 font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">
+                  Holder seat
+                </p>
+                <pre className="max-h-36 overflow-auto whitespace-pre-wrap break-all bg-[var(--color-paper-deep)] p-2 font-mono text-[10px] leading-4 text-[var(--color-ink-muted)]">
+                  {op?.sample ? previewJson(op.sample) : '[]'}
+                </pre>
+              </div>
+              <div>
+                <p className="mb-1 font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-faint)]">
+                  Public seat · {state?.observerIsConfigured ? state.observerPartyName : 'outsider'}
+                </p>
+                <pre className="max-h-36 overflow-auto whitespace-pre-wrap break-all bg-[var(--color-paper-deep)] p-2 font-mono text-[10px] leading-4 text-[var(--color-ink-faint)]">
+                  {obs?.refused ? (obs.error || 'query refused') : previewJson(obs?.positions ?? [])}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {(chromeOpen || !!verdict) && <TalkToUs source="privacy" />}
+        </div>
       </div>
     </section>
   );

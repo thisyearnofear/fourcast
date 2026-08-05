@@ -42,17 +42,19 @@ export default function ProofTheatreShell() {
 
   return (
     <AppShell
-      title={isCanton ? 'Private position · live' : 'Decision receipts'}
+      title={isCanton ? "They can't see your size" : 'Decision receipts'}
       subtitle={isCanton
-        ? (BRAND.pages.proof ?? 'Stake and side hidden. Same ledger, two views.')
+        ? (BRAND.pages.proof ?? 'Secret. Locked. Paid.')
         : 'Sealed decisions anchored on Solana.'}
       maxWidth="max-w-5xl"
       subheader={
-        <SecondaryNav
-          items={CHAINS}
-          activeItem={chain}
-          onChange={selectChain}
-        />
+        <div className={isCanton ? 'fc-proof-chain-nav fc-proof-chain-nav--canton' : undefined}>
+          <SecondaryNav
+            items={CHAINS}
+            activeItem={chain}
+            onChange={selectChain}
+          />
+        </div>
       }
     >
       {isCanton ? <CantonProof /> : <WorldCupClient bare />}

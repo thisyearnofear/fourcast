@@ -91,6 +91,8 @@ export default function SealMoment({
   sealed = false,
   label = 'SHA-256 receipt',
   compact = false,
+  /** Hex prefix shown before the flap (empty for Canton update ids). */
+  prefix = '0x',
   className = '',
 }) {
   const [armed, setArmed] = useState(false);
@@ -187,7 +189,9 @@ export default function SealMoment({
       </div>
 
       <div className="mt-3 flex items-center gap-2">
-        <span className="font-mono text-[var(--color-ink-faint)] select-none">0x</span>
+        {prefix ? (
+          <span className="font-mono text-[var(--color-ink-faint)] select-none">{prefix}</span>
+        ) : null}
         <span
           className="fc-seal-moment__hash font-mono text-sm leading-6 break-all text-[var(--color-ink)] sm:text-base"
           aria-label={`receipt hash ${hash || 'pending'}`}
@@ -198,9 +202,11 @@ export default function SealMoment({
 
       <p className="mt-3 font-mono text-[9px] leading-4 tracking-[0.04em] text-[var(--color-ink-faint)]">
         {showSealed
-          ? 'Fingerprint of evidence, policy, and decision — locked before the outcome was known.'
+          ? (prefix
+            ? 'Fingerprint of evidence, policy, and decision — locked before the outcome was known.'
+            : 'On-ledger settle update — stake cleared, payout executed.')
           : hasHash
-            ? 'Computing SHA-256 over the decision payload…'
+            ? (prefix ? 'Computing SHA-256 over the decision payload…' : 'Sealing settle update…')
             : 'Awaiting first sealed decision.'}
       </p>
     </div>

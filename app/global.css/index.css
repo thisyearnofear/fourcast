@@ -778,10 +778,15 @@ body { overflow-x: clip; }
   .fc-view-swap,
   .fc-privacy-act__line,
   .fc-privacy-verdict,
-  .fc-privacy-pane--in { animation: none !important; }
+  .fc-privacy-pane--in,
+  .fc-privacy-duel--curtain .fc-pane--blind,
+  .fc-weight-cell--pulse,
+  .fc-checks-reveal,
+  .fc-beat-rail__step.is-active { animation: none !important; }
   .fc-pane--see,
   .fc-pane--blind { box-shadow: none !important; transform: none !important; }
-  .fc-privacy-pane--out { opacity: 0.4; filter: none; transform: none; }
+  .fc-privacy-pane--out { opacity: 0.4; filter: none; transform: none; clip-path: none !important; }
+  .fc-privacy-clip { clip-path: none !important; }
 }
 
 #root {
@@ -1774,22 +1779,151 @@ code {
 .fc-privacy-verdict--warn svg { color: var(--color-sealed); }
 
 .fc-privacy-pane--out {
-  opacity: 0.22;
-  filter: saturate(0.55);
-  transform: scale(0.985);
+  opacity: 0.18;
+  filter: saturate(0.45);
+  transform: scale(0.98);
   pointer-events: none;
-  transition: opacity 0.35s var(--ease-out), filter 0.35s linear, transform 0.35s var(--ease-out);
+  clip-path: inset(0 0 100% 0);
+  transition:
+    opacity 0.45s var(--ease-out),
+    filter 0.45s linear,
+    transform 0.45s var(--ease-out),
+    clip-path 0.55s var(--ease-out);
 }
 .fc-privacy-pane--in {
   opacity: 1;
   filter: none;
   transform: none;
-  transition: opacity 0.4s var(--ease-out), filter 0.4s linear, transform 0.4s var(--ease-out);
-  animation: fc-privacy-pane-pop 0.45s var(--ease-out) both;
+  clip-path: inset(0 0 0 0);
+  transition:
+    opacity 0.5s var(--ease-out),
+    filter 0.5s linear,
+    transform 0.5s var(--ease-out),
+    clip-path 0.6s var(--ease-out);
+  animation: fc-privacy-pane-pop 0.55s var(--ease-out) both;
 }
 @keyframes fc-privacy-pane-pop {
-  from { opacity: 0.35; transform: translateY(6px); }
+  from { opacity: 0.2; transform: translateY(10px) scale(0.98); }
   to { opacity: 1; transform: none; }
+}
+
+.fc-privacy-blind--hold {
+  clip-path: inset(0 0 92% 0) !important;
+  opacity: 0.12 !important;
+}
+
+.fc-privacy-duel--curtain .fc-pane--see {
+  animation: fc-privacy-pane-pop 0.55s var(--ease-out) both, fc-pane-react 0.8s var(--ease-out);
+}
+.fc-privacy-duel--curtain .fc-pane--blind.fc-privacy-pane--in {
+  animation: fc-privacy-blind-wipe 0.7s var(--ease-out) both, fc-pane-react-blind 0.85s var(--ease-out);
+}
+@keyframes fc-privacy-blind-wipe {
+  from { clip-path: inset(0 100% 0 0); opacity: 0.3; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+/* Sticky beat progress — Hide · Lock · Paid */
+.fc-beat-rail {
+  position: sticky;
+  top: 0.65rem;
+  z-index: 30;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0.35rem;
+  border: 1px solid var(--color-rule);
+  background: color-mix(in oklch, var(--color-paper-deep) 92%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 28px var(--color-shadow);
+}
+.fc-beat-rail__step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.45rem 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--color-ink-faint);
+  cursor: pointer;
+  transition: color 0.2s linear, background 0.2s linear;
+}
+.fc-beat-rail__step:hover { color: var(--color-ink-muted); }
+.fc-beat-rail__num {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.fc-beat-rail__label {
+  font: 600 10px/1 var(--font-sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.fc-beat-rail__join {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 1px;
+  height: 55%;
+  transform: translateY(-50%);
+  background: var(--color-rule);
+}
+.fc-beat-rail__step.is-active {
+  color: var(--color-accent);
+  background: color-mix(in oklch, var(--color-accent) 10%, transparent);
+  animation: fc-privacy-line-in 0.35s var(--ease-out) both;
+}
+.fc-beat-rail__step.is-done:not(.is-active) {
+  color: var(--color-ink-muted);
+}
+.fc-beat-rail__step.is-done .fc-beat-rail__num {
+  color: var(--color-sealed);
+}
+
+.fc-beat-section {
+  position: relative;
+}
+
+/* Beat 2 — weight over inventory */
+.fc-weight-cell--accent {
+  background:
+    linear-gradient(145deg, var(--color-accent-atmosphere), transparent 60%),
+    var(--color-paper);
+}
+.fc-weight-cell--pulse {
+  animation: fc-weight-pulse 2.8s ease-in-out infinite;
+}
+@keyframes fc-weight-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklch, var(--color-accent) 28%, transparent),
+      0 0 32px color-mix(in oklch, var(--color-accent) 12%, transparent);
+  }
+}
+.fc-escrow-muted {
+  opacity: 0.55;
+}
+
+.fc-cbtc-hero {
+  background:
+    radial-gradient(ellipse 70% 80% at 20% 0%, var(--color-sealed-atmosphere), transparent 55%),
+    var(--color-paper);
+}
+
+.fc-checks-reveal {
+  animation: fc-view-swap 0.4s var(--ease-out) both;
+}
+
+.fc-proof-chain-nav--canton {
+  opacity: 0.72;
+  transition: opacity 0.25s linear;
+}
+.fc-proof-chain-nav--canton:hover,
+.fc-proof-chain-nav--canton:focus-within {
+  opacity: 1;
 }
 
 .fc-privacy-vs {

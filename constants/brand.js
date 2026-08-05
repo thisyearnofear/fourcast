@@ -65,7 +65,7 @@ export const BRAND = {
     signals: 'Publish from Markets — follow & reputation still early.',
     agent: 'Policy, dry-run, sealed decision.',
     positions: 'Your book — public venues, then private size.',
-    proof: 'Hide size. See escrow. Atomic CBTC.',
+    proof: 'Secret · locked · paid — same ledger, two views.',
     labs: 'Autopilot, Builder, operator tools.',
   },
 

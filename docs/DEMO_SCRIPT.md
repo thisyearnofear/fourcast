@@ -11,42 +11,51 @@ Private → `/proof?chain=canton`. Holder settle → `/positions?view=private`.
 
 > "A large position can leak strategy as soon as it is placed on a public venue. On Canton, the position is visible to its stakeholders and invisible to everyone else. Watch."
 
-**Show:** `/` (Canton hero + live privacy check) or jump to `/proof?chain=canton`
-via nav **Private**. Title: **Private position · live**.
+**Show:** `/` or nav **Private** → `/proof?chain=canton`.
+Title: **They can't see your size**. Sticky rail: Hide · Lock · Paid.
+
+### Mute test (60–90s, no narration)
+
+Record with sound off. A stranger should feel **secret → locked → paid**:
+1. Run the check → holder stake pops, book stays blank, then wipe.
+2. Brief pass on escrow weight (legs / locked).
+3. CBTC hero payout + seal stamp. Checklist stays collapsed.
+
+If it only feels like “correct panels,” re-record after tightening the frame.
 
 ---
 
-## Act 1 — Take a private position · 45s
+## Act 1 — The secret · 45s
 
 1. Open the prepared DevNet market and position (pre-staged the night before).
-2. Show the holder/operator view — **You see it** pane (stake / side).
+2. Show **YOU SEE IT** — stake / side large.
 
-**Say:** "This position is on-ledger. The stake, the side, the entry — visible only to the operator and this holder. The stake is locked as a CIP-56 allocation the wallet itself can discover."
+**Say:** "This position is on-ledger. The stake, the side — visible only to the operator and this holder."
 
 ---
 
 ## Act 2 — The absence · 45s
 
-1. In Privacy check, click **"Run the check"** (no wallet).
-2. Watch the 3-beat act: **As you** → **As the book** → **Compare**, then the panes uncurtain.
-3. **Two live ledger queries** — holder seat vs public seat — real DevNet, not simulated.
+1. Click **"Run the check"** (no wallet).
+2. Watch the act: **As you** → **As the book** → **Compare**, then the curtain wipe.
+3. Two live ledger queries — real DevNet.
 
-**Show:** **You see it** (Holder) has stake/side. **The book doesn't** is Blind/Blocked. Verdict stamp: size stays private. Optional: **Raw ledger**.
+**Show:** Holder has stake/side. **THE BOOK DOESN'T** is Blind. Verdict stamp.
 
-**Say:** "On Polymarket your size telegraphs. Here we ask the same ledger twice — as the holder, then as everyone else. Stake and side for you; nothing for the crowd. Protocol privacy, not a UI filter."
+**Say:** "On Polymarket your size telegraphs. Here we ask the same ledger twice — as the holder, then as everyone else."
 
-**Optional (5s):** Point at **Talk to us** under the privacy check — operator interview intake for people who size into public books and care about leakage. Not a vanity waitlist.
+**Optional (5s):** **Talk to us** after the duel — operator interview, not a waitlist.
 
 ---
 
-## Act 3 — The climax: the holder's own key · 60s
+## Act 3 — Paid · 60s
 
-**Judge path (recommended — Noders has no CIP-0103 gateway; Console Wallet is PixelPlex, not Noders):**
+**Judge path (no browser wallet — Noders has no CIP-0103 gateway):**
 
-1. After privacy check, scroll to **Beat 3 · Settled · CBTC** on `/proof?chain=canton`.
-2. Point at instrument CBTC, holder/operator Δ, payout, settle update id, green checks.
+1. After the check, let the page advance — **Locked** escrow, then **The money moved**.
+2. Point at hero payout, SealMoment update id, holder/operator Δ. Open **Evidence checklist** only if asked.
 
-**Say:** "Atomic settle on real BitSafe CBTC — stake cancelled and payout executed in one transaction. Holder-signed SettleAsHolder is in the DAR and CIP-0103-ready; on this NaaS we prove the economics with the pinned DevNet dossier."
+**Say:** "Atomic settle on real BitSafe CBTC — stake cancelled and payout executed in one transaction. Economics proven on DevNet with the pinned receipt."
 
 **Ops path (only if asked — `/labs/canton`, server OIDC, not a product surface):**
 
