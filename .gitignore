@@ -176,3 +176,7 @@ canton/dist/
 # they are the DevNet-vetted CIP-56 interface DARs fetched from the participant
 # (not regenerable offline; see vendor/network-cip-0056/manifest.json).
 docs/OPS.md
+.delphi-wallet.env
+
+# Delphi agent runtime state (logs, status) — local only
+.delphi-agent/

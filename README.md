@@ -1,385 +1,217 @@
-# Fourcast — Private CBTC prediction-market settlement
+# Fourcast — Autonomous Prediction-Market Operator
 
-Fourcast is a Canton DevNet prototype for high-volume prediction-market traders who
-do not want their position size and direction broadcast to the market.
+Fourcast is a venue-agnostic autonomous agent for prediction markets. It discovers edge, sizes positions under a policy-bound mandate, executes across multiple venues, and produces verifiable decision receipts that prove mandate adherence — before the outcome is known.
 
-The focused HackCanton wedge is:
+> **One agent core. Multiple execution venues. Verifiable decisions.**
 
-> **Fourcast lets large traders settle prediction positions in CBTC without
-> broadcasting their strategy to the market.**
+## The Wedge
 
-## What is implemented
-
-- Private Daml `PredictionPosition` contracts with holder and operator
-  visibility.
-- Holder-signed offers, so the operator cannot create a position unilaterally.
-- CIP-56 allocation escrow and atomic execute/cancel settlement.
-- Resolution attestations with committed evidence hash and URI.
-- Live DevNet privacy and seven Daml script checks.
-- **BitSafe CBTC settlement proven end-to-end on Canton DevNet** — real CBTC
-  escrowed, settled atomically, and verified via
-  `scripts/canton-bitsafe-lifecycle.mjs`. See
-  [`docs/BITSAFE_INTEGRATION.md`](docs/BITSAFE_INTEGRATION.md).
-
-The proof runs against both Fourcast's **reference CIP-56 registry** (via
-`scripts/canton-v2-preflight.mjs`) and **real BitSafe CBTC** (via
-`scripts/canton-bitsafe-lifecycle.mjs`). External wallet signing, independent
-attestation, and mainnet deployment are still incomplete. See the implementation
-matrix in [`docs/CANTON_ATOMIC_SETTLEMENT.md`](docs/CANTON_ATOMIC_SETTLEMENT.md).
-
-## Judge path
-
-Primary nav: **Markets · Positions · Private**. Private opens `/proof?chain=canton`.
-
-1. Open **Private** (`/proof?chain=canton`) — or `/` → **See Private**.
-2. Click **Run the check** — stakeholder vs non-stakeholder, same ledger.
-3. Show the non-stakeholder receives no position (empty / refused).
-4. Follow Hide · Lock · Paid to **Settled · CBTC** (pinned DevNet dossier).
-5. Optional: **Talk to us** under the privacy check — operator interview intake (`POST /api/talk`).
-
-Full script: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
-
-## Canton documentation
-
-- [`docs/CANTON_ATOMIC_SETTLEMENT.md`](docs/CANTON_ATOMIC_SETTLEMENT.md) —
-  current contract model, evidence, and limitations.
-- [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) — three-minute demo script.
-- [`docs/CANTON_V2_DEPLOY.md`](docs/CANTON_V2_DEPLOY.md) — DevNet runbook.
-- [`docs/CANTON.md`](docs/CANTON.md) — HackCanton context and historical notes.
-- [`docs/HACKCANTON_VALIDATION.md`](docs/HACKCANTON_VALIDATION.md) — interview
-  protocol and evidence log.
-
-## Other Fourcast surfaces
-
-Fourcast also contains an earlier TxLINE/Solana agent-receipts product. Those
-routes remain in the repository, but they are not part of the HackCanton
-submission narrative. Do not infer Canton CBTC integration from those routes.
-
-![Status](https://img.shields.io/badge/Status-DevNet%20prototype-orange)
-
-## Historical product reference (not HackCanton scope)
-
-The following sections document the earlier TxLINE/Solana product for existing
-contributors. They are not claims about the Canton wedge, and they should not be
-used in the HackCanton pitch.
-
-### Historical strategic positioning
-
-| | |
-|---|---|
-| **Primary customer** | Prediction-market operator plus the allocator who must diligence that operator |
-| **Distribution** | Verifiable decision history → allocator trust → operator/allocator concierge conversion |
-| **Headline product** | Mandate Control: a flight recorder for autonomous capital — policy-bound decision receipts, risk controls, and reconciled outcomes |
-| **Technical highlight** | Custom Solana program CPI-calls TxLINE's `txoracle::validate_stat` for parametric insurance settlement; SHA-256 receipts reconciled against on-chain Merkle roots |
-| **Data source** | TxLINE (primary) — fixtures, odds, scores, proofs. Polymarket as secondary comparison venue |
-
-Fourcast implements the full **proof chain** end to end: TxLINE data ingestion → pre-match evidence → seeded simulation → versioned policy gates → decision receipt (SHA-256) → TxLINE Merkle proof → Solana PDA verification → reconciliation → on-chain settlement via `match-escrow` CPI calling `validate_stat`. Every step is deterministic and independently verifiable.
-
-## The Problem
-
-Sports applications rely on opaque feeds and trusted operators for settlement. Even when match data is "live," end users have no way to verify the score happened as reported. Prediction-market traders lack a trusted consensus reference to spot mispricing. And anyone who wants to settle a wager trustlessly needs an oracle — which reintroduces the trust problem.
-
-## The Solution
-
-Fourcast uses **TxLINE as its single primary data layer** and builds the flagship route on top:
-
-1. **Mandate Control** — a headless VPS worker advances a replay clock, decides from pre-match TxLINE evidence, seals each decision into a SHA-256 receipt, withholds final proofs until the replay outcome time, and posts authenticated status to `/agent`. The hero eagerly fetches the canonical verification chain so the proof timeline shows real reconciliation + on-chain Solana verdict.
-2. **Proof Theatre** — finalised matches surface a vertical 6-stage evidence timeline: pre-match evidence → seeded simulation → versioned policy gates → immutable receipt → TxLINE Merkle proof + Solana validation → reconciliation. `/api/worldcup/verify` walks the full chain in one call.
-3. **Allocator Diligence** — mandate adherence, receipt coverage, discipline rate, and calibration computed from the same public receipts.
-4. **Parametric on-chain settlement** — a custom Solana program (`match-escrow`, deployed on devnet at `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ`) CPI-calls TxLINE's `txoracle::validate_stat` to verify match outcomes and release locked SOL trustlessly. Verified end-to-end: a 0.1 SOL policy on France–Sweden (Round of 32) was settled on-chain via CPI, no intermediary involved.
-
-TxLINE is the exclusive data source for fixtures, odds, scores, and proofs. Polymarket serves as a secondary comparison venue for edge detection only.
-
----
+Every AI trading agent claims performance. None prove discipline. Fourcast produces a cryptographic decision receipt before each outcome resolves, then reconciles it against independently verifiable data. Operators get an auditable track record; allocators get mandate assurance without trusting a black box.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                       TXLINE DATA LAYER (devnet)                        │
-│  fixtures/snapshot  ·  odds/snapshot  ·  scores/snapshot  ·  proofs     │
-└───────────────────────────────┬─────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                  FOURCAST WORLD CUP INTELLIGENCE                         │
-│  services/txline/txlineService.js                                        │
-│  · normalises PascalCase schema -> unified fixture shape                │
-│  · auto-refreshes guest JWT on 401                                       │
-│  · falls back to cached replays after July 19 cutoff                    │
-└───────┬──────────────────┬──────────────────┬───────────────────────────┘
-        │                  │                  │
-        ▼                  ▼                  ▼
-┌──────────────┐  ┌──────────────────┐  ┌──────────────────────────┐
-│ Live odds +  │  │ Cross-venue edge │  │ Verifiable receipt        │
-│ score panel  │  │ (Polymarket YES) │  │ · Merkle proof integrity  │
-│              │  │                  │  │ · PDA derivation & fetch  │
-└──────────────┘  └──────────────────┘  │ · On-chain root compare   │
-                                        └───────────┬──────────────┘
-                                                     │
-                        ┌────────────────────────────▼──────────────┐
-                        │  Autonomous Historical Lab (VPS)           │
-                        │  PM2 worker · replay clock · receipts      │
-                        │  signed heartbeat → /api/agent/historical-lab │
-                        └────────────────────────────┬──────────────┘
-                                                     │
-                                        ┌────────────▼──────────────┐
-                                        │  Solana Match-Escrow      │
-                                        │  CPI → txoracle           │
-                                        │  validate_stat            │
-                                        │  (settlePolicy flow)      │
-                                        └───────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                     AGENT CORE                          │
+│                                                         │
+│  Decision Policy (5-gate mandate)                       │
+│  Kelly Sizing · Monte Carlo Simulation                  │
+│  Pre-outcome Receipt (SHA-256 commitment)               │
+│  Reconciliation Engine                                  │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+       ┌───────────────┼───────────────────┐
+       │               │                   │
+┌──────▼──────┐  ┌─────▼──────┐  ┌────────▼────────┐
+│ Polymarket  │  │   Delphi   │  │  Canton Network │
+│ Kalshi      │  │   (LMSR)   │  │  (private size) │
+│ CLOB exec   │  │   SDK exec │  │  CBTC settle    │
+└─────────────┘  └────────────┘  └─────────────────┘
+       │               │
+┌──────▼───────────────▼──────────────────────────────────┐
+│                 INTELLIGENCE LAYER                       │
+│                                                         │
+│  TxLINE/TxOdds         Venice AI        Bright Data     │
+│  Professional odds     LLM reasoning    Web scrape      │
+│  Merkle proofs         Forecasting      SERP + social   │
+│  MLS (live) · PL (Aug 21)              SynthData ML     │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Tech Stack
-- **Primary data**: TxLINE devnet (free World Cup tier, service level 1)
-- **Settlement/verification**: Solana devnet, TxLINE `txoracle` program
-- **Secondary enrichment**: Polymarket gamma API (cross-venue pricing), Kalshi (optional)
-- **Frontend**: Next.js 16, React 19, Tailwind CSS
-- **Runtime**: Node.js 20+, standard Next.js webpack build
+## What's Live
 
----
+| Surface | URL | Status |
+|---------|-----|--------|
+| Markets (Polymarket + Kalshi aggregation) | `/markets` | Live |
+| Agent Mandate (policy cockpit, dry-run, run ledger) | `/agent` | Live |
+| Positions & Track Record | `/positions` | Live |
+| Signals (publish + follow) | `/signals` | Live |
+| Autonomous VPS Worker | Headless (PM2) | Live |
+| Delphi Competition Agent | Dry-run verified, ready for live | Aug 10–24 |
+| TxLINE MLS Odds | Integration in progress | Live at 50% |
+| TxLINE Premier League | Preparing | Full coverage Aug 21 |
+| Canton Private Settlement | Functional on DevNet | Roadmap |
 
-## TxLINE Endpoints Used
+**Production:** [fourcastapp.vercel.app](https://fourcastapp.vercel.app)
 
-| Endpoint | Purpose | Called by |
-|----------|---------|------------|
-| `POST /auth/guest/start` | Issue renewable guest JWT | `services/txline/txlineService.js`, `scripts/txline-subscribe-and-activate.mjs` |
-| `POST /api/token/activate` | Activate API token after on-chain subscribe | `scripts/txline-subscribe-and-activate.mjs` |
-| `GET /api/fixtures/snapshot?competitionId=72` | List World Cup fixtures | `getLiveFixtures()` |
-| `GET /api/odds/snapshot/{fixtureId}` | Consensus odds snapshot | `getLiveOdds(fixtureId)` |
-| `GET /api/scores/snapshot/{fixtureId}` | Score/event snapshot | `getLiveScores(fixtureId)` |
-| `GET /api/scores/stat-validation?fixtureId=X&seq=Y&statKeys=1,2` | Merkle proof for stats | `getMerkleProof(fixtureId, seq)` |
+## Execution Venues
 
-All data requests send `Authorization: Bearer ${jwt}` and `X-Api-Token: ${apiToken}` per the [TxLINE Quickstart](https://txline.txodds.com/documentation/quickstart). The service auto-refreshes the guest JWT on 401 and retries once.
+### Polymarket & Kalshi (Live)
+The original execution layer. Polymarket CLOB orders via Builder Program (earn USDC per attributed fill). Kalshi as secondary venue. The agent discovers markets, filters by volume/time/category, forecasts, detects edge, and executes autonomously.
 
----
+### Delphi / Gensyn (Active — Competition Aug 10–24)
+LMSR-based prediction markets on Gensyn Testnet. The same agent core (policy, sizing, forecasting) routes through the Delphi SDK for market discovery, quoting, and execution. TxLINE odds provide intelligence edge on sports markets that other competitors lack.
 
-## Solana Program & Network
+### Canton Network (Roadmap)
+Private settlement for operators who need position size hidden from the market. CIP-56 atomic CBTC escrow is implemented and proven on DevNet. Activates when counterparty network or mainnet makes it practical. Code is functional — not the hero, but available.
 
-| Field | Value |
-|-------|-------|
-| Network | Devnet |
-| TxORACLE Program ID | `6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J` |
-| Match-Escrow Program ID | `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ` |
-| TxL Token Mint | `4Zao8ocPhmMgq7PdsYWyxvqySMGx7xb9cMftPMkEokRG` |
-| TxORACLE version | `txoracle` (v1.5.6) |
-| Free-tier service level | 1 (sampling interval = 0 — effectively real-time on devnet) |
-| Settlement mechanism | CPI from match-escrow → `validate_stat` on txoracle |
+## Intelligence Layer
 
-The on-chain verification flow:
-1. **Proof verification** — `solanaVerify.js` extracts the Merkle proof (`eventStatRoot`, `statProofs`, `mainTreeProof`, `subTreeProof`, `statsToProve`) from a cached fixture replay
-2. **PDA derivation** — derives the `daily_scores_roots` PDA from the match timestamp using seeds `[b"daily_scores_roots", epoch_day as u16 LE]` (reverse-engineered from the txoracle program)
-3. **On-chain comparison** — fetches the PDA account via Solana JSON-RPC, reads the 32-byte Merkle root, and compares against `eventStatRoot`
-4. **Settlement (CPI)** — the match-escrow program (`settlementService.js`) builds and submits `settle_policy` transactions that CPI-call TxLINE's `validate_stat` to trustlessly release escrowed SOL to winners
+### TxLINE / TxOdds (Primary Sports Intelligence)
+Professional bookmaker consensus odds, live scores, and cryptographically verifiable Merkle proofs.
 
-Verdicts: `verified` (on-chain root matches), `onchain-mismatch` (root differs), `onchain-error` (PDA unreachable), `proof-present` (components valid but no timestamp for PDA derivation).
+- **MLS**: Live now at 50% coverage
+- **Premier League**: Full coverage from August 21, 2025
+- **Merkle proofs**: On-chain verification via Solana `txoracle` CPI — independently verifiable outcomes
+- **Free data access** continues into the season
 
-### Parametric Insurance / Prop Bet Settlement
+TxLINE provides the sharpest odds data available to any retail or agent participant. This is a concrete intelligence edge: the agent can compare professional consensus pricing against prediction-market prices to find mispricing.
 
-The match-escrow program at `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ` implements a parametric sports insurance flow:
-- **`createPolicy`** — a user locks SOL in a policy PDA specifying `{fixtureId, minTs, paysRecipientOnHomeWin, amount}`
-- **`settlePolicy`** — a keeper bot submits the TxLINE Merkle proof; the program CPI-calls txoracle's `validate_stat`, and if the condition is met, SOL is transferred to the designated recipient; otherwise refunded to the locker
+### Venice AI + SynthData ML
+LLM-based reasoning for non-sports markets (politics, economics, crypto, technology). Deterministic Monte Carlo simulation with persisted seeds for reproducible forecasting.
 
-The attestation won the `daily_scores_merkle_roots` seed pattern — it was not present in the published IDL at hackathon start but was obtained through program analysis. See `services/txline/settlementService.js` for the full Borsh-serialised instruction builders.
+### Bright Data (Optional Enrichment)
+Web intelligence via SERP API, Scraping Browser, and Web Unlocker. Supplements the core intelligence layer when credits are available. Analysis works without it.
 
----
+## Agent Core
 
-## Replay Mode and Autonomous Historical Lab
+The decision engine is venue-agnostic. It operates identically whether executing on Polymarket, Delphi, or any future venue:
 
-TxLINE hackathon access ends July 19, 2026 23:59 UTC. The adapter detects this automatically and switches to **cached replay mode**, serving deterministic snapshots of completed matches so the deployed demo keeps working for judges. The VPS worker runs those snapshots as an **Autonomous Historical Lab**: its replay clock creates a receipt from pre-match evidence first, withholds the final proof, and reconciles only when the simulated outcome time arrives. This preserves the decision-before-outcome ordering without claiming post-cutoff live coverage.
+1. **Discover** — scan available markets across connected venues
+2. **Forecast** — combine odds intelligence (TxLINE), LLM reasoning (Venice), ML models (SynthData), and web data (Bright Data)
+3. **Detect Edge** — fair value vs market price, minimum threshold gate
+4. **Size** — Kelly criterion with allocation cap and tail-loss limit
+5. **Decide** — five-gate policy: min edge, allocation cap, tail-loss probability, simulation validation, mandate bounds
+6. **Execute** — route to the appropriate venue SDK
+7. **Receipt** — SHA-256 commitment of the full decision payload, timestamped before outcome
+8. **Reconcile** — match receipt against independently verified outcome data
 
-The lab is deliberately scoped as an operator process rather than another dashboard:
+### Decision Policy (5 Gates)
 
-- It runs headlessly under PM2 on the VPS with no public port.
-- It uses the same `services/domain/decision/` policy, simulation, and receipt hashing modules as the app.
-- It posts a bearer-authenticated heartbeat to `POST /api/agent/historical-lab`; the app stores only the latest non-secret status in `historical_lab_status`.
-- The Mandate Control hero (`/agent`) polls `GET /api/agent/historical-lab` and eagerly fetches `/api/worldcup/verify` for the latest receipt, rendering the current decision, proof timeline, and on-chain Solana verdict. The supporting HistoricalLabPanel below the hero shows the replay phase, agent clock, and receipt hash.
+Every decision passes through a versioned policy before execution:
 
-To snapshot a real fixture (with verifiable Merkle proof):
+| Gate | Function |
+|------|----------|
+| Minimum Edge | Reject if edge < configured threshold |
+| Allocation Cap | Reject if position would exceed % of bankroll |
+| Tail-Loss Limit | Reject if P(loss) exceeds tolerance |
+| Simulation Validation | Reject if Monte Carlo doesn't confirm edge |
+| Mandate Bounds | Reject if outside operator-defined constraints |
 
-```bash
-# After onboarding (TXLINE_API_TOKEN, TXLINE_GUEST_JWT in .env.local)
-node scripts/txline-snapshot-fixture.mjs 18175981 991
-```
+The policy is the same object used by the UI (dry-run), the VPS worker (live), and the agent loop. One truth, multiple surfaces.
 
-This writes `cache/txline/replays/18175981.json` containing the fixture, score events, and the full Merkle proof from `/api/scores/stat-validation`. The `/world-cup` UI then surfaces this fixture as `final` with a "Verify on Solana" button.
+### Verifiable Receipts
 
-The demo fixture (`18175981`, France 3-0) is a real World Cup match with a real, verifiable Merkle proof anchored on the TxLINE devnet program.
+The pre-outcome receipt contains: evidence snapshot, simulation seed + result, policy version, gate verdicts, sizing, and the final ALLOCATE/PASS decision. The SHA-256 hash of this payload is committed before the outcome resolves. Reconciliation later proves the agent followed its mandate.
 
----
+## Autonomous Operator
+
+The VPS worker (`scripts/fourcast-agent-worker.mjs`) runs headlessly under PM2:
+
+- Discovers markets on configured venues
+- Evaluates the canonical decision policy
+- Emits pre-outcome receipts
+- Posts authenticated heartbeat to `/api/agent/historical-lab`
+- Dry-run by default; live execution requires explicit opt-in
+
+See [OPS.md](OPS.md) for deployment details.
 
 ## Quick Start
-
-### 1. Install
 
 ```bash
 git clone https://github.com/thisyearnofear/fourcast.git
 cd fourcast
 npm install
-```
-
-### 2. TxLINE onboarding (free, ~2 minutes)
-
-Generate a Solana keypair and run the on-chain subscribe + activate flow. Devnet SOL is required for transaction fees.
-
-```bash
-# Generate wallet (saves secret key to .env.local, chmod 600)
-node scripts/txline-generate-wallet.mjs
-
-# Fund the printed public address with devnet SOL (https://faucet.solana.com),
-# then run subscribe + activate in one step:
-node scripts/txline-subscribe-and-activate.mjs
-```
-
-The script:
-1. Submits an on-chain `subscribe` transaction (service level 1, 4 weeks) to the TxLINE devnet program
-2. Calls `POST /auth/guest/start` for a guest JWT
-3. Signs `${txSig}::${jwt}` with the wallet keypair
-4. Calls `POST /api/token/activate` to receive the API token
-5. Saves `TXLINE_API_TOKEN`, `TXLINE_GUEST_JWT`, `TXLINE_LAST_TX_SIG` to `.env.local`
-6. Smoke-tests `/api/fixtures` and prints the response shape
-
-To renew the JWT later without re-subscribing:
-```bash
-node scripts/txline-subscribe-and-activate.mjs --reactivate-only
-```
-
-### 3. Run
-
-```bash
+cp .env.local.example .env.local
+# Configure venue credentials (see .env.local.example)
 npm run dev
 ```
 
-Open `http://localhost:3000/world-cup` — TxLINE is now the primary source for fixtures, consensus odds, and verifiable receipts.
-
-### 4. Build & deploy
+### TxLINE Onboarding (Sports Intelligence)
 
 ```bash
-npm run build
+node scripts/txline-generate-wallet.mjs
+# Fund with devnet SOL, then:
+node scripts/txline-subscribe-and-activate.mjs
 ```
 
-The `/world-cup` route is statically prerendered; the API routes under `/api/worldcup/*` are server-rendered on demand. Deploy to Vercel as usual — env vars (`TXLINE_API_TOKEN`, `TXLINE_GUEST_JWT`, `TXLINE_API_ORIGIN`) propagate via the Vercel dashboard.
+### Delphi Agent (Competition)
 
----
+```bash
+# Configure .env.local per docs/DELPHI_AGENT.md, then:
+npm run delphi:dry   # one simulated cycle — safe
+npm run delphi:live  # continuous; respects DELPHI_AGENT_DRY_RUN
+```
+
+See [docs/DELPHI_AGENT.md](docs/DELPHI_AGENT.md) for the full operator guide.
 
 ## Project Layout
 
 ```
-services/txline/
-  txlineService.js        # Adapter: live + replay modes, auto JWT refresh
-  solanaVerify.js        # On-chain Merkle proof verification (PDA derivation + root comparison)
-  settlementService.js   # On-chain settlement: createPolicy + settlePolicy (CPI → validate_stat)
-  crossVenueEdge.js      # TxLINE consensus vs Polymarket YES prices
-  reconciliationService.js # Receipt/proof reconciliation state machine
-  receiptAdapter.js      # Canonical decision receipt -> TxLINE reconciliation view
+services/
+  aiAgentLoop.js              # Core autonomous loop (discover → forecast → size → execute)
+  domain/decision/
+    decisionPolicy.js         # Five-gate mandate policy (versioned)
+    decisionReceipt.js        # Canonical receipt + hash + verify
+    simulation.js             # Deterministic Monte Carlo
+    historicalLab.js          # Replay-clock phase logic
+  txline/
+    txlineService.js          # TxLINE/TxOdds adapter (live + replay)
+    solanaVerify.js           # On-chain Merkle proof verification
+    settlementService.js      # Solana match-escrow CPI settlement
+    crossVenueEdge.js         # TxLINE consensus vs venue prices
+    reconciliationService.js  # Receipt/proof reconciliation
+  delphiService.js            # Delphi SDK wrapper (markets, quotes, execution, redemption)
+  delphiAgentLoop.js          # Competition loop (balances → forecast → policy → execute)
+  delphiIntelligence.js       # Classification + TxLINE/Venice probability routing
+  cantonLedgerClient.js       # Canton DevNet CIP-56 settlement
 
-services/domain/decision/
-  decisionPolicy.js      # Five-gate mandate policy
-  decisionReceipt.js     # Canonical receipt/hash/verify helpers
-  simulation.js          # Deterministic Monte Carlo and seed derivation
-  historicalLab.js       # Replay-clock phase and no-lookahead checks
+app/api/
+  agent/                      # Agent mandate, runs, scheduling, track record
+  analyze/                    # Market analysis + streaming
+  canton/                     # Canton health, balances, markets, positions
+  worldcup/                   # TxLINE fixtures, verification, settlement
 
 scripts/
-  txline-generate-wallet.mjs            # Generate Solana keypair
-  txline-subscribe-and-activate.mjs     # On-chain subscribe + activate
-  txline-snapshot-fixture.mjs            # Snapshot a fixture's proof to cache
-  fourcast-agent-worker.mjs              # Headless autonomous worker
+  fourcast-agent-worker.mjs   # Headless autonomous VPS worker
+  delphi-agent-worker.mjs     # Delphi competition worker (--once, --dry-run)
+  txline-*.mjs                # TxLINE onboarding + snapshot tools
 
-app/api/worldcup/
-  fixtures/route.js              # GET /api/worldcup/fixtures
-  fixtures/[fixtureId]/route.js # GET /api/worldcup/fixtures/{id}
-  replay/route.js                # GET /api/worldcup/replay?fixtureId=X
-  edge/route.js                  # GET /api/worldcup/edge?fixtureId=X
-  verify/route.js                # GET /api/worldcup/verify?fixtureId=X
-  status/route.js                # GET /api/worldcup/status
+deploy/
+  delphi-agent.ecosystem.config.cjs  # PM2 config for the Delphi worker
 
-app/api/agent/
-  historical-lab/route.js        # GET/POST latest signed VPS worker heartbeat
-  runs/route.js                  # GET persisted decision ledger
-
-app/world-cup/
-  page.js               # Server entry, metadata
-  WorldCupClient.js     # Client UI: cards, replay viewer, verify panel, edge panel
-
-components/
-  MandateControl.js       # /agent flagship hero — live worker state, proof timeline, dossier trigger
-  DecisionDossier.js      # Right-side drawer — 5 allocator questions from canonical receipt
-  ProofTheatre.js         # /world-cup vertical 6-stage evidence timeline
-  HistoricalLabPanel.js  # /agent VPS telemetry panel (supporting surface below hero)
-  AgentDashboard.js       # Manual runner (demoted to Operator Controls drawer)
-  AgentRunLedger.js       # Persisted decision ledger
-  MandatePanel.js         # /positions allocator diligence hero
-
-cache/txline/replays/    # Cached fixture snapshots for replay mode
-
-idl/txline/
-  txoracle.mainnet.json  # Mainnet IDL (program 9ExbZjAapQ...)
-  txoracle.devnet.json   # Devnet IDL (program 6pW64gN1s...)
+constants/
+  brand.js                    # Product positioning (single source of truth)
 ```
 
----
+## Documentation
 
-## Secondary Enrichment (pre-TxLINE integrations)
-
-Fourcast was originally built on Bright Data + Polymarket/Kalshi aggregation. Those integrations remain and are surfaced as secondary enrichment around the TxLINE-primary World Cup experience:
-
-- **Bright Data** (SERP API, Scraping Browser, Web Unlocker) — web intelligence for the broader `/markets` discovery flow
-- **Polymarket CLOB + gamma API** — used by `/api/worldcup/edge` to compute cross-venue discrepancies against TxLINE consensus
-- **Kalshi API** — secondary sports markets (optional in the World Cup view)
-- **Venice AI** — LLM for evidence synthesis in the broader agent loop
-
-The `/markets` and `/signals` routes continue to provide the original Bright Data-powered experience as supporting capability. The flagship route — Mandate (`/agent`) → Proof Theatre (`/world-cup`) → Diligence (`/positions`) — is the TxLINE-primary surface.
-
----
-
-## API Endpoints
-
-| Endpoint | Purpose |
+| Document | Purpose |
 |----------|---------|
-| `GET /api/worldcup/fixtures` | World Cup fixtures (live or cached replay) |
-| `GET /api/worldcup/fixtures/{id}` | Single fixture with odds + scores merged |
-| `GET /api/worldcup/replay?fixtureId=X` | Cached event timeline for replay viewer |
-| `GET /api/worldcup/edge?fixtureId=X` | TxLINE vs Polymarket cross-venue edge |
-| `GET /api/worldcup/verify?fixtureId=X` | Solana verification result for cached proof |
-| `GET /api/worldcup/status` | Adapter mode (live vs replay), cutoff, replay count |
-| `GET /api/agent/historical-lab` | Latest VPS historical lab heartbeat for `/agent` |
-| `POST /api/agent/historical-lab` | Authenticated worker heartbeat receiver |
+| [STRATEGY.md](STRATEGY.md) | Multi-venue roadmap, timeline, and competition plan |
+| [OPS.md](OPS.md) | VPS autonomous worker deployment |
+| [docs/CANTON_ATOMIC_SETTLEMENT.md](docs/CANTON_ATOMIC_SETTLEMENT.md) | Canton CIP-56 contract model |
+| [docs/DELPHI_AGENT.md](docs/DELPHI_AGENT.md) | Delphi Agent Arena operator guide |
+| [docs/TXLINE_INTEGRATION.md](docs/TXLINE_INTEGRATION.md) | TxLINE/Solana proof chain (hackathon reference) |
+| [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | Product demo walkthrough |
 
----
+## Tech Stack
 
-## Demo Video Outline (≈ 4 minutes)
-
-1. **0:00–0:30 — Problem.** Agent-managed prediction-market capital lacks an audit layer; claimed P&L does not prove mandate discipline.
-2. **0:30–1:30 — Mandate Control.** Open `/agent`; show the live VPS worker, current mandate decision, proof timeline crossing from "outcome withheld" to "proof available," and on-chain Solana verdict in the telemetry strip.
-3. **1:30–2:45 — Decision dossier.** Click "Inspect decision dossier"; walk the 5 allocator questions: what it knew, what it decided, what prevented overreaching, when the result was unavailable, what later verified it. Show the raw receipt JSON.
-4. **2:45–3:30 — Proof Theatre.** Open `/world-cup`; click "Open proof theatre" on a final fixture; walk the vertical 6-stage evidence timeline from pre-match evidence to Solana-anchored reconciliation.
-5. **3:30–4:00 — Allocator Diligence.** Open `/positions`; show mandate adherence, discipline rate, and calibration — computed from the same public receipts.
-6. **4:00–4:10 — Close.** The route is one system: Mandate → Proof Theatre → Diligence. Verify without trust.
-
-See `docs/DEMO_SCRIPT_PROOF.md` for the full judge-path script with fallbacks and pre-demo checklist.
-
----
-
-## TxLINE Integration Feedback
-
-**What worked well:**
-- The normalised JSON schema across competitions is genuinely pleasant to consume — one normaliser handles fixtures, odds, and scores with no per-league special-casing.
-- The free World Cup tier activates cleanly once the on-chain `subscribe` tx confirms; no payment, no KYC.
-- Historical replay via `/scores/snapshot/{fixtureId}` returns the full event stream as an ordered array, which makes building a deterministic replay UI trivial.
-- The `stat-validation` endpoint returns a complete Merkle proof bundle (`eventStatRoot`, `statProofs`, `mainTreeProof`, `subTreeProof`, `statsToProve`) in a single call — no client-side tree walking required.
-
-**Where we hit friction:**
-- The onboarding flow has six steps (wallet, SOL, on-chain subscribe, guest JWT, sign message, activate) — a one-shot CLI helper would reduce setup time from ~15 minutes to ~30 seconds.
-- The published IDL does not include the seed pattern for the `daily_scores_merkle_roots` PDA. We reverse-engineered it from the deployed program — `[b"daily_scores_roots", epoch_day as u16 LE]` — but this should be documented upstream.
-- Team display names appear in `/fixtures/snapshot` but not in `/scores/snapshot/{fixtureId}` — score records only carry `Participant1Id` / `Participant2Id`. We had to cross-reference against the fixtures list (and older fixtures fall off the list, leaving team names unresolvable).
-- The free devnet tier depends on the public Solana devnet RPC for SOL, which is heavily rate-limited. A bundled devnet SOL faucet (or a one-line `requestAirdrop` helper in the SDK) would smooth the very first step.
-
----
-
-## AG Grid
-
-[AG Grid](https://www.ag-grid.com/javascript-data-grid/getting-started/) (free Community edition) could make Fourcast's Allocator Diligence table (`/positions`) and per-operator Track Records sortable/filterable — letting allocators slice by adherence rate, Brier score, or receipt coverage without custom table code. The diligence surface is fundamentally tabular decision data.
+- **Runtime:** Node.js 20+, Next.js 16, React 19
+- **Execution:** Polymarket CLOB, Delphi SDK (LMSR), Canton DApp SDK
+- **Chain:** EVM (wagmi/viem/ethers), Solana (Anchor), Gensyn Testnet
+- **Intelligence:** TxLINE/TxOdds, Venice AI, Bright Data, SynthData
+- **Infra:** Vercel (web), VPS + PM2 (agent worker), Redis/Upstash, Turso DB
 
 ## License
 

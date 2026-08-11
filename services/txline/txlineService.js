@@ -979,6 +979,84 @@ function sleep(ms) {
 
 /* ============================== end streaming ============================ */
 
+/* ─── Multi-League Support (MLS, Premier League, etc.) ───────────────────── */
+
+/**
+ * Known TxLINE competition IDs. Extend as new leagues become available.
+ * MLS: live now at 50% coverage. Premier League: full coverage Aug 21.
+ */
+export const KNOWN_COMPETITIONS = {
+  worldCup: { id: 72, name: 'FIFA World Cup', status: 'replay' },
+  mls: { id: null, name: 'MLS', status: 'live_partial' }, // TODO: confirm ID from API
+  premierLeague: { id: null, name: 'Premier League', status: 'preparing' }, // Full Aug 21
+};
+
+/**
+ * Check if TxLINE is configured and available.
+ */
+export function isConfigured() {
+  return Boolean(API_TOKEN) && resolveMode() === 'live';
+}
+
+/**
+ * Fetch fixtures for any competition by ID.
+ * Generalizes getLiveFixtures() beyond World Cup.
+ *
+ * @param {number} competitionId - TxLINE competition ID
+ * @returns {Promise<Array>} Normalized fixtures
+ */
+export async function getFixturesByCompetition(competitionId) {
+  if (resolveMode() !== 'live') {
+    return []; // No replay data for non-World-Cup competitions yet
+  }
+  const data = await txlineFetch(`/fixtures/snapshot?competitionId=${competitionId}`);
+  return normalizeFixtures(data);
+}
+
+/**
+ * Match a prediction-market question to a TxLINE fixture.
+ * Uses fuzzy team-name matching to bridge between Delphi market descriptions
+ * and TxLINE fixture data.
+ *
+ * @param {string} question - The prediction market question text
+ * @param {Array} fixtures - Array of normalized TxLINE fixtures
+ * @returns {{ fixture: Object, confidence: number } | null}
+ */
+export function matchFixtureToQuestion(question, fixtures) {
+  if (!question || !fixtures?.length) return null;
+
+  const qLower = question.toLowerCase();
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const fixture of fixtures) {
+    const home = (fixture.home?.name || fixture.homeName || '').toLowerCase();
+    const away = (fixture.away?.name || fixture.awayName || '').toLowerCase();
+
+    if (!home || !away) continue;
+
+    let score = 0;
+    if (qLower.includes(home)) score += 2;
+    if (qLower.includes(away)) score += 2;
+
+    // Partial matches (first word of team name)
+    const homeFirst = home.split(' ')[0];
+    const awayFirst = away.split(' ')[0];
+    if (homeFirst.length > 3 && qLower.includes(homeFirst)) score += 1;
+    if (awayFirst.length > 3 && qLower.includes(awayFirst)) score += 1;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = fixture;
+    }
+  }
+
+  if (bestScore >= 2) {
+    return { fixture: bestMatch, confidence: Math.min(1, bestScore / 4) };
+  }
+  return null;
+}
+
 const txlineService = {
   getTxlineStatus,
   getFixtures,
@@ -988,6 +1066,7 @@ const txlineService = {
   getLiveScores,
   getHistoricalReplay,
   getMerkleProof,
+  getFixturesByCompetition,
   listReplayFixtureIds,
   readReplayFixture,
   writeReplayFixture,
@@ -1003,6 +1082,9 @@ const txlineService = {
   toStreamDelta,
   parseStreamEvent,
   streamFixtureUpdates,
+  isConfigured,
+  matchFixtureToQuestion,
+  KNOWN_COMPETITIONS,
 };
 
 export default txlineService;

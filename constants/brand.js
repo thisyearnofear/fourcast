@@ -1,7 +1,10 @@
 /**
  * Fourcast brand & product narrative — single source of truth.
- * Venue loop: Markets → act → Positions, with Canton privacy as differentiator.
- * Bright Data scrape enrichment is optional when credits/keys are available.
+ *
+ * Core identity: venue-agnostic autonomous prediction-market operator.
+ * Agent core (policy + sizing + receipts) is the constant.
+ * Execution venues (Polymarket, Delphi, Canton) are additive layers.
+ * Intelligence (TxLINE/TxOdds, Venice AI, Bright Data) feeds the core.
  */
 
 export const BRAND = {
@@ -19,13 +22,14 @@ export const BRAND = {
   /** Positioning — single source of truth for everyone (UI + docs + tests). */
   positioning: {
     headline:
-      'Prediction markets with private size — settle in CBTC, prove what the public ledger cannot see.',
+      'Autonomous prediction-market operator with verifiable mandates. Venue-agnostic execution. Provable discipline.',
     promise:
-      'Browse · trade or publish · track · private settle when size must stay hidden.',
+      'Discover edge · size under policy · execute across venues · prove every decision before the outcome.',
     excludeRetailLead: false,
-    primaryRfb: '02 — Prediction Market Trader Intelligence',
-    secondaryRfb: '05 — Cross-Platform Arbitrage (execution layer)',
-    acquisitionRfb: '06 — Social Trading Intelligence (acquisition loop)',
+    primaryRfb: '01 — Verifiable Autonomous Operator (mandate receipts + reconciliation)',
+    secondaryRfb: '02 — Prediction Market Trader Intelligence (multi-venue edge)',
+    tertiaryRfb: '03 — Cross-Platform Arbitrage (venue-agnostic execution)',
+    acquisitionRfb: '04 — Social Trading Intelligence (signal marketplace)',
     operatorMath: {
       claim: 'Premium pays for itself on 3 attributed fills per month.',
       formula: 'Net = (attribution × fills) − $19.99 / mo',
@@ -37,41 +41,41 @@ export const BRAND = {
   },
 
   /** One line — hero, OG, pitch. */
-  tagline: 'Private size. Public markets. Atomic CBTC settle.',
+  tagline: 'Autonomous operator. Verifiable mandates. Multi-venue edge.',
 
   /** Supporting line — subheads, metadata. */
   subhead:
-    'Trade and publish like a venue you know. When size must stay hidden, settle privately on Canton — same ledger, two views.',
+    'Policy-bound agent trading across Polymarket, Kalshi, and Delphi. Every decision receipted before the outcome. Private settlement when size requires it.',
 
   /** Footer / trust strip */
-  footerStrip: 'Polymarket · Kalshi · Canton CBTC · decision receipts',
+  footerStrip: 'Polymarket · Kalshi · Delphi · TxLINE/TxOdds · decision receipts',
 
   /** Demo CTA */
-  demoTitle: 'See private settlement in under a minute',
+  demoTitle: 'See the agent decide in under a minute',
   demoSubcopy:
-    'Run the privacy check, then settle a position. Autopilot execution remains safety-gated — see /autopilot.',
+    'Watch a policy-bound decision from evidence through five gates to sealed receipt. Autopilot execution remains safety-gated.',
 
   /** Product loop (NarrativeSteps) */
   loop: {
-    search: { label: 'Search', short: 'Search', icon: '1' },
+    discover: { label: 'Discover', short: 'Discover', icon: '1' },
     analyze: { label: 'Analyze', short: 'Analyze', icon: '2' },
-    publish: { label: 'Publish / Trade', short: 'Publish', icon: '3' },
-    scored: { label: 'Track Record', short: 'Track', icon: '4' },
+    execute: { label: 'Execute', short: 'Execute', icon: '3' },
+    track: { label: 'Track', short: 'Track', icon: '4' },
   },
 
   /** Page subtitles — max ~12 words; prefer none when tabs explain. */
   pages: {
     markets: 'Find the edge. Act. Then track it.',
-    signals: 'Publish from Markets — follow & reputation still early.',
+    signals: 'Publish calls — follow & reputation early.',
     agent: 'Policy, dry-run, sealed decision.',
-    positions: 'Your book — public venues, then private size.',
-    proof: 'Secret · locked · paid — same ledger, two views.',
+    positions: 'Your book — all venues, one view.',
+    proof: 'Receipt committed before outcome. Reconciled after.',
     labs: 'Autopilot, Builder, operator tools.',
   },
 
-  /** Nav tooltips — short venue phrases that chain Markets → Positions → Private. */
+  /** Nav tooltips — short venue phrases. */
   nav: {
-    markets: 'Find edge · trade or publish',
+    markets: 'Find edge across venues',
     signals: 'Follow verified analyst calls',
     agent: 'Mandate and agent loop',
     positions: 'Your book after you act',
@@ -81,15 +85,14 @@ export const BRAND = {
   },
 
   /** Nav label overrides.
-   *  Primary: Markets · Positions · Private
-   *  Overflow: Signals · Mandate · Labs · Alerts */
+   *  Primary: Markets · Positions · Mandate
+   *  Supporting: Signals · Labs · Alerts · Private */
   navLabels: {
     markets: 'Markets',
     signals: 'Signals',
     agent: 'Mandate',
     positions: 'Positions',
     labs: 'Labs',
-    worldCup: 'Private',
     alerts: 'Alerts',
     canton: 'Private',
   },
@@ -98,8 +101,8 @@ export const BRAND = {
   walletExplainer: {
     headline: 'Connect for the action you need:',
     layers: [
-      { icon: 'Ξ', name: 'Trade / publish', detail: 'EVM wallet — Polymarket, Kalshi, Arc reputation' },
-      { icon: '◈', name: 'Private settle', detail: 'No wallet needed for the privacy proof — see Private' },
+      { icon: 'Ξ', name: 'Trade / publish', detail: 'EVM wallet — Polymarket, Kalshi, Delphi' },
+      { icon: '◈', name: 'Private settle', detail: 'Canton — when position size must stay hidden' },
       { icon: '◎', name: 'Inspect proofs', detail: 'Phantom — Solana receipt anchoring' },
     ],
     cta: 'Connect only what the next action requires.',
@@ -108,13 +111,13 @@ export const BRAND = {
   publish: {
     arcPreferred: { chain: 'Arc (USDC)', gas: '~$0.01 USDC' },
     cantonPrivate: { chain: 'Canton (cBTC/cETH)', gas: 'sub-cent', privacy: 'Position sizes hidden from all third parties' },
-    footnote: 'Arc = public receipt. Canton = private position. EVM = venue orders.',
+    footnote: 'EVM = venue orders. Canton = private when needed.',
   },
 
   agent: {
     title: 'Mandate',
-    subtitle: 'Policy · dry-run · sealed decision',
-    badge: 'Operator loop',
+    subtitle: 'Policy · dry-run · sealed decision · multi-venue',
+    badge: 'Autonomous operator',
     runCta: 'Run Agent',
     labsCta: 'Enable Autopilot →',
   },
@@ -127,18 +130,40 @@ export const BRAND = {
     track:    { label: 'Track Record', short: 'Track', icon: '5' },
   },
 
+  /** Execution venues — additive, not exclusive. */
+  venues: {
+    polymarket: { name: 'Polymarket', type: 'CLOB', status: 'live', chain: 'Polygon' },
+    kalshi: { name: 'Kalshi', type: 'Exchange', status: 'live', chain: 'Centralized' },
+    delphi: { name: 'Delphi', type: 'LMSR', status: 'active', chain: 'Gensyn Testnet' },
+    canton: { name: 'Canton', type: 'Private settle', status: 'roadmap', chain: 'Canton DevNet' },
+  },
+
+  /** Intelligence sources — feed the agent core. */
+  intelligence: {
+    txline: {
+      name: 'TxLINE / TxOdds',
+      type: 'Professional odds + Merkle proofs',
+      status: 'live',
+      coverage: 'MLS (50%), Premier League (full Aug 21)',
+    },
+    venice: { name: 'Venice AI', type: 'LLM reasoning + forecasting', status: 'live' },
+    brightData: { name: 'Bright Data', type: 'Web scrape + SERP', status: 'optional' },
+    synthData: { name: 'SynthData', type: 'ML forecasting models', status: 'live' },
+  },
+
   quad: {
-    forOperators: 'Polymarket & Kalshi operators running real capital who need verified attribution, not vibes.',
-    forAnalysts:  'Signal publishers who want their calls surfaced to operator-tier followers, not retail engagement.',
-    notFor:       "Casual lookers. If you don't intend to put capital at risk, Fourcast will underserve you. Use the free tier to audit, not to gamble.",
+    forOperators: 'Operators running real capital across prediction markets who need verified attribution and auditable mandate adherence.',
+    forAnalysts: 'Signal publishers who want their calls surfaced to operator-tier followers, not retail engagement.',
+    forAllocators: 'Allocators who need to diligence autonomous agents without trusting self-reported P&L.',
+    notFor: "Casual lookers. If you don't intend to put capital at risk or delegate to an agent, Fourcast will underserve you.",
   },
 
   labs: {
-    subtitle: 'Autopilot, Builder, Canton ops',
+    subtitle: 'Autopilot, Builder, operator tools',
     autopilot: {
       title: 'Autopilot',
       description:
-        'Safety-gated execution of policy-bound, Kelly-sized agent decisions.',
+        'Safety-gated execution of policy-bound, Kelly-sized agent decisions across connected venues.',
       status: 'core',
     },
     builder: {
@@ -154,59 +179,63 @@ export const BRAND = {
     unavailableNote: 'Deep web scrape is offline. Analysis uses AI + market data.',
   },
 
-  hackathon: {
-    label: 'Bright Data · Web Data UNLOCKED',
-    track: 'Track 2: Finance & Market Intelligence',
+  competitions: {
+    delphiArena: {
+      label: 'Delphi Agent Arena',
+      window: 'Aug 10–24, 2026',
+      venue: 'Gensyn Testnet (LMSR)',
+      status: 'active',
+    },
   },
 
   metadata: {
-    title: 'Fourcast — Private prediction-market settlement',
+    title: 'Fourcast — Autonomous Prediction-Market Operator',
     description:
-      'Prediction markets with private size and atomic CBTC settlement on Canton — plus verified decision receipts operators can audit.',
+      'Venue-agnostic autonomous agent for prediction markets. Policy-bound decisions with verifiable receipts across Polymarket, Kalshi, and Delphi.',
   },
 };
 
 /**
- * Onboarding copy — venue-first, short.
+ * Onboarding copy — agent-first, venue-agnostic.
  */
 export const ONBOARDING_COPY = [
   {
     id: 'welcome',
     title: 'Welcome to Fourcast',
     description:
-      'Browse markets, act, and track. Private CBTC settle when size must stay hidden.',
+      'Autonomous operator for prediction markets. Discover edge, act under mandate, prove every decision.',
     icon: '1',
     target: null,
   },
   {
     id: 'markets',
-    title: 'Pick a market',
+    title: 'Discover markets',
     description:
-      'Scan odds and edge. One action: analyze, trade, or publish.',
+      'Scan across Polymarket, Kalshi, and Delphi. Find mispricing the crowd missed.',
     icon: '2',
     target: '[data-onboard="markets"]',
   },
   {
-    id: 'publish',
-    title: 'Act on edge',
+    id: 'analyze',
+    title: 'Analyze edge',
     description:
-      'Fair odds vs market, Kelly size, then trade or publish a receipt.',
+      'Professional odds, LLM reasoning, Monte Carlo simulation. Fair value vs market price.',
     icon: '3',
-    target: '[data-onboard="publish"]',
+    target: '[data-onboard="analyze"]',
   },
   {
     id: 'agent',
-    title: 'Run under a mandate',
+    title: 'Decide under mandate',
     description:
-      'Policy-bound agent decisions seal to a receipt before the outcome.',
+      'Five-gate policy sizes and approves. Receipt sealed before the outcome resolves.',
     icon: '4',
     target: '[data-onboard="agent"]',
   },
   {
     id: 'positions',
-    title: 'Track positions',
+    title: 'Track everything',
     description:
-      'Public track record and private Canton positions in one place.',
+      'All venues in one book. Verifiable track record. Allocator-ready diligence.',
     icon: '5',
     target: '[data-onboard="positions"]',
   },

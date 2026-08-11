@@ -22,6 +22,9 @@
     "migrate:new": "node migrations/run.js new",
     "agent:live": "node scripts/fourcast-agent-worker.mjs live",
     "agent:once": "node scripts/fourcast-agent-worker.mjs --once",
+    "delphi:live": "node --env-file=.env.local scripts/delphi-agent-worker.mjs",
+    "delphi:once": "node --env-file=.env.local scripts/delphi-agent-worker.mjs --once",
+    "delphi:dry": "node --env-file=.env.local scripts/delphi-agent-worker.mjs --once --dry-run",
     "check:runtimes": "node scripts/check-runtimes.js",
     "check:bundles": "node scripts/check-bundle-size.js"
   },
@@ -30,6 +33,7 @@
     "@canton-network/wallet-sdk": "^1.4.0",
     "@console-wallet/dapp-sdk": "^2.2.5",
     "@coral-xyz/anchor": "^0.31.1",
+    "@gensyn-ai/gensyn-delphi-sdk": "^2.1.0",
     "@libsql/client": "^0.15.15",
     "@neynar/nodejs-sdk": "^2.0.0",
     "@noble/curves": "^2.0.1",
