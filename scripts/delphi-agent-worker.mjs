@@ -71,6 +71,40 @@ function writeStatus(status) {
   }
 }
 
+// ─── Arena Feed Ingest ─────────────────────────────────────────────────────
+
+function collectArenaPayload(steps, summary, durationMs) {
+  const pick = (step) => steps.find((s) => s.step === step && s.status === 'complete')?.data || null;
+  return {
+    runId: summary?.runId || `delphi-${Date.now()}`,
+    timestamp: summary?.timestamp || new Date().toISOString(),
+    summary: summary || null,
+    balances: pick('balance'),
+    decisions: pick('decide')?.topDecisions || [],
+    executions: pick('execute')?.executions || [],
+    positions: pick('positions')?.positions || [],
+    durationMs,
+  };
+}
+
+async function postArenaIngest(payload) {
+  const base = process.env.ARENA_INGEST_URL;
+  const secret = process.env.ADMIN_SECRET;
+  if (!base || !secret) return; // feed unconfigured — skip quietly
+  try {
+    const res = await fetch(`${base}/api/arena/ingest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) log('warn', `[ARENA] ingest ${res.status}`);
+    else log('info', '[ARENA] cycle published');
+  } catch (err) {
+    log('warn', `[ARENA] ingest failed: ${err.message}`);
+  }
+}
+
 // ─── Pre-flight Checks ──────────────────────────────────────────────────────
 
 function preflight() {
@@ -140,6 +174,9 @@ async function runOnce() {
       summary: summary?.data || null,
       dryRun: summary?.data?.dryRun ?? true,
     });
+
+    // Publish cycle to the public arena feed — fire-and-forget, never blocks
+    postArenaIngest(collectArenaPayload(steps, summary?.data, duration));
 
     log('info', `Run complete in ${(duration / 1000).toFixed(1)}s`);
     return true;

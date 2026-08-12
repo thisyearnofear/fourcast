@@ -30,6 +30,7 @@ import { replayTour } from "@/components/RouteGuide";
 const PRIMARY_NAV = [
   { name: BRAND.navLabels.markets ?? "Markets", href: "/markets", match: "/markets", description: BRAND.nav.markets, onboardId: "markets" },
   { name: BRAND.navLabels.positions ?? "Positions", href: "/positions", match: "/positions", description: BRAND.nav.positions, onboardId: "positions" },
+  { name: BRAND.navLabels.arena ?? "Arena", href: "/arena", match: "/arena", description: BRAND.nav.arena, onboardId: "agent" },
   { name: BRAND.navLabels.canton ?? "Private", href: "/proof?chain=canton", match: "/proof", description: BRAND.nav.canton, onboardId: "world-cup" },
 ];
 

@@ -218,6 +218,28 @@ export async function* runDelphiAgentLoop(config = {}) {
     message: `Analyzed ${forecasts.length} markets, ${forecasts.filter((f) => Math.abs(f.bestEdge.edge) >= opts.minEdge).length} with actionable edge`,
   };
 
+  // Enriched positions snapshot — joins held positions with discovered market
+  // questions/outcomes for the public feed.
+  const snapshotPositions = async () => {
+    try {
+      const raw = await delphiService.listPositions();
+      const byId = new Map(markets.map((m) => [String(m.id).toLowerCase(), m]));
+      return raw.map((p) => {
+        const m = byId.get(String(p.marketAddress).toLowerCase());
+        const o = m?.outcomes?.[p.outcomeIdx];
+        return {
+          market: p.marketAddress,
+          outcomeIdx: p.outcomeIdx,
+          shares: Number(p.shares ?? p.outcomeShares ?? 0),
+          question: m?.question || null,
+          outcome: o ? (typeof o === 'string' ? o : o.name || `Outcome ${p.outcomeIdx}`) : null,
+        };
+      });
+    } catch {
+      return [];
+    }
+  };
+
   // ── Step 5: Size and decide ───────────────────────────────────────────
 
   yield { step: 'decide', status: 'running', message: 'Applying decision policy...' };
@@ -343,6 +365,7 @@ export async function* runDelphiAgentLoop(config = {}) {
 
   if (allocatable.length === 0) {
     yield { step: 'execute', status: 'complete', message: 'No trades to execute this cycle.', data: { trades: 0 } };
+    yield { step: 'positions', status: 'complete', data: { positions: await snapshotPositions() } };
     // Still emit a summary so the worker status file reflects zero-trade cycles.
     yield {
       step: 'summary',
@@ -483,7 +506,9 @@ export async function* runDelphiAgentLoop(config = {}) {
       : `${executed.length} executed, ${failed.length} failed`,
   };
 
-  // ── Step 7: Summary ───────────────────────────────────────────────────
+  // ── Step 7: Positions + Summary ──────────────────────────────────────
+
+  yield { step: 'positions', status: 'complete', data: { positions: await snapshotPositions() } };
 
   yield {
     step: 'summary',
