@@ -18,6 +18,7 @@ if (typeof window !== 'undefined') {
 
 import { chatCompletion } from './llmRouter.js';
 import { estimateFromDataFeed } from './delphiDataFeeds.js';
+import { retrieveEvidence } from './evidenceRetriever.js';
 
 // ─── Market Classification ──────────────────────────────────────────────────
 
@@ -249,11 +250,16 @@ async function estimateWithLLM(market, classification) {
 
   const WEB_ENABLED = process.env.DELPHI_AGENT_WEB_SEARCH !== 'false';
 
+  // Grounding: retrieve web evidence and inject it into the prompt — works
+  // with ANY model (no provider plugin billing) and yields visible citations.
+  const evidence = await retrieveEvidence(market.question).catch(() => null);
+  const snippets = evidence?.snippets || [];
+
   const system = `${categoryPrompt}
 
 You MUST respond with ONLY valid JSON. Your probability estimates must sum to 1.0 across all outcomes. Be calibrated — prefer base rates over narrative. If you are uncertain, your probabilities should reflect that uncertainty (closer to uniform distribution).
 
-IMPORTANT: You are intentionally NOT shown current market prices, so that your estimate is independent. Estimate from fundamentals — do not try to guess the market price. Your estimate will be compared against market prices afterwards to detect mispricing.${WEB_ENABLED ? '\n\nYou have web search available and you MUST use it before answering: your training data is outdated relative to today, and these questions resolve on current facts (schedules, announcements, results). Ground every load-bearing claim in retrieved evidence — cite the specific dated facts you found (e.g. official schedule dates, published results). If search is not actually available to you or returns nothing relevant, say so explicitly in reasoning — do NOT fabricate citations — and fall back to base rates with LOW confidence.' : ''}`;
+IMPORTANT: You are intentionally NOT shown current market prices, so that your estimate is independent. Estimate from fundamentals — do not try to guess the market price. Your estimate will be compared against market prices afterwards to detect mispricing.${snippets.length ? '\n\nGround every load-bearing claim in the web evidence provided below and cite sources by number like [2]. Use ONLY the provided sources — do NOT invent citations or claim searches you did not perform. If the evidence does not answer the question, say so in reasoning and use base rates with LOW confidence.' : WEB_ENABLED ? '\n\nYou have web search available and you MUST use it before answering: your training data is outdated relative to today, and these questions resolve on current facts (schedules, announcements, results). Ground every load-bearing claim in retrieved evidence — cite the specific dated facts you found. If search is not actually available to you or returns nothing relevant, say so explicitly in reasoning — do NOT fabricate citations — and fall back to base rates with LOW confidence.' : ''}`;
 
   const user = `Prediction market question: "${market.question}"
 
@@ -262,7 +268,7 @@ Resolves: ${market.resolvesAt || 'Unknown'}
 
 Outcomes:
 ${outcomesStr}
-
+${snippets.length ? `\nCurrent web evidence:\n${snippets.map((s, i) => `[${i + 1}] "${s.title}" — ${s.url}${s.publishedDate ? ` (${s.publishedDate.slice(0, 10)})` : ''}\n${s.text}`).join('\n\n')}\n` : ''}
 Estimate the TRUE probability of each outcome. Consider:
 1. Base rates and historical precedent
 2. Any relevant knowledge you have about the teams, entities, or phenomena involved
@@ -274,8 +280,8 @@ Output ONLY valid JSON:
   "probabilities": [0.XX, 0.XX, ...],
   "confidence": "HIGH" | "MEDIUM" | "LOW",
   "reasoning": "Brief explanation of your probability estimate from fundamentals",
-  "evidence": [{"claim": "specific dated fact found via search", "source_url": "https://..."}]
-}${WEB_ENABLED ? '\n\nThe evidence array is MANDATORY when you found relevant current facts — a probability without dated evidence behind it will be distrusted.' : ''}`;
+  "evidence": [{"claim": "specific dated fact behind the estimate", "source": "[n] or url"}]
+}${snippets.length || WEB_ENABLED ? '\n\nThe evidence array is MANDATORY when relevant current facts were provided or found — a strong probability claim without dated evidence behind it will be distrusted.' : ''}`;
 
   try {
     const result = await chatCompletion({ system, user, temperature: 0.3, maxTokens: 500, webSearch: WEB_ENABLED });
@@ -313,7 +319,7 @@ Output ONLY valid JSON:
     return {
       probabilities: normalized,
       confidence: parsed.confidence || 'LOW',
-      source: `${result.provider}:${result.model}${result.webSearchUsed ? '+web' : ''}_${classification.category}${result.webSearchUsed ? `[ev:${evidenceCount}]` : ''}`,
+      source: `${result.provider}:${result.model}${result.webSearchUsed ? '+web' : ''}_${classification.category}${snippets.length ? `[exa:${snippets.length}/ev:${evidenceCount}]` : ''}`,
       reasoning: parsed.reasoning || null,
       evidence: parsed.evidence || null,
     };
