@@ -19,7 +19,8 @@ export function calculateKellySizing(
   marketYesOdds,
   riskTolerance = 0.5,
   confidence = "LOW",
-  source = "llm"
+  source = "llm",
+  minEdge = 0.05
 ) {
   if (
     aiProb == null ||
@@ -39,8 +40,9 @@ export function calculateKellySizing(
   const edge = aiProb - marketYesOdds;
   const absEdge = Math.abs(edge);
 
-  // Edge threshold for trade actionability is 5%
-  const actionable = absEdge > 0.05;
+  // Edge threshold for trade actionability (default 5%; callers like the
+  // Delphi agent loop pass their own minEdge through)
+  const actionable = absEdge > minEdge;
   const direction = edge > 0 ? "BUY YES" : "BUY NO";
 
   if (!actionable) {

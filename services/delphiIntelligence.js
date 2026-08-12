@@ -3,17 +3,20 @@
  * intelligence sources and returns probability estimates.
  *
  * Intelligence routing:
- * - Sports markets → TxLINE/TxOdds professional odds (primary), Venice AI (secondary)
- * - Politics/economics → Venice AI reasoning
- * - Crypto/technology → Venice AI + SynthData ML (if available)
- * - Current events → Venice AI with web context
+ * - Sports markets → TxLINE/TxOdds professional odds (primary), LLM fallback
+ * - Politics/economics → LLM reasoning
+ * - Crypto/technology → LLM reasoning (+ SynthData ML when available)
+ * - Current events → LLM reasoning
+ *
+ * LLM access goes through services/llmRouter.js — an OpenAI-compatible
+ * provider chain (default openrouter → nvidia → venice) with failover.
  */
 
 if (typeof window !== 'undefined') {
   throw new Error('delphiIntelligence is server-only');
 }
 
-import OpenAI from 'openai';
+import { chatCompletion } from './llmRouter.js';
 
 // ─── Market Classification ──────────────────────────────────────────────────
 
@@ -96,7 +99,7 @@ export async function estimateProbabilities(market, classification) {
     case 'economics':
     case 'general':
     default:
-      return estimateWithVeniceAI(market, classification);
+      return estimateWithLLM(market, classification);
   }
 }
 
@@ -113,8 +116,8 @@ async function estimateSportsProbabilities(market, classification) {
     return txlineEstimate;
   }
 
-  // Fall back to Venice AI for sports markets without TxLINE coverage
-  return estimateWithVeniceAI(market, classification);
+  // Fall back to the LLM router for sports markets without TxLINE coverage
+  return estimateWithLLM(market, classification);
 }
 
 /**
@@ -123,56 +126,64 @@ async function estimateSportsProbabilities(market, classification) {
  */
 async function matchTxLineOdds(market) {
   try {
-    // Dynamic import to avoid breaking if TxLINE is not configured
-    const { txlineService } = await import('./txline/txlineService.js');
-    if (!txlineService || !txlineService.isConfigured?.()) {
-      return null;
-    }
+    // Dynamic import to avoid breaking if TxLINE is not configured.
+    // NOTE: txlineService is the module's default export — a named import
+    // would be undefined and silently disable sports matching.
+    const mod = await import('./txline/txlineService.js');
+    const txlineService = mod.txlineService || mod.default;
+    // NB: don't gate on txlineService.isConfigured() — it requires live mode,
+    // but the agent reads fixtures/odds via getAllFixtures({forceLive:true})
+    // regardless of the World Cup demo's replay mode. Missing credentials
+    // surface as a fetch error below and return null anyway.
 
-    // Try to find matching fixtures based on market question
-    const fixtures = await txlineService.getLiveFixtures?.();
+    // All competitions, fetched live regardless of the World Cup demo's
+    // replay mode — the agent's markets are current fixtures.
+    const fixtures = await txlineService.getAllFixtures?.({ forceLive: true });
     if (!fixtures || fixtures.length === 0) return null;
 
-    // Simple matching: look for team names in the market question
-    const questionLower = market.question.toLowerCase();
-    const matchedFixture = fixtures.find((f) => {
-      const home = (f.home?.name || f.homeName || '').toLowerCase();
-      const away = (f.away?.name || f.awayName || '').toLowerCase();
-      return home && away && (questionLower.includes(home) || questionLower.includes(away));
-    });
+    // Fuzzy team-name matching first; simple substring fallback
+    let matchedFixture = txlineService.matchFixtureToQuestion?.(market.question, fixtures)?.fixture || null;
+    if (!matchedFixture) {
+      const questionLower = market.question.toLowerCase();
+      matchedFixture = fixtures.find((f) => {
+        const home = (f.home?.name || f.homeName || '').toLowerCase();
+        const away = (f.away?.name || f.awayName || '').toLowerCase();
+        return home && away && (questionLower.includes(home) || questionLower.includes(away));
+      });
+    }
 
     if (!matchedFixture) return null;
 
-    // Get odds for the matched fixture
+    // Get odds for the matched fixture.
+    // getLiveOdds returns { canonical: { home, draw, away, implied: {...} }, markets }
+    // where `implied` is already margin-normalized to sum to 1.
     const odds = await txlineService.getLiveOdds?.(matchedFixture.fixtureId || matchedFixture.id);
-    if (!odds) return null;
+    const implied = odds?.canonical?.implied;
+    if (!implied) return null;
 
-    // Extract consensus probabilities from professional odds
-    // TxLINE odds are typically in decimal format: probability = 1/decimal_odds
-    const homeProb = odds.homeWin ? 1 / odds.homeWin : null;
-    const drawProb = odds.draw ? 1 / odds.draw : null;
-    const awayProb = odds.awayWin ? 1 / odds.awayWin : null;
-
-    if (!homeProb && !awayProb) return null;
-
-    // Normalize to sum to 1 (remove bookmaker margin)
-    const total = (homeProb || 0) + (drawProb || 0) + (awayProb || 0);
+    const homeProb = implied.home || 0;
+    const drawProb = implied.draw || 0;
+    const awayProb = implied.away || 0;
+    const total = homeProb + drawProb + awayProb;
     if (total <= 0) return null;
 
-    // Map to Delphi market outcomes
+    // Map consensus probabilities to the Delphi market's outcome labels.
+    // Outcomes that match neither team nor 'draw' get an equal share of the
+    // residual (sports questions with non-team outcomes like Yes/No forms
+    // are a known gap — the classifier only routes team-labelled outcomes here).
     const probabilities = market.outcomes.map((outcome) => {
       const outcomeLower = (typeof outcome === 'string' ? outcome : outcome.name || '').toLowerCase();
       const home = (matchedFixture.home?.name || matchedFixture.homeName || '').toLowerCase();
       const away = (matchedFixture.away?.name || matchedFixture.awayName || '').toLowerCase();
 
       if (outcomeLower.includes(home) || outcomeLower.includes('home')) {
-        return (homeProb || 0) / total;
+        return homeProb / total;
       }
       if (outcomeLower.includes(away) || outcomeLower.includes('away')) {
-        return (awayProb || 0) / total;
+        return awayProb / total;
       }
       if (outcomeLower.includes('draw') || outcomeLower.includes('tie')) {
-        return (drawProb || 0) / total;
+        return drawProb / total;
       }
       // Default: equal split of remaining probability
       return 1 / market.outcomes.length;
@@ -194,8 +205,8 @@ async function matchTxLineOdds(market) {
 
 async function estimateCryptoProbabilities(market, classification) {
   // TODO: integrate SynthData ML models for crypto price forecasting
-  // For now, use Venice AI with crypto-specific prompting
-  return estimateWithVeniceAI(market, classification);
+  // For now, use the LLM router with crypto-specific prompting
+  return estimateWithLLM(market, classification);
 }
 
 // ─── Venice AI (General Intelligence) ───────────────────────────────────────
@@ -213,68 +224,57 @@ const CATEGORY_PROMPTS = {
 };
 
 /**
- * Use Venice AI to estimate outcome probabilities for a Delphi market.
- * Returns calibrated probability distribution across all outcomes.
+ * Estimate outcome probabilities via the LLM router — an ordered
+ * OpenAI-compatible provider chain (default openrouter → nvidia → venice)
+ * with automatic failover on auth/billing/rate-limit/network errors.
+ * Returns calibrated probability distribution across all outcomes, or null
+ * when every configured provider fails.
  */
-async function estimateWithVeniceAI(market, classification) {
-  const apiKey = process.env.VENICE_API_KEY;
-  if (!apiKey) {
-    // Fallback: no intelligence available, return null (skip this market)
-    return null;
-  }
-
-  const client = new OpenAI({
-    apiKey,
-    baseURL: 'https://api.venice.ai/api/v1',
-  });
-
+async function estimateWithLLM(market, classification) {
   const categoryPrompt = CATEGORY_PROMPTS[classification.category] || CATEGORY_PROMPTS.general;
 
+  // Blind pass: deliberately exclude current market prices so the LLM's
+  // estimate is not anchored to the market. Edge is computed afterwards
+  // against observed prices in the agent loop.
   const outcomesStr = market.outcomes
-    .map((o, i) => `[${i}] "${typeof o === 'string' ? o : o.name || `Outcome ${i}`}" (current price: ${(market.prices[i] || 0).toFixed(4)})`)
+    .map((o, i) => `[${i}] "${typeof o === 'string' ? o : o.name || `Outcome ${i}`}"`)
     .join('\n');
 
-  try {
-    const response = await client.chat.completions.create({
-      model: 'llama-3.3-70b',
-      messages: [
-        {
-          role: 'system',
-          content: `${categoryPrompt}
+  const system = `${categoryPrompt}
 
-You MUST respond with ONLY valid JSON. Your probability estimates must sum to 1.0 across all outcomes. Be calibrated — prefer base rates over narrative. If you are uncertain, your probabilities should reflect that uncertainty (closer to uniform distribution).`,
-        },
-        {
-          role: 'user',
-          content: `Prediction market question: "${market.question}"
+You MUST respond with ONLY valid JSON. Your probability estimates must sum to 1.0 across all outcomes. Be calibrated — prefer base rates over narrative. If you are uncertain, your probabilities should reflect that uncertainty (closer to uniform distribution).
+
+IMPORTANT: You are intentionally NOT shown current market prices, so that your estimate is independent. Estimate from fundamentals — do not try to guess the market price. Your estimate will be compared against market prices afterwards to detect mispricing.`;
+
+  const user = `Prediction market question: "${market.question}"
 
 ${market.description ? `Description: ${market.description}\n` : ''}Category: ${classification.category}
 Resolves: ${market.resolvesAt || 'Unknown'}
 
-Outcomes and current market prices:
+Outcomes:
 ${outcomesStr}
 
 Estimate the TRUE probability of each outcome. Consider:
 1. Base rates and historical precedent
-2. Current evidence and conditions
+2. Any relevant knowledge you have about the teams, entities, or phenomena involved
 3. Time until resolution
-4. Whether the market price seems well-calibrated or mispriced
+4. Your honest uncertainty — if the question depends on events after your knowledge cutoff, say so in the reasoning and stay near base rates rather than guessing a direction
 
 Output ONLY valid JSON:
 {
   "probabilities": [0.XX, 0.XX, ...],
   "confidence": "HIGH" | "MEDIUM" | "LOW",
-  "reasoning": "Brief explanation of your probability estimate and any edge vs market prices"
-}`,
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 500,
-    });
+  "reasoning": "Brief explanation of your probability estimate from fundamentals"
+}`;
 
-    let content = response.choices[0].message.content.trim();
+  try {
+    const result = await chatCompletion({ system, user, temperature: 0.3, maxTokens: 500 });
+    if (!result) return null; // every configured provider failed
 
-    // Strip thinking tags if present
+    let content = result.content;
+
+    // Strip reasoning/thinking tags (venice §THINK, deepseek-style <think>)
+    content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
     if (content.includes('§THINK_OPEN§')) {
       const thinkEnd = content.lastIndexOf('§THINK_CLOSE§');
       if (thinkEnd !== -1) content = content.substring(thinkEnd + 14).trim();
@@ -302,11 +302,11 @@ Output ONLY valid JSON:
     return {
       probabilities: normalized,
       confidence: parsed.confidence || 'LOW',
-      source: `venice_ai_${classification.category}`,
+      source: `${result.provider}:${result.model}_${classification.category}`,
       reasoning: parsed.reasoning || null,
     };
   } catch (err) {
-    console.error('Venice AI forecast failed:', err.message);
+    console.error('LLM forecast failed:', err.message);
     return null;
   }
 }

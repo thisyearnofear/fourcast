@@ -182,3 +182,5 @@ Clarity on scope prevents drift:
 | 2026-08-10 | Prepare for TxLINE PL coverage (Aug 21) | Continuous high-volume sports data for the agent; intelligence edge |
 | 2026-08-10 | Retain Canton code, reposition to roadmap | Working code is an asset; leading with it when it's not live is misleading |
 | 2026-08-10 | Keep TxLINE/Solana integration functional | Proof-of-decision via Merkle proofs remains novel; PL season makes it current |
+| 2026-08-12 | Rebuild Delphi pipeline after dry-run audit found 7 silent failure modes (anchored LLM, hidden Kelly gate, one-sided scan, broken TxLINE import/odds parsing, market truncation, dry-run sweep txs) | "Dry-run green" meant nothing; harness-verified mechanics now back the claim |
+| 2026-08-12 | Multi-provider LLM router (openrouter → nvidia → venice), Venice demoted to fallback | Venice had no web search, a single 402 killed all intelligence; OpenRouter gives free-tier models + future :online web models, NVIDIA free tier adds resilience |

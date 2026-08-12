@@ -115,6 +115,14 @@ async function runOnce() {
       // Log significant events
       if (update.status === 'error') {
         log('error', `[${update.step}] ${update.message}`);
+      } else if (update.step === 'forecast' && update.status === 'complete') {
+        log('info', `[FORECAST] ${update.message}`);
+      } else if (update.step === 'decide' && update.status === 'complete') {
+        const d = update.data || {};
+        log('info', `[DECIDE] ${d.allocate ?? 0}/${d.total ?? 0} cleared policy`);
+        for (const t of (d.topDecisions || [])) {
+          log('info', `  → ${t.outcome} | edge ${(t.edge * 100).toFixed(1)}% | ${t.shares} shares | ${t.question}`);
+        }
       } else if (update.step === 'execute' && update.data?.txHash) {
         log('info', `[TRADE] ${update.message}`);
       } else if (update.step === 'summary') {

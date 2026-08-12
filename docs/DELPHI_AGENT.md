@@ -82,11 +82,37 @@ only after dry-run cycles look sane.
 State and history land in `.delphi-agent/` (`status.json` per run, `runs.jsonl`
 append-only log; both gitignored).
 
-## Verified 2026-08-11
+## Verified 2026-08-12
 
-Dry-run green end-to-end: credential gate → balances (1000 TST, 0.05 ETH) →
-9 open markets discovered and analyzed → policy declined all (edge below
-threshold) → summary written. Zero trades is the mandate working, not a bug.
+Pipeline rebuilt and harness-tested after finding several silent failure
+modes that the original dry-run had masked (Venice estimates anchored to
+market prices, a hardcoded 5% Kelly gate overriding DELPHI_AGENT_MIN_EDGE,
+best-outcome-only scanning that could never buy an underpriced "No", a
+broken default-export import that disabled the TxLINE matcher entirely, a
+World-Cup-only fixture lookup, maxMarkets=10 silently skipping markets, and
+dry runs actually sending redemption transactions). Mock-forecaster harness:
+14/14 markets analyzed → 12 decisions evaluated → 9 cleared policy → 9 dry-run
+trades simulated with 5-share caps. Decide→execute path confirmed end-to-end.
+
+INFERENCE: forecasts run through a multi-provider LLM router
+(`services/llmRouter.js`) — ordered failover, default chain
+`openrouter → nvidia → venice` (`DELPHI_AGENT_LLM_PROVIDERS`). Only providers
+with configured keys are attempted; auth/billing/rate-limit failures roll over
+automatically, and the winning provider+model is recorded in each forecast's
+`source` for audit. Failover verified 2026-08-12 (openrouter 401 → nvidia 403
+→ venice 401 → null; chain mechanics correct).
+
+ACTION REQUIRED: Venice credits are exhausted (402) AND the key now returns
+401 — re-check both key and balance at https://venice.ai/settings/api. Until
+at least one of `OPENROUTER_API_KEY` / `NVIDIA_API_KEY` (or fixed Venice) is
+in `.env.local`, no market gets a probability and the agent trades nothing.
+OpenRouter's `:free` model variants enable zero-cost testing while unfunded.
+
+TxLINE sports path now verified up to the odds call: fixture list is live
+(415 fixtures: MLS/NFL/PL/friendlies) and fuzzy question matching works, but
+every fixture's odds snapshot currently returns empty — the dev API's odds
+feed appears dormant (expected to liven around PL season). Until odds exist,
+sports markets fall through to Venice.
 
 ## Gotchas (learned the hard way)
 
@@ -100,3 +126,14 @@ threshold) → summary written. Zero trades is the mandate working, not a bug.
 - **The positions API requires an explicit `wallet` query param.**
   `delphiService.listPositions()` derives it from `WALLET_PRIVATE_KEY` when
   the caller doesn't pass one.
+- **Kelly rounding zeroes small edges at LOW confidence.** sizePct is rounded
+  to whole percents after confidence haircuts; a ≤4% edge at LOW/MEDIUM
+  confidence sizes to 0. Small-edge trades realistically need HIGH-confidence
+  sources (TxLINE, data feeds) or ≥6–8% blind disagreement.
+- **Sports Yes/No outcome forms don't map to TxLINE probabilities.**
+  `matchTxLineOdds()` maps team/draw outcome labels; "Will X beat Y?" with
+  [Yes, No] outcomes needs predicate parsing — TODO before MLS/PL markets
+  hit the board.
+- **Tuning via env**: `DELPHI_AGENT_MIN_EDGE` (0.03), `DELPHI_AGENT_MAX_MARKETS`
+  (25), `DELPHI_AGENT_LLM_PROVIDERS` (chain order), `OPENROUTER_MODEL`,
+  `NVIDIA_MODEL`, `DELPHI_AGENT_VENICE_MODEL` (per-provider model overrides).

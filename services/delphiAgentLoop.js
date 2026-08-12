@@ -25,7 +25,7 @@ import { classifyMarket, estimateProbabilities } from './delphiIntelligence.js';
 // ─── Configuration ──────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIG = {
-  maxMarkets: 10,
+  maxMarkets: Number(process.env.DELPHI_AGENT_MAX_MARKETS || '25'),
   minEdge: Number(process.env.DELPHI_AGENT_MIN_EDGE || '0.05'),
   maxAllocationPct: Number(process.env.DELPHI_AGENT_MAX_ALLOCATION_PCT || '0.10'),
   maxSharesPerTrade: Number(process.env.DELPHI_AGENT_MAX_SHARES_PER_TRADE || '5'),
@@ -108,7 +108,8 @@ export async function* runDelphiAgentLoop(config = {}) {
   let swept = { redeemed: 0, liquidated: 0, tokensRecovered: 0 };
   try {
     const positions = await delphiService.listPositions();
-    for (const pos of positions) {
+    // Dry-run safety: never send redemption/liquidation txs while testing.
+    for (const pos of opts.dryRun ? [] : positions) {
       try {
         const result = await delphiService.sweepSettledPosition(
           pos.marketAddress,
@@ -128,10 +129,12 @@ export async function* runDelphiAgentLoop(config = {}) {
     yield {
       step: 'sweep',
       status: 'complete',
-      data: swept,
-      message: swept.redeemed + swept.liquidated > 0
-        ? `Recovered ${swept.tokensRecovered.toFixed(2)} tokens from ${swept.redeemed + swept.liquidated} positions`
-        : 'No settled positions to sweep',
+      data: { ...swept, positionsHeld: positions.length, dryRun: opts.dryRun },
+      message: opts.dryRun
+        ? `Dry run — sweep skipped (${positions.length} positions held, no txs sent)`
+        : swept.redeemed + swept.liquidated > 0
+          ? `Recovered ${swept.tokensRecovered.toFixed(2)} tokens from ${swept.redeemed + swept.liquidated} positions`
+          : 'No settled positions to sweep',
     };
   } catch (err) {
     yield { step: 'sweep', status: 'error', message: err.message };
@@ -161,8 +164,10 @@ export async function* runDelphiAgentLoop(config = {}) {
 
     try {
       // Classify market type and estimate probabilities using intelligence layer
+      // (estimateFn override allows tests/backtests to inject a forecaster)
       const classification = classifyMarket(market);
-      const probEstimate = await estimateProbabilities(market, classification);
+      const estimateFn = opts.estimateFn || estimateProbabilities;
+      const probEstimate = await estimateFn(market, classification);
 
       if (!probEstimate || !probEstimate.probabilities) {
         yield {
@@ -209,69 +214,75 @@ export async function* runDelphiAgentLoop(config = {}) {
   const decisions = [];
 
   for (const forecast of forecasts) {
-    const { market, bestEdge, probEstimate } = forecast;
+    const { market, edges, probEstimate } = forecast;
 
-    // Only consider outcomes with positive edge (buy signal)
-    if (bestEdge.edge < opts.minEdge) continue;
+    // Scan EVERY outcome: in LMSR, buying any underpriced outcome is the
+    // trade. (Binary "No underpriced" == "Yes overpriced" — the old
+    // best-edge-only scan could never take that side.)
+    for (const cand of edges) {
+      // Only consider outcomes with positive edge above threshold
+      if (cand.edge < opts.minEdge) continue;
 
-    // Kelly sizing: for LMSR, market odds = price = implied probability
-    const kelly = calculateKellySizing(
-      bestEdge.yourProb,
-      bestEdge.marketProb,
-      opts.riskTolerance,
-      probEstimate.confidence || 'MEDIUM',
-      probEstimate.source || 'llm'
-    );
+      // Kelly sizing: for LMSR, market odds = price = implied probability
+      const kelly = calculateKellySizing(
+        cand.yourProb,
+        cand.marketProb,
+        opts.riskTolerance,
+        probEstimate.confidence || 'MEDIUM',
+        probEstimate.source || 'llm',
+        opts.minEdge
+      );
 
-    if (!kelly.actionable) continue;
+      if (!kelly.actionable) continue;
 
-    // Convert allocation % to share count based on bankroll
-    const allocationTokens = balances.tokenBalance * kelly.sizePct;
-    const sharesToBuy = Math.min(
-      allocationTokens / bestEdge.marketProb, // shares affordable at current price
-      opts.maxSharesPerTrade
-    );
+      // Convert allocation % to share count based on bankroll
+      const allocationTokens = balances.tokenBalance * kelly.sizePct;
+      const sharesToBuy = Math.min(
+        allocationTokens / cand.marketProb, // shares affordable at current price
+        opts.maxSharesPerTrade
+      );
 
-    if (sharesToBuy < 0.1) continue; // Too small to bother
+      if (sharesToBuy < 0.1) continue; // Too small to bother
 
-    // Simulation for the policy gate
-    const seed = deriveSimulationSeed([market.id, bestEdge.outcomeIdx, timestamp]);
-    const simulation = simulateBinaryMarket({
-      probability: bestEdge.yourProb,
-      marketOdds: bestEdge.marketProb,
-      direction: 'BUY YES', // In LMSR, buying the underpriced outcome
-      runs: decisionPolicy.simulationRuns,
-      seed,
-    });
+      // Simulation for the policy gate
+      const seed = deriveSimulationSeed([market.id, cand.outcomeIdx, timestamp]);
+      const simulation = simulateBinaryMarket({
+        probability: cand.yourProb,
+        marketOdds: cand.marketProb,
+        direction: `BUY ${String(cand.outcome).toUpperCase()}`, // LMSR: buying the underpriced outcome
+        runs: decisionPolicy.simulationRuns,
+        seed,
+      });
 
-    // Policy evaluation
-    const recommendation = {
-      edge: bestEdge.edge,
-      sizePct: kelly.sizePct,
-      marketOdds: bestEdge.marketProb,
-      aiProbability: bestEdge.yourProb,
-    };
+      // Policy evaluation
+      const recommendation = {
+        edge: cand.edge,
+        sizePct: kelly.sizePct,
+        marketOdds: cand.marketProb,
+        aiProbability: cand.yourProb,
+      };
 
-    const decision = evaluateDecision({
-      recommendation,
-      simulation,
-      policy: decisionPolicy,
-    });
+      const decision = evaluateDecision({
+        recommendation,
+        simulation,
+        policy: decisionPolicy,
+      });
 
-    decisions.push({
-      market,
-      outcomeIdx: bestEdge.outcomeIdx,
-      outcomeName: bestEdge.outcome,
-      edge: bestEdge.edge,
-      yourProb: bestEdge.yourProb,
-      marketProb: bestEdge.marketProb,
-      kelly,
-      sharesToBuy: Math.round(sharesToBuy * 100) / 100,
-      simulation,
-      decision,
-      source: probEstimate.source,
-      reasoning: probEstimate.reasoning,
-    });
+      decisions.push({
+        market,
+        outcomeIdx: cand.outcomeIdx,
+        outcomeName: cand.outcome,
+        edge: cand.edge,
+        yourProb: cand.yourProb,
+        marketProb: cand.marketProb,
+        kelly,
+        sharesToBuy: Math.round(sharesToBuy * 100) / 100,
+        simulation,
+        decision,
+        source: probEstimate.source,
+        reasoning: probEstimate.reasoning,
+      });
+    }
   }
 
   // Sort by edge descending

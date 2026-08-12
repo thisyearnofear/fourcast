@@ -1014,6 +1014,23 @@ export async function getFixturesByCompetition(competitionId) {
 }
 
 /**
+ * Fetch fixtures across ALL competitions in one snapshot.
+ * Unlike getLiveFixtures() (World Cup only), this covers every competition
+ * TxLINE serves (MLS, NFL, Premier League, friendlies, ...) and is what
+ * agents use for sports-market matching. In replay mode returns [] unless
+ * forceLive is set — competition agents need current fixtures regardless of
+ * the World Cup demo's replay state.
+ *
+ * @param {{ forceLive?: boolean }} opts
+ * @returns {Promise<Array>} Normalized fixtures
+ */
+export async function getAllFixtures({ forceLive = false } = {}) {
+  if (!forceLive && resolveMode() !== 'live') return [];
+  const data = await txlineFetch('/fixtures/snapshot');
+  return normalizeFixtures(data);
+}
+
+/**
  * Match a prediction-market question to a TxLINE fixture.
  * Uses fuzzy team-name matching to bridge between Delphi market descriptions
  * and TxLINE fixture data.
@@ -1062,6 +1079,7 @@ const txlineService = {
   getFixtures,
   getFixtureDetail,
   getLiveFixtures,
+  getAllFixtures,
   getLiveOdds,
   getLiveScores,
   getHistoricalReplay,
