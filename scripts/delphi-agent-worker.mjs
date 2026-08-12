@@ -121,7 +121,7 @@ async function runOnce() {
         const d = update.data || {};
         log('info', `[DECIDE] ${d.allocate ?? 0}/${d.total ?? 0} cleared policy`);
         for (const t of (d.topDecisions || [])) {
-          log('info', `  → ${t.outcome} | edge ${(t.edge * 100).toFixed(1)}% | ${t.shares} shares | ${t.question}`);
+          log('info', `  → [${t.verdict}] ${t.outcome} | est ${(100 * (t.yourProb ?? 0)).toFixed(0)}% vs mkt ${(100 * (t.marketProb ?? 0)).toFixed(0)}% (edge ${(100 * (t.edge ?? 0)).toFixed(1)}%) | ${t.shares} sh | ${t.source || ''} | ${t.question}`);
         }
       } else if (update.step === 'execute' && update.data?.txHash) {
         log('info', `[TRADE] ${update.message}`);

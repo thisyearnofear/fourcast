@@ -29,8 +29,10 @@ price, directly comparable to EV per share.
 | File | Role |
 |------|------|
 | `services/delphiService.js` | Delphi SDK wrapper — discovery, quoting, execution, positions, redemption, edge math |
-| `services/delphiIntelligence.js` | Market classification and probability routing — TxLINE odds for sports, Venice AI for everything else |
-| `services/delphiAgentLoop.js` | Async-generator loop: balances → discover → sweep settled → forecast → Kelly size → 5-gate policy → execute |
+| `services/delphiIntelligence.js` | Market classification and probability routing — data feeds first, then TxLINE odds for sports, LLM router for everything else |
+| `services/delphiDataFeeds.js` | Deterministic public-data intelligence — SILSO sunspots, NSIDC sea ice, Open-Meteo weather. Near resolution the answer is often already published at ~0.85. |
+| `services/llmRouter.js` | OpenAI-compatible provider chain (openrouter → nvidia → venice) with failover, web-search support w/ auto-degrade, 429 backoff for `:free` models |
+| `services/delphiAgentLoop.js` | Async-generator loop: balances → discover → sweep settled → forecast → Kelly size → 5-gate policy → execute (with liveCategories/liveSources gating → paper trades) |
 | `scripts/delphi-agent-worker.mjs` | Headless worker (`--once`, `--dry-run`); state in `.delphi-agent/` |
 | `deploy/delphi-agent.ecosystem.config.cjs` | PM2 config (5-minute cycles) |
 
@@ -102,11 +104,19 @@ automatically, and the winning provider+model is recorded in each forecast's
 `source` for audit. Failover verified 2026-08-12 (openrouter 401 → nvidia 403
 → venice 401 → null; chain mechanics correct).
 
-ACTION REQUIRED: Venice credits are exhausted (402) AND the key now returns
-401 — re-check both key and balance at https://venice.ai/settings/api. Until
-at least one of `OPENROUTER_API_KEY` / `NVIDIA_API_KEY` (or fixed Venice) is
-in `.env.local`, no market gets a probability and the agent trades nothing.
-OpenRouter's `:free` model variants enable zero-cost testing while unfunded.
+ACTION REQUIRED (2026-08-12 evening): inference budget status —
+- OpenRouter trial credits were drained (~$0.26, mostly web-plugin queries
+  while testing). Paid models 402 on this account until a deposit. A ~$10
+  OpenRouter deposit restores llama-3.3-70b-instruct with web search (the
+  evidence-required prompt verifiably solved the CRS-35 phantom-edge test).
+- Zero-cost interim: `OPENROUTER_MODEL=google/gemma-4-31b-it:free` is
+  configured — works, but free-tier 429s are aggressive and many cycles only
+  partially forecast (router retries 10s/20s then degrades to skip).
+- Venice still 401s (credits+key need attention at venice.ai/settings/api).
+- The data feeds are free, deterministic, and drive the phase-1 live stance
+  (`DELPHI_AGENT_LIVE_SOURCES=datafeed` — verified edges vs market on
+  2026-08-12: sunspot 74-vs-≥40 at mkt 0.92; sea ice 5.829-vs-<5.88 at mkt
+  0.90; Wellington HS temp model 13.8°C-vs-exactly-15 at mkt 0.28).
 
 TxLINE sports path now verified up to the odds call: fixture list is live
 (415 fixtures: MLS/NFL/PL/friendlies) and fuzzy question matching works, but
@@ -136,4 +146,7 @@ sports markets fall through to Venice.
   hit the board.
 - **Tuning via env**: `DELPHI_AGENT_MIN_EDGE` (0.03), `DELPHI_AGENT_MAX_MARKETS`
   (25), `DELPHI_AGENT_LLM_PROVIDERS` (chain order), `OPENROUTER_MODEL`,
-  `NVIDIA_MODEL`, `DELPHI_AGENT_VENICE_MODEL` (per-provider model overrides).
+  `NVIDIA_MODEL`, `DELPHI_AGENT_VENICE_MODEL` (per-provider model overrides),
+  `DELPHI_AGENT_LIVE_SOURCES` / `DELPHI_AGENT_LIVE_CATEGORIES` (go-live gates —
+  anything else paper-trades), `DELPHI_AGENT_WEB_SEARCH` (default on; router
+  auto-degrades on 400/402), `DELPHI_AGENT_INTERVAL_MS` (1h during paper phase).

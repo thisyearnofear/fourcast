@@ -88,8 +88,11 @@ function parseOrder(providerOrder) {
 
 /**
  * @param {{ system: string, user: string, temperature?: number, maxTokens?: number,
- *           model?: string, providerOrder?: string }} params
- * @returns {Promise<{ content: string, provider: string, model: string } | null>}
+ *           model?: string, providerOrder?: string, webSearch?: boolean }} params
+ *          webSearch: openrouter uses the web plugin, venice uses
+ *          venice_parameters.enable_web_search; unsupported elsewhere.
+ * @returns {Promise<{ content: string, provider: string, model: string,
+ *           webSearchUsed: boolean } | null>}
  */
 export async function chatCompletion({
   system,
@@ -98,6 +101,7 @@ export async function chatCompletion({
   maxTokens = 500,
   model: modelOverride,
   providerOrder,
+  webSearch = false,
 }) {
   const order = parseOrder(providerOrder);
   const failures = [];
@@ -113,26 +117,60 @@ export async function chatCompletion({
 
     const model = modelOverride || process.env[cfg.modelEnv] || cfg.defaultModel;
 
-    try {
-      const res = await client.chat.completions.create({
-        model,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ],
-        temperature,
-        max_tokens: maxTokens,
-      });
-      const content = res.choices?.[0]?.message?.content?.trim();
-      if (!content) throw new Error('empty completion');
-      if (failures.length) {
-        console.log(`[llmRouter] fell back to ${name}/${model} after: ${failures.join(' | ')}`);
+    const webSupported = name === 'openrouter' || name === 'venice';
+    // Free-tier models are aggressively rate-limited (429s): give them a few
+    // polite in-provider retries before failing over.
+    const isFreeModel = model.endsWith(':free');
+    const maxAttempts = isFreeModel ? 3 : 1;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const payload = {
+          model,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user },
+          ],
+          temperature,
+          max_tokens: maxTokens,
+        };
+        if (webSearch && name === 'openrouter') payload.plugins = [{ id: 'web', max_results: 5 }];
+        if (webSearch && name === 'venice') payload.venice_parameters = { enable_web_search: 'auto' };
+
+        let res;
+        try {
+          res = await client.chat.completions.create(payload);
+        } catch (err) {
+          // Web search is an enhancement, not a requirement: if it fails
+          // (unsupported, unpayable) retry once without it before failing over.
+          if (webSearch && webSupported && (err.status === 400 || err.status === 402)) {
+            console.warn(`[llmRouter] ${name}/${model} web search failed (${err.status}) — retrying without web`);
+            const fallbackPayload = { ...payload };
+            delete fallbackPayload.plugins;
+            delete fallbackPayload.venice_parameters;
+            res = await client.chat.completions.create(fallbackPayload);
+            payload.__webDropped = true;
+          } else {
+            throw err;
+          }
+        }
+        const content = res.choices?.[0]?.message?.content?.trim();
+        if (!content) throw new Error('empty completion');
+        if (failures.length) {
+          console.log(`[llmRouter] fell back to ${name}/${model} after: ${failures.join(' | ')}`);
+        }
+        return { content, provider: name, model, webSearchUsed: webSearch && webSupported && !payload.__webDropped };
+      } catch (err) {
+        const status = err.status || err.code || 'ERR';
+        if ((status === 429 || status === 503) && attempt < maxAttempts) {
+          const waitMs = 5000 * attempt * 2; // 10s, 20s for free models
+          console.warn(`[llmRouter] ${name}/${model} rate-limited (429) — retry ${attempt}/${maxAttempts - 1} in ${waitMs / 1000}s`);
+          await new Promise((r) => setTimeout(r, waitMs));
+          continue;
+        }
+        failures.push(`${name}: ${status}`);
+        console.warn(`[llmRouter] ${name}/${model} failed (${status}) — trying next provider`);
       }
-      return { content, provider: name, model };
-    } catch (err) {
-      const status = err.status || err.code || 'ERR';
-      failures.push(`${name}: ${status}`);
-      console.warn(`[llmRouter] ${name}/${model} failed (${status}) — trying next provider`);
     }
   }
 

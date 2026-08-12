@@ -17,6 +17,7 @@ if (typeof window !== 'undefined') {
 }
 
 import { chatCompletion } from './llmRouter.js';
+import { estimateFromDataFeed } from './delphiDataFeeds.js';
 
 // ─── Market Classification ──────────────────────────────────────────────────
 
@@ -89,6 +90,12 @@ function countMatches(text, keywords) {
  * @returns {Promise<{probabilities: number[], confidence: string, source: string, reasoning: string}>}
  */
 export async function estimateProbabilities(market, classification) {
+  // Deterministic public-data feeds beat every model when they match —
+  // near resolution the answer is often already public while the market
+  // still prices it below certainty.
+  const feed = await estimateFromDataFeed(market).catch(() => null);
+  if (feed?.probabilities) return feed;
+
   // Route based on category
   switch (classification.category) {
     case 'sports':
@@ -240,11 +247,13 @@ async function estimateWithLLM(market, classification) {
     .map((o, i) => `[${i}] "${typeof o === 'string' ? o : o.name || `Outcome ${i}`}"`)
     .join('\n');
 
+  const WEB_ENABLED = process.env.DELPHI_AGENT_WEB_SEARCH !== 'false';
+
   const system = `${categoryPrompt}
 
 You MUST respond with ONLY valid JSON. Your probability estimates must sum to 1.0 across all outcomes. Be calibrated — prefer base rates over narrative. If you are uncertain, your probabilities should reflect that uncertainty (closer to uniform distribution).
 
-IMPORTANT: You are intentionally NOT shown current market prices, so that your estimate is independent. Estimate from fundamentals — do not try to guess the market price. Your estimate will be compared against market prices afterwards to detect mispricing.`;
+IMPORTANT: You are intentionally NOT shown current market prices, so that your estimate is independent. Estimate from fundamentals — do not try to guess the market price. Your estimate will be compared against market prices afterwards to detect mispricing.${WEB_ENABLED ? '\n\nYou have web search available and you MUST use it before answering: your training data is outdated relative to today, and these questions resolve on current facts (schedules, announcements, results). Ground every load-bearing claim in retrieved evidence — cite the specific dated facts you found (e.g. official schedule dates, published results). If search returns nothing relevant, say so explicitly in reasoning and fall back to base rates with LOW confidence.' : ''}`;
 
   const user = `Prediction market question: "${market.question}"
 
@@ -264,11 +273,12 @@ Output ONLY valid JSON:
 {
   "probabilities": [0.XX, 0.XX, ...],
   "confidence": "HIGH" | "MEDIUM" | "LOW",
-  "reasoning": "Brief explanation of your probability estimate from fundamentals"
-}`;
+  "reasoning": "Brief explanation of your probability estimate from fundamentals",
+  "evidence": [{"claim": "specific dated fact found via search", "source_url": "https://..."}]
+}${WEB_ENABLED ? '\n\nThe evidence array is MANDATORY when you found relevant current facts — a probability without dated evidence behind it will be distrusted.' : ''}`;
 
   try {
-    const result = await chatCompletion({ system, user, temperature: 0.3, maxTokens: 500 });
+    const result = await chatCompletion({ system, user, temperature: 0.3, maxTokens: 500, webSearch: WEB_ENABLED });
     if (!result) return null; // every configured provider failed
 
     let content = result.content;
@@ -288,6 +298,7 @@ Output ONLY valid JSON:
     if (jsonMatch) content = jsonMatch[0];
 
     const parsed = JSON.parse(content);
+    const evidenceCount = Array.isArray(parsed.evidence) ? parsed.evidence.length : 0;
 
     // Validate probabilities sum to ~1
     const probs = parsed.probabilities;
@@ -302,8 +313,9 @@ Output ONLY valid JSON:
     return {
       probabilities: normalized,
       confidence: parsed.confidence || 'LOW',
-      source: `${result.provider}:${result.model}_${classification.category}`,
+      source: `${result.provider}:${result.model}${result.webSearchUsed ? '+web' : ''}_${classification.category}${result.webSearchUsed ? `[ev:${evidenceCount}]` : ''}`,
       reasoning: parsed.reasoning || null,
+      evidence: parsed.evidence || null,
     };
   } catch (err) {
     console.error('LLM forecast failed:', err.message);

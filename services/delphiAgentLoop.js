@@ -30,6 +30,12 @@ const DEFAULT_CONFIG = {
   maxAllocationPct: Number(process.env.DELPHI_AGENT_MAX_ALLOCATION_PCT || '0.10'),
   maxSharesPerTrade: Number(process.env.DELPHI_AGENT_MAX_SHARES_PER_TRADE || '5'),
   slippagePct: Number(process.env.DELPHI_AGENT_SLIPPAGE_PCT || '2'),
+  // Go-live gates (paper-trade-out anything not listed when set):
+  // - liveCategories: market categories allowed to trade for real
+  // - liveSources: intelligence source prefixes allowed to trade for real
+  //   ('datafeed' = only deterministic public-data backed forecasts)
+  liveCategories: (process.env.DELPHI_AGENT_LIVE_CATEGORIES || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+  liveSources: (process.env.DELPHI_AGENT_LIVE_SOURCES || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   dryRun: process.env.DELPHI_AGENT_DRY_RUN !== 'false',
   riskTolerance: 0.5,
 };
@@ -279,6 +285,7 @@ export async function* runDelphiAgentLoop(config = {}) {
         sharesToBuy: Math.round(sharesToBuy * 100) / 100,
         simulation,
         decision,
+        category: forecast.classification?.category || 'general',
         source: probEstimate.source,
         reasoning: probEstimate.reasoning,
       });
@@ -298,12 +305,16 @@ export async function* runDelphiAgentLoop(config = {}) {
       total: decisions.length,
       allocate: allocatable.length,
       pass: passed.length,
-      topDecisions: allocatable.slice(0, 5).map((d) => ({
+      topDecisions: decisions.slice(0, 20).map((d) => ({
         question: d.market.question.slice(0, 60),
         outcome: d.outcomeName,
         edge: d.edge,
+        yourProb: d.yourProb,
+        marketProb: d.marketProb,
         shares: d.sharesToBuy,
         verdict: d.decision.verdict,
+        category: d.category,
+        source: d.source,
       })),
     },
     message: allocatable.length > 0
@@ -343,21 +354,30 @@ export async function* runDelphiAgentLoop(config = {}) {
   for (const trade of allocatable) {
     const tradeDesc = `${trade.sharesToBuy} shares of "${trade.outcomeName}" on "${trade.market.question.slice(0, 40)}"`;
 
-    if (opts.dryRun) {
+    // Go-live gating: trades sourced outside the allowed intelligence
+    // categories/sources paper-trade even in live mode.
+    const src = (trade.source || '').toLowerCase();
+    const catGated = opts.liveCategories.length > 0
+      && !opts.liveCategories.includes((trade.category || '').toLowerCase());
+    const srcGated = opts.liveSources.length > 0
+      && !opts.liveSources.some((p) => src.startsWith(p));
+    const gated = !opts.dryRun && (catGated || srcGated);
+    if (opts.dryRun || gated) {
+      const tag = opts.dryRun ? '[DRY RUN]' : '[PAPER]';
       executions.push({
         market: trade.market.id,
         outcome: trade.outcomeName,
         outcomeIdx: trade.outcomeIdx,
         shares: trade.sharesToBuy,
         edge: trade.edge,
-        status: 'dry_run',
-        message: `[DRY RUN] Would buy ${tradeDesc}`,
+        status: opts.dryRun ? 'dry_run' : 'paper',
+        message: `${tag} Would buy ${tradeDesc}`,
       });
       yield {
         step: 'execute',
         status: 'running',
-        message: `[DRY RUN] ${tradeDesc} (edge: ${(trade.edge * 100).toFixed(1)}%)`,
-        data: { dryRun: true, market: trade.market.id },
+        message: `${tag} ${tradeDesc} (edge: ${(trade.edge * 100).toFixed(1)}%)`,
+        data: { dryRun: true, gated, market: trade.market.id },
       };
       continue;
     }
@@ -429,6 +449,7 @@ export async function* runDelphiAgentLoop(config = {}) {
   const executed = executions.filter((e) => e.status === 'executed');
   const failed = executions.filter((e) => e.status === 'failed');
   const dryRuns = executions.filter((e) => e.status === 'dry_run');
+  const papers = executions.filter((e) => e.status === 'paper');
 
   yield {
     step: 'execute',
@@ -459,6 +480,7 @@ export async function* runDelphiAgentLoop(config = {}) {
       tradesExecuted: executed.length,
       tradesFailed: failed.length,
       tradesDryRun: dryRuns.length,
+      tradesPaper: papers.length,
       tokensSwept: swept.tokensRecovered,
       totalCost: executed.reduce((sum, e) => sum + (e.cost || 0), 0),
       dryRun: opts.dryRun,
