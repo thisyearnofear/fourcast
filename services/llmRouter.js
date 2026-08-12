@@ -31,6 +31,7 @@ const PROVIDERS = {
     keyEnv: 'OPENROUTER_API_KEY',
     modelEnv: 'OPENROUTER_MODEL',
     defaultModel: 'meta-llama/llama-3.3-70b-instruct',
+    timeout: 60_000,
     defaultHeaders: {
       'X-Title': 'Fourcast Delphi Agent',
     },
@@ -40,6 +41,7 @@ const PROVIDERS = {
     keyEnv: 'NVIDIA_API_KEY',
     modelEnv: 'NVIDIA_MODEL',
     defaultModel: 'meta/llama-3.3-70b-instruct',
+    timeout: 120_000, // free tier is slow on long prompts (>30s observed)
   },
   venice: {
     baseURL: 'https://api.venice.ai/api/v1',
@@ -65,7 +67,7 @@ function getClient(name) {
     apiKey,
     baseURL: cfg.baseURL,
     defaultHeaders: cfg.defaultHeaders,
-    timeout: 30_000,
+    timeout: cfg.timeout || 60_000,
     maxRetries: 0, // failover, not retry — a different provider is a better retry
   });
   clients.set(name, client);
