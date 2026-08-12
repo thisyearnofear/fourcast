@@ -32,6 +32,7 @@ const PROVIDERS = {
     modelEnv: 'OPENROUTER_MODEL',
     defaultModel: 'meta-llama/llama-3.3-70b-instruct',
     timeout: 60_000,
+    attempts: (model) => (model.endsWith(':free') ? 1 : 2), // :free 429s are persistent — don't burn 30s/market retrying
     defaultHeaders: {
       'X-Title': 'Fourcast Delphi Agent',
     },
@@ -42,12 +43,14 @@ const PROVIDERS = {
     modelEnv: 'NVIDIA_MODEL',
     defaultModel: 'meta/llama-3.3-70b-instruct',
     timeout: 120_000, // free tier is slow on long prompts (>30s observed)
+    attempts: 3, // 503s intersperse with wins — worth retrying
   },
   venice: {
     baseURL: 'https://api.venice.ai/api/v1',
     keyEnv: 'VENICE_API_KEY',
     modelEnv: 'DELPHI_AGENT_VENICE_MODEL', // legacy name, keep working
     defaultModel: 'llama-3.3-70b',
+    attempts: 2,
   },
 };
 
@@ -120,10 +123,9 @@ export async function chatCompletion({
     const model = modelOverride || process.env[cfg.modelEnv] || cfg.defaultModel;
 
     const webSupported = name === 'openrouter' || name === 'venice';
-    // Congestion-prone tiers (openrouter :free models, nvidia free) return
-    // 429s AND 503s under load: give every provider a few polite in-provider
-    // retries on those statuses before failing over (other errors fail fast).
-    const maxAttempts = 3;
+    // Congestion retries are per-provider (persistent :free 429s get no
+    // retries; nvidia 503s get a few — they intersperse with wins).
+    const maxAttempts = typeof cfg.attempts === 'function' ? cfg.attempts(model) : (cfg.attempts ?? 2);
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
