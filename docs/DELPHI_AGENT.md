@@ -85,6 +85,16 @@ only after dry-run cycles look sane.
 State and history land in `.delphi-agent/` (`status.json` per run, `runs.jsonl`
 append-only log; both gitignored).
 
+## Production deployment (2026-08-12, LIVE)
+
+- **Host**: `nuncio-vultr`, user `linuxuser`, repo `/home/linuxuser/fourcast`
+- **Process**: PM2 `delphi-agent` (id 19), hourly cycles (`DELPHI_AGENT_INTERVAL_MS=3600000`), `pm2 save` persisted
+- **Mode**: LIVE, gated `DELPHI_AGENT_LIVE_SOURCES=datafeed`
+- **First live trade** (laptop-supervised, pre-migration): 5 YES Arctic sea ice <5.88M km² @ 4.3955 TST, settles Aug 13 ~08:00 UTC; sweep+redeem runs automatically on subsequent cycles
+- **Position safety**: `DELPHI_AGENT_MAX_SHARES_PER_MARKET` (default 20) caps cumulative exposure per market+outcome — without it an hourly loop would stack the same edge every cycle
+- **Deploy mechanics**: code+env sync via rsync/ssh (GitHub push pending auth fix on the laptop); env lives only in VPS `.env.local`, `chmod 600`
+- **Known live constraint**: nvidia NIM free tier intermittently 503s / >120s queues; router retries 429/503 with backoff then degrades (LLM lane slow some cycles — data feeds are unaffected and still trade)
+
 ## Verified 2026-08-12
 
 Pipeline rebuilt and harness-tested after finding several silent failure

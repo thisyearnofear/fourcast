@@ -29,6 +29,9 @@ const DEFAULT_CONFIG = {
   minEdge: Number(process.env.DELPHI_AGENT_MIN_EDGE || '0.05'),
   maxAllocationPct: Number(process.env.DELPHI_AGENT_MAX_ALLOCATION_PCT || '0.10'),
   maxSharesPerTrade: Number(process.env.DELPHI_AGENT_MAX_SHARES_PER_TRADE || '5'),
+  // Hard per-market+outcome cumulative cap: without this, a live hourly loop
+  // would keep stacking the same edge (5 more shares every cycle).
+  maxSharesPerMarket: Number(process.env.DELPHI_AGENT_MAX_SHARES_PER_MARKET || '20'),
   slippagePct: Number(process.env.DELPHI_AGENT_SLIPPAGE_PCT || '2'),
   // Go-live gates (paper-trade-out anything not listed when set):
   // - liveCategories: market categories allowed to trade for real
@@ -112,8 +115,10 @@ export async function* runDelphiAgentLoop(config = {}) {
   yield { step: 'sweep', status: 'running', message: 'Checking for settled positions to redeem...' };
 
   let swept = { redeemed: 0, liquidated: 0, tokensRecovered: 0 };
+  let heldPositions = [];
   try {
     const positions = await delphiService.listPositions();
+    heldPositions = positions;
     // Dry-run safety: never send redemption/liquidation txs while testing.
     for (const pos of opts.dryRun ? [] : positions) {
       try {
@@ -219,6 +224,13 @@ export async function* runDelphiAgentLoop(config = {}) {
 
   const decisions = [];
 
+  // Holdings map for cumulative per-market caps
+  const heldShares = new Map();
+  for (const p of heldPositions) {
+    const key = `${(p.marketId || p.marketAddress || '').toLowerCase()}:${p.outcomeIdx}`;
+    heldShares.set(key, (heldShares.get(key) || 0) + Number(p.shares ?? p.outcomeShares ?? 0));
+  }
+
   for (const forecast of forecasts) {
     const { market, edges, probEstimate } = forecast;
 
@@ -241,11 +253,16 @@ export async function* runDelphiAgentLoop(config = {}) {
 
       if (!kelly.actionable) continue;
 
-      // Convert allocation % to share count based on bankroll
+      // Convert allocation % to share count based on bankroll.
+      // Also clamp by remaining room under the per-market+outcome cap.
       const allocationTokens = balances.tokenBalance * kelly.sizePct;
+      const heldKey = `${String(market.id || '').toLowerCase()}:${cand.outcomeIdx}`;
+      const alreadyHeld = heldShares.get(heldKey) || 0;
+      const room = Math.max(0, opts.maxSharesPerMarket - alreadyHeld);
       const sharesToBuy = Math.min(
         allocationTokens / cand.marketProb, // shares affordable at current price
-        opts.maxSharesPerTrade
+        opts.maxSharesPerTrade,
+        room
       );
 
       if (sharesToBuy < 0.1) continue; // Too small to bother

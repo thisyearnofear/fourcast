@@ -120,10 +120,10 @@ export async function chatCompletion({
     const model = modelOverride || process.env[cfg.modelEnv] || cfg.defaultModel;
 
     const webSupported = name === 'openrouter' || name === 'venice';
-    // Free-tier models are aggressively rate-limited (429s): give them a few
-    // polite in-provider retries before failing over.
-    const isFreeModel = model.endsWith(':free');
-    const maxAttempts = isFreeModel ? 3 : 1;
+    // Congestion-prone tiers (openrouter :free models, nvidia free) return
+    // 429s AND 503s under load: give every provider a few polite in-provider
+    // retries on those statuses before failing over (other errors fail fast).
+    const maxAttempts = 3;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -165,13 +165,15 @@ export async function chatCompletion({
       } catch (err) {
         const status = err.status || err.code || 'ERR';
         if ((status === 429 || status === 503) && attempt < maxAttempts) {
-          const waitMs = 5000 * attempt * 2; // 10s, 20s for free models
-          console.warn(`[llmRouter] ${name}/${model} rate-limited (429) — retry ${attempt}/${maxAttempts - 1} in ${waitMs / 1000}s`);
+          const retryAfterMs = Number(err.headers?.get?.('retry-after')) * 1000;
+          const waitMs = Math.max(10_000 * attempt, Number.isFinite(retryAfterMs) ? retryAfterMs : 0);
+          console.warn(`[llmRouter] ${name}/${model} congestion (${status}) — retry ${attempt}/${maxAttempts - 1} in ${Math.round(waitMs / 1000)}s`);
           await new Promise((r) => setTimeout(r, waitMs));
           continue;
         }
-        failures.push(`${name}: ${status}`);
-        console.warn(`[llmRouter] ${name}/${model} failed (${status}) — trying next provider`);
+        const detail = `${err.name || 'Error'}: ${String(err.message || err).slice(0, 140)}`;
+        failures.push(`${name}: ${status} (${err.name})`);
+        console.warn(`[llmRouter] ${name}/${model} failed (${status}: ${detail}) — trying next provider`);
       }
     }
   }

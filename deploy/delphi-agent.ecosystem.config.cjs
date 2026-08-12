@@ -18,8 +18,9 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         DELPHI_NETWORK: 'competition-testnet',
-        DELPHI_AGENT_DRY_RUN: 'true', // Safety: start in dry-run, flip to false when ready
-        DELPHI_AGENT_INTERVAL_MS: '300000', // 5 minutes
+        // DELPHI_AGENT_DRY_RUN deliberately NOT set here: it must come from
+        // .env.local so ops flips live/dry by editing the env file + restart,
+        // never by editing this config (and never silently overridden).
       },
       // Restart on crash, max 10 restarts within 60s window
       max_restarts: 10,
