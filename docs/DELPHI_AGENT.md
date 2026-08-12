@@ -32,6 +32,7 @@ price, directly comparable to EV per share.
 | `services/delphiIntelligence.js` | Market classification and probability routing — data feeds first, then TxLINE odds for sports, LLM router for everything else |
 | `services/delphiDataFeeds.js` | Deterministic public-data intelligence — SILSO sunspots, NSIDC sea ice, Open-Meteo weather. Near resolution the answer is often already published at ~0.85. |
 | `services/llmRouter.js` | OpenAI-compatible provider chain (openrouter → nvidia → venice) with failover, web-search support w/ auto-degrade, 429 backoff for `:free` models |
+| `services/evidenceRetriever.js` | Exa web search → citable snippets injected into forecast prompts (primary grounding; 6h per-question cache, ~$0.005/query) |
 | `services/delphiAgentLoop.js` | Async-generator loop: balances → discover → sweep settled → forecast → Kelly size → 5-gate policy → execute (with liveCategories/liveSources gating → paper trades) |
 | `scripts/delphi-agent-worker.mjs` | Headless worker (`--once`, `--dry-run`); state in `.delphi-agent/` |
 | `deploy/delphi-agent.ecosystem.config.cjs` | PM2 config (5-minute cycles) |
@@ -105,10 +106,13 @@ automatically, and the winning provider+model is recorded in each forecast's
 → venice 401 → null; chain mechanics correct).
 
 ACTION REQUIRED (2026-08-12 evening): inference budget status —
-- OpenRouter trial credits were drained (~$0.26, mostly web-plugin queries
-  while testing). Paid models 402 on this account until a deposit. A ~$10
-  OpenRouter deposit restores llama-3.3-70b-instruct with web search (the
-  evidence-required prompt verifiably solved the CRS-35 phantom-edge test).
+- Inference is HEALTHY: nvidia llama-3.3-70b (free) answers every forecast,
+  grounded by Exa citations (`[exa:N/ev:M]` in source tags). An OpenRouter
+  deposit would now only buy stronger models (better source discernment) —
+  nice-to-have, not a blocker. Coasty was evaluated for retrieval and
+  rejected: computer-use agents are ~$0.10-0.40/investigation with minutes of
+  latency; Exa covers the same grounding at ~$0.005/query (docs also carry an
+  agent-targeted injection prompt — noted and ignored during integration).
 - Zero-cost interim: `OPENROUTER_MODEL=google/gemma-4-31b-it:free` is
   configured — works, but free-tier 429s are aggressive and many cycles only
   partially forecast (router retries 10s/20s then degrades to skip).
