@@ -124,7 +124,7 @@ async function runOnce() {
           log('info', `  → [${t.verdict}] ${t.outcome} | est ${(100 * (t.yourProb ?? 0)).toFixed(0)}% vs mkt ${(100 * (t.marketProb ?? 0)).toFixed(0)}% (edge ${(100 * (t.edge ?? 0)).toFixed(1)}%) | ${t.shares} sh | ${t.source || ''} | ${t.question}`);
         }
       } else if (update.step === 'execute' && update.data?.txHash) {
-        log('info', `[TRADE] ${update.message}`);
+        log('info', `[TRADE] ${update.message}`, { txHash: update.data.txHash, cost: update.data.cost });
       } else if (update.step === 'summary') {
         log('info', `[SUMMARY] Markets: ${update.data.marketsScanned}, Analyzed: ${update.data.marketsAnalyzed}, Trades: ${update.data.tradesExecuted}${update.data.dryRun ? ' (dry-run)' : ''}`);
       }
