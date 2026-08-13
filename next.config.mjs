@@ -12,6 +12,18 @@ const nextConfig = {
         destination: '/labs/autopilot',
         permanent: true,
       },
+      // Retired experiment surfaces (design alignment 2026-08-12): dead/404
+      // routes fold into their living equivalents. Reversible on purpose.
+      {
+        source: '/month',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/world-cup',
+        destination: '/proof',
+        permanent: false,
+      },
     ];
   },
   images: {
