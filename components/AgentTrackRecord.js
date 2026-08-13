@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import useChangeFlash from '@/hooks/useChangeFlash';
 
 /**
  * AgentTrackRecord — the allocator-diligence lane of /positions.
@@ -40,9 +41,10 @@ function Row({ children, first }) {
 }
 
 function HeadStat({ label, value, accent }) {
+  const flashing = useChangeFlash(value);
   return (
     <div className="min-w-[7rem] flex-1 px-1 py-3 sm:px-3">
-      <div className="font-mono text-lg" style={{ ...mono, color: accent ? 'var(--color-accent)' : 'var(--color-ink)' }}>{value}</div>
+      <div className={`font-mono text-lg ${flashing ? 'fc-tick' : ''}`} style={{ ...mono, color: accent ? 'var(--color-accent)' : 'var(--color-ink)' }}>{value}</div>
       <div className="text-[11px] text-[var(--color-ink-faint)]">{label}</div>
     </div>
   );

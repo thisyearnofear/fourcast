@@ -3,6 +3,8 @@
 import React, { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { RefreshCw, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import useChangeFlash from '@/hooks/useChangeFlash';
+import { VERDICT_STYLE } from '@/utils/arenaUi';
 import { AppShell } from '@/app/components/PageNav';
 import Reveal from '@/components/motion/Reveal';
 import MandateBuilder from '@/components/MandateBuilder';
@@ -12,16 +14,6 @@ import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { AgentDashboard } from '@/components/AgentDashboard';
 
 const mono = { fontFamily: 'var(--font-mono, monospace)' };
-
-const VERDICT_STYLE = {
-  ALLOCATE: { color: 'var(--color-accent)', border: 'var(--color-accent)', label: 'ALLOCATE' },
-  PAPER: { color: 'var(--color-review)', border: 'var(--color-review)', label: 'PAPER' },
-  PASS: { color: 'var(--color-ink-faint)', border: 'var(--color-rule-strong)', label: 'PASS' },
-  executed: { color: 'var(--color-accent)', border: 'var(--color-accent)', label: 'EXECUTED' },
-  dry_run: { color: 'var(--color-ink-faint)', border: 'var(--color-rule-strong)', label: 'SIMULATED' },
-  paper: { color: 'var(--color-review)', border: 'var(--color-review)', label: 'PAPER' },
-  skipped_slippage: { color: 'var(--color-sealed)', border: 'var(--color-sealed)', label: 'SLIPPAGE-SKIP' },
-};
 
 function Stamp({ kind, small }) {
   const s = VERDICT_STYLE[kind] || VERDICT_STYLE.PASS;
@@ -86,6 +78,69 @@ function Section({ title, aside, children }) {
         <div style={{ borderTop: '1px solid var(--color-rule-strong)', borderBottom: '1px solid var(--color-rule)' }}>{children}</div>
       </section>
     </Reveal>
+  );
+}
+
+function Chevron({ open }) {
+  return <ChevronDown size={14} className={`text-[var(--color-ink-faint)] transition-transform ${open ? 'rotate-180' : ''}`} />;
+}
+
+/** Flashing number — wash highlight whenever the value changes. */
+function Flash({ value, className = '', style, children }) {
+  const flashing = useChangeFlash(value);
+  return <span className={`${className} ${flashing ? 'fc-tick' : ''}`} style={style}>{children}</span>;
+}
+
+/** Collapsed row by default; tap opens gates + reasoning (density per genre). */
+function LedgerRow({ d, first }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ borderTop: first ? 'none' : '1px solid var(--color-rule)' }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-1 py-2.5 text-left sm:px-3"
+      >
+        <Stamp kind={d.verdict} small />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] text-[var(--color-ink)]">{d.outcome} · {d.question}</div>
+          <div className="text-[11px] text-[var(--color-ink-faint)]" style={mono}>
+            est {pct(d.yourProb, 0)} vs mkt {pct(d.marketProb, 0)} · edge {pct(d.edge, 1)} · {timeAgo(d.runTs)}
+          </div>
+        </div>
+        <SourceChip source={d.source} />
+        <Chevron open={open} />
+      </button>
+      {open && (
+        <div className="px-3 pb-3">
+          {d.reasoning && (
+            <p className="mb-2 border-l-2 pl-3 text-[12px] italic leading-5 text-[var(--color-ink-muted)]" style={{ borderColor: 'var(--color-evidence)' }}>
+              {d.reasoning}
+            </p>
+          )}
+          {d.gates?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {d.gates.map((g, i) => (
+                <span
+                  key={i}
+                  className="px-1.5 py-0.5 text-[10px]"
+                  style={{
+                    border: `1px solid ${g.passed ? 'var(--color-accent)' : 'var(--color-breach)'}`,
+                    color: g.passed ? 'var(--color-accent)' : 'var(--color-breach)',
+                  }}
+                >
+                  {g.label}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="mt-2 text-[10px] text-[var(--color-ink-faint)]" style={mono}>
+            {d.category}{d.shares ? ` · ${d.shares} sh` : ''}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -158,14 +213,14 @@ function LedgerLane() {
             <span className="text-[12px] text-[var(--color-ink-faint)]" style={mono}>cycle {timeAgo(latest.timestamp)}</span>
           </div>
           {balances && (
-            <span className="text-[13px] text-[var(--color-ink)]" style={mono}>
+            <Flash value={balances.tokenBalance} className="text-[13px] text-[var(--color-ink)]" style={mono}>
               {balances.tokenBalance?.toFixed(2)} {balances.tokenSymbol}
               <span className="text-[11px] text-[var(--color-ink-faint)]"> bankroll</span>
-            </span>
+            </Flash>
           )}
-          <span className="text-[12px] text-[var(--color-ink-muted)]" style={mono}>
+          <Flash value={`${s.marketsScanned}|${s.tradesExecuted}|${s.tradesPaper}`} className="text-[12px] text-[var(--color-ink-muted)]" style={mono}>
             {s.marketsScanned ?? '—'} markets · {s.tradesExecuted ?? 0} live · {s.tradesPaper ?? 0} paper
-          </span>
+          </Flash>
           <button
             onClick={() => fetchFeed(true)}
             className="ml-auto flex items-center gap-1.5 border px-2 py-1 text-[11px] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
@@ -197,16 +252,7 @@ function LedgerLane() {
           <Row first><span className="text-[13px] text-[var(--color-ink-faint)]">No decisions logged yet this window.</span></Row>
         ) : (
           ledger.map((d, i) => (
-            <Row key={`${d.question}${d.outcome}${i}`} first={i === 0}>
-              <Stamp kind={d.verdict} small />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] text-[var(--color-ink)]">{d.outcome} · {d.question}</div>
-                <div className="text-[11px] text-[var(--color-ink-faint)]" style={mono}>
-                  est {pct(d.yourProb, 0)} vs mkt {pct(d.marketProb, 0)} · edge {pct(d.edge, 1)} · {timeAgo(d.runTs)}
-                </div>
-              </div>
-              <SourceChip source={d.source} />
-            </Row>
+            <LedgerRow key={`${d.question}${d.outcome}${i}`} d={d} first={i === 0} />
           ))
         )}
       </Section>

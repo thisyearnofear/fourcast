@@ -8,14 +8,15 @@
  */
 
 export const VERDICT_STYLE = {
-  ALLOCATE: { color: 'var(--color-accent)', label: 'ALLOCATE' },
-  PASS: { color: 'var(--color-ink-faint)', label: 'PASS' },
-  PAPER: { color: 'var(--color-review)', label: 'PAPER' },
-  EXEC: { color: 'var(--color-accent)', label: 'EXEC' },
-  EXECUTED: { color: 'var(--color-accent)', label: 'EXECUTED' },
-  dry_run: { color: 'var(--color-ink-faint)', label: 'SIMULATED' },
-  paper: { color: 'var(--color-review)', label: 'PAPER' },
-  skipped_slippage: { color: 'var(--color-sealed)', label: 'SLIPPAGE-SKIP' },
+  ALLOCATE: { color: 'var(--color-accent)', border: 'var(--color-accent)', label: 'ALLOCATE' },
+  PASS: { color: 'var(--color-ink-faint)', border: 'var(--color-rule-strong)', label: 'PASS' },
+  PAPER: { color: 'var(--color-review)', border: 'var(--color-review)', label: 'PAPER' },
+  EXEC: { color: 'var(--color-accent)', border: 'var(--color-accent)', label: 'EXEC' },
+  EXECUTED: { color: 'var(--color-accent)', border: 'var(--color-accent)', label: 'EXECUTED' },
+  executed: { color: 'var(--color-accent)', border: 'var(--color-accent)', label: 'EXECUTED' },
+  dry_run: { color: 'var(--color-ink-faint)', border: 'var(--color-rule-strong)', label: 'SIMULATED' },
+  paper: { color: 'var(--color-review)', border: 'var(--color-review)', label: 'PAPER' },
+  skipped_slippage: { color: 'var(--color-sealed)', border: 'var(--color-sealed)', label: 'SLIPPAGE-SKIP' },
 };
 
 export const VERDICT_COLORS = Object.fromEntries(

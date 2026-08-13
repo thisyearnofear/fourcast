@@ -355,6 +355,8 @@ export async function* runDelphiAgentLoop(config = {}) {
         verdict: d.decision.verdict,
         category: d.category,
         source: d.source,
+        gates: (d.decision.riskChecks || []).map((c) => ({ label: c.description || c.label || c.id, passed: !!c.passed })),
+        reasoning: typeof d.reasoning === 'string' ? d.reasoning.slice(0, 400) : null,
       })),
     },
     message: allocatable.length > 0
