@@ -14,14 +14,15 @@ export default function PositionsPage() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("view") === "private") setView("private");
+    else if (params.get("view") === "agent") setView("agent");
   }, []);
 
   const selectView = (next) => {
     setView(next);
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
-    if (next === "private") url.searchParams.set("view", "private");
-    else url.searchParams.delete("view");
+    if (next === "public") url.searchParams.delete("view");
+    else url.searchParams.set("view", next);
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   };
 

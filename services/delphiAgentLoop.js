@@ -233,6 +233,7 @@ export async function* runDelphiAgentLoop(config = {}) {
           shares: Number(p.shares ?? p.outcomeShares ?? 0),
           question: m?.question || null,
           outcome: o ? (typeof o === 'string' ? o : o.name || `Outcome ${p.outcomeIdx}`) : null,
+          resolvesAt: m?.resolvesAt || null,
         };
       });
     } catch {
