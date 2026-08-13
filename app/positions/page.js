@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
 import PositionsDashboard from "@/components/PositionsDashboard";
 import CantonHolderDashboard from "@/components/CantonHolderDashboard";
+import AgentTrackRecord from "@/components/AgentTrackRecord";
+import EventTape from "@/components/EventTape";
 import Reveal from "@/components/motion/Reveal";
 import { BRAND } from "@/constants/brand";
 
