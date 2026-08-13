@@ -24,6 +24,13 @@ const nextConfig = {
         destination: '/proof',
         permanent: false,
       },
+      // Agent surfaces unified under /arena (design alignment phase B):
+      // the mandate cockpit lives as the Mandate lane.
+      {
+        source: '/agent',
+        destination: '/arena?lane=mandate',
+        permanent: false,
+      },
     ];
   },
   images: {
