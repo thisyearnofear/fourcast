@@ -13,6 +13,22 @@ function formatAge(timestamp) {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
+function useArenaAge() {
+  const [ts, setTs] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    const load = () =>
+      fetch('/api/arena/feed?limit=1')
+        .then((r) => r.json())
+        .then((d) => { if (!cancelled && d?.latest?.timestamp) setTs(d.latest.timestamp); })
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 60_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+  return ts ? formatAge(Math.floor(new Date(ts).getTime() / 1000)) : null;
+}
+
 export function useOperatorPulse() {
   const [state, setState] = useState({ loading: true, pulse: null });
 
@@ -42,7 +58,8 @@ export function useOperatorPulse() {
 
 export default function OperatorPulse({ compact = false, className = '', liveCounts = null }) {
   const { loading, pulse } = useOperatorPulse();
-  const isActive = pulse?.mode === 'LIVE' || pulse?.mode === 'DRY RUN' || !!liveCounts;
+  const arenaAge = useArenaAge();
+  const isActive = pulse?.mode === 'LIVE' || pulse?.mode === 'DRY RUN' || !!liveCounts || !!arenaAge;
 
   // Merge API pulse with live market counts so the header feels alive
   // even when the backend agent hasn't run.
@@ -52,11 +69,17 @@ export default function OperatorPulse({ compact = false, className = '', liveCou
 
   if (compact) {
     return (
-      <div className={`operator-pulse operator-pulse--compact ${className}`} aria-live="polite">
+      <a
+        href="/arena"
+        aria-live="polite"
+        title="Arena — live agent ledger"
+        className={`operator-pulse operator-pulse--compact no-underline ${className}`}
+      >
         <span className={`operator-pulse__lamp ${isActive ? 'is-active' : ''}`} />
         <span>{loading ? 'SYNCING' : modeLabel}</span>
         {!loading && <span className="operator-pulse__quiet">{freshEdges} fresh edges</span>}
-      </div>
+        {arenaAge && <span className="operator-pulse__quiet">· arena {arenaAge}</span>}
+      </a>
     );
   }
 
