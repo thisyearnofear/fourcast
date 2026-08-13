@@ -13,18 +13,7 @@ import { ArrowRight } from 'lucide-react';
  * never fake numbers.
  */
 
-const VERDICT_COLORS = {
-  ALLOCATE: 'var(--color-accent)',
-  PASS: 'var(--color-ink-faint)',
-  PAPER: 'var(--color-review)',
-};
-
-function ago(ts) {
-  const s = Math.max(0, (Date.now() - new Date(ts).getTime()) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  return `${(s / 3600).toFixed(1)}h ago`;
-}
+import { VERDICT_COLORS, timeAgo as ago } from '@/utils/arenaUi';
 
 export default function ArenaStrip() {
   const [feed, setFeed] = useState(null);

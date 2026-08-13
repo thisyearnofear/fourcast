@@ -42,7 +42,11 @@ export default function PositionsPage() {
         />
       }
     >
-      {view === "private" ? (
+      <div className="mb-2">
+ <EventTape />
+</div>
+
+{view === "private" ? (
         <Reveal key="private">
           <div className="fc-view-swap fc-life-stage">
             <CantonHolderDashboard />

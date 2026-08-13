@@ -11,21 +11,7 @@ import Link from 'next/link';
  * a static rail). Every item links to /arena. Renders nothing while empty.
  */
 
-const VERDICT_COLORS = {
-  ALLOCATE: 'var(--color-accent)',
-  PASS: 'var(--color-ink-faint)',
-  PAPER: 'var(--color-review)',
-  EXEC: 'var(--color-accent)',
-  PAPERTRADE: 'var(--color-review)',
-};
-
-function ago(ts) {
-  const s = Math.max(0, (Date.now() - new Date(ts).getTime()) / 1000);
-  if (s < 60) return `${Math.floor(s)}s`;
-  if (s < 3600) return `${Math.floor(s / 60)}m`;
-  if (s < 86400) return `${(s / 3600).toFixed(1)}h`;
-  return `${Math.floor(s / 86400)}d`;
-}
+import { VERDICT_COLORS, ago } from '@/utils/arenaUi';
 
 function subject(question) {
   if (!question) return '';
@@ -56,7 +42,7 @@ function buildEvents(runs) {
     for (const e of r.executions || []) {
       if (e.status !== 'executed' && e.status !== 'paper') continue;
       events.push({
-        kind: e.status === 'executed' ? 'EXEC' : 'PAPERTRADE',
+        kind: e.status === 'executed' ? 'EXEC' : 'PAPER',
         text: `${e.shares}sh ${e.outcome}${e.cost != null ? ` ${e.cost.toFixed(2)}` : ''}`,
         subject: subject(null) || null,
         ts: r.timestamp,
@@ -81,7 +67,7 @@ function TapeLane({ events }) {
       {events.map((e, i) => (
         <span key={i} className="fc-marquee__item">
           <span className="fc-marquee__dot" style={{ background: VERDICT_COLORS[e.kind] || 'var(--color-ink-faint)' }} />
-          <span style={{ color: VERDICT_COLORS[e.kind], fontWeight: 700 }}>{e.kind === 'PAPERTRADE' ? 'PAPER' : e.kind}</span>
+          <span style={{ color: VERDICT_COLORS[e.kind], fontWeight: 700 }}>{e.kind}</span>
           <span>{e.text}{e.subject ? ` · ${e.subject}` : ''}</span>
           <span style={{ color: 'var(--color-ink-faint)' }}>{ago(e.ts)}</span>
         </span>
@@ -114,7 +100,7 @@ export default function EventTape() {
           {events.concat(events).map((e, i) => (
             <span key={i} className="fc-marquee__item" aria-hidden={i >= events.length}>
               <span className="fc-marquee__dot" style={{ background: VERDICT_COLORS[e.kind] || 'var(--color-ink-faint)' }} />
-              <span style={{ color: VERDICT_COLORS[e.kind], fontWeight: 700 }}>{e.kind === 'PAPERTRADE' ? 'PAPER' : e.kind}</span>
+              <span style={{ color: VERDICT_COLORS[e.kind], fontWeight: 700 }}>{e.kind}</span>
               <span>{e.text}{e.subject ? ` · ${e.subject}` : ''}</span>
               <span style={{ color: 'var(--color-ink-faint)' }}>{ago(e.ts)}</span>
             </span>

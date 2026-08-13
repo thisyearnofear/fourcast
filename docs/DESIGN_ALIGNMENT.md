@@ -85,6 +85,25 @@ system (Syne/DM Sans/JetBrains Mono, square CTAs, card policy).
   citation/evidence lists virtualized past 20 rows.
 - LCP ≤ 2.0s on `/`, `/markets`, `/arena`; INP ≤ 200ms.
 
+## Live-presence policy (where liveness lives)
+
+Consistency rule for tapes, pulses, and verdict grammar, so it stays a
+decision, not an accident:
+
+- **Shared grammar module**: `utils/arenaUi.js` (verdict stamps, ago/until
+  helpers) — every live element consumes it; never fork color/time semantics.
+- **EventTape (scrolling tape)**: trading family only — Landing (under the
+  hero), Markets, Positions (all tabs). It answers "is anything happening?"
+  before any scroll.
+- **Arena**: owns decision/execution ROWS (the tape's deep form) — no tape
+  there, it would duplicate its own content. Status page IS liveness — no
+  tape added. Signals/Private/Labs: different jobs, no tape.
+- **Heartbeat** (header pulse): global, every AppShell page, lamp on all
+  viewports, labels xl+.
+- **Verdict colors** (tokens, locked): ALLOCATE=emerald, PASS=muted,
+  PAPER=violet, SETTLED=amber, BREACH=red. Motion only on genuinely-live
+  values; reduced-motion = static.
+
 ## Execution order
 
 1. **Arena data plumbing first** (worker → `/api/arena` ingest via Turso +
