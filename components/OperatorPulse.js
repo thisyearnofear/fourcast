@@ -76,8 +76,8 @@ export default function OperatorPulse({ compact = false, className = '', liveCou
         className={`operator-pulse operator-pulse--compact no-underline ${className}`}
       >
         <span className={`operator-pulse__lamp ${isActive ? 'is-active' : ''}`} />
-        <span>{loading ? 'SYNCING' : modeLabel}</span>
-        {!loading && <span className="operator-pulse__quiet">{freshEdges} fresh edges</span>}
+        <span className="hidden xl:inline">{loading ? 'SYNCING' : modeLabel}</span>
+        {!loading && <span className="operator-pulse__quiet hidden xl:inline">{freshEdges} fresh edges</span>}
         {arenaAge && <span className="operator-pulse__quiet">· arena {arenaAge}</span>}
       </a>
     );

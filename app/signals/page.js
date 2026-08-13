@@ -7,6 +7,7 @@ import { useChainConnections } from '@/hooks/useChainConnections';
 import useFilterStore from '@/hooks/useFilterStore';
 import { useGlobalToast } from '@/components/ToastProvider';
 import { AppShell, SecondaryNav } from '@/app/components/PageNav';
+import NotificationsPanel from '@/components/NotificationsPanel';
 import ProfileDrawer from '@/app/components/ProfileDrawer';
 import SignalFilters from '@/app/components/signals/SignalFilters';
 import SignalCard from '@/app/components/signals/SignalCard';
@@ -30,6 +31,13 @@ export default function SignalsPage() {
  const filterStore = useFilterStore();
  const activeTab = filterStore.signalsActiveTab;
  const setActiveTab = (tab) => filterStore.setSignalsActiveTab(tab);
+
+ // Deep-link: ?tab=alerts (canonical home of alerts after the fold)
+ useEffect(() => {
+ if (typeof window === 'undefined') return;
+ if (new URLSearchParams(window.location.search).get('tab') === 'alerts') setActiveTab('alerts');
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, []);
  const [selectedProfile, setSelectedProfile] = useState(null);
  const [isLoading, setIsLoading] = useState(true);
  const [error, setError] = useState(null);
@@ -215,6 +223,7 @@ export default function SignalsPage() {
  { id: 'defi', label: 'DeFi', icon: '▲' },
  ...(connected ? [{ id: 'my-signals', label: 'Mine', icon: '◎' }] : []),
  { id: 'leaderboard', label: 'Leaders', icon: '◇' },
+ { id: 'alerts', label: 'Alerts', icon: '🔔' },
  ]}
  activeItem={activeTab}
  onChange={setActiveTab}
@@ -258,7 +267,9 @@ export default function SignalsPage() {
  </div>
  )}
 
- {activeTab === 'defi' ? (
+ {activeTab === 'alerts' ? (
+ <NotificationsPanel />
+ ) : activeTab === 'defi' ? (
  <DeFiArbitrageTab
  textColor={textColor}
  cardBgColor={cardBgColor}

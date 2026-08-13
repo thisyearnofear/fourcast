@@ -38,7 +38,6 @@ const OVERFLOW_NAV = [
   { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", match: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
   { name: BRAND.navLabels.agent ?? "Mandate", href: "/arena?lane=mandate", match: "/arena", description: BRAND.nav.agent, onboardId: "agent" },
   { name: BRAND.navLabels.labs ?? "Labs", href: "/labs", match: "/labs", description: BRAND.nav.labs },
-  { name: BRAND.navLabels.alerts ?? "Alerts", href: "/notifications", match: "/notifications", description: BRAND.nav.alerts },
 ];
 
 function pathMatches(pathname, item) {
@@ -274,7 +273,7 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
           <HomeLink />
           <div className="flex items-center gap-2">
             <PageNav />
-            <OperatorPulse compact className="hidden xl:flex" />
+            <OperatorPulse compact className="flex" />
             <div className="hidden sm:block"><StatusBadge /></div>
             {wallet && <div className="platform-wallet"><WalletConnect /></div>}
           </div>

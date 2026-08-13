@@ -31,6 +31,13 @@ const nextConfig = {
         destination: '/arena?lane=mandate',
         permanent: false,
       },
+      // Alerts folded into the Signals page as a tab — notifications are a
+      // signal-side feature, not a standalone destination.
+      {
+        source: '/notifications',
+        destination: '/signals?tab=alerts',
+        permanent: false,
+      },
     ];
   },
   images: {
