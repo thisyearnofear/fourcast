@@ -185,6 +185,9 @@
   will-change: transform;
 }
 .fc-marquee:hover .fc-marquee__track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .fc-marquee__track { animation: none; }
+}
 .fc-marquee__item {
   display: inline-flex;
   align-items: center;

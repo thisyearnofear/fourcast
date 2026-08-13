@@ -14,6 +14,7 @@ import { ARC_EXPLORER_TX } from "@/constants/appConstants";
 import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
 import FirstRunBanner from "@/components/FirstRunBanner";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
+import EventTape from "@/components/EventTape";
 import Link from "next/link";
 import { useCountUp } from "@/hooks/useCountUp";
 
@@ -567,7 +568,11 @@ export default function MarketsPage() {
  />
  }
  >
- {/* Analysis Config Modal */}
+ <div className="mb-2">
+ <EventTape />
+</div>
+
+{/* Analysis Config Modal */}
  <AnalysisConfigModal
  isOpen={showConfigModal}
  onClose={() => setShowConfigModal(false)}

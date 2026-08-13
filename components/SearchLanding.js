@@ -13,6 +13,7 @@ import ProofChain from '@/components/ProofChain';
 import TweenNumber from '@/components/motion/TweenNumber';
 import TrustStatsStrip from '@/components/TrustStatsStrip';
 import ArenaStrip from '@/components/ArenaStrip';
+import EventTape from '@/components/EventTape';
 
 // Canonical Solana receipt — kept below the fold as depth, not competing hero.
 const VERIFIED_RECEIPT = {
@@ -240,6 +241,10 @@ export default function SearchLanding() {
         </header>
 
         <ArenaHero />
+
+        <div className="fc-print mt-6" style={{ '--print-delay': '380ms' }}>
+          <EventTape />
+        </div>
 
         {/* Uniform venue doors — same weight, four compact entries */}
         <section
