@@ -188,6 +188,40 @@
 @media (prefers-reduced-motion: reduce) {
   .fc-marquee__track { animation: none; }
 }
+
+/* Arena lane morph — View Transitions (skipped entirely for reduced-motion) */
+@media (prefers-reduced-motion: no-preference) {
+  .arena-lane-host { view-transition-name: arena-lane; }
+  ::view-transition-old(arena-lane) { animation: vt-lane-out 180ms ease-out both; }
+  ::view-transition-new(arena-lane) { animation: vt-lane-in 240ms ease-out both; }
+}
+@keyframes vt-lane-out { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes vt-lane-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* Seal→verify reveal: the ledger expansion 'unseals' — an evidence wipe sweeps
+   L→R while the stamps shift sealed-amber → evidence. Signature motion per
+   design.md (proof progression), transform/clip only, ~480ms one-shot. */
+@keyframes fc-unseal-wipe {
+  from { clip-path: inset(0 100% 0 0); opacity: 0.4; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+@keyframes fc-unseal-scan {
+  from { transform: translateX(-101%); }
+  to { transform: translateX(101%); }
+}
+.fc-unseal { position: relative; overflow: hidden; }
+.fc-unseal > * { animation: fc-unseal-wipe 480ms var(--ease-out) both; }
+.fc-unseal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, oklch(72% 0.15 252 / 0.14), transparent);
+  animation: fc-unseal-scan 560ms var(--ease-out) both;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-unseal > *, .fc-unseal::after { animation: none; }
+}
 .fc-marquee__item {
   display: inline-flex;
   align-items: center;

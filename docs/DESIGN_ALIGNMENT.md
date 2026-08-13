@@ -104,6 +104,25 @@ decision, not an accident:
   PAPER=violet, SETTLED=amber, BREACH=red. Motion only on genuinely-live
   values; reduced-motion = static.
 
+## Creative-motion explorations (verdicts)
+
+Candidates reviewed for a signature proof moment (2026-08-13):
+
+- **View Transitions (native)**: ADOPTED for arena lane morphs
+  (`arena-lane-host` + `vt-lane-*`, reduced-motion aware). Cheap, accessible,
+  no deps.
+- **Seal→verify reveal**: ADOPTED as CSS signature (`fc-unseal`) — every
+  ledger-row expansion 'unseals' via evidence wipe + scan. Fulfills
+  design.md's proof-progression signature without GPU complexity.
+- **WebGPU page transitions (bnpne/page-transitions-with-webgpu)** +
+  **Codrops motion-path (Ibaliqbal)** + **GSAP shaders (biazo)**: PARKED as
+  the upgrade path for the seal moment on full receipts. Verdict: impressive
+  but WebGPU coverage (Safari partial, Firefox flag-only) makes it a
+  progressive-enhancement play only; build the fuller reveal when a real
+  receipts dossier exists to explode, behind `?gpu` capability detection and
+  a CSS fallback. Do NOT sprinkle shaders as ambient decor — the moment must
+  mean something (seal → verify), or it violates our own motion policy.
+
 ## Execution order
 
 1. **Arena data plumbing first** (worker → `/api/arena` ingest via Turso +

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense, useState, useEffect, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { RefreshCw, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import useChangeFlash from '@/hooks/useChangeFlash';
@@ -113,7 +114,7 @@ function LedgerRow({ d, first }) {
         <Chevron open={open} />
       </button>
       {open && (
-        <div className="px-3 pb-3">
+        <div className="fc-unseal px-3 pb-3">
           {d.reasoning && (
             <p className="mb-2 border-l-2 pl-3 text-[12px] italic leading-5 text-[var(--color-ink-muted)]" style={{ borderColor: 'var(--color-evidence)' }}>
               {d.reasoning}
@@ -354,7 +355,15 @@ function ArenaPageInner() {
   const [lane, setLane] = useState(initial);
 
   const switchLane = (id) => {
-    setLane(id);
+    // View Transitions morph (reduced-motion users get instant swap)
+    const canMorph = typeof document !== 'undefined'
+      && 'startViewTransition' in document
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (canMorph) {
+      document.startViewTransition(() => flushSync(() => setLane(id)));
+    } else {
+      setLane(id);
+    }
     router.replace(id === 'ledger' ? '/arena' : `/arena?lane=${id}`, { scroll: false });
   };
 
@@ -381,7 +390,9 @@ function ArenaPageInner() {
         </nav>
       }
     >
-      {lane === 'ledger' ? <LedgerLane /> : <MandateLane />}
+      <div className="arena-lane-host">
+        {lane === 'ledger' ? <LedgerLane /> : <MandateLane />}
+      </div>
     </AppShell>
   );
 }
