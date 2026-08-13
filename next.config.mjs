@@ -71,6 +71,10 @@ const nextConfig = {
     };
     return config;
   },
+  // Turbopack config (Next.js 16 default bundler). Empty object silences the
+  // "webpack config present but no turbopack config" build error. Turbopack
+  // doesn't need the webpack splitChunks workaround.
+  turbopack: {},
 };
 
 export default nextConfig;

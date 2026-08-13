@@ -52,6 +52,21 @@ export function SportsTabContent({
 
  return (
  <div className="space-y-10">
+ {/* TxLINE Coverage Status */}
+ <div className="flex items-center gap-2 px-3 py-2 border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/5 text-xs">
+ <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
+ <span className="text-[var(--color-ink-muted)]">
+ <span className="font-medium text-[var(--color-ink)]">TxLINE</span>
+ {" · "}
+ <span className="text-emerald-500">MLS Live</span>
+ {" · "}
+ <span className="text-amber-500">PL Aug 21</span>
+ {" · "}
+ <span className="text-emerald-500">NFL Live</span>
+ <span className="hidden sm:inline text-[var(--color-ink-faint)]"> — professional consensus odds powering agent intelligence</span>
+ </span>
+ </div>
+
  {/* Compact Filter Bar — open section */}
  <div className="platform-open-section space-y-2">
  {/* Event Type */}
@@ -67,6 +82,7 @@ export function SportsTabContent({
  className={"mc-input flex-1 px-3 py-2 text-sm"}
  >
  <option value="Soccer">Soccer</option>
+ <option value="MLS">MLS</option>
  <option value="NFL">NFL</option>
  <option value="F1">Formula 1</option>
  <option value="all">All Sports</option>

@@ -1,10 +1,15 @@
 /**
  * TxLINE free-tier onboarding - devnet or mainnet.
  *
- * Default: devnet (free SOL via airdrop, service level 1 with real-time data).
- * Set TXLINE_SOLANA_NETWORK=mainnet in .env.local to use mainnet instead.
+ * Default: MAINNET free tier (service level 1, no TxL purchase needed).
+ * The free tier gives access to live MLS, Premier League, NFL fixtures + odds.
+ * Set TXLINE_SOLANA_NETWORK=devnet in .env.local to use devnet instead.
  *
- * Flow (per https://txline.txodds.com/documentation/worldcup):
+ * Requirements for mainnet free tier:
+ *   - A Solana wallet with ~0.005 SOL for transaction fees
+ *   - No TxL token purchase needed (service level 1 is free)
+ *
+ * Flow (per https://txline.txodds.com/documentation/quickstart):
  *   1. Load keypair from .env.local (TXLINE_SOLANA_SECRET_KEY)
  *   2. On devnet, auto-request SOL airdrop if balance is 0
  *   3. Send on-chain `subscribe` tx (service level from env, 4 weeks)
@@ -16,15 +21,15 @@
  *   9. Smoke-test with /api/fixtures
  *
  * Usage:
- *   node scripts/txline-subscribe-and-activate.mjs
- *   node scripts/txline-subscribe-and-activate.mjs --dry-run   # skip on-chain tx
- *   node scripts/txline-subscribe-and-activate.mjs --reactivate-only  # skip subscribe, just re-activate
- *   node scripts/txline-subscribe-and-activate.mjs --airdrop-only  # just request devnet SOL
+ *   node scripts/txline-subscribe-and-activate.mjs                     # mainnet free tier (default)
+ *   node scripts/txline-subscribe-and-activate.mjs --dry-run           # skip on-chain tx
+ *   node scripts/txline-subscribe-and-activate.mjs --reactivate-only   # skip subscribe, just re-activate
+ *   node scripts/txline-subscribe-and-activate.mjs --airdrop-only      # just request devnet SOL
  *
  * Env (read from .env.local):
  *   TXLINE_SOLANA_SECRET_KEY  - base58 secret key (required)
- *   TXLINE_SOLANA_NETWORK     - 'devnet' (default) or 'mainnet'
- *   TXLINE_SERVICE_LEVEL      - default 1 (devnet) or 12 (mainnet realtime)
+ *   TXLINE_SOLANA_NETWORK     - 'mainnet' (default) or 'devnet'
+ *   TXLINE_SERVICE_LEVEL      - default 1 (free tier, both networks)
  *   TXLINE_SUBSCRIBE_WEEKS    - default 4
  *   SOLANA_RPC_URL            - optional override RPC
  *
@@ -76,7 +81,7 @@ const NETWORK_CONFIG = {
     apiOrigin: 'https://txline.txodds.com',
     programId: new PublicKey('9ExbZjAapQww1vfcisDmrngPinHTEfpjYRWMunJgcKaA'),
     txlMint: new PublicKey('Zhw9TVKp68a1QrftncMSd6ELXKDtpVMNuMGr1jNwdeL'),
-    defaultServiceLevel: 12,
+    defaultServiceLevel: 1, // Free tier — no TxL purchase needed
     supportsAirdrop: false,
     airdropLamports: 0,
   },
@@ -326,7 +331,7 @@ async function main() {
   const env = readEnv();
   const payer = loadKeypair(env);
 
-  const networkKey = (env.get('TXLINE_SOLANA_NETWORK') || 'devnet').toLowerCase();
+  const networkKey = (env.get('TXLINE_SOLANA_NETWORK') || 'mainnet').toLowerCase();
   const cfg = NETWORK_CONFIG[networkKey];
   if (!cfg) {
     console.error(`Unknown TXLINE_SOLANA_NETWORK: ${networkKey}. Use 'devnet' or 'mainnet'.`);
@@ -380,7 +385,14 @@ async function main() {
       sol = lamports / LAMPORTS_PER_SOL;
       console.log(`Balance after airdrop: ${sol.toFixed(5)} SOL`);
     } else {
-      console.error('Wallet has 0 SOL. Fund the address above and re-run.');
+      console.error('Wallet has 0 SOL on mainnet. You need ~0.005 SOL for the subscribe transaction fee.');
+      console.error('');
+      console.error('Options to fund your wallet (' + payer.publicKey.toBase58() + '):');
+      console.error('  1. Transfer SOL from an exchange (Coinbase, Binance, etc.)');
+      console.error('  2. Use a Solana faucet or friend to send 0.01 SOL');
+      console.error('  3. Use devnet instead: set TXLINE_SOLANA_NETWORK=devnet in .env.local');
+      console.error('');
+      console.error('The free tier does NOT require purchasing TxL tokens — only SOL for gas.');
       process.exit(1);
     }
   }
@@ -453,8 +465,20 @@ async function main() {
   console.log('========================================================');
   console.log(' ONBOARDING COMPLETE');
   console.log('========================================================');
-  console.log('TxLINE is now the primary source for /world-cup.');
+  console.log(`Network: ${networkKey}`);
+  console.log(`API:     ${cfg.apiOrigin}`);
+  console.log('');
+  console.log('TxLINE is now active. Available data:');
+  console.log('  • MLS — live now (77 fixtures, consensus odds)');
+  console.log('  • Premier League — full coverage from Aug 21 (280 fixtures)');
+  console.log('  • NFL — live (32 fixtures)');
+  console.log('');
   console.log('Restart the dev server (or redeploy) to pick up the new env vars.');
+  if (networkKey === 'devnet') {
+    console.log('');
+    console.log('NOTE: You are on devnet. For production MLS/PL odds, switch to mainnet:');
+    console.log('  Set TXLINE_SOLANA_NETWORK=mainnet in .env.local and re-run this script.');
+  }
 }
 
 main().catch((err) => {

@@ -43,7 +43,7 @@ export async function POST(request) {
 
     // 1. Fetch Polymarket Data
     let polymarketResults = { markets: [], totalFound: 0 };
-    const weatherSensitiveCategories = ['Sports', 'Soccer', 'NFL', 'NBA', 'Weather', 'all'];
+    const weatherSensitiveCategories = ['Sports', 'Soccer', 'MLS', 'NFL', 'NBA', 'Weather', 'all'];
     // Always fetch Polymarket in discovery mode; in event-weather mode, only for weather-sensitive categories
     const shouldFetchPolymarket = filters.platform !== 'kalshi' && (
       analysisType === 'discovery' || weatherSensitiveCategories.includes(eventType)
@@ -87,7 +87,7 @@ export async function POST(request) {
     // 2. Fetch Kalshi Data (Category-aware)
     let kalshiMarkets = [];
     // Only fetch Kalshi if in discovery mode OR if the category is supported
-    const supportedKalshiCategories = ['all', 'Weather', 'Politics', 'Economics', 'Crypto', 'Sports', 'Soccer', 'NFL', 'NBA'];
+    const supportedKalshiCategories = ['all', 'Weather', 'Politics', 'Economics', 'Crypto', 'Sports', 'Soccer', 'MLS', 'NFL', 'NBA'];
     const shouldFetchKalshi = (analysisType === 'discovery' || supportedKalshiCategories.includes(eventType)) && filters.platform !== 'polymarket';
 
     console.log('[Markets API] Kalshi fetch decision:', {

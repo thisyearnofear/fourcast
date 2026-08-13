@@ -724,7 +724,7 @@ export default function WorldCupClient({ bare = false }) {
   }, []);
 
   const isReplayMode = status?.mode === 'replay';
-  const cutoffPassed = status ? new Date(status.cutoff).getTime() < Date.now() : false;
+  const cutoffPassed = status ? new Date(status.wcCutoff || status.cutoff || 0).getTime() < Date.now() : false;
 
   const streamBadge = (() => {
     if (streamStatus === 'connecting') {

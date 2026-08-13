@@ -23,11 +23,25 @@ import { retrieveEvidence } from './evidenceRetriever.js';
 // ─── Market Classification ──────────────────────────────────────────────────
 
 const SPORTS_KEYWORDS = [
+  // General sports terms
   'win', 'beat', 'score', 'goal', 'match', 'game', 'championship', 'league',
   'premier league', 'mls', 'nfl', 'nba', 'mlb', 'la liga', 'champions league',
   'world cup', 'tournament', 'playoff', 'finals', 'team', 'player',
-  'liverpool', 'arsenal', 'manchester', 'chelsea', 'barcelona', 'real madrid',
-  'inter miami', 'lafc', 'atlanta united',
+  // Premier League clubs
+  'liverpool', 'arsenal', 'manchester', 'chelsea', 'tottenham', 'spurs',
+  'aston villa', 'newcastle', 'brighton', 'fulham', 'brentford', 'bournemouth',
+  'crystal palace', 'everton', 'nottingham forest', 'west ham',
+  'coventry', 'hull city', 'ipswich', 'leeds',
+  // MLS clubs (matched to TxLINE Participant names)
+  'inter miami', 'lafc', 'atlanta united', 'la galaxy', 'seattle sounders',
+  'portland timbers', 'nashville', 'columbus crew', 'fc cincinnati',
+  'philadelphia union', 'new york city', 'ny red bulls', 'orlando city',
+  'charlotte fc', 'dc united', 'toronto fc', 'montreal', 'new england',
+  'chicago fire', 'houston dynamo', 'austin fc', 'real salt lake',
+  'sporting kansas city', 'colorado rapids', 'minnesota united',
+  'san jose earthquakes', 'vancouver whitecaps', 'st. louis city',
+  // La Liga / European
+  'barcelona', 'real madrid',
 ];
 
 const CRYPTO_KEYWORDS = [
@@ -131,6 +145,9 @@ async function estimateSportsProbabilities(market, classification) {
 /**
  * Attempt to match a Delphi sports market to TxLINE odds data.
  * TxLINE provides professional bookmaker consensus — the sharpest odds available.
+ *
+ * Routes to competition-specific fixture fetching when keywords suggest MLS or PL,
+ * falling back to all-fixtures scan for ambiguous markets.
  */
 async function matchTxLineOdds(market) {
   try {
@@ -144,15 +161,40 @@ async function matchTxLineOdds(market) {
     // regardless of the World Cup demo's replay mode. Missing credentials
     // surface as a fetch error below and return null anyway.
 
-    // All competitions, fetched live regardless of the World Cup demo's
-    // replay mode — the agent's markets are current fixtures.
-    const fixtures = await txlineService.getAllFixtures?.({ forceLive: true });
+    // Detect competition from market question for efficient routing
+    const questionLower = (market.question || '').toLowerCase();
+    const descLower = (market.description || '').toLowerCase();
+    const text = `${questionLower} ${descLower}`;
+
+    let fixtures = null;
+    const COMPETITIONS = txlineService.KNOWN_COMPETITIONS;
+
+    // Route to competition-specific fetch when we can identify the league
+    if (COMPETITIONS && txlineService.getFixturesByCompetition) {
+      if (text.includes('mls') || MLS_TEAM_HINTS.some(t => text.includes(t))) {
+        if (COMPETITIONS.mls?.id) {
+          fixtures = await txlineService.getFixturesByCompetition(COMPETITIONS.mls.id);
+        }
+      } else if (text.includes('premier league') || PL_TEAM_HINTS.some(t => text.includes(t))) {
+        if (COMPETITIONS.premierLeague?.id) {
+          fixtures = await txlineService.getFixturesByCompetition(COMPETITIONS.premierLeague.id);
+        }
+      } else if (text.includes('nfl') || NFL_TEAM_HINTS.some(t => text.includes(t))) {
+        if (COMPETITIONS.nfl?.id) {
+          fixtures = await txlineService.getFixturesByCompetition(COMPETITIONS.nfl.id);
+        }
+      }
+    }
+
+    // Fallback: fetch all competitions
+    if (!fixtures || fixtures.length === 0) {
+      fixtures = await txlineService.getAllFixtures?.({ forceLive: true });
+    }
     if (!fixtures || fixtures.length === 0) return null;
 
     // Fuzzy team-name matching first; simple substring fallback
     let matchedFixture = txlineService.matchFixtureToQuestion?.(market.question, fixtures)?.fixture || null;
     if (!matchedFixture) {
-      const questionLower = market.question.toLowerCase();
       matchedFixture = fixtures.find((f) => {
         const home = (f.home?.name || f.homeName || '').toLowerCase();
         const away = (f.away?.name || f.awayName || '').toLowerCase();
@@ -197,17 +239,49 @@ async function matchTxLineOdds(market) {
       return 1 / market.outcomes.length;
     });
 
+    // Include competition context in reasoning for transparency
+    const competitionTag = matchedFixture.competition || matchedFixture.competitionId || '';
+
     return {
       probabilities,
       confidence: 'HIGH',
-      source: 'txline',
-      reasoning: `Professional bookmaker consensus (TxLINE): ${matchedFixture.home?.name || matchedFixture.homeName} vs ${matchedFixture.away?.name || matchedFixture.awayName}. Consensus odds normalized to true probabilities.`,
+      source: `txline${competitionTag ? `_${String(competitionTag).toLowerCase().replace(/\s+/g, '')}` : ''}`,
+      reasoning: `Professional bookmaker consensus (TxLINE${competitionTag ? ` / ${competitionTag}` : ''}): ${matchedFixture.home?.name || matchedFixture.homeName} vs ${matchedFixture.away?.name || matchedFixture.awayName}. Consensus odds normalized to true probabilities.`,
     };
   } catch (err) {
     // TxLINE not available — fall through
     return null;
   }
 }
+
+// Lightweight team-name hints for competition routing (not for matching — that
+// uses the full TEAM_ALIAS_REGISTRY in crossVenueEdge.js). These just help the
+// intelligence layer pick the right competition ID before doing the full scan.
+const MLS_TEAM_HINTS = [
+  'inter miami', 'lafc', 'atlanta united', 'la galaxy', 'seattle sounders',
+  'portland timbers', 'nashville sc', 'columbus crew', 'fc cincinnati',
+  'philadelphia union', 'new york city fc', 'ny red bulls', 'orlando city',
+  'charlotte fc', 'dc united', 'toronto fc', 'montreal', 'new england',
+  'chicago fire', 'houston dynamo', 'austin fc', 'real salt lake',
+  'sporting kansas city', 'colorado rapids', 'minnesota united',
+  'san jose earthquakes', 'vancouver whitecaps', 'st. louis city',
+];
+
+const PL_TEAM_HINTS = [
+  'arsenal', 'liverpool', 'manchester city', 'man city', 'manchester united',
+  'man united', 'chelsea', 'tottenham', 'spurs', 'aston villa', 'newcastle',
+  'brighton', 'fulham', 'brentford', 'bournemouth', 'crystal palace',
+  'everton', 'nottingham forest', 'west ham', 'coventry', 'hull city',
+  'ipswich', 'leeds',
+];
+
+const NFL_TEAM_HINTS = [
+  'chiefs', 'eagles', 'bills', '49ers', 'cowboys', 'ravens', 'lions',
+  'dolphins', 'packers', 'rams', 'bengals', 'seahawks', 'jets', 'texans',
+  'steelers', 'giants', 'bears', 'raiders', 'broncos', 'chargers',
+  'patriots', 'saints', 'vikings', 'cardinals', 'colts', 'jaguars',
+  'titans', 'commanders', 'falcons', 'panthers', 'buccaneers', 'browns',
+];
 
 // ─── Crypto Intelligence ────────────────────────────────────────────────────
 

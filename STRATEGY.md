@@ -47,7 +47,7 @@ Each source strengthens the agent's forecast without coupling to a specific venu
 
 | Source | What It Provides | Status | Edge |
 |--------|-----------------|--------|------|
-| **TxLINE / TxOdds** | Professional bookmaker consensus odds, Merkle proofs | Live (MLS 50%, PL Aug 21) | Sharpest odds available — most participants don't have this |
+| **TxLINE / TxOdds** | Professional bookmaker consensus odds, Merkle proofs | Live (MLS, NFL, PL Aug 21) — mainnet free tier | Sharpest odds available — most participants don't have this |
 | **Venice AI** | LLM reasoning, evidence synthesis | Live | Handles politics, economics, crypto, tech, current events |
 | **SynthData** | ML forecasting models | Live | Quantitative probability estimates |
 | **Bright Data** | SERP, web scrape, social | Optional | Supplementary web intelligence when available |
@@ -88,9 +88,9 @@ Remaining before live: flip `DELPHI_AGENT_DRY_RUN=false` and run under PM2 (see 
 
 TxLINE/TxOdds delivers full Premier League coverage from August 21.
 
-- [ ] Adapt fixture discovery for PL competition/league IDs
-- [ ] Test odds ingestion pipeline with MLS data (live now at 50%)
-- [ ] Prepare cross-venue edge detection: TxLINE consensus vs Polymarket/Delphi sports markets
+- [x] Adapt fixture discovery for PL competition/league IDs
+- [x] Test odds ingestion pipeline with MLS data (live now at 50%)
+- [x] Prepare cross-venue edge detection: TxLINE consensus vs Polymarket/Delphi sports markets
 - [ ] Verify Merkle proof pipeline works with new season's fixture IDs
 - [ ] Build PL-specific forecasting context for Venice AI
 
@@ -166,7 +166,7 @@ Clarity on scope prevents drift:
 | README led with Canton | Misrepresented what's live | Done |
 | Brand.js led with "private size" | Same | Done |
 | No Delphi integration | Competition starts today | High |
-| TxLINE adapter assumes World Cup fixtures | Needs league-generic discovery | High (before Aug 21) |
+| TxLINE adapter assumes World Cup fixtures | Needs league-generic discovery | Done (Aug 13) |
 | Agent loop coupled to Polymarket execution | Needs venue-agnostic routing | Medium |
 | Canton wallet layer feature-flagged but hero-positioned | Reposition to "available" | Low |
 | World Cup route is hackathon artifact | Keep functional, deprioritize | Low |
@@ -189,3 +189,5 @@ Clarity on scope prevents drift:
 | 2026-08-12 | Live on VPS with datafeed-only gate (nuncio-vultr, PM2) | Laptop can't stay open; flip executed with ~0.44% bankroll at risk. First trade: sea-ice YES 5sh @4.40 TST (NSIDC published data), settles Aug 13 |
 | 2026-08-12 | Design alignment: nav becomes Markets · Positions · Arena · Private; agent-first hero; beautifului-style reasoning primitives restyled to tokens.css | Review found the site contradicting the strategy doc (Canton-first home, dead /world-cup, two agent surfaces, hollow /positions) while the week's receipts stayed invisible. Plan: docs/DESIGN_ALIGNMENT.md |
 | 2026-08-12 | Build `/arena` as the public proof surface + worker→`/api/arena` ingest via Upstash | The receipts, gate refusals, source attribution, and calibration curve ARE the product; surface them or they don't exist commercially |
+| 2026-08-13 | TxLINE mainnet free tier activated; MLS/NFL/PL pipeline operational | Subscription confirmed on Solana mainnet (service level 1, no TxL purchase). 415 fixtures flowing across MLS (77), NFL (32), Premier League (280). Competition-specific fixture routing wired into Delphi agent. `DELPHI_AGENT_LIVE_SOURCES=datafeed,txline` — sports markets now trade-eligible when odds populate. |
+| 2026-08-13 | framer-motion override 6.5.1→11.18.2; production build unblocked | connectkit 1.9.2 pinned framer-motion ^6.3.11 whose .mjs imports broke webpack5. npm overrides field resolves cleanly; `npm run build` passes. |
