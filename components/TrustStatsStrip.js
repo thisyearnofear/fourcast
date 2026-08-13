@@ -80,7 +80,7 @@ export default function TrustStatsStrip() {
       {metrics.map((metric) => (
         <div key={metric.label} className="px-4 py-5 text-center">
           <TweenNumber
-            value={inView ? metric.value : 0}
+            value={inView ? (metric.value ?? 1) : 0}
             duration={700}
             format={metric.format}
             className="font-display text-2xl font-bold text-[var(--color-ink)]"

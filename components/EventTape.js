@@ -50,11 +50,14 @@ function buildEvents(runs) {
     }
   }
   events.sort((a, b) => new Date(b.ts) - new Date(a.ts));
-  // cap and de-repeat consecutive identical items
+  // Dedupe by subject+side: only the LATEST event per market-side survives
+  // (hourly cycles otherwise retell the same story 3× on the tape).
+  const seen = new Set();
   const out = [];
   for (const e of events) {
-    const prev = out[out.length - 1];
-    if (prev && prev.kind === e.kind && prev.text === e.text && prev.subject === e.subject) continue;
+    const key = `${e.subject}::${e.text.slice(0, e.text.indexOf(' '))}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     out.push(e);
     if (out.length >= 12) break;
   }
