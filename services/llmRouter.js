@@ -22,6 +22,7 @@ if (typeof window !== 'undefined') {
 }
 
 import OpenAI from 'openai';
+import { withRateLimit } from './gatewayRateLimiter.js';
 
 // ─── Provider Registry ──────────────────────────────────────────────────────
 
@@ -52,9 +53,23 @@ const PROVIDERS = {
     defaultModel: 'llama-3.3-70b',
     attempts: 2,
   },
+  vercel: {
+    // Vercel AI Gateway (OpenAI-compatible). Free tier: zai/glm-4.7-flash
+    // accessible but burst-rate-limited (429 recovers in minutes).
+    // Exa web search is free through Aug 31 via gateway.tools.exaSearch()
+    // (handled in evidenceRetriever.js, not here).
+    // Rate limiter (gatewayRateLimiter.js) serializes calls to stay within
+    // free-tier limits.
+    baseURL: 'https://ai-gateway.vercel.sh/v1',
+    keyEnv: 'VERCEL_GATEWAY_API_KEY',
+    modelEnv: 'VERCEL_GATEWAY_MODEL',
+    defaultModel: 'zai/glm-4.7-flash',
+    timeout: 90_000,
+    attempts: 3,
+  },
 };
 
-const DEFAULT_ORDER = 'openrouter,nvidia,venice';
+const DEFAULT_ORDER = 'vercel,venice,nvidia,openrouter';
 
 // ─── Client Cache ───────────────────────────────────────────────────────────
 
@@ -143,7 +158,13 @@ export async function chatCompletion({
 
         let res;
         try {
-          res = await client.chat.completions.create(payload);
+          // Vercel free tier is burst-limited (~1 req / 5 min per model) —
+          // serialize all gateway calls through the shared rate limiter.
+          if (name === 'vercel') {
+            res = await withRateLimit(() => client.chat.completions.create(payload));
+          } else {
+            res = await client.chat.completions.create(payload);
+          }
         } catch (err) {
           // Web search is an enhancement, not a requirement: if it fails
           // (unsupported, unpayable) retry once without it before failing over.
@@ -152,7 +173,9 @@ export async function chatCompletion({
             const fallbackPayload = { ...payload };
             delete fallbackPayload.plugins;
             delete fallbackPayload.venice_parameters;
-            res = await client.chat.completions.create(fallbackPayload);
+            res = name === 'vercel'
+              ? await withRateLimit(() => client.chat.completions.create(fallbackPayload))
+              : await client.chat.completions.create(fallbackPayload);
             payload.__webDropped = true;
           } else {
             throw err;
@@ -182,7 +205,7 @@ export async function chatCompletion({
 
   const anyConfigured = order.some((name) => PROVIDERS[name] && process.env[PROVIDERS[name].keyEnv]);
   if (!anyConfigured) {
-    console.warn(`[llmRouter] no LLM provider keys configured (tried: ${order.join(', ')}) — set OPENROUTER_API_KEY / NVIDIA_API_KEY / VENICE_API_KEY`);
+    console.warn(`[llmRouter] no LLM provider keys configured (tried: ${order.join(', ')}) — set VERCEL_GATEWAY_API_KEY / VENICE_API_KEY / NVIDIA_API_KEY / OPENROUTER_API_KEY`);
   } else if (failures.length) {
     console.warn(`[llmRouter] all providers failed: ${failures.join(' | ')}`);
   }
