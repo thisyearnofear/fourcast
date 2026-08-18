@@ -2,7 +2,7 @@
 
 The buyer-facing story, the concierge path, and the interview script. Strategy and the 14-day test live in `docs/GO_TO_MARKET.md`; this document is what we say to a customer.
 
-Related: `constants/brand.js` (copy source of truth) · `docs/DEMO_SCRIPT_PROOF.md` (the 2-minute proof) · `docs/HACKATHON.md` (judge narrative)
+Related: `constants/brand.js` (copy source of truth) · `docs/DEMO_SCRIPT_PROOF.md` (the 2-minute proof) · `docs/HACKATHONS.md` (competition record)
 
 ---
 

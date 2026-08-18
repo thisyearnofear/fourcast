@@ -5,7 +5,7 @@ This is the document that turns the strategic decision into a 30-day plan. It is
 Related docs:
 
 - `README.md` — Strategic Positioning table (summary)
-- `docs/HACKATHON.md` — Why this is the primary RFB
+- `docs/HACKATHONS.md` — Why this is the primary RFB (hackathon/competition record)
 - `docs/INSIGHTS_MARKETPLACE.md` — How this drives the acquisition loop
 - `docs/NINE_PLAN.md` P3.1 — Why the IA commits to it
 - `constants/brand.js` — The narrative single source of truth

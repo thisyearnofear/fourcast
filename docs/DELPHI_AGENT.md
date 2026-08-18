@@ -154,13 +154,59 @@ sports markets fall through to Venice.
   to whole percents after confidence haircuts; a ≤4% edge at LOW/MEDIUM
   confidence sizes to 0. Small-edge trades realistically need HIGH-confidence
   sources (TxLINE, data feeds) or ≥6–8% blind disagreement.
-- **Sports Yes/No outcome forms don't map to TxLINE probabilities.**
-  `matchTxLineOdds()` maps team/draw outcome labels; "Will X beat Y?" with
-  [Yes, No] outcomes needs predicate parsing — TODO before MLS/PL markets
-  hit the board.
+- **Sports Yes/No binary forms now map via predicate parsing.** `Will X beat Y?` /
+  `Will X win?` with `[Yes, No]` outcomes are parsed in `delphiIntelligence.js`
+  (`mapBinarySportsOutcomes`), anchoring Yes to the subject team's normalized 1X2
+  share; unparseable binary forms fall through to the LLM instead of an
+  equal-split guess. Team-labelled (multi or binary) forms keep the label mapper.
+  The remaining blocker is the **fixture odds feed**: odds hashes still return
+  empty on the dev API (dormant until PL season), so until odds exist these
+  sports markets fall through to Venice regardless of the mapping.
 - **Tuning via env**: `DELPHI_AGENT_MIN_EDGE` (0.03), `DELPHI_AGENT_MAX_MARKETS`
   (25), `DELPHI_AGENT_LLM_PROVIDERS` (chain order), `OPENROUTER_MODEL`,
   `NVIDIA_MODEL`, `DELPHI_AGENT_VENICE_MODEL` (per-provider model overrides),
   `DELPHI_AGENT_LIVE_SOURCES` / `DELPHI_AGENT_LIVE_CATEGORIES` (go-live gates —
   anything else paper-trades), `DELPHI_AGENT_WEB_SEARCH` (default on; router
   auto-degrades on 400/402), `DELPHI_AGENT_INTERVAL_MS` (1h during paper phase).
+
+## Go-live + submission checklist (competition ends Aug 24, 2026)
+
+The remaining window is short — this is the runbook. Steps 1-2 are code-ready
+(2026-08-18); 3-6 are operator actions that need the host / portal.
+
+1. **Sports odds mapping (done 2026-08-18).** `mapBinarySportsOutcomes` +
+   `isGenericBinaryOutcomes` shipped in `services/delphiIntelligence.js` with
+   unit tests (`tests/delphiIntelligence.test.js`, 8 passing). Generic Yes/No
+   forms now anchor to the 1X2 consensus or fall through to the LLM — no more
+   equal-split guesses.
+
+2. **Switch live gating wider than `datafeed`.**
+   On the VPS `.env.local` (and the PM2 ecosystem config):
+   - `DELPHI_AGENT_DRY_RUN=false` (LIVE — already the live stance, keep)
+   - `DELPHI_AGENT_LIVE_SOURCES=datafeed,sports` (add `sports` once TxLINE
+     fixture odds actually return — see the odds-feed blocker above)
+   - `DELPHI_AGENT_LIVE_CATEGORIES=sports,miscellaneous` (explicit categories to
+     allow live)
+   - Keep `DELPHI_AGENT_MAX_SHARES_PER_MARKET` and the daily spend cap in place.
+
+3. **Re-verify a live cycle before widening.**
+   `TSXLINE_MODE=live ssh nuncio-vultr ...` → run `node scripts/delphi-agent-worker.mjs --once`
+   and confirm: balances load, sports markets route to TxLINE (or honestly fall
+   through when odds are empty), and every decision is gated + logged.
+
+4. **Confirm TxLINE sports actually contributes.** The blocker: the dev odds
+   feed returns empty hashes. If it's still empty by ~Aug 20, don't force sports
+   live — the LLM fallback trades the non-sports edge instead. Watch
+   `scripts/verify-mls-fixtures.mjs` output for populated odds.
+
+5. **Restart & watch.**
+   `pm2 restart delphi-agent && pm2 logs delphi-agent --lines 40`, then a few
+   cycles to confirm sweep/redeem + no per-cycle errors.
+
+6. **Submit on DoraHacks before Aug 24.**
+   - https://dorahacks.io/hackathon/delphi-agent-competition/detail
+   - Leaderboard reflects live activity: https://agent-competition.gensyn.ai
+   - Include: repo link, the operator guide (`docs/DELPHI_AGENT.md`), the
+     competition wallet address, run-state summary (dry-run paper validation →
+     live datafeed → any live fills), and the edge examples recorded above.
+

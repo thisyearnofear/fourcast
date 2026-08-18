@@ -217,10 +217,35 @@ async function matchTxLineOdds(market) {
     const total = homeProb + drawProb + awayProb;
     if (total <= 0) return null;
 
+    // Binary (2-way) sports forms — e.g. "Will X win / beat Y?" with [Yes, No] —
+    // can't be mapped label-by-label to home/away/draw. Parse the question and
+    // anchor Yes to the subject team's share of the 1X2 consensus. If we can't
+    // parse it confidently we fall through to the LLM rather than guessing.
+    const outcomeList = Array.isArray(market.outcomes) ? market.outcomes : [];
+    if (outcomeList.length === 2) {
+      const binary = mapBinarySportsOutcomes({
+        question: market.question,
+        outcomes: outcomeList,
+        fixture: matchedFixture,
+        homeProb, awayProb, drawProb,
+      });
+      if (binary) {
+        const tag = matchedFixture.competition || matchedFixture.competitionId || '';
+        return {
+          probabilities: binary,
+          confidence: 'HIGH',
+          source: `txline${tag ? `_${String(tag).toLowerCase().replace(/\s+/g, '')}` : ''}`,
+          reasoning: `Professional bookmaker consensus (TxLINE${tag ? ` / ${tag}` : ''}): ${matchedFixture.home?.name || matchedFixture.homeName} vs ${matchedFixture.away?.name || matchedFixture.awayName}. Binary Yes/No form mapped from normalized 1X2 consensus.`,
+        };
+      }
+      // Generic Yes/No form we couldn't parse — don't emit an equal-split guess.
+      if (isGenericBinaryOutcomes(outcomeList)) return null;
+    }
+
     // Map consensus probabilities to the Delphi market's outcome labels.
     // Outcomes that match neither team nor 'draw' get an equal share of the
-    // residual (sports questions with non-team outcomes like Yes/No forms
-    // are a known gap — the classifier only routes team-labelled outcomes here).
+    // residual (multi-outcome team-labelled forms; generic binary Yes/No forms
+    // are handled above and never reach this branch).
     const probabilities = market.outcomes.map((outcome) => {
       const outcomeLower = (typeof outcome === 'string' ? outcome : outcome.name || '').toLowerCase();
       const home = (matchedFixture.home?.name || matchedFixture.homeName || '').toLowerCase();
@@ -252,6 +277,75 @@ async function matchTxLineOdds(market) {
     // TxLINE not available — fall through
     return null;
   }
+}
+
+// ─── Binary Yes/No sports form mapping ───────────────────────────────────────
+
+/**
+ * Detect generic Yes/No binary outcome labels (e.g. ["Yes", "No"]).
+ * True only when one side reads as 'yes' and the other as 'no', so
+ * team-labelled binary markets stay on the label-mapping path.
+ * @param {Array} outcomes - Delphi market outcomes
+ * @returns {boolean}
+ */
+export function isGenericBinaryOutcomes(outcomes) {
+  if (!Array.isArray(outcomes) || outcomes.length !== 2) return false;
+  let yes = false;
+  let no = false;
+  for (const o of outcomes) {
+    const label = (typeof o === 'string' ? o : o.name || '').toLowerCase().trim();
+    if (/^yes\b/.test(label)) yes = true;
+    else if (/^no\b/.test(label)) no = true;
+  }
+  return yes && no;
+}
+
+/**
+ * Map a binary (2-way) generic Yes/No sports market to TxLINE 1X2 consensus.
+ * Parses the question for a subject team ("Will X beat Y?", "Will X win?") and
+ * maps Yes = P(subject wins) from the fixture's home/away share; No = 1 − That.
+ * Returns null when the form can't be parsed confidently so the caller can fall
+ * through to the LLM instead of emitting a guess.
+ *
+ * @returns {number[] | null} two probabilities aligned to market.outcomes
+ */
+export function mapBinarySportsOutcomes({ question, outcomes, fixture, homeProb, awayProb, drawProb }) {
+  if (!isGenericBinaryOutcomes(outcomes) || !fixture) return null;
+
+  const home = (fixture.home?.name || fixture.homeName || '').toLowerCase();
+  const away = (fixture.away?.name || fixture.awayName || '').toLowerCase();
+  if (!home || !away) return null;
+
+  const q = (question || '').toLowerCase();
+
+  // Identify the subject — the team the question is about.
+  let subject = null;
+  // "will {subject} beat/defeat/top {opponent}"
+  const beat = q.match(/will\s+(.+?)\s+(?:beat|defeats?|take\s+down|tops?)\s+.+?(?:\?|\.|,|$)/);
+  if (beat) subject = beat[1].trim();
+  else {
+    const win = q.match(/will\s+(.+?)\s+win/);
+    if (win) subject = win[1].trim();
+  }
+  if (!subject) return null;
+
+  const s = subject.toLowerCase();
+  const total = (homeProb || 0) + (drawProb || 0) + (awayProb || 0);
+  if (total <= 0) return null;
+
+  const subIsHome = home.includes(s) || s.includes(home);
+  const subIsAway = away.includes(s) || s.includes(away);
+  if (!subIsHome && !subIsAway) return null;
+
+  const subWin = (subIsHome ? homeProb : awayProb) || 0;
+  const yesProb = subWin / total;
+  const noProb = 1 - yesProb;
+  if (!Number.isFinite(yesProb)) return null;
+
+  return outcomes.map((o) => {
+    const label = (typeof o === 'string' ? o : o.name || '').toLowerCase().trim();
+    return /^yes\b/.test(label) ? yesProb : noProb;
+  });
 }
 
 // Lightweight team-name hints for competition routing (not for matching — that

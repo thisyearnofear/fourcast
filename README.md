@@ -202,6 +202,7 @@ constants/
 | [OPS.md](OPS.md) | VPS autonomous worker deployment |
 | [docs/CANTON_ATOMIC_SETTLEMENT.md](docs/CANTON_ATOMIC_SETTLEMENT.md) | Canton CIP-56 contract model |
 | [docs/DELPHI_AGENT.md](docs/DELPHI_AGENT.md) | Delphi Agent Arena operator guide |
+| [docs/HACKATHONS.md](docs/HACKATHONS.md) | Hackathon/competition record (active + participated) |
 | [docs/TXLINE_INTEGRATION.md](docs/TXLINE_INTEGRATION.md) | TxLINE/Solana proof chain (hackathon reference) |
 | [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | Product demo walkthrough |
 
