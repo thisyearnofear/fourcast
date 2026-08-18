@@ -1,0 +1,66 @@
+# Telegraph Protocol Miner Configuration
+# Fourcast Sports Intelligence Miner
+# https://integrate.telegraphprotocol.com
+
+name: fourcast-sports-intelligence
+version: "1.0.0"
+description: >
+  Verified sports scores and match results powered by TxLINE (professional
+  bookmaker consensus + Solana Merkle proofs). Every result is independently
+  verifiable on-chain — no trust required.
+
+# Intents this miner serves
+intents:
+  - id: SPORTS_SCORE
+    tier: A
+    category: "Weather & Sports"
+    evaluation: "WASM Exact Match"
+    deterministic: false
+    description: >
+      Live and recent match scores across MLS, NFL, and Premier League.
+      Returns team names, current score, match status, and verification metadata.
+
+  - id: GAME_RESULT
+    tier: A
+    category: "Weather & Sports"
+    evaluation: "WASM Exact Match"
+    deterministic: false
+    description: >
+      Final match results with full Solana Merkle proof for independent
+      on-chain verification. Consumers can validate results trustlessly.
+
+# Endpoint configuration
+endpoint:
+  url: "https://miner.sportwarren.com"
+  method: POST
+  path: /query
+  health: /health
+  timeout_ms: 10000
+
+# Data source attribution
+source:
+  name: TxLINE / TxODDS
+  url: https://txodds.net/our-products/tx-line/
+  docs: https://txline-docs.txodds.com
+  verification: Solana Merkle proofs
+  chain: solana
+  program_id: "9ExbZjAapQww1vfcisDmrngPinHTEfpjYRWMunJgcKaAZ"
+
+# Coverage
+coverage:
+  sports:
+    - league: MLS
+      status: live
+    - league: NFL
+      status: live
+    - league: Premier League
+      status: live
+    - league: International Friendlies
+      status: live
+  update_frequency: real-time (60s delay on free tier)
+
+# Payment (x402)
+payment:
+  chain: solana
+  token: USDC
+  network: mainnet-beta
