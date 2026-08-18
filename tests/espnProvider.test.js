@@ -3,6 +3,7 @@ import {
   americanToProbability,
   normalize1x2,
   classifyLeague,
+  mergeScoreboardEvents,
 } from '../services/txline/espnProvider.js';
 
 describe('americanToProbability', () => {
@@ -40,6 +41,32 @@ describe('normalize1x2', () => {
   it('returns null when any side is missing/zero', () => {
     expect(normalize1x2(-155, null, 340)).toBeNull();
     expect(normalize1x2(-155, 0, 340)).toBeNull();
+  });
+});
+
+describe('mergeScoreboardEvents', () => {
+  const ev = (id) => ({ id });
+
+  it('concatenates groups and de-duplicates by event id', () => {
+    const merged = mergeScoreboardEvents([ev('1'), ev('2')], [ev('2'), ev('3')]);
+    expect(merged.map((e) => e.id)).toEqual(['1', '2', '3']);
+  });
+
+  it('keeps live/dated games even when the dated group is an empty array', () => {
+    // Regression: ESPN's `dates=YYYYMMDD` query for today can return an empty
+    // events array while the no-date scoreboard carries the same fixtures under
+    // a UTC-day boundary. A truthy-but-empty dated group must not shadow the
+    // default window's events.
+    const merged = mergeScoreboardEvents([ev('phi-mia')], []);
+    expect(merged.map((e) => e.id)).toEqual(['phi-mia']);
+  });
+
+  it('skips events without an id', () => {
+    expect(mergeScoreboardEvents([ev('1'), {}], [ev('1')]).map((e) => e.id)).toEqual(['1']);
+  });
+
+  it('returns [] for empty/undefined groups', () => {
+    expect(mergeScoreboardEvents(undefined, null, [])).toEqual([]);
   });
 });
 

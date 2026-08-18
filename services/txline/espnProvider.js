@@ -154,6 +154,27 @@ function extractOdds(comp) {
 }
 
 /**
+ * Merge scoreboard event lists, de-duplicating by event id (order preserved:
+ * first source wins). Guards against the ESPN date-boundary quirk where a
+ * `dates=YYYYMMDD` query for today returns ZERO events while the no-date
+ * (current) scoreboard has the same fixtures under the following UTC date —
+ * a naive `dated || default` fallback silently drops live markets.
+ */
+export function mergeScoreboardEvents(...groups) {
+  const seen = new Set();
+  const out = [];
+  for (const group of groups) {
+    for (const ev of group || []) {
+      const id = ev?.id;
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push(ev);
+    }
+  }
+  return out;
+}
+
+/**
  * Fetch free ESPN consensus odds for a Delphi sports market.
  * @param {{question:string, description?:string, resolvesAt?:string}} market
  * @returns {Promise<{fixture, homeProb, drawProb, awayProb, league, provider}|null>}
@@ -164,13 +185,19 @@ export async function getConsensusGame({ question, description, resolvesAt }) {
     const league = classifyLeague(text);
     if (!league) return null;
 
-    // Prefer a scoreboard near the market's resolution date (odds are posted as
-    // kickoff approaches); fall back to the default window if that has no events.
+    // Gather both the no-date (current) scoreboard AND the resolution-day
+    // window, then merge: the current window reliably carries live/near-kickoff
+    // games (which a resolved-today `dates=` query can miss due to ESPN's UTC
+    // day boundary), while the dated window carries fixtures further out.
     const date = resolvesAt ? String(resolvesAt).slice(0, 10).replace(/-/g, '') : null;
-    const data = (await fetchScoreboard(league, date)) || (await fetchScoreboard(league, null));
-    if (!data?.events?.length) return null;
+    const [defaultData, datedData] = [
+      await fetchScoreboard(league, null),
+      date ? await fetchScoreboard(league, date) : null,
+    ];
+    const events = mergeScoreboardEvents(defaultData?.events, datedData?.events);
+    if (!events.length) return null;
 
-    const match = matchEvent(text, data.events);
+    const match = matchEvent(text, events);
     if (!match) return null;
 
     const odds = extractOdds(match.event.competitions[0]);
@@ -193,4 +220,4 @@ export async function getConsensusGame({ question, description, resolvesAt }) {
   }
 }
 
-export default { americanToProbability, normalize1x2, classifyLeague, getConsensusGame };
+export default { americanToProbability, normalize1x2, classifyLeague, getConsensusGame, mergeScoreboardEvents };
