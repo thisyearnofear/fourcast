@@ -15,6 +15,93 @@
  * Tuning: ESPN_SCOREBOARD_TTL_MS - scoreboard cache TTL (default 5 min).
  */
 
+// ─── ESPN throttle guard & scoreboard cache ────────────────────────────────────
+
+const SCOREBOARD_TTL_MS = Number(process.env.ESPN_SCORE_TTL_MS || 5 * 60 * 1000);
+const SCOREBOARD_CACHE_MAX = 10; // Keep only the most recent scoreboards per league
+
+// Scoreboard cache with LRU eviction: keyed by `${sport}/${slug}?dates=...`
+// Evicts LRU entry when full to bound memory across cycles.
+const scoreboardCache = new Map();
+
+/**
+ * Rate limiter for ESPN fetches. Prevents hitting ESPN's undocumented
+ * rate limits (429s) when multiple markets share the same league.
+ * Max 2 fetches per second per league, with a FIFO queue.
+ */
+const ESPN_THROTTLE_INTERVAL_MS = 500; // 2/sec max per league
+const fetchQueue = new Map(); // league slug -> { lastFetch: number, queue: Promise[] }
+
+function getFetchQueue(slug) {
+  if (!fetchQueue.has(slug)) {
+    fetchQueue.set(slug, { lastFetch: 0, queue: [] });
+  }
+  return fetchQueue.get(slug);
+}
+
+async function throttleFetch(slug, fn) {
+  const q = getFetchQueue(slug);
+  const now = Date.now();
+  const waitMs = Math.max(0, ESPN_THROTTLE_INTERVAL_MS - (now - q.lastFetch));
+  if (waitMs > 0) {
+    await new Promise((r) => setTimeout(r, waitMs));
+  }
+  q.lastFetch = Date.now();
+  return fn();
+}
+
+/**
+ * Get from LRU scoreboard cache. Promotes key to most-recently-used.
+ * Returns null if cache miss or expired.
+ */
+function getScoreboardCache(key) {
+  if (!scoreboardCache.has(key)) return null;
+  const entry = scoreboardCache.get(key);
+  scoreboardCache.delete(key);
+  scoreboardCache.set(key, entry);
+  if (Date.now() - entry.at < SCOREBOARD_TTL_MS) return entry.data;
+  scoreboardCache.delete(key); // expired
+  return null;
+}
+
+/**
+ * Set scoreboard cache with LRU eviction. Removes oldest entry when full.
+ */
+function setScoreboardCache(key, data) {
+  while (scoreboardCache.size >= SCOREBOARD_CACHE_MAX) {
+    const oldest = scoreboardCache.keys().next().value;
+    scoreboardCache.delete(oldest);
+  }
+  scoreboardCache.set(key, { at: Date.now(), data });
+}
+
+function cacheKey(sport, slug, date) {
+  return `${sport}/${slug}?dates=${date || ''}`;
+}
+
+async function fetchScoreboard(league, date) {
+  const key = cacheKey(league.sport, league.slug, date);
+
+  // Check cache first
+  const cached = getScoreboardCache(key);
+  if (cached) return cached;
+
+  // Throttle ESPN fetches to avoid 429s
+  const data = await throttleFetch(league.slug, async () => {
+    const url = `https://site.api.espn.com/apis/site/v2/sports/${league.sport}/${league.slug}/scoreboard${
+      date ? `?dates=${date}` : ''
+    }`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (!res.ok) return null;
+    return res.json();
+  });
+
+  if (data !== null) {
+    setScoreboardCache(key, data);
+  }
+  return data;
+}
+
 // leagueId hints are substrings checked against question+description.
 const LEAGUES = [
   {
@@ -95,30 +182,6 @@ export function normalize1x2(homeAmerican, drawAmerican, awayAmerican) {
 export function classifyLeague(text) {
   const t = (text || '').toLowerCase();
   return LEAGUES.find((l) => l.hints.some((h) => t.includes(h))) || null;
-}
-
-// ─── network ──────────────────────────────────────────────────────────────────
-
-const SCOREBOARD_TTL_MS = Number(process.env.ESPN_SCORE_TTL_MS || 5 * 60 * 1000);
-const cache = new Map(); // `${sport}/${slug}?dates=...` -> { at, data }
-
-function cacheKey(sport, slug, date) {
-  return `${sport}/${slug}?dates=${date || ''}`;
-}
-
-async function fetchScoreboard(league, date) {
-  const key = cacheKey(league.sport, league.slug, date);
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < SCOREBOARD_TTL_MS) return hit.data;
-
-  const url = `https://site.api.espn.com/apis/site/v2/sports/${league.sport}/${league.slug}/scoreboard${
-    date ? `?dates=${date}` : ''
-  }`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-  if (!res.ok) return null;
-  const data = await res.json();
-  cache.set(key, { at: Date.now(), data });
-  return data;
 }
 
 function matchEvent(marketText, events) {

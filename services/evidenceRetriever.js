@@ -20,7 +20,30 @@ import { withRateLimit } from './gatewayRateLimiter.js';
 
 const EXA_ENDPOINT = 'https://api.exa.ai/search';
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const CACHE_MAX_SIZE = 50;
 const cache = new Map();
+
+/**
+ * LRU cache wrapper: promotes keys on access, evicts oldest when full.
+ * Replaces the plain Map so memory stays bounded even across thousands of questions.
+ */
+function getFromLRUCache(key) {
+  if (!cache.has(key)) return null;
+  // Promote to most recently used (delete + re-add at end)
+  const entry = cache.get(key);
+  cache.delete(key);
+  cache.set(key, entry);
+  return entry;
+}
+
+function setLRUCache(key, value) {
+  // Evict least recently used if full
+  while (cache.size >= CACHE_MAX_SIZE) {
+    const oldest = cache.keys().next().value;
+    cache.delete(oldest);
+  }
+  cache.set(key, value);
+}
 
 // ─── Gateway-based Exa search (free tier) ──────────────────────────────────
 
@@ -175,7 +198,7 @@ export async function retrieveEvidence(question, { numResults = 5, maxCharacters
   if (!question) return null;
 
   const key = `${question.toLowerCase().trim()}|${numResults}`;
-  const hit = cache.get(key);
+  const hit = getFromLRUCache(key);
   if (hit && Date.now() - hit.ts < CACHE_TTL_MS) return hit.value;
 
   let snippets = null;
@@ -193,7 +216,7 @@ export async function retrieveEvidence(question, { numResults = 5, maxCharacters
   if (!snippets) return null;
 
   const value = { query: question, snippets };
-  cache.set(key, { ts: Date.now(), value });
+  setLRUCache(key, { ts: Date.now(), value });
   return value;
 }
 

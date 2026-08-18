@@ -3,21 +3,28 @@
  * with ordered failover. Built for the Delphi agent's forecaster; generic
  * enough for other services to adopt later.
  *
- * Chain order (default "openrouter,nvidia,venice") via DELPHI_AGENT_LLM_PROVIDERS.
+ * Chain order (default "vercel,bai,venice,nvidia,openrouter") via
+ * DELPHI_AGENT_LLM_PROVIDERS.
+ *
+ * Two modes:
+ * - Sequential (default): try providers in order, failover on error. Safe
+ *   but slow if all providers are down (each can take 30-120s).
+ * - Parallel (`parallel: true`): fire all providers simultaneously, take
+ *   the first response, cancel the rest. Cuts worst-case latency from
+ *   ~10min to ~2min. Use for time-sensitive markets; sequential mode
+ *   is better for batch forecasting where you can wait.
+ *
  * Only providers whose API key is configured are attempted; auth failures
  * (401/402/403), rate limits (429), timeouts and 5xx all roll over to the
- * next provider. Returns null when no provider answers.
+ * next provider (or to the next provider in parallel mode). Returns null
+ * when no provider answers.
  *
  * Why this order (overridable):
- * - vercel: AI Gateway free tier, Exa web search built-in
- * - openrouter: one key → many models incl. free ":free" variants for
- *   zero-cost testing, cheap paid llama-3.3-70b, optional ":online" web
- *   models for news-driven markets later.
- * - nvidia: free tier (build.nvidia.com), quality instruct models, decent
- *   rate limits.
- * - venice: privacy-focused, existing integration — final fallback.
- * - bai: B.AI free DeepSeek-V4-Flash (unlimited free access, limited-time offer).
- *   Strong reasoning model, good for complex multi-outcome markets.
+ * - vercel: AI Gateway free tier, Exa web search built-in (rate-limited)
+ * - bai: B.AI free DeepSeek-V4-Flash (unlimited free access). Strong reasoning.
+ * - nvidia: free tier (build.nvidia.com), quality instruct models.
+ * - venice: privacy-focused, existing integration.
+ * - openrouter: one key → many models incl. free ":free" variants.
  */
 
 if (typeof window !== 'undefined') {
@@ -83,7 +90,22 @@ const PROVIDERS = {
   },
 };
 
-const DEFAULT_ORDER = 'vercel,venice,nvidia,openrouter';
+const DEFAULT_ORDER = 'vercel,bai,venice,nvidia,openrouter';
+
+// Abort controller for cancelling parallel provider calls when first wins.
+let _abortController = null;
+
+function getAbortController() {
+  if (!_abortController || _abortController.aborted) {
+    _abortController = new AbortController();
+  }
+  return _abortController;
+}
+
+function cancelAll() {
+  try { _abortController?.abort(); } catch {}
+  _abortController = null;
+}
 
 // ─── Client Cache ───────────────────────────────────────────────────────────
 
@@ -122,9 +144,13 @@ function parseOrder(providerOrder) {
 
 /**
  * @param {{ system: string, user: string, temperature?: number, maxTokens?: number,
- *           model?: string, providerOrder?: string, webSearch?: boolean }} params
+ *           model?: string, providerOrder?: string, webSearch?: boolean,
+ *           parallel?: boolean }} params
  *          webSearch: openrouter uses the web plugin, venice uses
  *          venice_parameters.enable_web_search; unsupported elsewhere.
+ *          parallel: when true, fire all configured providers simultaneously
+ *          and take the first response (cutting worst-case latency from ~10min
+ *          to ~2min). Default: false (sequential failover, safer for free tiers).
  * @returns {Promise<{ content: string, provider: string, model: string,
  *           webSearchUsed: boolean } | null>}
  */
@@ -136,6 +162,20 @@ export async function chatCompletion({
   model: modelOverride,
   providerOrder,
   webSearch = false,
+  parallel = false,
+}) {
+  if (parallel) {
+    return chatCompletionParallel({ system, user, temperature, maxTokens, model: modelOverride, providerOrder, webSearch });
+  }
+  return chatCompletionSequential({ system, user, temperature, maxTokens, model: modelOverride, providerOrder, webSearch });
+}
+
+/**
+ * Sequential failover: try providers in order. Safe for free tiers
+ * (only one API call at a time), but slow if all providers fail.
+ */
+async function chatCompletionSequential({
+  system, user, temperature, maxTokens, model: modelOverride, providerOrder, webSearch,
 }) {
   const order = parseOrder(providerOrder);
   const failures = [];
@@ -147,41 +187,32 @@ export async function chatCompletion({
       continue;
     }
     const client = getClient(name);
-    if (!client) continue; // no key configured — skip quietly
+    if (!client) continue;
 
     const model = modelOverride || process.env[cfg.modelEnv] || cfg.defaultModel;
-
     const webSupported = name === 'openrouter' || name === 'venice';
-    // Congestion retries are per-provider (persistent :free 429s get no
-    // retries; nvidia 503s get a few — they intersperse with wins).
     const maxAttempts = typeof cfg.attempts === 'function' ? cfg.attempts(model) : (cfg.attempts ?? 2);
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         const payload = {
-          model,
-          messages: [
+          model, messages: [
             { role: 'system', content: system },
             { role: 'user', content: user },
           ],
-          temperature,
-          max_tokens: maxTokens,
+          temperature, max_tokens: maxTokens,
         };
         if (webSearch && name === 'openrouter') payload.plugins = [{ id: 'web', max_results: 5 }];
         if (webSearch && name === 'venice') payload.venice_parameters = { enable_web_search: 'auto' };
 
         let res;
         try {
-          // Vercel free tier is burst-limited (~1 req / 5 min per model) —
-          // serialize all gateway calls through the shared rate limiter.
           if (name === 'vercel') {
             res = await withRateLimit(() => client.chat.completions.create(payload));
           } else {
             res = await client.chat.completions.create(payload);
           }
         } catch (err) {
-          // Web search is an enhancement, not a requirement: if it fails
-          // (unsupported, unpayable) retry once without it before failing over.
           if (webSearch && webSupported && (err.status === 400 || err.status === 402)) {
             console.warn(`[llmRouter] ${name}/${model} web search failed (${err.status}) — retrying without web`);
             const fallbackPayload = { ...payload };
@@ -217,13 +248,120 @@ export async function chatCompletion({
     }
   }
 
+  _logProviderFailures(failures, order);
+  return null;
+}
+
+/**
+ * Parallel mode: fire all configured providers simultaneously, take the first
+ * response, cancel the rest. Cuts worst-case latency from ~10min to ~2min.
+ *
+ * Trade-off: if all providers succeed, you get N redundant API calls instead
+ * of 1. Use with providers that have generous free tiers (B.AI, Nvidia).
+ * For rate-limited providers (Vercel, OpenRouter :free), prefer sequential.
+ */
+async function chatCompletionParallel({
+  system, user, temperature, maxTokens, model: modelOverride, providerOrder, webSearch,
+}) {
+  const order = parseOrder(providerOrder);
+  const configured = order
+    .filter((name) => PROVIDERS[name] && getClient(name))
+    .map((name) => {
+      const cfg = PROVIDERS[name];
+      const model = modelOverride || process.env[cfg.modelEnv] || cfg.defaultModel;
+      return { name, cfg, model };
+    });
+
+  if (configured.length === 0) {
+    console.warn(`[llmRouter] no configured providers in parallel mode`);
+    return null;
+  }
+
+  const ac = getAbortController();
+  const promises = configured.map(({ name, cfg, model }) => {
+    const client = getClient(name);
+    const webSupported = name === 'openrouter' || name === 'venice';
+    const maxAttempts = typeof cfg.attempts === 'function' ? cfg.attempts(model) : (cfg.attempts ?? 1);
+
+    return (async () => {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        if (ac.signal.aborted) return null;
+        try {
+          const payload = {
+            model,
+            messages: [
+              { role: 'system', content: system },
+              { role: 'user', content: user },
+            ],
+            temperature,
+            max_tokens: maxTokens,
+          };
+          if (webSearch && name === 'openrouter') payload.plugins = [{ id: 'web', max_results: 5 }];
+          if (webSearch && name === 'venice') payload.venice_parameters = { enable_web_search: 'auto' };
+
+          let res;
+          try {
+            if (name === 'vercel') {
+              res = await withRateLimit(() => client.chat.completions.create(payload));
+            } else {
+              res = await client.chat.completions.create(payload);
+            }
+          } catch (err) {
+            if (webSearch && webSupported && (err.status === 400 || err.status === 402)) {
+              const fallbackPayload = { ...payload };
+              delete fallbackPayload.plugins;
+              delete fallbackPayload.venice_parameters;
+              res = name === 'vercel'
+                ? await withRateLimit(() => client.chat.completions.create(fallbackPayload))
+                : await client.chat.completions.create(fallbackPayload);
+            } else {
+              throw err;
+            }
+          }
+          const content = res.choices?.[0]?.message?.content?.trim();
+          if (!content) throw new Error('empty completion');
+          ac.abort(); // cancel the rest
+          return { content, provider: name, model, webSearchUsed: webSearch && webSupported };
+        } catch (err) {
+          const status = err.status || err.code || 'ERR';
+          if ((status === 429 || status === 503) && attempt < maxAttempts) {
+            const waitMs = 10_000 * attempt;
+            await new Promise((r) => setTimeout(r, waitMs));
+            continue;
+          }
+          console.warn(`[llmRouter] parallel: ${name}/${model} failed (${status})`);
+          return null; // exit this promise, don't retry — another provider may win
+        }
+      }
+      return null;
+    })();
+  });
+
+  const results = await Promise.all(promises);
+  const winner = results.find((r) => r !== null);
+  cancelAll();
+
+  if (winner) {
+    const others = configured
+      .filter(({ name }) => winner.provider !== name)
+      .map(({ name }) => name);
+    if (others.length > 0) {
+      console.log(`[llmRouter] parallel winner: ${winner.provider} (${others.length} cancelled)`);
+    }
+    return winner;
+  }
+
+  console.warn(`[llmRouter] parallel: all ${configured.length} providers failed`);
+  return null;
+}
+
+function _logProviderFailures(failures, order) {
   const anyConfigured = order.some((name) => PROVIDERS[name] && process.env[PROVIDERS[name].keyEnv]);
   if (!anyConfigured) {
     console.warn(`[llmRouter] no LLM provider keys configured (tried: ${order.join(', ')}) — set VERCEL_GATEWAY_API_KEY / VENICE_API_KEY / NVIDIA_API_KEY / OPENROUTER_API_KEY / BAI_API_KEY`);
   } else if (failures.length) {
     console.warn(`[llmRouter] all providers failed: ${failures.join(' | ')}`);
   }
-  return null;
 }
 
 export default { chatCompletion, listConfiguredProviders };
