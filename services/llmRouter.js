@@ -9,12 +9,15 @@
  * next provider. Returns null when no provider answers.
  *
  * Why this order (overridable):
+ * - vercel: AI Gateway free tier, Exa web search built-in
  * - openrouter: one key → many models incl. free ":free" variants for
  *   zero-cost testing, cheap paid llama-3.3-70b, optional ":online" web
  *   models for news-driven markets later.
  * - nvidia: free tier (build.nvidia.com), quality instruct models, decent
  *   rate limits.
  * - venice: privacy-focused, existing integration — final fallback.
+ * - bai: B.AI free DeepSeek-V4-Flash (unlimited free access, limited-time offer).
+ *   Strong reasoning model, good for complex multi-outcome markets.
  */
 
 if (typeof window !== 'undefined') {
@@ -66,6 +69,17 @@ const PROVIDERS = {
     defaultModel: 'zai/glm-4.7-flash',
     timeout: 90_000,
     attempts: 3,
+  },
+  bai: {
+    // B.AI — DeepSeek-V4-Flash free tier (limited-time free access)
+    // Base URL: https://api.b.ai/v1
+    // Model: deepseek-v4-flash
+    baseURL: 'https://api.b.ai/v1',
+    keyEnv: 'BAI_API_KEY',
+    modelEnv: 'BAI_MODEL',
+    defaultModel: 'deepseek-v4-flash',
+    timeout: 90_000, // DeepSeek reasoning models can be slow on long prompts
+    attempts: 2,
   },
 };
 
@@ -205,7 +219,7 @@ export async function chatCompletion({
 
   const anyConfigured = order.some((name) => PROVIDERS[name] && process.env[PROVIDERS[name].keyEnv]);
   if (!anyConfigured) {
-    console.warn(`[llmRouter] no LLM provider keys configured (tried: ${order.join(', ')}) — set VERCEL_GATEWAY_API_KEY / VENICE_API_KEY / NVIDIA_API_KEY / OPENROUTER_API_KEY`);
+    console.warn(`[llmRouter] no LLM provider keys configured (tried: ${order.join(', ')}) — set VERCEL_GATEWAY_API_KEY / VENICE_API_KEY / NVIDIA_API_KEY / OPENROUTER_API_KEY / BAI_API_KEY`);
   } else if (failures.length) {
     console.warn(`[llmRouter] all providers failed: ${failures.join(' | ')}`);
   }
