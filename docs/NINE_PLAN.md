@@ -287,30 +287,33 @@ That is the headline loop. Autopilot is the execution capability inside it, not 
 
 ## Progress Tracking
 
-| Phase | Status | Completed |
-|-------|--------|-----------|
-| P0.1 — Pre-deploy CI gate | ⬜ Pending | |
-| P0.2 — Runtime policy doc + lint | ⬜ Pending | |
-| P0.3 — Schema migrations runner | ⬜ Pending | |
-| P0.4 — Bundle audit | ⬜ Pending | |
-| P1.1 — API namespacing | ⬜ Pending | |
-| P1.2 — services/ layering | ⬜ Pending | |
+> Status legend: ✅ Done · 🚧 In progress / partial · ⬜ Pending.
+> _As of 2026-08-18 — verified against the repository (CI, scripts, services/ layout, app surface)._
+
+| Phase | Status | Where it landed |
+|-------|--------|-----------------|
+| P0.1 — Pre-deploy CI gate | ✅ Done | `.github/workflows/ci.yml` runs lint → typecheck → `check-runtimes` → tests → build → `check-bundle-size` on PR + push |
+| P0.2 — Runtime policy doc + lint | ✅ Done | `docs/RUNTIME_POLICY.md`; CI enforces `export const runtime` on every route via `scripts/check-runtimes.js` |
+| P0.3 — Schema migrations runner | ✅ Done | `migrations/` numbered `.sql` files + `npm run migrate:*`; inline `ALTER TABLE` gone |
+| P0.4 — Bundle audit | 🐝 In progress | `scripts/check-bundle-size.js` enforces 750/900 KB in CI; `@next/bundle-analyzer` baseline not yet committed |
+| P1.1 — API namespacing | 🐝 In progress | `agents/agent`, `markets`, `signals`, `wallet`-adjacent, `social`, `meta`, `intelligence` present; legacy routes (analyze/builder/validate/predictions) still live |
+| P1.2 — services/ layering | ✅ Done | god-file decomposition (aiService/pm…) + `services/{domain,infra,markets,txline}` sub-dirs |
 | P1.3 — One typed contract | ⬜ Pending | |
-| P1.4 — Pick the EVM chain | ⬜ Pending | |
-| P2.1 — Resilience primitives | ⬜ Pending | |
-| P2.2 — Caching discipline | ⬜ Pending | |
-| P2.3 — Observability | ⬜ Pending | |
-| P2.4 — Test pyramid | ⬜ Pending | |
-| P3.1 — The "one loop" decision | ⬜ Pending | |
-| P3.2 — Information architecture rewrite | ⬜ Pending | |
-| P3.3 — Evidence-first analysis card | ⬜ Pending | |
-| P3.4 — Reputation as the spine | ⬜ Pending | |
+| P1.4 — Pick the EVM chain | ⬜ Pending | multi-venue stays, per STRATEGY/GO_TO_MARKET |
+| P2.1 — Resilience primitives | 🐝 In progress | `gatewayRateLimiter`, `services/infra/http.js`, markets cache present; circuit-breaker/docs pending |
+| P2.2 — Caching discipline | 🐝 In progress | `services/markets/cache.js`, txline replay cache present |
+| P2.3 — Observability | 🐝 In progress | `/api/meta/health` + structured receipts/ledger exist |
+| P2.4 — Test pyramid | 🐝 In progress | vitest suite, 40+ test files in `tests/`; PR blocked-by-test not yet enforced |
+| P3.1 — The "one loop" decision | ✅ Done | `docs/GO_TO_MARKET.md` ("Quant Operator First"); autonomous agent loop is the headline |
+| P3.2 — Information architecture rewrite | ✅ Done | nav consolidation; `/month` & `/world-cup` retired into living surfaces |
+| P3.3 — Evidence-first analysis card | ✅ Done | evidence retrieval on Vercel AI Gateway free Exa search; evidence blocks in analysis |
+| P3.4 — Reputation as the spine | ✅ Done | `AgentTrackRecord`, `EventTape`, track-record lanes on `/positions` |
 | P3.5 — Onboarding cut | ⬜ Pending | |
 | P4.1 — Streaming where it matters | ⬜ Pending | |
 | P4.2 — Three.js triage | ⬜ Pending | |
-| P4.3 — Image / OG hygiene | ⬜ Pending | |
-| P4.4 — Web vitals budget | ⬜ Pending | |
+| P4.3 — Image / OG hygiene | 🐝 In progress | `app/api/og` route exists |
+| P4.4 — Web vitals budget | 🐝 In progress | Lighthouse CI configured in workflow |
 | P5.1 — Architecture truth | ⬜ Pending | |
-| P5.2 — Honest status page | ⬜ Pending | |
+| P5.2 — Honest status page | ✅ Done | `app/status` (from `/api/meta/health`) + public `app/arena` proof surface |
 | P5.3 — SDK & extension story | ⬜ Pending | |
 | P5.4 — License & contribution | ⬜ Pending | |
