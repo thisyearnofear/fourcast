@@ -135,10 +135,12 @@ ACTION REQUIRED (2026-08-12 evening): inference budget status —
 TxLINE sports path re-verified live **2026-08-18** (`scripts/verify-mls-fixtures.mjs`):
 fixture discovery works (MLS 76 + **PL 290 fixtures**), team aliases and
 `matchFixtureToQuestion` resolve cleanly (e.g. "Will Arsenal win...?" → Arsenal vs
-Chelsea @ 1.00). The remaining blocker is **odds**: the current devnet token
-returns fixtures but odds hashes stay **pending** — the sports edge needs a
-**mainnet subscription** for live consensus odds. Until odds populate, sports
-markets fall through to Venice.
+Chelsea @ 1.00). The **remaining blocker was odds**: the devnet token returns
+fixtures but odds hashes stay pending, and live odds need a **paid mainnet
+subscription**. Cost-constrained decision (2026-08-18): we skip the subscription —
+sports edge runs on the free **deterministic data feeds** + the free **blind
+LLM**, which are both allow-listed in the go-live checklist below. TxLINE odds
+remain an optional future upgrade, not a dependency.
 
 ## Gotchas (learned the hard way)
 
@@ -183,26 +185,31 @@ The remaining window is short — this is the runbook. Steps 1-2 are code-ready
    forms now anchor to the 1X2 consensus or fall through to the LLM — no more
    equal-split guesses.
 
-2. **Switch live gating wider than `datafeed`.**
-   On the VPS `.env.local` (and the PM2 ecosystem config):
+2. **Zero-cost live gating — no TxLINE subscription needed.** On the VPS
+   `.env.local` (and the PM2 ecosystem config):
    - `DELPHI_AGENT_DRY_RUN=false` (LIVE — already the live stance, keep)
-   - `DELPHI_AGENT_LIVE_SOURCES=datafeed,sports` (add `sports` once the odds
-     re-verification below passes — TxLINE announced PL coverage 2026-08-18)
-   - `DELPHI_AGENT_LIVE_CATEGORIES=sports,miscellaneous` (explicit categories to
-     allow live)
+   - `DELPHI_AGENT_LIVE_SOURCES=datafeed,openrouter,nvidia,venice,gateway,gemini`
+     — allow the free deterministic **datafeed** plus the free **LLM providers**
+     (openrouter `:free`, nvidia free tier, venice, Vercel AI Gateway free Exa).
+     **Deliberately do NOT list `txline`** — its mainnet odds need a paid
+     subscription (cost-constrained decision).
+   - `DELPHI_AGENT_LIVE_CATEGORIES=` (empty = every category trades live) or
+     `sports,crypto,politics,economics,miscellaneous`.
    - Keep `DELPHI_AGENT_MAX_SHARES_PER_MARKET` and the daily spend cap in place.
 
-3. **Re-verify a live cycle before widening.**
-   `TXLINE_MODE=live ssh nuncio-vultr ...` → run `node scripts/delphi-agent-worker.mjs --once`
-   and confirm: balances load, sports markets route to TxLINE (or honestly fall
-   through when odds are empty), and every decision is gated + logged.
+3. **Re-verify a live cycle before switching.** Run
+   `node scripts/delphi-agent-worker.mjs --once` and confirm: balances load,
+   data feeds + LLM forecasts produce gated decisions, and no per-cycle errors.
 
-4. **Confirm TxLINE sports actually contributes.** Re-verified 2026-08-18:
-   fixtures are live (MLS 76 + PL 290) but the current devnet token returns
-   **empty odds hashes** — the script says *"Subscribe on mainnet for live odds
-   (devnet has fixtures but odds pending)"*. If odds still don't populate by
-   ~Aug 20, don't force sports live — the LLM fallback trades the non-sports
-   edge instead. Watch `scripts/verify-mls-fixtures.mjs` for populated odds.
+4. **Cost-constrained sports edge (skip the paid odds).** TxLINE mainnet odds
+   require a subscription; we don't pay. That only costs us the *professional-
+   odds anchor* — the deterministic **data feeds** remain the backbone free edge,
+   and sports still forecast via the **blind LLM** (`estimateWithLLM` excludes
+   market prices and is grounded with free Exa web evidence from the Vercel AI
+   Gateway), so sports edges are still genuine, just less sharp than bookmaker
+   consensus. Optional future upgrade: a **free public odds provider** (ESPN's
+   public JSON endpoints — verified reachable, no key) as a drop-in for the
+   TxLINE anchor.
 
 5. **Restart & watch.**
    `pm2 restart delphi-agent && pm2 logs delphi-agent --lines 40`, then a few
