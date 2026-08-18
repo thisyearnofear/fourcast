@@ -1,0 +1,196 @@
+/**
+ * ESPN free sports-odds provider.
+ *
+ * Zero-cost alternative to the paid TxLINE mainnet subscription: ESPN's public
+ * JSON endpoints (`site.api.espn.com`) return bookmaker moneyline odds with NO
+ * API key and no cost. Consumed by `delphiIntelligence.matchEspnOdds()` as the
+ * free sports-odds anchor, falling back to the blind LLM when no ESPN line is
+ * posted for a market.
+ *
+ * Coverage: soccer (Premier League / MLS), NFL, and the big LaLiga/Bundesliga.
+ * Reliability caveat: ESPN only posts odds for fixtures close enough to kickoff
+ * that a line exists; otherwise this module returns null and the caller falls
+ * through. It is a free convenience, never a hard dependency.
+ *
+ * Tuning: ESPN_SCOREBOARD_TTL_MS - scoreboard cache TTL (default 5 min).
+ */
+
+// leagueId hints are substrings checked against question+description.
+const LEAGUES = [
+  {
+    sport: 'soccer',
+    slug: 'eng.1',
+    name: 'English Premier League',
+    hints: [
+      'premier league', 'premier-league',
+      'arsenal', 'liverpool', 'manchester city', 'man city', 'manchester united',
+      'man united', 'chelsea', 'tottenham', 'spurs', 'aston villa', 'newcastle',
+      'brighton', 'fulham', 'brentford', 'bournemouth', 'crystal palace',
+      'everton', 'nottingham', 'west ham', 'coventry', 'leeds', 'ipswich',
+    ],
+  },
+  {
+    sport: 'soccer',
+    slug: 'usa.1',
+    name: 'MLS',
+    hints: [
+      'mls', 'major league soccer', 'inter miami', 'la galaxy', 'lafc',
+      'atlanta united', 'seattle sounders', 'portland timbers', 'columbus crew',
+      'fc cincinnati', 'philadelphia union', 'new york city', 'ny red bulls',
+      'orlando city', 'charlotte fc', 'dc united', 'toronto fc', 'montreal',
+      'new england', 'chicago fire', 'houston dynamo', 'austin fc',
+      'real salt lake', 'sporting kansas city', 'colorado rapids',
+      'minnesota united', 'san jose', 'vancouver whitecaps', 'st. louis city',
+    ],
+  },
+  {
+    sport: 'football',
+    slug: 'nfl',
+    name: 'NFL',
+    hints: [
+      'nfl', 'super bowl', 'chiefs', 'eagles', 'bills', '49ers', 'cowboys',
+      'ravens', 'lions', 'dolphins', 'packers', 'rams', 'bengals', 'seahawks',
+      'jets', 'texans', 'steelers', 'giants', 'bears', 'raiders', 'broncos',
+      'chargers', 'patriots', 'saints', 'vikings', 'cardinals', 'colts',
+      'titans', 'commanders', 'falcons', 'panthers', 'buccaneers', 'browns',
+    ],
+  },
+  {
+    sport: 'soccer',
+    slug: 'esp.1',
+    name: 'La Liga',
+    hints: ['la liga', 'real madrid', 'barcelona', 'athletic club', 'atletico'],
+  },
+  {
+    sport: 'soccer',
+    slug: 'ger.1',
+    name: 'Bundesliga',
+    hints: ['bundesliga', 'bayern munich', 'borussia dortmund', 'dortmund', 'bayer leverkusen'],
+  },
+];
+
+// ─── pure helpers ─────────────────────────────────────────────────────────────
+
+/** Convert American moneyline (e.g. -155, +650) to a 0..1 implied probability. */
+export function americanToProbability(raw) {
+  if (raw === null || raw === undefined) return null;
+  const n = Number(String(raw).trim());
+  if (!Number.isFinite(n) || n === 0) return null;
+  if (n < 0) return -n / (-n + 100);
+  return 100 / (100 + n);
+}
+
+/** De-vig the 1X2 moneyline into a true probability distribution (sums to 1). */
+export function normalize1x2(homeAmerican, drawAmerican, awayAmerican) {
+  const h = americanToProbability(homeAmerican);
+  const d = americanToProbability(drawAmerican);
+  const a = americanToProbability(awayAmerican);
+  if (h === null || d === null || a === null) return null;
+  const total = h + d + a;
+  if (!(total > 0)) return null;
+  return { home: h / total, draw: d / total, away: a / total };
+}
+
+/** Pick the ESPN league whose hints appear in the market text. */
+export function classifyLeague(text) {
+  const t = (text || '').toLowerCase();
+  return LEAGUES.find((l) => l.hints.some((h) => t.includes(h))) || null;
+}
+
+// ─── network ──────────────────────────────────────────────────────────────────
+
+const SCOREBOARD_TTL_MS = Number(process.env.ESPN_SCORE_TTL_MS || 5 * 60 * 1000);
+const cache = new Map(); // `${sport}/${slug}?dates=...` -> { at, data }
+
+function cacheKey(sport, slug, date) {
+  return `${sport}/${slug}?dates=${date || ''}`;
+}
+
+async function fetchScoreboard(league, date) {
+  const key = cacheKey(league.sport, league.slug, date);
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < SCOREBOARD_TTL_MS) return hit.data;
+
+  const url = `https://site.api.espn.com/apis/site/v2/sports/${league.sport}/${league.slug}/scoreboard${
+    date ? `?dates=${date}` : ''
+  }`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+  if (!res.ok) return null;
+  const data = await res.json();
+  cache.set(key, { at: Date.now(), data });
+  return data;
+}
+
+function matchEvent(marketText, events) {
+  const t = (marketText || '').toLowerCase();
+  const norm = (s) => String(s || '').toLowerCase().trim();
+
+  let best = null;
+  let bestScore = 0;
+  for (const ev of events || []) {
+    const comp = ev?.competitions?.[0];
+    if (!comp) continue;
+    const listed = (comp.competitors || []).map((c) => norm(c?.team?.displayName));
+    if (listed.length < 2) continue;
+
+    let score = 0;
+    for (const name of listed) {
+      if (name.length <= 3) continue; // short tokens like "City" are ambiguous
+      if (t.includes(name)) score += 1;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = { event: ev, homeName: listed[0], awayName: listed[1] };
+    }
+  }
+  return bestScore >= 1 ? best : null;
+}
+
+function extractOdds(comp) {
+  const ml = comp?.odds?.[0]?.moneyline;
+  if (!ml?.home || !ml?.away || !ml?.draw) return null;
+  const pick = (side) => side.close?.odds ?? side.open?.odds;
+  return { homeAmerican: pick(ml.home), drawAmerican: pick(ml.draw), awayAmerican: pick(ml.away) };
+}
+
+/**
+ * Fetch free ESPN consensus odds for a Delphi sports market.
+ * @param {{question:string, description?:string, resolvesAt?:string}} market
+ * @returns {Promise<{fixture, homeProb, drawProb, awayProb, league, provider}|null>}
+ */
+export async function getConsensusGame({ question, description, resolvesAt }) {
+  try {
+    const text = `${question} ${description || ''}`;
+    const league = classifyLeague(text);
+    if (!league) return null;
+
+    // Prefer a scoreboard near the market's resolution date (odds are posted as
+    // kickoff approaches); fall back to the default window if that has no events.
+    const date = resolvesAt ? String(resolvesAt).slice(0, 10).replace(/-/g, '') : null;
+    const data = (await fetchScoreboard(league, date)) || (await fetchScoreboard(league, null));
+    if (!data?.events?.length) return null;
+
+    const match = matchEvent(text, data.events);
+    if (!match) return null;
+
+    const odds = extractOdds(match.event.competitions[0]);
+    if (!odds) return null;
+
+    const probs = normalize1x2(odds.homeAmerican, odds.drawAmerican, odds.awayAmerican);
+    if (!probs) return null;
+
+    return {
+      fixture: { home: { name: match.homeName }, away: { name: match.awayName } },
+      homeProb: probs.home,
+      drawProb: probs.draw,
+      awayProb: probs.away,
+      league: league.name,
+      provider: match.event.competitions[0].odds[0]?.provider?.name || 'ESPN',
+    };
+  } catch (err) {
+    // Not available/parseable — caller falls through to the blind LLM.
+    return null;
+  }
+}
+
+export default { americanToProbability, normalize1x2, classifyLeague, getConsensusGame };

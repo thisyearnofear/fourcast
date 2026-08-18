@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   isGenericBinaryOutcomes,
   mapBinarySportsOutcomes,
+  buildOddsEstimate,
 } from '../services/delphiIntelligence.js';
 
 const FIXTURE = {
@@ -84,5 +85,65 @@ describe('mapBinarySportsOutcomes', () => {
       question: 'Will Inter Miami beat Toronto FC?',
     });
     expect(res).toEqual([0.6, 0.4]);
+  });
+});
+
+describe('buildOddsEstimate', () => {
+  const fixture = FIXTURE;
+  const marketFor = (outcomes, question) => ({ outcomes, question });
+
+  it('maps binary Yes/No to the subject team share from free odds', () => {
+    const est = buildOddsEstimate({
+      market: marketFor(['Yes', 'No'], 'Will Inter Miami beat Toronto FC?'),
+      fixture,
+      homeProb: 0.6,
+      drawProb: 0.2,
+      awayProb: 0.2,
+      source: 'espn',
+      league: 'MLS',
+    });
+    expect(est.probabilities).toEqual([0.6, 0.4]);
+    expect(est.source).toBe('espn');
+    expect(est.confidence).toBe('HIGH');
+  });
+
+  it('maps a team-labelled 3-way market to home/draw/away', () => {
+    const est = buildOddsEstimate({
+      market: marketFor(['Inter Miami', 'Toronto FC', 'Draw'], 'Inter Miami vs Toronto FC'),
+      fixture,
+      homeProb: 0.6,
+      drawProb: 0.2,
+      awayProb: 0.2,
+      source: 'espn',
+    });
+    expect(est.probabilities[0]).toBeCloseTo(0.6, 6);
+    expect(est.probabilities[1]).toBeCloseTo(0.2, 6);
+    expect(est.probabilities[2]).toBeCloseTo(0.2, 6);
+  });
+
+  it('returns null for an unparseable generic binary form', () => {
+    expect(
+      buildOddsEstimate({
+        market: marketFor(['Yes', 'No'], 'Will Inter Miami score over 2.5 goals?'),
+        fixture,
+        homeProb: 0.6,
+        drawProb: 0.2,
+        awayProb: 0.2,
+        source: 'espn',
+      })
+    ).toBeNull();
+  });
+
+  it('returns null when no odds are available (total <= 0)', () => {
+    expect(
+      buildOddsEstimate({
+        market: marketFor(['Yes', 'No'], 'Will Inter Miami beat Toronto FC?'),
+        fixture,
+        homeProb: 0,
+        drawProb: 0,
+        awayProb: 0,
+        source: 'espn',
+      })
+    ).toBeNull();
   });
 });

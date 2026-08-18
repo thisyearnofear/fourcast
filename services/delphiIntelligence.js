@@ -132,13 +132,20 @@ export async function estimateProbabilities(market, classification) {
  * Falls back to Venice AI if no TxLINE match is found.
  */
 async function estimateSportsProbabilities(market, classification) {
-  // Try TxLINE match first
+  // 1. Paid TxLINE consensus first (when configured/mainnet odds exist).
   const txlineEstimate = await matchTxLineOdds(market);
   if (txlineEstimate) {
     return txlineEstimate;
   }
 
-  // Fall back to the LLM router for sports markets without TxLINE coverage
+  // 2. Free ESPN consensus odds (no key / no subscription) — the cost-constrained
+  //    sports anchor. Null when no ESPN line is posted or no league match.
+  const espnEstimate = await matchEspnOdds(market);
+  if (espnEstimate) {
+    return espnEstimate;
+  }
+
+  // 3. Fall back to the blind LLM for sports markets without any free odds.
   return estimateWithLLM(market, classification);
 }
 
@@ -275,6 +282,85 @@ async function matchTxLineOdds(market) {
     };
   } catch (err) {
     // TxLINE not available — fall through
+    return null;
+  }
+}
+
+// ─── Free ESPN odds anchor ────────────────────────────────────────────────────
+
+/**
+ * Build a probability estimate from a matched fixture + normalized 1X2 consensus.
+ * Handles generic binary (Yes/No) forms via predicate parsing and other outcome
+ * shapes via label mapping. Returns null for unparseable generic binary forms so
+ * the caller can fall through to the LLM instead of guessing.
+ */
+export function buildOddsEstimate({ market, fixture, homeProb, awayProb, drawProb, source, league }) {
+  const total = (homeProb || 0) + (drawProb || 0) + (awayProb || 0);
+  if (!(total > 0)) return null;
+
+  const outcomeList = Array.isArray(market.outcomes) ? market.outcomes : [];
+
+  if (outcomeList.length === 2) {
+    const binary = mapBinarySportsOutcomes({
+      question: market.question,
+      outcomes: outcomeList,
+      fixture,
+      homeProb, awayProb, drawProb,
+    });
+    if (binary) {
+      return {
+        probabilities: binary,
+        confidence: 'HIGH',
+        source,
+        reasoning: `Free consensus odds (${source}${league ? ` / ${league}` : ''}): ${fixture.home?.name} vs ${fixture.away?.name}. Binary Yes/No mapped from normalized 1X2.`,
+      };
+    }
+    if (isGenericBinaryOutcomes(outcomeList)) return null;
+  }
+
+  const home = (fixture.home?.name || '').toLowerCase();
+  const away = (fixture.away?.name || '').toLowerCase();
+  const probabilities = outcomeList.map((outcome) => {
+    const label = (typeof outcome === 'string' ? outcome : outcome.name || '').toLowerCase();
+    if (label.includes(home) || label.includes('home')) return homeProb / total;
+    if (label.includes(away) || label.includes('away')) return awayProb / total;
+    if (label.includes('draw') || label.includes('tie')) return drawProb / total;
+    return 1 / (outcomeList.length || 1);
+  });
+
+  return {
+    probabilities,
+    confidence: 'HIGH',
+    source,
+    reasoning: `Free consensus odds (${source}${league ? ` / ${league}` : ''}): ${fixture.home?.name} vs ${fixture.away?.name}. Normalized, de-vigged 1X2 mapped to market outcomes.`,
+  };
+}
+
+/**
+ * Match a sports market to free ESPN public odds — the cost-constrained sports
+ * anchor (no subscription). Returns null when no ESPN line is posted or no
+ * league fixture matches, so the caller falls through to the blind LLM.
+ */
+async function matchEspnOdds(market) {
+  try {
+    const mod = await import('./txline/espnProvider.js');
+    const espn = mod.default || mod;
+    const game = await espn.getConsensusGame({
+      question: market.question,
+      description: market.description,
+      resolvesAt: market.resolvesAt,
+    });
+    if (!game) return null;
+    return buildOddsEstimate({
+      market,
+      fixture: game.fixture,
+      homeProb: game.homeProb,
+      awayProb: game.awayProb,
+      drawProb: game.drawProb,
+      source: 'espn',
+      league: game.league,
+    });
+  } catch (err) {
     return null;
   }
 }

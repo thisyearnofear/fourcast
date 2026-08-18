@@ -29,7 +29,7 @@ price, directly comparable to EV per share.
 | File | Role |
 |------|------|
 | `services/delphiService.js` | Delphi SDK wrapper — discovery, quoting, execution, positions, redemption, edge math |
-| `services/delphiIntelligence.js` | Market classification and probability routing — data feeds first, then TxLINE odds for sports, LLM router for everything else |
+| `services/delphiIntelligence.js` | Market classification and probability routing — data feeds first, then sports odds (paid TxLINE → free ESPN anchor) for sports, LLM router for everything else |
 | `services/delphiDataFeeds.js` | Deterministic public-data intelligence — SILSO sunspots, NSIDC sea ice, Open-Meteo weather. Near resolution the answer is often already published at ~0.85. |
 | `services/llmRouter.js` | OpenAI-compatible provider chain (openrouter → nvidia → venice) with failover, web-search support w/ auto-degrade, 429 backoff for `:free` models |
 | `services/evidenceRetriever.js` | Exa web search → citable snippets injected into forecast prompts (primary grounding; 6h per-question cache, ~$0.005/query) |
@@ -37,9 +37,13 @@ price, directly comparable to EV per share.
 | `scripts/delphi-agent-worker.mjs` | Headless worker (`--once`, `--dry-run`); state in `.delphi-agent/` |
 | `deploy/delphi-agent.ecosystem.config.cjs` | PM2 config (5-minute cycles) |
 
-Sports markets are bridged to TxLINE via `matchFixtureToQuestion()` +
-`getFixturesByCompetition()` in `services/txline/txlineService.js` — the
-intelligence edge most competitors don't have.
+Sports markets are budgeted by `matchEspnOdds()` — the free ESPN public
+consensus-odds anchor (`services/txline/espnProvider.js`) — falling through to
+the blind LLM when no line is posted. Paid TxLINE (`services/txline/txlineService.js`,
+`matchFixtureToQuestion()` + `getFixturesByCompetition()`) only engages if a
+mainnet subscription is configured; under the current cost-constrained stance it
+is deliberately **not** in `DELPHI_AGENT_LIVE_SOURCES`, so ESPN is the live
+sports anchor.
 
 ## Setup
 
@@ -188,11 +192,14 @@ The remaining window is short — this is the runbook. Steps 1-2 are code-ready
 2. **Zero-cost live gating — no TxLINE subscription needed.** On the VPS
    `.env.local` (and the PM2 ecosystem config):
    - `DELPHI_AGENT_DRY_RUN=false` (LIVE — already the live stance, keep)
-   - `DELPHI_AGENT_LIVE_SOURCES=datafeed,openrouter,nvidia,venice,gateway,gemini`
+   - `DELPHI_AGENT_LIVE_SOURCES=datafeed,openrouter,nvidia,venice,gateway,espn`
      — allow the free deterministic **datafeed** plus the free **LLM providers**
-     (openrouter `:free`, nvidia free tier, venice, Vercel AI Gateway free Exa).
-     **Deliberately do NOT list `txline`** — its mainnet odds need a paid
-     subscription (cost-constrained decision).
+     (openrouter `:free`, nvidia free tier, venice, Vercel AI Gateway free Exa)
+     plus the **free ESPN sports-odds anchor** (no key, no cost). The anchoring
+     precedent (`estimateSportsProbabilities`) is TxLINE → ESPN → blind LLM, so
+     `txline` only trades if a paid mainnet subscription is configured.
+     **Deliberately do NOT list `txline` under the free plan** — its mainnet odds
+     need a paid subscription (cost-constrained decision).
    - `DELPHI_AGENT_LIVE_CATEGORIES=` (empty = every category trades live) or
      `sports,crypto,politics,economics,miscellaneous`.
    - Keep `DELPHI_AGENT_MAX_SHARES_PER_MARKET` and the daily spend cap in place.
@@ -201,15 +208,17 @@ The remaining window is short — this is the runbook. Steps 1-2 are code-ready
    `node scripts/delphi-agent-worker.mjs --once` and confirm: balances load,
    data feeds + LLM forecasts produce gated decisions, and no per-cycle errors.
 
-4. **Cost-constrained sports edge (skip the paid odds).** TxLINE mainnet odds
-   require a subscription; we don't pay. That only costs us the *professional-
-   odds anchor* — the deterministic **data feeds** remain the backbone free edge,
-   and sports still forecast via the **blind LLM** (`estimateWithLLM` excludes
-   market prices and is grounded with free Exa web evidence from the Vercel AI
-   Gateway), so sports edges are still genuine, just less sharp than bookmaker
-   consensus. Optional future upgrade: a **free public odds provider** (ESPN's
-   public JSON endpoints — verified reachable, no key) as a drop-in for the
-   TxLINE anchor.
+4. **Zero-cost sports odds — ESPN free anchor (shipped 2026-08-18).** TxLINE
+   mainnet odds require a paid subscription; we don't pay. Instead `matchEspnOdds()`
+   (`services/txline/espnProvider.js` + `tests/espnProvider.test.js`) pulls ESPN's
+   free public moneyline consensus (`site.api.espn.com`, no key, no cost) for
+   EPL/MLS/NFL/La Liga/Bundesliga, de-vigs it into true probabilities, and maps
+   it to the market's outcomes — so sports edges are **anchored to real
+   bookmaker consensus**, not the blind LLM. When no ESPN line is posted the
+   provider returns null and the callers fall gracefully to the blind LLM
+   (`estimateWithLLM` — market-price-free, Exa-grounded). ESPN is a free
+   convenience, never a hard dependency. Paid TxLINE remains the drop-in
+   professional-odds upgrade if a subscription is ever justified.
 
 5. **Restart & watch.**
    `pm2 restart delphi-agent && pm2 logs delphi-agent --lines 40`, then a few
