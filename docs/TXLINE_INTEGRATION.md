@@ -11,7 +11,7 @@ It is not a venue (we don't trade on TxLINE). It's the data source that gives th
 | League | Status | Notes |
 |--------|--------|-------|
 | MLS | Live (50% coverage) | Active now |
-| Premier League | Full coverage Aug 21 | 2025–26 season start |
+| Premier League | Live (coverage arrived 2026-08-18) | 2025–26 season |
 
 Free data access continues into the season.
 
@@ -86,13 +86,16 @@ Environment variables needed:
 - `TXLINE_GUEST_JWT` — renewable bearer token
 - `TXLINE_API_ORIGIN` — defaults to `https://txline.txodds.com`
 
-## Premier League Preparation (Aug 21)
+## Premier League — Coverage Arrived (2026-08-18)
 
-To prepare for full PL coverage:
+PL coverage is live per the TxLINE team's announcement. Verified 2026-08-18 via
+`scripts/verify-mls-fixtures.mjs`: **290 PL fixtures resolve (CompetitionId 8)**,
+team aliases and `matchFixtureToQuestion` work, and MLS/PL fixture discovery is
+operational. Remaining verification before Delphi sports can use it:
 
-1. **Identify PL competition ID** in TxLINE's fixture schema
-2. **Extend fixture discovery** in `txlineService.js` to query PL fixtures
-3. **Test odds pipeline** with MLS data (live now)
+1. **Confirm the PL competition ID** (`KNOWN_COMPETITIONS.premierLeague.id = 8`) resolves fixtures — ✅ confirmed (290 fixtures)
+2. **Subscribe on mainnet for live odds** — the current devnet token returns fixtures but **odds hashes stay pending**. This is the actual remaining blocker for the sports edge; `scripts/verify-mls-fixtures.mjs` prints *"Subscribe on mainnet for live odds (devnet has fixtures but odds pending)"*
+3. **Extend fixture discovery** in `txlineService.js` to query PL fixtures (getFixturesByCompetition already covers this)
 4. **Verify proof pipeline** works with new season fixture IDs
 5. **Build PL context** for Venice AI forecasting prompts
 

@@ -35,7 +35,7 @@ const REPLAY_DIR =
 const REPLAY_DIR_FALLBACK = path.join(process.cwd(), 'data', 'txline-replays');
 
 // Legacy: World Cup cutoff was 2026-07-19. TxLINE now operates continuously
-// (MLS live, PL from Aug 21). Cutoff retained only for World Cup replay logic.
+// (MLS + PL live as of 2026-08-18). Cutoff retained only for World Cup replay logic.
 const TXLINE_WC_CUTOFF = new Date('2026-07-19T23:59:59Z').getTime();
 
 // TxLINE World Cup competition id (numeric, used in /fixtures/snapshot?competitionId=72)
@@ -48,7 +48,7 @@ function resolveMode() {
   const forced = (process.env.TXLINE_MODE || 'auto').toLowerCase();
   if (forced === 'live' || forced === 'replay') return forced;
   // auto: live if we have a valid API token — TxLINE now operates continuously
-  // (MLS coverage live, PL from Aug 21). No date cutoff needed.
+  // (MLS + PL coverage live as of 2026-08-18). No date cutoff needed.
   if (API_TOKEN) return 'live';
   return 'replay';
 }
@@ -985,12 +985,12 @@ function sleep(ms) {
 
 /**
  * Known TxLINE competition IDs. Confirmed via devnet /fixtures/snapshot.
- * MLS: live now. Premier League: full coverage Aug 21. NFL: available.
+ * MLS: live now. Premier League: coverage arrived 2026-08-18. NFL: available.
  */
 export const KNOWN_COMPETITIONS = {
   worldCup: { id: 72, name: 'FIFA World Cup', status: 'replay' },
   mls: { id: 33, name: 'MLS', status: 'live' },
-  premierLeague: { id: 8, name: 'Premier League', status: 'preparing' }, // Full Aug 21
+  premierLeague: { id: 8, name: 'Premier League', status: 'live' }, // Coverage arrived 2026-08-18
   nfl: { id: 500001, name: 'NFL', status: 'live' },
   friendlies: { id: 430, name: 'Friendlies', status: 'live' },
 };

@@ -31,15 +31,17 @@ relying on them.
   integrate.telegraphprotocol.com — endpoint `miner.sportwarren.com/query`).
 - **Tag** [@Telegraphprotoc](https://x.com/Telegraphprotoc) in progress posts.
 
-## Arc / Circle (the Canteen agora) — status unconfirmed
-- **What:** USDC-native signals/tips settlement on Arc (Circle L1); on-chain
-  `SubscriptionManager` subscription contracts.
-- **Places:** [agora](https://agora.thecanteenapp.com/) ·
-  [Arc docs](https://rpc.testnet.arc.network/)
-- **Status:** no deadline is recorded in the repo — verify against the agora
-  before treating this as a live submission window.
-
 ## Participated (finished)
+
+### Arc / Agora Agents Hackathon (Canteen × Circle) — ✅ May 2026
+- **What:** Arc-native prediction-market intelligence agent: USDC-denominated
+  signals/tips/subscriptions on Arc (Circle L1), Circle Wallets, paymaster,
+  CCTP/gateway. RFBs 02/05/06.
+- **Status:** shipped live on Arc testnet — real testnet USDC flowed through
+  signals, tips, and subscriptions; AI predictions logged a **~68% win rate** in
+  that cohort. Retired as an active window 2026-08-18 (no deadline to track).
+  Integration lives on in `docs/SETUP.md`, `docs/ARCHITECTURE.md`, and
+  `contracts/SubscriptionManager.sol`.
 
 ### TxLINE Hackathon · Solana — ✅ Jul 19, 2026
 - **Submission:** `docs/TXLINE_SUBMISSION.md` (live yet kept) — "Verifiable Agent

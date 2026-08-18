@@ -132,11 +132,13 @@ ACTION REQUIRED (2026-08-12 evening): inference budget status —
   2026-08-12: sunspot 74-vs-≥40 at mkt 0.92; sea ice 5.829-vs-<5.88 at mkt
   0.90; Wellington HS temp model 13.8°C-vs-exactly-15 at mkt 0.28).
 
-TxLINE sports path now verified up to the odds call: fixture list is live
-(415 fixtures: MLS/NFL/PL/friendlies) and fuzzy question matching works, but
-every fixture's odds snapshot currently returns empty — the dev API's odds
-feed appears dormant (expected to liven around PL season). Until odds exist,
-sports markets fall through to Venice.
+TxLINE sports path re-verified live **2026-08-18** (`scripts/verify-mls-fixtures.mjs`):
+fixture discovery works (MLS 76 + **PL 290 fixtures**), team aliases and
+`matchFixtureToQuestion` resolve cleanly (e.g. "Will Arsenal win...?" → Arsenal vs
+Chelsea @ 1.00). The remaining blocker is **odds**: the current devnet token
+returns fixtures but odds hashes stay **pending** — the sports edge needs a
+**mainnet subscription** for live consensus odds. Until odds populate, sports
+markets fall through to Venice.
 
 ## Gotchas (learned the hard way)
 
@@ -159,9 +161,10 @@ sports markets fall through to Venice.
   (`mapBinarySportsOutcomes`), anchoring Yes to the subject team's normalized 1X2
   share; unparseable binary forms fall through to the LLM instead of an
   equal-split guess. Team-labelled (multi or binary) forms keep the label mapper.
-  The remaining blocker is the **fixture odds feed**: odds hashes still return
-  empty on the dev API (dormant until PL season), so until odds exist these
-  sports markets fall through to Venice regardless of the mapping.
+  The remaining blocker was the **fixture odds feed**: odds hashes returned
+  empty on the dev API. TxLINE announced PL coverage arrived 2026-08-18 — re-verify
+  odds hashes populate (see the go-live checklist below); if they do, enable
+  `sports` in `DELPHI_AGENT_LIVE_SOURCES`.
 - **Tuning via env**: `DELPHI_AGENT_MIN_EDGE` (0.03), `DELPHI_AGENT_MAX_MARKETS`
   (25), `DELPHI_AGENT_LLM_PROVIDERS` (chain order), `OPENROUTER_MODEL`,
   `NVIDIA_MODEL`, `DELPHI_AGENT_VENICE_MODEL` (per-provider model overrides),
@@ -183,21 +186,23 @@ The remaining window is short — this is the runbook. Steps 1-2 are code-ready
 2. **Switch live gating wider than `datafeed`.**
    On the VPS `.env.local` (and the PM2 ecosystem config):
    - `DELPHI_AGENT_DRY_RUN=false` (LIVE — already the live stance, keep)
-   - `DELPHI_AGENT_LIVE_SOURCES=datafeed,sports` (add `sports` once TxLINE
-     fixture odds actually return — see the odds-feed blocker above)
+   - `DELPHI_AGENT_LIVE_SOURCES=datafeed,sports` (add `sports` once the odds
+     re-verification below passes — TxLINE announced PL coverage 2026-08-18)
    - `DELPHI_AGENT_LIVE_CATEGORIES=sports,miscellaneous` (explicit categories to
      allow live)
    - Keep `DELPHI_AGENT_MAX_SHARES_PER_MARKET` and the daily spend cap in place.
 
 3. **Re-verify a live cycle before widening.**
-   `TSXLINE_MODE=live ssh nuncio-vultr ...` → run `node scripts/delphi-agent-worker.mjs --once`
+   `TXLINE_MODE=live ssh nuncio-vultr ...` → run `node scripts/delphi-agent-worker.mjs --once`
    and confirm: balances load, sports markets route to TxLINE (or honestly fall
    through when odds are empty), and every decision is gated + logged.
 
-4. **Confirm TxLINE sports actually contributes.** The blocker: the dev odds
-   feed returns empty hashes. If it's still empty by ~Aug 20, don't force sports
-   live — the LLM fallback trades the non-sports edge instead. Watch
-   `scripts/verify-mls-fixtures.mjs` output for populated odds.
+4. **Confirm TxLINE sports actually contributes.** Re-verified 2026-08-18:
+   fixtures are live (MLS 76 + PL 290) but the current devnet token returns
+   **empty odds hashes** — the script says *"Subscribe on mainnet for live odds
+   (devnet has fixtures but odds pending)"*. If odds still don't populate by
+   ~Aug 20, don't force sports live — the LLM fallback trades the non-sports
+   edge instead. Watch `scripts/verify-mls-fixtures.mjs` for populated odds.
 
 5. **Restart & watch.**
    `pm2 restart delphi-agent && pm2 logs delphi-agent --lines 40`, then a few

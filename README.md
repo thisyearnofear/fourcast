@@ -34,7 +34,7 @@ Every AI trading agent claims performance. None prove discipline. Fourcast produ
 │  TxLINE/TxOdds         Venice AI        Bright Data     │
 │  Professional odds     LLM reasoning    Web scrape      │
 │  Merkle proofs         Forecasting      SERP + social   │
-│  MLS (live) · PL (Aug 21)              SynthData ML     │
+│  MLS + PL (live)                       SynthData ML     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -49,7 +49,7 @@ Every AI trading agent claims performance. None prove discipline. Fourcast produ
 | Autonomous VPS Worker | Headless (PM2) | Live |
 | Delphi Competition Agent | Dry-run verified, ready for live | Aug 10–24 |
 | TxLINE MLS Odds | Integration in progress | Live at 50% |
-| TxLINE Premier League | Preparing | Full coverage Aug 21 |
+| TxLINE Premier League | Live | Coverage arrived 2026-08-18 |
 | Canton Private Settlement | Functional on DevNet | Roadmap |
 
 **Production:** [fourcastapp.vercel.app](https://fourcastapp.vercel.app)
@@ -71,7 +71,7 @@ Private settlement for operators who need position size hidden from the market. 
 Professional bookmaker consensus odds, live scores, and cryptographically verifiable Merkle proofs.
 
 - **MLS**: Live now at 50% coverage
-- **Premier League**: Full coverage from August 21, 2025
+- **Premier League**: Live — **290 fixtures confirmed 2026-08-18**. Odds hashes still pending on the devnet token; need a **mainnet subscription** for live consensus odds (verify via `scripts/verify-mls-fixtures.mjs`)
 - **Merkle proofs**: On-chain verification via Solana `txoracle` CPI — independently verifiable outcomes
 - **Free data access** continues into the season
 

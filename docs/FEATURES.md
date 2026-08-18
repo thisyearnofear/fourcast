@@ -289,9 +289,9 @@ Fourcast commits to one primary customer. The other use cases exist to feed that
 
 ---
 
-## 🏆 Agora Agents Hackathon Integration
+## Arc / Agora prior integration (May 2026 — finished)
 
-Fourcast is an **Arc-native prediction market intelligence agent** in the [Agora Agents Hackathon](https://agora.thecanteenapp.com/) (Canteen × Circle). **RFB 02** (primary) · **RFB 05** · **RFB 06**. Demo: [DEMO_SCRIPT.md](./DEMO_SCRIPT.md). UI copy: [constants/brand.js](../constants/brand.js).
+Fourcast shipped as an **Arc-native prediction market intelligence agent** for the Agora Agents Hackathon (Canteen × Circle, May 2026). **RFB 02** (primary) · **RFB 05** · **RFB 06**. Demo: [DEMO_SCRIPT.md](./DEMO_SCRIPT.md). UI copy: [constants/brand.js](../constants/brand.js).
 
 ### Arc-Native Features (New)
 
@@ -319,9 +319,8 @@ Fourcast is an **Arc-native prediction market intelligence agent** in the [Agora
 | Polygon | Trading contracts | 🧪 Beta |
 | Arbitrum | Trading contracts | 🧪 Beta |
 
-### Hackathon Resources
-- **Strategy doc**: [HACKATHONS.md](./HACKATHONS.md)
+### Arc (Circle L1) tooling
+- **Competition record**: [HACKATHONS.md](./HACKATHONS.md)
 - **Arc CLI**: `uv tool install git+https://github.com/the-canteen-dev/ARC-cli`
 - **Arc docs**: https://rpc.testnet.arc.network/
-- **Hackathon page**: https://agora.thecanteenapp.com/
 - **Submission form**: https://forms.gle/hFPM2t4Jt1zGfqzM7
