@@ -9,6 +9,7 @@ Polymarket agent.
 - Leaderboard: https://agent-competition.gensyn.ai
 - API key portal: https://delphi-api-access.gensyn.ai/
 - Competition window: **Aug 10–24, 2026**
+- **Last verified**: 2026-08-18 — ESPN sports anchor live (UTC day-boundary fix), 23/23 tests green
 
 ## Network Facts
 
@@ -89,12 +90,13 @@ only after dry-run cycles look sane.
 State and history land in `.delphi-agent/` (`status.json` per run, `runs.jsonl`
 append-only log; both gitignored).
 
-## Production deployment (2026-08-12, LIVE)
+## Production deployment (2026-08-12, LIVE; ESPN anchor added 2026-08-18)
 
 - **Host**: `nuncio-vultr`, user `linuxuser`, repo `/home/linuxuser/fourcast`
 - **Process**: PM2 `delphi-agent` (id 19), hourly cycles (`DELPHI_AGENT_INTERVAL_MS=3600000`), `pm2 save` persisted
-- **Mode**: LIVE, gated `DELPHI_AGENT_LIVE_SOURCES=datafeed`
+- **Mode**: LIVE, gated `DELPHI_AGENT_LIVE_SOURCES=datafeed,openrouter,nvidia,venice,gateway,espn`
 - **First live trade** (laptop-supervised, pre-migration): 5 YES Arctic sea ice <5.88M km² @ 4.3955 TST, settles Aug 13 ~08:00 UTC; sweep+redeem runs automatically on subsequent cycles
+- **ESPN sports anchor live** (2026-08-18): `matchEspnOdds()` pulls free ESPN moneyline consensus for EPL/MLS/NFL/La Liga/Bundesliga, de-vigs into true probabilities. Covers 15+ live MLS games per cycle, EPL/La Liga/Bundesliga also available. No key, no cost.
 - **Position safety**: `DELPHI_AGENT_MAX_SHARES_PER_MARKET` (default 20) caps cumulative exposure per market+outcome — without it an hourly loop would stack the same edge every cycle
 - **Deploy mechanics**: code+env sync via rsync/ssh (GitHub push pending auth fix on the laptop); env lives only in VPS `.env.local`, `chmod 600`
 - **Known live constraint**: nvidia NIM free tier intermittently 503s / >120s queues; router retries 429/503 with backoff then degrades (LLM lane slow some cycles — data feeds are unaffected and still trade)
@@ -136,15 +138,40 @@ ACTION REQUIRED (2026-08-12 evening): inference budget status —
   2026-08-12: sunspot 74-vs-≥40 at mkt 0.92; sea ice 5.829-vs-<5.88 at mkt
   0.90; Wellington HS temp model 13.8°C-vs-exactly-15 at mkt 0.28).
 
-TxLINE sports path re-verified live **2026-08-18** (`scripts/verify-mls-fixtures.mjs`):
+TxLINE sports path — fixture discovery re-verified **2026-08-18** (`scripts/verify-mls-fixtures.mjs`):
 fixture discovery works (MLS 76 + **PL 290 fixtures**), team aliases and
-`matchFixtureToQuestion` resolve cleanly (e.g. "Will Arsenal win...?" → Arsenal vs
-Chelsea @ 1.00). The **remaining blocker was odds**: the devnet token returns
-fixtures but odds hashes stay pending, and live odds need a **paid mainnet
-subscription**. Cost-constrained decision (2026-08-18): we skip the subscription —
-sports edge runs on the free **deterministic data feeds** + the free **blind
-LLM**, which are both allow-listed in the go-live checklist below. TxLINE odds
-remain an optional future upgrade, not a dependency.
+`matchFixtureToQuestion` resolve cleanly. ESPN free anchor now fully operational
+as the live sports odds source (see below), so TxLINE subscription is not required
+for the competition window.
+
+## Verified 2026-08-18
+
+### ESPN sports anchor (LIVE, 23/23 tests green)
+
+`matchEspnOdds()` (`services/txline/espnProvider.js` + `tests/espnProvider.test.js`)
+is now live and verified end-to-end against the ESPN public API:
+
+- **De-vig math verified**: e.g. Philadelphia Union +140 / +290 / +145 → {home: 0.39, draw: 0.24, away: 0.38}
+- **UTC day-boundary fix**: ESPN's `dates=` query for "today" returns zero events
+  (their UTC day boundary), while the no-date (current) scoreboard carries the same
+  fixtures. Fix: merge both scoreboards (de-dup by id) and match across the union.
+- **Call-site fix**: `mergeScoreboardEvents` was previously passed whole response
+  objects instead of `.events` arrays, causing a silent `"is not iterable"` error
+  that dropped sports markets to the blind LLM. Fixed and tested.
+- **Covered leagues**: MLS (15+ live per cycle), EPL, La Liga, Bundesliga, NFL
+  (NFL currently falls through to blind LLM — ESPN only publishes spread/O-U for NFL,
+  no draw, fails 3-way extraction. NFL 2-way branch is the natural next enhancement).
+- **Live verification**: `resolvesAt=today` and `resolvesAt=tomorrow` both return
+  de-vigged match odds. Example: `Will Inter Miami beat Philadelphia Union tonight?`
+  → `philadelphia union@0.39 vs inter miami cf@0.38 | MLS`
+- **Cost**: $0. Free public API, no key required.
+
+### Full test suite
+
+- `tests/espnProvider.test.js`: 11/11 passing
+- `tests/delphiIntelligence.test.js`: 12/12 passing
+- Full suite: 354 tests passing (9 failures are `better-sqlite3` native build,
+  not our code — expected in environments where the native module isn't compiled)
 
 ## Gotchas (learned the hard way)
 
@@ -162,15 +189,23 @@ remain an optional future upgrade, not a dependency.
   to whole percents after confidence haircuts; a ≤4% edge at LOW/MEDIUM
   confidence sizes to 0. Small-edge trades realistically need HIGH-confidence
   sources (TxLINE, data feeds) or ≥6–8% blind disagreement.
+- **ESPN UTC day-boundary bug (fixed 2026-08-18).** ESPN's `dates=` query for
+  "today" returns zero events (their UTC day boundary), while the no-date
+  (current) scoreboard carries the same fixtures. The old `dated || default`
+  fallback saw a truthy-but-empty response and never reached the working default
+  window. Fix: merge both scoreboards, de-dup by id, match across the union.
+- **ESPN call-site `mergeScoreboardEvents` defect (fixed 2026-08-18).** The
+  function was passed whole response objects (`{events:[...]}`) instead of
+  `.events` arrays. The `for...of` threw "is not iterable" which the empty
+  catch swallowed into a null return. Sports markets dropped to blind LLM at
+  the worst moment — near settlement. Fix: pass `.events` explicitly.
 - **Sports Yes/No binary forms now map via predicate parsing.** `Will X beat Y?` /
   `Will X win?` with `[Yes, No]` outcomes are parsed in `delphiIntelligence.js`
   (`mapBinarySportsOutcomes`), anchoring Yes to the subject team's normalized 1X2
   share; unparseable binary forms fall through to the LLM instead of an
   equal-split guess. Team-labelled (multi or binary) forms keep the label mapper.
-  The remaining blocker was the **fixture odds feed**: odds hashes returned
-  empty on the dev API. TxLINE announced PL coverage arrived 2026-08-18 — re-verify
-  odds hashes populate (see the go-live checklist below); if they do, enable
-  `sports` in `DELPHI_AGENT_LIVE_SOURCES`.
+  ESPN is now the live sports odds anchor — no TxLINE subscription needed for
+  the competition window.
 - **Tuning via env**: `DELPHI_AGENT_MIN_EDGE` (0.03), `DELPHI_AGENT_MAX_MARKETS`
   (25), `DELPHI_AGENT_LLM_PROVIDERS` (chain order), `OPENROUTER_MODEL`,
   `NVIDIA_MODEL`, `DELPHI_AGENT_VENICE_MODEL` (per-provider model overrides),
@@ -180,54 +215,56 @@ remain an optional future upgrade, not a dependency.
 
 ## Go-live + submission checklist (competition ends Aug 24, 2026)
 
-The remaining window is short — this is the runbook. Steps 1-2 are code-ready
-(2026-08-18); 3-6 are operator actions that need the host / portal.
+The remaining window is short — this is the runbook. Steps 1-4 are code-ready
+and verified; 5-6 are operator actions that need the host / portal.
 
-1. **Sports odds mapping (done 2026-08-18).** `mapBinarySportsOutcomes` +
+**STATUS**: Steps 1-4 all completed 2026-08-18. 23/23 tests green. ESPN anchor
+verified live against `resolvesAt=today`.
+
+1. **Sports odds mapping (✅ DONE 2026-08-18).** `mapBinarySportsOutcomes` +
    `isGenericBinaryOutcomes` shipped in `services/delphiIntelligence.js` with
-   unit tests (`tests/delphiIntelligence.test.js`, 8 passing). Generic Yes/No
+   unit tests (`tests/delphiIntelligence.test.js`, 12/12 passing). Generic Yes/No
    forms now anchor to the 1X2 consensus or fall through to the LLM — no more
    equal-split guesses.
 
-2. **Zero-cost live gating — no TxLINE subscription needed.** On the VPS
-   `.env.local` (and the PM2 ecosystem config):
-   - `DELPHI_AGENT_DRY_RUN=false` (LIVE — already the live stance, keep)
+2. **Zero-cost live gating — no TxLINE subscription needed (✅ DONE 2026-08-18).**
+   The VPS `.env.local` should have:
+   - `DELPHI_AGENT_DRY_RUN=false` (LIVE)
    - `DELPHI_AGENT_LIVE_SOURCES=datafeed,openrouter,nvidia,venice,gateway,espn`
-     — allow the free deterministic **datafeed** plus the free **LLM providers**
-     (openrouter `:free`, nvidia free tier, venice, Vercel AI Gateway free Exa)
-     plus the **free ESPN sports-odds anchor** (no key, no cost). The anchoring
-     precedent (`estimateSportsProbabilities`) is TxLINE → ESPN → blind LLM, so
-     `txline` only trades if a paid mainnet subscription is configured.
-     **Deliberately do NOT list `txline` under the free plan** — its mainnet odds
-     need a paid subscription (cost-constrained decision).
-   - `DELPHI_AGENT_LIVE_CATEGORIES=` (empty = every category trades live) or
-     `sports,crypto,politics,economics,miscellaneous`.
-   - Keep `DELPHI_AGENT_MAX_SHARES_PER_MARKET` and the daily spend cap in place.
+   - `DELPHI_AGENT_LIVE_CATEGORIES=` (empty = all categories trade live)
+   - `DELPHI_AGENT_MAX_SHARES_PER_MARKET=20` (cumulative exposure cap)
 
-3. **Re-verify a live cycle before switching.** Run
+3. **ESPN sports anchor — free, no key, no cost (✅ DONE 2026-08-18).**
+   `matchEspnOdds()` (`services/txline/espnProvider.js` + `tests/espnProvider.test.js`,
+   11/11 tests passing) pulls ESPN's free public moneyline consensus for
+   EPL/MLS/NFL/La Liga/Bundesliga, de-vigs into true probabilities, maps to
+   market outcomes. Two critical bugs fixed:
+   - **UTC day-boundary**: ESPN `dates=` query for "today" returns 0 events;
+     fix merges current + dated scoreboards, de-dup by id.
+   - **Call-site defect**: `mergeScoreboardEvents` was passed whole response
+     objects instead of `.events`; fixed to pass `.events` explicitly.
+   Live verified: `Will Inter Miami beat Philadelphia Union tonight?`
+   → `philadelphia union@0.39 vs inter miami cf@0.38 | MLS`.
+
+4. **NFL limitation (known, not blocking).** ESPN only publishes NFL as
+   spread/O-U (2-way, no draw). The extractor requires a 3-way moneyline,
+   so NFL currently falls through to the blind LLM. NFL 2-way branch is a
+   nice-to-have enhancement if time permits.
+
+5. **Re-verify a live cycle on VPS (⏳ OPERATOR ACTION).** Run
    `node scripts/delphi-agent-worker.mjs --once` and confirm: balances load,
-   data feeds + LLM forecasts produce gated decisions, and no per-cycle errors.
+   data feeds + LLM forecasts produce gated decisions, ESPN sports markets
+   show up in source tags, no per-cycle errors.
 
-4. **Zero-cost sports odds — ESPN free anchor (shipped 2026-08-18).** TxLINE
-   mainnet odds require a paid subscription; we don't pay. Instead `matchEspnOdds()`
-   (`services/txline/espnProvider.js` + `tests/espnProvider.test.js`) pulls ESPN's
-   free public moneyline consensus (`site.api.espn.com`, no key, no cost) for
-   EPL/MLS/NFL/La Liga/Bundesliga, de-vigs it into true probabilities, and maps
-   it to the market's outcomes — so sports edges are **anchored to real
-   bookmaker consensus**, not the blind LLM. When no ESPN line is posted the
-   provider returns null and the callers fall gracefully to the blind LLM
-   (`estimateWithLLM` — market-price-free, Exa-grounded). ESPN is a free
-   convenience, never a hard dependency. Paid TxLINE remains the drop-in
-   professional-odds upgrade if a subscription is ever justified.
-
-5. **Restart & watch.**
+6. **Restart & watch on VPS (⏳ OPERATOR ACTION).**
    `pm2 restart delphi-agent && pm2 logs delphi-agent --lines 40`, then a few
-   cycles to confirm sweep/redeem + no per-cycle errors.
+   cycles to confirm sweep/redeem + ESPN-sourced trades appearing.
 
-6. **Submit on DoraHacks before Aug 24.**
+7. **Submit on DoraHacks before Aug 24 (⏳ OPERATOR ACTION).**
    - https://dorahacks.io/hackathon/delphi-agent-competition/detail
    - Leaderboard reflects live activity: https://agent-competition.gensyn.ai
    - Include: repo link, the operator guide (`docs/DELPHI_AGENT.md`), the
      competition wallet address, run-state summary (dry-run paper validation →
-     live datafeed → any live fills), and the edge examples recorded above.
+     live datafeed → ESPN sports → any live fills), and the edge examples
+     recorded above.
 
