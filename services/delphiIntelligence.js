@@ -294,7 +294,7 @@ async function matchTxLineOdds(market) {
  * shapes via label mapping. Returns null for unparseable generic binary forms so
  * the caller can fall through to the LLM instead of guessing.
  */
-export function buildOddsEstimate({ market, fixture, homeProb, awayProb, drawProb, source, league }) {
+export function buildOddsEstimate({ market, fixture, homeProb, awayProb, drawProb, twoWay, source, league }) {
   const total = (homeProb || 0) + (drawProb || 0) + (awayProb || 0);
   if (!(total > 0)) return null;
 
@@ -312,7 +312,7 @@ export function buildOddsEstimate({ market, fixture, homeProb, awayProb, drawPro
         probabilities: binary,
         confidence: 'HIGH',
         source,
-        reasoning: `Free consensus odds (${source}${league ? ` / ${league}` : ''}): ${fixture.home?.name} vs ${fixture.away?.name}. Binary Yes/No mapped from normalized 1X2.`,
+        reasoning: `Free consensus odds (${source}${league ? ` / ${league}` : ''}): ${fixture.home?.name} vs ${fixture.away?.name}. Binary Yes/No mapped from normalized ${twoWay ? '2-way' : '1X2'}.`,
       };
     }
     if (isGenericBinaryOutcomes(outcomeList)) return null;
@@ -324,7 +324,8 @@ export function buildOddsEstimate({ market, fixture, homeProb, awayProb, drawPro
     const label = (typeof outcome === 'string' ? outcome : outcome.name || '').toLowerCase();
     if (label.includes(home) || label.includes('home')) return homeProb / total;
     if (label.includes(away) || label.includes('away')) return awayProb / total;
-    if (label.includes('draw') || label.includes('tie')) return drawProb / total;
+    // For 2-way markets (NFL etc.), skip draw mapping — the draw share is 0
+    if (!twoWay && (label.includes('draw') || label.includes('tie'))) return drawProb / total;
     return 1 / (outcomeList.length || 1);
   });
 
@@ -332,7 +333,7 @@ export function buildOddsEstimate({ market, fixture, homeProb, awayProb, drawPro
     probabilities,
     confidence: 'HIGH',
     source,
-    reasoning: `Free consensus odds (${source}${league ? ` / ${league}` : ''}): ${fixture.home?.name} vs ${fixture.away?.name}. Normalized, de-vigged 1X2 mapped to market outcomes.`,
+    reasoning: `Free consensus odds (${source}${league ? ` / ${league}` : ''}): ${fixture.home?.name} vs ${fixture.away?.name}. Normalized, de-vigged ${twoWay ? '2-way' : '1X2'} mapped to market outcomes.`,
   };
 }
 
@@ -357,6 +358,7 @@ async function matchEspnOdds(market) {
       homeProb: game.homeProb,
       awayProb: game.awayProb,
       drawProb: game.drawProb,
+      twoWay: game.twoWay,
       source: 'espn',
       league: game.league,
     });

@@ -1,13 +1,15 @@
 /**
  * Evidence Retriever — web search as the forecaster's grounding layer.
  *
- * Two backends, tried in order:
+ * Three backends, tried in order:
  *   1. Vercel AI Gateway Exa search (free through Aug 31 2026) — uses the
  *      AI SDK's gateway.tools.exaSearch() provider-executed tool via
  *      generateText. No direct Exa API key needed; the gateway handles
  *      auth and execution server-side.
  *   2. Direct Exa REST API (EXA_API_KEY) — fallback if gateway unavailable
  *      or rate-limited.
+ *   3. Parallel AI Search REST API (PARALLEL_API_KEY required) — third fallback.
+ *   4. Firecrawl Search (free without key; FIRECRAWL_API_KEY for higher limits) — final fallback.
  *
  * A 6h per-question cache caps spend (hourly agent cycles → ≤4 refreshes/question/day).
  */
@@ -137,7 +139,7 @@ function buildSnippetText(result) {
   return '';
 }
 
-// ─── Direct Exa API (fallback) ──────────────────────────────────────────────
+// ─── Direct Exa API (fallback 2) ────────────────────────────────────────────
 
 async function retrieveEvidenceDirectExa(question, { numResults = 5, maxCharacters = 700 } = {}) {
   const apiKey = process.env.EXA_API_KEY;
@@ -183,6 +185,95 @@ async function retrieveEvidenceDirectExa(question, { numResults = 5, maxCharacte
   }
 }
 
+// ─── Parallel AI Search (fallback 3, requires PARALLEL_API_KEY) ─────────────
+
+const PARALLEL_SEARCH_ENDPOINT = 'https://api.parallel.ai/v1/search';
+
+async function retrieveEvidenceViaParallel(question, { numResults = 5, maxCharacters = 700 } = {}) {
+  const apiKey = process.env.PARALLEL_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch(PARALLEL_SEARCH_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        objective: question,
+        search_queries: [question],
+        mode: 'turbo',
+        num_results: numResults,
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) {
+      console.warn(`[evidenceRetriever] parallel-search ${res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+    const snippets = (data.results || [])
+      .flatMap((r) =>
+        (r.excerpts || []).map((excerpt) => ({
+          title: r.title || '',
+          url: r.url || '',
+          publishedDate: r.publish_date || null,
+          text: excerpt.replace(/\s+/g, ' ').trim().slice(0, maxCharacters),
+        }))
+      )
+      .filter((s) => s.text.length > 40)
+      .slice(0, numResults);
+
+    return snippets.length > 0 ? snippets : null;
+  } catch (err) {
+    console.warn(`[evidenceRetriever] parallel-search failed: ${err.message?.slice(0, 100)}`);
+    return null;
+  }
+}
+
+// ─── Firecrawl Search (fallback 4, free, no key required) ───────────────────
+
+const FIRECRAWL_SEARCH_ENDPOINT = 'https://api.firecrawl.dev/v1/search';
+
+async function retrieveEvidenceViaFirecrawl(question, { numResults = 5, maxCharacters = 700 } = {}) {
+  try {
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    const apiKey = process.env.FIRECRAWL_API_KEY;
+    if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+    const res = await fetch(FIRECRAWL_SEARCH_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ query: question, limit: numResults, scrapeOptions: { formats: ['markdown'] } }),
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) {
+      console.warn(`[evidenceRetriever] firecrawl-search ${res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+    const snippets = (data.data || [])
+      .map((r) => ({
+        title: r.title || r.metadata?.title || '',
+        url: r.url || '',
+        publishedDate: r.metadata?.publishedTime || null,
+        text: (r.markdown || r.description || r.metadata?.description || '').replace(/\s+/g, ' ').trim().slice(0, maxCharacters),
+      }))
+      .filter((s) => s.text.length > 40);
+
+    return snippets.length > 0 ? snippets : null;
+  } catch (err) {
+    console.warn(`[evidenceRetriever] firecrawl-search failed: ${err.message?.slice(0, 100)}`);
+    return null;
+  }
+}
+
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /**
@@ -211,6 +302,16 @@ export async function retrieveEvidence(question, { numResults = 5, maxCharacters
   // 2. Fallback to direct Exa API
   if (!snippets && process.env.EXA_API_KEY) {
     snippets = await retrieveEvidenceDirectExa(question, { numResults, maxCharacters });
+  }
+
+  // 3. Fallback to Parallel AI Search (requires PARALLEL_API_KEY)
+  if (!snippets) {
+    snippets = await retrieveEvidenceViaParallel(question, { numResults, maxCharacters });
+  }
+
+  // 4. Fallback to Firecrawl Search (free without key, FIRECRAWL_API_KEY for higher limits)
+  if (!snippets) {
+    snippets = await retrieveEvidenceViaFirecrawl(question, { numResults, maxCharacters });
   }
 
   if (!snippets) return null;

@@ -40,7 +40,7 @@ const DEFAULT_CONFIG = {
   liveCategories: (process.env.DELPHI_AGENT_LIVE_CATEGORIES || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   liveSources: (process.env.DELPHI_AGENT_LIVE_SOURCES || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   dryRun: process.env.DELPHI_AGENT_DRY_RUN !== 'false',
-  riskTolerance: 0.5,
+  riskTolerance: Number(process.env.DELPHI_AGENT_RISK_TOLERANCE || '0.5'),
 };
 
 // ─── Main Loop ──────────────────────────────────────────────────────────────

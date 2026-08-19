@@ -92,9 +92,10 @@ export function calculateKellySizing(
     confidenceMultiplier = Math.min(1.0, confidenceMultiplier * 1.2);
   }
 
-  // Fractional Kelly factor: scaled by riskTolerance and confidence multiplier
-  const fractionalKelly =
-    kellyPct * (riskTolerance * 0.25) * confidenceMultiplier;
+  // Fractional Kelly factor: scaled by riskTolerance and confidence multiplier.
+  // riskTolerance is already a (0,1] fraction; the extra * 0.25 was a double-penalty
+  // that caused even HIGH-confidence trades to size at ~3% of full Kelly.
+  const fractionalKelly = kellyPct * riskTolerance * confidenceMultiplier;
 
   // Cap size at 25% (0.25) to prevent over-allocation
   const sizePct = Math.min(0.25, Math.round(fractionalKelly * 100) / 100);

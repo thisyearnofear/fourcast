@@ -1,10 +1,11 @@
 /**
  * Simple rate limiter for Vercel AI Gateway free tier.
  * Serializes gateway calls with a minimum interval to avoid 429s.
- * Free tier allows roughly 1 request per 5 minutes per model.
+ * Free tier allows roughly 1 request per 2 minutes per model.
+ * Override via VERCEL_GATEWAY_MIN_INTERVAL_MS (ms).
  */
 
-const MIN_INTERVAL_MS = Number(process.env.VERCEL_GATEWAY_MIN_INTERVAL_MS) || 6 * 60 * 1000;
+const MIN_INTERVAL_MS = Number(process.env.VERCEL_GATEWAY_MIN_INTERVAL_MS) || 2 * 60 * 1000;
 let lastCallTime = 0;
 let queue = [];
 let processing = false;

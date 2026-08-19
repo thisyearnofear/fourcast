@@ -167,12 +167,21 @@ export function americanToProbability(raw) {
   return 100 / (100 + n);
 }
 
-/** De-vig the 1X2 moneyline into a true probability distribution (sums to 1). */
+/** De-vig the 1X2 (or 2-way) moneyline into a true probability distribution (sums to 1). */
 export function normalize1x2(homeAmerican, drawAmerican, awayAmerican) {
   const h = americanToProbability(homeAmerican);
-  const d = americanToProbability(drawAmerican);
   const a = americanToProbability(awayAmerican);
-  if (h === null || d === null || a === null) return null;
+  if (h === null || a === null) return null;
+
+  // 2-way: no draw (NFL/NBA/MLB) — distribute just home + away
+  if (drawAmerican === null) {
+    const total = h + a;
+    if (!(total > 0)) return null;
+    return { home: h / total, draw: 0, away: a / total };
+  }
+
+  const d = americanToProbability(drawAmerican);
+  if (d === null) return null;
   const total = h + d + a;
   if (!(total > 0)) return null;
   return { home: h / total, draw: d / total, away: a / total };
@@ -211,9 +220,24 @@ function matchEvent(marketText, events) {
 
 function extractOdds(comp) {
   const ml = comp?.odds?.[0]?.moneyline;
-  if (!ml?.home || !ml?.away || !ml?.draw) return null;
-  const pick = (side) => side.close?.odds ?? side.open?.odds;
-  return { homeAmerican: pick(ml.home), drawAmerican: pick(ml.draw), awayAmerican: pick(ml.away) };
+  if (!ml) return null;
+  const pick = (side) => side?.close?.odds ?? side?.open?.odds;
+
+  // Full 3-way (soccer): home + draw + away
+  if (ml.home && ml.draw && ml.away) {
+    return { homeAmerican: pick(ml.home), drawAmerican: pick(ml.draw), awayAmerican: pick(ml.away) };
+  }
+
+  // 2-way (NFL, NBA, MLB): home + away, no draw. Synthesize draw=0 so
+  // normalize1x2 still works — callers must treat drawProb as 0.
+  if (ml.home && ml.away && !ml.draw) {
+    const h = pick(ml.home);
+    const a = pick(ml.away);
+    if (h == null || a == null) return null;
+    return { homeAmerican: h, drawAmerican: null, awayAmerican: a, twoWay: true };
+  }
+
+  return null;
 }
 
 /**
@@ -274,6 +298,7 @@ export async function getConsensusGame({ question, description, resolvesAt }) {
       homeProb: probs.home,
       drawProb: probs.draw,
       awayProb: probs.away,
+      twoWay: odds.twoWay || false,
       league: league.name,
       provider: match.event.competitions[0].odds[0]?.provider?.name || 'ESPN',
     };

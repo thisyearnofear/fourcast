@@ -90,15 +90,15 @@ only after dry-run cycles look sane.
 State and history land in `.delphi-agent/` (`status.json` per run, `runs.jsonl`
 append-only log; both gitignored).
 
-## Production deployment (2026-08-12, LIVE; ESPN anchor added 2026-08-18)
+## Production deployment (2026-08-12, LIVE; last updated 2026-08-19)
 
 - **Host**: `nuncio-vultr`, user `linuxuser`, repo `/home/linuxuser/fourcast`
-- **Process**: PM2 `delphi-agent` (id 19), hourly cycles (`DELPHI_AGENT_INTERVAL_MS=3600000`), `pm2 save` persisted
-- **Mode**: LIVE, gated `DELPHI_AGENT_LIVE_SOURCES=datafeed,openrouter,nvidia,venice,gateway,espn`
+- **Process**: PM2 `delphi-agent` (id 19), **3h cycles** (`DELPHI_AGENT_INTERVAL_MS=10800000`), `pm2 save` persisted
+- **Mode**: LIVE, `DELPHI_AGENT_LIVE_SOURCES=datafeed,txline,espn,vercel,bai,venice,nvidia,openrouter`
 - **First live trade** (laptop-supervised, pre-migration): 5 YES Arctic sea ice <5.88M km² @ 4.3955 TST, settles Aug 13 ~08:00 UTC; sweep+redeem runs automatically on subsequent cycles
-- **ESPN sports anchor live** (2026-08-18): `matchEspnOdds()` pulls free ESPN moneyline consensus for EPL/MLS/NFL/La Liga/Bundesliga, de-vigs into true probabilities. Covers 15+ live MLS games per cycle, EPL/La Liga/Bundesliga also available. No key, no cost.
-- **Position safety**: `DELPHI_AGENT_MAX_SHARES_PER_MARKET` (default 20) caps cumulative exposure per market+outcome — without it an hourly loop would stack the same edge every cycle
-- **Deploy mechanics**: code+env sync via rsync/ssh (GitHub push pending auth fix on the laptop); env lives only in VPS `.env.local`, `chmod 600`
+- **ESPN sports anchor live** (2026-08-18): `matchEspnOdds()` pulls free ESPN moneyline consensus for EPL/MLS/NFL/La Liga/Bundesliga. **NFL 2-way fix (2026-08-19)**: ESPN publishes NFL as spread/O-U without draw — `extractOdds` now handles 2-way (home+away only), `normalize1x2` synthesizes `draw=0`, `buildOddsEstimate` skips draw mapping. NFL markets no longer fall through to blind LLM.
+- **Position safety**: `DELPHI_AGENT_MAX_SHARES_PER_MARKET=50` caps cumulative exposure per market+outcome
+- **Deploy mechanics**: code+env sync via rsync/ssh + git push; env lives only in VPS `.env.local`, `chmod 600`
 - **Known live constraint**: nvidia NIM free tier intermittently 503s / >120s queues; router retries 429/503 with backoff then degrades (LLM lane slow some cycles — data feeds are unaffected and still trade)
 
 ## Verified 2026-08-12
@@ -173,6 +173,24 @@ is now live and verified end-to-end against the ESPN public API:
 - Full suite: 354 tests passing (9 failures are `better-sqlite3` native build,
   not our code — expected in environments where the native module isn't compiled)
 
+## Verified 2026-08-19
+
+### Agent performance improvements (live on VPS)
+
+- **Cycle interval**: 6h → **3h** (`DELPHI_AGENT_INTERVAL_MS=10800000`). ~40 cycles remaining before Aug 24.
+- **Rate limiter**: 6 min → **2 min** between Vercel gateway calls (`VERCEL_GATEWAY_MIN_INTERVAL_MS=120000`). Cycle runtime: ~42 min → ~14 min.
+- **Max markets**: 4 → **25** per cycle (`DELPHI_AGENT_MAX_MARKETS=25`).
+- **Trade sizing**: `maxSharesPerTrade` 5→**10**, `maxSharesPerMarket` 20→**50**, `maxAllocationPct` 10→**20%**.
+- **Kelly fix**: removed hidden `* 0.25` double-penalty in `utils/kellySizing.js`. Fractional Kelly is now `kelly * riskTolerance * confidenceMultiplier` (was `kelly * riskTolerance * 0.25 * confidenceMultiplier`). At MEDIUM confidence a 25% edge → ~7.5% allocation vs ~1.25% before.
+- **`riskTolerance`** now reads from `DELPHI_AGENT_RISK_TOLERANCE` env (was hardcoded 0.5). VPS set to **0.75**.
+- **LLM provider chain**: added B.AI (`bai`) with `BAI_API_KEY` — DeepSeek-V4-Flash free tier, zero rate limit, fires immediately when Vercel is queued. Chain: `vercel → bai → venice → nvidia → openrouter`.
+- **Evidence retrieval chain**: Vercel Exa → direct Exa → **Parallel AI** (`PARALLEL_API_KEY`) → **Firecrawl** (free, no key needed, `https://api.firecrawl.dev/v1/search`). Four fallbacks; Firecrawl fires when all others are unavailable or rate-limited.
+- **NFL 2-way ESPN**: `extractOdds` now handles home+away-only (no draw) responses. `normalize1x2` accepts `drawAmerican=null`. NFL markets anchored at HIGH confidence from ESPN instead of falling through to blind LLM.
+
+### Live trade summary (Aug 14–19)
+20 live trades, ~22.5 TST deployed, 6.26 TST swept (confirmed winners).
+Markets traded: Trump nominations, NYC executive order, Mississippi River discharge, Jaguars NFL, ETH/BTC crypto bands, Federal Register, TSLA, GB carbon intensity, WTI crude, Battery NY water level, US 10yr yield, Gemini model release, KC MLS.
+
 ## Gotchas (learned the hard way)
 
 - **The worker must read `.env.local`, not `.env`.** `dotenv/config` only
@@ -218,8 +236,8 @@ is now live and verified end-to-end against the ESPN public API:
 The remaining window is short — this is the runbook. Steps 1-4 are code-ready
 and verified; 5-6 are operator actions that need the host / portal.
 
-**STATUS**: Steps 1-4 all completed 2026-08-18. 23/23 tests green. ESPN anchor
-verified live against `resolvesAt=today`.
+**STATUS**: Steps 1-4 all completed 2026-08-18/19. 23/23 tests green. Agent
+running live on VPS at 3h cycles, 20 live trades executed, 6.26 TST swept.
 
 1. **Sports odds mapping (✅ DONE 2026-08-18).** `mapBinarySportsOutcomes` +
    `isGenericBinaryOutcomes` shipped in `services/delphiIntelligence.js` with
@@ -246,10 +264,10 @@ verified live against `resolvesAt=today`.
    Live verified: `Will Inter Miami beat Philadelphia Union tonight?`
    → `philadelphia union@0.39 vs inter miami cf@0.38 | MLS`.
 
-4. **NFL limitation (known, not blocking).** ESPN only publishes NFL as
-   spread/O-U (2-way, no draw). The extractor requires a 3-way moneyline,
-   so NFL currently falls through to the blind LLM. NFL 2-way branch is a
-   nice-to-have enhancement if time permits.
+4. **NFL 2-way moneyline (✅ DONE 2026-08-19).** `extractOdds` now handles
+   home+away-only responses, `normalize1x2` accepts `drawAmerican=null` and
+   returns `draw:0`, `buildOddsEstimate` skips draw-label mapping for `twoWay`
+   markets. NFL markets are now ESPN-anchored at HIGH confidence.
 
 5. **Re-verify a live cycle on VPS (⏳ OPERATOR ACTION).** Run
    `node scripts/delphi-agent-worker.mjs --once` and confirm: balances load,
