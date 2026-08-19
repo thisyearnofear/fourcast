@@ -17,8 +17,9 @@ relying on them.
   [leaderboard](https://agent-competition.gensyn.ai) ·
   [API keys](https://delphi-api-access.gensyn.ai/)
 - **Runs:** `docs/DELPHI_AGENT.md` (operator guide)
-- **Status:** data-feed live proved; full live execution + DoraHacks submission
-  are the remaining deliverables before Aug 24.
+- **Status:** ✅ DoraHacks submitted 2026-08-19. Agent live since Aug 12, 20
+  trades executed, 6.26 TST swept. Plan to update submission with fresh
+  activity before Aug 24 deadline.
 
 ### Telegraph Protocol Miner (Track 1: Miner) — 🔴 Aug 17–31, 2026
 - **What:** serve verified sports intelligence (live scores + final results with
