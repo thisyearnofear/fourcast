@@ -28,8 +28,9 @@ relying on them.
 - **Track 3 (apps consume miners):** Sep 1–7.
 - **Guardrail:** need ≥3 active miners in the same intent **and** ≥100 real
   requests from Track 3 apps.
-- **Runs:** `telegraph-miner/` (committed 2026-08-18; deploy/register at
-  integrate.telegraphprotocol.com — endpoint `miner.sportwarren.com/query`).
+- **Runs:** `telegraph-miner/` — deployed 2026-08-19; endpoint live at
+  `https://miner.sportwarren.com/query` (PM2 id 25, Traefik SSL via Let's Encrypt).
+- **Register:** [integrate.telegraphprotocol.com](https://integrate.telegraphprotocol.com) — ⏳ OPERATOR ACTION
 - **Tag** [@Telegraphprotoc](https://x.com/Telegraphprotoc) in progress posts.
 
 ## Participated (finished)
