@@ -98,6 +98,7 @@ export default function StatusPage() {
  synthdata: Brain,
  database: Database,
  canton: Zap,
+ telegraph: Activity,
  };
  const Icon = icons[key] || Activity;
  return <Icon className="h-5 w-5 text-[var(--color-ink-muted)]" aria-hidden="true" />;

@@ -93,6 +93,18 @@ export default function ArenaStrip() {
           <span className="font-mono text-[11px] text-[var(--color-ink-muted)]">
             est {Math.round((headline.yourProb ?? 0) * 100)}% vs mkt {Math.round((headline.marketProb ?? 0) * 100)}%
           </span>
+          {headline.source && (
+            <span
+              className="hidden font-mono text-[10px] text-[var(--color-ink-faint)] sm:inline"
+              title={headline.source}
+            >
+              {headline.source.startsWith('datafeed:')
+                ? headline.source.replace('datafeed:', '')
+                : headline.source.includes('[exa:')
+                  ? 'evidence + web'
+                  : 'model'}
+            </span>
+          )}
           <ArrowRight className="h-3.5 w-3.5 text-[var(--color-accent)] transition group-hover:translate-x-0.5" />
         </Link>
       )}

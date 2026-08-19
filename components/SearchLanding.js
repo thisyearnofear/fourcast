@@ -14,6 +14,7 @@ import TweenNumber from '@/components/motion/TweenNumber';
 import TrustStatsStrip from '@/components/TrustStatsStrip';
 import ArenaStrip from '@/components/ArenaStrip';
 import EventTape from '@/components/EventTape';
+import LatestExecutionCard from '@/components/LatestExecutionCard';
 
 // Canonical Solana receipt — kept below the fold as depth, not competing hero.
 const VERIFIED_RECEIPT = {
@@ -160,7 +161,7 @@ function ArenaHero() {
       </h1>
 
       <p className="fc-print mt-4 max-w-xl text-base text-[var(--color-ink-muted)] sm:text-lg" style={{ '--print-delay': '140ms' }}>
-        Watch it trade Delphi live — every call, its evidence, its verdict.
+        Every call sized from evidence, gated by policy, logged before settlement.
       </p>
 
       <div className="fc-print" style={{ '--print-delay': '220ms' }}>
@@ -266,17 +267,19 @@ export default function SearchLanding() {
 
         <TrustStatsStrip />
 
-        {/* Solana proof depth — below the fold */}
+        {/* Live execution + settled proof depth — below the fold */}
         <div ref={receiptRef} id="verify-receipt" className="scroll-mt-24">
           <Reveal as="section" className="mt-10" aria-label="Verify a decision receipt">
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--color-rule)] pb-3">
               <div>
-                <p className="fc-kicker">Decision receipts · Solana</p>
+                <p className="fc-kicker">Decision receipts</p>
                 <h2 className="mt-1.5 max-w-xl font-display text-xl font-semibold leading-tight tracking-tight text-[var(--color-ink)] sm:text-2xl">
-                  A settled proof you can audit
+                  Proof you can audit — live and settled
                 </h2>
               </div>
             </div>
+
+            <LatestExecutionCard />
 
             <ProofChain />
 
@@ -284,7 +287,7 @@ export default function SearchLanding() {
               <div className="fc-instrument__inner flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5">
                 <div className="min-w-0">
                   <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
-                    {VERIFIED_RECEIPT.stage}
+                    Settled fixture · {VERIFIED_RECEIPT.stage}
                   </p>
                   <p className="mt-1 font-display text-lg font-semibold text-[var(--color-ink)]">
                     {VERIFIED_RECEIPT.home} <span className="text-[var(--color-ink-faint)]">v</span> {VERIFIED_RECEIPT.away}

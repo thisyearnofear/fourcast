@@ -83,8 +83,12 @@ export async function GET() {
     type: cantonConfigured ? 'configured' : 'unconfigured',
   };
 
+  // ── Telegraph miner (sports intelligence endpoint) ───────────────────
+  const telegraphUrl = process.env.TELEGRAPH_MINER_URL || 'https://miner.sportwarren.com/health';
+  const telegraph = await pingUrl(telegraphUrl, 8000);
+
   // ── Aggregate ─────────────────────────────────────────────────────────
-  const allUp = [pm, ks, venice, synth, canton].every(
+  const allUp = [pm, ks, venice, synth, canton, telegraph].every(
     (p) => p.status === 'healthy' || p.status === 'disabled'
   );
 
@@ -123,6 +127,11 @@ export async function GET() {
         label: 'Canton Devnet',
         description: 'Private settlement layer — integration configured (live ledger state on /proof)',
         ...canton,
+      },
+      telegraph: {
+        label: 'Sports intelligence',
+        description: 'TxLINE-backed miner — live scores, fixtures, and fact checks',
+        ...telegraph,
       },
     },
   };

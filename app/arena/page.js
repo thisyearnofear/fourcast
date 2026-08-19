@@ -285,7 +285,7 @@ function LedgerLane() {
       </Section>
 
       <p className="mt-8 px-1 text-[11px] leading-relaxed text-[var(--color-ink-faint)] sm:px-3" style={mono}>
-        Same decision core across Polymarket, Kalshi and Delphi. Data-feed sources trade real; model sources paper-trade until calibration proves them.
+        Same decision core across every venue. Data-feed sources trade live; model sources paper-trade until calibration proves them.
       </p>
     </>
   );
