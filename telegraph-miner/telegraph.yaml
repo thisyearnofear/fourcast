@@ -1,66 +1,166 @@
-# Telegraph Protocol Miner Configuration
-# Fourcast Sports Intelligence Miner
-# https://integrate.telegraphprotocol.com
-
+version: "1"
+kind: miner
+id: 1
+slug: fourcast-sports-intelligence
+protocol: bittensor
 name: fourcast-sports-intelligence
-version: "1.0.0"
 description: >
-  Verified sports scores and match results powered by TxLINE (professional
-  bookmaker consensus + Solana Merkle proofs). Every result is independently
-  verifiable on-chain — no trust required.
+  Verified sports scores and match results powered by TxLINE professional
+  bookmaker consensus with Solana Merkle proofs. Every result is independently
+  verifiable on-chain, no trust required.
 
-# Intents this miner serves
-intents:
-  - id: SPORTS_SCORE
-    tier: A
-    category: "Weather & Sports"
-    evaluation: "WASM Exact Match"
-    deterministic: false
-    description: >
-      Live and recent match scores across MLS, NFL, and Premier League.
-      Returns team names, current score, match status, and verification metadata.
+base_url: https://miner.sportwarren.com
 
-  - id: GAME_RESULT
-    tier: A
-    category: "Weather & Sports"
-    evaluation: "WASM Exact Match"
-    deterministic: false
-    description: >
-      Final match results with full Solana Merkle proof for independent
-      on-chain verification. Consumers can validate results trustlessly.
+docs:
+  website: https://fourcastapp.vercel.app
+  repository: https://github.com/thisyearnofear/fourcast
 
-# Endpoint configuration
-endpoint:
-  url: "https://miner.sportwarren.com"
-  method: POST
-  path: /query
-  health: /health
-  timeout_ms: 10000
+limitations:
+  - code: RATE_LIMIT
+    message: Max 10 requests per second
+  - code: DATA_FRESHNESS
+    message: >
+      Sports scores delayed up to 60s. Coverage includes MLS, NFL,
+      Premier League, La Liga, Bundesliga.
 
-# Data source attribution
-source:
-  name: TxLINE / TxODDS
-  url: https://txodds.net/our-products/tx-line/
-  docs: https://txline-docs.txodds.com
-  verification: Solana Merkle proofs
-  chain: solana
-  program_id: "9ExbZjAapQww1vfcisDmrngPinHTEfpjYRWMunJgcKaAZ"
+auth:
+  type: none
 
-# Coverage
-coverage:
-  sports:
-    - league: MLS
-      status: live
-    - league: NFL
-      status: live
-    - league: Premier League
-      status: live
-    - league: International Friendlies
-      status: live
-  update_frequency: real-time (60s delay on free tier)
+rate_limit_per_sec: 10
+cache_ttl_sec: 30
+circuit_threshold: 5
+circuit_cooldown_seconds: 30
 
-# Payment (x402)
-payment:
-  chain: solana
-  token: USDC
-  network: mainnet-beta
+endpoints:
+  - path: /query
+    external_path: /query
+    method: POST
+
+input_schema:
+  type: object
+  properties:
+    intent:
+      type: string
+      description: SPORTS_SCORE or GAME_RESULT
+    params:
+      type: object
+      description: Intent-specific parameters (team name or fixture_id)
+    request_id:
+      type: string
+  required:
+    - intent
+    - params
+
+output_schema:
+  type: object
+  properties:
+    request_id:
+      type: string
+    intent:
+      type: string
+    answer:
+      type: object
+    metadata:
+      type: object
+  required:
+    - intent
+    - answer
+
+semantics:
+  signal_mapping:
+    label_field: answer
+  supported_intents:
+    - SPORTS_SCORE
+    - GAME_RESULT
+
+on_chain:
+  description: >
+    Sports match scores and results from TxLINE professional bookmaker
+    consensus, stored on-chain for trustless verification. Consumers can
+    independently verify each result against its Solana Merkle proof without
+    relying on the miner. Captures fixture identity, team names, match status,
+    winner, and the Solana transaction hash anchoring the proof on-chain.
+  transform: direct
+  min_price_usdc: 0.001
+  fields:
+    strings:
+      - index: 0
+        name: request_id
+        description: Unique request identifier for deduplication
+        source_path: request_id
+      - index: 1
+        name: intent
+        description: Intent type SPORTS_SCORE or GAME_RESULT
+        source_path: intent
+      - index: 2
+        name: answer_fixture_id
+        description: TxLINE fixture ID for the matched game
+        source_path: answer.fixture_id
+      - index: 3
+        name: answer_competition
+        description: League or competition name such as MLS or NFL
+        source_path: answer.competition
+      - index: 4
+        name: answer_home_team
+        description: Home team name
+        source_path: answer.home_team
+      - index: 5
+        name: answer_away_team
+        description: Away team name
+        source_path: answer.away_team
+      - index: 6
+        name: answer_status
+        description: Match status scheduled, live, or finished
+        source_path: answer.status
+      - index: 7
+        name: answer_winner
+        description: Winning team name for GAME_RESULT only
+        source_path: answer.winner
+      - index: 8
+        name: answer_solana_tx
+        description: Solana transaction hash for Merkle proof verification
+        source_path: answer.solana_tx
+      - index: 9
+        name: metadata_source
+        description: Data source identifier
+        source_path: metadata.source
+      - index: 10
+        name: metadata_verification
+        description: Verification method
+        source_path: metadata.verification
+      - index: 11
+        name: metadata_provider
+        description: Provider identifier
+        source_path: metadata.provider
+    integers:
+      - index: 0
+        name: answer_home_score
+        description: Home team score
+        source_path: answer.home_score
+      - index: 1
+        name: answer_away_score
+        description: Away team score
+        source_path: answer.away_score
+      - index: 2
+        name: metadata_latency_ms
+        description: Response latency in milliseconds
+        source_path: metadata.latency_ms
+    bools:
+      - index: 0
+        name: answer_verified
+        description: Whether the result is verified
+        source_path: answer.verified
+        transform_rule: "bool_from_eq:true"
+      - index: 1
+        name: answer_proof_available
+        description: Whether a Solana Merkle proof is available
+        source_path: answer.proof_available
+        transform_rule: "bool_from_eq:true"
+  request:
+    - endpoint: query
+      method: POST
+      body:
+        - field: intent
+          source: strings.0
+        - field: request_id
+          source: strings.1

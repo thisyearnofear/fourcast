@@ -30,7 +30,7 @@ relying on them.
   requests from Track 3 apps.
 - **Runs:** `telegraph-miner/` — deployed 2026-08-19; endpoint live at
   `https://miner.sportwarren.com/query` (PM2 id 25, Traefik SSL via Let's Encrypt).
-- **Register:** [integrate.telegraphprotocol.com](https://integrate.telegraphprotocol.com) — ⏳ OPERATOR ACTION
+- **Registered:** ✅ 2026-08-19 — on-chain tx [0xf8b206cb...445140d8](https://sepolia.basescan.org/tx/0xf8b206cb3b5968dce042171e4f735cb8a305376209ba7e049ffddf3f445140d8) on Base Sepolia, contract `0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8`. IPFS: `QmWtdBnELzsxXVf3pd5AMGeS2fYCf2UvbbZiEbcmBUQDJx`. Fee address `0x55A5705453Ee82c742274154136Fce8149597058`. Pending activation at next epoch boundary.
 - **Tag** [@Telegraphprotoc](https://x.com/Telegraphprotoc) in progress posts.
 
 ## Participated (finished)
