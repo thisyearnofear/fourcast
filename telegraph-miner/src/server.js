@@ -10,7 +10,6 @@
  *   - flatter { query, team, fixture_id, ... } (Telegraph auto-router)
  */
 
-import { pathToFileURL } from 'node:url';
 import 'dotenv/config';
 import express from 'express';
 import { handleSportsScore } from './intents/sportsScore.js';
@@ -117,15 +116,9 @@ app.get('/', (_req, res) => {
 
 export default app;
 
-const isMain =
-  process.argv[1] &&
-  import.meta.url === pathToFileURL(process.argv[1]).href;
-
-if (isMain) {
-  app.listen(PORT, HOST, () => {
-    console.log(`[fourcast-miner] Telegraph miner listening on ${HOST}:${PORT}`);
-    console.log(`[fourcast-miner] Intents: ${SUPPORTED_INTENTS.join(', ')}`);
-    console.log(`[fourcast-miner] TxLINE origin: ${process.env.TXLINE_API_ORIGIN || 'https://txline.txodds.com'}`);
-    console.log(`[fourcast-miner] Token configured: ${Boolean(process.env.TXLINE_API_TOKEN)}`);
-  });
-}
+app.listen(PORT, HOST, () => {
+  console.log(`[fourcast-miner] Telegraph miner listening on ${HOST}:${PORT}`);
+  console.log(`[fourcast-miner] Intents: ${SUPPORTED_INTENTS.join(', ')}`);
+  console.log(`[fourcast-miner] TxLINE origin: ${process.env.TXLINE_API_ORIGIN || 'https://txline.txodds.com'}`);
+  console.log(`[fourcast-miner] Token configured: ${Boolean(process.env.TXLINE_API_TOKEN)}`);
+});
