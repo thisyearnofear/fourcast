@@ -120,27 +120,42 @@ docker run -d --restart=unless-stopped -p 8402:8402 \
 
 ## Current registration status (verified 2026-08-20)
 
-The **process** is live and correct. The **on-chain identity** is not.
+The **process** and the **on-chain identity** now match.
 
 | Layer | What it says |
 |---|---|
 | Git `telegraph.yaml` + `GET /` | `SPORTS_SCORE`, `GAME_RESULT` |
 | Live `https://miner.sportwarren.com` | healthy; `/query` only handles those two intents |
-| Pinned YAML `ipfs://QmWtdBnELzsxXVf3pd5AMGeS2fYCf2UvbbZiEbcmBUQDJx` | `WEB_SEARCH`, `FACT_CHECK` |
-| On-chain `supportedIntents` / `GET /api/miners` | `WEB_SEARCH`, `FACT_CHECK` |
+| Node `GET /api/miners/148` | **`active`**, same intents, GitHub raw YAML |
+| Catalog slug `fourcast-sports-intelligence` | `SPORTS_SCORE`, `GAME_RESULT` |
 
-Git never contained `WEB_SEARCH`. `registerMiner` takes intents as a **separate argument** from the YAML file; the console pinned a YAML whose intents did not match this repo. Epoch 239 scored us **0** on both wrong intents (WEB_SEARCH rank 6, FACT_CHECK rank 2) because `/query` returns 400 for them.
+First pin (2026-08-19, `registrationId` 128) wrote `WEB_SEARCH` / `FACT_CHECK`
+because `registerMiner` takes intents as a **separate argument** from the YAML.
+Epoch 239 scored **0** on those (WEB_SEARCH rank 6, FACT_CHECK rank 2). Corrected
+the same day with `updateMiner` — tx
+[0xbc89aed7…e4e608](https://sepolia.basescan.org/tx/0xbc89aed7f52fe0c292c5e1ce3209af914aeb0988ec9c315c5be4e385dde4e608).
+128 is **deregistered**. Intermediate 146/147 were rejected: zsh wrapped the
+YAML URL across lines (`telegrap\n  h-miner`). Keep `"$U"` on **one line**.
 
-- Miner `id`: **1** (global — do not change; requests route on it)
+- Miner `id`: **1** (YAML / catalog routing id — do not change)
+- Live **`registrationId`**: **148** (lookup `/api/miners/148`, not `/api/miners/1`)
 - Slug: `fourcast-sports-intelligence`
-- Protocol on-chain: `bittensor` (misleading; we are a plain HTTPS API. Change to `generic` on update)
-- Floor on-chain: `10000` = **$0.01** USDC (protocol minimum). Git still says `0.001`, which is below the minimum — do not copy that onto the chain.
+- Protocol: `generic`
+- Floor: `10000` = **$0.01** USDC (protocol minimum)
 - Wallet / fee: `0x55A5705453Ee82c742274154136Fce8149597058`
 - Diamond: `0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8` (Base Sepolia)
-- First registration: 2026-08-19, still inside the **7-day grace period**. Those zeros become the leaderboard seed after grace.
-- Competitor on the sports intents: `scorewire-oracle` (`id` 300) — the only miner currently serving `SPORTS_SCORE` / `GAME_RESULT`.
+- YAML:
+  `https://raw.githubusercontent.com/thisyearnofear/fourcast/main/telegraph-miner/telegraph.yaml`
+  SHA-256 `0x608b7dd0dcbba7c1a2f97e4a675a83720d6e96deed5ca2304db4716c72330927`
+- Still inside the **7-day grace period** from the first registration. WEB_SEARCH
+  zeros may linger as seed until grace ends; sports scoring starts on 148.
+- Competitor on the sports intents: `scorewire-oracle` (`id` 300).
 
-**Do not re-register from scratch.** Use `updateMiner` (same wallet, same slug). It atomically replaces YAML, floor, fee, and intents and issues a new `registrationId`. Spec: [miner-registration.md](https://github.com/telegraphprotocol/telegraph-docs/blob/main/miners/miner-registration.md).
+**Do not click Register On-Chain again.** Protocol engineering confirmed
+(2026-08-20): `registerMiner` with the same wallet does **not** supersede the
+live listing. It creates a second `registrationId` / `intentId`. Further YAML
+or intent changes use **`updateMiner(148, …)`**. Spec:
+[miner-registration.md](https://github.com/telegraphprotocol/telegraph-docs/blob/main/miners/miner-registration.md).
 
 **Do not also declare `WEB_SEARCH` “for coverage.”** Validators will keep scoring us there and we will keep getting zeros.
 
@@ -169,28 +184,54 @@ On-chain integers support `multiplier` (e.g. `source_path: risk_score, multiplie
 
 ## Update the registration (operator)
 
-1. ~~Fix `telegraph-miner/telegraph.yaml`~~ **Done (git, not yet pinned).** Intents `SPORTS_SCORE` + `GAME_RESULT`, `protocol: generic`, `min_price_usdc: 0.01`, scalar `signal_mapping` (`score` / `reason`), map-shaped `on_chain.request`. `id: 1` and slug unchanged.
-2. ~~Harden `POST /query`~~ **Done (git, not yet deployed).** Envelope `{intent, params}` still works. Flat auto-routed bodies (`query`, `team`, `fixture_id`, …) are accepted. Responses include `score`, `label`, `winner`, `reason` for signal mapping.
-3. Deploy this commit to `nuncio-vultr` (`git pull`, `pm2 restart telegraph-miner`). Confirm live:
-   ```bash
-   curl -sS -X POST https://miner.sportwarren.com/query \
-     -H "Content-Type: application/json" \
-     -d '{"intent":"SPORTS_SCORE","params":{"team":"Inter Miami"}}'
-   curl -sS -X POST https://miner.sportwarren.com/query \
-     -H "Content-Type: application/json" \
-     -d '{"query":"What is the Inter Miami score?"}'
-   ```
-   Both should be 200 with a `score` / `reason` field. Do **not** paste YAML into the console until this is true.
-4. Paste `telegraph-miner/telegraph.yaml` at [integrate.telegraphprotocol.com](https://integrate.telegraphprotocol.com). Let it sandbox-test `/query`. Confirm the form's intents are the **sports** ones — the last pin overwrote them to `WEB_SEARCH` / `FACT_CHECK`.
-5. Sign **`updateMiner`** with the same wallet that registered (`0x55A5705453Ee82c742274154136Fce8149597058`). Do not send a fresh `registerMiner`.
-6. Re-check the live catalog until `supported_intents` is sports and a new IPFS CID is listed:
+Confirmed 2026-08-20 by Telegraph protocol engineering: pin the git YAML, then
+`updateMiner`. Do **not** use the console **Register On-Chain** button (that is
+`registerMiner` and duplicates us). If the new UI grows a true **Update**
+control that calls `updateMiner(148, …)`, that is fine — verify the calldata
+before signing. Pass the YAML URL as a **single line** (no shell wrap).
 
-```bash
-curl -sS https://devnode.telegraphprotocol.com/api/miners \
-  | python3 -c "import json,sys; m=next(x for x in json.load(sys.stdin) if x.get('id')=='1'); print(m['slug'], m['protocol'], m['supported_intents'], m['yaml_url'], m.get('scores'))"
+GitHub raw already serves the corrected file (same bytes as git; no Pinata
+required):
+
+```text
+https://raw.githubusercontent.com/thisyearnofear/fourcast/main/telegraph-miner/telegraph.yaml
+SHA-256  0x608b7dd0dcbba7c1a2f97e4a675a83720d6e96deed5ca2304db4716c72330927
 ```
 
-7. Log the new CID, `registrationId`, and tx in `docs/HACKATHONS.md`.
+From a machine that has Foundry `cast` and the **registering wallet** (never
+paste the key into chat):
+
+```bash
+export DIAMOND="0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8"
+export RPC="https://sepolia.base.org"
+export YAML_URL="https://raw.githubusercontent.com/thisyearnofear/fourcast/main/telegraph-miner/telegraph.yaml"
+export YAML_HASH="0x608b7dd0dcbba7c1a2f97e4a675a83720d6e96deed5ca2304db4716c72330927"
+export FEE_ADDRESS="0x55A5705453Ee82c742274154136Fce8149597058"
+export MIN_PRICE=10000   # 0.01 USDC (6 decimals)
+
+cast send "$DIAMOND" \
+  "updateMiner(uint256,string,bytes32,address,uint256,string[])" \
+  148 \
+  "$YAML_URL" \
+  "$YAML_HASH" \
+  "$FEE_ADDRESS" \
+  "$MIN_PRICE" \
+  '["SPORTS_SCORE","GAME_RESULT"]' \
+  --rpc-url "$RPC" \
+  --private-key "$MINER_PRIVATE_KEY"
+```
+
+After a further update confirms, `GET /api/miners/148` should show
+`deregistered` / superseded, and the catalog row for slug
+`fourcast-sports-intelligence` should list the new `registration_id`. Check:
+
+```bash
+curl -sS -A 'fourcast-review/1.0' https://devnode.telegraphprotocol.com/api/miners/148
+curl -sS -A 'fourcast-review/1.0' https://devnode.telegraphprotocol.com/api/miners \
+  | python3 -c "import json,sys; m=next(x for x in json.load(sys.stdin) if x.get('slug')=='fourcast-sports-intelligence'); print(m['id'], m['supported_intents'], m['yaml_url'], m.get('scores'))"
+```
+
+Log the new `registrationId`, tx, and YAML URL in `docs/HACKATHONS.md`.
 
 ## TxLINE Setup
 
@@ -247,7 +288,7 @@ Telegraph Network (validators, apps, routing)
 ## Hackathon Notes
 
 - **Track 1 (Miner)** — this is our submission. Status and the on-chain mismatch: `docs/HACKATHONS.md`.
-- **Judging**: 75% Normalized Performance (accuracy vs ground truth), 25% X engagement. Sports intents are Tier A WASM exact match; `WEB_SEARCH` / `FACT_CHECK` are Tier B LLM-judge — we are being judged as the latter until `updateMiner`.
+- **Judging**: 75% Normalized Performance (accuracy vs ground truth), 25% X engagement. Sports intents are Tier A WASM exact match; `WEB_SEARCH` / `FACT_CHECK` are Tier B LLM-judge. We are now on the sports intents (`registrationId` 148).
 - **Guardrail** (as recorded in-repo; confirm on the official page): need 3+ active miners in the same intent + 100 real requests from Track 3 apps. Joining the sports intents currently makes that 2 miners, not 3. Scoring 0 on a crowded wrong intent is worse than being correctly routed in a thin category.
 - **Timeline**: Aug 17–31 (Track 1 & 2), Sep 1–7 (Track 3 apps consume us)
 - Tag [@Telegraphprotoc](https://x.com/Telegraphprotoc) in all progress posts
