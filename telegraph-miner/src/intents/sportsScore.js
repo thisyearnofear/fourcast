@@ -160,6 +160,15 @@ async function getScoreByFixtureId(fixtureId) {
     }
   }
 
+  let winner = null;
+  if (status === 'final' && homeScore != null && awayScore != null) {
+    const h = Number(homeScore);
+    const a = Number(awayScore);
+    if (h > a) winner = fixtureData?.Participant1 || 'Unknown';
+    else if (a > h) winner = fixtureData?.Participant2 || 'Unknown';
+    else winner = 'draw';
+  }
+
   const answer = {
     fixture_id: String(fixtureId),
     competition: fixtureData?.Competition || null,
@@ -173,6 +182,7 @@ async function getScoreByFixtureId(fixtureId) {
       ? new Date(Number(fixtureData.StartTime)).toISOString()
       : null,
     minute: minute ? Number(minute) : null,
+    winner,
     verified: true,
     proof_available: proofAvailable,
   };

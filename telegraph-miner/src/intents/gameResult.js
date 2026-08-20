@@ -202,6 +202,10 @@ async function getResultByFixtureId(fixtureId) {
     }
   }
 
+  let winner = 'draw';
+  if (result === 'home_win') winner = fixtureData?.Participant1 || 'Unknown';
+  else if (result === 'away_win') winner = fixtureData?.Participant2 || 'Unknown';
+
   const answer = {
     fixture_id: String(fixtureId),
     competition: fixtureData?.Competition || null,
@@ -215,7 +219,9 @@ async function getResultByFixtureId(fixtureId) {
       ? new Date(Number(fixtureData.StartTime)).toISOString()
       : null,
     result,
+    winner,
     verified: true,
+    proof_available: Boolean(proof?.verifiable),
     proof,
   };
 
@@ -224,6 +230,7 @@ async function getResultByFixtureId(fixtureId) {
     metadata: {
       source: 'txline',
       fixture_id: String(fixtureId),
+      verification: 'solana-merkle-proof',
       verification_method: 'solana-merkle-proof',
       proof_verifiable: proof?.verifiable || false,
       event_count: events.length,

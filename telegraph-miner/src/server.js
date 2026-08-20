@@ -5,17 +5,22 @@
  * Telegraph Protocol network. Data sourced from TxLINE — professional
  * bookmaker consensus with Solana Merkle proof verification.
  *
- * Intents served:
- *   - SPORTS_SCORE: live and recent match scores
- *   - GAME_RESULT:  final match results with cryptographic proof
+ * POST /query accepts:
+ *   - envelope { intent, params, request_id } (direct callers)
+ *   - flatter { query, team, fixture_id, ... } (Telegraph auto-router)
  */
 
+import { pathToFileURL } from 'node:url';
 import 'dotenv/config';
 import express from 'express';
 import { handleSportsScore } from './intents/sportsScore.js';
 import { handleGameResult } from './intents/gameResult.js';
 import { getMinerStatus } from './status.js';
-import { txline } from './txline.js';
+import {
+  SUPPORTED_INTENTS,
+  normalizeQueryRequest,
+  signalFieldsFromAnswer,
+} from './query.js';
 
 const app = express();
 app.use(express.json());
@@ -23,57 +28,49 @@ app.use(express.json());
 const PORT = Number(process.env.PORT) || 8402;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// ─── Intent Router ──────────────────────────────────────────────────────────
-
 const INTENT_HANDLERS = {
   SPORTS_SCORE: handleSportsScore,
   GAME_RESULT: handleGameResult,
 };
 
-/**
- * POST /query
- *
- * Telegraph miners receive intent requests as POST with a JSON body:
- * {
- *   "intent": "SPORTS_SCORE",
- *   "params": { ... intent-specific parameters ... },
- *   "request_id": "uuid",
- *   "timestamp": "iso8601"
- * }
- *
- * Response must be deterministic and match the evaluation script's expected
- * ground-truth format for "WASM Exact Match" scoring.
- */
 app.post('/query', async (req, res) => {
   const start = Date.now();
-  const { intent, params, request_id } = req.body || {};
+  const parsed = normalizeQueryRequest(req.body);
 
-  if (!intent) {
-    return res.status(400).json({
-      error: 'missing_intent',
-      message: 'Request must include an "intent" field',
+  if (!parsed.ok) {
+    return res.status(parsed.status).json({
+      error: parsed.error,
+      message: parsed.message,
+      ...(parsed.extra || {}),
     });
   }
 
+  const { intent, params, request_id } = parsed;
   const handler = INTENT_HANDLERS[intent];
-  if (!handler) {
-    return res.status(400).json({
-      error: 'unsupported_intent',
-      message: `This miner serves SPORTS_SCORE and GAME_RESULT intents. Received: ${intent}`,
-      supported_intents: Object.keys(INTENT_HANDLERS),
-    });
-  }
 
   try {
     const result = await handler(params || {});
     const latencyMs = Date.now() - start;
+    const signals = signalFieldsFromAnswer(result.answer);
+    const answer = result.answer
+      ? { ...result.answer, proof_available: signals.proof_available }
+      : result.answer;
 
     return res.json({
       request_id: request_id || null,
       intent,
-      answer: result.answer,
+      score: signals.score,
+      label: signals.label,
+      winner: signals.winner,
+      reason: signals.reason,
+      answer,
       metadata: {
         ...result.metadata,
+        source: result.metadata?.source || 'txline',
+        verification:
+          result.metadata?.verification ||
+          result.metadata?.verification_method ||
+          'solana-merkle-proof',
         provider: 'fourcast-txline',
         latency_ms: latencyMs,
         timestamp: new Date().toISOString(),
@@ -90,8 +87,6 @@ app.post('/query', async (req, res) => {
   }
 });
 
-// ─── Health & Status ────────────────────────────────────────────────────────
-
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
@@ -105,7 +100,7 @@ app.get('/', (_req, res) => {
   res.json({
     name: 'Fourcast Telegraph Miner',
     description: 'Verified sports intelligence powered by TxLINE (professional bookmaker consensus + Solana Merkle proofs)',
-    intents: ['SPORTS_SCORE', 'GAME_RESULT'],
+    intents: [...SUPPORTED_INTENTS],
     evaluation: 'WASM Exact Match',
     tier: 'A',
     category: 'Weather & Sports',
@@ -120,13 +115,17 @@ app.get('/', (_req, res) => {
   });
 });
 
-// ─── Start ──────────────────────────────────────────────────────────────────
-
-app.listen(PORT, HOST, () => {
-  console.log(`[fourcast-miner] Telegraph miner listening on ${HOST}:${PORT}`);
-  console.log(`[fourcast-miner] Intents: SPORTS_SCORE, GAME_RESULT`);
-  console.log(`[fourcast-miner] TxLINE origin: ${process.env.TXLINE_API_ORIGIN || 'https://txline.txodds.com'}`);
-  console.log(`[fourcast-miner] Token configured: ${Boolean(process.env.TXLINE_API_TOKEN)}`);
-});
-
 export default app;
+
+const isMain =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isMain) {
+  app.listen(PORT, HOST, () => {
+    console.log(`[fourcast-miner] Telegraph miner listening on ${HOST}:${PORT}`);
+    console.log(`[fourcast-miner] Intents: ${SUPPORTED_INTENTS.join(', ')}`);
+    console.log(`[fourcast-miner] TxLINE origin: ${process.env.TXLINE_API_ORIGIN || 'https://txline.txodds.com'}`);
+    console.log(`[fourcast-miner] Token configured: ${Boolean(process.env.TXLINE_API_TOKEN)}`);
+  });
+}

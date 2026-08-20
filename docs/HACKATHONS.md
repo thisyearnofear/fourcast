@@ -26,11 +26,27 @@ relying on them.
   Solana Merkle proofs) to the Telegraph network. Judging: 75% normalized
   performance (accuracy vs ground truth), 25% X engagement.
 - **Track 3 (apps consume miners):** Sep 1–7.
-- **Guardrail:** need ≥3 active miners in the same intent **and** ≥100 real
-  requests from Track 3 apps.
-- **Runs:** `telegraph-miner/` — deployed 2026-08-19; endpoint live at
-  `https://miner.sportwarren.com/query` (PM2 id 25, Traefik SSL via Let's Encrypt).
-- **Registered:** ✅ 2026-08-19 — on-chain tx [0xf8b206cb...445140d8](https://sepolia.basescan.org/tx/0xf8b206cb3b5968dce042171e4f735cb8a305376209ba7e049ffddf3f445140d8) on Base Sepolia, contract `0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8`. IPFS: `QmWtdBnELzsxXVf3pd5AMGeS2fYCf2UvbbZiEbcmBUQDJx`. Fee address `0x55A5705453Ee82c742274154136Fce8149597058`. Pending activation at next epoch boundary.
+- **Guardrail (as recorded; re-check the official page before relying on it):**
+  ≥3 active miners in the same intent **and** ≥100 real requests from Track 3
+  apps. `SPORTS_SCORE` / `GAME_RESULT` currently have **1** miner each
+  (scorewire). `WEB_SEARCH` has 7 — but that is the wrong product for us.
+- **Runs:** `telegraph-miner/` — process live at
+  `https://miner.sportwarren.com/query` (PM2, Traefik SSL). Operator runbook:
+  `telegraph-miner/README.md`.
+- **Registered:** ✅ 2026-08-19 — tx
+  [0xf8b206cb...445140d8](https://sepolia.basescan.org/tx/0xf8b206cb3b5968dce042171e4f735cb8a305376209ba7e049ffddf3f445140d8)
+  on Base Sepolia, diamond `0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8`.
+  Slug `fourcast-sports-intelligence`, miner `id` **1**, fee
+  `0x55A5705453Ee82c742274154136Fce8149597058`. Activation is event-driven
+  (not epoch-gated); the miner is **already `active`**.
+- **Blocker (verified 2026-08-20):** git + the live process declare
+  `SPORTS_SCORE` + `GAME_RESULT`. The pinned YAML
+  (`ipfs://QmWtdBnELzsxXVf3pd5AMGeS2fYCf2UvbbZiEbcmBUQDJx`) and the on-chain
+  `supportedIntents` are **`WEB_SEARCH` + `FACT_CHECK`**. Epoch 239 scored us
+  rank 6 / rank 2 with **score 0** on those intents — `/query` 400s anything
+  else. Grace period (7 days from 19 Aug) is accumulating that zero track
+  record. Fix is `updateMiner`, not a new registration. Do **not** also
+  declare `WEB_SEARCH` “for coverage”.
 - **Tag** [@Telegraphprotoc](https://x.com/Telegraphprotoc) in progress posts.
 
 ## Participated (finished)
@@ -64,4 +80,3 @@ relying on them.
   validation as achieved.
 - **Intake pipeline retained:** Privacy check → **Talk to us**
   (`POST /api/talk` → `operator_leads`).
-```
