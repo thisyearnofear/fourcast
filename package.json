@@ -25,6 +25,10 @@
     "delphi:live": "node --env-file=.env.local scripts/delphi-agent-worker.mjs",
     "delphi:once": "node --env-file=.env.local scripts/delphi-agent-worker.mjs --once",
     "delphi:dry": "node --env-file=.env.local scripts/delphi-agent-worker.mjs --once --dry-run",
+    "delphi:aggro": "node --env-file=.env.local scripts/delphi-agent-worker.mjs --once --aggro",
+    "delphi:aggro:live": "node --env-file=.env.local scripts/delphi-agent-worker.mjs --once --aggro --live",
+    "delphi:sweep": "node --env-file=.env.local scripts/delphi-sweep.mjs",
+    "delphi:sweep:run": "node --env-file=.env.local scripts/delphi-sweep.mjs --sweep",
     "check:runtimes": "node scripts/check-runtimes.js",
     "check:bundles": "node scripts/check-bundle-size.js"
   },

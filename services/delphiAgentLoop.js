@@ -43,6 +43,50 @@ const DEFAULT_CONFIG = {
   riskTolerance: Number(process.env.DELPHI_AGENT_RISK_TOLERANCE || '0.5'),
 };
 
+// ─── Aggro mode (the risky top-5 push) ─────────────────────────────────────
+// Opt-in only via DELPHI_AGENT_MODE=aggro (or the worker's --aggro flag).
+// Concentrates capital on a handful of high-conviction edges and HARD-BLOCKS
+// the blind-LLM providers from trading live. The normal (default) path is
+// byte-for-byte unchanged unless the mode is explicitly set to 'aggro'.
+
+export const AGGRO_MODE = 'aggro';
+
+export const AGGRO_OVERRIDES = {
+  maxMarkets: 8,              // force concentration over scatter
+  minEdge: 0.07,             // only real edges, not noise
+  maxAllocationPct: 0.9,     // near-full Kelly entitlement
+  maxSharesPerTrade: 200,
+  maxSharesPerMarket: 400,
+  riskTolerance: 0.9,        // near-full Kelly
+};
+
+// Hard source whitelist for aggro mode: anything not starting with one of
+// these prefixes PAPER-trades even in live. Only deterministic public-data
+// (datafeed), ESPN sports lines, and the evidence-grounded gateway (vercel)
+// may trade for real. DELIBERATELY ignores DELPHI_AGENT_LIVE_SOURCES so a
+// stale/broad env value can never silently re-enable blind-LLM live trading.
+export const AGGRO_LIVE_SOURCES = ['datafeed', 'espn', 'vercel'];
+
+/**
+ * Resolve the effective agent config.
+ * When mode === 'aggro' (from config.mode or DELPHI_AGENT_MODE), applies the
+ * aggressive overrides and forces the hard source whitelist. Otherwise returns
+ * defaults merged with caller overrides (unchanged legacy behavior).
+ */
+export function resolveDelphiConfig(config = {}) {
+  const mode = (config.mode || process.env.DELPHI_AGENT_MODE || '').toLowerCase();
+  if (mode === AGGRO_MODE) {
+    return {
+      ...DEFAULT_CONFIG,
+      ...AGGRO_OVERRIDES,
+      liveSources: [...AGGRO_LIVE_SOURCES], // hard-block blind-LLM live trading
+      dryRun: config.dryRun !== undefined ? config.dryRun : DEFAULT_CONFIG.dryRun,
+      mode,
+    };
+  }
+  return { ...DEFAULT_CONFIG, ...config };
+}
+
 // ─── Main Loop ──────────────────────────────────────────────────────────────
 
 /**
@@ -53,7 +97,7 @@ const DEFAULT_CONFIG = {
  * @yields {{ step: string, status: string, data?: any, message?: string }}
  */
 export async function* runDelphiAgentLoop(config = {}) {
-  const opts = { ...DEFAULT_CONFIG, ...config };
+  const opts = resolveDelphiConfig(config);
   const runId = `delphi-${Date.now()}`;
   const timestamp = new Date().toISOString();
 
@@ -62,7 +106,18 @@ export async function* runDelphiAgentLoop(config = {}) {
     maxAllocationPct: opts.maxAllocationPct,
   });
 
-  yield { step: 'init', status: 'complete', data: { runId, timestamp, dryRun: opts.dryRun, network: delphiService.network } };
+  yield {
+    step: 'init',
+    status: 'complete',
+    data: {
+      runId,
+      timestamp,
+      dryRun: opts.dryRun,
+      mode: opts.mode || 'default',
+      liveSources: opts.liveSources,
+      network: delphiService.network,
+    },
+  };
 
   // ── Step 1: Check balances ────────────────────────────────────────────
 

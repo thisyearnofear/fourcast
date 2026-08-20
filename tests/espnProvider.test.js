@@ -38,9 +38,19 @@ describe('normalize1x2', () => {
     expect(p.home + p.draw + p.away).toBeCloseTo(1, 6);
   });
 
-  it('returns null when any side is missing/zero', () => {
-    expect(normalize1x2(-155, null, 340)).toBeNull();
+  it('treats a null draw as a 2-way line and de-vigs home/away', () => {
+    // NFL/NBA/MLB have no draw — null drawAmerican is a valid 2-way line.
+    const p = normalize1x2(-155, null, 340);
+    expect(p).not.toBeNull();
+    expect(p.draw).toBe(0);
+    expect(p.home + p.away).toBeCloseTo(1, 6);
+    expect(p.home).toBeGreaterThan(p.away); // home favorite
+  });
+
+  it('returns null when a draw is present but missing/zero, or any side is invalid', () => {
     expect(normalize1x2(-155, 0, 340)).toBeNull();
+    expect(normalize1x2(0, 200, 340)).toBeNull();   // home missing
+    expect(normalize1x2(-155, 200, 'n/a')).toBeNull(); // away unparseable
   });
 });
 

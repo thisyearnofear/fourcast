@@ -10,6 +10,8 @@
  *   node scripts/delphi-agent-worker.mjs --once       # Single iteration
  *   node scripts/delphi-agent-worker.mjs --dry-run    # Force dry-run mode
  *   node scripts/delphi-agent-worker.mjs --live       # Force live execution
+ *   node scripts/delphi-agent-worker.mjs --aggro      # Aggressive top-5 push
+ *                                                     # (concentrated + whitelisted)
  *
  * Environment:
  *   DELPHI_NETWORK=competition-testnet
@@ -39,7 +41,13 @@ const args = process.argv.slice(2);
 const ONCE = args.includes('--once');
 const FORCE_DRY_RUN = args.includes('--dry-run');
 const FORCE_LIVE = args.includes('--live');
+const AGGRESSIVE = args.includes('--aggro');
 const INTERVAL_MS = Number(process.env.DELPHI_AGENT_INTERVAL_MS || '300000'); // 5 min
+
+// Aggressive (aggro) mode is opt-in: deliberately concentrates capital on
+// high-conviction edges and hard-blocks blind-LLM sources from live trading
+// (see AGGRO_LIVE_SOURCES in services/delphiAgentLoop.js).
+if (AGGRESSIVE) process.env.DELPHI_AGENT_MODE = 'aggro';
 
 // ─── State Directory ────────────────────────────────────────────────────────
 
@@ -200,6 +208,7 @@ async function runOnce() {
 async function main() {
   log('info', '=== Delphi Agent Worker ===');
   log('info', ONCE ? 'Mode: single iteration' : `Mode: continuous (${INTERVAL_MS / 1000}s interval)`);
+  log('info', AGGRESSIVE ? 'PROFILE: AGGRO (concentrated, hard source whitelist)' : 'PROFILE: default');
   log('info', FORCE_DRY_RUN ? 'Execution: DRY RUN (forced)' : FORCE_LIVE ? 'Execution: LIVE (forced)' : `Execution: ${process.env.DELPHI_AGENT_DRY_RUN !== 'false' ? 'DRY RUN' : 'LIVE'}`);
 
   preflight();

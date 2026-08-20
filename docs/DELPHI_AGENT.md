@@ -6,10 +6,11 @@ the same decision core (policy gates, Kelly sizing, forecasting) that runs the
 Polymarket agent.
 
 - Competition: https://dorahacks.io/hackathon/delphi-agent-competition/detail
-- Leaderboard: https://agent-competition.gensyn.ai
+- Leaderboard (official board, judged on P&L only): https://competition.delphi.fyi/ · `agent-competition.gensyn.ai` is SSO-gated
 - API key portal: https://delphi-api-access.gensyn.ai/
+- Competition wallet (registered on DoraHacks): `0x5c4a7a58989f3efde45f1d9e4cfd1b52488ea33f`
 - Competition window: **Aug 10–24, 2026**
-- **Last verified**: 2026-08-18 — ESPN sports anchor live (UTC day-boundary fix), 23/23 tests green
+- **Last verified**: 2026-08-20 (day 11/14) — **rank 80/159 on the official board**: account **1000.35 TST**, PnL **−0.15 TST**, 86 trades, volume 214.26. See Live trade summary below.
 
 ## Network Facts
 
@@ -187,9 +188,18 @@ is now live and verified end-to-end against the ESPN public API:
 - **Evidence retrieval chain**: Vercel Exa → direct Exa → **Parallel AI** (`PARALLEL_API_KEY`) → **Firecrawl** (free, no key needed, `https://api.firecrawl.dev/v1/search`). Four fallbacks; Firecrawl fires when all others are unavailable or rate-limited.
 - **NFL 2-way ESPN**: `extractOdds` now handles home+away-only (no draw) responses. `normalize1x2` accepts `drawAmerican=null`. NFL markets anchored at HIGH confidence from ESPN instead of falling through to blind LLM.
 
-### Live trade summary (Aug 14–19)
-20 live trades, ~22.5 TST deployed, 6.26 TST swept (confirmed winners).
-Markets traded: Trump nominations, NYC executive order, Mississippi River discharge, Jaguars NFL, ETH/BTC crypto bands, Federal Register, TSLA, GB carbon intensity, WTI crude, Battery NY water level, US 10yr yield, Gemini model release, KC MLS.
+### Live trade summary (Aug 12–20)
+
+**Rank 80/159 on the official board (`competition.delphi.fyi`) — account 1000.35 TST, PnL −0.15 TST, 86 trades, volume 214.26.** Official judging is **P&L-only, mark-to-market from a 1,000 TST start**; we sit essentially **breakeven**, lower-middle of the pack (above the negative tail; leader Ramalogy at +8,285).
+
+- **Internal activity** (VPS feed `/api/arena/feed`): 48 cycles, 68 executed fills (86 trades by board count) on **25 markets**; **138.78 TST gross deployed** (Aug 19 → 40.7, Aug 20 → 54.1).
+- **Realized (swept): 31.26 TST** (5.0 Aug 16 · 10.0 Aug 18 · 6.26 Aug 19 · 10.0 Aug 20).
+- **Not a contradiction — two accounting views.** The internal wallet-balance reading (986.7 → 911.6), the board mark-to-market account (1000.35), and the 1,000 TST start differ because open positions are held at market before resolution. **The official board PnL is the metric that ranks us.**
+- **Open exposure ~480 gross shares / 25 markets**; ≈45% of deployed sits in the top-5 and the late window stacked short-dated books (WTI, ECB FX, 10yr, Binance BTC-minute, SOFR, LaLiga) — high variance.
+
+Markets traded: LaLiga Rayo–Alavés, US 10yr yield, Sporting KC MLS, Botafogo–Cienciano, SOFR, BTC/ETH bands, Battery NY water, Binance BTC-minute, Rangers–Jablonec, ECB FX, Trump nominations, WTI, Gemini model, Typhoon Dolphin, SILSO sunspots, NSIDC sea ice, Jaguars NFL, Mississippi River, GB carbon intensity, TSLA, Federal Register, NYC EO, Al Ittihad (Saudi), SpaceX.
+
+⚠️ **Positioning honesty:** at −0.15 essentially flat, the open short-dated book still decides direction. Not in payout contention (leader +8,285 across 159); realistic goal is defending a positive PnL to the close.
 
 ## Gotchas (learned the hard way)
 
@@ -236,8 +246,10 @@ Markets traded: Trump nominations, NYC executive order, Mississippi River discha
 The remaining window is short — this is the runbook. Steps 1-4 are code-ready
 and verified; 5-6 are operator actions that need the host / portal.
 
-**STATUS**: Steps 1-4 all completed 2026-08-18/19. 23/23 tests green. Agent
-running live on VPS at 3h cycles, 20 live trades executed, 6.26 TST swept.
+**STATUS**: Steps 1-4 all completed 2026-08-18/19. 24/24 tests green. Agent
+running live on VPS at 3h cycles. **Official board (2026-08-20): rank 80/159,
+account 1000.35 TST, PnL −0.15 TST, 86 trades.** Internal: 68 fills on 25
+markets, 138.8 TST deployed, 31.26 TST swept — see Live trade summary above.
 
 1. **Sports odds mapping (✅ DONE 2026-08-18).** `mapBinarySportsOutcomes` +
    `isGenericBinaryOutcomes` shipped in `services/delphiIntelligence.js` with

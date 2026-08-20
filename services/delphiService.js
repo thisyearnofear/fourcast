@@ -410,6 +410,71 @@ export async function sweepSettledPosition(marketAddress, heldOutcomeIndices) {
   return { action: 'none', reason: `Market status: ${market.status}` };
 }
 
+/**
+ * Sweep ALL settleable positions: redeem every settled market and liquidate
+ * every expired/failed one. Returns aggregate totals plus the still-open
+ * positions (those that can't be recovered until they resolve).
+ *
+ * @returns {Promise<{redeemed: number, liquidated: number, tokensRecovered: number,
+ *   open: Array<{marketAddress, outcomeIdx, shares, status}>}>}
+ */
+export async function sweepAllSettled() {
+  const positions = await listPositions();
+  const agg = { redeemed: 0, liquidated: 0, tokensRecovered: 0, open: [] };
+
+  for (const p of positions) {
+    const held = [p.outcomeIdx];
+    try {
+      const market = await getMarket(p.marketAddress);
+      if (market.status === 'settled') {
+        const result = await redeemPositions([p.marketAddress]);
+        agg.redeemed++;
+        agg.tokensRecovered += result.totalTokens || 0;
+        continue;
+      }
+      if (market.status === 'expired' || market.status === 'failed') {
+        const result = await liquidatePosition(p.marketAddress, held);
+        agg.liquidated++;
+        agg.tokensRecovered += result.totalTokens || 0;
+        continue;
+      }
+    } catch {
+      // keep going — a single unreadable market shouldn't block the sweep
+    }
+    agg.open.push({
+      marketAddress: p.marketAddress,
+      outcomeIdx: p.outcomeIdx,
+      shares: Number(p.shares ?? p.outcomeShares ?? 0),
+    });
+  }
+
+  return agg;
+}
+
+/**
+ * Deployable capital snapshot for a wave: cash balance now, plus what's tied
+ * up in positions that are still OPEN (not recoverable until they resolve).
+ * READ-ONLY — does not send any transaction.
+ *
+ * @returns {Promise<{cash: number, symbol: string, openShares: number,
+ *   openMarkets: number, openPositions: Array<{marketAddress, outcomeIdx, shares}>}>}
+ */
+export async function getDeployableCapital() {
+  const [balances, positions] = await Promise.all([getBalances(), listPositions()]);
+  const open = positions.map((p) => ({
+    marketAddress: p.marketAddress,
+    outcomeIdx: p.outcomeIdx,
+    shares: Number(p.shares ?? p.outcomeShares ?? 0),
+  }));
+  return {
+    cash: balances.tokenBalance,
+    symbol: balances.tokenSymbol || 'TST',
+    openMarkets: open.length,
+    openShares: open.reduce((s, p) => s + (p.shares || 0), 0),
+    openPositions: open,
+  };
+}
+
 // ─── Edge Computation ───────────────────────────────────────────────────────
 
 /**
@@ -445,6 +510,8 @@ export const delphiService = {
   redeemPositions,
   liquidatePosition,
   sweepSettledPosition,
+  sweepAllSettled,
+  getDeployableCapital,
   computeEdge,
   // Helpers
   sharesToBigint,
