@@ -22,7 +22,7 @@ import { replayTour } from "@/components/RouteGuide";
 /**
  * Nav architecture:
  *  - PRIMARY_NAV: Markets · Positions · Private (always visible)
- *  - OVERFLOW_NAV: Signals · Mandate · Labs · Alerts
+ *  - OVERFLOW_NAV: Signals · Agent · Labs · Alerts
  *  - UTILITY: tour replay + audience switcher
  *
  * Labels overridden via BRAND.navLabels in constants/brand.js.
@@ -36,7 +36,7 @@ const PRIMARY_NAV = [
 
 const OVERFLOW_NAV = [
   { name: BRAND.navLabels.signals ?? "Signals", href: "/signals", match: "/signals", description: BRAND.nav.signals, onboardId: "publish" },
-  { name: BRAND.navLabels.agent ?? "Mandate", href: "/arena?lane=mandate", match: "/arena", description: BRAND.nav.agent, onboardId: "agent" },
+  { name: BRAND.navLabels.agent ?? "Agent", href: "/arena?lane=mandate", match: "/arena", description: BRAND.nav.agent, onboardId: "agent" },
   { name: BRAND.navLabels.labs ?? "Labs", href: "/labs", match: "/labs", description: BRAND.nav.labs },
 ];
 

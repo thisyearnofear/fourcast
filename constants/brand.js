@@ -22,7 +22,7 @@ export const BRAND = {
   /** Positioning — single source of truth for everyone (UI + docs + tests). */
   positioning: {
     headline:
-      'Autonomous prediction-market operator with verifiable mandates. Venue-agnostic execution. Provable discipline.',
+      'A self-driving prediction-market operator that proves every call. Venue-agnostic execution. Provable discipline.',
     promise:
       'Discover edge · size under policy · execute across venues · prove every decision before the outcome.',
     excludeRetailLead: false,
@@ -41,19 +41,19 @@ export const BRAND = {
   },
 
   /** One line — hero, OG, pitch. */
-  tagline: 'Autonomous operator. Verifiable mandates. Multi-venue edge.',
+  tagline: 'Self-driving edge. Every call gated, sized, and receipted beforehand.',
 
   /** Supporting line — subheads, metadata. */
   subhead:
-    'Policy-bound agent trading across Polymarket, Kalshi, and Delphi. Every decision receipted before the outcome. Private settlement when size requires it.',
+    'A policy-bound agent hunts edge across Polymarket, Kalshi, and Delphi — sizes it, and writes the receipt before the outcome. Private settlement only when your size needs it.',
 
   /** Footer / trust strip */
   footerStrip: 'Polymarket · Kalshi · Delphi · TxLINE/TxOdds · decision receipts',
 
   /** Demo CTA */
-  demoTitle: 'See the agent decide in under a minute',
+  demoTitle: 'Watch the agent decide in under a minute',
   demoSubcopy:
-    'Watch a policy-bound decision from evidence through five gates to sealed receipt. Autopilot execution remains safety-gated.',
+    'See one policy-bound decision travel evidence → five gates → sealed receipt. Autopilot stays safety-gated — it points you at the edge, you take the shot.',
 
   /** Product loop (NarrativeSteps) */
   loop: {
@@ -67,7 +67,7 @@ export const BRAND = {
   pages: {
     markets: 'Find the edge. Act. Then track it.',
     signals: 'Publish calls — follow & reputation early.',
-    agent: 'Policy, dry-run, sealed decision.',
+    agent: 'Watch it decide. Then prove the outcome.',
     positions: 'Your book — all venues, one view.',
     proof: 'Receipt committed before outcome. Reconciled after.',
     labs: 'Autopilot, Builder, operator tools.',
@@ -77,7 +77,7 @@ export const BRAND = {
   nav: {
     markets: 'Find edge across venues',
     signals: 'Follow verified analyst calls',
-    agent: 'Mandate and agent loop',
+    agent: 'the agent loop — gate, size, receipt',
     arena: 'The agent, proving discipline live',
     positions: 'Your book after you act',
     canton: 'Private size · CBTC settle',
@@ -86,12 +86,12 @@ export const BRAND = {
   },
 
   /** Nav label overrides.
-   *  Primary: Markets · Positions · Mandate
+   *  Primary: Markets · Positions · Agent
    *  Supporting: Signals · Labs · Alerts · Private */
   navLabels: {
     markets: 'Markets',
     signals: 'Signals',
-    agent: 'Mandate',
+    agent: 'Agent',
     arena: 'Arena',
     positions: 'Positions',
     labs: 'Labs',
@@ -117,8 +117,8 @@ export const BRAND = {
   },
 
   agent: {
-    title: 'Mandate',
-    subtitle: 'Policy · dry-run · sealed decision · multi-venue',
+    title: 'Agent',
+    subtitle: 'Gate · Kelly-size · sealed receipt · multi-venue',
     badge: 'Autonomous operator',
     runCta: 'Run Agent',
     labsCta: 'Enable Autopilot →',
@@ -227,7 +227,7 @@ export const ONBOARDING_COPY = [
   },
   {
     id: 'agent',
-    title: 'Decide under mandate',
+    title: 'Decide under the agent',
     description:
       'Five-gate policy sizes and approves. Receipt sealed before the outcome resolves.',
     icon: '4',

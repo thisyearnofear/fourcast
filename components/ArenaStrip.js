@@ -47,9 +47,9 @@ export default function ArenaStrip() {
   const headline = (latest?.decisions || [])[0];
 
   return (
-    <div className="mt-8 border-y border-[var(--color-rule)]" aria-label="Live agent activity">
+    <div className="mt-3 border-b border-[var(--color-rule)]" aria-label="Live agent activity">
       {/* heartbeat row */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-1 py-2.5 sm:px-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 py-1.5 sm:px-2">
         {latest ? (
           <>
             <span className="inline-flex items-center gap-2 text-[12px] font-semibold" style={{ color: latest.summary?.dryRun ? 'var(--color-sealed)' : 'var(--color-accent)' }}>
@@ -77,7 +77,7 @@ export default function ArenaStrip() {
       {headline && (
         <Link
           href="/arena"
-          className="group flex flex-wrap items-center gap-x-3 gap-y-1 px-1 py-2.5 no-underline sm:px-3"
+          className="group flex flex-wrap items-center gap-x-3 gap-y-1 px-1 py-1.5 no-underline sm:px-2"
           style={{ borderTop: '1px solid var(--color-rule)' }}
         >
           <span

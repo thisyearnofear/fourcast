@@ -80,7 +80,7 @@ export default function RootLayout({ children }) {
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
                 <Link href="/signals" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.signals ?? 'Signals'}</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/agent" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.agent ?? 'Mandate'}</Link>
+                <Link href="/agent" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.agent ?? 'Agent'}</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
                 <Link href="/labs" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.labs ?? 'Labs'}</Link>
                 <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
