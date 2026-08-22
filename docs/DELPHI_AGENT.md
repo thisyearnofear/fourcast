@@ -10,7 +10,7 @@ Polymarket agent.
 - API key portal: https://delphi-api-access.gensyn.ai/
 - Competition wallet (registered on DoraHacks): `0x5c4a7a58989f3efde45f1d9e4cfd1b52488ea33f`
 - Competition window: **Aug 10–24, 2026**
-- **Last verified**: 2026-08-20 (day 11/14) — **rank 80/159 on the official board**: account **1000.35 TST**, PnL **−0.15 TST**, 86 trades, volume 214.26. See Live trade summary below.
+- **Last verified**: 2026-08-22 (day 13/14) — **rank 80/159 on the official board**: account **1000.35 TST**, PnL **−0.15 TST**, 86 trades, volume 214.26. See Live trade summary below.
 
 ## Network Facts
 
@@ -33,11 +33,11 @@ price, directly comparable to EV per share.
 | `services/delphiService.js` | Delphi SDK wrapper — discovery, quoting, execution, positions, redemption, edge math |
 | `services/delphiIntelligence.js` | Market classification and probability routing — data feeds first, then sports odds (paid TxLINE → free ESPN anchor) for sports, LLM router for everything else |
 | `services/delphiDataFeeds.js` | Deterministic public-data intelligence — SILSO sunspots, NSIDC sea ice, Open-Meteo weather. Near resolution the answer is often already published at ~0.85. |
-| `services/llmRouter.js` | OpenAI-compatible provider chain (openrouter → nvidia → venice) with failover, web-search support w/ auto-degrade, 429 backoff for `:free` models |
+| `services/llmRouter.js` | OpenAI-compatible provider chain (**`venice → nvidia → bai → vercel → openrouter`**) with failover, web-search support w/ auto-degrade, 429 backoff for `:free` models. Venice `stealth-ox-alpha` primary (3min timeout); all others fallback. |
 | `services/evidenceRetriever.js` | Exa web search → citable snippets injected into forecast prompts (primary grounding; 6h per-question cache, ~$0.005/query) |
 | `services/delphiAgentLoop.js` | Async-generator loop: balances → discover → sweep settled → forecast → Kelly size → 5-gate policy → execute (with liveCategories/liveSources gating → paper trades) |
 | `scripts/delphi-agent-worker.mjs` | Headless worker (`--once`, `--dry-run`); state in `.delphi-agent/` |
-| `deploy/delphi-agent.ecosystem.config.cjs` | PM2 config (5-minute cycles) |
+| `deploy/delphi-agent.ecosystem.config.cjs` | PM2 config (3h cycles, **`--aggro --live` baked in**) |
 
 Sports markets are budgeted by `matchEspnOdds()` — the free ESPN public
 consensus-odds anchor (`services/txline/espnProvider.js`) — falling through to
@@ -116,7 +116,7 @@ trades simulated with 5-share caps. Decide→execute path confirmed end-to-end.
 
 INFERENCE: forecasts run through a multi-provider LLM router
 (`services/llmRouter.js`) — ordered failover, default chain
-`openrouter → nvidia → venice` (`DELPHI_AGENT_LLM_PROVIDERS`). Only providers
+`venice → nvidia → bai → vercel → openrouter` (`DELPHI_AGENT_LLM_PROVIDERS`). Only providers
 with configured keys are attempted; auth/billing/rate-limit failures roll over
 automatically, and the winning provider+model is recorded in each forecast's
 `source` for audit. Failover verified 2026-08-12 (openrouter 401 → nvidia 403
@@ -185,6 +185,7 @@ is now live and verified end-to-end against the ESPN public API:
 - **Kelly fix**: removed hidden `* 0.25` double-penalty in `utils/kellySizing.js`. Fractional Kelly is now `kelly * riskTolerance * confidenceMultiplier` (was `kelly * riskTolerance * 0.25 * confidenceMultiplier`). At MEDIUM confidence a 25% edge → ~7.5% allocation vs ~1.25% before.
 - **`riskTolerance`** now reads from `DELPHI_AGENT_RISK_TOLERANCE` env (was hardcoded 0.5). VPS set to **0.75**.
 - **LLM provider chain**: added B.AI (`bai`) with `BAI_API_KEY` — DeepSeek-V4-Flash free tier, zero rate limit, fires immediately when Vercel is queued. Chain: `vercel → bai → venice → nvidia → openrouter`.
+- **2026-08-22 update**: Venice promoted to **#1 provider** (`venice → nvidia → bai → vercel → openrouter`) with `stealth-ox-alpha` model and 180s timeout. Vercel 402/429 persistent, Bai empty completions; Venice free tier proved faster (82–150s vs 370–870s) and reliable. PM2 ecosystem config now enforces `--aggro --live` via `args` field. Venetce timeout increased from default 60s → 180s for `stealth-ox-alpha`.
 - **Evidence retrieval chain**: Vercel Exa → direct Exa → **Parallel AI** (`PARALLEL_API_KEY`) → **Firecrawl** (free, no key needed, `https://api.firecrawl.dev/v1/search`). Four fallbacks; Firecrawl fires when all others are unavailable or rate-limited.
 - **NFL 2-way ESPN**: `extractOdds` now handles home+away-only (no draw) responses. `normalize1x2` accepts `drawAmerican=null`. NFL markets anchored at HIGH confidence from ESPN instead of falling through to blind LLM.
 
@@ -234,12 +235,7 @@ Markets traded: LaLiga Rayo–Alavés, US 10yr yield, Sporting KC MLS, Botafogo�
   equal-split guess. Team-labelled (multi or binary) forms keep the label mapper.
   ESPN is now the live sports odds anchor — no TxLINE subscription needed for
   the competition window.
-- **Tuning via env**: `DELPHI_AGENT_MIN_EDGE` (0.03), `DELPHI_AGENT_MAX_MARKETS`
-  (25), `DELPHI_AGENT_LLM_PROVIDERS` (chain order), `OPENROUTER_MODEL`,
-  `NVIDIA_MODEL`, `DELPHI_AGENT_VENICE_MODEL` (per-provider model overrides),
-  `DELPHI_AGENT_LIVE_SOURCES` / `DELPHI_AGENT_LIVE_CATEGORIES` (go-live gates —
-  anything else paper-trades), `DELPHI_AGENT_WEB_SEARCH` (default on; router
-  auto-degrades on 400/402), `DELPHI_AGENT_INTERVAL_MS` (1h during paper phase).
+- **Tuning via env**: `DELPHI_AGENT_MIN_EDGE` (0.03), `DELPHI_AGENT_MAX_MARKETS` (25), `DELPHI_AGENT_LLM_PROVIDERS` (chain: **`venice,nvidia,bai,vercel,openrouter`**), `OPENROUTER_MODEL`, `NVIDIA_MODEL`, `DELPHI_AGENT_VENICE_MODEL` (**`stealth-ox-alpha`**, Venice primary w/ 180s timeout), `DELPHI_AGENT_LIVE_SOURCES` / `DELPHI_AGENT_LIVE_CATEGORIES` (go-live gates — anything else paper-trades), `DELPHI_AGENT_WEB_SEARCH` (default on; router auto-degrades on 400/402), `DELPHI_AGENT_INTERVAL_MS` (3h).
 
 ## Go-live + submission checklist (competition ends Aug 24, 2026)
 
