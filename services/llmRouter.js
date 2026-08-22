@@ -61,6 +61,7 @@ const PROVIDERS = {
     keyEnv: 'VENICE_API_KEY',
     modelEnv: 'DELPHI_AGENT_VENICE_MODEL', // legacy name, keep working
     defaultModel: 'llama-3.3-70b',
+    timeout: 180_000, // stealth-ox-alpha is a heavy model; needs 3min budget
     attempts: 2,
   },
   vercel: {

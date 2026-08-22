@@ -14,6 +14,7 @@ module.exports = {
       cwd: process.env.DELPHI_AGENT_CWD || '.',
       interpreter: 'node',
       interpreter_args: '--experimental-vm-modules --env-file=.env.local',
+      args: '--aggro --live',
       node_args: '--experimental-vm-modules --env-file=.env.local',
       env: {
         NODE_ENV: 'production',
