@@ -10,6 +10,7 @@ import {
 import Reveal from '@/components/motion/Reveal';
 import useChangeFlash from '@/hooks/useChangeFlash';
 import { AppShell } from '@/app/components/PageNav';
+import GlowList from '@/components/ui/GlowList';
 
 const formatLatency = (ms) => {
  if (ms == null) return '—';
@@ -108,6 +109,11 @@ export default function StatusPage() {
  const summaryAppearance = health ? getSummaryAppearance(health.summary) : null;
  const isHealthy = health?.summary === 'all_healthy';
 
+ // Provider counts for the GlowList header chips.
+ const providers = health ? Object.entries(health.providers) : [];
+ const healthyCount = providers.filter(([, p]) => p.status === 'healthy').length;
+ const degradedCount = providers.length - healthyCount;
+
  return (
  <AppShell
       title="Status"
@@ -161,10 +167,30 @@ export default function StatusPage() {
  </div>
  )}
 
- {/* Provider records — tabular operational sections, not cards */}
+ {/* Provider records — GlowList progressive disclosure */}
  {health && (
- <div className="w-full flex flex-col gap-3">
- {Object.entries(health.providers).map(([key, provider], index) => (
+ <GlowList
+ count={providers.length}
+ label="provider"
+ defaultOpen={true}
+ renderSummary={() => (
+ <>
+ <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-medium text-accent border border-accent/30">
+ <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+ {healthyCount} healthy
+ </span>
+ {degradedCount > 0 && (
+ <span className="inline-flex items-center gap-1.5 rounded-full bg-sealed/15 px-2 py-0.5 text-[10px] font-medium text-sealed border border-sealed/30">
+ <span className="w-1.5 h-1.5 rounded-full bg-sealed" />
+ {degradedCount} degraded
+ </span>
+ )}
+ </>
+ )}
+ emptyLabel="No providers registered"
+ >
+ <div className="w-full flex flex-col gap-3 mt-2">
+ {providers.map(([key, provider], index) => (
  <Reveal key={key} delay={Math.min(index * 50, 300)}>
  <div
  className="bg-[var(--color-wash-soft)] border border-[var(--color-rule)] p-[18px_20px] transition-colors duration-200 hover:bg-white/[0.05]"
@@ -204,6 +230,7 @@ export default function StatusPage() {
  </Reveal>
  ))}
  </div>
+ </GlowList>
  )}
  </AppShell>
  );

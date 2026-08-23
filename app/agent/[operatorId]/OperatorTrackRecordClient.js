@@ -105,7 +105,7 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
       )}
 
       {!loading && !error && (
-        <>
+        <div className="mobile-readable">
           {/* Operator card — the designed sports-card hero. This is the
               shareable artifact: identity, calibration, and mandate in one
               glance. */}
@@ -210,7 +210,7 @@ export default function OperatorTrackRecordClient({ operatorId, initialData }) {
             <ExternalLink className="h-3 w-3 shrink-0 text-[var(--color-ink-faint)]" />
             <span>Public by design — anyone with the link can audit this. Private mandates are Premium.</span>
           </div>
-        </>
+        </div>
       )}
     </AppShell>
   );

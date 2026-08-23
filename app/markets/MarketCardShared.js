@@ -10,6 +10,7 @@ import TweenNumber from "@/components/motion/TweenNumber";
 import EduWait from "@/components/EduWait";
 import useChangeFlash from "@/hooks/useChangeFlash";
 import { AnalysisTrace } from "./AnalysisTrace";
+import PercentileChart from "@/components/charts/PercentileChart";
 
 // Token-vocabulary tints (tokens.css) — replaces ad-hoc blue/purple/green
 // Tailwind palette: evidence blue, review violet, sealed amber, breach red,
@@ -246,6 +247,13 @@ function DenseAnalysisPanel({
  <p className="text-sm font-medium text-[var(--color-ink)]">
  {analysis.recommended_action}
  </p>
+ )}
+
+ {/* Insight card — ML forecast distribution (recharts; replaces the
+ deferred liveline carousel). Renders only when SynthData percentiles
+ are present. */}
+ {analysis.synthData?.percentiles?.raw && (
+ <PercentileChart synthData={analysis.synthData} />
  )}
 
  <ChainActionWidget
