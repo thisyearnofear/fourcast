@@ -318,6 +318,33 @@ body {
   z-index: 1; /* above the fixed canvas (z-0) */
 }
 
+/* ── Global CSS backdrop — replaces per-page WaveGrid + platform-atmosphere ──
+   A fixed, breathing grid rendered as a ::before pseudo-element on body.
+   Zero JS cost, no canvas context, no rAF loop — pure CSS GPU-composited.
+   Visible on every page (landing, markets, arena, positions, signals…).
+   The perspective wave-grid was a nice landing-only flourish; this gives
+   every page the same live-instrument feel without the overhead.
+   Mask fades lines out toward the bottom so the content doesn't fight them.
+   Reduced motion: breathing pauses, grid stays visible.
+   */
+@keyframes fc-backdrop-breathe {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.55; }
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2; /* behind body (z-1) but above page canvas (z-0) */
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, transparent calc(100% - 1px), rgba(243, 240, 231, 0.055) 0),
+    repeating-linear-gradient(180deg, transparent 0, transparent 5.7rem, rgba(243, 240, 231, 0.055) 5.75rem, rgba(243, 240, 231, 0.055) 5.8rem);
+  background-size: clamp(4.5rem, 8vw, 8rem) clamp(5.8rem, 10vh, 8rem);
+  mask-image: linear-gradient(to bottom, black 0%, black 42%, transparent 90%);
+  animation: fc-backdrop-breathe 10s ease-in-out infinite;
+}
+
 /* Live Evidence Terminal — use these components for operator surfaces.
    They are intentionally squared-off and data-led; glass is reserved for overlays. */
 .market-field {
@@ -799,6 +826,7 @@ body { overflow-x: clip; }
   .fc-rec-lamp { animation: none !important; }
   .fc-seal-target.is-revealed { animation: none !important; }
   .fc-backdrop__grid { animation: none !important; }
+  body::before { animation: none !important; }
   .fc-radar::before { animation: none !important; }
   .fc-marquee__track { animation: none !important; }
   .fc-market-slide { animation: none !important; }

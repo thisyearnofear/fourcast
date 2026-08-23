@@ -10,7 +10,7 @@ import DecisionRadar from '@/components/DecisionRadar';
 import LatestExecutionCard from '@/components/LatestExecutionCard';
 import TrustStatsStrip from '@/components/TrustStatsStrip';
 import AgentRail from '@/components/AgentRail';
-import WaveGrid from '@/components/WaveGrid';
+
 import VenueMap from '@/components/VenueMap';
 import ProofTimeline from '@/components/ProofTimeline';
 import MagneticButton from '@/components/ui/MagneticButton';
@@ -226,8 +226,9 @@ export default function SearchLanding() {
 
   return (
     <main className="fc-grain relative min-h-screen overflow-x-hidden text-[var(--ink)]">
-      {/* Backdrop layers — WaveGrid self-handles reduced motion (static frame). */}
-      <WaveGrid />
+      {/* Backdrop — global CSS grid on body::before covers all pages.
+          The landing-specific CSS grid (.fc-backdrop__grid) adds a
+          secondary finer layer behind the hero for extra depth. */}
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden>
         <div className="fc-backdrop">
           <div className="fc-backdrop__grid" />

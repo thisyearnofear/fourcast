@@ -34,7 +34,6 @@ function PresentShell({ children }) {
 
   return (
     <div className="fc-present relative flex min-h-screen flex-col text-[var(--color-ink)]">
-      <div className="platform-atmosphere" aria-hidden="true" />
       <header className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-6 sm:px-6">
         <span className="flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center border border-[var(--color-accent)]/25 bg-[var(--color-accent)]/5 font-display text-sm text-[var(--color-accent)]">

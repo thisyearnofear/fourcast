@@ -267,7 +267,6 @@ export function HomeLink({ showLabel = true }) {
 export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-w-7xl", wallet = true, children }) {
   return (
     <div className="platform-shell flex min-h-screen flex-col text-[var(--color-ink)]">
-      <div className="platform-atmosphere" aria-hidden="true" />
       <div className="platform-frame mx-auto w-full max-w-7xl px-4 pt-3 sm:px-6 sm:pt-4">
         <header className="operator-header platform-header sticky top-3 z-50 flex items-center justify-between gap-4 px-3 py-2.5 sm:top-4">
           <HomeLink />
