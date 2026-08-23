@@ -63,9 +63,12 @@ records and telemetry should remain compact.
 - Use motion for feedback, state indication, spatial consistency, or explanation.
 - The signature motion is proof progression from sealed evidence to reconciliation.
 - Continuous animation is reserved for genuinely live indicators. The landing
-  wave grid qualifies: it breathes at idle, ripples to the pointer, and sweeps
+  wave field qualifies: it breathes at idle, ripples to the pointer, and sweeps
   state-colored pulses when agent decisions land — it is driven by live state,
-  not decoration.
+  not decoration. Two implementations share one contract: a WebGL liquid field
+  (`LiquidField`, custom displacement shader) on capable clients, and the 2D
+  canvas `WaveGrid` everywhere else. Capability gates: WebGL + fine pointer +
+  no reduced motion + no Save-Data; three.js loads only when all pass.
 - The backdrop is state-driven (`BackdropProvider`): six semantic states
   (idle, scanning, sealed, breach, review, reconciled) shift the grid/glow
   palette app-wide via CSS custom properties. One pulse bus

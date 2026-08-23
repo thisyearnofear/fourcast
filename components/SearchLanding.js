@@ -9,16 +9,16 @@ import ParticleReveal from '@/components/canvasui/ParticleReveal';
 import LatestExecutionCard from '@/components/LatestExecutionCard';
 import TrustStatsStrip from '@/components/TrustStatsStrip';
 import AgentRail from '@/components/AgentRail';
-import WaveGrid from '@/components/WaveGrid';
+import LiquidField from '@/components/LiquidField';
 import VenueMap from '@/components/VenueMap';
 import ProofTimeline from '@/components/ProofTimeline';
 import MagneticButton from '@/components/ui/MagneticButton';
 import ParallaxReveal from '@/components/ui/ParallaxReveal';
 import { BRAND } from '@/constants/brand';
 
-// Venues named in the hero legend strip. The labeled peaks themselves stand
-// in the WaveGrid field behind the hero (see WaveGrid VENUES); Canton stays
-// quiet (amber) as a roadmap venue.
+// Venues named in the hero legend strip. The glowing peaks themselves stand
+// in the backdrop field behind the hero (LiquidFieldScene on capable
+// clients, WaveGrid elsewhere); Canton stays quiet (amber) as a roadmap venue.
 const HERO_VENUES = [
   { name: 'Polymarket' },
   { name: 'Kalshi' },
@@ -245,12 +245,13 @@ export default function SearchLanding() {
 
   return (
     <main className="fc-grain relative min-h-screen overflow-x-hidden text-[var(--ink)]">
-      {/* Backdrop — the landing's living wave field. WaveGrid is the
-          signature instrument: it breathes, ripples to the pointer, and
-          sweeps state-colored pulses when agent decisions land (via the
-          shared BackdropProvider bus). The static CSS grid underneath is
-          the reduced-motion / no-canvas fallback. */}
-      <WaveGrid />
+      {/* Backdrop — the landing's living field. LiquidField mounts the
+          WebGL liquid wave field on capable clients (WebGL + fine pointer
+          + no reduced motion + no Save-Data) and falls back to the 2D
+          WaveGrid everywhere else. Both breathe, ripple to the pointer,
+          and sweep state-colored pulses via the shared BackdropProvider
+          bus. The static CSS grid underneath is the final fallback. */}
+      <LiquidField />
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden>
         <div className="fc-backdrop">
           <div className="fc-backdrop__grid" />
