@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState, useEffect, useCallback } from 'react';
+import React, { Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { RefreshCw, ChevronDown, SlidersHorizontal } from 'lucide-react';
@@ -13,6 +13,7 @@ import { MandateControl } from '@/components/MandateControl';
 import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
 import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { AgentDashboard } from '@/components/AgentDashboard';
+import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
 
 const mono = { fontFamily: 'var(--font-mono, monospace)' };
 
@@ -174,6 +175,8 @@ function LedgerLane() {
   const balances = latest?.balances || null;
   const positions = latest?.positions || [];
 
+  const { setState: setBackdrop } = useBackdrop();
+
   const seen = new Set();
   const ledger = [];
   for (const r of runs) {
@@ -186,6 +189,21 @@ function LedgerLane() {
     }
     if (ledger.length >= 14) break;
   }
+
+  // Backdrop state — driven by latest ledger decision verdict
+  const latestVerdict = useMemo(() => {
+    const d = ledger[ledger.length - 1];
+    return d?.verdict?.toLowerCase() || null;
+  }, [ledger]);
+
+  useEffect(() => {
+    if (!latestVerdict) return;
+    if (latestVerdict === 'reconciled') setBackdrop(BACKDROP_STATES.reconciled);
+    else if (latestVerdict === 'breach') setBackdrop(BACKDROP_STATES.breach);
+    else if (latestVerdict === 'review') setBackdrop(BACKDROP_STATES.review);
+    else if (latestVerdict === 'pass') setBackdrop(BACKDROP_STATES.sealed);
+    else setBackdrop(BACKDROP_STATES.scanning);
+  }, [latestVerdict, setBackdrop]);
 
   const trades = runs
     .flatMap((r) => (r.executions || []).filter((e) => e.status !== 'dry_run' || !r.summary?.dryRun).map((e) => ({ ...e, runTs: r.timestamp })))

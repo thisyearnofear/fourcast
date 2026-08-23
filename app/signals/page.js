@@ -20,6 +20,7 @@ import AgentRail from '@/components/AgentRail';
 import Reveal from '@/components/motion/Reveal';
 import { useCountUp } from '@/hooks/useCountUp';
 import { BRAND } from '@/constants/brand';
+import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
 
 export default function SignalsPage() {
   const { connected, walletAddress } = useSignalPublisher();
@@ -44,6 +45,15 @@ export default function SignalsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedSignalId, setExpandedSignalId] = useState(null);
+
+  // Backdrop — signal activity state
+  const { setState: setBackdrop } = useBackdrop();
+  useEffect(() => {
+    if (isLoading) { setBackdrop(BACKDROP_STATES.scanning); return; }
+    if (error) { setBackdrop(BACKDROP_STATES.breach); return; }
+    if (signals.length > 0) { setBackdrop(BACKDROP_STATES.review); return; }
+    setBackdrop(BACKDROP_STATES.idle);
+  }, [isLoading, error, signals.length, setBackdrop]);
 
   // Filters & Search (persisted)
   const filters = filterStore.signalsFilters;

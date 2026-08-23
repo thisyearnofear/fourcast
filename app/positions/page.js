@@ -8,9 +8,12 @@ import AgentTrackRecord from "@/components/AgentTrackRecord";
 import AgentRail from "@/components/AgentRail";
 import Reveal from "@/components/motion/Reveal";
 import { BRAND } from "@/constants/brand";
+import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
+import { useAccount } from 'wagmi';
 
 export default function PositionsPage() {
   const [view, setView] = useState("public");
+  const { address: walletAddress } = useAccount();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -18,6 +21,17 @@ export default function PositionsPage() {
     if (params.get("view") === "private") setView("private");
     else if (params.get("view") === "agent") setView("agent");
   }, []);
+
+  // Backdrop — reflect position activity state
+  const { setState: setBackdrop } = useBackdrop();
+  useEffect(() => {
+    if (!walletAddress) { setBackdrop(BACKDROP_STATES.idle); return; }
+    if (view === 'private' || view === 'agent') {
+      setBackdrop(BACKDROP_STATES.reconciled); // viewing historical proof
+    } else {
+      setBackdrop(BACKDROP_STATES.scanning); // viewing open positions
+    }
+  }, [walletAddress, view, setBackdrop]);
 
   const selectView = (next) => {
     setView(next);

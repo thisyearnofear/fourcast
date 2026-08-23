@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useMarketsData } from "./useMarketsData";
+import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
 import { useSignalPublisher } from "@/hooks/useSignalPublisher";
 import { useChainConnections } from "@/hooks/useChainConnections";
 import useFilterStore from "@/hooks/useFilterStore";
@@ -219,6 +220,19 @@ export default function MarketsPage() {
  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
  const [analysisStage, setAnalysisStage] = useState(0);
  const [analysisMode, setAnalysisMode] = useState("basic");
+ 
+ // Backdrop — markets analysis state
+ const { setState: setBackdrop } = useBackdrop();
+ useEffect(() => {
+  if (isLoadingAnalysis) { setBackdrop(BACKDROP_STATES.scanning); return; }
+  if (analysis) {
+    const breach = analysis.assessment?.breach || analysis.breach;
+    if (breach) setBackdrop(BACKDROP_STATES.breach);
+    else setBackdrop(BACKDROP_STATES.sealed);
+    return;
+  }
+  setBackdrop(BACKDROP_STATES.idle);
+ }, [analysis, isLoadingAnalysis, setBackdrop]);
  
  // Analysis config modal state
  const [showConfigModal, setShowConfigModal] = useState(false);
