@@ -211,7 +211,7 @@ export default function PageNav() {
         <AudienceSwitcher />
       </div>
 
-      {/* Mobile: compact labels */}
+      {/* Mobile: compact labels, tap-friendly targets */}
       <div className="flex min-w-0 items-center gap-1 md:hidden">
         {PRIMARY_NAV.map((item) => (
           <Link
@@ -220,7 +220,7 @@ export default function PageNav() {
             aria-label={item.name}
             aria-current={isActive(item) ? "page" : undefined}
             className={`mc-nav-link no-underline ${isActive(item) ? "is-active" : ""}`}
-            style={{ padding: "0.4rem 0.5rem", fontSize: "11px" }}
+            style={{ padding: "0.55rem 0.5rem", fontSize: "12px" }}
           >
             {item.name}
           </Link>
@@ -272,7 +272,8 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
           <HomeLink />
           <div className="flex items-center gap-2">
             <PageNav />
-            <OperatorPulse compact className="flex" />
+            {/* OperatorPulse — supplementary on mobile; the lamp also lives in AgentRail */}
+            <OperatorPulse compact className="hidden sm:flex" />
             <div className="hidden sm:block"><StatusBadge /></div>
             {wallet && <div className="platform-wallet"><WalletConnect /></div>}
           </div>
@@ -298,7 +299,7 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
         )}
       </div>
 
-      <main className={`${maxWidth} platform-main platform-stage mx-auto w-full flex-1 px-4 pb-16 pt-4 sm:px-6 sm:pb-24`}>
+      <main className={`${maxWidth} platform-main platform-stage mobile-readable mx-auto w-full flex-1 px-4 pb-16 pt-4 sm:px-6 sm:pb-24`}>
         {children}
       </main>
     </div>

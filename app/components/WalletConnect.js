@@ -53,7 +53,7 @@ export default function WalletConnect({ isNight = false }) {
  // Styling — disconnected trigger uses the secondary-CTA voice (emerald text
  // + mint border) per design.md so it reads against the operator header.
  // Connected state keeps the document-surface mc-panel look for the pills.
- const triggerDisconnected = 'fc-action--quiet px-4 py-2 text-sm font-medium';
+ const triggerDisconnected = 'fc-action--quiet px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm';
  const triggerConnected = 'mc-panel px-3 py-2 text-sm font-medium text-[var(--color-ink)]';
  const textColor = 'text-[var(--color-ink)]';
  const dropdownGlass = 'mc-panel bg-[var(--color-paper-raised)]';

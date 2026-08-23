@@ -259,7 +259,7 @@ export default function SearchLanding() {
       </div>
 
       {/* Content — single column, max-w-6xl */}
-      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col">
+      <div className="mobile-readable relative mx-auto flex min-h-screen w-full max-w-6xl flex-col">
         {/* Header — compressed, glass on scroll */}
         <header
           ref={headerRef}
