@@ -14,6 +14,11 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
  *   breach     — policy violation detected (red)
  *   review     — verification under review (violet)
  *   reconciled — outcome settled, matches receipt (strong green)
+ *
+ * Pulse system:
+ *   emitBackdropPulse({ x, y, state? }) creates a one-shot radial ripple
+ *   at screen coords. Called from any page — AgentRail, arena feed,
+ *   DecisionRadar, position updates, signal events. CSS does all the work.
  */
 
 export const BACKDROP_STATES = /** @type {const} */ ({
@@ -24,6 +29,16 @@ export const BACKDROP_STATES = /** @type {const} */ ({
   review: 'review',
   reconciled: 'reconciled',
 });
+
+/** Pulse color for each backdrop state. */
+const PULSE_COLORS = {
+  idle: 'rgba(121, 245, 183, 0.15)',
+  scanning: 'rgba(121, 245, 183, 0.18)',
+  sealed: 'rgba(245, 197, 107, 0.15)',
+  breach: 'rgba(255, 122, 111, 0.22)',
+  review: 'rgba(196, 181, 253, 0.18)',
+  reconciled: 'rgba(121, 245, 183, 0.25)',
+};
 
 /** Palette for each backdrop state. */
 const PALETTES = {
@@ -77,6 +92,31 @@ const PALETTES = {
   },
 };
 
+/**
+ * Emit a one-shot radial pulse on the backdrop grid.
+ * @param {{ x?: number, y?: number, state?: string }} opts
+ *   x/y — screen coords (center of ripple). Defaults to center-screen.
+ *   state — backdrop state color to use. Defaults to current.
+ */
+export function emitBackdropPulse({ x, y, state } = {}) {
+  if (typeof document === 'undefined') return;
+  const el = document.createElement('div');
+  el.className = 'fc-backdrop-pulse';
+  el.style.setProperty('--pulse-x', x != null ? `${x}px` : '50%');
+  el.style.setProperty('--pulse-y', y != null ? `${y}px` : '50%');
+  if (state) el.style.setProperty('--pulse-color', PULSE_COLORS[state] ?? PULSE_COLORS.scanning);
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove(), { once: true });
+  // Safety: remove after 1.2s in case animationend doesn't fire (tab hidden etc.)
+  setTimeout(() => el.remove(), 1200);
+}
+
+// Expose globally for legacy callers (emitWaveGridPulse still works via re-export)
+const _emitBackdropPulseGlobal = emitBackdropPulse;
+if (typeof window !== 'undefined') {
+  window.__emitBackdropPulse = _emitBackdropPulseGlobal;
+}
+
 /** @type {React.Context<BackdropCtx | null>} */
 const BackdropContext = createContext(null);
 
@@ -115,8 +155,12 @@ export function BackdropProvider({ children }) {
     };
   }, [state, palette]);
 
+  const emitPulse = useCallback((opts) => {
+    emitBackdropPulse({ ...opts, state: opts.state || state });
+  }, [state]);
+
   return (
-    <BackdropContext.Provider value={{ state, setState: setStateSafe }}>
+    <BackdropContext.Provider value={{ state, setState: setStateSafe, emitPulse }}>
       {children}
     </BackdropContext.Provider>
   );

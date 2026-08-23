@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { VERDICT_COLORS, ago } from '@/utils/arenaUi';
-import { emitWaveGridPulse } from '@/components/WaveGrid';
+import { emitBackdropPulse, BACKDROP_STATES } from '@/components/BackdropProvider';
 
 /**
  * AgentRail — the unified live agent feed (supersedes the old
@@ -16,8 +16,8 @@ import { emitWaveGridPulse } from '@/components/WaveGrid';
  *   Row 3 (marquee): decisions as dense, scrollable items
  *
  * Replaces three separate components that all polled the same endpoint.
- * When a *new* cycle lands it fires emitWaveGridPulse() so the WaveGrid
- * backdrop ripples — the fold visibly reacts to the agent's heartbeat.
+ * When a *new* cycle lands it fires emitBackdropPulse() so the grid
+ * visibly ripples — the whole page reacts to the agent's heartbeat.
  *
  * Truth-first liveness: the lamp only reads LIVE when a cycle landed within
  * STALE_AFTER_MS (the worker runs every 5 min, so 30 min of silence means
@@ -77,7 +77,16 @@ export default function AgentRail() {
           // not on the initial load or every 60s re-poll of the same data.
           const ts = latestRun?.timestamp || null;
           if (ts && lastCycleRef.current && ts !== lastCycleRef.current) {
-            emitWaveGridPulse();
+            // Use the latest decision's verdict to color the pulse.
+            const latestDecision = latestRun?.decisions?.[latestRun.decisions.length - 1];
+            const verdict = latestDecision?.verdict?.toLowerCase();
+            const stateMap = {
+              reconciled: BACKDROP_STATES.reconciled,
+              breach: BACKDROP_STATES.breach,
+              review: BACKDROP_STATES.review,
+              pass: BACKDROP_STATES.sealed,
+            };
+            emitBackdropPulse({ state: stateMap[verdict] || BACKDROP_STATES.scanning });
           }
           lastCycleRef.current = ts;
         })
