@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ToastProvider } from '@/components/ToastProvider';
+import { BackdropProvider } from '@/components/BackdropProvider';
 import WalletLayer from './WalletLayer';
 import SolanaWalletLayer from './SolanaWalletLayer';
 import { CantonWalletProvider } from './CantonWalletLayer';
@@ -25,13 +26,15 @@ export function Providers({ children }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <WalletLayer>
-          <SolanaWalletLayer>
-            <CantonWalletProvider>{children}</CantonWalletProvider>
-          </SolanaWalletLayer>
-        </WalletLayer>
-      </ToastProvider>
+      <BackdropProvider>
+        <ToastProvider>
+          <WalletLayer>
+            <SolanaWalletLayer>
+              <CantonWalletProvider>{children}</CantonWalletProvider>
+            </SolanaWalletLayer>
+          </WalletLayer>
+        </ToastProvider>
+      </BackdropProvider>
     </QueryClientProvider>
   );
 }

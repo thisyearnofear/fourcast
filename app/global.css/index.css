@@ -304,8 +304,8 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at 78% -12%, var(--color-accent-atmosphere), transparent 34rem),
-    radial-gradient(circle at 2% 38%, var(--color-sealed-atmosphere), transparent 30rem),
+    radial-gradient(circle at 78% -12%, var(--backdrop-glow, var(--color-accent-atmosphere)), transparent 34rem),
+    radial-gradient(circle at 2% 38%, var(--backdrop-glow2, var(--color-sealed-atmosphere)), transparent 30rem),
     var(--app-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -328,8 +328,8 @@ body {
    Reduced motion: breathing pauses, grid stays visible.
    */
 @keyframes fc-backdrop-breathe {
-  0%, 100% { opacity: 0.35; }
-  50%      { opacity: 0.55; }
+  0%, 100% { opacity: var(--backdrop-breathe-min, 0.35); }
+  50%      { opacity: var(--backdrop-breathe-max, 0.55); }
 }
 body::before {
   content: '';
@@ -338,8 +338,8 @@ body::before {
   z-index: -2; /* behind body (z-1) but above page canvas (z-0) */
   pointer-events: none;
   background-image:
-    linear-gradient(90deg, transparent calc(100% - 1px), rgba(243, 240, 231, 0.055) 0),
-    repeating-linear-gradient(180deg, transparent 0, transparent 5.7rem, rgba(243, 240, 231, 0.055) 5.75rem, rgba(243, 240, 231, 0.055) 5.8rem);
+    linear-gradient(90deg, transparent calc(100% - 1px), var(--backdrop-grid, rgba(243, 240, 231, 0.06)) 0),
+    repeating-linear-gradient(180deg, transparent 0, transparent 5.7rem, var(--backdrop-grid2, var(--backdrop-grid, rgba(243, 240, 231, 0.06))) 5.75rem, var(--backdrop-grid2, var(--backdrop-grid, rgba(243, 240, 231, 0.06))) 5.8rem);
   background-size: clamp(4.5rem, 8vw, 8rem) clamp(5.8rem, 10vh, 8rem);
   mask-image: linear-gradient(to bottom, black 0%, black 42%, transparent 90%);
   animation: fc-backdrop-breathe 10s ease-in-out infinite;
@@ -826,7 +826,10 @@ body { overflow-x: clip; }
   .fc-rec-lamp { animation: none !important; }
   .fc-seal-target.is-revealed { animation: none !important; }
   .fc-backdrop__grid { animation: none !important; }
-  body::before { animation: none !important; }
+  body::before {
+    animation: none !important;
+    opacity: 0.5 !important;
+  }
   .fc-radar::before { animation: none !important; }
   .fc-marquee__track { animation: none !important; }
   .fc-market-slide { animation: none !important; }

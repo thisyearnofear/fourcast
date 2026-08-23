@@ -7,6 +7,7 @@ import ShareReceiptButton from '@/components/ShareReceiptButton';
 import Ripple from '@/components/canvasui/Ripple';
 import SealMoment from '@/components/motion/SealMoment';
 import AgentPulse from '@/components/motion/AgentPulse';
+import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
 
 /* --------------------------------------------------------------------------
    Mandate Control — flagship surface for /agent.
@@ -61,6 +62,7 @@ function relativeClock(agentTime) {
 }
 
 export function MandateControl() {
+  const { setState: setBackdrop } = useBackdrop();
   const [lab, setLab] = useState({ loading: true, status: null, verification: null, error: null });
   const [fixtures, setFixtures] = useState({});
   const [dossier, setDossier] = useState(null); // { fixtureId } | null
@@ -144,6 +146,26 @@ export function MandateControl() {
     [latest, timeline, reconciled, verificationVerdict, lab.verification],
   );
   const livePct = stages.length ? (stages.filter((s) => s.state === 'complete').length / stages.length) * 100 : 0;
+
+  // ── Backdrop state — driven by latest receipt status ──
+  useEffect(() => {
+    if (lab.loading) return;
+    if (!latest || !latest.verdict) {
+      setBackdrop(BACKDROP_STATES.scanning);
+      return;
+    }
+    if (reconciled) {
+      setBackdrop(BACKDROP_STATES.reconciled);
+    } else if (verdictKey === 'review') {
+      setBackdrop(BACKDROP_STATES.review);
+    } else if (latest.verdict?.toLowerCase() === 'breach' || latest?.breach) {
+      setBackdrop(BACKDROP_STATES.breach);
+    } else if (latest.receiptHash) {
+      setBackdrop(BACKDROP_STATES.sealed);
+    } else {
+      setBackdrop(BACKDROP_STATES.scanning);
+    }
+  }, [latest, reconciled, verdictKey, lab.loading, setBackdrop]);
 
   return (
     <section className="platform-workbench relative overflow-hidden" aria-labelledby="mandate-control-heading">
