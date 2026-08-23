@@ -63,8 +63,14 @@ records and telemetry should remain compact.
 - Use motion for feedback, state indication, spatial consistency, or explanation.
 - The signature motion is proof progression from sealed evidence to reconciliation.
 - Continuous animation is reserved for genuinely live indicators. The landing
-  wave grid qualifies: it breathes at idle, ripples to the pointer, and pulses
-  when a new agent cycle lands — it is driven by live state, not decoration.
+  wave grid qualifies: it breathes at idle, ripples to the pointer, and sweeps
+  state-colored pulses when agent decisions land — it is driven by live state,
+  not decoration.
+- The backdrop is state-driven (`BackdropProvider`): six semantic states
+  (idle, scanning, sealed, breach, review, reconciled) shift the grid/glow
+  palette app-wide via CSS custom properties. One pulse bus
+  (`emitBackdropPulse`) ripples the CSS grid on app pages and sweeps the
+  landing's wave field — same signal, both surfaces.
 - Disclosure is asymmetric (act first, prove second): panels unfold slowly on
   open (~520ms, the "prove" moment) and snap back fast on close (~200ms).
   Implemented via `.fc-clip-wrap` / `.fc-clip` (clip-path + grid-rows), no JS.
