@@ -12,7 +12,8 @@ precise, calm, independently auditable.
 
 ## Macrostructure family
 
-- Marketing pages: Canton wedge hero, then compact venue doors.
+- Marketing pages: live-agent hero over the wave grid, then the unified
+  agent rail, venue surfaces, and the proof timeline.
 - App pages: Workbench with open sections, dense rows, evidence on expand.
 - Content and status pages: Long Document with tabular operational sections.
 
@@ -37,6 +38,7 @@ one tap away. Trade language leads (`Markets`, `Positions`, `Private`, `Settle`,
 
 - `--color-paper`: lifted charcoal-green, never pitch black.
 - `--color-paper-raised`: localized working surfaces, not universal cards.
+- `--color-paper-glass`: frosted working surface for `GlassPanel` (see Card policy).
 - `--color-ink`: warm evidence paper.
 - `--color-accent`: verification emerald, limited to live/verified/selected states.
 - Evidence blue, sealed amber, breach red, and review violet are semantic only.
@@ -60,7 +62,12 @@ records and telemetry should remain compact.
 - UI transitions are crisp and generally below 300ms.
 - Use motion for feedback, state indication, spatial consistency, or explanation.
 - The signature motion is proof progression from sealed evidence to reconciliation.
-- Continuous animation is reserved for genuinely live indicators.
+- Continuous animation is reserved for genuinely live indicators. The landing
+  wave grid qualifies: it breathes at idle, ripples to the pointer, and pulses
+  when a new agent cycle lands — it is driven by live state, not decoration.
+- Disclosure is asymmetric (act first, prove second): panels unfold slowly on
+  open (~520ms, the "prove" moment) and snap back fast on close (~200ms).
+  Implemented via `.fc-clip-wrap` / `.fc-clip` (clip-path + grid-rows), no JS.
 - Animate transform and opacity; reduced motion removes displacement and keeps
   useful opacity/color feedback at 150ms or less.
 
@@ -81,7 +88,12 @@ records and telemetry should remain compact.
 - Cards are reserved for actionable objects, selected records, errors, and modals.
 - Page summaries, metrics, policies, fixtures, and positions use open sections,
   definition lists, evidence strips, and rows.
-- Never nest more than one bordered container.
+- `GlassPanel` (`--color-paper-glass`, frosted) is the sanctioned working
+  surface for interactive instruments: filters, scanners, and grouped controls
+  that the operator acts on. It is not a universal card — passive prose,
+  metrics, and summaries stay in open sections.
+- Never nest more than one bordered container. A `GlassPanel` holding plain
+  rows is one container; do not put bordered cards inside it.
 
 ## Per-page allowances
 
