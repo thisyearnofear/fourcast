@@ -96,7 +96,7 @@ export default function WaveGrid() {
       ctx.clearRect(0, 0, W, H);
 
       // Grid fades as you scroll past the hero.
-      const alpha = Math.max(0.12, 0.34 - scrollFade * 0.24);
+      const alpha = Math.max(0.12, 0.52 - scrollFade * 0.24);
 
       // Pointer proximity per row (cheap: one distance per row).
       const rowProx = new Array(ROWS + 1);
@@ -120,7 +120,7 @@ export default function WaveGrid() {
           Math.sin(elapsed * 0.4 + ny * 1.5) * 0.18 +
           Math.sin(elapsed * 0.3 + ny * 1.2 + 1.5) * 0.14;
 
-        const lineAlpha = Math.max(0.02, alpha * (0.3 + ny * 0.7) - scrollFade * 0.12);
+        const lineAlpha = Math.max(0.04, alpha * (0.5 + ny * 0.7) - scrollFade * 0.12);
         ctx.strokeStyle = `rgba(16, 74, 52, ${lineAlpha})`;
         ctx.beginPath();
         for (let s = 0; s <= segments; s++) {
@@ -138,8 +138,8 @@ export default function WaveGrid() {
       for (let c = 0; c <= COLS; c++) {
         const nx = c / COLS;
         const lineAlpha = Math.max(
-          0.02,
-          alpha * (0.4 + (1 - Math.abs(nx - 0.5) * 2) * 0.3) - scrollFade * 0.12,
+          0.04,
+          alpha * (0.6 + (1 - Math.abs(nx - 0.5) * 2) * 0.3) - scrollFade * 0.12,
         );
         ctx.strokeStyle = `rgba(14, 62, 44, ${lineAlpha})`;
         ctx.beginPath();
@@ -180,7 +180,7 @@ export default function WaveGrid() {
           const pulse = (Math.sin(elapsed * 1.2 + r + c * 0.7) + 1) * 0.5;
           const boost = Math.min(1, Math.abs(pw) * 0.06);
           const size = 1 + pulse * 1.5 + boost * 2;
-          const nodeAlpha = Math.max(0.04, alpha * 0.4 * pulse + boost * 0.3 - scrollFade * 0.2);
+          const nodeAlpha = Math.max(0.04, alpha * 0.6 * pulse + boost * 0.4 - scrollFade * 0.15);
           if (nodeAlpha < 0.03) continue;
           ctx.fillStyle = `rgba(121, 245, 183, ${nodeAlpha})`;
           ctx.beginPath();
