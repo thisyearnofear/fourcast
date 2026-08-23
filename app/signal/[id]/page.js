@@ -2,6 +2,8 @@ import { getSignalById } from '@/services/db.js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import SignalCTA from '@/components/SignalCTA';
+import GlassPanel from '@/components/ui/GlassPanel';
+import MagneticButton from '@/components/ui/MagneticButton';
 import { AppShell } from '@/app/components/PageNav';
 
 export const runtime = 'nodejs';
@@ -100,7 +102,7 @@ export default async function SignalPage({ params }) {
  </Link>
 
  {/* Signal Card */}
- <div className="bg-white/[0.03] border border-white/[0.06] p-6 space-y-5">
+ <GlassPanel className="p-6 space-y-5">
  {/* Header */}
  <div className="flex items-center justify-between">
  <span className="text-xs uppercase tracking-wider text-[var(--color-ink-faint)] font-medium">
@@ -159,7 +161,7 @@ export default async function SignalPage({ params }) {
  </span>
  </div>
  )}
- </div>
+ </GlassPanel>
 
  {/* Conversion CTA — stops the share loop from dead-ending */}
  <SignalCTA

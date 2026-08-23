@@ -5,6 +5,9 @@ import EmptyMarketState from "@/components/EmptyMarketState";
 import { StaggeredMarketCard } from "./MarketCardShared";
 import { Skeleton } from "@/components/Skeleton";
 import Reveal from "@/components/motion/Reveal";
+import GlassPanel from "@/components/ui/GlassPanel";
+import ExpandPanel from "@/components/ui/ExpandPanel";
+import ParallaxReveal from "@/components/ui/ParallaxReveal";
 
 export function SportsTabContent({
  markets,
@@ -51,7 +54,7 @@ export function SportsTabContent({
  };
 
  return (
- <div className="space-y-10">
+ <div className="space-y-8">
  {/* TxLINE Coverage Status */}
  <div className="flex items-center gap-2 px-3 py-2 border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/5 text-xs">
  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden />
@@ -68,7 +71,9 @@ export function SportsTabContent({
  </div>
 
  {/* Compact Filter Bar — open section */}
- <div className="platform-open-section space-y-2">
+<GlassPanel>
+<ExpandPanel title="Filters" subtitle="event type · date · volume" defaultOpen>
+ <div className="space-y-2">
  {/* Event Type */}
  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
  <label className={`${textColor} text-xs opacity-60 min-w-max`}>
@@ -167,14 +172,14 @@ export function SportsTabContent({
  </button>
  </div>
  </div>
+</ExpandPanel>
+</GlassPanel>
  {dateRange === "later" && (
- <div
- className={`mt-2 ${cardBgColor} border p-3`}
- >
+ <GlassPanel className="p-3 mt-2">
  <p className={`text-xs ${textColor} opacity-80`}>
  Weather-based analysis becomes less reliable beyond ~14 days.
  </p>
- </div>
+ </GlassPanel>
  )}
  {/* Markets List */}
  {isLoading || !markets ? (
@@ -246,7 +251,7 @@ export function SportsTabContent({
  <div className="mt-6 flex justify-center">
  <button
  onClick={onLoadMore}
- className="px-4 py-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent)] text-[var(--color-ink)] rounded-md text-sm font-medium transition-colors"
+ className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent)] px-5 py-2.5 text-sm font-medium text-[var(--color-ink)] transition-colors hover:shadow-lg hover:shadow-[var(--color-accent)]/20"
  >
  Load More ({markets.length - displayLimit} remaining)
  </button>

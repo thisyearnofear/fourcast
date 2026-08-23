@@ -26,7 +26,8 @@ export default function OperatorSpotlight({ operators = [], onProfileClick }) {
  const top = operators.slice(0, 3);
 
  return (
- <div className="evidence-strip grid grid-cols-1 gap-px bg-[var(--color-paper-soft)] sm:grid-cols-3" aria-label="Top analysts">
+ <GlassPanel className="p-1">
+ <div className="evidence-strip grid grid-cols-1 sm:grid-cols-3" aria-label="Top analysts">
  {top.map((user, idx) => {
  const winRate = Math.round((user.win_rate || 0) * 100);
  const tier = tierInfoFor(user.win_rate || 0);
@@ -72,5 +73,6 @@ export default function OperatorSpotlight({ operators = [], onProfileClick }) {
  );
  })}
  </div>
+ </GlassPanel>
  );
 }

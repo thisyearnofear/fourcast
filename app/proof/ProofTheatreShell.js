@@ -6,6 +6,7 @@ import { AppShell, SecondaryNav } from '@/app/components/PageNav';
 import CantonProof from './CantonProof';
 import WorldCupClient from '@/app/world-cup/WorldCupClient';
 import { BRAND } from '@/constants/brand';
+import GlassPanel from '@/components/ui/GlassPanel';
 
 /**
  * Private / Proof — chain-agnostic evidence surface.

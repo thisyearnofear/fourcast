@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useChainConnections } from "@/hooks/useChainConnections";
 import { CHAINS } from "@/constants/appConstants";
 import BottomSheet from "@/components/BottomSheet";
+import GlassPanel from "@/components/ui/GlassPanel";
 import EvidenceBlock from "@/components/EvidenceBlock";
 import TweenNumber from "@/components/motion/TweenNumber";
 import EduWait from "@/components/EduWait";
@@ -178,7 +179,9 @@ export function StaggeredMarketCard({
  }`}
  aria-hidden={!isVisible}
  >
+ <GlassPanel className="p-4">
  <MarketCard {...marketCardProps} />
+ </GlassPanel>
  </div>
  );
 }

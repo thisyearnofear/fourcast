@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { AppShell, SecondaryNav } from "@/app/components/PageNav";
+import { AppShell } from "@/app/components/PageNav";
 import PositionsDashboard from "@/components/PositionsDashboard";
 import CantonHolderDashboard from "@/components/CantonHolderDashboard";
 import AgentTrackRecord from "@/components/AgentTrackRecord";
-import EventTape from "@/components/EventTape";
+import AgentRail from "@/components/AgentRail";
 import Reveal from "@/components/motion/Reveal";
 import { BRAND } from "@/constants/brand";
 
@@ -34,31 +34,34 @@ export default function PositionsPage() {
       subtitle={BRAND.pages.positions}
       maxWidth="max-w-4xl"
       subheader={
-        <SecondaryNav
-          items={[
-            { id: "public", label: "Public", icon: "◆" },
-            { id: "private", label: "Private", icon: "◈" },
-          ]}
-          activeItem={view}
-          onChange={selectView}
-        />
+        <div className="mc-tab-strip">
+          {["public", "private", "agent"].map((id) => (
+            <button
+              key={id}
+              onClick={() => selectView(id)}
+              className={`mc-tab ${view === id ? "is-active" : ""}`}
+            >
+              {id === "public" ? "Public" : id === "private" ? "Private" : "Agent"}
+            </button>
+          ))}
+        </div>
       }
     >
-      <div className="mb-2">
- <EventTape />
-</div>
+      <AgentRail />
 
-{view === "private" ? (
-        <Reveal key="private">
+      {view === "agent" ? (
+        <Reveal>
+          <AgentTrackRecord />
+        </Reveal>
+      ) : view === "private" ? (
+        <Reveal>
           <div className="fc-view-swap fc-life-stage">
             <CantonHolderDashboard />
           </div>
         </Reveal>
       ) : (
-        <Reveal key="public">
-          <div className="fc-view-swap">
-            <PositionsDashboard />
-          </div>
+        <Reveal>
+          <PositionsDashboard />
         </Reveal>
       )}
     </AppShell>

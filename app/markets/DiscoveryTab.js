@@ -7,6 +7,9 @@ import EmptyMarketState from "@/components/EmptyMarketState";
 import { StaggeredMarketCard } from "./MarketCardShared";
 import { Skeleton } from "@/components/Skeleton";
 import Reveal from "@/components/motion/Reveal";
+import GlassPanel from "@/components/ui/GlassPanel";
+import ExpandPanel from "@/components/ui/ExpandPanel";
+import ParallaxReveal from "@/components/ui/ParallaxReveal";
 
 export function DiscoveryTabContent({
  markets,
@@ -51,11 +54,10 @@ export function DiscoveryTabContent({
  };
 
  return (
- <div className="space-y-10">
+ <div className="space-y-8">
  {/* Compact Filter Bar — open section */}
- <div
- className="platform-open-section space-y-2"
- >
+<GlassPanel>
+<ExpandPanel title="Filters" subtitle="category · platform · date" defaultOpen>
  {/* Category */}
  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
  <label className={`${textColor} text-xs opacity-60 min-w-max`}>
@@ -176,7 +178,8 @@ export function DiscoveryTabContent({
  />
  </button>
  </div>
- </div>
+ </ExpandPanel>
+</GlassPanel>
  {/* Arbitrage Opportunities Banner */}
  {!isLoading &&
  markets &&
@@ -186,9 +189,7 @@ export function DiscoveryTabContent({
 
  if (opportunities.count > 0) {
  return (
- <div
- className={`${cardBgColor} border p-4`}
- >
+ <GlassPanel className="p-4">
  <div className="flex items-center justify-between mb-3">
  <div className="flex items-center gap-2">
  <Zap className="h-5 w-5 text-[var(--color-sealed)]" />
@@ -260,7 +261,7 @@ export function DiscoveryTabContent({
  ))}
  </div>
  )}
- </div>
+</GlassPanel>
  );
  }
  return null;

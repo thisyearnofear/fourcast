@@ -15,6 +15,8 @@ import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOption
 import FirstRunBanner from "@/components/FirstRunBanner";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
 import EventTape from "@/components/EventTape";
+import GlassPanel from "@/components/ui/GlassPanel";
+import ParallaxReveal from "@/components/ui/ParallaxReveal";
 import Link from "next/link";
 import { useCountUp } from "@/hooks/useCountUp";
 
@@ -572,6 +574,16 @@ export default function MarketsPage() {
  <EventTape />
 </div>
 
+<ParallaxReveal className="mb-4">
+  <GlassPanel className="p-4">
+    <MarketEdgeScanner
+      markets={markets}
+      onAnalyze={openAnalyzeConfig}
+      isNight={isNight}
+    />
+  </GlassPanel>
+</ParallaxReveal>
+
 {/* Analysis Config Modal */}
  <AnalysisConfigModal
  isOpen={showConfigModal}
@@ -584,15 +596,6 @@ export default function MarketsPage() {
 
  <div>
  {landingQuery ? <FirstRunBanner searchQuery={landingQuery} /> : null}
-
- <div className="platform-open-section mb-6">
- {/* Live Edge Scanner - Discovery Hook */}
- <MarketEdgeScanner
- markets={markets}
- onAnalyze={openAnalyzeConfig}
- isNight={isNight}
- />
- </div>
 
  {/* Sports Tab Content */}
  {activeTab === "sports" && (

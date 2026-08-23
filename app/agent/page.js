@@ -13,6 +13,9 @@ import { BRAND } from '@/constants/brand';
 import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
 import { useCountUp } from '@/hooks/useCountUp';
 import Reveal from '@/components/motion/Reveal';
+import GlassPanel from '@/components/ui/GlassPanel';
+import ExpandPanel from '@/components/ui/ExpandPanel';
+import MagneticButton from '@/components/ui/MagneticButton';
 
 // Each section keyed by id so the audience mode can reorder without
 // re-rendering cost and without losing disclosure state.
