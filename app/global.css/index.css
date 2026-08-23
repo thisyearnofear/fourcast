@@ -2517,16 +2517,34 @@ body[data-fc-present='1'] .fc-weight-cell--pulse { animation: none; }
   .fc-clip { transform: none !important; }
 }
 
-/* ── Mobile readability helpers ──
-   Bumps tiny text to readable sizes on small screens (< 640px).
-   Wrap any dense-data container in `mobile-readable` and these cascade:
-     9px → 10px, 10px → 11px, xs → sm, sm → base.
+/* ── Mobile readability + tap targets ──
+   Scoped to `.mobile-readable`, applied once at the shell level: AppShell
+   <main> (all 16 app pages) and the landing content wrapper.
 
-   This solves the user feedback: "on mobile much of the home/landing
-   is really hard to read (small) and far too verbose". */
+   No !important needed: Tailwind v4 emits utilities into @layer utilities,
+   and unlayered author styles win the cascade per CSS Cascade Layers —
+   the same mechanism documented near the top of this file.
+
+   Text bumps (screens < 640px), targeting the tokens.css scale:
+     text-[9px] → 10px,  text-[10px] → 11px
+     text-xs    → var(--text-sm)   (12px → 14px)
+     text-sm    → 1rem             (14px → 16px; no token between sm/md)
+
+   Tap targets (coarse pointers < 640px):
+     interactive elements sitting on py-0.5 / py-1 / py-1.5 get py-2
+     (0.5rem block padding), lifting ~25px controls to ~36px without
+     bloating dense data rows. Informational chips are untouched. */
 @media (max-width: 639px) {
-  .mobile-readable .text-\[9px\] { font-size: 10px !important; }
-  .mobile-readable .text-\[10px\] { font-size: 11px !important; }
-  .mobile-readable .text-xs { font-size: 14px !important; }
-  .mobile-readable .text-sm { font-size: 16px !important; }
+  .mobile-readable .text-\[9px\] { font-size: 10px; }
+  .mobile-readable .text-\[10px\] { font-size: 11px; }
+  .mobile-readable .text-xs { font-size: var(--text-sm); }
+  .mobile-readable .text-sm { font-size: 1rem; }
+}
+
+@media (max-width: 639px) and (pointer: coarse) {
+  .mobile-readable .py-0\.5:is(button, a, summary, [role="button"]),
+  .mobile-readable .py-1:is(button, a, summary, [role="button"]),
+  .mobile-readable .py-1\.5:is(button, a, summary, [role="button"]) {
+    padding-block: 0.5rem;
+  }
 }
