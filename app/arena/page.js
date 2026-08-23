@@ -14,6 +14,7 @@ import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
 import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { AgentDashboard } from '@/components/AgentDashboard';
 import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
+import GlowList from '@/components/ui/GlowList';
 
 const mono = { fontFamily: 'var(--font-mono, monospace)' };
 
@@ -251,19 +252,36 @@ function LedgerLane() {
       </Reveal>
 
       {/* ── Positions ───────────────────────────────────────────────── */}
-      <Section title="Open positions" aside={positions.length ? `${positions.length} held` : 'flat'}>
-        {positions.length === 0 ? (
+      {positions.length === 0 ? (
+        <Section title="Open positions" aside="flat">
           <Row first><span className="text-[13px] text-[var(--color-ink-faint)]">No open positions — capital waiting for verified edge.</span></Row>
-        ) : (
-          positions.map((p, i) => (
-            <Row key={p.market + p.outcomeIdx} first={i === 0}>
-              <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--color-ink)]">{p.question || `${p.market.slice(0, 10)}…`}</span>
-              <span className="text-[12px] text-[var(--color-ink-muted)]">{p.outcome ?? `outcome ${p.outcomeIdx}`}</span>
-              <span className="text-[13px] text-[var(--color-ink)]" style={mono}>{p.shares} sh</span>
-            </Row>
-          ))
-        )}
-      </Section>
+        </Section>
+      ) : (
+        <Reveal>
+          <section className="mt-8 first:mt-6">
+            <GlowList
+              count={positions.length}
+              label="position"
+              defaultOpen={true}
+              renderSummary={() => (
+                <span className="inline-flex items-center rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-medium text-accent border border-accent/30">
+                  {positions.length} held
+                </span>
+              )}
+            >
+              <div style={{ borderTop: '1px solid var(--color-rule-strong)', borderBottom: '1px solid var(--color-rule)' }}>
+                {positions.map((p, i) => (
+                  <Row key={p.market + p.outcomeIdx} first={i === 0}>
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--color-ink)]">{p.question || `${p.market.slice(0, 10)}…`}</span>
+                    <span className="text-[12px] text-[var(--color-ink-muted)]">{p.outcome ?? `outcome ${p.outcomeIdx}`}</span>
+                    <span className="text-[13px] text-[var(--color-ink)]" style={mono}>{p.shares} sh</span>
+                  </Row>
+                ))}
+              </div>
+            </GlowList>
+          </section>
+        </Reveal>
+      )}
 
       {/* ── Decision ledger ─────────────────────────────────────────── */}
       <Section title="Decision ledger" aside={`latest ${ledger.length}`}>
@@ -278,19 +296,35 @@ function LedgerLane() {
 
       {/* ── Executions ──────────────────────────────────────────────── */}
       {trades.length > 0 && (
-        <Section title="Executions" aside={`${trades.length} recent`}>
-          {trades.map((t, i) => (
-            <Row key={i} first={i === 0}>
-              <Stamp kind={t.status} small />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] text-[var(--color-ink)]">{t.shares} sh {t.outcome}</div>
-                <div className="text-[11px] text-[var(--color-ink-faint)]" style={mono}>
-                  {t.cost != null ? `${t.cost.toFixed(4)} TST · ` : ''}{t.txHash ? `tx ${t.txHash.slice(0, 12)}… · ` : ''}{timeAgo(t.runTs)}
-                </div>
+        <Reveal>
+          <section className="mt-8">
+            <GlowList
+              count={trades.length}
+              label="execution"
+              defaultOpen={false}
+              renderSummary={() => (
+                <span className="inline-flex items-center rounded-full bg-field px-2 py-0.5 text-[10px] font-medium text-ink-faint shadow-hairline">
+                  {trades.length} recent
+                </span>
+              )}
+              emptyLabel="No executions yet"
+            >
+              <div style={{ borderTop: '1px solid var(--color-rule-strong)', borderBottom: '1px solid var(--color-rule)' }}>
+                {trades.map((t, i) => (
+                  <Row key={i} first={i === 0}>
+                    <Stamp kind={t.status} small />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13px] text-[var(--color-ink)]">{t.shares} sh {t.outcome}</div>
+                      <div className="text-[11px] text-[var(--color-ink-faint)]" style={mono}>
+                        {t.cost != null ? `${t.cost.toFixed(4)} TST · ` : ''}{t.txHash ? `tx ${t.txHash.slice(0, 12)}… · ` : ''}{timeAgo(t.runTs)}
+                      </div>
+                    </div>
+                  </Row>
+                ))}
               </div>
-            </Row>
-          ))}
-        </Section>
+            </GlowList>
+          </section>
+        </Reveal>
       )}
 
       {/* ── Calibration ─────────────────────────────────────────────── */}

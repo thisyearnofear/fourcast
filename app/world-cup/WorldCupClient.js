@@ -22,6 +22,7 @@ import { ProofTheatre } from '@/components/ProofTheatre';
 import RouteGuide from '@/components/RouteGuide';
 import Reveal from '@/components/motion/Reveal';
 import { useCountUp } from '@/hooks/useCountUp';
+import GlowList from '@/components/ui/GlowList';
 
 /* ------------------------------- helpers -------------------------------- */
 
@@ -828,21 +829,35 @@ export default function WorldCupClient({ bare = false }) {
           </div>
         </div>
       ) : (
-        <div className="fixture-ledger border-t border-[var(--mc-rule-strong)]">
-          {filtered.map((fixture, index) => (
-            <Reveal key={fixture.id} delay={Math.min(index * 40, 240)} className="fixture-ledger__item">
-              <FixtureCard
-                fixture={fixture}
-                onReplay={handleReplay}
-                onVerify={handleVerify}
-                onOpenTheatre={setSelectedFixture}
-                replaying={replayingId === fixture.id}
-                verifying={verifyingId === fixture.id}
-                proofResult={verifications[fixture.id]}
-              />
-            </Reveal>
-          ))}
-        </div>
+        <GlowList
+          count={filtered.length}
+          label="receipt"
+          defaultOpen={true}
+          renderSummary={() => (
+            tab !== 'all' && (
+              <span className="inline-flex items-center rounded-full bg-field px-2 py-0.5 text-[10px] font-medium text-ink-faint shadow-hairline">
+                {tab}
+              </span>
+            )
+          )}
+          emptyLabel="No fixtures match the selected filter."
+        >
+          <div className="fixture-ledger border-t border-[var(--mc-rule-strong)] mt-2">
+            {filtered.map((fixture, index) => (
+              <Reveal key={fixture.id} delay={Math.min(index * 40, 240)} className="fixture-ledger__item">
+                <FixtureCard
+                  fixture={fixture}
+                  onReplay={handleReplay}
+                  onVerify={handleVerify}
+                  onOpenTheatre={setSelectedFixture}
+                  replaying={replayingId === fixture.id}
+                  verifying={verifyingId === fixture.id}
+                  proofResult={verifications[fixture.id]}
+                />
+              </Reveal>
+            ))}
+          </div>
+        </GlowList>
       )}
     </div>
   );
