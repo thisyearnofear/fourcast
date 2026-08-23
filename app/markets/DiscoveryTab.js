@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/Skeleton";
 import Reveal from "@/components/motion/Reveal";
 import GlassPanel from "@/components/ui/GlassPanel";
 import ExpandPanel from "@/components/ui/ExpandPanel";
-import GlowList from "./GlowList";
+import GlowList from "@/components/ui/GlowList";
 
 export function DiscoveryTabContent({
  markets,

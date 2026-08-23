@@ -21,6 +21,7 @@ import Reveal from '@/components/motion/Reveal';
 import { useCountUp } from '@/hooks/useCountUp';
 import { BRAND } from '@/constants/brand';
 import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
+import GlowList from '@/components/ui/GlowList';
 
 export default function SignalsPage() {
   const { connected, walletAddress } = useSignalPublisher();
@@ -289,113 +290,112 @@ export default function SignalsPage() {
       )}
 
       {/* Feed tab — open sections */}
-      {activeTab === 'feed' && !isLoading && !error && (
+      {activeTab === 'feed' && !error && (
         <Reveal>
-          <section className="mt-6 evidence-strip grid grid-cols-3 gap-px bg-[var(--color-paper-soft)]">
-            <div className="p-4 bg-[var(--color-paper)]">
-              <div ref={totalPredictionsRef} className="text-2xl font-light text-[var(--color-ink)] mb-1">
-                {Math.round(totalPredictionsValue)}
+          {/* Summary strip */}
+          {filteredSignals.length > 0 && (
+            <section className="mt-6 evidence-strip grid grid-cols-3 gap-px bg-[var(--color-paper-soft)]">
+              <div className="p-4 bg-[var(--color-paper)]">
+                <div ref={totalPredictionsRef} className="text-2xl font-light text-[var(--color-ink)] mb-1">
+                  {Math.round(totalPredictionsValue)}
+                </div>
+                <div className="text-xs text-[var(--color-ink-faint)]">Total Predictions</div>
               </div>
-              <div className="text-xs text-[var(--color-ink-faint)]">Total Predictions</div>
-            </div>
-            <div className="p-4 bg-[var(--color-paper)]">
-              <div ref={uniqueEventsRef} className="text-2xl font-light text-[var(--color-ink)] mb-1">
-                {Math.round(uniqueEventsValue)}
+              <div className="p-4 bg-[var(--color-paper)]">
+                <div ref={uniqueEventsRef} className="text-2xl font-light text-[var(--color-ink)] mb-1">
+                  {Math.round(uniqueEventsValue)}
+                </div>
+                <div className="text-xs text-[var(--color-ink-faint)]">Unique Events</div>
               </div>
-              <div className="text-xs text-[var(--color-ink-faint)]">Unique Events</div>
-            </div>
-            <div className="p-4 bg-[var(--color-paper)]">
-              <div ref={filteredResultsRef} className="text-2xl font-light text-[var(--color-ink)] mb-1">
-                {Math.round(filteredResultsValue)}
+              <div className="p-4 bg-[var(--color-paper)]">
+                <div ref={filteredResultsRef} className="text-2xl font-light text-[var(--color-ink)] mb-1">
+                  {Math.round(filteredResultsValue)}
+                </div>
+                <div className="text-xs text-[var(--color-ink-faint)]">Filtered Results</div>
               </div>
-              <div className="text-xs text-[var(--color-ink-faint)]">Filtered Results</div>
-            </div>
-          </section>
+            </section>
+          )}
+
+          {/* Empty state */}
+          {filteredSignals.length === 0 && (
+            <section className="mt-6 border border-[var(--color-rule)] bg-[var(--color-wash-soft)] p-5">
+              <p className="text-sm text-[var(--color-ink)]">No published calls in this feed yet.</p>
+              <p className="mt-1 text-xs text-[var(--color-ink-faint)]">
+                Analyze a market and publish a receipt — reputation scoring here is still early.
+              </p>
+              <Link href="/markets" className="fc-action mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-xs no-underline">
+                Open Markets
+              </Link>
+            </section>
+          )}
+
+          {/* Event groups in GlowList */}
+          {filteredSignals.length > 0 && (
+            <GlowList
+              header={`Signal feed · ${Object.keys(signalsByEvent).length} events · ${filteredSignals.length} calls`}
+              filterChips={[
+                filters.confidence !== 'all' ? `Conf: ${filters.confidence}` : null,
+                filters.oddsEfficiency !== 'all' ? `OE: ${filters.oddsEfficiency}` : null,
+                filters.searchText ? `Search: "${filters.searchText}"` : null,
+              ].filter(Boolean)}
+              count={Object.keys(signalsByEvent).length}
+              chipLink="/signals?tab=feed"
+              chipLabel="Clear filters"
+            >
+              {Object.entries(signalsByEvent).map(([eventId, eventSignals]) => (
+                <Reveal key={eventId}>
+                  <section className="platform-open-section">
+                    <p className="fc-kicker mb-2">Decision record · {eventSignals.length} entries</p>
+                    <h3 className="text-lg font-medium text-[var(--color-ink)] mb-3">
+                      {eventSignals[0]?.market_title || eventId}
+                    </h3>
+
+                    {eventSignals[0]?.venue && (
+                      <p className="text-xs text-[var(--color-ink-faint)] mb-3">
+                        Venue · {eventSignals[0].venue}
+                      </p>
+                    )}
+
+                    <div className="space-y-3">
+                      {eventSignals.map((signal, index) => (
+                        <SignalCard
+                          key={signal.id || index}
+                          signal={signal}
+                          index={index}
+                          isExpanded={expandedSignalId === signal.id}
+                          onToggle={() => setExpandedSignalId(expandedSignalId === signal.id ? null : signal.id)}
+                          formatTimestamp={formatTimestamp}
+                          textColor="text-[var(--color-ink)]"
+                          onProfileClick={handleProfileClick}
+                          userStats={userStatsCache[signal.author_address] || null}
+                          onExpand={() => {
+                            if (!userStatsCache[signal.author_address]) {
+                              getUserStats(signal.author_address);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-[var(--color-rule)] flex flex-wrap items-center gap-4 text-xs text-[var(--color-ink-faint)]">
+                      <span>{eventSignals.length} prediction{eventSignals.length !== 1 ? 's' : ''} published</span>
+                      {eventSignals[0]?.event_time && (
+                        <span>Event: {formatTimestamp(eventSignals[0].event_time)}</span>
+                      )}
+                    </div>
+                  </section>
+                </Reveal>
+              ))}
+            </GlowList>
+          )}
         </Reveal>
       )}
 
-      {activeTab === 'feed' && !isLoading && !error && filteredSignals.length === 0 && (
-        <Reveal>
-          <section className="mt-6 border border-[var(--color-rule)] bg-[var(--color-wash-soft)] p-5">
-            <p className="text-sm text-[var(--color-ink)]">No published calls in this feed yet.</p>
-            <p className="mt-1 text-xs text-[var(--color-ink-faint)]">
-              Analyze a market and publish a receipt — reputation scoring here is still early.
-            </p>
-            <Link href="/markets" className="fc-action mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-xs no-underline">
-              Open Markets
-            </Link>
-          </section>
-        </Reveal>
-      )}
-
-      {activeTab === 'feed' && !isLoading && !error && filteredSignals.length > 0 && (
-        <div className="space-y-8 mt-6">
-          {Object.entries(signalsByEvent).map(([eventId, eventSignals]) => (
-            <Reveal key={eventId}>
-              <section className="platform-open-section">
-                <p className="fc-kicker mb-2">Decision record · {eventSignals.length} entries</p>
-                <h3 className="text-lg font-medium text-[var(--color-ink)] mb-3">
-                  {eventSignals[0]?.market_title || eventId}
-                </h3>
-
-                {eventSignals[0]?.venue && (
-                  <p className="text-xs text-[var(--color-ink-faint)] mb-3">
-                    Venue · {eventSignals[0].venue}
-                  </p>
-                )}
-
-                <div className="space-y-3">
-                  {eventSignals.map((signal, index) => (
-                    <SignalCard
-                      key={signal.id || index}
-                      signal={signal}
-                      index={index}
-                      isExpanded={expandedSignalId === signal.id}
-                      onToggle={() => setExpandedSignalId(expandedSignalId === signal.id ? null : signal.id)}
-                      formatTimestamp={formatTimestamp}
-                      textColor="text-[var(--color-ink)]"
-                      onProfileClick={handleProfileClick}
-                      userStats={userStatsCache[signal.author_address] || null}
-                      onExpand={() => {
-                        if (!userStatsCache[signal.author_address]) {
-                          getUserStats(signal.author_address);
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-[var(--color-rule)] flex flex-wrap items-center gap-4 text-xs text-[var(--color-ink-faint)]">
-                  <span>{eventSignals.length} prediction{eventSignals.length !== 1 ? 's' : ''} published</span>
-                  {eventSignals[0]?.event_time && (
-                    <span>Event: {formatTimestamp(eventSignals[0].event_time)}</span>
-                  )}
-                </div>
-              </section>
-            </Reveal>
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'feed' && isLoading && (
+      {activeTab === 'feed' && !error && isLoading && (
         <Reveal>
           <div className="mt-8 flex items-center justify-center py-12">
             <div className="w-6 h-6 border-2 border-[var(--color-rule)] border-t-[var(--color-accent)] animate-spin" />
             <span className="ml-3 text-sm text-[var(--color-ink-faint)]">Loading signals...</span>
-          </div>
-        </Reveal>
-      )}
-
-      {activeTab === 'feed' && error && (
-        <Reveal>
-          <div className="mt-6 mc-panel p-6 text-center">
-            <p className="text-[var(--color-ink)] mb-3">{error}</p>
-            <button
-              onClick={fetchSignals}
-              className="px-4 py-2 text-sm text-[var(--color-ink)] border border-[var(--color-rule)] bg-[var(--color-wash)] hover:bg-[var(--color-paper-soft)] transition-colors"
-            >
-              Try Again
-            </button>
           </div>
         </Reveal>
       )}
