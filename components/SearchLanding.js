@@ -6,16 +6,25 @@ import Link from 'next/link';
 import { ArrowRight, Eye, Menu, Radar, X } from 'lucide-react';
 import PageNav, { HomeLink, PRIMARY_NAV, OVERFLOW_NAV } from '@/app/components/PageNav';
 import ParticleReveal from '@/components/canvasui/ParticleReveal';
-import DecisionRadar from '@/components/DecisionRadar';
 import LatestExecutionCard from '@/components/LatestExecutionCard';
 import TrustStatsStrip from '@/components/TrustStatsStrip';
 import AgentRail from '@/components/AgentRail';
-
+import WaveGrid from '@/components/WaveGrid';
 import VenueMap from '@/components/VenueMap';
 import ProofTimeline from '@/components/ProofTimeline';
 import MagneticButton from '@/components/ui/MagneticButton';
 import ParallaxReveal from '@/components/ui/ParallaxReveal';
 import { BRAND } from '@/constants/brand';
+
+// Venues named in the hero legend strip. The labeled peaks themselves stand
+// in the WaveGrid field behind the hero (see WaveGrid VENUES); Canton stays
+// quiet (amber) as a roadmap venue.
+const HERO_VENUES = [
+  { name: 'Polymarket' },
+  { name: 'Kalshi' },
+  { name: 'Delphi' },
+  { name: 'Canton', quiet: true },
+];
 
 // ────────────────────────────────────────────
 //  MOBILE NAV — reused from existing
@@ -182,28 +191,38 @@ function Hero() {
         </Link>
       </div>
 
-      {/* Live instrument rail — compact inline */}
+      {/* Venue legend — the labeled peaks themselves stand in the wave
+          field behind the hero; this strip names them and links to the
+          ledger. Replaces the old DecisionRadar + "now scanning" block. */}
       <div
-        className="fc-print mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-4"
+        className="fc-print mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
         style={{ '--print-delay': '360ms' }}
       >
-        <DecisionRadar />
-        <div className="min-w-0 max-w-sm text-left">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
-            Now scanning
-          </p>
-          <p className="mt-0.5 text-sm leading-5 text-[var(--color-ink-muted)]">
-            {BRAND.tagline}
-          </p>
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
+          Scanning
+        </span>
+        {HERO_VENUES.map((v) => (
           <Link
-            href="/arena?lane=mandate"
-            className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-[var(--color-accent)] no-underline hover:underline"
+            key={v.name}
+            href="/arena"
+            className="inline-flex items-center gap-1.5 font-mono text-[11px] text-[var(--color-ink-muted)] no-underline transition-colors hover:text-[var(--color-accent)]"
           >
-            <Eye className="h-3 w-3" aria-hidden />
-            Inspect the gating policy
-            <ArrowRight className="h-3 w-3" />
+            <span
+              className="inline-block h-1.5 w-1.5 rounded-full"
+              style={{ background: v.quiet ? 'var(--color-sealed)' : 'var(--color-accent)' }}
+              aria-hidden
+            />
+            {v.name}
           </Link>
-        </div>
+        ))}
+        <Link
+          href="/arena?lane=mandate"
+          className="inline-flex items-center gap-1.5 text-xs text-[var(--color-accent)] no-underline hover:underline"
+        >
+          <Eye className="h-3 w-3" aria-hidden />
+          Gating policy
+          <ArrowRight className="h-3 w-3" />
+        </Link>
       </div>
     </section>
   );
@@ -226,9 +245,12 @@ export default function SearchLanding() {
 
   return (
     <main className="fc-grain relative min-h-screen overflow-x-hidden text-[var(--ink)]">
-      {/* Backdrop — global CSS grid on body::before covers all pages.
-          The landing-specific CSS grid (.fc-backdrop__grid) adds a
-          secondary finer layer behind the hero for extra depth. */}
+      {/* Backdrop — the landing's living wave field. WaveGrid is the
+          signature instrument: it breathes, ripples to the pointer, and
+          sweeps state-colored pulses when agent decisions land (via the
+          shared BackdropProvider bus). The static CSS grid underneath is
+          the reduced-motion / no-canvas fallback. */}
+      <WaveGrid />
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden>
         <div className="fc-backdrop">
           <div className="fc-backdrop__grid" />

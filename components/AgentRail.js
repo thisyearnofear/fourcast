@@ -77,14 +77,16 @@ export default function AgentRail() {
           // not on the initial load or every 60s re-poll of the same data.
           const ts = latestRun?.timestamp || null;
           if (ts && lastCycleRef.current && ts !== lastCycleRef.current) {
-            // Use the latest decision's verdict to color the pulse.
-            const latestDecision = latestRun?.decisions?.[latestRun.decisions.length - 1];
-            const verdict = latestDecision?.verdict?.toLowerCase();
+            // Color the pulse by the cycle's lead verdict. Feed verdicts are
+            // ALLOCATE / EXEC / PAPER / PASS: acted = green, simulated =
+            // review-violet, declined = quiet sealed-amber.
+            const verdict = (latestRun?.decisions || [])[0]?.verdict?.toLowerCase();
             const stateMap = {
+              pass: BACKDROP_STATES.sealed,
+              paper: BACKDROP_STATES.review,
               reconciled: BACKDROP_STATES.reconciled,
               breach: BACKDROP_STATES.breach,
               review: BACKDROP_STATES.review,
-              pass: BACKDROP_STATES.sealed,
             };
             emitBackdropPulse({ state: stateMap[verdict] || BACKDROP_STATES.scanning });
           }

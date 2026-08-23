@@ -18,7 +18,9 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
  * Pulse system:
  *   emitBackdropPulse({ x, y, state? }) creates a one-shot radial ripple
  *   at screen coords. Called from any page — AgentRail, arena feed,
- *   DecisionRadar, position updates, signal events. CSS does all the work.
+ *   position updates, signal events. CSS does the work on app pages; the
+ *   landing's WaveGrid canvas subscribes via onBackdropPulse() and sweeps
+ *   the same state-colored wave across its field.
  */
 
 export const BACKDROP_STATES = /** @type {const} */ ({
@@ -92,6 +94,22 @@ const PALETTES = {
   },
 };
 
+// ── Canvas pulse bridge ────────────────────────────────────────────────────
+// The landing's WaveGrid canvas subscribes here so the same pulse that
+// ripples the CSS grid also sweeps the wave field. Keeps one source of
+// truth (emitBackdropPulse) for every surface.
+const canvasPulseListeners = new Set();
+
+/**
+ * Subscribe to backdrop pulses (used by the WaveGrid canvas).
+ * @param {(opts: {x?: number, y?: number, state?: string}) => void} fn
+ * @returns {() => void} unsubscribe
+ */
+export function onBackdropPulse(fn) {
+  canvasPulseListeners.add(fn);
+  return () => canvasPulseListeners.delete(fn);
+}
+
 /**
  * Emit a one-shot radial pulse on the backdrop grid.
  * @param {{ x?: number, y?: number, state?: string }} opts
@@ -99,6 +117,10 @@ const PALETTES = {
  *   state — backdrop state color to use. Defaults to current.
  */
 export function emitBackdropPulse({ x, y, state } = {}) {
+  // Notify canvas subscribers (WaveGrid) regardless of DOM availability.
+  for (const fn of canvasPulseListeners) {
+    try { fn({ x, y, state }); } catch { /* a listener must never break the emitter */ }
+  }
   if (typeof document === 'undefined') return;
   const el = document.createElement('div');
   el.className = 'fc-backdrop-pulse';
