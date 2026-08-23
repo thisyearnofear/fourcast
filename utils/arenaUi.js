@@ -1,7 +1,7 @@
 /**
  * Shared arena/live-feed UI grammar — single source of truth.
  *
- * Used by EventTape, ArenaStrip, /arena lanes, AgentTrackRecord. Verdict
+ * Used by AgentRail, /arena lanes, AgentTrackRecord. Verdict
  * color semantics come from tokens.css (design.md):
  *   ALLOCATE/emerald (acted), PASS/muted (declined), PAPER/violet (simulated),
  *   SETTLED/amber (reconciled), BREACH/red (violated).

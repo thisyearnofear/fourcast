@@ -14,7 +14,7 @@ import { ARC_EXPLORER_TX } from "@/constants/appConstants";
 import AnalysisOptions, { useAnalysisOptions } from "@/components/AnalysisOptions";
 import FirstRunBanner from "@/components/FirstRunBanner";
 import { AppShell, SecondaryNav } from "@/app/components/PageNav";
-import EventTape from "@/components/EventTape";
+import AgentRail from "@/components/AgentRail";
 import GlassPanel from "@/components/ui/GlassPanel";
 import ParallaxReveal from "@/components/ui/ParallaxReveal";
 import Link from "next/link";
@@ -571,7 +571,7 @@ export default function MarketsPage() {
  }
  >
  <div className="mb-2">
- <EventTape />
+ <AgentRail />
 </div>
 
 <ParallaxReveal className="mb-4">
