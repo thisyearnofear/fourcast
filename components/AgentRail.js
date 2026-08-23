@@ -7,7 +7,8 @@ import { VERDICT_COLORS, ago } from '@/utils/arenaUi';
 import { emitWaveGridPulse } from '@/components/WaveGrid';
 
 /**
- * AgentRail — unified live feed merging LiveTicker + ArenaStrip + EventTape.
+ * AgentRail — the unified live agent feed (supersedes the old
+ * LiveTicker / ArenaStrip / EventTape trio).
  *
  * Single fetch, three rows:
  *   Row 1 (compact header): LIVE/PAPER lamp · last cycle · bankroll · counters
@@ -17,7 +18,15 @@ import { emitWaveGridPulse } from '@/components/WaveGrid';
  * Replaces three separate components that all polled the same endpoint.
  * When a *new* cycle lands it fires emitWaveGridPulse() so the WaveGrid
  * backdrop ripples — the fold visibly reacts to the agent's heartbeat.
+ *
+ * Truth-first liveness: the lamp only reads LIVE when a cycle landed within
+ * STALE_AFTER_MS (the worker runs every 5 min, so 30 min of silence means
+ * it stalled). A snapshot-served feed (`stale: true` from the API) or an
+ * aged-out cycle renders an amber STALE/STALLED state with the last cycle
+ * age — never a fake green lamp, never a blank fold.
  */
+
+const STALE_AFTER_MS = 30 * 60 * 1000; // 6 missed 5-min cycles
 
 function buildFeedItems(runs) {
   const items = [];
@@ -82,6 +91,13 @@ export default function AgentRail() {
   const items = buildFeedItems(runs);
   const dry = latest?.summary?.dryRun;
 
+  // Honest liveness: snapshot-served or aged-out cycles read amber, not green.
+  const cycleAgeMs = latest?.timestamp ? Date.now() - new Date(latest.timestamp).getTime() : null;
+  const stalled = cycleAgeMs != null && cycleAgeMs > STALE_AFTER_MS;
+  const stale = Boolean(feed?.stale) || stalled;
+  const lampLabel = stale ? (stalled ? 'STALLED' : 'STALE') : dry ? 'PAPER' : 'LIVE';
+  const lampColor = stale ? 'var(--color-sealed)' : dry ? 'var(--color-sealed)' : 'var(--color-accent)';
+
   const counters = [];
   if (runs.length > 0) {
     counters.push(`${runs.length} cycles`);
@@ -108,10 +124,15 @@ export default function AgentRail() {
           <>
             <span
               className="inline-flex items-center gap-1.5 text-[11px] font-semibold"
-              style={{ color: dry ? 'var(--color-sealed)' : 'var(--color-accent)' }}
+              style={{ color: lampColor }}
+              title={
+                stale
+                  ? 'No fresh cycle in the last 30 minutes — showing the last recorded state'
+                  : undefined
+              }
             >
               <span className="mc-lamp mc-lamp--live inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'currentColor' }} />
-              {dry ? 'PAPER' : 'LIVE'}
+              {lampLabel}
             </span>
             <span className="font-mono text-[10px] text-[var(--color-ink-faint)]">
               cycle · {ago(latest.timestamp)}
