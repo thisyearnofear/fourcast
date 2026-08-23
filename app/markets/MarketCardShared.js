@@ -9,6 +9,7 @@ import EvidenceBlock from "@/components/EvidenceBlock";
 import TweenNumber from "@/components/motion/TweenNumber";
 import EduWait from "@/components/EduWait";
 import useChangeFlash from "@/hooks/useChangeFlash";
+import { AnalysisTrace } from "./AnalysisTrace";
 
 // Token-vocabulary tints (tokens.css) — replaces ad-hoc blue/purple/green
 // Tailwind palette: evidence blue, review violet, sealed amber, breach red,
@@ -260,19 +261,10 @@ function DenseAnalysisPanel({
  />
 
  {reasoning && (
- <details className="group border-t border-[var(--color-rule)] pt-3">
- <summary className="cursor-pointer list-none text-[10px] font-mono uppercase tracking-wider text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]">
- Reasoning
- </summary>
- <p className="mt-2 text-sm leading-5 text-[var(--color-ink-muted)] line-clamp-6 group-open:line-clamp-none">
- {reasoning}
- </p>
- {analysis.thinking && (
- <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words bg-[var(--color-paper-deep)] p-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
- {analysis.thinking}
- </pre>
- )}
- </details>
+   <AnalysisTrace
+     analysis={analysis}
+     market={market}
+   />
  )}
 
  <EvidenceBlock

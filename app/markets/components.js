@@ -13,3 +13,5 @@ export {
   ChainRecommendationBadge,
   ChainActionWidget,
 } from './MarketCardShared';
+export { AnalysisTrace } from './AnalysisTrace';
+export { default as GlowList } from './GlowList';
