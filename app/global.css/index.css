@@ -2516,3 +2516,17 @@ body[data-fc-present='1'] .fc-weight-cell--pulse { animation: none; }
   .fc-clip, .fc-clip-wrap { transition: none !important; }
   .fc-clip { transform: none !important; }
 }
+
+/* ── Mobile readability helpers ──
+   Bumps tiny text to readable sizes on small screens (< 640px).
+   Wrap any dense-data container in `mobile-readable` and these cascade:
+     9px → 10px, 10px → 11px, xs → sm, sm → base.
+
+   This solves the user feedback: "on mobile much of the home/landing
+   is really hard to read (small) and far too verbose". */
+@media (max-width: 639px) {
+  .mobile-readable .text-\[9px\] { font-size: 10px !important; }
+  .mobile-readable .text-\[10px\] { font-size: 11px !important; }
+  .mobile-readable .text-xs { font-size: 14px !important; }
+  .mobile-readable .text-sm { font-size: 16px !important; }
+}

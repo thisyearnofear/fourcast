@@ -153,9 +153,9 @@ function Hero() {
         <span className="text-[var(--color-accent)]">before the outcome lands.</span>
       </h1>
 
-      {/* Sub — one breath */}
+      {/* Sub — one breath, tighter on mobile */}
       <p
-        className="fc-print mt-4 max-w-xl text-base text-[var(--color-ink-muted)] sm:text-lg"
+        className="fc-print mt-3 max-w-xl text-[15px] leading-snug text-[var(--color-ink-muted)] sm:mt-4 sm:text-base sm:leading-relaxed"
         style={{ '--print-delay': '200ms' }}
       >
         Scans markets. Sizes under policy. Writes the receipt.{' '}
@@ -164,7 +164,7 @@ function Hero() {
 
       {/* CTAs — one primary (magnetic + particle reveal), one secondary */}
       <div
-        className="fc-print mt-7 flex flex-wrap items-center justify-center gap-4"
+        className="fc-print mt-5 flex flex-wrap items-center justify-center gap-4 sm:mt-7"
         style={{ '--print-delay': '280ms' }}
       >
         <MagneticButton as="div" intensity={0.18} style={{ display: 'inline-block' }}>
@@ -195,7 +195,7 @@ function Hero() {
           field behind the hero; this strip names them and links to the
           ledger. Replaces the old DecisionRadar + "now scanning" block. */}
       <div
-        className="fc-print mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
+        className="fc-print mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:mt-8"
         style={{ '--print-delay': '360ms' }}
       >
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
@@ -291,7 +291,10 @@ export default function SearchLanding() {
         {/* ── Latest execution + trust stats ── */}
         <ParallaxReveal speed={0.08} className="space-y-4 px-4 pb-8 sm:px-6 lg:px-8">
           <LatestExecutionCard />
-          <TrustStatsStrip />
+          {/* TrustStatsStrip — hidden on mobile (low value, takes space) */}
+          <div className="hidden sm:block">
+            <TrustStatsStrip />
+          </div>
         </ParallaxReveal>
 
         {/* ── Proof lifecycle (replaces receipt panel + footer receipt) ── */}

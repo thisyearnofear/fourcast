@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAccount } from 'wagmi';
 import { Wallet } from 'lucide-react';
 import { ARC_EXPLORER_TX } from '@/constants/appConstants';
+import GlowList from '@/components/ui/GlowList';
 
 const PAGE_SIZE = 10;
 
@@ -128,7 +129,7 @@ export function PositionsDashboard({ isNight = false }) {
   }
 
   return (
-    <div className="positions-workbench space-y-5">
+    <div className="mobile-readable positions-workbench space-y-5">
       <div className="flex items-center justify-between gap-3">
         <p className="mc-kicker">Public book</p>
         <button
@@ -208,12 +209,20 @@ export function PositionsDashboard({ isNight = false }) {
           </div>
         </div>
       )}
-      {/* Position Cards */}
+      {/* Position Cards — GlowList progressive disclosure */}
       {!loading && visiblePositions.length > 0 && (
-        <div className="position-ledger border-t border-[var(--color-rule)]">
-          <h3 className={`border-b border-[var(--color-rule)] py-3 text-sm font-medium ${textColor}`}>
-            {selectedFilter === 'OPEN' ? 'Open' : selectedFilter === 'CLOSED' ? 'Closed' : 'All'} Positions ({positions.length})
-          </h3>
+        <GlowList
+          count={visiblePositions.length}
+          label="position"
+          defaultOpen={false}
+          renderSummary={() => (
+            <span className="inline-flex items-center rounded-full bg-field px-2 py-0.5 text-[10px] font-medium text-ink-faint shadow-hairline">
+              {selectedFilter === 'OPEN' ? 'Open' : selectedFilter === 'CLOSED' ? 'Closed' : 'All'}
+            </span>
+          )}
+          emptyLabel={`No ${selectedFilter.toLowerCase()} positions`}
+        >
+          <div className="mt-2 border-t border-[var(--color-rule)]">
           {visiblePositions.map((pos, i) => (
             <PositionCard
               key={pos.id || i}
@@ -234,7 +243,8 @@ export function PositionsDashboard({ isNight = false }) {
               Show More ({positions.length - visibleCount} remaining)
             </button>
           )}
-        </div>
+          </div>
+        </GlowList>
       )}
     </div>
   );

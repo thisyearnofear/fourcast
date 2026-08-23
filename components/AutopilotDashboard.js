@@ -341,7 +341,7 @@ export function AutopilotDashboard({ isNight = false }) {
  }, []);
 
  return (
- <div className="space-y-6">
+ <div className="mobile-readable space-y-6">
  {/* Header */}
  <div className="flex items-start justify-between gap-3">
  <div>

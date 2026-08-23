@@ -56,20 +56,20 @@ export default function LatestExecutionCard() {
 
   return (
     <div className="fc-instrument mt-4 overflow-hidden p-1">
-      <div className="fc-instrument__inner flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5">
+      <div className="fc-instrument__inner flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
         <div className="min-w-0">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
             Latest live execution · {ago(exec.runTs)}
           </p>
-          <p className="mt-1 font-display text-lg font-semibold text-[var(--color-ink)]">
+          <p className="mt-1 font-display text-[17px] font-semibold text-[var(--color-ink)]">
             {exec.shares} sh <span className="text-[var(--color-accent)]">{exec.outcome}</span>
           </p>
           <p className="mt-1 max-w-lg text-xs leading-5 text-[var(--color-ink-muted)]">
             {shortenQuestion(exec.question)}
           </p>
           {exec.cost != null && (
-            <p className="mt-2 font-mono text-[11px] text-[var(--color-ink-faint)]">
-              {exec.cost.toFixed(3)} TST · policy-gated · hash-bound before settlement
+            <p className="mt-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
+              {exec.cost.toFixed(3)} TST · policy-gated · hash-bound
             </p>
           )}
         </div>

@@ -140,8 +140,8 @@ export default function ProofTimeline() {
           </div>
         </div>
 
-        {/* Step descriptions — compact, below the chain. */}
-        <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-5">
+        {/* Step descriptions — compact, below the chain. Hidden on mobile (too verbose). */}
+        <div className="mt-3 hidden grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-5 sm:grid">
           {STEPS.map((step) => (
             <div key={step.key} className="text-center sm:text-left">
               <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--color-ink-muted)]">

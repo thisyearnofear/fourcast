@@ -70,7 +70,7 @@ export default function CantonHolderDashboard() {
   }, [settleAsHolder, loadAll]);
 
   return (
-    <div className="space-y-6">
+    <div className="mobile-readable space-y-6">
       {/* Wallet card */}
       <section className="platform-open-section p-4 sm:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

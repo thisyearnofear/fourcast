@@ -69,22 +69,23 @@ export default function RootLayout({ children }) {
         <Providers>
           {children}
           <ConditionalChrome />
-          <footer className="platform-footer w-full px-5 py-8" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
-            <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
-              <div className="flex items-center gap-4 flex-wrap justify-center">
-                <Link href="/markets" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.markets ?? 'Markets'}</Link>
-                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/positions" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.positions ?? 'Positions'}</Link>
-                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/proof?chain=canton" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.canton ?? 'Private'}</Link>
-                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/signals" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.signals ?? 'Signals'}</Link>
-                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/agent" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.agent ?? 'Agent'}</Link>
-                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/labs" className="text-[12px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline">{BRAND.navLabels.labs ?? 'Labs'}</Link>
-                <span className="text-[var(--color-rule-strong)] text-[10px]">·</span>
-                <Link href="/status" className="text-[12px] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors no-underline font-medium">Status</Link>
+          <footer className="platform-footer w-full px-5 py-6 sm:py-8" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
+            <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-4 sm:flex-row sm:items-end sm:gap-5">
+              {/* Nav links — compact on mobile, scrollable */}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 justify-center">
+                <Link href="/markets" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.markets ?? 'Markets'}</Link>
+                <span className="text-[var(--color-rule-strong)]">·</span>
+                <Link href="/positions" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.positions ?? 'Positions'}</Link>
+                <span className="text-[var(--color-rule-strong)]">·</span>
+                <Link href="/proof?chain=canton" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.canton ?? 'Private'}</Link>
+                <span className="text-[var(--color-rule-strong)]">·</span>
+                <Link href="/signals" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.signals ?? 'Signals'}</Link>
+                <span className="text-[var(--color-rule-strong)]">·</span>
+                <Link href="/agent" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.agent ?? 'Agent'}</Link>
+                <span className="text-[var(--color-rule-strong)]">·</span>
+                <Link href="/labs" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.labs ?? 'Labs'}</Link>
+                <span className="text-[var(--color-rule-strong)]">·</span>
+                <Link href="/status" className="text-[11px] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors no-underline font-medium sm:text-[12px]">Status</Link>
               </div>
               <div className="text-left text-[11px] font-light text-[var(--color-ink-faint)] sm:text-right">
                 {BRAND.name} · {new Date().getFullYear()}

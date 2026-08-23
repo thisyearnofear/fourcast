@@ -191,9 +191,9 @@ export default function AgentRail() {
         </Link>
       )}
 
-      {/* Row 3 — marquee of decisions */}
+      {/* Row 3 — marquee of decisions (hidden on mobile — too small) */}
       {items.length > 0 && (
-        <div className="fc-marquee border-t border-[var(--color-rule)]">
+        <div className="hidden sm:block fc-marquee border-t border-[var(--color-rule)]">
           <div className="fc-marquee__track">
             {items.slice(0, 12).concat(items.slice(0, 12)).map((item, i) => (
               <span key={i} className="fc-marquee__item">
