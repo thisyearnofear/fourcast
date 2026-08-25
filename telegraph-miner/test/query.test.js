@@ -5,7 +5,27 @@ import {
   inferIntent,
   normalizeQueryRequest,
   signalFieldsFromAnswer,
+  parseNaturalLanguage,
 } from '../src/query.js';
+
+describe('parseNaturalLanguage', () => {
+  it('extracts Premier League from query', () => {
+    const got = parseNaturalLanguage('Premier League scores this weekend');
+    assert.equal(got.competition, 'Premier League');
+  });
+
+  it('extracts team name via teamFromQuery via normalize', () => {
+    const got = normalizeQueryRequest({ query: 'who won Manchester City this weekend' });
+    assert.equal(got.ok, true);
+    assert.equal(got.params.team, 'Manchester City');
+  });
+
+  it('infers GAME_RESULT for winner queries', () => {
+    const got = normalizeQueryRequest({ query: 'who won Liverpool this weekend' });
+    assert.equal(got.ok, true);
+    assert.equal(got.intent, 'GAME_RESULT');
+  });
+});
 
 describe('teamFromQuery', () => {
   it('pulls a team name out of a natural-language score question', () => {
@@ -71,14 +91,28 @@ describe('normalizeQueryRequest', () => {
     assert.equal(got.params.team, 'FromParams');
   });
 
-  it('400s unknown intents instead of silently scanning', () => {
+  it('infers intent from query when declared intent is unsupported', () => {
+    // When the auto-router misfires with an unsupported intent, try parsing
+    // the query text — "Inter Miami" should infer SPORTS_SCORE.
     const got = normalizeQueryRequest({
       intent: 'WEB_SEARCH',
       query: 'Inter Miami',
     });
+    assert.equal(got.ok, true);
+    assert.equal(got.intent, 'SPORTS_SCORE');
+    assert.equal(got.params.team, 'Inter Miami');
+  });
+
+  it('returns graceful 200 when intent is unsupported and query is not parseable', () => {
+    // "what can you offer" has no parseable sports signal — graceful 200.
+    const got = normalizeQueryRequest({
+      intent: 'unsupported',
+      query: 'what can you offer',
+    });
     assert.equal(got.ok, false);
-    assert.equal(got.status, 400);
+    assert.equal(got.status, 200); // graceful, not a 400
     assert.equal(got.error, 'unsupported_intent');
+    assert.match(got.message, /SPORTS_SCORE/);
   });
 
   it('400s an empty body', () => {

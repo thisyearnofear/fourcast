@@ -37,10 +37,23 @@ app.post('/query', async (req, res) => {
   const parsed = normalizeQueryRequest(req.body);
 
   if (!parsed.ok) {
+    // Graceful degradation: return 200 with a helpful message when we can't
+    // answer, rather than a 400 that looks like the miner is broken.
     return res.status(parsed.status).json({
-      error: parsed.error,
-      message: parsed.message,
-      ...(parsed.extra || {}),
+      request_id: parsed.request_id || null,
+      intent: null,
+      score: '',
+      label: 'unsupported',
+      winner: '',
+      reason: parsed.message || 'This miner serves SPORTS_SCORE and GAME_RESULT. Try asking about a specific team, fixture, or competition.',
+      answer: null,
+      metadata: {
+        error: parsed.error,
+        supported_intents: parsed.extra?.supported_intents || [],
+        source: 'fourcast-txline',
+        latency_ms: Date.now() - start,
+        timestamp: new Date.now().toISOString(),
+      },
     });
   }
 

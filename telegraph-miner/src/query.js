@@ -38,11 +38,60 @@ export function teamFromQuery(q) {
   return focus
     .replace(/[?!.,:;'"]/g, ' ')
     .replace(
-      /\b(what|whats|what'?s|who|whos|who'?s|the|a|an|is|are|was|were|did|does|current|live|latest|final|score|scores|result|results|of|for|win|won|winner|game|match|between|please|tell|me|give)\b/gi,
+      /\b(what|whats|what'?s|who|whos|who'?s|can|could|would|should|you|your|yours|the|a|an|is|are|was|were|did|does|current|live|latest|final|score|scores|result|results|of|for|win|won|winner|game|match|between|please|tell|me|give|this|that|these|those|last|next|past|current|upcoming|recent|yesterday|tomorrow|today|tonight|evening|morning|afternoon|night|weekend|day|week|month|year|offer|information|info|details|check|about|using|use|with|and|or)\b/gi,
       ' '
     )
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * Parse natural-language sports queries into structured params.
+ * Handles queries like:
+ *   "who won Manchester City this weekend"
+ *   "Premier League scores today"
+ *   "Did Liverpool win?"
+ */
+export function parseNaturalLanguage(queryText) {
+  if (!queryText) return {};
+
+  const q = queryText.toLowerCase();
+
+  // Competition extraction
+  let competition = null;
+  if (/\b(premier league|pl|epl|english premier)\b/.test(q)) competition = 'Premier League';
+  else if (/\b(mls|major league soccer)\b/.test(q)) competition = 'MLS';
+  else if (/\b(laliga|la liga|la liga)\b/.test(q)) competition = 'La Liga';
+  else if (/\b(bundesliga)\b/.test(q)) competition = 'Bundesliga';
+  else if (/\b(nfl|national football league)\b/.test(q)) competition = 'NFL';
+  else if (/\b(serie a|serie)\b/.test(q)) competition = 'Serie A';
+  else if (/\b(champions league|ucl)\b/.test(q)) competition = 'Champions League';
+
+  // Date reference resolution
+  let date = null;
+  if (/\b(this weekend|last weekend|past weekend)\b/.test(q)) {
+    // Most recent weekend (Sat-Sun)
+    const now = new Date();
+    const dow = now.getDay(); // 0=Sun, 6=Sat
+    const daysToSat = (dow + 6) % 7; // days since last Saturday
+    const lastSat = new Date(now);
+    lastSat.setDate(now.getDate() - daysToSat - (dow === 6 ? 7 : 0) - (dow === 0 ? 1 : 0) - (dow === 1 ? 2 : 0));
+    lastSat.setHours(0, 0, 0, 0);
+    if (dow === 0 || dow === 1) lastSat.setDate(lastSat.getDate() - 7); // if Mon/Tue, go to prior weekend
+    if (dow === 6) lastSat.setDate(lastSat.getDate() - 7); // if Sat, go to last Sat not future
+    date = lastSat.toISOString().slice(0, 10);
+  } else if (/\b(last night|yesterday)\b/.test(q)) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    date = d.toISOString().slice(0, 10);
+  } else if (/\b(today)\b/.test(q)) {
+    date = new Date().toISOString().slice(0, 10);
+  }
+
+  // Result/winner indicator
+  const wantsResult = RESULT_RE.test(q);
+
+  return { competition, date, wantsResult };
 }
 
 export function inferIntent(queryText, params = {}) {
@@ -70,9 +119,22 @@ export function normalizeQueryRequest(body) {
   }
 
   const queryText = firstString(raw.query, raw.q, raw.question, raw.text);
-  if (queryText && !params.team && !params.fixture_id) {
-    const extracted = teamFromQuery(queryText);
-    if (extracted) params.team = extracted;
+
+  // Enrich params with NL parsing — this lets the intent handlers resolve
+  // natural-language asks ("who won Man City this weekend") without needing
+  // the auto-router to have already classified them.
+  if (queryText) {
+    const nl = parseNaturalLanguage(queryText);
+    if (!params.competition && !params.league && nl.competition) {
+      params.competition = nl.competition;
+    }
+    if (!params.date && nl.date) {
+      params.date = nl.date;
+    }
+    if (!params.team && !params.fixture_id) {
+      const extracted = teamFromQuery(queryText);
+      if (extracted) params.team = extracted;
+    }
   }
   if (params.home_team && !params.team) {
     params.team = params.home_team;
@@ -83,11 +145,25 @@ export function normalizeQueryRequest(body) {
 
   if (declared) {
     if (!SUPPORTED_INTENTS.includes(declared)) {
+      // Auto-router sometimes sends a declared intent the classifier couldn't
+      // map. Try inferring from the query text before rejecting — the query
+      // often contains enough signal even when the routing layer misfires.
+      const inferredIntent = inferIntent(queryText, params);
+      // Require a plausible lookup key — single filler words ("offer", "info")
+      // aren't real team/fixture references even if they survive stopword stripping.
+      const hasRealLookup =
+        (params.team && params.team.length >= 3) ||
+        params.fixture_id ||
+        params.competition;
+      if (inferredIntent && hasRealLookup) {
+        return { ok: true, intent: inferredIntent, params, request_id };
+      }
+      // Graceful 200 so the caller doesn't get a 400 on an otherwise valid ask.
       return {
         ok: false,
-        status: 400,
+        status: 200,
         error: 'unsupported_intent',
-        message: `This miner serves SPORTS_SCORE and GAME_RESULT intents. Received: ${declared}`,
+        message: `This miner serves SPORTS_SCORE and GAME_RESULT intents. Try asking about a specific team, fixture, or competition — e.g. "What was the Manchester City score?"`,
         extra: { supported_intents: SUPPORTED_INTENTS },
       };
     }
