@@ -78,13 +78,13 @@ const ROUTE_CARDS = {
   },
   diligence: {
     eyebrow: "POSITIONS",
-    headline: "Public track record + private CBTC",
-    line: "Your positions and receipts — public Arc history and private Canton settle in one place.",
+    headline: "Auditable records + private settlement",
+    line: "Decision receipts, track records, and private Canton settlement when discretion matters.",
   },
   positions: {
     eyebrow: "POSITIONS",
-    headline: "Public track record + private CBTC",
-    line: "Your positions and receipts — public Arc history and private Canton settle in one place.",
+    headline: "Auditable records + private settlement",
+    line: "Decision receipts, track records, and private Canton settlement when discretion matters.",
   },
   proof: {
     eyebrow: "PRIVATE",
@@ -97,9 +97,9 @@ const ROUTE_CARDS = {
     line: "Autopilot, Builder attribution, and Canton ops.",
   },
   canton: {
-    eyebrow: "PRIVATE",
+    eyebrow: "PRIVATE · DEVNET",
     headline: "Hidden-size positions on Canton",
-    line: "Protocol privacy — not a UI filter. Atomic settlement in CBTC.",
+    line: "Protocol privacy — not a UI filter. CBTC settlement is demonstrated on DevNet; mainnet remains ahead.",
   },
   status: {
     eyebrow: "STATUS",
@@ -530,7 +530,7 @@ async function renderLandingOG() {
         <div style={{ display: "flex", width: "100%", gap: "42px", position: "relative", zIndex: 1 }}>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "42px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "32px" }}>
                 <div
                   style={{
                     height: "42px",
@@ -548,24 +548,24 @@ async function renderLandingOG() {
                 </div>
                 <div style={{ fontSize: "24px", fontWeight: 700 }}>Fourcast</div>
               </div>
-              <div style={{ fontSize: "64px", fontWeight: 760, lineHeight: 0.95, letterSpacing: "-0.04em" }}>
-                Fourcast
+              <div style={{ color: "#a7f3d0", fontSize: "13px", fontWeight: 800, letterSpacing: "0.18em" }}>
+                EVIDENCE &amp; SETTLEMENT
               </div>
-              <div style={{ marginTop: "18px", fontSize: "28px", fontWeight: 500, lineHeight: 1.25, color: "rgba(255,255,255,0.72)", maxWidth: "520px" }}>
-                Find mispriced prediction markets before the crowd
+              <div style={{ marginTop: "18px", fontSize: "58px", fontWeight: 760, lineHeight: 0.98, letterSpacing: "-0.04em", maxWidth: "620px" }}>
+                Every prediction deserves a proof trail.
               </div>
-              <div style={{ marginTop: "26px", fontSize: "24px", lineHeight: 1.35, color: "rgba(255,255,255,0.66)", maxWidth: "620px" }}>
-                AI fair odds vs live Polymarket and Kalshi prices — publish a trackable call.
+              <div style={{ marginTop: "24px", fontSize: "24px", lineHeight: 1.35, color: "rgba(255,255,255,0.66)", maxWidth: "620px" }}>
+                Market evidence becomes sealed decisions, verifiable outcomes, and private settlement when discretion matters.
               </div>
             </div>
             <div style={{ display: "flex", gap: "14px", color: "rgba(255,255,255,0.52)", fontSize: "18px" }}>
-              <span>Search</span>
+              <span>Evidence</span>
               <span>→</span>
-              <span>Analyze</span>
+              <span>Seal</span>
               <span>→</span>
-              <span>Publish</span>
+              <span>Verify</span>
               <span>→</span>
-              <span>Track</span>
+              <span>Settle</span>
             </div>
           </div>
 
@@ -585,10 +585,10 @@ async function renderLandingOG() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ color: "#a7f3d0", fontSize: "13px", fontWeight: 800, letterSpacing: "0.18em" }}>
-                  LIVE EDGE SCANNER
+                  DECISION PROOF
                 </div>
                 <div style={{ marginTop: "8px", fontSize: "21px", fontWeight: 650, lineHeight: 1.18 }}>
-                  Bitcoin $150K market
+                  Evidence bound. Outcome ready.
                 </div>
               </div>
               <div
@@ -602,15 +602,15 @@ async function renderLandingOG() {
                   fontWeight: 800,
                 }}
               >
-                HIGH · BUY YES
+                SEALED BEFORE OUTCOME
               </div>
             </div>
 
             <div style={{ display: "flex", gap: "12px" }}>
               {[
-                ["Market", "42%"],
-                ["AI fair", "58.0%"],
-                ["Edge", "+16.0%"],
+                ["Evidence", "BOUND"],
+                ["Decision", "SEALED"],
+                ["Outcome", "READY"],
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -623,7 +623,7 @@ async function renderLandingOG() {
                   }}
                 >
                   <div style={{ color: "rgba(255,255,255,0.42)", fontSize: "12px", textTransform: "uppercase" }}>{label}</div>
-                  <div style={{ marginTop: "10px", fontSize: "29px", fontWeight: 760, color: label === "Edge" ? "#a7f3d0" : "white" }}>
+                  <div style={{ marginTop: "10px", fontSize: "24px", fontWeight: 760, color: label === "Outcome" ? "#a7f3d0" : "white" }}>
                     {value}
                   </div>
                 </div>
@@ -631,7 +631,7 @@ async function renderLandingOG() {
             </div>
 
             <div style={{ borderRadius: "16px", background: "rgba(0,0,0,0.26)", border: "1px solid rgba(255,255,255,0.1)", padding: "18px" }}>
-              {["ETF inflows · SERP API", "Institutional bid · Scraping Browser", "Macro setup · Web Unlocker"].map((item, index) => (
+              {["Market + oracle inputs", "Policy-bound decision", "Public proof / private settlement"].map((item, index) => (
                 <div key={item} style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: index === 0 ? 0 : "14px" }}>
                   <div style={{ height: "9px", width: "9px", borderRadius: "99px", background: ["#22d3ee", "#34d399", "#fcd34d"][index] }} />
                   <div style={{ fontSize: "17px", color: "rgba(255,255,255,0.78)" }}>{item}</div>
@@ -640,9 +640,9 @@ async function renderLandingOG() {
             </div>
 
             <div style={{ borderRadius: "16px", background: "rgba(6,182,212,0.12)", border: "1px solid rgba(103,232,249,0.26)", padding: "18px" }}>
-              <div style={{ fontSize: "17px", color: "#cffafe", fontWeight: 700 }}>AI edge detection</div>
+              <div style={{ fontSize: "17px", color: "#cffafe", fontWeight: 700 }}>Evidence → decision → resolution</div>
               <div style={{ marginTop: "6px", fontSize: "14px", color: "rgba(207,250,254,0.62)" }}>
-                SERP API · Scraping Browser · Web Unlocker · MCP Server
+                Receipt · outcome attestation · public proof or private settlement
               </div>
             </div>
           </div>

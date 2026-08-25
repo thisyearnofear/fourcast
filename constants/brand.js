@@ -1,10 +1,10 @@
 /**
  * Fourcast brand & product narrative — single source of truth.
  *
- * Core identity: venue-agnostic autonomous prediction-market operator.
- * Agent core (policy + sizing + receipts) is the constant.
- * Execution venues (Polymarket, Delphi, Canton) are additive layers.
- * Intelligence (TxLINE/TxOdds, Venice AI, Bright Data) feeds the core.
+ * Core identity: evidence and settlement infrastructure for prediction markets.
+ * Fourcast turns market intelligence into sealed, auditable decisions.
+ * Verification and resolution can be public or private; autonomous agents are
+ * one decision surface, not the whole product category.
  */
 
 export const BRAND = {
@@ -19,17 +19,17 @@ export const BRAND = {
   /** The fall-back customer if the test fails on custody. */
   fallbackCustomer: 'Signal Analyst / Reputation Climber',
 
-  /** Positioning — single source of truth for everyone (UI + docs + tests). */
+  /** Positioning — shared product narrative for UI, metadata, and partner copy. */
   positioning: {
     headline:
-      'A self-driving prediction-market operator that proves every call. Venue-agnostic execution. Provable discipline.',
+      'The evidence and settlement layer for prediction markets. Market intelligence becomes sealed decisions, verifiable outcomes, and private settlement when discretion matters.',
     promise:
-      'Discover edge · size under policy · execute across venues · prove every decision before the outcome.',
+      'Capture evidence · seal the decision · verify the outcome · settle privately when needed.',
     excludeRetailLead: false,
-    primaryRfb: '01 — Verifiable Autonomous Operator (mandate receipts + reconciliation)',
-    secondaryRfb: '02 — Prediction Market Trader Intelligence (multi-venue edge)',
-    tertiaryRfb: '03 — Cross-Platform Arbitrage (venue-agnostic execution)',
-    acquisitionRfb: '04 — Social Trading Intelligence (signal marketplace)',
+    primaryRfb: '01 — Evidence-bound decisions (receipts + reconciliation)',
+    secondaryRfb: '02 — Prediction-market intelligence (multi-venue evidence)',
+    tertiaryRfb: '03 — Verifiable resolution and private settlement',
+    acquisitionRfb: '04 — Public decision records and reputation',
     operatorMath: {
       claim: 'Premium pays for itself on 3 attributed fills per month.',
       formula: 'Net = (attribution × fills) − $19.99 / mo',
@@ -41,14 +41,14 @@ export const BRAND = {
   },
 
   /** One line — hero, OG, pitch. */
-  tagline: 'Self-driving edge. Every call gated, sized, and receipted beforehand.',
+  tagline: 'Evidence in. Decision sealed. Outcome verified.',
 
   /** Supporting line — subheads, metadata. */
   subhead:
-    'A policy-bound agent hunts edge across Polymarket, Kalshi, and Delphi — sizes it, and writes the receipt before the outcome. Private settlement only when your size needs it.',
+    'Fourcast turns market and oracle inputs into auditable decisions: evidence-bound before resolution, verifiable afterward, and privately settleable when discretion matters.',
 
   /** Footer / trust strip */
-  footerStrip: 'Polymarket · Kalshi · Delphi · TxLINE/TxOdds · decision receipts',
+  footerStrip: 'market evidence · sealed decisions · verifiable outcomes · private settlement',
 
   /** Demo CTA */
   demoTitle: 'Watch the agent decide in under a minute',
@@ -137,7 +137,7 @@ export const BRAND = {
     polymarket: { name: 'Polymarket', type: 'CLOB', status: 'live', chain: 'Polygon' },
     kalshi: { name: 'Kalshi', type: 'Exchange', status: 'live', chain: 'Centralized' },
     delphi: { name: 'Delphi', type: 'LMSR', status: 'finished', chain: 'Gensyn Testnet' },
-    canton: { name: 'Canton', type: 'Private settle', status: 'roadmap', chain: 'Canton DevNet' },
+    canton: { name: 'Canton', type: 'Private settlement', status: 'devnet', chain: 'Canton DevNet' },
   },
 
   /** Intelligence sources — feed the agent core. */
@@ -191,9 +191,9 @@ export const BRAND = {
   },
 
   metadata: {
-    title: 'Fourcast — Autonomous Prediction-Market Operator',
+    title: 'Fourcast — Evidence and Settlement for Prediction Markets',
     description:
-      'Venue-agnostic autonomous agent for prediction markets. Policy-bound decisions with verifiable receipts across Polymarket, Kalshi, and Delphi.',
+      'Turn market intelligence into sealed, auditable decisions. Fourcast provides evidence-bound receipts, verifiable outcomes, and private settlement for prediction markets.',
   },
 };
 

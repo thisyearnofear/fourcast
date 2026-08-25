@@ -43,7 +43,7 @@ export const metadata = {
         url: '/api/og?type=landing',
         width: 1200,
         height: 630,
-        alt: 'Fourcast — verification and reputation for prediction-market agents',
+        alt: 'Fourcast — evidence and settlement for prediction markets',
       },
     ],
   },

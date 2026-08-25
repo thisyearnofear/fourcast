@@ -138,10 +138,10 @@ function Hero() {
         />
       </div>
 
-      {/* Agent badge */}
+      {/* Evidence-and-settlement badge */}
       <p className="fc-kicker fc-print inline-flex items-center gap-2">
         <span className="mc-lamp mc-lamp--live" aria-hidden />
-        {BRAND.agent.badge}
+        Evidence &amp; settlement
       </p>
 
       {/* Headline — print stagger, not word-by-word */}
@@ -149,8 +149,8 @@ function Hero() {
         className="fc-display fc-print mt-4 max-w-4xl text-3xl font-extrabold leading-[1.02] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-6xl"
         style={{ '--print-delay': '120ms' }}
       >
-        An agent that proves every decision —{' '}
-        <span className="text-[var(--color-accent)]">before the outcome lands.</span>
+        Every prediction deserves a{' '}
+        <span className="text-[var(--color-accent)]">proof trail.</span>
       </h1>
 
       {/* Sub — one breath, tighter on mobile */}
@@ -158,8 +158,7 @@ function Hero() {
         className="fc-print mt-3 max-w-xl text-[15px] leading-snug text-[var(--color-ink-muted)] sm:mt-4 sm:text-base sm:leading-relaxed"
         style={{ '--print-delay': '200ms' }}
       >
-        Scans markets. Sizes under policy. Writes the receipt.{' '}
-        <span className="text-[var(--color-ink-faint)]">You get the tape, not the selling.</span>
+        Market evidence becomes sealed decisions, verifiable outcomes, and private settlement when discretion matters.
       </p>
 
       {/* CTAs — one primary (magnetic + particle reveal), one secondary */}
@@ -174,10 +173,10 @@ function Hero() {
             style={{ display: 'inline-block' }}
           >
             <Link
-              href="/arena"
+              href="/proof?chain=canton"
               className="fc-action inline-flex items-center justify-center gap-2 px-6 py-3 text-sm sm:text-base"
             >
-              Watch it decide
+              See the proof
               <ArrowRight className="h-4 w-4" />
             </Link>
           </ParticleReveal>
@@ -187,7 +186,7 @@ function Hero() {
           className="mc-nav-link no-underline inline-flex items-center gap-1.5 text-sm text-[var(--color-ink-muted)]"
         >
           <Radar className="h-4 w-4" aria-hidden />
-          Scan today&rsquo;s markets
+          Explore markets
         </Link>
       </div>
 
