@@ -4,7 +4,7 @@
 
 Fourcast is a **flight recorder for autonomous capital**. An agent operates under a versioned mandate — it decides from pre-match TxLINE evidence alone, seals each decision into a SHA-256 receipt, and reconciles against an independently verifiable on-chain outcome after the match finalizes. The route is one unfolding system: **Mandate Control → Proof Theatre → Diligence**.
 
-TxLINE is the single primary data layer for fixtures, consensus odds, score events, and Merkle proofs. A custom Solana program (`match-escrow`) CPI-calls TxLINE's `txoracle::validate_stat` to trustlessly settle parametric sports insurance. The supporting infrastructure (Bright Data, Polymarket/Kalshi, Venice AI, SynthData) remains as secondary enrichment for the `/markets` and `/signals` routes.
+TxLINE is the primary data layer for fixtures, consensus odds, score events, and Merkle proofs. Fourcast also has a **Solana DevNet** `match-escrow` program whose settlement design CPI-calls TxLINE's `txoracle::validate_stat` for parametric sports policies. The supporting infrastructure (Bright Data, Polymarket/Kalshi, Venice AI, SynthData) remains as secondary enrichment for the `/markets` and `/signals` routes.
 
 ## Flagship Route Architecture
 
@@ -124,7 +124,7 @@ The on-chain verification flow:
 1. **Proof verification** — `solanaVerify.js` extracts the Merkle proof from a cached fixture replay
 2. **PDA derivation** — derives the `daily_scores_roots` PDA using seeds `[b"daily_scores_roots", epoch_day as u16 LE]`
 3. **On-chain comparison** — fetches the PDA account via Solana JSON-RPC, reads the 32-byte Merkle root, compares against `eventStatRoot`
-4. **Settlement (CPI)** — `settlementService.js` builds and submits `settle_policy` transactions
+4. **Settlement (CPI)** — `settlementService.js` builds the `settle_policy` instruction; the wallet/UI signing path submits it
 
 Verdicts: `verified` (on-chain root matches), `onchain-mismatch` (root differs), `onchain-error` (PDA unreachable), `proof-present` (components valid but no timestamp for PDA derivation).
 
@@ -322,13 +322,12 @@ CREATE TABLE signals (
 
 ## Multi-Chain Architecture
 
-### Arc (Primary Settlement Layer) — Agora Agents Hackathon
-- **Purpose**: Signal publishing, USDC settlement, agent accounts, cross-chain coordination
-- **Network**: Arc testnet (Chain ID 5042002)
-- **Contract**: `PredictionReceiptERC20` for signal publishing; SubscriptionManager for USDC plans
-- **Features**: On-chain signals, USDC-denominated subscriptions, sub-second finality, ~$0.01 tx fees
-- **Circle Tools**: CCTP, Gateway, Wallets, Paymaster, USYC, App Kit
-- **Status**: Arc publish routing is wired in the app; contract deployment/env config still required for live publishing
+### Arc (historical Agora testnet integration)
+- **Purpose then**: receipt publishing and experiment-oriented USDC subscriptions during the Agora Agents Hackathon.
+- **Network**: Arc testnet (Chain ID 5042002).
+- **Current code scope**: wallet-signed `PredictionReceiptERC20` publishing remains available when its contracts and environment variables are configured; it is not Fourcast's current primary settlement rail.
+- **Important limitation**: the active receipt publisher maps signals with `stakeUnits = 0`, so it does not demonstrate a current USDC value-settlement flow.
+- **Status**: historical integration retained for reference; do not represent Arc/Circle as an active production or Canton-adjacent settlement path.
 
 ### Movement/Aptos — RETIRED (2026-07)
 The legacy Move-based signal layer (Movement Bardock, `signal_registry.move`)

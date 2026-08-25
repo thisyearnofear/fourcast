@@ -1,5 +1,12 @@
 # Features & Capabilities
 
+> **Status note (2026-08):** Canton is a DevNet-only prototype: private CIP-56
+> settlement and a BitSafe CBTC lifecycle are demonstrated, while resolution is
+> operator-attested by default and mainnet/independent-attester deployment remain
+> open. Arc sections describe a finished testnet hackathon integration, not an
+> active primary settlement rail. For authoritative Canton status, see
+> [`CANTON_ATOMIC_SETTLEMENT.md`](CANTON_ATOMIC_SETTLEMENT.md).
+
 ## What Works Today
 
 ### Venue loop + Canton privacy (HackCanton wedge)
@@ -37,12 +44,13 @@ Primary nav: **Markets · Positions · Private**. Overflow: Signals · Mandate �
 - **Auto-hides** when no data (first-time user)
 - **Links to /signals** for full stats
 
-#### Monetization (USDC on Arc)
-- **Free tier**: 3 AI analyses per day
-- **Pro tier** ($9.99/mo): Unlimited analyses, deep mode, weather, web search
-- **Premium tier** ($19.99/mo): Kelly Criterion, API access, arbitrage execution
-- **Subscription smart contract** on Arc testnet (0xC7e26e89...)
-- **Rate limit bypass** for active subscribers — checked on-chain via viem
+#### Historical Arc testnet monetization
+
+The following pricing, subscription, and USDC notes describe the completed
+Agora testnet experiment. They are **not** an active Fourcast settlement or
+commercial offering. The retained Arc receipt path publishes zero-stake
+receipts when its contracts and environment are configured; it does not move
+USDC value today.
 
 #### AI-Powered Market Analysis
 - **Venice AI Integration** - Llama 3.3 70B with web search
@@ -68,8 +76,8 @@ Primary nav: **Markets · Positions · Private**. Overflow: Signals · Mandate �
 - **Telegram Bot (@fourcasterbot)** — /edge commands for AI prediction analysis via messaging
 
 #### On-Chain Signals
-- **Arc Publishing** - Publish predictions on Arc testnet via PredictionReceiptERC20 when configured
-- **Legacy Fallback** - Movement/Aptos publish path remains available when Arc is not connected
+- **Arc receipt publishing (historical testnet path)** — retained `PredictionReceiptERC20` publishing when configured; zero-stake receipts do not move USDC value.
+- **Movement/Aptos** — retired for new functionality; historical signal records may retain legacy origin badges.
 - **TxLINE/Solana Proof of Decision** - Receipt integrity, TxLINE Merkle proof validation, Solana root comparison, and decision-vs-outcome reconciliation in one endpoint
 - **Parametric Sports Settlement** - Match-escrow Solana program CPI-calls TxLINE `validate_stat` to settle a proof-backed policy
 - **Tipping System** - Reward analysts with APT on legacy Movement signals
@@ -313,7 +321,7 @@ Fourcast shipped as an **Arc-native prediction market intelligence agent** for t
 
 | Chain | Purpose | Status |
 |-------|---------|--------|
-| **Arc (Circle L1)** | Primary settlement — USDC subs ✅, signals/tips rolling out | ✅ Testnet |
+| **Arc (Circle L1)** | Historical Agora testnet receipt/subscription integration | Archived testnet path |
 | Movement/Aptos | Legacy signal publishing | ✅ Testnet |
 | BNB Chain | Trading contracts | 🧪 Beta |
 | Polygon | Trading contracts | 🧪 Beta |

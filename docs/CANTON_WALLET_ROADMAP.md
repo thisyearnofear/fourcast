@@ -1,13 +1,14 @@
 # Canton Wallet & Settlement UX Roadmap
 
-> Status: DevNet prototype. The holder dashboard (`/canton/holder`) has
-> Console Wallet connection, private queries, and a **holder-signed settlement
-> lane**: `/api/canton/settle/prepare` assembles exact unsigned `SettleAsHolder`
-> payloads (resolution + escrow legs + BitSafe disclosed contracts) and
-> `useCantonHolderWallet.settleAsHolder` signs them with the holder's own key.
-> The server never signs. Remaining: holder-signed position creation (offer
-> signing) and independent attesters. The operator server-side ledger client
-> remains the fallback judge-demo path.
+> **Current status (2026-08):** DevNet prototype. The holder dashboard
+> (`/canton/holder`) supports private queries and a **holder-signed settlement
+> lane**: `/api/canton/settle/prepare` assembles an unsigned `SettleAsHolder`
+> payload and `useCantonHolderWallet.settleAsHolder` signs it with the holder's
+> own key. The real BitSafe CBTC lifecycle is verified on DevNet; mainnet is
+> not deployed. Remaining product work is holder-signed position creation and
+> an independent attester integration. The current DevNet resolver defaults to
+> operator self-attestation, and the server-side ledger client remains the
+> fallback judge-demo path.
 
 ---
 
@@ -70,36 +71,36 @@
 
 **Why second:** high demo impact, but touches Daml contracts and working settlement logic.
 
-### Status: **Daml layer and DevNet reference-registry flow delivered (v2.0.0)**
+### Status: Delivered and verified on DevNet
 
-The contract rework is done and verified — see `docs/CANTON_ATOMIC_SETTLEMENT.md`
-and `canton/daml/Fourcast/PredictionPosition.daml`. Instead of automating a
-post-hoc transfer, v2 eliminated the obligation entirely: stakes are locked as
-CIP-56 allocations at position entry, and `Settle`/`SettleAsHolder` execute /
-cancel the escrow legs inside the settlement transaction itself. 7/7 Daml
-Scripts pass (`dpm test` in `canton/`, SDK 3.5.2).
+The v2 contract model and real BitSafe CBTC lifecycle are complete on Canton
+DevNet. The recorded lifecycle is `scripts/canton-bitsafe-lifecycle.mjs`, with
+captured evidence in `public/proof/canton-receipts.json` (2026-08-04). It uses
+real BitSafe CBTC holdings, CIP-56 allocations, and holder-side
+`SettleAsHolder`; it is not merely the Fourcast reference-registry flow.
 
-The remaining production work is registry-specific integration and evidence
-capture; the reference-registry lifecycle is already wired and tested.
+Remaining production work is not a second BitSafe qualification pass. It is:
+
+1. integrate an independent attester instead of the current operator
+   self-attestation default;
+2. complete holder-signed position creation, rather than only holder-signed
+   settlement; and
+3. establish the target-network registry, wallet, permissions, and operational
+   runbook before any mainnet deployment.
 
 ### Scope
-- Verify the same flow against BitSafe's real CBTC registry and instrument.
-- Keep the manual Console Wallet fallback only for operational recovery, not as the product settlement path.
-
-### Implementation steps
-1. Add the CIP-56 token DAR to the Daml project in `canton/daml/`.
-2. Extend the `PredictionPosition` Daml model so that `Settle` exercises a token transfer choice.
-3. Update `services/cantonLedgerClient.js::settlePosition()` to submit the transfer command.
-4. Capture transaction IDs and before/after balances for the real BitSafe registry run.
+- Keep the DevNet BitSafe lifecycle reproducible as a regression/operational check.
+- Retain the server-side operator lane only as a judge/demo fallback; it is not the intended production holder-authority model.
+- Do not claim mainnet deployment, independent oracle resolution, or cETH registry integration until each has separate evidence.
 
 ### Acceptance criteria
-- A resolved reference-registry market can be settled with one command.
-- Escrow legs execute or cancel atomically and no obligation remains.
-- The real BitSafe CBTC registry flow is separately verified before claiming CBTC integration.
+- The DevNet BitSafe lifecycle continues to pass with real CBTC and recorded evidence.
+- A market cannot resolve without an attestation from its designated attester.
+- A holder can sign settlement with their own wallet; holder-signed position creation and independent attester operation remain tracked production work.
 
 ### Risks & mitigations
-- **Risk:** Token transfer DAR may require different party permissions. **Mitigation:** test on Canton Devnet with pre-funded parties before touching main code.
-- **Risk:** Could break the existing settlement UI. **Mitigation:** keep the current settle route as `/api/canton/settle-legacy` until the new flow is verified.
+- **Risk:** Target-network token registries, package versions, and party permissions differ from DevNet. **Mitigation:** obtain the production registry configuration and rerun the complete lifecycle before enabling real assets.
+- **Risk:** The current self-attested DevNet resolver is mistaken for independent oracle operation. **Mitigation:** state this distinction explicitly in product and partner material; require a distinct attester party for production.
 
 ---
 
@@ -130,9 +131,9 @@ capture; the reference-registry lifecycle is already wired and tested.
 
 | Order | Phase | Effort | Risk | Hackathon Value |
 |-------|-------|--------|------|-----------------|
-| 1 | Verify BitSafe CBTC registry swap | Medium | Medium | Critical |
+| 1 | Independent attester integration | Medium | Medium | Critical |
 | ~~2~~ | ~~Complete external holder signing~~ — **DELIVERED for settlement** (`SettleAsHolder` via `/api/canton/settle/prepare` + dashboard). Position *creation* signing remains open (Phase 1) | Medium | Medium | High |
-| 3 | Independent attestation | Low | Low | Medium |
+| 3 | Mainnet / production registry deployment | High | High | Medium |
 | 4 | OAuth/Wallet Gateway auth | Medium | High | Low |
 
 ---

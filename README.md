@@ -47,10 +47,10 @@ Every AI trading agent claims performance. None prove discipline. Fourcast produ
 | Positions & Track Record | `/positions` | Live |
 | Signals (publish + follow) | `/signals` | Live |
 | Autonomous VPS Worker | Headless (PM2) | Live |
-| Delphi Competition Agent | Dry-run verified, ready for live | Aug 10–24 |
-| TxLINE MLS Odds | Integration in progress | Live at 50% |
-| TxLINE Premier League | Live | Coverage arrived 2026-08-18 |
-| Canton Private Settlement | Functional on DevNet | Roadmap |
+| Delphi Competition Agent | Competition completed; worker stopped | Aug 10–24, 2026 |
+| TxLINE MLS Odds | Credential-gated live mode with replay fallback | Provider availability/config dependent |
+| TxLINE Premier League | Credential-gated live mode with replay fallback | Provider availability/config dependent |
+| Canton Private Settlement | DevNet-proven CIP-56/BitSafe CBTC prototype; operator-attested by default | Independent attester + mainnet pending |
 
 **Production:** [fourcastapp.vercel.app](https://fourcastapp.vercel.app)
 
@@ -59,10 +59,10 @@ Every AI trading agent claims performance. None prove discipline. Fourcast produ
 ### Polymarket & Kalshi (Live)
 The original execution layer. Polymarket CLOB orders via Builder Program (earn USDC per attributed fill). Kalshi as secondary venue. The agent discovers markets, filters by volume/time/category, forecasts, detects edge, and executes autonomously.
 
-### Delphi / Gensyn (Active — Competition Aug 10–24)
+### Delphi / Gensyn (Finished — competition Aug 10–24, 2026)
 LMSR-based prediction markets on Gensyn Testnet. The same agent core (policy, sizing, forecasting) routes through the Delphi SDK for market discovery, quoting, and execution. TxLINE odds provide intelligence edge on sports markets that other competitors lack.
 
-### Canton Network (Roadmap)
+### Canton Network (DevNet prototype)
 Private settlement for operators who need position size hidden from the market. CIP-56 atomic CBTC escrow is implemented and proven on DevNet. Activates when counterparty network or mainnet makes it practical. Code is functional — not the hero, but available.
 
 ## Intelligence Layer

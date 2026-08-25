@@ -1,20 +1,17 @@
 # HackCanton S2 — Fourcast Opportunity
 
-> **Current pitch wedge:** Fourcast is a private prediction-market settlement
-> layer for high-volume traders. AI agents, Solana receipts, allocator
-> diligence, cETH, and leaderboards are out of scope for the HackCanton pitch.
-> The current DevNet proof uses a reference CIP-56 registry. Do not claim
-> BitSafe CBTC settlement until the real BitSafe registry and instrument have
-> completed the lifecycle.
+> **Current verified status (2026-08):** Fourcast has a **Canton DevNet** private-settlement prototype. The v2 Daml contracts provide holder-signed offers, CIP-56 escrow, and atomic settlement. The real BitSafe **CBTC** lifecycle has been demonstrated on DevNet; see `scripts/canton-bitsafe-lifecycle.mjs` and `public/proof/canton-receipts.json` (captured 2026-08-04).
+>
+> **Resolution status:** each market has a configurable designated attester. The current DevNet workflow defaults to the Fourcast operator as attester, so it is **self-attested**. An independent oracle/attester is supported by the contract design but is not yet integrated or deployed. Mainnet is not deployed.
+>
+> The v2 contract set supersedes the historical v1 IOU-bookkeeping material retained below. `docs/CANTON_ATOMIC_SETTLEMENT.md` is the authoritative capability/status document; `docs/CANTON_V2_DEPLOY.md` is the DevNet deployment runbook.
 
-> **v2 note (July 31, 2026):** The contract set described below as "completed" is the **v1 (IOU-bookkeeping)** integration. It is superseded by the **canton-2.0.0 atomic-settlement** contracts: stakes escrowed as CIP-56 allocations, holder-signed consent, attestation-anchored resolution, settlement inside one transaction — package `fourcast` `550828d2…930a`, **live-verified on DevNet** (`scripts/canton-v2-preflight.mjs` → PASS). Authoritative docs: `docs/CANTON_ATOMIC_SETTLEMENT.md` (model + proofs) and `docs/CANTON_V2_DEPLOY.md` (deploy runbook). V1 detail kept below for history.
-
-**Event**: HackCanton League Season 2  
+**Event**: HackCanton League Season 2 (finished)
 **Host**: NODERS & Canton Foundation  
 **Duration**: 5 weeks (June 2026)  
 **Prize Pool**: Up to $50,000 in cash & credits  
 **Settlement**: Canton Network (privacy-enabled institutional L1)  
-**Supported Assets**: CC for DevNet gas · reference CIP-56 token today · BitSafe CBTC pending verification
+**Supported Assets**: DevNet CC gas · BitSafe CBTC proven on DevNet · reference CIP-56 registry for local/preflight flows · no external cETH lifecycle verified
 
 ---
 
@@ -236,7 +233,7 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 
 ### Manual Tasks
 - [x] Fund `FourcastOperator` with CC (devnet gas) — funded via @mrlp8
-- [ ] Verify the BitSafe CBTC registry and instrument end-to-end — reference registry currently used
+- [x] Verify the BitSafe CBTC registry and instrument end-to-end — **proven on Canton DevNet** via `scripts/canton-bitsafe-lifecycle.mjs`; evidence captured in `public/proof/canton-receipts.json` (2026-08-04)
 - [x] Run preflight script — market + 4 positions created at ledger offset 401652
 - [x] Run actual privacy test on Canton Devnet — **PASSED**: Operator sees 6 positions, Alice sees 2, Bob sees 2. Daml enforces structural privacy correctly.
 - [x] TxLINE replay mode verification (July 23, 2026) — Verifier now handles both live API format (hex strings) and cached replay format (byte arrays). All proof checks pass: inputs-present, proof-well-formed (14 hashes), stat-roots-present, stat-proof-count (2 stats). On-chain PDA mismatch is expected for historical data.
