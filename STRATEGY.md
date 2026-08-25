@@ -36,7 +36,7 @@ Each venue is a plugin. The agent core routes decisions to whichever venue offer
 |-------|------------|--------|-------|
 | **Polymarket** | CLOB (binary/multi) | Live | Builder Program attribution, USDC settlement |
 | **Kalshi** | Exchange (regulated) | Live | US-regulated markets, complementary coverage |
-| **Delphi** | LMSR (multi-outcome) | Active | Gensyn Testnet, competition Aug 10–24 |
+| **Delphi** | LMSR (multi-outcome) | Finished | Gensyn Testnet, competition Aug 10–24 |
 | **Canton** | Private settlement | Roadmap | CIP-56 escrow, CBTC — for when size must stay hidden |
 
 Adding a venue means implementing: discover markets, get quote, execute trade, track position, redeem settled. The decision logic stays identical.
@@ -143,9 +143,11 @@ Clarity on scope prevents drift:
 ## Success Metrics
 
 ### Delphi Competition (Aug 10–24)
-- Positive P&L across competition markets
-- Top 3 finish → $10K share (stretch)
-- Minimum: demonstrate venue-agnostic execution works on a third protocol
+- ✅ Agent live Aug 12, 68 fills across 25 markets
+- ✅ End-to-end on-chain: discovery → quote → execute → sweep → settle
+- ⏳ Final P&L pending official board (window closed Aug 24)
+- ⏳ Top 3 finish unlikely (leader +8,285 TST; last snapshot rank 80/159, PnL −0.15 TST breakeven)
+- Credential earned: shipped a live competition agent with real TST on testnet
 
 ### TxLINE/PL Season (Aug 21+)
 - Continuous decision receipts across PL fixtures

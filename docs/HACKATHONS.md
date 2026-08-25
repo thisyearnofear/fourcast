@@ -10,18 +10,6 @@ relying on them.
 
 ## Active
 
-### Gensyn Delphi: Agent Arena — 🔴 Aug 10–24, 2026
-- **What:** autonomous agent trading LMSR prediction markets on Gensyn testnet
-  (chain 685685), driven by the same decision core as the Polymarket agent.
-- **Places:** [competition](https://dorahacks.io/hackathon/delphi-agent-competition/detail) ·
-  [leaderboard](https://agent-competition.gensyn.ai) ·
-  [API keys](https://delphi-api-access.gensyn.ai/)
-- **Runs:** `docs/DELPHI_AGENT.md` (operator guide)
-- **Status:** ✅ DoraHacks submitted 2026-08-19. Agent live since Aug 12: 68
-  fills on 25 markets, 138.8 TST deployed, 31.26 TST swept. **Official board
-  (2026-08-20): rank 80/159, account 1000.35 TST, PnL −0.15 TST, 86 trades.**
-  Refresh submission with the real ledger before Aug 24 deadline.
-
 ### Telegraph Protocol Miner (Track 1: Miner) — 🔴 Aug 17–31, 2026
 - **What:** serve verified sports intelligence (live scores + final results with
   Solana Merkle proofs) to the Telegraph network. Judging: 75% normalized
@@ -29,11 +17,16 @@ relying on them.
 - **Track 3 (apps consume miners):** Sep 1–7.
 - **Guardrail (as recorded; re-check the official page before relying on it):**
   ≥3 active miners in the same intent **and** ≥100 real requests from Track 3
-  apps. `SPORTS_SCORE` / `GAME_RESULT` now have **2** miners each (scorewire +
-  us). `WEB_SEARCH` has 7 — that was the wrong product for us.
+  apps. `SPORTS_SCORE` / `GAME_RESULT` each have **2** miners (scorewire +
+  fourcast). `WEB_SEARCH` has 7 — that was the wrong product for us.
 - **Runs:** `telegraph-miner/` — process live at
   `https://miner.sportwarren.com/query` (PM2, Traefik SSL). Operator runbook:
   `telegraph-miner/README.md`.
+- **Data tier:** free TxLINE tier covers MLS + future PL fixtures. Historical
+  game results for GAME_RESULT queries require a paid TxLINE tier. Aug 25 epoch
+  scores: both miners scored 0 (evaluator had no matching ground-truth for the
+  free-tier leagues during the current epoch). Aug 25 code update added natural
+  language query handling and graceful degradation for unsupported intents.
 - **Registered:** ✅ 2026-08-19 first pin (tx
   [0xf8b206cb...445140d8](https://sepolia.basescan.org/tx/0xf8b206cb3b5968dce042171e4f735cb8a305376209ba7e049ffddf3f445140d8))
   wrote `WEB_SEARCH` / `FACT_CHECK` as **`registrationId` 128**. Corrected
@@ -81,3 +74,20 @@ relying on them.
   validation as achieved.
 - **Intake pipeline retained:** Privacy check → **Talk to us**
   (`POST /api/talk` → `operator_leads`).
+
+### Gensyn Delphi: Agent Arena — ✅ Aug 10–24, 2026
+- **What:** autonomous agent trading LMSR prediction markets on Gensyn testnet
+  (chain 685685), driven by the same decision core as the Polymarket agent.
+- **Submission:** [DoraHacks](https://dorahacks.io/hackathon/delphi-agent-competition/detail) —
+  submitted 2026-08-19. Operator guide: `docs/DELPHI_AGENT.md`.
+- **Agent:** live since Aug 12, 68 fills on 25 markets, 138.8 TST gross deployed,
+  31.26 TST swept to date.
+- **Last board (2026-08-20):** rank 80/159, account 1,000.35 TST, PnL −0.15 TST,
+  86 trades — essentially breakeven, lower-middle. Final official standings pending
+  on [competition.delphi.fyi](https://competition.delphi.fyi/).
+- **What it proved:** the Delphi agent loop, ESPN sports-odds routing, Kelly sizing,
+  and policy gates all functioned end-to-end on-chain. Not in payout contention
+  (leader +8,285 TST); credential is shipping a live competition agent with real
+  TST on testnet. Delphi-specific code lives in `services/delphiService.js`,
+  `services/delphiAgentLoop.js`, `services/delphiIntelligence.js`,
+  `services/delphiDataFeeds.js`, and `deploy/delphi-agent.ecosystem.config.cjs`.

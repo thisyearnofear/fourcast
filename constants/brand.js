@@ -136,7 +136,7 @@ export const BRAND = {
   venues: {
     polymarket: { name: 'Polymarket', type: 'CLOB', status: 'live', chain: 'Polygon' },
     kalshi: { name: 'Kalshi', type: 'Exchange', status: 'live', chain: 'Centralized' },
-    delphi: { name: 'Delphi', type: 'LMSR', status: 'active', chain: 'Gensyn Testnet' },
+    delphi: { name: 'Delphi', type: 'LMSR', status: 'finished', chain: 'Gensyn Testnet' },
     canton: { name: 'Canton', type: 'Private settle', status: 'roadmap', chain: 'Canton DevNet' },
   },
 
@@ -184,7 +184,7 @@ export const BRAND = {
   competitions: {
     delphiArena: {
       label: 'Delphi Agent Arena',
-      window: 'Aug 10–24, 2026',
+      window: 'Aug 10–24, 2026 — finished',
       venue: 'Gensyn Testnet (LMSR)',
       status: 'active',
     },

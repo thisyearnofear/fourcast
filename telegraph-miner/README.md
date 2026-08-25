@@ -11,12 +11,30 @@ Telegraph Protocol miner serving **verified sports intelligence** — live score
 
 ## Differentiator
 
-Most sports data miners will wrap ESPN or a free API. This miner serves **TxLINE professional bookmaker consensus data** with:
+Most sports data miners return a score. Ours returns a **proof chain**:
 
-- Every result verifiable via Solana Merkle proofs (no trust required)
-- Professional-grade odds consensus from the world's sharpest books
-- On-chain timestamp anchoring — proves when data was published
-- Independent verification: consumers can CPI-call `txoracle::validate_stat` on Solana
+- Every result is independently verifiable via Solana Merkle proofs — consumers can CPI-call `txoracle::validate_stat` on Solana to confirm the data, no trust in the miner required
+- Built on Fourcast's agent infrastructure — the same decision-receipt layer that powers autonomous prediction-market operation on Polymarket, Kalshi, and Delphi
+- Natural language queries accepted — no need to know the fixture ID or intent enum; the miner parses conversational asks
+
+## Query Interface
+
+```bash
+# Natural language (auto-detects SPORTS_SCORE vs GAME_RESULT)
+curl -X POST http://localhost:8402/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "who won Manchester City this weekend"}'
+
+# Structured intent
+curl -X POST http://localhost:8402/query \
+  -H "Content-Type: application/json" \
+  -d '{"intent": "SPORTS_SCORE", "params": {"team": "Liverpool"}}'
+
+# Graceful degradation — unparseable queries return 200, not 500
+curl -X POST http://localhost:8402/query \
+  -H "Content-Type: application/json" \
+  -d '{"intent": "WEB_SEARCH", "query": "what can you offer"}'
+```
 
 ## Quick Start
 
@@ -244,7 +262,8 @@ node scripts/txline-generate-wallet.mjs
 node scripts/txline-subscribe-and-activate.mjs
 ```
 
-The free tier (service level 1) gives you MLS + International Friendlies with 60-second delay — sufficient for the hackathon.
+The free tier covers MLS + International Friendlies + future PL fixtures. Historical
+game results (needed for GAME_RESULT queries on past matches) require a paid tier.
 
 ## Architecture
 
