@@ -85,6 +85,13 @@ relying on them.
 - **Last board (2026-08-20):** rank 80/159, account 1,000.35 TST, PnL −0.15 TST,
   86 trades — essentially breakeven, lower-middle. Final official standings pending
   on [competition.delphi.fyi](https://competition.delphi.fyi/).
+- **🛑 Agent stopped 2026-08-25.** Competition window closed Aug 24; PM2
+  `delphi-agent` (id 29) was stopped, deleted, and `pm2 save`d clear of the
+  worker. Last live cycle 2026-08-25 09:07 UTC, 0 trades (LLM chain had degraded
+  to all-ERR by then). Final state dir archived to
+  `/home/linuxuser/fourcast/.delphi-agent-archive-2026-08-25.tar.gz` (56 KB,
+  `status.json` + `runs.jsonl` + pm2 logs). To resume: `pm2 start
+  deploy/delphi-agent.ecosystem.config.cjs && pm2 save`.
 - **What it proved:** the Delphi agent loop, ESPN sports-odds routing, Kelly sizing,
   and policy gates all functioned end-to-end on-chain. Not in payout contention
   (leader +8,285 TST); credential is shipping a live competition agent with real

@@ -91,11 +91,11 @@ only after dry-run cycles look sane.
 State and history land in `.delphi-agent/` (`status.json` per run, `runs.jsonl`
 append-only log; both gitignored).
 
-## Production deployment (2026-08-12, LIVE; last updated 2026-08-19)
+## Production deployment (2026-08-12, LIVE; last updated 2026-08-19; **STOPPED 2026-08-25**)
 
 - **Host**: `nuncio-vultr`, user `linuxuser`, repo `/home/linuxuser/fourcast`
-- **Process**: PM2 `delphi-agent` (id 19), **3h cycles** (`DELPHI_AGENT_INTERVAL_MS=10800000`), `pm2 save` persisted
-- **Mode**: LIVE, `DELPHI_AGENT_LIVE_SOURCES=datafeed,txline,espn,vercel,bai,venice,nvidia,openrouter`
+- **Process**: PM2 `delphi-agent` (id 29) — **stopped and removed 2026-08-25** after the Aug 24 competition window closed. Last live cycle 2026-08-25 09:07 UTC, 0 trades (LLM provider chain fully degraded). State dir archived to `.delphi-agent-archive-2026-08-25.tar.gz`. Resume with `pm2 start deploy/delphi-agent.ecosystem.config.cjs && pm2 save`.
+- **Mode** (when last running): LIVE, `DELPHI_AGENT_LIVE_SOURCES=datafeed,txline,espn,vercel,bai,venice,nvidia,openrouter`
 - **First live trade** (laptop-supervised, pre-migration): 5 YES Arctic sea ice <5.88M km² @ 4.3955 TST, settles Aug 13 ~08:00 UTC; sweep+redeem runs automatically on subsequent cycles
 - **ESPN sports anchor live** (2026-08-18): `matchEspnOdds()` pulls free ESPN moneyline consensus for EPL/MLS/NFL/La Liga/Bundesliga. **NFL 2-way fix (2026-08-19)**: ESPN publishes NFL as spread/O-U without draw — `extractOdds` now handles 2-way (home+away only), `normalize1x2` synthesizes `draw=0`, `buildOddsEstimate` skips draw mapping. NFL markets no longer fall through to blind LLM.
 - **Position safety**: `DELPHI_AGENT_MAX_SHARES_PER_MARKET=50` caps cumulative exposure per market+outcome
