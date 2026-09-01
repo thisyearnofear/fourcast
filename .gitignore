@@ -180,3 +180,7 @@ docs/OPS.md
 
 # Delphi agent runtime state (logs, status) — local only
 .delphi-agent/
+.delphi-agent-archive-*.tar.gz
+
+# Telegraph miner PM2 logs (written by deploy/telegraph-miner.ecosystem.config.cjs)
+telegraph-miner/logs/
