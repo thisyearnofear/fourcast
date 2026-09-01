@@ -11,6 +11,8 @@
  */
 
 import 'dotenv/config';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import express from 'express';
 import { handleSportsScore } from './intents/sportsScore.js';
 import { handleGameResult } from './intents/gameResult.js';
@@ -127,7 +129,10 @@ app.get('/', (_req, res) => {
   });
 });
 
-const isDirectRun = process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+// Resolve argv[1] against cwd — PM2 passes a relative script path.
+const isDirectRun =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 
 export default app;
 
