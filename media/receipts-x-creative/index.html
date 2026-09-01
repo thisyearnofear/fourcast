@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1920">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0d0e11;
+      }
+      body {
+        font-family: "JetBrains Mono", monospace;
+        color: #f4f1ea;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0d0e11;
+      }
+      #stage {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* ---------- brand tag ---------- */
+      #brand-tag {
+        position: absolute;
+        top: 64px;
+        left: 64px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        color: #f4f1ea;
+      }
+      #live-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #e5484d;
+        display: block;
+      }
+      #brand-tag .dim {
+        color: #8b93a3;
+      }
+
+      /* ---------- noise panel (what search returns) ---------- */
+      #noise-panel {
+        position: absolute;
+        top: 190px;
+        left: 48px;
+        width: 984px;
+        height: 730px;
+        background: #ece7db;
+        color: #17181c;
+        padding: 52px 56px;
+        overflow: hidden;
+      }
+      #noise-chip {
+        display: inline-block;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        color: #ece7db;
+        background: #17181c;
+        padding: 12px 22px;
+        margin-bottom: 44px;
+      }
+      .hl {
+        font-family: "EB Garamond", serif;
+        font-style: italic;
+        font-weight: 400;
+        font-size: 40px;
+        line-height: 1.28;
+        color: #232428;
+        max-width: 860px;
+        margin-bottom: 30px;
+      }
+      .hl .src {
+        font-family: "JetBrains Mono", monospace;
+        font-style: normal;
+        font-size: 24px;
+        color: #4d5058;
+        letter-spacing: 0.04em;
+      }
+
+      /* ---------- terminal panel ---------- */
+      #terminal-panel {
+        position: absolute;
+        top: 960px;
+        left: 48px;
+        width: 984px;
+        height: 690px;
+        background: #131519;
+        border: 2px solid #2a2e37;
+        overflow: hidden;
+      }
+      #term-chrome {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 22px 28px;
+        border-bottom: 2px solid #2a2e37;
+        background: #101216;
+      }
+      .tdot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #2a2e37;
+        display: block;
+      }
+      #term-title {
+        margin-left: 16px;
+        font-size: 24px;
+        color: #8b93a3;
+        letter-spacing: 0.05em;
+      }
+      #term-body {
+        padding: 40px 44px;
+        font-size: 34px;
+        line-height: 1.62;
+      }
+      #term-prompt {
+        color: #8b93a3;
+        margin-bottom: 18px;
+      }
+      #term-prompt .q {
+        color: #f4f1ea;
+      }
+      .jrow {
+        white-space: pre;
+        color: #f4f1ea;
+      }
+      .jrow .k {
+        color: #8b93a3;
+      }
+      .jrow .v {
+        color: #f4f1ea;
+      }
+      .jrow .hot {
+        color: #ff6b70;
+        font-weight: 700;
+      }
+      #cursor {
+        display: inline-block;
+        width: 20px;
+        height: 40px;
+        background: #e5484d;
+        vertical-align: -4px;
+      }
+      #verified {
+        position: absolute;
+        left: 44px;
+        bottom: 36px;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        color: #7ee2a8;
+      }
+
+      /* ---------- veo texture ---------- */
+      #veo-texture {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+        mix-blend-mode: screen;
+        pointer-events: none;
+      }
+
+      /* ---------- stamp ---------- */
+      #stamp {
+        position: absolute;
+        top: 640px;
+        left: 108px;
+        width: 864px;
+        border: 10px solid #e5484d;
+        background: rgba(13, 14, 17, 0.92);
+        padding: 52px 48px 46px;
+        text-align: center;
+      }
+      #stamp .big {
+        font-family: "Archivo Black", sans-serif;
+        font-weight: 400;
+        font-size: 72px;
+        line-height: 1.05;
+        letter-spacing: 0.01em;
+        color: #e5484d;
+        text-transform: uppercase;
+        max-width: 640px;
+        margin: 0 auto;
+      }
+      #stamp .sub {
+        margin-top: 22px;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        color: #f4f1ea;
+      }
+      #stamp .hash {
+        margin-top: 26px;
+        font-size: 24px;
+        line-height: 1.5;
+        color: #8b93a3;
+        word-break: break-all;
+      }
+      #flash {
+        position: absolute;
+        inset: 0;
+        background: #f4f1ea;
+        pointer-events: none;
+      }
+
+      /* ---------- captions ---------- */
+      .cap {
+        position: absolute;
+        top: 1690px;
+        left: 0;
+        width: 1080px;
+        text-align: center;
+        font-family: "Archivo Black", sans-serif;
+        font-weight: 400;
+        font-size: 54px;
+        line-height: 1.22;
+        letter-spacing: 0.01em;
+        color: #f4f1ea;
+        text-shadow: 0 4px 28px rgba(0, 0, 0, 0.85);
+        padding: 0 56px;
+      }
+      .cap .acc {
+        color: #ff6b70;
+      }
+
+      /* ---------- end card ---------- */
+      #end-card {
+        position: absolute;
+        inset: 0;
+        background: #0d0e11;
+      }
+      #end-kicker {
+        position: absolute;
+        top: 660px;
+        width: 1080px;
+        text-align: center;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 0.34em;
+        color: #8b93a3;
+      }
+      #end-url {
+        position: absolute;
+        top: 750px;
+        width: 1080px;
+        text-align: center;
+        font-family: "Archivo Black", sans-serif;
+        font-weight: 400;
+        font-size: 70px;
+        letter-spacing: -0.01em;
+        color: #f4f1ea;
+      }
+      #end-rule {
+        position: absolute;
+        top: 900px;
+        left: 360px;
+        width: 360px;
+        height: 10px;
+        background: #e5484d;
+        display: block;
+      }
+      #end-tag {
+        position: absolute;
+        top: 968px;
+        width: 1080px;
+        text-align: center;
+        font-size: 44px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        color: #f4f1ea;
+      }
+      #end-handle {
+        position: absolute;
+        top: 1078px;
+        width: 1080px;
+        text-align: center;
+        font-size: 34px;
+        color: #8b93a3;
+      }
+
+      /* ---------- grain ---------- */
+      #grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.05;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-qv3y" id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1080" data-height="1920">
+      <div data-hf-id="hf-1rt5" id="stage">
+        <div data-hf-id="hf-5l75" id="brand-tag" class="clip" data-start="0.2" data-duration="9.8" data-track-index="0">
+          <span data-hf-id="hf-hara" id="live-dot"></span>
+          <span data-hf-id="hf-1az1">FOURCAST <span data-hf-id="hf-2mva" class="dim">/</span> TELEGRAPH MINER</span>
+        </div>
+
+        <div data-hf-id="hf-pipu" id="noise-panel" class="clip" data-start="0.5" data-duration="5.4" data-track-index="1">
+          <div data-hf-id="hf-oub0" id="noise-chip">WHAT SEARCH RETURNS ↓</div>
+          <div data-hf-id="hf-l8ie" class="hl">“Messi injury update: what we know so far” <span data-hf-id="hf-t9fd" class="src">— blog, 2 days ago</span></div>
+          <div data-hf-id="hf-tt3y" class="hl">“Fans react as drama unfolds in Miami” <span data-hf-id="hf-0c04" class="src">— aggregator</span></div>
+          <div data-hf-id="hf-jpz2" class="hl">“Top 10 moments you missed last night” <span data-hf-id="hf-hzwe" class="src">— listicle</span></div>
+          <div data-hf-id="hf-fvk2" class="hl">“Rumors swirl over surprise transfer” <span data-hf-id="hf-pz3i" class="src">— forum thread</span></div>
+          <div data-hf-id="hf-ola8" class="hl">“Opinion: a night nobody will forget” <span data-hf-id="hf-jpbj" class="src">— column</span></div>
+        </div>
+
+        <div data-hf-id="hf-sxkn" id="terminal-panel" class="clip" data-start="0.8" data-duration="10.4" data-track-index="1">
+          <div data-hf-id="hf-hvfe" id="term-chrome" data-layout-allow-overlap="">
+            <span data-hf-id="hf-f524" class="tdot"></span><span data-hf-id="hf-2nv8" class="tdot"></span><span data-hf-id="hf-1gy5" class="tdot"></span>
+            <span data-hf-id="hf-zlfq" id="term-title" data-layout-allow-overlap="" data-layout-allow-occlusion="">query — miner.sportwarren.com</span>
+          </div>
+          <div data-hf-id="hf-8kg4" id="term-body">
+            <div data-hf-id="hf-1i5y" id="term-prompt">POST /query · <span data-hf-id="hf-ogxf" class="q">"Inter Miami score"</span> <span data-hf-id="hf-42e8" id="cursor"></span></div>
+            <div data-hf-id="hf-6m9z" class="jrow">{</div>
+            <div data-hf-id="hf-g29y" class="jrow">  <span data-hf-id="hf-r3ng" class="k">"intent":</span> <span data-hf-id="hf-5ha9" class="v">"SPORTS_SCORE",</span></div>
+            <div data-hf-id="hf-52fe" class="jrow">  <span data-hf-id="hf-3xpk" class="k">"home_score":</span> <span data-hf-id="hf-scm0" class="hot">2</span>  <span data-hf-id="hf-vgfx" class="k">"away_score":</span> <span data-hf-id="hf-r5ox" class="hot">1</span><span data-hf-id="hf-cuyw" class="k">,</span></div>
+            <div data-hf-id="hf-5gqf" class="jrow">  <span data-hf-id="hf-ehps" class="k">"status":</span> <span data-hf-id="hf-s7ph" class="v">"final",</span></div>
+            <div data-hf-id="hf-5v1g" class="jrow">  <span data-hf-id="hf-5vif" class="k">"source":</span> <span data-hf-id="hf-359k" class="v">"TxLINE · bookmaker consensus",</span></div>
+            <div data-hf-id="hf-69ch" class="jrow">  <span data-hf-id="hf-pkc0" class="k">"proof":</span> <span data-hf-id="hf-iu0v" class="v">"merkle:verified"</span></div>
+            <div data-hf-id="hf-7ew1" class="jrow">}</div>
+          </div>
+          <div data-hf-id="hf-xa6n" id="verified" data-layout-allow-overlap="">✓ MERKLE-VERIFIED · SOURCE: TXLINE</div>
+        </div>
+
+        <video data-hf-id="hf-snnd" id="veo-texture" class="clip" src="media/veo-stamp-texture.mp4" data-start="7.4" data-duration="6" data-track-index="2" muted playsinline></video>
+
+        <div data-hf-id="hf-m6ri" id="stamp" class="clip" data-start="7.6" data-duration="7.4" data-track-index="3" data-layout-allow-overlap="" data-layout-allow-occlusion="">
+          <div data-hf-id="hf-wugr" class="big">On-chain receipt</div>
+          <div data-hf-id="hf-x8vz" class="sub" data-layout-allow-overlap="">MERKLE PROOF · SOLANA</div>
+          <div data-hf-id="hf-8vnc" class="hash">0x608b7dd0dcbba7c1a2f97e4a675a83720d6e96deed5ca2304db4716c72330927</div>
+        </div>
+
+        <div data-hf-id="hf-u0h3" id="flash" class="clip" data-start="7.6" data-duration="0.8" data-track-index="4"></div>
+
+        <div data-hf-id="hf-cv18" id="cap1" class="cap clip" data-start="1.25" data-duration="2.75" data-track-index="5">
+          Search gives you words about the score.
+        </div>
+        <div data-hf-id="hf-lyoe" id="cap2" class="cap clip" data-start="4.05" data-duration="2.2" data-track-index="5">
+          We return <span data-hf-id="hf-bg0g" class="acc">the score itself</span> —
+        </div>
+        <div data-hf-id="hf-oul7" id="cap3" class="cap clip" data-start="6.3" data-duration="3.4" data-track-index="5">
+          verified, with an <span data-hf-id="hf-fek1" class="acc">on-chain receipt</span>.
+        </div>
+
+        <div data-hf-id="hf-bg56" id="end-card" class="clip" data-start="10.15" data-duration="4.85" data-track-index="6" data-layout-allow-occlusion="">
+          <div data-hf-id="hf-hf1x" id="end-kicker">LIVE ON TELEGRAPH</div>
+          <div data-hf-id="hf-up8j" id="end-url">miner.sportwarren.com</div>
+          <div data-hf-id="hf-i7zz" id="end-rule"></div>
+          <div data-hf-id="hf-ui7i" id="end-tag">PROVABLE, NOT VIBES.</div>
+          <div data-hf-id="hf-5l74" id="end-handle">@Telegraphprotoc</div>
+        </div>
+
+        <div data-hf-id="hf-v7hy" id="grain" class="clip" data-start="0" data-duration="15" data-track-index="7"></div>
+      </div>
+
+      <audio data-hf-id="hf-veon" id="vo" src="audio/vo.mp3" data-start="1.2" data-duration="6.48" data-track-index="10" data-volume="1"></audio>
+      <audio data-hf-id="hf-1n8b" id="sfx-typing" src="audio/sfx-typing.mp3" data-start="3.9" data-duration="2.6" data-track-index="11" data-volume="0.5"></audio>
+      <audio data-hf-id="hf-0abk" id="sfx-stamp" src="audio/sfx-stamp.mp3" data-start="7.66" data-duration="1.5" data-track-index="11" data-volume="0.9"></audio>
+      <audio data-hf-id="hf-qt0n" id="sfx-whoosh" src="audio/sfx-whoosh.mp3" data-start="10.3" data-duration="0.8" data-track-index="11" data-volume="0.45"></audio>
+    </div>
+
+    <script>
+      document.fonts.ready.then(() => {
+        const tl = gsap.timeline({ paused: true });
+
+        // brand
+        tl.from("#brand-tag", { autoAlpha: 0, y: -24, duration: 0.5, ease: "power3.out" }, 0.2);
+        tl.to("#brand-tag", { autoAlpha: 0, duration: 0.4, ease: "power1.inOut" }, 9.5);
+        tl.to("#live-dot", { opacity: 0.2, duration: 0.45, repeat: 13, yoyo: true, ease: "power1.inOut" }, 0.9);
+
+        // noise panel — headlines arrive like a feed
+        tl.from("#noise-panel", { autoAlpha: 0, y: 44, duration: 0.6, ease: "power3.out" }, 0.5);
+        tl.from(".hl", { autoAlpha: 0, y: 26, filter: "blur(6px)", duration: 0.5, ease: "power2.out", stagger: 0.3 }, 0.85);
+        tl.to(".hl", { y: -10, duration: 7, ease: "sine.inOut", stagger: 0.35 }, 2.2);
+        // search recedes as the terminal takes over, then leaves the stage
+        tl.to("#noise-panel", { autoAlpha: 0.22, scale: 0.975, duration: 0.3, ease: "power2.inOut", transformOrigin: "50% 40%" }, 4.95);
+        tl.to("#noise-panel", { autoAlpha: 0, duration: 0.55, ease: "power1.inOut" }, 5.25);
+
+        // terminal
+        tl.from("#terminal-panel", { autoAlpha: 0, y: 60, duration: 0.6, ease: "power3.out" }, 0.8);
+        tl.from("#term-prompt", { autoAlpha: 0, duration: 0.3 }, 1.4);
+        tl.to("#cursor", { opacity: 0, duration: 0.3, repeat: 5, yoyo: true, ease: "steps(1)" }, 1.75);
+        // JSON types out row by row
+        const rows = document.querySelectorAll(".jrow");
+        tl.set(rows, { clipPath: "inset(0 100% 0 0)" }, 0);
+        [3.95, 4.3, 4.65, 5.0, 5.35, 5.7, 6.05].forEach((t, i) => {
+          tl.to(rows[i], { clipPath: "inset(0 0% 0 0)", duration: 0.42, ease: "steps(12)" }, t);
+        });
+        tl.from("#verified", { autoAlpha: 0, scale: 0.9, duration: 0.35, ease: "back.out(2)" }, 6.75);
+
+        // stamp slam
+        tl.fromTo(
+          "#stamp",
+          { autoAlpha: 0, scale: 2.4, rotation: -14 },
+          { autoAlpha: 1, scale: 1, rotation: -6, duration: 0.28, ease: "back.out(2.2)" },
+          7.66
+        );
+        tl.fromTo("#flash", { autoAlpha: 0.85 }, { autoAlpha: 0, duration: 0.45, ease: "power2.out" }, 7.66);
+        tl.fromTo("#stage", { x: 0 }, { x: 14, duration: 0.05, repeat: 5, yoyo: true, ease: "none" }, 7.66);
+        tl.set("#stage", { x: 0 }, 8.3);
+
+        // veo texture swell under the stamp
+        tl.fromTo("#veo-texture", { autoAlpha: 0 }, { autoAlpha: 0.35, duration: 0.6, ease: "power2.out" }, 7.4);
+        tl.to("#veo-texture", { autoAlpha: 0, duration: 0.7, ease: "power1.inOut" }, 12.7);
+
+        // captions
+        tl.from("#cap1", { autoAlpha: 0, y: 24, duration: 0.3, ease: "power3.out" }, 1.25);
+        tl.to("#cap1", { autoAlpha: 0, y: -14, duration: 0.25, ease: "power2.in" }, 3.7);
+        tl.set("#cap1", { autoAlpha: 0 }, 3.95);
+        tl.from("#cap2", { autoAlpha: 0, y: 24, duration: 0.3, ease: "power3.out" }, 4.05);
+        tl.to("#cap2", { autoAlpha: 0, y: -14, duration: 0.25, ease: "power2.in" }, 6.0);
+        tl.set("#cap2", { autoAlpha: 0 }, 6.25);
+        tl.from("#cap3", { autoAlpha: 0, y: 24, duration: 0.3, ease: "power3.out" }, 6.3);
+        tl.to("#cap3", { autoAlpha: 0, y: -14, duration: 0.3, ease: "power2.in" }, 9.4);
+
+        // end card
+        tl.from("#end-card", { autoAlpha: 0, duration: 0.6, ease: "power2.inOut" }, 10.15);
+        tl.to("#terminal-panel", { autoAlpha: 0, y: 40, duration: 0.5, ease: "power2.in" }, 10.15);
+        tl.to("#stamp", { autoAlpha: 0, scale: 0.92, duration: 0.45, ease: "power2.in" }, 10.15);
+        tl.from("#end-kicker", { autoAlpha: 0, y: 20, duration: 0.4, ease: "power3.out" }, 10.5);
+        tl.from("#end-url", { autoAlpha: 0, scale: 1.14, duration: 0.5, ease: "power4.out", transformOrigin: "50% 50%" }, 10.6);
+        tl.from("#end-rule", { scaleX: 0, duration: 0.4, ease: "power3.out", transformOrigin: "50% 50%" }, 10.75);
+        tl.from("#end-tag", { autoAlpha: 0, y: 18, duration: 0.4, ease: "power3.out" }, 11.0);
+        tl.from("#end-handle", { autoAlpha: 0, duration: 0.5 }, 11.4);
+
+        window.__timelines["main"] = tl;
+      });
+    </script>
+  </body>
+</html>

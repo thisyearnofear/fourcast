@@ -136,6 +136,10 @@ yarn.lock
 *.mp3
 *.ogg
 *.flac
+# Exception: authored source assets for the "Receipts" promo project
+# (small, not regenerable from repo sources; renders/ stay ignored).
+!media/receipts-x-creative/media/*.mp4
+!media/receipts-x-creative/audio/*.mp3
 
 # ============================================
 # Temporary Files
