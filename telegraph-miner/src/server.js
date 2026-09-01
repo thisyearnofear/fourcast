@@ -129,10 +129,12 @@ app.get('/', (_req, res) => {
   });
 });
 
-// Resolve argv[1] against cwd — PM2 passes a relative script path.
+// PM2 forks via ProcessContainerFork.js, so argv[1] is PM2's container;
+// pm_exec_path holds the real script path under PM2.
+const entryScript = process.env.pm_exec_path || process.argv[1];
 const isDirectRun =
-  process.argv[1] &&
-  import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+  entryScript &&
+  import.meta.url === pathToFileURL(resolve(entryScript)).href;
 
 export default app;
 
