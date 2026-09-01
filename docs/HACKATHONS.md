@@ -10,11 +10,14 @@ relying on them.
 
 ## Active
 
-### Telegraph Protocol Miner (Track 1: Miner) — 🔴 Aug 17–31, 2026
+### Telegraph Protocol Miner (Track 1: Miner) — 🔴 extended to Sep 2, 2026 11:59:59 UTC
 - **What:** serve verified sports intelligence (live scores + final results with
   Solana Merkle proofs) to the Telegraph network. Judging: 75% normalized
   performance (accuracy vs ground truth), 25% X engagement.
-- **Track 3 (apps consume miners):** Sep 1–7.
+- **Timeline (verified on the official page 2026-09-01):** Track 1 (Miner) and
+  Track 2 (WASM) were extended past Aug 31 — submission closes **Wed, 02 Sep
+  2026 11:59:59 UTC**. Track 3 (apps consume miners) is **coming soon**; the
+  earlier Sep 1–7 window no longer applies.
 - **Guardrail (as recorded; re-check the official page before relying on it):**
   ≥3 active miners in the same intent **and** ≥100 real requests from Track 3
   apps. `SPORTS_SCORE` / `GAME_RESULT` each have **2** miners (scorewire +
@@ -27,6 +30,11 @@ relying on them.
   scores: both miners scored 0 (evaluator had no matching ground-truth for the
   free-tier leagues during the current epoch). Aug 25 code update added natural
   language query handling and graceful degradation for unsupported intents.
+  Sep 1 hardening before the extended deadline: fixed a crash in the
+  graceful-degradation path (`new Date.now()` typo took the whole process down
+  on any unsupported-intent query) and a PM2 v7 listen-gate bug (process
+  "online" but never binding 8402); redeployed and re-verified health,
+  graceful 200s, and live TxLINE queries.
 - **Registered:** ✅ 2026-08-19 first pin (tx
   [0xf8b206cb...445140d8](https://sepolia.basescan.org/tx/0xf8b206cb3b5968dce042171e4f735cb8a305376209ba7e049ffddf3f445140d8))
   wrote `WEB_SEARCH` / `FACT_CHECK` as **`registrationId` 128**. Corrected

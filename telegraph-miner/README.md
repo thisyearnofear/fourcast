@@ -99,7 +99,19 @@ cd /home/linuxuser/fourcast
 git pull --ff-only
 cd telegraph-miner && npm ci && cd ..
 pm2 restart telegraph-miner
+
+# Verify it actually bound the port (don't trust "online" alone):
+curl -s http://localhost:8402/health
 ```
+
+**PM2 v7 gotcha (bit us 2026-09-01):** PM2 forks apps through
+`ProcessContainerFork.js`, so inside the app `process.argv[1]` is PM2's
+container, not this script. `src/server.js` gates `app.listen()` on being the
+entrypoint using `process.env.pm_exec_path` (PM2 sets it to the real script
+path) — if you swap that check back to `argv[1]`, the process will show
+`online` in pm2 forever while binding nothing. If pm2 says online but
+`/health` refuses connections, check the listen gate first, then
+`pm2 delete telegraph-miner && pm2 start deploy/telegraph-miner.ecosystem.config.cjs`.
 
 ### Expose publicly (nginx)
 
@@ -309,5 +321,5 @@ Telegraph Network (validators, apps, routing)
 - **Track 1 (Miner)** — this is our submission. Status and the on-chain mismatch: `docs/HACKATHONS.md`.
 - **Judging**: 75% Normalized Performance (accuracy vs ground truth), 25% X engagement. Sports intents are Tier A WASM exact match; `WEB_SEARCH` / `FACT_CHECK` are Tier B LLM-judge. We are now on the sports intents (`registrationId` 148).
 - **Guardrail** (as recorded in-repo; confirm on the official page): need 3+ active miners in the same intent + 100 real requests from Track 3 apps. Joining the sports intents currently makes that 2 miners, not 3. Scoring 0 on a crowded wrong intent is worse than being correctly routed in a thin category.
-- **Timeline**: Aug 17–31 (Track 1 & 2), Sep 1–7 (Track 3 apps consume us)
+- **Timeline** (verified 2026-09-01): Track 1 & 2 extended to **Sep 2, 2026 11:59:59 UTC**; Track 3 (apps consume us) coming soon — see `docs/HACKATHONS.md`
 - Tag [@Telegraphprotoc](https://x.com/Telegraphprotoc) in all progress posts
