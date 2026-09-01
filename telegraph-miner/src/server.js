@@ -52,7 +52,7 @@ app.post('/query', async (req, res) => {
         supported_intents: parsed.extra?.supported_intents || [],
         source: 'fourcast-txline',
         latency_ms: Date.now() - start,
-        timestamp: new Date.now().toISOString(),
+        timestamp: new Date().toISOString(),
       },
     });
   }
@@ -127,11 +127,15 @@ app.get('/', (_req, res) => {
   });
 });
 
+const isDirectRun = process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+
 export default app;
 
-app.listen(PORT, HOST, () => {
-  console.log(`[fourcast-miner] Telegraph miner listening on ${HOST}:${PORT}`);
-  console.log(`[fourcast-miner] Intents: ${SUPPORTED_INTENTS.join(', ')}`);
-  console.log(`[fourcast-miner] TxLINE origin: ${process.env.TXLINE_API_ORIGIN || 'https://txline.txodds.com'}`);
-  console.log(`[fourcast-miner] Token configured: ${Boolean(process.env.TXLINE_API_TOKEN)}`);
-});
+if (isDirectRun) {
+  app.listen(PORT, HOST, () => {
+    console.log(`[fourcast-miner] Telegraph miner listening on ${HOST}:${PORT}`);
+    console.log(`[fourcast-miner] Intents: ${SUPPORTED_INTENTS.join(', ')}`);
+    console.log(`[fourcast-miner] TxLINE origin: ${process.env.TXLINE_API_ORIGIN || 'https://txline.txodds.com'}`);
+    console.log(`[fourcast-miner] Token configured: ${Boolean(process.env.TXLINE_API_TOKEN)}`);
+  });
+}

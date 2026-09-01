@@ -1,5 +1,7 @@
+import { createServer } from 'node:http';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import app from '../src/server.js';
 import {
   teamFromQuery,
   inferIntent,
@@ -7,6 +9,40 @@ import {
   signalFieldsFromAnswer,
   parseNaturalLanguage,
 } from '../src/query.js';
+
+describe('server HTTP contract', () => {
+  it('serves graceful 200 JSON for unsupported intent and empty body without crashing', async () => {
+    const server = createServer(app).listen(0);
+    await new Promise((r) => server.once('listening', r));
+    const base = `http://127.0.0.1:${server.address().port}`;
+
+    try {
+      const unsupported = await fetch(`${base}/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intent: 'WEB_SEARCH', query: 'what can you offer' }),
+      });
+      assert.equal(unsupported.status, 200);
+      const unsBody = await unsupported.json();
+      assert.equal(unsBody.label, 'unsupported');
+      assert.ok(unsBody.metadata.timestamp);
+
+      const empty = await fetch(`${base}/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      assert.equal(empty.status, 400);
+      const emptyBody = await empty.json();
+      assert.ok(emptyBody.metadata.timestamp);
+
+      const health = await fetch(`${base}/health`);
+      assert.equal(health.status, 200);
+    } finally {
+      server.close();
+    }
+  });
+});
 
 describe('parseNaturalLanguage', () => {
   it('extracts Premier League from query', () => {
