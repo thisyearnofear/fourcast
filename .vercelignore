@@ -8,7 +8,7 @@ contracts
 telegraph-miner
 tests
 docs
-scripts
+# scripts/ must ship — package.json prepare runs chmod on scripts/*.sh
 onchain
 deploy
 .git
