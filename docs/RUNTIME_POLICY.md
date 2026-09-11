@@ -26,14 +26,26 @@ Fourcast uses Next.js runtime configurations to optimize for performance and com
 - **Large SDKs**: 
   - `@vercel/og` (image generation)
   - `@polymarket/clob-client`
-  - `better-sqlite3`
+  - `better-sqlite3` (local/dev only — never statically import into shared server modules)
   - `@aptos-labs/ts-sdk`
   - `ethers` v6
+  - `puppeteer-core` (prefer Bright Data proxy on VPS; dynamic-import if needed on Node)
 - **WASM modules**: Any module loading WebAssembly
 - **Native bindings**: Modules compiled as native addons
 - **Streaming responses**: SSE with complex backends
 - **File system access**: Reading/writing local files
 - **Child processes**: `spawn`, `exec`, `fork`
+
+### Serverless package weight
+
+Production DB is **Turso**. `better-sqlite3` must stay behind a conditional
+`require()` in `services/db.js` so it is not traced into every Node λ NFT.
+`puppeteer-core` is likewise dynamic-imported and listed under
+`outputFileTracingExcludes` / `serverExternalPackages` in `next.config.mjs`.
+
+Edge still has a hard CI budget (below). Node routes have no CI fail limit, but
+retained Hobby deployments multiply each λ payload — keep imports lean and prune
+historic deploys (see `docs/DEPLOYMENT.md`).
 
 ## Enforcement
 

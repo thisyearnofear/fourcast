@@ -1,5 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Keep Solidity/video/docs/tooling trees out of serverless NFTs. Production DB
+  // is Turso; better-sqlite3 is local-dev only. Puppeteer is loaded on demand.
+  outputFileTracingExcludes: {
+    '*': [
+      './lib/openzeppelin-contracts/**',
+      './videos/**',
+      './media/**',
+      './canton/**',
+      './contracts/**',
+      './telegraph-miner/**',
+      './tests/**',
+      './docs/**',
+      './scripts/**',
+      './onchain/**',
+      './deploy/**',
+      'node_modules/better-sqlite3/**',
+      'node_modules/@photon-ai/imessage-kit/node_modules/better-sqlite3/**',
+      'node_modules/puppeteer-core/**',
+      'node_modules/@puppeteer/**',
+    ],
+  },
+  serverExternalPackages: ['better-sqlite3', 'puppeteer-core'],
   async redirects() {
     return [
       {

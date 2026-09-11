@@ -1,5 +1,4 @@
 import axios from 'axios';
-import puppeteer from 'puppeteer-core';
 
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_CACHE_ENTRIES = 200;
@@ -292,6 +291,8 @@ class BrightDataService {
       const endpoint = this.sbrWsEndpoint || `wss://${this.sbrAuth}@brd.superproxy.io:9222`;
       console.log(`[BrightData] Scraping Browser connecting for: ${url}`);
 
+      // Dynamic import keeps puppeteer-core out of routes that only hit SERP/proxy paths.
+      const { default: puppeteer } = await import('puppeteer-core');
       browser = await puppeteer.connect({ browserWSEndpoint: endpoint });
       const page = await browser.newPage();
       page.setDefaultNavigationTimeout(30_000);

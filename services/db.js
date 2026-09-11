@@ -6,11 +6,15 @@
 // DO NOT add inline ALTER TABLE statements here.
 
 import { createClient } from '@libsql/client';
-import Database from 'better-sqlite3';
+import { createRequire } from 'module';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { getExecutionStatus } from './autopilotSafety.js';
+
+// Lazy-load better-sqlite3 only for local/dev SQLite. Production uses Turso, so a
+// static import would pull the native addon into every Vercel serverless NFT graph.
+const require = createRequire(import.meta.url);
 
 let db;
 let isTurso = false;
@@ -26,6 +30,7 @@ if (process.env.TURSO_CONNECTION_URL && process.env.TURSO_AUTH_TOKEN) {
   console.log('Using Turso database');
 } else {
   // Development: Use local SQLite (DATABASE_PATH lets tests point at a temp file)
+  const Database = require('better-sqlite3');
   const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'fourcast.db');
   db = new Database(dbPath);
 

@@ -1,0 +1,23 @@
+# Keep deploy checkout lean. Git deploys still clone tracked files, but CLI
+# uploads and Next NFT tracing should not treat these as app payload.
+lib/openzeppelin-contracts
+videos
+media
+canton
+contracts
+telegraph-miner
+tests
+docs
+scripts
+onchain
+deploy
+.git
+*.md
+!README.md
+*.db
+*.db-shm
+*.db-wal
+*.mp4
+*.mov
+*.pdf
+*.dar

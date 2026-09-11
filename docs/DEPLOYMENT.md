@@ -18,6 +18,37 @@ npm i -g vercel
 vercel --prod
 ```
 
+### Function / deployment storage hygiene
+
+Hobby teams meter **Functions** and **Deployment** storage across retained
+deploys. Prefer pruning historic URLs over raising plan limits:
+
+```bash
+# Confirm live production (note deployment URL + aliases)
+vercel inspect https://fourcastapp.vercel.app --scope papas-projects-5b188431
+
+# List every deployment URL (paginate with --next when prompted)
+vercel ls fourcast --scope papas-projects-5b188431
+
+# Delete only by URL; --safe keeps active production / git-main / live preview aliases
+vercel rm <urls...> --safe --yes --scope papas-projects-5b188431
+```
+
+Never `vercel rm fourcast` by project name. Do not change env or DNS while
+pruning — old builds are regenerable from git.
+
+**Packaging controls (keep serverless NFTs lean):**
+
+| Control | Purpose |
+|---------|---------|
+| `.vercelignore` | Exclude Solidity/video/docs/tooling trees from CLI uploads |
+| `outputFileTracingExcludes` in `next.config.mjs` | Keep those trees + `better-sqlite3` / `puppeteer*` out of λ traces |
+| `services/db.js` | Load `better-sqlite3` only on the local SQLite path; production uses Turso |
+| `services/brightDataService.js` | Dynamic-import `puppeteer-core` only for direct Scraping Browser (prefer `BRIGHT_DATA_PROXY_URL` → VPS) |
+
+Heavy work (scraping browser, miners, local SQLite) belongs on the VPS, not in
+every Vercel Node function. After a prune, Usage meters can lag before totals drop.
+
 ### Environment Variables
 
 Set these in Vercel dashboard. **TxLINE vars are primary** — without them the
