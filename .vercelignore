@@ -1,5 +1,7 @@
 # Keep deploy checkout lean. Git deploys still clone tracked files, but CLI
 # uploads and Next NFT tracing should not treat these as app payload.
+# Do NOT ignore onchain/ — WalletLayer imports onchain/config at build time.
+# Do NOT ignore scripts/ — package.json prepare runs chmod on scripts/*.sh
 lib/openzeppelin-contracts
 videos
 media
@@ -8,8 +10,6 @@ contracts
 telegraph-miner
 tests
 docs
-# scripts/ must ship — package.json prepare runs chmod on scripts/*.sh
-onchain
 deploy
 .git
 *.md

@@ -14,7 +14,7 @@
     "test:turso": "node scripts/test-turso-connection.js",
     "test:db": "node scripts/test-db-operations.js",
     "test:api": "node scripts/test-signals-api.js",
-    "prepare": "chmod +x scripts/*.sh && if [ -d .git/hooks ]; then cp scripts/pre-commit.sh .git/hooks/pre-commit 2>/dev/null || true; fi",
+    "prepare": "sh -c 'chmod +x scripts/*.sh 2>/dev/null || true; if [ -d .git/hooks ] && [ -f scripts/pre-commit.sh ]; then cp scripts/pre-commit.sh .git/hooks/pre-commit 2>/dev/null || true; fi'",
     "hooks:install": "./scripts/install-hooks.sh",
     "hooks:test": "./scripts/pre-commit.sh",
     "migrate": "node migrations/run.js",

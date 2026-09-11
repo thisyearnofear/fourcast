@@ -13,7 +13,6 @@ const nextConfig = {
       './tests/**',
       './docs/**',
       './scripts/**',
-      './onchain/**',
       './deploy/**',
       'node_modules/better-sqlite3/**',
       'node_modules/@photon-ai/imessage-kit/node_modules/better-sqlite3/**',

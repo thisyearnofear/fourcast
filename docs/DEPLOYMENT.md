@@ -41,7 +41,7 @@ pruning — old builds are regenerable from git.
 
 | Control | Purpose |
 |---------|---------|
-| `.vercelignore` | Exclude Solidity/video/docs/tooling trees from uploads (`scripts/` stays — `prepare` needs it) |
+| `.vercelignore` | Exclude Solidity/video/docs/tooling trees from uploads (`scripts/` and `onchain/` must ship for prepare + WalletLayer) |
 | `outputFileTracingExcludes` in `next.config.mjs` | Keep those trees + `better-sqlite3` / `puppeteer*` out of λ traces |
 | `services/db.js` | Load `better-sqlite3` only on the local SQLite path; production uses Turso |
 | `services/brightDataService.js` | Dynamic-import `puppeteer-core` only for direct Scraping Browser (prefer `BRIGHT_DATA_PROXY_URL` → VPS) |
