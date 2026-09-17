@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "build:migrate": "node scripts/migrate.mjs",
+    "build": "npm run build:migrate && next build --webpack",
     "start": "next start",
     "lint": "eslint -c .eslintrc.json . --ext .js,.jsx,.ts,.tsx",
     "lint:next": "next lint",
