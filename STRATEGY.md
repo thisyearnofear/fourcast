@@ -21,6 +21,9 @@ Everything else is additive. The core never changes:
 | Monte Carlo Simulation | Deterministic with persisted seed | Reproducible forecasts, auditable logic |
 | Pre-outcome Receipt | SHA-256 hash of full decision payload | Proves what the agent knew and decided before resolution |
 | Reconciliation | Match receipt against verified outcome | Closes the loop — mandate adherence is fact, not claim |
+| Calibration Tracking | Brier scoring + confidence bucket analysis per forecast | Proves calibrated confidence, not vibes. Overconfidence kills bankrolls under Kelly. |
+
+> **Sized on calibrated confidence, not vibes.** Kelly betting is unforgiving of miscalibration — an 80% model that wins 60% of the time recommends larger positions than justified, compounding losses. The calibration curve on `/arena` tracks hit-rate by confidence bucket (HIGH/MEDIUM/LOW) so the deviation from perfect calibration is visible and auditable.
 
 This core is venue-agnostic. It doesn't care whether it's buying YES on Polymarket, shares on Delphi, or escrowing CBTC on Canton. It produces the same auditable decision artifact regardless of where the trade lands.
 

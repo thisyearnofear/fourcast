@@ -13,6 +13,7 @@ import { MandateControl } from '@/components/MandateControl';
 import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
 import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { AgentDashboard } from '@/components/AgentDashboard';
+import { CalibrationCurve } from '@/components/CalibrationCurve';
 import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
 import GlowList from '@/components/ui/GlowList';
 
@@ -328,15 +329,9 @@ function LedgerLane() {
       )}
 
       {/* ── Calibration ─────────────────────────────────────────────── */}
-      <Section title="Calibration" aside="accrues as markets settle">
-        <Row first>
-          <span className="text-[13px] text-[var(--color-ink-muted)]">
-            Paper calls are being scored against settlements from Aug 13 onward. The curve appears here once the first receipts reconcile.
-          </span>
-        </Row>
-      </Section>
+      <CalibrationCurve />
 
-      <p className="mt-8 px-1 text-[11px] leading-relaxed text-[var(--color-ink-faint)] sm:px-3" style={mono}>
+      <p className="mt-6 px-1 text-[11px] leading-relaxed text-[var(--color-ink-faint)] sm:px-3" style={mono}>
         Same decision core across every venue. Data-feed sources trade live; model sources paper-trade until calibration proves them.
       </p>
     </>
@@ -388,6 +383,11 @@ function MandateLane() {
             </div>
           )}
         </section>
+      </Reveal>
+      <Reveal>
+        <div className="platform-open-section mt-10">
+          <CalibrationCurve />
+        </div>
       </Reveal>
     </>
   );

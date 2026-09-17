@@ -638,19 +638,44 @@ export async function getLeaderboard(limit = 50) {
 }
 
 /**
+ * Derive a confidence bucket from a forecast's confidence level.
+ *
+ * Maps the text confidence values (LOW/MEDIUM/HIGH) used in the UI to the
+ * same buckets stored in the database. For raw numeric confidence, applies
+ * standard thresholds: <0.50 → LOW, 0.50–0.75 → MEDIUM, ≥0.75 → HIGH.
+ */
+export function deriveConfidenceBucket(confidence) {
+  if (!confidence) return 'LOW';
+  const s = String(confidence).toUpperCase().trim();
+  if (s === 'HIGH') return 'HIGH';
+  if (s === 'MEDIUM') return 'MEDIUM';
+  if (s === 'LOW') return 'LOW';
+  // Numeric: treat as a probability or score
+  const n = Number(confidence);
+  if (!Number.isFinite(n)) return 'LOW';
+  if (n >= 0.75) return 'HIGH';
+  if (n >= 0.50) return 'MEDIUM';
+  return 'LOW';
+}
+
+/**
  * Save an agent forecast to the database for track record
  *
  * operatorId is optional. When set, the forecast is scoped to that operator's
  * Track Record URL (migration 0010). When omitted, the forecast belongs to
  * the global/legacy agent (back-compat with existing callers).
+ *
+ * Also persists confidence_bucket for calibration analysis (migration 0013).
  */
 export async function saveForecast(forecast) {
   try {
+    const bucket = deriveConfidenceBucket(forecast.confidence);
     await execute(
       `INSERT INTO agent_forecasts (
         id, market_id, market_title, platform, ai_probability, market_odds,
-        edge, confidence, reasoning, key_factors, timestamp, operator_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        edge, confidence, reasoning, key_factors, timestamp, operator_id,
+        confidence_bucket
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         forecast.id,
         forecast.marketID,
@@ -664,6 +689,7 @@ export async function saveForecast(forecast) {
         forecast.keyFactors ? JSON.stringify(forecast.keyFactors) : null,
         forecast.timestamp || Math.floor(Date.now() / 1000),
         forecast.operatorId || null,
+        bucket,
       ]
     );
     return { success: true };
@@ -696,6 +722,108 @@ export async function resolveForecast(marketId, actualOutcome) {
     return { success: true, resolved: rows.length };
   } catch (error) {
     console.error('Failed to resolve forecast:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get calibration analysis — bucketed hit rates, Brier scores, and the
+ * data points needed to render a calibration curve.
+ *
+ * Confirms or refutes: "sized on calibrated confidence, not vibes."
+ *
+ * Returns an array of bucket objects (LOW, MEDIUM, HIGH), each with:
+ *   - bucket: the bucket name
+ *   - count: resolved forecasts in this bucket
+ *   - hitRate: fraction that won (0–1)
+ *   - avgBrier: mean Brier score within bucket
+ *   - avgProbability: mean predicted probability (for curve x-axis)
+ *   - midpointConfidence: the bucket's representative confidence value
+ *
+ * Plus a top-level summary:
+ *   - totalResolved, avgBrier, minConfidenceBucket, maxConfidenceBucket
+ *
+ * operatorId is optional for per-operator calibration.
+ */
+export async function getCalibrationAnalysis(operatorId = null) {
+  try {
+    await migrationsReady;
+    const whereClause = operatorId ? 'WHERE operator_id = ?' : '';
+    const params = operatorId ? [operatorId] : [];
+
+    // Bucketed aggregation
+    const buckets = await query(
+      `SELECT
+        confidence_bucket as bucket,
+        COUNT(*) as count,
+        SUM(CASE WHEN actual_outcome = 1 THEN 1 ELSE 0 END) / CAST(COUNT(*) AS REAL) as hit_rate,
+        AVG(brier_score) as avg_brier,
+        AVG(ai_probability) as avg_probability
+       FROM agent_forecasts
+       WHERE resolved = 1 AND confidence_bucket IS NOT NULL
+       ${whereClause}
+       GROUP BY confidence_bucket
+       ORDER BY CASE confidence_bucket WHEN 'LOW' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'HIGH' THEN 3 END`,
+      params
+    );
+
+    // Overall summary
+    const summary = await query(
+      `SELECT
+        COUNT(*) as total_resolved,
+        AVG(brier_score) as avg_brier,
+        MIN(confidence_bucket) as min_bucket,
+        MAX(confidence_bucket) as max_bucket
+       FROM agent_forecasts
+       WHERE resolved = 1 AND confidence_bucket IS NOT NULL
+       ${whereClause}`,
+      params
+    );
+
+    // Temporal trend — Brier score per month (last 12 months)
+    const trend = await query(
+      `SELECT
+        strftime('%Y-%m', datetime(resolution_time, 'unixepoch')) as month,
+        COUNT(*) as count,
+        AVG(brier_score) as avg_brier
+       FROM agent_forecasts
+       WHERE resolved = 1 AND resolution_time IS NOT NULL
+       ${whereClause}
+       GROUP BY month
+       ORDER BY month DESC
+       LIMIT 12`,
+      params
+    );
+
+    // Source-level calibration (if platform/source is tracked)
+    const sourceCal = await query(
+      `SELECT
+        platform as source,
+        COUNT(*) as count,
+        AVG(brier_score) as avg_brier,
+        SUM(CASE WHEN actual_outcome = 1 THEN 1 ELSE 0 END) / CAST(COUNT(*) AS REAL) as hit_rate
+       FROM agent_forecasts
+       WHERE resolved = 1 AND platform IS NOT NULL
+       ${whereClause}
+       GROUP BY platform
+       ORDER BY avg_brier ASC`,
+      params
+    );
+
+    return {
+      success: true,
+      summary: summary[0] || null,
+      buckets: buckets.map((b) => ({
+        ...b,
+        // Fixed midpoints for each bucket (used for x-axis on calibration curve)
+        midpointConfidence: b.bucket === 'HIGH' ? 0.875 : b.bucket === 'MEDIUM' ? 0.625 : 0.25,
+      })),
+      trend: trend.map((t) => ({ ...t, count: Number(t.count), avg_brier: Number(t.avg_brier) })),
+      sourceCal: sourceCal.map((s) => ({ ...s, count: Number(s.count), avg_brier: Number(s.avg_brier), hit_rate: Number(s.hit_rate) })),
+      operatorId: operatorId || null,
+    };
+  } catch (error) {
+    console.error('Failed to get calibration analysis:', error);
     return { success: false, error: error.message };
   }
 }

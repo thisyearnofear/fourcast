@@ -8,6 +8,14 @@ Fourcast is a venue-agnostic autonomous agent for prediction markets. It discove
 
 Every AI trading agent claims performance. None prove discipline. Fourcast produces a cryptographic decision receipt before each outcome resolves, then reconciles it against independently verifiable data. Operators get an auditable track record; allocators get mandate assurance without trusting a black box.
 
+## Calibration
+
+**Sized on calibrated confidence, not vibes.**
+
+Every forecast is scored with a Brier point and grouped into HIGH / MEDIUM / LOW confidence buckets. The calibration curve on `/arena` shows whether the agent's stated confidence actually predicts outcomes — a well-calibrated agent's dots fall near the y=x diagonal. Systematic deviations flag over- or under-confidence before they compound into losses.
+
+Read the full methodology → [docs/CALIBRATION.md](docs/CALIBRATION.md)
+
 ## Architecture
 
 ```
@@ -200,6 +208,7 @@ constants/
 |----------|---------|
 | [STRATEGY.md](STRATEGY.md) | Multi-venue roadmap, timeline, and competition plan |
 | [OPS.md](OPS.md) | VPS autonomous worker deployment |
+| [docs/CALIBRATION.md](docs/CALIBRATION.md) | Calibration methodology, confidence buckets, Brier scoring |
 | [docs/CANTON_ATOMIC_SETTLEMENT.md](docs/CANTON_ATOMIC_SETTLEMENT.md) | Canton CIP-56 contract model |
 | [docs/DELPHI_AGENT.md](docs/DELPHI_AGENT.md) | Delphi Agent Arena operator guide |
 | [docs/HACKATHONS.md](docs/HACKATHONS.md) | Hackathon/competition record (active + participated) |
