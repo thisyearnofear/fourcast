@@ -20,9 +20,12 @@ This is not a policy statement. It is a testable hypothesis, visible in real tim
 | Bucketed analysis | **Live** | Hit rate, Brier, mean probability per bucket via `/api/agent/calibration` |
 | Source-level calibration | **Live** | Per-platform Brier scores (polymarket, kalshi, etc.) |
 | Temporal trend | **Live** | Monthly Brier score bars (last 12 months) |
-| Calibration factor adjustment | **Planned** | Shrink raw LLM probabilities toward 50% based on historical bucket hit-rates |
-| Per-source weight adjustment | **Planned** | Dynamically adjust fusion weights as each source's Brier score changes |
-| Reconciliation Brier integration | **Planned** | Link calibration scores to decision receipts |
+| Resolution wiring | **Live** | Worker saves forecasts + `resolveForecast()` runs when phases complete |
+| Backfill script | **Live** | `npm run backfill:calibration` seeds historical receipts into the curve |
+| Calibration-aware Kelly | **Live** | `calculateKellySizing(..., bucketCalibration)` shrinks sizing by hit-rate ratio |
+| Decision receipt calibration | **Live** | Each receipt carries `calibration.{buckets, bucket, shrinkageFactor, sampleSize}` |
+| Per-operator dashboard | **Planned** | Allocator-facing dashboard with calibration deltas per mandate |
+| Streaming resolution | **Planned** | Sub-minute resolution via TxLINE proof feed instead of polling |
 
 ---
 
@@ -148,15 +151,64 @@ GROUP BY confidence_bucket
 - [x] Temporal Brier trend
 - [x] Source-level calibration (per-platform)
 
-### Phase 2: Calibration-Driven Sizing (planned)
-- [ ] Confidence-based Kelly shrinkage: `kelly_adjusted = kelly_base * calibration_factor(bucket)`
-- [ ] Bucket hit-rates feed into the agent loop as feedback for future confidence tagging
-- [ ] Per-source Brier tracking feeds into probability fusion weights
+### Phase 2: Calibration-Driven Sizing (shipped)
+- [x] Confidence-based Kelly shrinkage: `kelly_adjusted = kelly_base * shrinkage_factor(bucket)`
+  - `kellySizing.calculateKellySizing()` accepts `bucketCalibration` and applies shrink capped at [0.25×, 1.5×]
+  - `aiAgentLoop.runAgentLoop()` pulls live bucket hit-rates each cycle and threads them into sizing
+- [x] Bucket hit-rates feed into the agent loop as feedback for future confidence tagging
+- [ ] Per-source Brier tracking feeds into probability fusion weights (still single-platform)
 
-### Phase 3: Receipt Integration (planned)
-- [ ] Calibration score embedded in decision receipts
+### Phase 3: Receipt Integration (shipped)
+- [x] Calibration block embedded in decision receipts: `buckets`, `bucket`, `shrinkageFactor`, `sampleSize`
+- [x] Sample size surfaced so allocators see whether shrinkage is data-driven or default
 - [ ] Per-operator calibration dashboards (visible to allocators)
 - [ ] Calibration-based operator ranking in signal marketplace
+
+---
+
+## Operational Runbook
+
+### Seeding the curve from historical receipts
+
+The first time the curve renders with no resolved forecasts, seed it from the
+receipts already on disk:
+
+```bash
+npm run backfill:calibration:dry   # preview what would be inserted
+npm run backfill:calibration       # persist one resolved forecast per receipt
+```
+
+The script is idempotent: re-running is safe. Each row is keyed by the receipt
+content hash.
+
+### Closing the loop each cycle
+
+The fourcast worker and the Delphi sweep now call `resolveForecast()` whenever
+a market settles:
+
+1. **fourcast-agent** (autonomous, every cycle): the historical-lab phase
+   `proof_reconciled` triggers `resolveForecast(fixtureId, outcome)` where
+   outcome is read from the replay fixture's `proof.outcome.homeWon`.
+2. **delphi-sweep** (per wave): redeemed positions resolve to outcome = 1,
+   liquidated (expired) positions resolve to outcome = 0.
+3. **Manual**: `resolveForecast('market-id', 1|0)` from the Turso console.
+
+### Tuning shrinkage
+
+The shrinkage factor is applied as:
+
+```
+shrinkage = clamp(observedHitRate / nominalHitRate, 0.25, 1.5)
+nominalHitRate = { LOW: 0.35, MEDIUM: 0.55, HIGH: 0.75 }
+```
+
+A HIGH bucket that hits 60% will have its sizing multiplied by 0.8×. A LOW
+bucket that hits 50% will see 1.43× — a confidence boost. The cap at 1.5×
+keeps uncalibrated hot streaks from runaway Kelly oversizing.
+
+When `getCalibrationAnalysis()` returns fewer than ~20 resolved forecasts per
+bucket, the factor defaults to 1.0× (no shrinkage) via the agent loop's
+graceful fallback. This avoids shrinking on insufficient data.
 
 ---
 

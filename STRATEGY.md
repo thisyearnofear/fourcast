@@ -23,7 +23,7 @@ Everything else is additive. The core never changes:
 | Reconciliation | Match receipt against verified outcome | Closes the loop — mandate adherence is fact, not claim |
 | Calibration Tracking | Brier scoring + confidence bucket analysis per forecast | Proves calibrated confidence, not vibes. Overconfidence kills bankrolls under Kelly. |
 
-> **Sized on calibrated confidence, not vibes.** Kelly betting is unforgiving of miscalibration — an 80% model that wins 60% of the time recommends larger positions than justified, compounding losses. The calibration curve on `/arena` tracks hit-rate by confidence bucket (HIGH/MEDIUM/LOW) so the deviation from perfect calibration is visible and auditable.
+> **Sized on calibrated confidence, not vibes.** Kelly betting is unforgiving of miscalibration — an 80% model that wins 60% of the time recommends larger positions than justified, compounding losses. The calibration curve on `/arena` tracks hit-rate by confidence bucket (HIGH/MEDIUM/LOW), and the Kelly formula itself is shrunk by the bucket's observed hit-rate ratio (`kelly = kelly_base × observed / nominal`, capped [0.25×, 1.5×]) so the sizing adapts to prove-or-disprove calibration every cycle.
 
 This core is venue-agnostic. It doesn't care whether it's buying YES on Polymarket, shares on Delphi, or escrowing CBTC on Canton. It produces the same auditable decision artifact regardless of where the trade lands.
 

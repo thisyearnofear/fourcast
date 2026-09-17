@@ -19,7 +19,7 @@ import { buildDecisionReceipt } from '../services/domain/decision/decisionReceip
 import { deriveSimulationSeed, simulateBinaryMarket } from '../services/domain/decision/simulation.js';
 import { assertNoLookahead, historicalPhase, historicalTimeline } from '../services/domain/decision/historicalLab.js';
 import { reconcile } from '../services/txline/reconciliationService.js';
-import { getMandate, migrationsReady } from '../services/db.js';
+import { getMandate, migrationsReady, saveForecast, resolveForecast, getCalibrationAnalysis } from '../services/db.js';
 
 dotenv.config({ path: process.env.FOURCAST_AGENT_ENV_FILE || '.env.agent' });
 dotenv.config();
@@ -40,6 +40,21 @@ const webhookSecret = process.env.FOURCAST_AGENT_WEBHOOK_SECRET || null;
 const operatorId = process.env.FOURCAST_AGENT_OPERATOR_ID || null;
 
 fs.mkdirSync(receiptDir, { recursive: true });
+
+/**
+ * Translate observed bucket hit-rates into the shrinkage factor applied to a
+ * given confidence bucket's Kelly multiplier. Mirrors `kellySizing.js` so the
+ * receipt's `shrinkageFactor` matches the sizing that was actually applied.
+ *
+ * Nominal hit-rates: LOW ≈ 0.35, MEDIUM ≈ 0.55, HIGH ≈ 0.75.
+ */
+const NOMINAL_HIT_RATE = { LOW: 0.35, MEDIUM: 0.55, HIGH: 0.75 };
+function computeShrinkageFactor(buckets, bucket) {
+  const observed = Number(buckets?.[bucket]);
+  const nominal = NOMINAL_HIT_RATE[bucket];
+  if (!Number.isFinite(observed) || !nominal) return 1.0;
+  return Math.max(0.25, Math.min(1.5, observed / nominal));
+}
 
 /**
  * When FOURCAST_AGENT_OPERATOR_ID is set, pull the persisted mandate from the
@@ -114,12 +129,59 @@ async function runCycle() {
   const receipts = [];
   const lab = dataMode === 'historical-lab' ? readHistoricalState() : null;
   const agentTime = lab ? advanceHistoricalClock(lab, candidates) : null;
+
+  // Pull bucket hit-rates once per cycle so every receipt in this run
+  // shares a consistent calibration snapshot. Failures fall back to null,
+  // in which case the receipt omits the calibration block entirely.
+  let calibrationBuckets = null;
+  let calibrationSampleSize = 0;
+  try {
+    await migrationsReady;
+    const cal = await getCalibrationAnalysis();
+    if (cal?.success && Array.isArray(cal.buckets)) {
+      calibrationBuckets = cal.buckets.reduce((acc, b) => {
+        if (b?.bucket && Number.isFinite(b.hitRate)) {
+          acc[b.bucket] = b.hitRate;
+        }
+        return acc;
+      }, {});
+      calibrationSampleSize = cal.summary?.totalResolved || 0;
+    }
+  } catch (err) {
+    console.warn(`[fourcast-agent] calibration lookup failed (continuing without):`, err.message);
+  }
+
   for (const fixture of candidates) {
     if (lab) {
       const activity = await runHistoricalFixture({ fixture, mode, lab, agentTime, policy: mandatePolicy });
-      if (activity) receipts.push(activity);
+      if (activity) {
+        receipts.push(activity);
+        // When a fixture has settled, score the original forecast so the
+        // calibration curve grows. The historical fixture detail carries
+        // the final scores; actualOutcome = 1 means home team won.
+        if (activity.phase === 'proof_reconciled' && activity.timeline?.outcomeAvailableAt) {
+          try {
+            const detail = txlineService.readReplayFixture(fixture.id);
+            const outcome = detail?.proof?.outcome?.homeWon === false ? 0 : 1;
+            if (typeof outcome === 'number') {
+              const r = await resolveForecast(fixture.id, outcome);
+              if (r.success && r.resolved > 0) {
+                console.log(`[fourcast-agent] resolved ${r.resolved} forecast(s) for ${fixture.id} → outcome=${outcome}`);
+              }
+            }
+          } catch (err) {
+            console.warn(`[fourcast-agent] resolution skipped for ${fixture.id}:`, err.message);
+          }
+        }
+      }
     } else {
-      receipts.push(await evaluateFixture({ fixture, mode, policy: mandatePolicy }));
+      receipts.push(await evaluateFixture({
+        fixture,
+        mode,
+        policy: mandatePolicy,
+        calibrationBuckets,
+        calibrationSampleSize,
+      }));
     }
   }
 
@@ -174,7 +236,7 @@ async function runHistoricalFixture({ fixture, mode, lab, agentTime, policy = nu
   return { ...stored.receipt, reconciliation, file: existing.file, phase: 'proof_reconciled', timeline };
 }
 
-async function evaluateFixture({ fixture, mode, createdAt = new Date().toISOString(), historical = null, policy: overridePolicy = null }) {
+async function evaluateFixture({ fixture, mode, createdAt = new Date().toISOString(), historical = null, policy: overridePolicy = null, calibrationBuckets = null, calibrationSampleSize = 0 }) {
   const policy = overridePolicy || createDecisionPolicy({
     minAbsoluteEdge: toNumber(process.env.FOURCAST_AGENT_MIN_EDGE, 0.05),
     maxAllocationPct: toNumber(process.env.FOURCAST_AGENT_MAX_ALLOCATION_PCT, 0.03),
@@ -257,6 +319,16 @@ async function evaluateFixture({ fixture, mode, createdAt = new Date().toISOStri
         runMode: dryRun ? 'autonomous-dry-run' : 'autonomous-live',
       },
     },
+    calibration: calibrationBuckets
+      ? {
+          buckets: calibrationBuckets,
+          bucket: confBucket,
+          // Calibration-aware shrinkage applied to this decision's sizing
+          shrinkageFactor: computeShrinkageFactor(calibrationBuckets, confBucket),
+          sampleSize: calibrationSampleSize,
+          message: 'Sized on calibrated confidence, not vibes.',
+        }
+      : null,
   });
 
   const reconciliation = !historical && replay?.proof
@@ -264,6 +336,40 @@ async function evaluateFixture({ fixture, mode, createdAt = new Date().toISOStri
     : null;
   const out = path.join(receiptDir, `${Date.now()}-${fixture.id}-${receipt.proof.integrity.contentHash.slice(0, 10)}.receipt.json`);
   fs.writeFileSync(out, JSON.stringify({ receipt, reconciliation }, null, 2) + '\n');
+
+  // Lift confBucket before the receipt build so the calibration block can
+  // reference it without a TDZ-style linter warning.
+  const confBucket =
+    decision.verdict === 'EXECUTE' ? 'HIGH' :
+    decision.verdict === 'PASS' ? 'MEDIUM' :
+    'LOW';
+
+  // Persist to agent_forecasts so the calibration curve has data points.
+  // Failures here must never break the cycle — forecasting is the primary
+  // job, scoring is downstream. Confidence is mapped LOW/MEDIUM/HIGH by
+  // db.js based on the policy decision verdict.
+  try {
+    await migrationsReady;
+    await saveForecast({
+      id: `fourcast-${fixture.id}-${receipt.proof.integrity.contentHash.slice(0, 12)}`,
+      marketID: fixture.id,
+      title: fixture.home?.name && fixture.away?.name
+        ? `${fixture.home.name} vs ${fixture.away.name}`
+        : fixture.id,
+      platform: 'txline',
+      aiProbability: recommendation.aiProbability,
+      marketOdds: recommendation.marketOdds,
+      edge: recommendation.edge,
+      confidence: confBucket,
+      reasoning: `fourcast-agent policy=${policy.version} verdict=${decision.verdict}`,
+      keyFactors: [fixture.home?.name, fixture.away?.name, mode].filter(Boolean),
+      source: 'fourcast-agent',
+      timestamp: Math.floor(new Date(createdAt).getTime() / 1000),
+    });
+  } catch (err) {
+    console.warn(`[fourcast-agent] forecast save skipped for ${fixture.id}:`, err.message);
+  }
+
   return { ...receipt, reconciliation, file: out };
 }
 

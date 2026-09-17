@@ -30,6 +30,8 @@
     "delphi:aggro:live": "node --env-file=.env.local scripts/delphi-agent-worker.mjs --once --aggro --live",
     "delphi:sweep": "node --env-file=.env.local scripts/delphi-sweep.mjs",
     "delphi:sweep:run": "node --env-file=.env.local scripts/delphi-sweep.mjs --sweep",
+    "backfill:calibration": "node --env-file=.env.local scripts/backfill-calibration.mjs",
+    "backfill:calibration:dry": "node --env-file=.env.local scripts/backfill-calibration.mjs --dry-run",
     "check:runtimes": "node scripts/check-runtimes.js",
     "check:bundles": "node scripts/check-bundle-size.js"
   },

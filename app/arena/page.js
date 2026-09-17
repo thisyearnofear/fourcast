@@ -445,6 +445,25 @@ function ArenaPageInner() {
       <div className="arena-lane-host">
         {lane === 'ledger' ? <LedgerLane /> : <MandateLane />}
       </div>
+      <footer
+        className="mt-10 pt-6 border-t text-[11px] flex items-center justify-between gap-4"
+        style={{ borderColor: 'var(--color-border)', color: 'var(--color-ink-faint)' }}
+        aria-label="Arena footer"
+      >
+        <span>
+          Sized on calibrated confidence, not vibes.{' '}
+          <a
+            href="https://github.com/thisyearnofear/fourcast/blob/main/docs/CALIBRATION.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+            style={{ color: 'var(--color-ink)' }}
+          >
+            Methodology
+          </a>
+        </span>
+        <span className="font-mono">v0.13 · calibration tracking</span>
+      </footer>
     </AppShell>
   );
 }

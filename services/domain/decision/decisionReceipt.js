@@ -12,8 +12,14 @@ export function hashCanonical(value) {
 /**
  * Adds integrity metadata without contaminating the payload being hashed.
  * `ledger` preserves the existing run-summary shape for current consumers.
+ *
+ * `calibration` (optional) embeds live bucket hit-rates and a per-decision
+ * shrinkage factor so allocators can audit whether sizing was sized on
+ * calibrated confidence, not vibes. It is excluded from the integrity hash
+ * to avoid breaking existing verification of historical receipts that predate
+ * the calibration block.
  */
-export function buildDecisionReceipt({ id, createdAt, policy, evidence, decisions, execution, ledger = {} }) {
+export function buildDecisionReceipt({ id, createdAt, policy, evidence, decisions, execution, calibration = null, ledger = {} }) {
   const payload = {
     schemaVersion: DECISION_RECEIPT_VERSION,
     id,
@@ -24,7 +30,7 @@ export function buildDecisionReceipt({ id, createdAt, policy, evidence, decision
     execution,
   };
   const contentHash = hashCanonical(payload);
-  return {
+  const receipt = {
     ...ledger,
     proof: {
       ...payload,
@@ -35,6 +41,10 @@ export function buildDecisionReceipt({ id, createdAt, policy, evidence, decision
       },
     },
   };
+  if (calibration) {
+    receipt.calibration = calibration;
+  }
+  return receipt;
 }
 
 export function verifyDecisionReceipt(receipt) {

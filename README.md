@@ -98,7 +98,7 @@ The decision engine is venue-agnostic. It operates identically whether executing
 1. **Discover** — scan available markets across connected venues
 2. **Forecast** — combine odds intelligence (TxLINE), LLM reasoning (Venice), ML models (SynthData), and web data (Bright Data)
 3. **Detect Edge** — fair value vs market price, minimum threshold gate
-4. **Size** — Kelly criterion with allocation cap and tail-loss limit
+4. **Size** — Kelly criterion with allocation cap, tail-loss limit, **and calibration-aware shrinkage** when bucket hit-rates are available
 5. **Decide** — five-gate policy: min edge, allocation cap, tail-loss probability, simulation validation, mandate bounds
 6. **Execute** — route to the appropriate venue SDK
 7. **Receipt** — SHA-256 commitment of the full decision payload, timestamped before outcome

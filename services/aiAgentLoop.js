@@ -18,7 +18,7 @@ import { synthService } from "./synthService.js";
 import { brightDataService } from "./brightDataService.js";
 import { MarketIntelligenceAnalyzer } from "./analysis/MarketIntelligenceAnalyzer.js";
 import { arbitrageService } from "./arbitrageService.js";
-import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution, getAutopilotExecutionsSince } from "./db.js";
+import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution, getAutopilotExecutionsSince, getCalibrationAnalysis } from "./db.js";
 import {
   buildTradedTodaySet,
   computeSpentToday,
@@ -682,11 +682,38 @@ Output ONLY valid JSON:
 
   yield { step: "edge", status: "running", message: "Calculating edges..." };
 
+  // Pull live bucket hit-rates so Kelly sizing shrinks or expands based on
+  // observed calibration. If the DB is cold we fall back to identity (1.0×)
+  // multipliers — every bucket effectively passes through uncalibrated.
+  let bucketCalibration = null;
+  try {
+    const cal = await getCalibrationAnalysis();
+    if (cal?.success && Array.isArray(cal.buckets)) {
+      bucketCalibration = cal.buckets.reduce((acc, b) => {
+        if (b?.bucket && Number.isFinite(b.hitRate)) {
+          acc[b.bucket] = b.hitRate;
+        }
+        return acc;
+      }, {});
+      if (Object.keys(bucketCalibration).length === 0) bucketCalibration = null;
+    }
+  } catch (err) {
+    console.warn("Agent loop: calibration lookup failed (using identity):", err.message);
+  }
+
   const recommendations = forecasts
     .filter((f) => f.aiProbability != null)
     .map((f) => {
       const marketYes = f.currentOdds?.yes ?? 0.5;
-      const kelly = calculateKellySizing(f.aiProbability, marketYes, riskTolerance, f.confidence, f.source || "llm");
+      const kelly = calculateKellySizing(
+        f.aiProbability,
+        marketYes,
+        riskTolerance,
+        f.confidence,
+        f.source || "llm",
+        undefined, // minEdge — let callers' defaults stand
+        bucketCalibration
+      );
       const absEdge = Math.abs(kelly.edge);
 
       // Calibration guardrail: relax threshold for SynthData-backed forecasts

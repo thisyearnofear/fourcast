@@ -15,6 +15,7 @@
  */
 import 'dotenv/config';
 import { delphiService } from '../services/delphiService.js';
+import { resolveForecast, migrationsReady } from '../services/db.js';
 
 const SWEEP = process.argv.includes('--sweep');
 
@@ -42,6 +43,28 @@ async function main() {
   console.log(`Liquidated   : ${agg.liquidated}`);
   console.log(`Tokens back  : ${fmt(agg.tokensRecovered)} ${deploy.symbol}`);
   console.log(`Still open   : ${agg.open.length} (${agg.open.reduce((s, p) => s + (p.shares || 0), 0)} shares)`);
+
+  // Feed settlement outcomes back into the calibration database.
+  // redeemed → market resolved YES (outcome = 1)
+  // liquidated → market expired unresolved (outcome = 0 for both sides)
+  // open → skip; will be scored on a future sweep.
+  try {
+    await migrationsReady;
+    let scored = 0;
+    for (const pos of agg.redeemedList || []) {
+      const r = await resolveForecast(pos.marketId || pos.market_id || pos.id, 1);
+      if (r.success) scored += r.resolved || 0;
+    }
+    for (const pos of agg.liquidatedList || agg.open || []) {
+      if ((agg.liquidatedList || []).includes(pos)) {
+        const r = await resolveForecast(pos.marketId || pos.market_id || pos.id, 0);
+        if (r.success) scored += r.resolved || 0;
+      }
+    }
+    if (scored > 0) console.log(`Calibration   : scored ${scored} settled forecast(s)`);
+  } catch (err) {
+    console.warn(`Calibration scoring skipped: ${err.message}`);
+  }
 
   const after = await delphiService.getDeployableCapital();
   console.log('\n=== After sweep (redeploy capital) ===');

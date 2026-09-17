@@ -127,4 +127,46 @@ describe('calculateKellySizing', () => {
     const result = calculateKellySizing(0.70, 0.55);
     expect(result.edge).toBeCloseTo(0.15, 3);
   });
+
+  // ── Phase 2: calibration-aware shrinkage ──
+
+  it('passes through when no bucketCalibration provided', () => {
+    const baseline = calculateKellySizing(0.70, 0.50, 0.5, 'HIGH');
+    expect(baseline.calibrationFactor).toBeUndefined();
+  });
+
+  it('shrinks HIGH sizing when observed hit-rate is below nominal', () => {
+    // HIGH nominal = 0.75. Observed 0.60 → shrink to 0.60/0.75 = 0.8×
+    const full = calculateKellySizing(0.70, 0.50, 0.5, 'HIGH');
+    const shrunk = calculateKellySizing(0.70, 0.50, 0.5, 'HIGH', 'llm', 0.05, { HIGH: 0.60 });
+    expect(shrunk.calibrationFactor).toBeCloseTo(0.8, 2);
+    expect(shrunk.sizePct).toBeLessThan(full.sizePct);
+  });
+
+  it('expands LOW sizing when observed hit-rate beats nominal', () => {
+    // LOW nominal = 0.35. Observed 0.50 → expand to 0.50/0.35 ≈ 1.43×
+    const baseline = calculateKellySizing(0.55, 0.45, 0.5, 'LOW');
+    const expanded = calculateKellySizing(0.55, 0.45, 0.5, 'LOW', 'llm', 0.05, { LOW: 0.50 });
+    expect(expanded.calibrationFactor).toBeCloseTo(1.43, 1);
+    expect(expanded.sizePct).toBeGreaterThan(baseline.sizePct);
+  });
+
+  it('caps shrinkage factor at 0.25 (floor)', () => {
+    // HIGH nominal = 0.75. Observed 0.05 → raw 0.067, clamped to 0.25
+    const result = calculateKellySizing(0.70, 0.50, 0.5, 'HIGH', 'llm', 0.05, { HIGH: 0.05 });
+    expect(result.calibrationFactor).toBe(0.25);
+  });
+
+  it('caps shrinkage factor at 1.5 (ceiling)', () => {
+    // MEDIUM nominal = 0.55. Observed 1.00 → raw 1.82, clamped to 1.5
+    const result = calculateKellySizing(0.65, 0.50, 0.5, 'MEDIUM', 'llm', 0.05, { MEDIUM: 1.0 });
+    expect(result.calibrationFactor).toBe(1.5);
+  });
+
+  it('ignores bucketCalibration entries that are not numbers', () => {
+    const withGarbage = calculateKellySizing(0.70, 0.50, 0.5, 'HIGH', 'llm', 0.05, { HIGH: 'hot' });
+    const without = calculateKellySizing(0.70, 0.50, 0.5, 'HIGH');
+    expect(withGarbage.calibrationFactor).toBeUndefined();
+    expect(withGarbage.sizePct).toBe(without.sizePct);
+  });
 });
