@@ -86,6 +86,14 @@ export async function track(name, fn) {
     entry.last_ok = new Date().toISOString();
     return out;
   } catch (err) {
+    // An expected refusal (e.g. TxLINE 403 for a fixture outside our tier) is
+    // the upstream working correctly — counting it would report an outage.
+    if (err?.expected) {
+      entry.ok += 1;
+      entry.last_ok = new Date().toISOString();
+      entry.refused = (entry.refused || 0) + 1;
+      throw err;
+    }
     entry.failed += 1;
     entry.last_fail = new Date().toISOString();
     entry.last_error = clip(err?.message ?? String(err));

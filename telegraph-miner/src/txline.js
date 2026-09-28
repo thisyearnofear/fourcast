@@ -57,7 +57,9 @@ async function rawRequest(path, { retry401 = true } = {}) {
   }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`TxLINE ${path} -> ${res.status}: ${text.slice(0, 200)}`);
+    const err = new Error(`TxLINE ${path} -> ${res.status}: ${text.slice(0, 200)}`);
+    if (res.status === 403 && /access denied|no tickets/i.test(text)) err.expected = true;
+    throw err;
   }
   return res.json();
 }

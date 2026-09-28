@@ -88,6 +88,16 @@ export function matchFixtures(fixtures, { team, opponent, date, pastOnly }) {
     bestName = Math.max(bestName, score);
     named.push({ f, score, start: Number(f.StartTime || 0) });
   }
+  // A partial name ("Chiefs") that fits several different teams ("Kaizer
+  // Chiefs", "Kansas City Chiefs") is not a lookup, it is a guess. Without an
+  // exact name, it must point at exactly one team.
+  if (team && !opponent && bestName < 4) {
+    const teams = new Set();
+    for (const x of named) {
+      for (const p of [x.f.Participant1, x.f.Participant2]) if (participantScore(team, p)) teams.add(p);
+    }
+    if (teams.size > 1) return [];
+  }
   // The best-named team is decided across the whole snapshot, *before* the
   // time filter: if senior Arsenal only has future fixtures, "Arsenal" must
   // not quietly become Arsenal U21's last game.

@@ -21,6 +21,7 @@ const FIXTURES = [
   // Participant1 is the away side here.
   { FixtureId: 777, Competition: 'NFL', CompetitionId: 500001, Participant1: 'Kansas City Chiefs', Participant2: 'Miami Dolphins', Participant1IsHome: false, StartTime: now - 30 * HOUR, GameState: 6 },
   { FixtureId: 901, Competition: 'Premier League 2', CompetitionId: 1592, Participant1: 'Arsenal U21', Participant2: 'Sunderland U21', StartTime: now - 20 * HOUR, GameState: 6 },
+  { FixtureId: 903, Competition: 'PSL', CompetitionId: 214, Participant1: 'Kaizer Chiefs', Participant2: 'Durban City', StartTime: now - 10 * HOUR, GameState: 6 },
   { FixtureId: 902, Competition: 'Premier League', CompetitionId: 8, Participant1: 'Arsenal', Participant2: 'Leeds', StartTime: now + 72 * HOUR, GameState: 1 },
 ];
 
@@ -72,8 +73,15 @@ describe('TxLINE live shapes', () => {
     assert.match(out.answer.proof.reason, /Stat validation failed/);
   });
 
-  it('honours Participant1IsHome = false', async () => {
+  it('a partial name fitting two teams is not guessed ("Chiefs")', async () => {
+    urls = [];
     const out = await handleGameResult({ team: 'Chiefs' });
+    assert.equal(out.answer, null);
+    assert.ok(!urls.some((u) => /scores\/snapshot\/(777|903)/.test(u)));
+  });
+
+  it('honours Participant1IsHome = false', async () => {
+    const out = await handleGameResult({ team: 'Kansas City Chiefs' });
     assert.equal(out.answer.home_team, 'Miami Dolphins');
     assert.equal(out.answer.away_team, 'Kansas City Chiefs');
     assert.equal(out.answer.home_score, 24);
