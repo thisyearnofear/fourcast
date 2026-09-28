@@ -149,6 +149,14 @@ positioning claims.
       wallet (`scripts/txline-generate-wallet.mjs`), fund it with ~0.01 SOL,
       and subscribe from that. Then copy `TXLINE_API_TOKEN` into `.env.agent`
       and restart. Until then every answer is ESPN and carries no Merkle proof.
+      **2026-09-28: new wallet generated** →
+      `8eEsu1AtLkrR1SuzA5nAgXr1v8RZ6yERF6Rmy6eiUz7g` (mainnet). Its secret is
+      at `nuncio-vultr:/home/linuxuser/.secrets/txline-wallet-2026-09.env`
+      (dir 700, file 600, outside the repo) as
+      `TXLINE_WALLET_2026_09_SECRET_KEY`. Nothing existing was overwritten.
+      Waiting on ~0.02 SOL funding, then subscribe (free tier, service
+      level 1). **Back this file up off-box**: losing the last wallet key is
+      why we're here.
 - [x] **Premier League coverage fixed without a new source.** ESPN's dated
       `eng.1` scoreboards return nothing, but each team's ESPN schedule has
       its whole season. The miner now resolves the team and reads its
