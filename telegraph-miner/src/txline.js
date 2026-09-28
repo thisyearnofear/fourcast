@@ -6,6 +6,8 @@
  * always serves live data.
  */
 
+import { track } from './observe.js';
+
 const API_ORIGIN = process.env.TXLINE_API_ORIGIN || 'https://txline.txodds.com';
 const BASE_URL = `${API_ORIGIN}/api`;
 const AUTH_URL = `${API_ORIGIN}/auth/guest/start`;
@@ -27,7 +29,11 @@ async function refreshJwt() {
   return cachedJwt;
 }
 
-async function request(path, { retry401 = true } = {}) {
+function request(path, opts) {
+  return track('txline', () => rawRequest(path, opts));
+}
+
+async function rawRequest(path, { retry401 = true } = {}) {
   if (!API_TOKEN) throw new Error('TXLINE_API_TOKEN not configured');
   if (!cachedJwt) await refreshJwt();
 

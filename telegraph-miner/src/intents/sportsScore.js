@@ -1,191 +1,150 @@
 /**
- * SPORTS_SCORE Intent Handler
+ * SPORTS_SCORE — the live or most recent score for a team, fixture or league.
  *
- * Returns live or recent match scores for a given fixture, team, or competition.
- * Data sourced from TxLINE with cryptographic verification via Solana Merkle proofs.
+ * Sources: TxLINE first (a final can carry a Merkle proof), ESPN when TxLINE
+ * has nothing live or final for the ask. A scheduled TxLINE fixture is only
+ * returned when ESPN has nothing better, and it carries no score — a game that
+ * has not started has no score, not 0-0.
  *
- * Telegraph evaluation: WASM Exact Match — response must be deterministic and
- * match the canonical ground truth format.
- *
- * Expected params:
- *   - fixture_id: (string) TxLINE fixture ID — most precise lookup
- *   - team: (string) team name — fuzzy match against fixtures
- *   - competition: (string) competition name or ID
- *   - date: (string) ISO date to filter fixtures (default: today)
- *   - league: (string) alias for competition
- *
- * Response format (answer):
- * {
- *   "fixture_id": "123456",
- *   "competition": "MLS",
- *   "home_team": "Inter Miami",
- *   "away_team": "Atlanta United",
- *   "home_score": 2,
- *   "away_score": 1,
- *   "status": "final" | "live" | "scheduled",
- *   "kickoff": "2026-08-14T23:00:00Z",
- *   "minute": 90,
- *   "verified": true,
- *   "proof_available": true
- * }
+ * Returns { answer, metadata } — `answer: null` means no result, with a reason.
  */
 
 import { txline } from '../txline.js';
-import { normalizeTeamName, fuzzyMatch } from '../utils.js';
+import { findGame } from '../espn.js';
+import { normalizeTeamName, fuzzyMatch, txlineCompetitionId } from '../utils.js';
+import { describe, resultFromScores, winnerFor } from '../answer.js';
 
-export async function handleSportsScore(params) {
-  const { fixture_id, team, competition, league, date } = params;
+export async function handleSportsScore(params = {}) {
+  const { fixture_id, team, opponent, competition, league, date } = params;
+  const comp = competition || league;
 
-  // Direct fixture lookup — most precise
-  if (fixture_id) {
-    return await getScoreByFixtureId(fixture_id);
+  if (fixture_id && String(fixture_id).startsWith('espn:')) {
+    return noResult('espn_fixture_lookup_unsupported',
+      `Lookup by ESPN fixture id is not supported; ask by team instead (${fixture_id})`);
   }
 
-  // Fetch all fixtures and filter
-  const competitionId = resolveCompetitionId(competition || league);
-  const fixtures = await txline.getFixtures(competitionId || undefined);
+  let tx;
+  try {
+    tx = fixture_id ? await getTxlineScore(fixture_id) : await findTxlineScore({ team, competition: comp, date });
+  } catch (err) {
+    tx = noResult('txline_unavailable', err.message);
+  }
+  if (fixture_id) return tx;
+  if (tx.answer && (tx.answer.status === 'live' || tx.answer.status === 'final')) return tx;
 
-  if (!Array.isArray(fixtures) || fixtures.length === 0) {
+  const { answer, searched } = await findGame({ team, opponent, competition: comp, date, wantFinal: false });
+  if (answer) {
+    answer.summary = describe(answer);
     return {
-      answer: null,
+      answer,
       metadata: {
-        error: 'no_fixtures',
-        message: 'No fixtures found for the given parameters',
-        params,
+        source: 'espn',
+        verification: 'none',
+        fallback_from: tx.metadata?.error ?? (tx.answer ? `txline_${tx.answer.status}` : null),
+        fixture_id: answer.fixture_id,
       },
     };
   }
+  if (tx.answer) return tx;
 
-  // Filter by team name if provided
-  let candidates = fixtures;
-  if (team) {
-    const normalized = normalizeTeamName(team);
-    candidates = fixtures.filter(
-      (f) =>
-        fuzzyMatch(normalized, f.Participant1) ||
-        fuzzyMatch(normalized, f.Participant2)
-    );
-  }
-
-  // Filter by date if provided
-  if (date) {
-    const targetDate = new Date(date).toISOString().slice(0, 10);
-    candidates = candidates.filter((f) => {
-      if (!f.StartTime) return false;
-      const fDate = new Date(Number(f.StartTime)).toISOString().slice(0, 10);
-      return fDate === targetDate;
-    });
-  }
-
-  // If no date filter, default to today's fixtures or the most recent
-  if (!date && candidates.length > 1) {
-    const now = Date.now();
-    // Sort by proximity to now (live games first, then nearest upcoming/recent)
-    candidates.sort((a, b) => {
-      const da = Math.abs(now - Number(a.StartTime || 0));
-      const db = Math.abs(now - Number(b.StartTime || 0));
-      return da - db;
-    });
-  }
-
-  if (candidates.length === 0) {
-    return {
-      answer: null,
-      metadata: {
-        error: 'no_match',
-        message: `No fixtures matching: team=${team}, competition=${competition || league}, date=${date}`,
-        total_fixtures: fixtures.length,
-      },
-    };
-  }
-
-  // Return the best match (closest to now or exact team match)
-  const best = candidates[0];
-  return await getScoreByFixtureId(best.FixtureId || best.fixture_id || best.id);
+  return noResult('no_match', `No game found for ${team ? `team "${team}"` : comp || 'this ask'}`, {
+    txline: tx.metadata?.error ?? null,
+    espn_searched: searched,
+  });
 }
 
-async function getScoreByFixtureId(fixtureId) {
-  // Fetch score events for this fixture
-  let scoreData;
-  try {
-    scoreData = await txline.getScoreSnapshot(fixtureId);
-  } catch (err) {
-    // Score endpoint may 404 for scheduled matches with no events yet
-    scoreData = [];
-  }
+function noResult(error, message, extra = {}) {
+  return { answer: null, metadata: { error, message, ...extra } };
+}
 
-  // Also fetch the fixture metadata for team names
-  let fixtureData = null;
-  try {
-    const allFixtures = await txline.getFixtures();
-    fixtureData = (allFixtures || []).find(
-      (f) => String(f.FixtureId) === String(fixtureId)
+async function findTxlineScore({ team, competition, date }) {
+  const fixtures = await txline.getFixtures(txlineCompetitionId(competition) || undefined);
+  if (!Array.isArray(fixtures) || fixtures.length === 0) return noResult('no_fixtures', 'TxLINE returned no fixtures');
+
+  let candidates = fixtures;
+  if (team) {
+    const n = normalizeTeamName(team);
+    candidates = candidates.filter((f) => fuzzyMatch(n, f.Participant1) || fuzzyMatch(n, f.Participant2));
+  }
+  if (date) {
+    const target = new Date(date).toISOString().slice(0, 10);
+    candidates = candidates.filter(
+      (f) => f.StartTime && new Date(Number(f.StartTime)).toISOString().slice(0, 10) === target
     );
+  }
+  if (candidates.length === 0) return noResult('no_match', 'TxLINE has no fixture for this ask');
+
+  const now = Date.now();
+  candidates.sort((a, b) => Math.abs(now - Number(a.StartTime || 0)) - Math.abs(now - Number(b.StartTime || 0)));
+  const best = candidates[0];
+  return getTxlineScore(best.FixtureId || best.fixture_id || best.id, fixtures);
+}
+
+async function getTxlineScore(fixtureId, knownFixtures) {
+  let events = [];
+  try {
+    const scores = await txline.getScoreSnapshot(fixtureId);
+    events = Array.isArray(scores) ? scores : [];
   } catch {
-    // non-critical
+    events = []; // scheduled fixtures have no score events yet
   }
 
-  const events = Array.isArray(scoreData) ? scoreData : [];
-  const sorted = events.sort((a, b) => (a.Seq || 0) - (b.Seq || 0));
-  const latest = sorted[sorted.length - 1];
-  const finalised = events.find((e) => e.Action === 'game_finalised');
-  const summary = finalised || latest;
+  let fixture = null;
+  try {
+    const all = knownFixtures ?? (await txline.getFixtures());
+    fixture = (all || []).find((f) => String(f.FixtureId) === String(fixtureId)) ?? null;
+  } catch {
+    // names reported as null
+  }
 
-  // Extract score from Stats
+  const sorted = [...events].sort((a, b) => (a.Seq || 0) - (b.Seq || 0));
+  const finalised = sorted.find((e) => e.Action === 'game_finalised');
+  const summary = finalised || sorted.at(-1);
   const stats = summary?.Stats || {};
-  const homeScore = stats['1'] ?? stats.score_home ?? null;
-  const awayScore = stats['2'] ?? stats.score_away ?? null;
+  const rawHome = stats['1'] ?? stats.score_home ?? null;
+  const rawAway = stats['2'] ?? stats.score_away ?? null;
 
-  // Determine match status
   let status = 'scheduled';
-  if (finalised) {
-    status = 'final';
-  } else if (summary?.Action === 'in_running' || summary?.GameState === 'in_running') {
-    status = 'live';
-  } else if (homeScore != null) {
-    status = 'live';
-  }
+  if (finalised) status = 'final';
+  else if (summary?.Action === 'in_running' || summary?.GameState === 'in_running' || rawHome != null) status = 'live';
 
-  // Extract minute/period if live
+  const scored = status !== 'scheduled';
+  const homeScore = scored && rawHome != null ? Number(rawHome) : null;
+  const awayScore = scored && rawAway != null ? Number(rawAway) : null;
+  const homeTeam = fixture?.Participant1 || null;
+  const awayTeam = fixture?.Participant2 || null;
+  const result = status === 'final' ? resultFromScores(homeScore, awayScore) : null;
   const minute = summary?.Data?.minute || summary?.Data?.matchTime || null;
 
-  // Check if Merkle proof is available
-  let proofAvailable = false;
+  let proofRoot = null;
   if (status === 'final' && summary?.Seq) {
     try {
-      const proof = await txline.getMerkleProof(fixtureId, summary.Seq);
-      proofAvailable = Boolean(proof?.eventStatRoot || proof?.root);
+      const p = await txline.getMerkleProof(fixtureId, summary.Seq);
+      proofRoot = p?.eventStatRoot || p?.root || null;
     } catch {
-      // proof not yet published
+      // not published yet
     }
-  }
-
-  let winner = null;
-  if (status === 'final' && homeScore != null && awayScore != null) {
-    const h = Number(homeScore);
-    const a = Number(awayScore);
-    if (h > a) winner = fixtureData?.Participant1 || 'Unknown';
-    else if (a > h) winner = fixtureData?.Participant2 || 'Unknown';
-    else winner = 'draw';
   }
 
   const answer = {
     fixture_id: String(fixtureId),
-    competition: fixtureData?.Competition || null,
-    competition_id: fixtureData?.CompetitionId || null,
-    home_team: fixtureData?.Participant1 || 'Unknown',
-    away_team: fixtureData?.Participant2 || 'Unknown',
-    home_score: homeScore != null ? Number(homeScore) : null,
-    away_score: awayScore != null ? Number(awayScore) : null,
+    competition: fixture?.Competition || null,
+    competition_id: fixture?.CompetitionId || null,
+    home_team: homeTeam,
+    away_team: awayTeam,
+    home_score: homeScore,
+    away_score: awayScore,
     status,
-    kickoff: fixtureData?.StartTime
-      ? new Date(Number(fixtureData.StartTime)).toISOString()
-      : null,
+    kickoff: fixture?.StartTime ? new Date(Number(fixture.StartTime)).toISOString() : null,
     minute: minute ? Number(minute) : null,
-    winner,
-    verified: true,
-    proof_available: proofAvailable,
+    result,
+    winner: status === 'final' ? winnerFor(result, homeTeam, awayTeam) : null,
+    source: 'txline',
+    verified: Boolean(proofRoot),
+    proof_available: Boolean(proofRoot),
+    proof: proofRoot ? { merkle_root: proofRoot, chain: 'solana', verifiable: true, sequence: summary.Seq } : null,
   };
+  answer.summary = describe(answer);
 
   return {
     answer,
@@ -194,31 +153,7 @@ async function getScoreByFixtureId(fixtureId) {
       fixture_id: String(fixtureId),
       event_count: events.length,
       last_seq: summary?.Seq || null,
-      verification: 'solana-merkle-proof',
+      verification: proofRoot ? 'solana-merkle-proof' : 'none',
     },
   };
-}
-
-/**
- * Resolve a competition name/alias to a TxLINE competition ID.
- */
-function resolveCompetitionId(input) {
-  if (!input) return null;
-  const n = Number(input);
-  if (Number.isFinite(n) && n > 0) return n;
-
-  const lower = String(input).toLowerCase().trim();
-  const MAP = {
-    mls: null, // MLS is included in free tier, no specific filter needed
-    'major league soccer': null,
-    'premier league': 500001,
-    pl: 500001,
-    epl: 500001,
-    nfl: null, // NFL competition ID TBD
-    'world cup': 72,
-    wc: 72,
-    fifa: 72,
-  };
-
-  return MAP[lower] ?? null;
 }

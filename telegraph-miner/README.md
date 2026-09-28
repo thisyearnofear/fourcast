@@ -2,20 +2,102 @@
 
 Telegraph Protocol miner serving **verified sports intelligence** — live scores and final match results with Solana Merkle proof verification.
 
+> **Season II plan:** Season I scored this miner 0 (structural — we shipped into
+> a near-zero-scored intent family with paid-gated ground truth, and had no
+> instrumentation to notice). The Season II readiness plan — instrument first
+> (survey/asked), make verification a one-command independent check, dual-shape
+> `GAME_RESULT`, an evaluator WASM, and a paid-rail Track 3 app — lives in
+> [`docs/HACKATHONS.md`](../docs/HACKATHONS.md#telegraph-protocol-hackathon-season-ii----preparing).
+> Read it before registering into any intent.
+
 ## Intents
 
-| Intent | Description | Evaluation |
-|--------|-------------|------------|
-| `SPORTS_SCORE` | Live/recent match scores (MLS, NFL, PL) | WASM Exact Match |
-| `GAME_RESULT` | Final results + cryptographic proof | WASM Exact Match |
+| Intent | Description | Sources |
+|--------|-------------|---------|
+| `SPORTS_SCORE` | Live or most recent score for a team/fixture/league | TxLINE, then ESPN |
+| `GAME_RESULT` | Final result of the most recent *completed* game | TxLINE (with Merkle proof when published), then ESPN |
+
+## Season II changes (v1.1)
+
+Season I scored this miner 0 on `GAME_RESULT`: the free TxLINE tier has no
+history, so most asks came back "no completed match", and nothing told us.
+v1.1 fixes the cause and instruments the rest.
+
+- **Free finals.** When TxLINE has no live/final answer, the miner reads ESPN's
+  public scoreboards (MLB, NFL, NCAAF, NBA, WNBA, NHL, EPL, MLS, La Liga,
+  Bundesliga, Serie A, Ligue 1, UCL), looking back `ESPN_LOOKBACK_DAYS` (4).
+  The `GAME_RESULT` miners that did score in Season I answered from free
+  official feeds too.
+- **Attributed answers.** `reason` is a sentence naming who beat whom, winner's
+  score first: `Buffalo Bills beat Los Angeles Chargers 24-16 (final)`. The
+  scalars (`score` home-away, `winner`, `answer.*`) are unchanged for on-chain use.
+- **Absence is absence.** No `"Unknown"` team names, no `0-0` for a game that has
+  not started, no `verified: true` without a proof. A miss is `label: no_result`,
+  `answer: null`, and a `reason` saying what was searched. Team matching requires
+  every word of the name, so "Manchester City" never matches Manchester United.
+- **Two kinds of evidence, never merged.** Every answer carries
+  `metadata.attestation` (Ed25519 over the settle fields, which proves this
+  miner said it). Only TxLINE answers with a published proof carry
+  `answer.proof` and `verified: true`, which proves the data. ESPN answers are
+  signed but say `verified: false`.
+- **Instruments.** `GET /api/asked` (last 50 requests: field, text, resolved
+  intent, outcome, source, latency), `GET /health` (`degraded` when every called
+  upstream is failing; still HTTP 200), `npm run survey` (live network standing).
+
+`telegraph.yaml` is **unchanged**, so no `updateMiner` is needed. Deploy is
+`git pull` + `npm ci` + `pm2 restart`, plus `MINER_SIGNING_KEY` in `.env.agent`
+(below).
+
+## Endpoints
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /query` | The scored endpoint. Envelope `{intent, params}` or flat `{query}` / `{team}` |
+| `GET /health` | `ok` / `degraded` + per-upstream last success/failure |
+| `GET /status` | Sources, leagues, signing-key state |
+| `GET /api/asked` | What the network actually asked, and how each ask ended |
+| `GET /.well-known/fourcast-miner.json` | Signing public key, signed fields, how to verify |
+
+`/api/asked` is public and unauthenticated by design (so judges and we can read
+it without a key). It stores request text truncated to 200 chars, with no IP
+addresses, in memory only.
+
+## Tools
+
+```bash
+npm run survey                         # our rank/score per intent vs the live network
+npm run survey -- --intent GAME_RESULT # one intent, top 5 miners + scorer bar
+npm run survey -- --all                # every scored intent
+npm run verify -- --team "Buffalo Bills" --intent GAME_RESULT   # ask + verify live
+npm run verify -- --url http://localhost:8402 --query "Did the Bills win?"
+npm run verify -- --file saved.json    # verify a response you kept
+npm run keygen                         # new MINER_SIGNING_KEY (put in .env.agent, never git)
+```
+
+`verify` checks the attestation against the key at `/.well-known` (not the key
+inside the response), checks that the displayed values are the signed values,
+and for TxLINE answers checks the proof shape and compares the root with the
+Solana daily-root account. Each check is reported separately. A check that
+can't run is shown as `--`, never as a pass.
+
+Read `npm run survey` before any registration change. On 2026-09-28 it showed
+`SPORTS_SCORE` effectively unmeasured network-wide (best miner 7.5e-12), while
+`GAME_RESULT` is measured (best 0.1197) and we were 15/15 at 0.
 
 ## Differentiator
 
-Most sports data miners return a score. Ours returns a **proof chain**:
+Most sports miners return a score. This one returns a score with its evidence
+stated plainly:
 
-- Every result is independently verifiable via Solana Merkle proofs — consumers can CPI-call `txoracle::validate_stat` on Solana to confirm the data, no trust in the miner required
-- Built on Fourcast's agent infrastructure — the same decision-receipt layer that powers autonomous prediction-market operation on Polymarket, Kalshi, and Delphi
-- Natural language queries accepted — no need to know the fixture ID or intent enum; the miner parses conversational asks
+- **TxLINE answers** can carry a Solana Merkle proof; consumers can check it
+  (`npm run verify`, or CPI `txoracle::validate_stat`) without trusting the miner.
+  `verified: true` appears only then.
+- **ESPN answers** fill the gaps the free TxLINE tier leaves. They are signed by
+  the miner and marked `verified: false`.
+- **Every answer** is Ed25519-signed over the settle fields, with the key
+  published at `/.well-known/fourcast-miner.json`.
+- Natural-language asks work: "Did the Dodgers beat the Giants?" resolves both
+  sides, the intent, and the league.
 
 ## Query Interface
 
@@ -98,10 +180,13 @@ ssh nuncio-vultr
 cd /home/linuxuser/fourcast
 git pull --ff-only
 cd telegraph-miner && npm ci && cd ..
-pm2 restart telegraph-miner
+# once: persistent signing key, so attestations verify across restarts
+grep -q '^MINER_SIGNING_KEY=' .env.agent || node telegraph-miner/scripts/keygen.mjs >> .env.agent
+pm2 restart deploy/telegraph-miner.ecosystem.config.cjs --update-env   # re-reads .env.agent
 
 # Verify it actually bound the port (don't trust "online" alone):
 curl -s http://localhost:8402/health
+curl -s https://miner.sportwarren.com/.well-known/fourcast-miner.json   # persistent: true
 ```
 
 **PM2 v7 gotcha (bit us 2026-09-01):** PM2 forks apps through
@@ -291,7 +376,8 @@ Telegraph Network (validators, apps, routing)
 │  telegraph-miner (PM2)                   │
 │  ├── Express server, port 8402           │
 │  ├── Intent: SPORTS_SCORE                │
-│  └── Intent: GAME_RESULT                 │
+│  ├── Intent: GAME_RESULT                 │
+│  └── fallback: ESPN public scoreboards   │
 ├──────────────────────────────────────────┤
 │  Also running on same host:              │
 │  ├── fourcast-agent (PM2) — headless     │

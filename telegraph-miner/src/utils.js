@@ -53,3 +53,22 @@ export function toIso(ts) {
 export function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
+
+/**
+ * TxLINE competition id for a name/alias, or null for "no filter".
+ * Unknown names are null too: filtering on a guess would hide the fixture.
+ */
+export function txlineCompetitionId(input) {
+  if (!input) return null;
+  const n = Number(input);
+  if (Number.isFinite(n) && n > 0) return n;
+  const MAP = {
+    'premier league': 500001,
+    pl: 500001,
+    epl: 500001,
+    'world cup': 72,
+    wc: 72,
+    fifa: 72,
+  };
+  return MAP[String(input).toLowerCase().trim()] ?? null;
+}

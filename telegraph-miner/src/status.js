@@ -1,8 +1,12 @@
 /**
- * Miner status and metadata endpoint.
+ * Miner status: sources, coverage, and the state of the signing key.
+ * Claims here are limited to what the code does.
  */
 
 import { txline } from './txline.js';
+import { LEAGUES } from './espn.js';
+import { publicKey, keyIsPersistent } from './attest.js';
+import { upstreamReport } from './observe.js';
 
 export async function getMinerStatus() {
   const txlineStatus = await txline.getStatus();
@@ -10,33 +14,23 @@ export async function getMinerStatus() {
   return {
     miner: {
       name: 'Fourcast Telegraph Miner',
-      version: '1.0.0',
+      version: '1.1.0',
       intents: ['SPORTS_SCORE', 'GAME_RESULT'],
-      tier: 'A',
-      category: 'Weather & Sports',
-      evaluation_method: 'WASM Exact Match',
       deterministic: false, // live data changes over time
     },
-    data_source: {
-      provider: 'TxLINE / TxODDS',
-      description: 'Professional bookmaker consensus odds and verified match results',
-      verification: 'Solana Merkle proofs — independently verifiable on-chain',
-      coverage: [
-        'MLS (Major League Soccer) — live',
-        'NFL (National Football League) — live',
-        'Premier League — live from Aug 21 2025',
-        'International Friendlies',
-      ],
-      documentation: 'https://txline-docs.txodds.com',
+    sources: {
+      txline: {
+        role: 'primary; the only source with independently verifiable (Solana Merkle) proofs',
+        note: 'free tier: limited leagues and no historical results',
+        connection: txlineStatus,
+      },
+      espn: {
+        role: 'fallback for live scores and recent finals; signed, not independently verifiable',
+        leagues: LEAGUES.map((l) => l.name),
+      },
     },
-    connection: txlineStatus,
-    differentiators: [
-      'Cryptographic proof of every result (Solana Merkle tree)',
-      'Professional bookmaker consensus — sharpest odds available',
-      'On-chain verification: consumers can independently validate without trusting the miner',
-      'Sub-minute latency on live scores',
-      'Free tier data (no cost overhead passed to consumers)',
-    ],
+    signing: { algorithm: 'ed25519', public_key: publicKey, persistent: keyIsPersistent },
+    upstream: upstreamReport().calls,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   };

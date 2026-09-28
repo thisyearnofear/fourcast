@@ -1,13 +1,16 @@
 {
   "name": "fourcast-telegraph-miner",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Telegraph Protocol miner serving verified sports data (scores + results) via TxLINE",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "survey": "node scripts/survey.mjs",
+    "verify": "node scripts/verify.mjs",
+    "keygen": "node scripts/keygen.mjs"
   },
   "dependencies": {
     "@solana/web3.js": "^1.95.0",

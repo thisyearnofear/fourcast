@@ -16,10 +16,11 @@ const PARAM_KEYS = [
   'date',
   'home_team',
   'away_team',
+  'opponent',
 ];
 
 const RESULT_RE =
-  /\b(who\s+won|winner|final(?:e)?|full[- ]?time|result|finished|completed|final score)\b/i;
+  /\b(who\s+won|won|win|wins|winner|beat|beats|lost|lose|defeat(?:ed)?|final(?:e)?|full[- ]?time|result|finished|completed|final score)\b/i;
 
 function firstString(...values) {
   for (const v of values) {
@@ -28,21 +29,40 @@ function firstString(...values) {
   return null;
 }
 
+const FILLER =
+  /\b(what|whats|what'?s|who|whos|who'?s|how|did|do|does|can|could|would|should|you|your|yours|the|a|an|is|are|was|were|current|live|latest|final|score|scores|scoreline|result|results|of|for|in|on|win|won|wins|winner|game|games|match|matches|fixture|between|please|tell|me|give|this|that|these|those|last|next|past|upcoming|recent|yesterday|tomorrow|today|tonight|evening|morning|afternoon|night|weekend|day|week|month|year|offer|information|info|details|check|about|using|use|with|and|or|end|ended|finish|finished|full[- ]?time)\b/gi;
+
+// League names are a competition, not a team: "Premier League scores" names no team.
+const LEAGUE_WORDS =
+  /\b(english premier league|premier league|epl|major league soccer|mls|major league baseball|mlb|nfl|national football league|nba|wnba|nhl|college football|ncaaf|la ?liga|bundesliga|serie a|ligue 1|champions league|ucl)\b/gi;
+
+// "X vs Y", "X v Y", "X against Y", "X beat Y", "X @ Y".
+const SIDES_SPLIT = /\s+(?:vs\.?|v\.?|versus|against|beat|beats|defeated|defeat|played|plays|play|@)\s+/i;
+
+function cleanSide(text) {
+  return String(text || '')
+    .replace(/[?!.,:;'"]/g, ' ')
+    .replace(LEAGUE_WORDS, ' ')
+    .replace(FILLER, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Both sides of a question: "Did the Dodgers beat the Giants?" →
+ * { team: "Dodgers", opponent: "Giants" }. Either may be empty.
+ */
+export function sidesFromQuery(q) {
+  if (!q) return { team: '', opponent: '' };
+  const [first, second] = String(q).split(SIDES_SPLIT);
+  return { team: cleanSide(first), opponent: cleanSide(second) };
+}
+
 /**
  * Strip question filler so "What is the Inter Miami score?" → "Inter Miami".
  */
 export function teamFromQuery(q) {
-  if (!q) return '';
-  const vsSplit = String(q).split(/\s+vs\.?\s+/i);
-  const focus = vsSplit[0];
-  return focus
-    .replace(/[?!.,:;'"]/g, ' ')
-    .replace(
-      /\b(what|whats|what'?s|who|whos|who'?s|can|could|would|should|you|your|yours|the|a|an|is|are|was|were|did|does|current|live|latest|final|score|scores|result|results|of|for|win|won|winner|game|match|between|please|tell|me|give|this|that|these|those|last|next|past|current|upcoming|recent|yesterday|tomorrow|today|tonight|evening|morning|afternoon|night|weekend|day|week|month|year|offer|information|info|details|check|about|using|use|with|and|or)\b/gi,
-      ' '
-    )
-    .replace(/\s+/g, ' ')
-    .trim();
+  return sidesFromQuery(q).team;
 }
 
 /**
@@ -66,6 +86,12 @@ export function parseNaturalLanguage(queryText) {
   else if (/\b(nfl|national football league)\b/.test(q)) competition = 'NFL';
   else if (/\b(serie a|serie)\b/.test(q)) competition = 'Serie A';
   else if (/\b(champions league|ucl)\b/.test(q)) competition = 'Champions League';
+  else if (/\b(mlb|major league baseball|baseball)\b/.test(q)) competition = 'MLB';
+  else if (/\b(wnba)\b/.test(q)) competition = 'WNBA';
+  else if (/\b(nba|basketball)\b/.test(q)) competition = 'NBA';
+  else if (/\b(nhl|hockey)\b/.test(q)) competition = 'NHL';
+  else if (/\b(college football|ncaaf)\b/.test(q)) competition = 'NCAA Football';
+  else if (/\b(ligue 1)\b/.test(q)) competition = 'Ligue 1';
 
   // Date reference resolution
   let date = null;
@@ -118,7 +144,7 @@ export function normalizeQueryRequest(body) {
     }
   }
 
-  const queryText = firstString(raw.query, raw.q, raw.question, raw.text);
+  const queryText = firstString(raw.query, raw.q, raw.question, raw.text, raw.prompt, raw.input);
 
   // Enrich params with NL parsing — this lets the intent handlers resolve
   // natural-language asks ("who won Man City this weekend") without needing
@@ -132,12 +158,16 @@ export function normalizeQueryRequest(body) {
       params.date = nl.date;
     }
     if (!params.team && !params.fixture_id) {
-      const extracted = teamFromQuery(queryText);
-      if (extracted) params.team = extracted;
+      const sides = sidesFromQuery(queryText);
+      if (sides.team) params.team = sides.team;
+      if (sides.opponent && !params.opponent) params.opponent = sides.opponent;
     }
   }
   if (params.home_team && !params.team) {
     params.team = params.home_team;
+  }
+  if (params.away_team && !params.opponent && params.team !== params.away_team) {
+    params.opponent = params.away_team;
   }
 
   const request_id = raw.request_id ?? null;
@@ -192,60 +222,5 @@ export function normalizeQueryRequest(body) {
   };
 }
 
-/**
- * Flat scalars for signal_mapping and on_chain.source_path.
- * Always strings so a missing fixture does not break the mapping.
- */
-export function signalFieldsFromAnswer(answer) {
-  if (!answer || typeof answer !== 'object') {
-    return {
-      score: '',
-      label: 'unknown',
-      winner: '',
-      reason: 'No matching fixture',
-      proof_available: false,
-    };
-  }
-
-  const home = answer.home_score;
-  const away = answer.away_score;
-  const score =
-    home != null && away != null && home !== '' && away !== ''
-      ? `${home}-${away}`
-      : '';
-
-  let winner = typeof answer.winner === 'string' ? answer.winner : '';
-  if (!winner && answer.result === 'home_win') winner = answer.home_team || '';
-  else if (!winner && answer.result === 'away_win') winner = answer.away_team || '';
-  else if (!winner && answer.result === 'draw') winner = 'draw';
-  else if (
-    !winner &&
-    answer.status === 'final' &&
-    home != null &&
-    away != null
-  ) {
-    const h = Number(home);
-    const a = Number(away);
-    if (h > a) winner = answer.home_team || '';
-    else if (a > h) winner = answer.away_team || '';
-    else winner = 'draw';
-  }
-
-  const teams =
-    answer.home_team && answer.away_team
-      ? `${answer.home_team} vs ${answer.away_team}`
-      : answer.home_team || answer.away_team || '';
-  const reason = [teams, score && `(${score})`, winner && winner !== 'draw' ? `winner: ${winner}` : winner === 'draw' ? 'draw' : answer.status]
-    .filter(Boolean)
-    .join(' — ');
-
-  return {
-    score,
-    label: answer.status || 'unknown',
-    winner: winner || '',
-    reason: reason || 'No matching fixture',
-    proof_available: Boolean(
-      answer.proof_available || answer.proof?.verifiable
-    ),
-  };
-}
+// Scalars now live with the answer shape; re-exported for existing callers.
+export { signalFieldsFromAnswer } from './answer.js';

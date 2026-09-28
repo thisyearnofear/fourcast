@@ -173,13 +173,13 @@ describe('signalFieldsFromAnswer', () => {
     assert.equal(got.label, 'final');
     assert.equal(got.winner, 'Inter Miami');
     assert.equal(got.proof_available, true);
-    assert.match(got.reason, /Inter Miami vs Atlanta United/);
+    assert.equal(got.reason, 'Inter Miami beat Atlanta United 2-1 (final)');
   });
 
   it('returns empty score when there is no fixture', () => {
     const got = signalFieldsFromAnswer(null);
     assert.equal(got.score, '');
-    assert.equal(got.label, 'unknown');
+    assert.equal(got.label, 'no_result');
     assert.equal(got.winner, '');
   });
 });

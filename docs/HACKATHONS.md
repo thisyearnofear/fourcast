@@ -10,6 +10,144 @@ relying on them.
 
 ## Active
 
+### Telegraph Protocol Hackathon Season II — ⏸️ preparing
+30 days, $10,000 prize pool. Season I closed without a Fourcast placement. This
+section is the plan for Season II so we enter instrumented instead of blind.
+Registration is through the Season II page at
+[telegraphprotocol.com](https://telegraphprotocol.com); exact prize split,
+judging criteria, and qualification requirements publish with the final rules —
+**re-verify all of it before relying on this plan.**
+
+#### Why we did not win Season I (root cause, not vibes)
+Our Season I entry was `fourcast-sports-intelligence` (Track 1 miner,
+`SPORTS_SCORE` / `GAME_RESULT`, `registrationId` 148, live at
+`miner.sportwarren.com/query`). The Aug 25 epoch scored it **0** — "evaluator
+had no matching ground-truth for the free-tier leagues during the current
+epoch" (see the Season I record below). Three compounding causes:
+
+1. **We shipped into an intent family the network scores near zero.** Telegraph
+   scores by *answer shape*: prose intents (TASK_COMPLETION, URL_SCAN) top out
+   near 1.0; deterministic/quantity intents (scores, prices) top out near 0.
+   `SPORTS_SCORE` / `GAME_RESULT` return quantities — the dead half of the
+   network — so our score was structural, not quality.
+2. **Ground truth was gated behind a paid TxLINE tier**, so the evaluator had
+   nothing to grade the free-tier leagues against.
+3. **We had no instrumentation to detect any of this until after the epoch.** We
+   could not tell "wrong answer" from "nothing to compare against" from "scored
+   on the wrong axis."
+
+The strongest Season I entry (`amanat`, a weather miner + evaluation WASM +
+on-chain app in one repo, [github.com/PugarHuda/amanat](https://github.com/PugarHuda/amanat))
+won on **epistemic honesty as a product**: it measured the network before
+optimizing, proved every number, and reported absences as absences. That is
+Fourcast's own stated thesis ("none prove discipline… verifiable mandate
+adherence"). Season I we pointed it at markets; Season II we point it at
+Telegraph itself.
+
+#### Season II plan — priority order
+
+**P0 · Instrument before optimizing (the direct cause of the 0).**
+Port the survey + asked pattern into `telegraph-miner/`:
+- `agent/survey` equivalent: read live per-intent scores across the network and
+  print *measured champion bar* vs *displayed eval_score* (they drift badly —
+  the displayed number is the margin achieved on the winning day, frozen). Never
+  register into a zero-scored intent again; read the live bar before spending a
+  registration.
+- `/api/asked`: record the last ~50 questions the node actually sent this miner
+  (with the field they arrived in). The tournament question and the docs did not
+  agree in Season I; without this we are guessing what the scorer sees.
+- Distinguish, in our own scoring log, "answer wrong" vs "answer never arrived"
+  vs "nothing to compare against."
+
+**P1 · Make verification a one-command independent check.**
+Today `GET /` advertises `verification: 'solana-merkle-proof'` and the miner
+returns `proof_available: true` — a claim, not a check. Replace with:
+- `/.well-known/fourcast.json` publishing the signing key + the exact verify
+  snippet so anyone can confirm a signature without trusting us.
+- A `verify` script that re-derives the Solana Merkle proof and **reports
+  honestly when it cannot confirm** rather than printing a tick.
+- Product rule: every number sits beside an address, tx, signal hash, or
+  signature; a figure without one is not shown.
+
+**P2 · Answer in two shapes on `GAME_RESULT`.**
+Return a prose sentence a text scorer can grade *and* clean scalars a contract
+settles on (`winner`, `home_score`, `away_score`), with the TxLINE Merkle root
+as the evidence field. Report absence as absence — never a confident zero /
+Null-Island answer for a missing fixture (return an explicit "no result" state).
+
+**P3 · Enter the Evaluator track with a `GAME_RESULT` attribution scorer.**
+The Season I champion scorer is blind to attribution — it scores "Boston beat
+the Knicks 112-108" at 1.0000 when the Knicks won. We serve `GAME_RESULT` and
+already have the ground truth. A `no_std` WASM scorer that reads the direction
+of the result verb is a research narrative we can actually win, aligned with our
+"provable discipline" thesis. Note the network's **agreement gate** (a
+challenger must rank answers the way the incumbent does, ≥0.60 Spearman) can
+make a scorer that *fixes* a broken intent structurally unpassable — document
+that as a finding either way.
+
+**P4 · Wire Telegraph's paid rails into the existing decision core (Track 3 app).**
+Cheapest-first cost discipline maps directly onto our 5-gate policy + pre-outcome
+receipt (`services/domain/decision/`): free daemon feed → ~$0.01 x402 Engine
+call → ~$1.00 ERC-8183 on-chain job, with a hard per-answer ceiling and per-run
+spend cap. "A prediction-market agent that buys ranked Telegraph intelligence
+before sizing, and commits a receipt before the outcome" is a stronger Track 3
+app than any Season I winner and reuses machinery we already ship.
+
+**P5 · Package for a judge with 3 minutes and an agent with 0 patience.**
+`/openapi.json`, `/llms.txt`, `/.well-known/`, a generated social card (X
+engagement was ~25% of Season I score), a short demo film cut from real
+sessions, and one link-to-chain per claim.
+
+**P6 · Publish our own bug report.**
+We already found real network issues (the `new Date.now()` crash in the
+graceful-degradation path; the free-tier-ground-truth gap; the PM2 v7 listen
+gate). Per Season I results, a measured, reproducible findings report is worth
+more than a marginal miner slot — and it is exactly the credibility our
+positioning claims.
+
+#### Live survey, 2026-09-28 (`npm run survey` in `telegraph-miner/`)
+- Our miner: `active`, 10 requests served, epoch 368. `SPORTS_SCORE` 0 (rank
+  14/15), `GAME_RESULT` 0 (rank 15/15).
+- `SPORTS_SCORE` is **unmeasured network-wide**: the best of 15 miners scores
+  7.5e-12. Don't optimise for it. Keep serving it, but don't count on it.
+- `GAME_RESULT` **is measured**: best 0.1197 (`game-mlb-schedule`), then
+  `game-football-data` 0.0786 and `game-nhl-score` 0.0471. All three answer
+  from free official feeds, which is the gap v1.1 closes. Scorer bar: displayed
+  0.7150, measured 0.5622.
+- Network: 118 intents scored, 88 measured (best ≥ 0.05), 30 effectively
+  unmeasured. The commercial intents are live, e.g. `EVENT_OUTCOME_RESOLUTION`
+  (18 miners, best 0.727), which is close to our prediction-market core and
+  worth a look for Season II.
+
+#### Season II readiness checklist
+- [ ] Confirm Season II rules, tracks, prize split, and qualification on the
+      official page (do not trust this plan's numbers).
+- [x] P0 instrumentation: `npm run survey`, `GET /api/asked`, outcome counters,
+      upstream ledger, and `degraded` `/health` (telegraph-miner v1.1). Its
+      first local run caught ESPN answering 403 to custom User-Agents, and
+      that got fixed.
+- [x] P1 `/.well-known/fourcast-miner.json` + Ed25519 attestation on every
+      answer + `npm run verify` (reports each check separately, never a blanket
+      tick). `verified: true` only when a TxLINE proof exists.
+- [x] P2 attributed `reason` sentences ("X beat Y 24-16 (final)"), explicit
+      `no_result`, no invented names or pre-game 0-0, and an ESPN free-finals
+      fallback for `GAME_RESULT` / `SPORTS_SCORE`.
+- [ ] Deploy v1.1 to `nuncio-vultr` with a persistent `MINER_SIGNING_KEY`
+      (runbook: `telegraph-miner/README.md` → Update). No `updateMiner`
+      needed, because `telegraph.yaml` is unchanged.
+- [ ] After a scored epoch, read `/api/asked` + `npm run survey` together:
+      what the tournament asked, what we answered, what it scored.
+- [ ] Decide intent targeting from live scores (consider
+      `EVENT_OUTCOME_RESOLUTION`). Don't re-register into an unmeasured intent.
+- [ ] P3 evaluator WASM decision: a `GAME_RESULT` attribution scorer. Build it,
+      or write it up as a finding.
+- [ ] P4 Track 3 app decision (paid-rail buyer on top of the decision core).
+- [ ] P5 judge/agent packaging: `/openapi.json`, `/llms.txt`, a social card,
+      a demo.
+- [ ] P6 bug report drafted from measured findings.
+
+---
+
 ### Telegraph Protocol Miner (Track 1: Miner) — 🔴 extended to Sep 2, 2026 11:59:59 UTC
 - **What:** serve verified sports intelligence (live scores + final results with
   Solana Merkle proofs) to the Telegraph network. Judging: 75% normalized
