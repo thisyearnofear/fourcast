@@ -115,8 +115,14 @@ async function getTxlineResult(fixtureId, knownFixtures) {
   try {
     const scores = await txline.getScoreSnapshot(fixtureId);
     events = Array.isArray(scores) ? scores : [];
-  } catch {
-    events = [];
+  } catch (err) {
+    // A 403 is "our tier cannot see this fixture" — not "no events yet". Read
+    // as empty, it turned every inaccessible fixture into a confident
+    // "scheduled" answer.
+    if (/\b403\b|access denied|no tickets/i.test(err.message)) {
+      return noResult('txline_no_access', `TxLINE tier has no score access for fixture ${fixtureId}`);
+    }
+    events = []; // 404 etc.: a scheduled fixture has no score events yet
   }
 
   let fixture = null;

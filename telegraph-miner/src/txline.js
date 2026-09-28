@@ -66,11 +66,48 @@ async function rawRequest(path, { retry401 = true } = {}) {
 
 /**
  * Get fixture snapshot. Optional competitionId filter.
- * Returns raw TxLINE fixture array.
+ *
+ * The unfiltered snapshot is ~29 MB / ~100k fixtures and takes ~4 s (measured
+ * 2026-09-28), and every ask used to fetch it twice. It is cached slim — only
+ * the fields the handlers read — for FIXTURES_TTL_MS, and concurrent callers
+ * share one in-flight fetch.
  */
+const FIXTURES_TTL_MS = Number(process.env.TXLINE_FIXTURES_TTL_MS || 5 * 60_000);
+const fixtureCache = new Map(); // key -> { at, data } | { pending }
+const slim = (f) => ({
+  FixtureId: f.FixtureId,
+  Competition: f.Competition,
+  CompetitionId: f.CompetitionId,
+  Participant1: f.Participant1,
+  Participant2: f.Participant2,
+  StartTime: f.StartTime,
+  GameState: f.GameState,
+});
+
 export async function getFixtures(competitionId) {
+  const key = competitionId ? String(competitionId) : 'all';
+  const hit = fixtureCache.get(key);
+  if (hit?.data && Date.now() - hit.at < FIXTURES_TTL_MS) return hit.data;
+  if (hit?.pending) return hit.pending;
+
   const q = competitionId ? `?competitionId=${competitionId}` : '';
-  return request(`/fixtures/snapshot${q}`);
+  const pending = request(`/fixtures/snapshot${q}`)
+    .then((rows) => {
+      const data = Array.isArray(rows) ? rows.map(slim) : rows;
+      fixtureCache.set(key, { at: Date.now(), data });
+      return data;
+    })
+    .catch((err) => {
+      // Serve the last good copy through an outage rather than failing the ask.
+      if (hit?.data) {
+        fixtureCache.set(key, hit);
+        return hit.data;
+      }
+      fixtureCache.delete(key);
+      throw err;
+    });
+  fixtureCache.set(key, { ...(hit?.data ? hit : {}), pending });
+  return pending;
 }
 
 /**
