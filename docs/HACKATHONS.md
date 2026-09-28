@@ -137,17 +137,25 @@ positioning claims.
       `szo7NI2P1gmMW9iY0LGKLPN1EvVzNgHpm9RNKJWxS7M=`). Verified from outside:
       `npm run verify -- --team "Buffalo Bills"` passes attestation and
       consistency. `.env.agent` backup is `.env.agent.bak-*` on the VPS.
-- [ ] **Renew the TxLINE token.** `/health` on the VPS shows TxLINE returning 403
-      "API Token is invalid or expired", so every answer is currently ESPN
-      (`fallback_from: txline_unavailable`) and none carries a Merkle proof.
-      Rerun `scripts/txline-subscribe-and-activate.mjs`, then update
-      `TXLINE_API_TOKEN` in `.env.agent` and restart.
-- [ ] **Premier League via ESPN is thin.** On 2026-09-28 ESPN's `eng.1`
-      board answered only with its default slate (4 matches dated 2026-09-20),
-      and every dated query came back empty, so "Who won the Arsenal game?" was
-      `no_result`. MLS/NFL/MLB dated queries work. Once the TxLINE token is
-      renewed, TxLINE covers PL. Otherwise, add a second free PL source
-      (football-data.org, which is what `game-football-data` uses).
+- [ ] **Renew the TxLINE token. Blocked on the wallet secret.** `/health`
+      shows TxLINE answering 403 "API Token is invalid or expired". I checked
+      on 2026-09-28 with a fresh guest JWT, so the API token itself is dead,
+      not just the JWT. The subscription (4 weeks from ~Aug 13) has lapsed.
+      Renewing needs a new on-chain `subscribe` tx signed by the subscribing
+      wallet (`9k5PTr…`, holds 0.0179 SOL, enough for fees). Its
+      `TXLINE_SOLANA_SECRET_KEY` is neither on the laptop nor on the VPS.
+      Options: restore that key into `.env.local` and run
+      `node scripts/txline-subscribe-and-activate.mjs`, or generate a new
+      wallet (`scripts/txline-generate-wallet.mjs`), fund it with ~0.01 SOL,
+      and subscribe from that. Then copy `TXLINE_API_TOKEN` into `.env.agent`
+      and restart. Until then every answer is ESPN and carries no Merkle proof.
+- [x] **Premier League coverage fixed without a new source.** ESPN's dated
+      `eng.1` scoreboards return nothing, but each team's ESPN schedule has
+      its whole season. The miner now resolves the team and reads its
+      schedule after today's boards (commit `307e41e`). Live: "Who won the
+      Arsenal game?" → "Brighton & Hove Albion beat Arsenal 3-0 (final)",
+      which matches the schedule. football-data.org was the alternative, but
+      it needs an API key (403 without one), so it wasn't worth adding.
 - [ ] After a scored epoch, read `/api/asked` + `npm run survey` together:
       what the tournament asked, what we answered, what it scored.
 - [ ] Decide intent targeting from live scores (consider
