@@ -142,9 +142,12 @@ positioning claims.
       (`fallback_from: txline_unavailable`) and none carries a Merkle proof.
       Rerun `scripts/txline-subscribe-and-activate.mjs`, then update
       `TXLINE_API_TOKEN` in `.env.agent` and restart.
-- [ ] Consider `ESPN_LOOKBACK_DAYS=8` for soccer's weekly cadence. On
-      2026-09-28 "Who won the Arsenal game?" was `no_result`, which was
-      correct (no Arsenal match in 4 days), but a week-old result is still the answer.
+- [ ] **Premier League via ESPN is thin.** On 2026-09-28 ESPN's `eng.1`
+      board answered only with its default slate (4 matches dated 2026-09-20),
+      and every dated query came back empty, so "Who won the Arsenal game?" was
+      `no_result`. MLS/NFL/MLB dated queries work. Once the TxLINE token is
+      renewed, TxLINE covers PL. Otherwise, add a second free PL source
+      (football-data.org, which is what `game-football-data` uses).
 - [ ] After a scored epoch, read `/api/asked` + `npm run survey` together:
       what the tournament asked, what we answered, what it scored.
 - [ ] Decide intent targeting from live scores (consider
