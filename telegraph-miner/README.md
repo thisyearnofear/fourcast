@@ -362,6 +362,45 @@ node scripts/txline-subscribe-and-activate.mjs
 The free tier covers MLS + International Friendlies + future PL fixtures. Historical
 game results (needed for GAME_RESULT queries on past matches) require a paid tier.
 
+### Renewing the subscription (every 4 weeks — do not let it lapse)
+
+When the subscription lapses, every TxLINE call starts failing and the miner
+silently drops to ESPN-only (no `verified: true` answers anywhere). The miner
+reports the deadline: `GET /health` → `txline_renewal.days_left` /
+`due_soon` / `expired` (set from `TXLINE_SUBSCRIBED_UNTIL` in the env).
+
+```bash
+# On the machine holding the wallet (fourcast root, .env.local has
+# TXLINE_SOLANA_SECRET_KEY for the funded wallet):
+node scripts/txline-subscribe-and-activate.mjs            # subscribe tx + activate
+# It writes fresh TXLINE_API_TOKEN / TXLINE_GUEST_JWT into .env.local.
+# Push them to the miner (values stay off the command line):
+scp .env.local nuncio-vultr:/tmp/renew.env && ssh nuncio-vultr '
+  cd /home/linuxuser/fourcast &&
+  python3 - <<PYEOF
+import re
+new = dict(l.strip().split("=",1) for l in open("/tmp/renew.env") if "=" in l)
+lines = open(".env.agent").read().splitlines(True)
+keys = ("TXLINE_API_TOKEN","TXLINE_GUEST_JWT","TXLINE_SUBSCRIBED_UNTIL")
+out, seen = [], set()
+for l in lines:
+    k = l.split("=",1)[0]
+    if k in keys and k in new:
+        out.append(f"{k}={new[k]}\n"); seen.add(k)
+    else: out.append(l)
+for k in keys:
+    if k not in seen and k in new: out.append(f"{k}={new[k]}\n")
+open(".env.agent","w").writelines(out)
+PYEOF
+  rm /tmp/renew.env
+  pm2 restart deploy/telegraph-miner.ecosystem.config.cjs --update-env'
+```
+
+Set `TXLINE_SUBSCRIBED_UNTIL=<subscription end date>` in `.env.agent` when
+renewing so /health keeps counting down. A renewal reminder is scheduled on
+the VPS (`crontab -l` on `nuncio-vultr`). The subscription tx from 2026-09-28
+and the wallet are recorded in `docs/HACKATHONS.md`.
+
 ## Architecture
 
 ```

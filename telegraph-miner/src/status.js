@@ -5,6 +5,7 @@
 
 import { txline } from './txline.js';
 import { LEAGUES } from './espn.js';
+import { txlineRenewal } from './utils.js';
 import { publicKey, keyIsPersistent } from './attest.js';
 import { upstreamReport } from './observe.js';
 
@@ -22,6 +23,7 @@ export async function getMinerStatus() {
       txline: {
         role: 'primary; the only source with independently verifiable (Solana Merkle) proofs',
         note: 'free tier: limited leagues and no historical results',
+        subscription: txlineRenewal(),
         connection: txlineStatus,
       },
       espn: {

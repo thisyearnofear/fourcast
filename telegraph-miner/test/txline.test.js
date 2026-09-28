@@ -71,3 +71,17 @@ describe('TxLINE tier without score access', () => {
     assert.equal(out.metadata.txline, 'txline_no_access');
   });
 });
+
+describe('TxLINE proof endpoints', () => {
+  it('a broken proof endpoint does not mark the score feed degraded', async () => {
+    const observe = await import('../src/observe.js');
+    const { txline } = await import('../src/txline.js');
+    observe.resetObservations();
+    // Stub answers the stat-validation path 404 (the live tier answers 500).
+    await assert.rejects(() => txline.getMerkleProof(1, 1));
+    await getFixtures(999999); // a score-feed call that succeeds
+    const { calls } = observe.upstreamReport();
+    assert.ok(calls['txline-proofs'].failed >= 1);
+    assert.ok(calls.txline.ok >= 1 && !calls.txline.degraded);
+  });
+});

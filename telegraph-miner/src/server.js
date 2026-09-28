@@ -27,6 +27,8 @@ import { getMinerStatus } from './status.js';
 import { SUPPORTED_INTENTS, normalizeQueryRequest } from './query.js';
 import { signalFieldsFromAnswer } from './answer.js';
 import { recordAsk, askedReport, upstreamReport } from './observe.js';
+import { txline } from './txline.js';
+import { txlineCompetitionId, txlineRenewal } from './utils.js';
 import { attest, settleFields, publicKey, keyIsPersistent, SIGNED_FIELDS, ALGORITHM } from './attest.js';
 
 const app = express();
@@ -145,6 +147,7 @@ app.get('/health', (_req, res) => {
     uptime: process.uptime(),
     time: new Date().toISOString(),
     upstream: calls,
+    txline_renewal: txlineRenewal(),
     signing_key_persistent: keyIsPersistent,
   });
 });
@@ -218,4 +221,19 @@ if (isDirectRun) {
     console.log(`[fourcast-miner] TxLINE token configured: ${Boolean(process.env.TXLINE_API_TOKEN)}`);
     console.log(`[fourcast-miner] signing key ${keyIsPersistent ? 'persistent' : 'EPHEMERAL (set MINER_SIGNING_KEY)'}: ${publicKey}`);
   });
+
+  // The unfiltered TxLINE fixture snapshot is ~29 MB / ~4 s and the NFL one
+  // another beat; the first ask after a restart used to pay that bill (6.5 s
+  // measured). Warm the two cache keys the handlers use so the network never
+  // sees a cold start. Failures are logged only — the cache serves stale and
+  // the handlers fall back to ESPN on their own.
+  if (process.env.TXLINE_API_TOKEN && process.env.TXLINE_WARMUP !== 'off') {
+    const warm = (label, id) =>
+      txline
+        .getFixtures(id)
+        .then((f) => console.log(`[fourcast-miner] warmed TxLINE ${label}: ${Array.isArray(f) ? f.length : 0} fixtures`))
+        .catch((err) => console.error(`[fourcast-miner] TxLINE warm ${label} failed: ${err.message}`));
+    warm('snapshot', undefined);
+    warm('NFL', txlineCompetitionId('nfl'));
+  }
 }

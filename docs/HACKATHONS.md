@@ -153,11 +153,17 @@ positioning claims.
       answer 403 "Bundle access denied". So NFL answers come from TxLINE, and
       everything else from ESPN. Getting TxLINE scores for PL/MLS needs a paid
       bundle.
-- [ ] **No Merkle proofs yet, even on NFL.** `stat-validation` answers 500
-      "Stat validation failed" for the finalised Broncos–Rams game with the
-      default stat keys 1,2 (and with 1, 2, 3,4). The answer is correct but
-      reports `verified: false` with that reason. Ask TxLINE which stat keys US
-      football uses, or whether free-tier proofs exist.
+- [ ] **No Merkle proofs yet, even on NFL — probed exhaustively 2026-09-28.**
+      `stat-validation` answers 500 "Stat validation failed" for the finalised
+      Broncos–Rams game with **every** statKey that actually exists on the
+      final event (all ~130 of them: 1–16, 101, 1001–1016, 2001–2016,
+      30001–30016, 40001–40016 — enumerated by `scripts/proof-probe.mjs`), and
+      `stat-multiproof` answers **404** for all of them. So this is not a
+      stat-key question: the proof endpoints do not serve our tier at all.
+      The answer stays correct with `verified: false` + the reason. Ask TxLINE
+      directly (this enumeration is a reproducible P6 bug-report exhibit);
+      /health now tracks `txline-proofs` separately so a dead proof endpoint
+      never reads as a dead score feed.
 - [x] **The renewed token surfaced TxLINE parsing bugs, now fixed**
       (`ba6edee`, `d4b8e06`, `ba8b672`): the 29 MB snapshot was fetched
       twice per ask (now cached 5 min); a tier 403 was read as "scheduled";
@@ -177,8 +183,25 @@ positioning claims.
       it needs an API key (403 without one), so it wasn't worth adding.
 - [ ] After a scored epoch, read `/api/asked` + `npm run survey` together:
       what the tournament asked, what we answered, what it scored.
-- [ ] Decide intent targeting from live scores (consider
-      `EVENT_OUTCOME_RESOLUTION`). Don't re-register into an unmeasured intent.
+- [x] **Intent targeting, decided from the 2026-09-28 survey.** Keep serving
+      `SPORTS_SCORE` (unmeasured network-wide, best 7.5e-12 — free coverage,
+      zero optimisation pressure) and `GAME_RESULT` (measured, our answer
+      quality now matches ground truth). `EVENT_OUTCOME_RESOLUTION` is measured
+      and alive (18 miners, best 0.727 `txlens` with 3,523 requests, then
+      `chainsight-oracle` 0.671 and the `event-poly-search` trio 0.452) and is
+      adjacent to our prediction-market core: sports-market questions ("Will X
+      beat Y?") resolve directly onto our fixture data. **Caveat: no scorer
+      registry entry for that intent**, so the ≥0.60-Spearman agreement gate
+      reads are unavailable — we'd be registering blind on the scorer axis.
+      Decision: build the handler behind a flag this cycle; only add the intent
+      via `updateMiner(148, …)` after Season II rules confirm multi-intent
+      miners score per-intent and the gate mechanics are confirmed.
+- [x] **Renewal regime in place** (token expires ~2026-10-26): `TXLINE_-
+      SUBSCRIBED_UNTIL=2026-10-26` in `.env.agent` is published by /health
+      (`txline_renewal.days_left/due_soon/expired`); reminders cron on the VPS
+      fires Oct 19/22/25 09:00 UTC into `.renewal-reminders.log`; the full
+      resubscribe + env-push runbook is in `telegraph-miner/README.md`
+      ("Renewing the subscription").
 - [ ] P3 evaluator WASM decision: a `GAME_RESULT` attribution scorer. Build it,
       or write it up as a finding.
 - [ ] P4 Track 3 app decision (paid-rail buyer on top of the decision core).

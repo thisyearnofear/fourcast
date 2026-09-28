@@ -305,4 +305,20 @@ describe('HTTP: /query, /api/asked, /health, /.well-known', () => {
     assert.equal(health.upstream.espn.degraded, false);
     assert.equal(health.signing_key_persistent, false);
   });
+
+  it('/health says when the TxLINE subscription is due for renewal', async () => {
+    process.env.TXLINE_SUBSCRIBED_UNTIL = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+    const soon = await (await fetch(`${base}/health`)).json();
+    assert.equal(soon.txline_renewal.days_left, 3);
+    assert.equal(soon.txline_renewal.due_soon, true);
+    assert.equal(soon.txline_renewal.expired, false);
+
+    process.env.TXLINE_SUBSCRIBED_UNTIL = new Date(Date.now() + 25 * 86_400_000).toISOString().slice(0, 10);
+    const fresh = await (await fetch(`${base}/health`)).json();
+    assert.equal(fresh.txline_renewal.due_soon, false);
+
+    delete process.env.TXLINE_SUBSCRIBED_UNTIL;
+    const unset = await (await fetch(`${base}/health`)).json();
+    assert.equal(unset.txline_renewal, null); // absence reported, not guessed
+  });
 });

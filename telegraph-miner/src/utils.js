@@ -101,3 +101,20 @@ export function sidesOf(fixture) {
   const p2 = fixture?.Participant2 || null;
   return fixture?.Participant1IsHome === false ? { home: p2, away: p1, swapped: true } : { home: p1, away: p2, swapped: false };
 }
+
+/**
+ * TxLINE subscription status. The free subscription lasts 4 weeks; when it
+ * lapses every TxLINE call 401s and the miner silently degrades to ESPN-only.
+ * Set TXLINE_SUBSCRIBED_UNTIL (ISO date, e.g. "2026-10-26") alongside the
+ * token so /health and /status can say when a renewal is due. Returns null
+ * when unset or unparseable — we report absence, not a guess.
+ */
+export function txlineRenewal() {
+  const until = process.env.TXLINE_SUBSCRIBED_UNTIL;
+  if (!until) return null;
+  const at = Date.parse(until);
+  if (!Number.isFinite(at)) return null;
+  const days_left = Math.ceil((at - Date.now()) / 86_400_000);
+  return { until, days_left, due_soon: days_left <= 7, expired: days_left <= 0 };
+}
+

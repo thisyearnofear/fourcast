@@ -33,6 +33,17 @@ function request(path, opts) {
   return track('txline', () => rawRequest(path, opts));
 }
 
+// The proof endpoints are a separate service from the score feed, and on the
+// free tier they fail independently of it: measured 2026-09-28, every statKey
+// present on a finalised NFL fixture (all ~130 of them) makes
+// stat-validation answer 500 "Stat validation failed", and stat-multiproof
+// answers 404. Tracking them under "txline" made a broken proof endpoint look
+// like a dead score feed in /health. They get their own ledger entry now.
+function proofRequest(path) {
+  return track('txline-proofs', () => rawRequest(path));
+}
+
+
 async function rawRequest(path, { retry401 = true } = {}) {
   if (!API_TOKEN) throw new Error('TXLINE_API_TOKEN not configured');
   if (!cachedJwt) await refreshJwt();
@@ -160,7 +171,7 @@ export async function getMerkleProof(fixtureId, seq, statKeys = [1, 2]) {
     seq: String(seq),
     statKeys: statKeys.join(','),
   });
-  return request(`/scores/stat-validation?${q}`);
+  return proofRequest(`/scores/stat-validation?${q}`);
 }
 
 /**
@@ -172,7 +183,7 @@ export async function getMerkleMultiproof(fixtureId, seq, statKeys = [1, 2]) {
     seq: String(seq),
     statKeys: statKeys.join(','),
   });
-  return request(`/scores/stat-multiproof?${q}`);
+  return proofRequest(`/scores/stat-multiproof?${q}`);
 }
 
 /**
