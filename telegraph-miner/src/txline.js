@@ -82,6 +82,7 @@ const slim = (f) => ({
   Participant2: f.Participant2,
   StartTime: f.StartTime,
   GameState: f.GameState,
+  Participant1IsHome: f.Participant1IsHome,
 });
 
 export async function getFixtures(competitionId) {

@@ -11,8 +11,9 @@
 
 import { txline } from '../txline.js';
 import { findGame } from '../espn.js';
-import { normalizeTeamName, fuzzyMatch, txlineCompetitionId } from '../utils.js';
+import { txlineCompetitionId } from '../utils.js';
 import { describe, resultFromScores, winnerFor } from '../answer.js';
+import { readScores, homeAway, matchFixtures } from '../txlineScores.js';
 
 export async function handleSportsScore(params = {}) {
   const { fixture_id, team, opponent, competition, league, date } = params;
@@ -25,7 +26,7 @@ export async function handleSportsScore(params = {}) {
 
   let tx;
   try {
-    tx = fixture_id ? await getTxlineScore(fixture_id) : await findTxlineScore({ team, competition: comp, date });
+    tx = fixture_id ? await getTxlineScore(fixture_id) : await findTxlineScore({ team, opponent, competition: comp, date });
   } catch (err) {
     tx = noResult('txline_unavailable', err.message);
   }
@@ -57,43 +58,22 @@ function noResult(error, message, extra = {}) {
   return { answer: null, metadata: { error, message, ...extra } };
 }
 
-async function findTxlineScore({ team, competition, date }) {
+async function findTxlineScore({ team, opponent, competition, date }) {
+  if (!team) return noResult('no_team', 'TxLINE lookup needs a team');
   const fixtures = await txline.getFixtures(txlineCompetitionId(competition) || undefined);
   if (!Array.isArray(fixtures) || fixtures.length === 0) return noResult('no_fixtures', 'TxLINE returned no fixtures');
 
-  let candidates = fixtures;
-  if (team) {
-    const n = normalizeTeamName(team);
-    candidates = candidates.filter((f) => fuzzyMatch(n, f.Participant1) || fuzzyMatch(n, f.Participant2));
-  }
-  if (date) {
-    const target = new Date(date).toISOString().slice(0, 10);
-    candidates = candidates.filter(
-      (f) => f.StartTime && new Date(Number(f.StartTime)).toISOString().slice(0, 10) === target
-    );
-  }
+  const candidates = matchFixtures(fixtures, { team, opponent, date, pastOnly: false });
   if (candidates.length === 0) return noResult('no_match', 'TxLINE has no fixture for this ask');
-
+  // Closest to now: a live game, else the latest final or the next kickoff.
   const now = Date.now();
-  candidates.sort((a, b) => Math.abs(now - Number(a.StartTime || 0)) - Math.abs(now - Number(b.StartTime || 0)));
-  const best = candidates[0];
-  return getTxlineScore(best.FixtureId || best.fixture_id || best.id, fixtures);
+  candidates.sort((x, y) => Math.abs(now - Number(x.StartTime || 0)) - Math.abs(now - Number(y.StartTime || 0)));
+  return getTxlineScore(candidates[0].FixtureId, fixtures);
 }
 
 async function getTxlineScore(fixtureId, knownFixtures) {
-  let events = [];
-  try {
-    const scores = await txline.getScoreSnapshot(fixtureId);
-    events = Array.isArray(scores) ? scores : [];
-  } catch (err) {
-    // A 403 is "our tier cannot see this fixture" — not "no events yet". Read
-    // as empty, it turned every inaccessible fixture into a confident
-    // "scheduled" answer.
-    if (/\b403\b|access denied|no tickets/i.test(err.message)) {
-      return noResult('txline_no_access', `TxLINE tier has no score access for fixture ${fixtureId}`);
-    }
-    events = []; // 404 etc.: a scheduled fixture has no score events yet
-  }
+  const scores = await readScores(fixtureId);
+  if (!scores.access) return noResult('txline_no_access', `TxLINE tier has no score access for fixture ${fixtureId}`);
 
   let fixture = null;
   try {
@@ -103,32 +83,23 @@ async function getTxlineScore(fixtureId, knownFixtures) {
     // names reported as null
   }
 
-  const sorted = [...events].sort((a, b) => (a.Seq || 0) - (b.Seq || 0));
-  const finalised = sorted.find((e) => e.Action === 'game_finalised');
-  const summary = finalised || sorted.at(-1);
-  const stats = summary?.Stats || {};
-  const rawHome = stats['1'] ?? stats.score_home ?? null;
-  const rawAway = stats['2'] ?? stats.score_away ?? null;
-
+  const hasScore = scores.p1 != null || scores.p2 != null;
   let status = 'scheduled';
-  if (finalised) status = 'final';
-  else if (summary?.Action === 'in_running' || summary?.GameState === 'in_running' || rawHome != null) status = 'live';
+  if (scores.final) status = 'final';
+  else if (hasScore || scores.events.some((e) => e.Action === 'in_running' || e.GameState === 'in_running')) status = 'live';
 
-  const scored = status !== 'scheduled';
-  const homeScore = scored && rawHome != null ? Number(rawHome) : null;
-  const awayScore = scored && rawAway != null ? Number(rawAway) : null;
-  const homeTeam = fixture?.Participant1 || null;
-  const awayTeam = fixture?.Participant2 || null;
-  const result = status === 'final' ? resultFromScores(homeScore, awayScore) : null;
-  const minute = summary?.Data?.minute || summary?.Data?.matchTime || null;
+  const sides = homeAway(fixture, status === 'scheduled' ? { p1: null, p2: null } : scores);
+  const result = status === 'final' ? resultFromScores(sides.home_score, sides.away_score) : null;
+  const src = scores.final ?? scores.latest;
+  const minute = src?.Data?.minute || src?.Data?.matchTime || null;
 
   let proofRoot = null;
-  if (status === 'final' && summary?.Seq) {
+  if (status === 'final' && scores.final?.Seq) {
     try {
-      const p = await txline.getMerkleProof(fixtureId, summary.Seq);
+      const p = await txline.getMerkleProof(fixtureId, scores.final.Seq);
       proofRoot = p?.eventStatRoot || p?.root || null;
     } catch {
-      // not published yet
+      // not published / validation failed: reported as unverified
     }
   }
 
@@ -136,19 +107,16 @@ async function getTxlineScore(fixtureId, knownFixtures) {
     fixture_id: String(fixtureId),
     competition: fixture?.Competition || null,
     competition_id: fixture?.CompetitionId || null,
-    home_team: homeTeam,
-    away_team: awayTeam,
-    home_score: homeScore,
-    away_score: awayScore,
+    ...sides,
     status,
     kickoff: fixture?.StartTime ? new Date(Number(fixture.StartTime)).toISOString() : null,
     minute: minute ? Number(minute) : null,
     result,
-    winner: status === 'final' ? winnerFor(result, homeTeam, awayTeam) : null,
+    winner: status === 'final' ? winnerFor(result, sides.home_team, sides.away_team) : null,
     source: 'txline',
     verified: Boolean(proofRoot),
     proof_available: Boolean(proofRoot),
-    proof: proofRoot ? { merkle_root: proofRoot, chain: 'solana', verifiable: true, sequence: summary.Seq } : null,
+    proof: proofRoot ? { merkle_root: proofRoot, chain: 'solana', verifiable: true, sequence: scores.final.Seq } : null,
   };
   answer.summary = describe(answer);
 
@@ -157,8 +125,8 @@ async function getTxlineScore(fixtureId, knownFixtures) {
     metadata: {
       source: 'txline',
       fixture_id: String(fixtureId),
-      event_count: events.length,
-      last_seq: summary?.Seq || null,
+      event_count: scores.events.length,
+      last_seq: src?.Seq || null,
       verification: proofRoot ? 'solana-merkle-proof' : 'none',
     },
   };

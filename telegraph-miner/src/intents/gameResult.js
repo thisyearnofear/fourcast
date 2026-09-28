@@ -4,9 +4,8 @@
  * Sources, best evidence first:
  *   1. TxLINE  — result plus a Solana Merkle proof when one is published.
  *                The only independently verifiable answer this miner gives.
- *   2. ESPN    — free public scoreboards. Covers the history the free TxLINE
- *                tier does not (the reason Season I scored 0 here). Signed by
- *                this miner, but `verified: false`: nothing on-chain backs it.
+ *   2. ESPN    — free public scoreboards and team schedules. Signed by this
+ *                miner, but `verified: false`: nothing on-chain backs it.
  *
  * An answer is only ever about a *completed* game. A live or scheduled game is
  * not a result; it is reported as no result, with the reason.
@@ -17,8 +16,14 @@
 
 import { txline } from '../txline.js';
 import { findGame } from '../espn.js';
-import { normalizeTeamName, fuzzyMatch, txlineCompetitionId } from '../utils.js';
+import { txlineCompetitionId } from '../utils.js';
 import { describe, resultFromScores, winnerFor } from '../answer.js';
+import { readScores, homeAway, isFinishedState, matchFixtures } from '../txlineScores.js';
+
+/** Candidates to open score streams for; each is one API call. */
+const MAX_CANDIDATES = 3;
+/** A game that started this long ago is probably over; confirmed by its events. */
+const LIKELY_OVER_MS = 2.5 * 60 * 60 * 1000;
 
 export async function handleGameResult(params = {}) {
   const { fixture_id, team, opponent, competition, league, date } = params;
@@ -34,7 +39,7 @@ export async function handleGameResult(params = {}) {
   try {
     txlineOutcome = fixture_id
       ? await getTxlineResult(fixture_id)
-      : await findTxlineResult({ team, competition: comp, date });
+      : await findTxlineResult({ team, opponent, competition: comp, date });
   } catch (err) {
     txlineOutcome = noResult('txline_unavailable', err.message);
   }
@@ -76,54 +81,32 @@ function describeAsk({ team, opponent, competition, date }) {
   ].filter(Boolean).join(' ');
 }
 
-async function findTxlineResult({ team, competition, date }) {
+async function findTxlineResult({ team, opponent, competition, date }) {
+  if (!team) return noResult('no_team', 'TxLINE lookup needs a team');
   const fixtures = await txline.getFixtures(txlineCompetitionId(competition) || undefined);
-  if (!Array.isArray(fixtures) || fixtures.length === 0) {
-    return noResult('no_fixtures', 'TxLINE returned no fixtures');
-  }
+  if (!Array.isArray(fixtures) || fixtures.length === 0) return noResult('no_fixtures', 'TxLINE returned no fixtures');
 
-  let completed = fixtures.filter(
-    (f) => f.GameState === 'game_finalised' || f.GameState === 'final' || f.GameState === 6
+  // Finished by the snapshot's state, or started long enough ago to be over.
+  // The snapshot's state lags (the Broncos' finished game still said 3), so
+  // the second test matters; the score events decide.
+  const now = Date.now();
+  const candidates = matchFixtures(fixtures, { team, opponent, date, pastOnly: true }).filter(
+    (f) => isFinishedState(f) || now - Number(f.StartTime || 0) > LIKELY_OVER_MS
   );
-  if (completed.length === 0) {
-    // Snapshot carries no state: a kickoff more than 2.5h ago is a candidate,
-    // confirmed (or not) by the score events below.
-    const now = Date.now();
-    completed = fixtures.filter((f) => {
-      const start = Number(f.StartTime || 0);
-      return start > 0 && now - start > 2.5 * 60 * 60 * 1000;
-    });
-  }
-  if (team) {
-    const n = normalizeTeamName(team);
-    completed = completed.filter((f) => fuzzyMatch(n, f.Participant1) || fuzzyMatch(n, f.Participant2));
-  }
-  if (date) {
-    const target = new Date(date).toISOString().slice(0, 10);
-    completed = completed.filter(
-      (f) => f.StartTime && new Date(Number(f.StartTime)).toISOString().slice(0, 10) === target
-    );
-  }
-  completed.sort((a, b) => Number(b.StartTime || 0) - Number(a.StartTime || 0));
-  if (completed.length === 0) return noResult('no_completed_match', 'TxLINE has no completed fixture for this ask');
+  if (candidates.length === 0) return noResult('no_completed_match', 'TxLINE has no completed fixture for this ask');
 
-  return getTxlineResult(completed[0].FixtureId || completed[0].id, fixtures);
+  let last = null;
+  for (const f of candidates.slice(0, MAX_CANDIDATES)) {
+    last = await getTxlineResult(f.FixtureId, fixtures);
+    if (last.answer) return last;
+    if (last.metadata?.error === 'txline_no_access') return last; // same tier, same answer for older games
+  }
+  return last;
 }
 
 async function getTxlineResult(fixtureId, knownFixtures) {
-  let events = [];
-  try {
-    const scores = await txline.getScoreSnapshot(fixtureId);
-    events = Array.isArray(scores) ? scores : [];
-  } catch (err) {
-    // A 403 is "our tier cannot see this fixture" — not "no events yet". Read
-    // as empty, it turned every inaccessible fixture into a confident
-    // "scheduled" answer.
-    if (/\b403\b|access denied|no tickets/i.test(err.message)) {
-      return noResult('txline_no_access', `TxLINE tier has no score access for fixture ${fixtureId}`);
-    }
-    events = []; // 404 etc.: a scheduled fixture has no score events yet
-  }
+  const scores = await readScores(fixtureId);
+  if (!scores.access) return noResult('txline_no_access', `TxLINE tier has no score access for fixture ${fixtureId}`);
 
   let fixture = null;
   try {
@@ -133,38 +116,25 @@ async function getTxlineResult(fixtureId, knownFixtures) {
     // Team names unknown; reported as null below, never guessed.
   }
 
-  const sorted = [...events].sort((a, b) => (a.Seq || 0) - (b.Seq || 0));
-  const finalised = sorted.find((e) => e.Action === 'game_finalised');
-  const summary = finalised || sorted.at(-1);
-  if (!(finalised || summary?.GameState === 'game_finalised')) {
+  if (!scores.final) {
     return noResult('not_final', `TxLINE fixture ${fixtureId} has not finalised`, {
-      current_status: summary?.Action || 'no events',
+      current_status: scores.latest?.Action || 'no events',
     });
   }
 
-  const stats = summary?.Stats || {};
-  const rawHome = stats['1'] ?? stats.score_home ?? null;
-  const rawAway = stats['2'] ?? stats.score_away ?? null;
-  const homeScore = rawHome != null ? Number(rawHome) : null;
-  const awayScore = rawAway != null ? Number(rawAway) : null;
-  const homeTeam = fixture?.Participant1 || null;
-  const awayTeam = fixture?.Participant2 || null;
-  const result = resultFromScores(homeScore, awayScore);
-
-  const proof = summary?.Seq ? await fetchProof(fixtureId, summary.Seq) : null;
+  const sides = homeAway(fixture, scores);
+  const result = resultFromScores(sides.home_score, sides.away_score);
+  const proof = await fetchProof(fixtureId, scores.final.Seq);
 
   const answer = {
     fixture_id: String(fixtureId),
     competition: fixture?.Competition || null,
     competition_id: fixture?.CompetitionId || null,
-    home_team: homeTeam,
-    away_team: awayTeam,
-    home_score: homeScore,
-    away_score: awayScore,
+    ...sides,
     status: 'final',
     kickoff: fixture?.StartTime ? new Date(Number(fixture.StartTime)).toISOString() : null,
     result,
-    winner: winnerFor(result, homeTeam, awayTeam),
+    winner: winnerFor(result, sides.home_team, sides.away_team),
     source: 'txline',
     // Verified means: a Merkle proof exists that a third party can check.
     // Not "we believe it".
@@ -181,8 +151,8 @@ async function getTxlineResult(fixtureId, knownFixtures) {
       fixture_id: String(fixtureId),
       verification: proof?.verifiable ? 'solana-merkle-proof' : 'none',
       proof_verifiable: Boolean(proof?.verifiable),
-      event_count: events.length,
-      final_seq: summary?.Seq || null,
+      event_count: scores.events.length,
+      final_seq: scores.final.Seq ?? null,
     },
   };
 }
@@ -190,8 +160,11 @@ async function getTxlineResult(fixtureId, knownFixtures) {
 /**
  * The TxLINE stat-validation proof, normalised, with the raw payload kept so
  * scripts/verify.mjs can re-check it without trusting our normalisation.
+ * TxLINE answers 500 "Stat validation failed" for some fixtures; that is
+ * reported as no proof, and the answer says verified: false.
  */
 async function fetchProof(fixtureId, seq) {
+  if (!seq) return { verifiable: false, reason: 'no final sequence number' };
   try {
     const p = await txline.getMerkleProof(fixtureId, seq);
     if (!p) return { verifiable: false, reason: 'TxLINE returned no proof' };
@@ -207,6 +180,6 @@ async function fetchProof(fixtureId, seq) {
       source_payload: p,
     };
   } catch (err) {
-    return { merkle_root: null, chain: 'solana', verifiable: false, reason: `Proof not published: ${err.message}` };
+    return { merkle_root: null, chain: 'solana', verifiable: false, reason: `Proof not available: ${err.message.replace(/^.*-> /, '').slice(0, 120)}` };
   }
 }
