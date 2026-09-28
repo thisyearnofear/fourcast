@@ -137,26 +137,37 @@ positioning claims.
       `szo7NI2P1gmMW9iY0LGKLPN1EvVzNgHpm9RNKJWxS7M=`). Verified from outside:
       `npm run verify -- --team "Buffalo Bills"` passes attestation and
       consistency. `.env.agent` backup is `.env.agent.bak-*` on the VPS.
-- [ ] **Renew the TxLINE token. Blocked on the wallet secret.** `/health`
-      shows TxLINE answering 403 "API Token is invalid or expired". I checked
-      on 2026-09-28 with a fresh guest JWT, so the API token itself is dead,
-      not just the JWT. The subscription (4 weeks from ~Aug 13) has lapsed.
-      Renewing needs a new on-chain `subscribe` tx signed by the subscribing
-      wallet (`9k5PTr…`, holds 0.0179 SOL, enough for fees). Its
-      `TXLINE_SOLANA_SECRET_KEY` is neither on the laptop nor on the VPS.
-      Options: restore that key into `.env.local` and run
-      `node scripts/txline-subscribe-and-activate.mjs`, or generate a new
-      wallet (`scripts/txline-generate-wallet.mjs`), fund it with ~0.01 SOL,
-      and subscribe from that. Then copy `TXLINE_API_TOKEN` into `.env.agent`
-      and restart. Until then every answer is ESPN and carries no Merkle proof.
-      **2026-09-28: new wallet generated** →
-      `8eEsu1AtLkrR1SuzA5nAgXr1v8RZ6yERF6Rmy6eiUz7g` (mainnet). Its secret is
-      at `nuncio-vultr:/home/linuxuser/.secrets/txline-wallet-2026-09.env`
-      (dir 700, file 600, outside the repo) as
-      `TXLINE_WALLET_2026_09_SECRET_KEY`. Nothing existing was overwritten.
-      Waiting on ~0.02 SOL funding, then subscribe (free tier, service
-      level 1). **Back this file up off-box**: losing the last wallet key is
-      why we're here.
+- [x] **TxLINE renewed 2026-09-28** with a new wallet
+      `8eEsu1AtLkrR1SuzA5nAgXr1v8RZ6yERF6Rmy6eiUz7g` (the old `9k5PTr…` key is
+      lost; its 0.0179 SOL is stranded). Free tier, service level 1, 4 weeks:
+      subscribe tx
+      [`54ca7Uyz…pVvG`](https://explorer.solana.com/tx/54ca7UyzrWHDaWgFrYKC4obB8rMuqZyqrcKjQSb56NEvK24S6reiDRpeAqbWzvt4RtKpvSiU5uhNL9XdkryYpVvG).
+      The secret, API token and tx are in
+      `nuncio-vultr:~/.secrets/txline-wallet-2026-09.env` under
+      `TXLINE_WALLET_2026_09_*` names. `.env.agent` got the new
+      `TXLINE_API_TOKEN`/`TXLINE_GUEST_JWT` (backup `.env.agent.bak-*`).
+      `.env.local` is untouched. **Expires ~2026-10-26: resubscribe before then.**
+- [ ] **What the free tier actually gives (measured 2026-09-28):** the
+      fixture snapshot lists ~100k fixtures across every league, but score
+      streams are only readable for NFL. MLS, Premier League and the rest
+      answer 403 "Bundle access denied". So NFL answers come from TxLINE, and
+      everything else from ESPN. Getting TxLINE scores for PL/MLS needs a paid
+      bundle.
+- [ ] **No Merkle proofs yet, even on NFL.** `stat-validation` answers 500
+      "Stat validation failed" for the finalised Broncos–Rams game with the
+      default stat keys 1,2 (and with 1, 2, 3,4). The answer is correct but
+      reports `verified: false` with that reason. Ask TxLINE which stat keys US
+      football uses, or whether free-tier proofs exist.
+- [x] **The renewed token surfaced TxLINE parsing bugs, now fixed**
+      (`ba6edee`, `d4b8e06`, `ba8b672`): the 29 MB snapshot was fetched
+      twice per ask (now cached 5 min); a tier 403 was read as "scheduled";
+      totals are in `Score.ParticipantN.Total.Score`; a lagging snapshot
+      `GameState` hid finished games; `Participant1IsHome` was ignored;
+      "premier league" was mapped to competition 500001, which is **NFL**
+      (PL is 8, MLS 33). Partial names that fit several teams ("Broncos" = 4
+      teams, "Chiefs" = Kansas City or Kaizer) aren't guessed. Live:
+      `{"team":"Denver Broncos"}` → "Denver Broncos beat L.A. Rams 30-26
+      (final)" from TxLINE, which matches ESPN. Tests: 49/49.
 - [x] **Premier League coverage fixed without a new source.** ESPN's dated
       `eng.1` scoreboards return nothing, but each team's ESPN schedule has
       its whole season. The miner now resolves the team and reads its
