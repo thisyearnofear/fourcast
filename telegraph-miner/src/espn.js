@@ -78,6 +78,98 @@ async function eventsFor(league, yyyymmdd) {
   }
 }
 
+// ─── team schedules ────────────────────────────────────────────────────────
+//
+// Scoreboards only reach back as far as we walk them, and some ignore the date
+// entirely: on 2026-09-28 every dated eng.1 query returned nothing, so
+// "Who won the Arsenal game?" was a miss although Arsenal's last final was two
+// weeks old. A team's schedule lists its whole season, finals included, in one
+// call — the right source for "this team's most recent result".
+
+const TTL_TEAMS_MS = 24 * 60 * 60_000;
+const TTL_SCHEDULE_MS = 10 * 60_000;
+
+async function cachedJson(key, ttl, url) {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < hit.ttl) return hit.data;
+  const data = await track('espn', async () => {
+    const res = await fetch(url, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (!res.ok) throw new Error(`ESPN ${url.replace(BASE, '')} -> ${res.status}`);
+    return res.json();
+  });
+  while (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
+  cache.set(key, { at: Date.now(), ttl, data });
+  return data;
+}
+
+async function teamsOf(league) {
+  try {
+    const data = await cachedJson(`${league.key}:teams`, TTL_TEAMS_MS, `${BASE}/${league.sport}/${league.slug}/teams`);
+    return (data?.sports?.[0]?.leagues?.[0]?.teams ?? []).map((t) => t.team).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+/** The best-named team across leagues, or null. Ties are ambiguous → null. */
+export async function resolveTeam(search, leagues) {
+  const lists = await Promise.all(leagues.map(async (l) => (await teamsOf(l)).map((team) => ({ league: l, team }))));
+  let best = null;
+  let tie = false;
+  for (const c of lists.flat()) {
+    const score = teamScore(search, c.team);
+    if (!score) continue;
+    if (!best || score > best.score) {
+      best = { ...c, score };
+      tie = false;
+    } else if (score === best.score && c.team.id !== best.team.id) {
+      tie = true;
+    }
+  }
+  // "Giants" is New York (NFL) and San Francisco (MLB): without a league that
+  // is two teams, and answering for one of them is answering a different ask.
+  return best && !tie ? best : null;
+}
+
+/** Schedule events carry `score` as { value, displayValue }; boards carry a string. */
+function flattenScores(event) {
+  for (const comp of event?.competitions ?? []) {
+    for (const c of comp.competitors ?? []) {
+      if (c.score && typeof c.score === 'object') c.score = c.score.displayValue ?? c.score.value ?? null;
+    }
+  }
+  return event;
+}
+
+async function fromTeamSchedule({ team, opponent, leagues, wantFinal, date }) {
+  const hit = await resolveTeam(team, leagues);
+  if (!hit) return null;
+  let data;
+  try {
+    data = await cachedJson(
+      `${hit.league.key}:schedule:${hit.team.id}`,
+      TTL_SCHEDULE_MS,
+      `${BASE}/${hit.league.sport}/${hit.league.slug}/teams/${hit.team.id}/schedule`
+    );
+  } catch {
+    return null;
+  }
+  let events = (data?.events ?? []).map((e) => ({ league: hit.league, event: flattenScores(e) }));
+  if (date) {
+    const days = new Set([espnDate(Date.parse(`${date}T12:00:00Z`)), espnDate(Date.parse(`${date}T12:00:00Z`) + 86_400_000)]);
+    events = events.filter((c) => days.has(espnDate(Date.parse(c.event.date))));
+  }
+  // Search by the resolved full name so matching is exact from here on.
+  const chosen = pick(events, { team: hit.team.displayName, opponent, wantFinal });
+  if (!chosen) return null;
+  // Most recent *past* game for a score ask: a schedule also lists next month.
+  if (!wantFinal && Date.parse(chosen.event.date) > Date.now() + 86_400_000) {
+    const past = pick(events, { team: hit.team.displayName, opponent, wantFinal: true });
+    return past ?? chosen;
+  }
+  return chosen;
+}
+
 // ─── matching ───────────────────────────────────────────────────────────────
 
 /**
@@ -238,11 +330,19 @@ export async function findGame({ team, opponent, competition, date, wantFinal = 
     for (let i = 1; i <= LOOKBACK_DAYS; i++) days.push(espnDate(Date.now() - i * 86_400_000));
   }
 
-  for (const day of days) {
+  // Order: today's boards (freshest live scores) → the team's own schedule
+  // (whole season, one call) → dated boards walking back.
+  for (const [i, day] of days.entries()) {
     searched.days.push(day ?? 'today');
     const lists = await Promise.all(leagues.map((l) => eventsFor(l, day)));
     const hit = pick(lists.flat(), { team, opponent, wantFinal });
     if (hit) return { answer: toAnswer(hit), searched };
+
+    if (i === 0 && team) {
+      searched.days.push('team-schedule');
+      const scheduled = await fromTeamSchedule({ team, opponent, leagues, wantFinal, date });
+      if (scheduled) return { answer: toAnswer(scheduled), searched };
+    }
   }
   return { answer: null, searched };
 }

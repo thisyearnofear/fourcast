@@ -50,12 +50,31 @@ const YESTERDAY = [
   event('9', '2026-09-27T17:05Z', PADRES, GIANTS, 0, 0, 'post', false, 'STATUS_POSTPONED'),
 ];
 
+// Premier League: scoreboards return nothing for any date (as measured
+// 2026-09-28); the team schedule has the season, with object scores.
+const ARSENAL = { id: '359', ...team('Arsenal', 'Arsenal', 'Arsenal', 'Arsenal', 'ARS') };
+const CHELSEA = { id: '363', ...team('Chelsea', 'Chelsea', 'Chelsea', 'Chelsea', 'CHE') };
+const SUNDERLAND = team('Sunderland', 'Sunderland', 'Sunderland', 'Sunderland', 'SUN');
+function scheduled(ev) {
+  for (const c of ev.competitions[0].competitors) c.score = { value: Number(c.score), displayValue: c.score };
+  return ev;
+}
+const ARSENAL_SCHEDULE = [
+  scheduled(event('a1', '2026-09-06T16:30Z', ARSENAL, CHELSEA, 2, 1, 'post', true)),
+  scheduled(event('a2', '2026-09-12T14:00Z', SUNDERLAND, ARSENAL, 0, 2, 'post', true)),
+  scheduled(event('a3', '2099-10-03T14:00Z', ARSENAL, CHELSEA, 0, 0, 'pre', false)),
+];
+const json = (body) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
 let realFetch;
 function stubEspn() {
   realFetch = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
     const u = String(url);
     if (!u.includes('site.api.espn.com')) return realFetch(url, init);
+    if (u.includes('/soccer/eng.1/teams/359/schedule')) return json({ events: ARSENAL_SCHEDULE });
+    if (u.includes('/soccer/eng.1/teams')) return json({ sports: [{ leagues: [{ teams: [{ team: ARSENAL }, { team: CHELSEA }] }] }] });
+    if (u.includes('/teams')) return json({ sports: [{ leagues: [{ teams: [] }] }] });
     const isMlb = u.includes('/baseball/mlb/');
     const dated = /dates=(\d{8})/.exec(u)?.[1];
     let events = [];
@@ -157,6 +176,22 @@ describe('ESPN fallback', () => {
   it('a named opponent excludes a game against someone else', async () => {
     const { answer } = await espn.findGame({ team: 'Dodgers', opponent: 'Padres', competition: 'MLB', wantFinal: true });
     assert.equal(answer, null);
+  });
+
+  it('finds an old final from the team schedule when boards are empty (Arsenal)', async () => {
+    const { answer, searched } = await espn.findGame({ team: 'Arsenal', competition: 'Premier League', wantFinal: true });
+    assert.equal(answer.summary ?? null, null);
+    assert.equal(answer.winner, 'Arsenal');
+    assert.equal(answer.home_team, 'Sunderland');
+    assert.equal(answer.home_score, 0);
+    assert.equal(answer.away_score, 2);
+    assert.ok(searched.days.includes('team-schedule'));
+  });
+
+  it('schedule path respects a named opponent', async () => {
+    const { answer } = await espn.findGame({ team: 'Arsenal', opponent: 'Chelsea', competition: 'Premier League', wantFinal: true });
+    assert.equal(answer.fixture_id, 'espn:epl:a1');
+    assert.equal(answer.result, 'home_win');
   });
 
   it('a postponed game is not a final', async () => {
