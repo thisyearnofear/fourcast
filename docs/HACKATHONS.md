@@ -132,9 +132,19 @@ positioning claims.
 - [x] P2 attributed `reason` sentences ("X beat Y 24-16 (final)"), explicit
       `no_result`, no invented names or pre-game 0-0, and an ESPN free-finals
       fallback for `GAME_RESULT` / `SPORTS_SCORE`.
-- [ ] Deploy v1.1 to `nuncio-vultr` with a persistent `MINER_SIGNING_KEY`
-      (runbook: `telegraph-miner/README.md` → Update). No `updateMiner`
-      needed, because `telegraph.yaml` is unchanged.
+- [x] Deployed v1.1 to `nuncio-vultr` 2026-09-28 (commit `735808b`), with a
+      persistent signing key (public
+      `szo7NI2P1gmMW9iY0LGKLPN1EvVzNgHpm9RNKJWxS7M=`). Verified from outside:
+      `npm run verify -- --team "Buffalo Bills"` passes attestation and
+      consistency. `.env.agent` backup is `.env.agent.bak-*` on the VPS.
+- [ ] **Renew the TxLINE token.** `/health` on the VPS shows TxLINE returning 403
+      "API Token is invalid or expired", so every answer is currently ESPN
+      (`fallback_from: txline_unavailable`) and none carries a Merkle proof.
+      Rerun `scripts/txline-subscribe-and-activate.mjs`, then update
+      `TXLINE_API_TOKEN` in `.env.agent` and restart.
+- [ ] Consider `ESPN_LOOKBACK_DAYS=8` for soccer's weekly cadence. On
+      2026-09-28 "Who won the Arsenal game?" was `no_result`, which was
+      correct (no Arsenal match in 4 days), but a week-old result is still the answer.
 - [ ] After a scored epoch, read `/api/asked` + `npm run survey` together:
       what the tournament asked, what we answered, what it scored.
 - [ ] Decide intent targeting from live scores (consider
