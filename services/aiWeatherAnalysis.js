@@ -14,7 +14,6 @@ import { LocationValidator } from "./locationValidator.js";
 import { polymarketService } from "./polymarketService.js";
 import { kalshiService } from "./kalshiService.js";
 import { VenueExtractor } from "./venueExtractor.js";
-import { synthService } from "./synthService.js";
 import { weatherService } from "./weatherService.js";
 import {
   callVeniceAI,
@@ -88,49 +87,9 @@ export async function analyzeWeatherImpactServer(params) {
       location = null;
     }
 
-    // For finance/stock markets, try to get SynthData to inform the analysis
-    let synthData = null;
-    let synthContext = null;
-    if (!isWeatherMarket && synthService.isAvailable()) {
-      try {
-        const detectedAsset = synthService.detectAsset(title, title);
-        if (detectedAsset) {
-          console.log(`🎯 Detected asset for single-market analysis: ${detectedAsset}`);
-          const synthForecast = await synthService.buildForecast(detectedAsset, {
-            includePolymarket: true,
-          });
-          
-          if (synthForecast) {
-            synthData = {
-              asset: synthForecast.asset,
-              currentPrice: synthForecast.currentPrice,
-              percentiles: synthForecast.percentiles,
-              polymarketEdge: synthForecast.polymarketEdge,
-              confidence: synthForecast.confidence,
-            };
-            
-            // Build context for LLM to incorporate synth data into reasoning
-            const edge = synthForecast.polymarketEdge;
-            const edgeInfo = edge ? `
-- Polymarket Edge: ${Math.abs(edge.edge * 100).toFixed(1)}% ${edge.edge > 0 ? 'UNDERPRICED (YES value)' : 'OVERPRICED (YES overvalued)'}
-- Synth Fair Probability: ${(edge.synthFairProb * 100).toFixed(1)}%
-- Market Probability: ${(edge.polymarketProb * 100).toFixed(1)}%
-` : '';
-            
-            synthContext = `
-📊 SYNTHDATA MARKET INTELLIGENCE:
-- Current ${synthForecast.asset} Price: $${synthForecast.currentPrice?.toLocaleString()}
-- 24h Price Range (P5-P95): $${synthForecast.percentiles?.p5?.toLocaleString()} - $${synthForecast.percentiles?.p95?.toLocaleString()}
-- P50 (Median): $${synthForecast.percentiles?.p50?.toLocaleString()}
-- ML Confidence: ${synthForecast.confidence}
-${edgeInfo}
-`;
-          }
-        }
-      } catch (err) {
-        console.warn(`SynthData fetch failed for single-market analysis:`, err.message);
-      }
-    }
+    // SynthData ML removed 2026-09-29 — finance markets use LLM + web intel.
+    const synthData = null;
+    const synthContext = null;
 
     // Build Bright Data intelligence context for the LLM prompt
     let brightDataContextStr = null;
@@ -390,7 +349,7 @@ Use this live web intelligence as the PRIMARY source for your analysis. These ar
           eventDate,
           isFuturesBet,
           analysisTypes, // Finance/stock analysis types
-          synthContext: [synthContext, brightDataContextStr].filter(Boolean).join('\n\n') || null,
+          synthContext: brightDataContextStr || null,
         },
         {
           webSearch: !brightDataContext, // Skip Venice web search if Bright Data already provided intelligence
@@ -416,7 +375,7 @@ Use this live web intelligence as the PRIMARY source for your analysis. These ar
             eventDate,
             isFuturesBet,
             analysisTypes, // Finance/stock analysis types
-            synthContext, // Include SynthData context for finance markets
+            synthContext: null,
           },
           {
             webSearch: true,

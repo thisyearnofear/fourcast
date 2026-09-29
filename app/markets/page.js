@@ -37,14 +37,6 @@ function PanelSkeleton({ className = "h-28" }) {
  );
 }
 
-const MarketEdgeScanner = dynamic(
- () =>
- import("@/components/MarketEdgeScanner").then((m) => ({
- default: m.MarketEdgeScanner,
- })),
- { loading: () => <PanelSkeleton className="h-36" />, ssr: false }
-);
-
 const SportsTabContent = dynamic(
  () =>
  import("./SportsTab").then((m) => ({ default: m.SportsTabContent })),
@@ -587,16 +579,6 @@ export default function MarketsPage() {
  <div className="mb-2">
  <AgentRail />
 </div>
-
-<ParallaxReveal className="mb-4">
-  <GlassPanel className="p-4">
-    <MarketEdgeScanner
-      markets={markets}
-      onAnalyze={openAnalyzeConfig}
-      isNight={isNight}
-    />
-  </GlassPanel>
-</ParallaxReveal>
 
 {/* Analysis Config Modal */}
  <AnalysisConfigModal

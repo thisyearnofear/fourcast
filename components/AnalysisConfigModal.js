@@ -29,10 +29,9 @@ export default function AnalysisConfigModal({
  
  const [analysisDepth, setAnalysisDepth] = useState('standard'); // quick, standard, deep
  
- // Data sources toggles
- const [dataSources, setDataSources] = useState({
- includeWeather: true,
- includeSynthData: true,
+  // Data sources toggles (SynthData ML removed 2026-09-29)
+  const [dataSources, setDataSources] = useState({
+  includeWeather: true,
  includeFutures: false,
  includeWebSearch: true,
  includeOnChain: false,
@@ -47,8 +46,7 @@ export default function AnalysisConfigModal({
  if (defaultOptions) {
  setDataSources(prev => ({
  ...prev,
- includeWeather: defaultOptions.includeWeather ?? prev.includeWeather,
- includeSynthData: defaultOptions.includeSynthData ?? prev.includeSynthData,
+  includeWeather: defaultOptions.includeWeather ?? prev.includeWeather,
  includeFutures: defaultOptions.includeFutures ?? prev.includeFutures,
  includeWebSearch: defaultOptions.webSearchEnabled ?? prev.includeWebSearch,
  }));
@@ -86,9 +84,8 @@ export default function AnalysisConfigModal({
  // Auto-detect relevant data sources based on market type
  useEffect(() => {
  const autoDefaults = {
- crypto: {
- includeSynthData: true,
- includeOnChain: true,
+  crypto: {
+  includeOnChain: true,
  includeSentiment: true,
  },
  finance: {
@@ -127,8 +124,7 @@ export default function AnalysisConfigModal({
  let multiplier = 1;
  
  // Add cost for additional data sources
- if (dataSources.includeWeather) multiplier += 0.2;
- if (dataSources.includeSynthData) multiplier += 0.3;
+  if (dataSources.includeWeather) multiplier += 0.2;
  if (dataSources.includeWebSearch) multiplier += 0.2;
  if (dataSources.includeOnChain) multiplier += 0.3;
  if (dataSources.includeFundamental) multiplier += 0.2;
@@ -217,14 +213,8 @@ export default function AnalysisConfigModal({
  onClick={() => toggleDataSource('includeWeather')}
  auto={marketType === 'sports'}
  />
- <ToggleChip
- label="📊 ML Models"
- active={dataSources.includeSynthData}
- onClick={() => toggleDataSource('includeSynthData')}
- auto={marketType === 'crypto'}
- />
- <ToggleChip
- label="🔍 Web Search"
+  <ToggleChip
+  label="🔍 Web Search"
  active={dataSources.includeWebSearch}
  onClick={() => toggleDataSource('includeWebSearch')}
  />

@@ -107,7 +107,7 @@ export async function executeAnalysis(request, onStage = () => {}, { skipAuth = 
       mode = 'basic',
       // New analysis options from UI toggles
       includeWeather = true,
-      includeSynthData = true,
+      includeSynthData = false, // SynthData ML removed 2026-09-29 — accepted, ignored
       includeFutures = false,
       webSearchEnabled = false,
       analysisTypes = []
@@ -349,8 +349,8 @@ export async function executeAnalysis(request, onStage = () => {}, { skipAuth = 
         } : null,
         productsUsed: brightDataIntel.productsUsed,
       } : null,
-      // ENHANCED: Include SynthData for finance markets
-      synthData: analysis.synthData || null,
+      // SynthData ML removed 2026-09-29 — key kept null for UI shape stability.
+      synthData: null,
       // ENHANCED: Include analysis types used for display badges
       analysisTypes: analysisTypes || [],
       // ENHANCED: Include validation results

@@ -167,7 +167,6 @@ export function useMarketsData({
  mode,
  // Analysis factor toggles from user preferences
  includeWeather: analysisOptions.includeWeather,
- includeSynthData: analysisOptions.includeSynthData,
  includeFutures: analysisOptions.includeFutures,
  webSearchEnabled: analysisOptions.webSearchEnabled,
  analysisTypes: analysisOptions.analysisTypes || [],
@@ -255,7 +254,6 @@ export function useMarketsData({
  : config.depth) || analysisMode,
  // Config from modal
  includeWeather: config.includeWeather,
- includeSynthData: config.includeSynthData,
  includeFutures: config.includeFutures,
  webSearchEnabled: config.includeWebSearch,
  analysisTypes: [

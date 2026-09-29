@@ -14,7 +14,6 @@ import OpenAI from "openai";
 import { getRedisClient } from "./redisService.js";
 import { polymarketService } from "./polymarketService.js";
 import { kalshiService } from "./kalshiService.js";
-import { synthService } from "./synthService.js";
 import { brightDataService } from "./brightDataService.js";
 import { MarketIntelligenceAnalyzer } from "./analysis/MarketIntelligenceAnalyzer.js";
 import { arbitrageService } from "./arbitrageService.js";
@@ -27,7 +26,6 @@ import {
   shouldSkipCap,
   formatDryRunMessage,
 } from "./autopilotSafety.js";
-import { analyzePathDependentMarket, detectPathDependentMarket } from "./pathDependentService.js";
 import { calculateKellySizing } from "../utils/kellySizing.js";
 import { createDecisionPolicy, evaluateDecision } from "./domain/decision/decisionPolicy.js";
 import { deriveSimulationSeed, simulateBinaryMarket } from "./domain/decision/simulation.js";
@@ -179,32 +177,16 @@ export async function* runAgentLoop(config = {}) {
     baseURL: "https://api.venice.ai/api/v1",
   });
 
-  const hasSynthData = synthService.isAvailable();
   const intelligenceAnalyzer = new MarketIntelligenceAnalyzer();
   const forecasts = [];
 
-  // Pre-filter: Separate Synth-eligible from non-eligible markets for efficiency
-  const synthEligibleMarkets = [];
-  const nonSynthMarkets = [];
-  
-  for (const market of candidates) {
-    const hasAsset = synthService.detectAsset(market.title, market.description);
-    const hasRelevantCategory = synthService.isSynthRelevantCategory(market.category);
-    
-    if (hasAsset || hasRelevantCategory) {
-      synthEligibleMarkets.push(market);
-    } else {
-      nonSynthMarkets.push(market);
-    }
-  }
-
-  // Process Synth-eligible markets first (higher priority, better data)
-  const orderedMarkets = [...synthEligibleMarkets, ...nonSynthMarkets];
+  // All candidates go through the LLM forecast path.
+  const orderedMarkets = candidates;
 
   yield {
     step: "forecast",
     status: "running",
-    message: `Pre-filtered: ${synthEligibleMarkets.length} Synth-eligible, ${nonSynthMarkets.length} LLM-only`,
+    message: `Forecasting ${orderedMarkets.length} markets with LLM reasoning`,
     total: orderedMarkets.length,
   };
 
@@ -212,7 +194,6 @@ export async function* runAgentLoop(config = {}) {
     const market = orderedMarkets[i];
     const yesPrice = market.currentOdds?.yes ?? 0.5;
     const noPrice = market.currentOdds?.no ?? 0.5;
-    const isSynthEligible = synthEligibleMarkets.includes(market);
 
     // Skip if recently analyzed (within 6 hours)
     const recentlyAnalyzed = await wasRecentlyAnalyzed(market.marketID, 6);
@@ -245,198 +226,9 @@ export async function* runAgentLoop(config = {}) {
     let brightDataSources = [];
     let brightDataDeepResearch = null;
 
-    // Try SynthData first for supported price/crypto assets (only if pre-filtered as eligible)
-    const detectedAsset = isSynthEligible ? synthService.detectAsset(market.title, market.description) : null;
-    let synthForecast = null;
-    
-    // Check for path-dependent market pattern (only if asset detected)
-    const pathDependent = detectedAsset ? detectPathDependentMarket(market.title) : { detected: false };
-
-    if (detectedAsset) {
-      yield {
-        step: "forecast",
-        status: "running",
-        market: { title: market.title, marketID: market.marketID },
-        message: `Detected ${detectedAsset} - preparing ML analysis`,
-        index: i,
-        total: orderedMarkets.length,
-      };
-    }
-
-    if (hasSynthData && detectedAsset) {
-      try {
-        // Path-dependent market detected
-        if (pathDependent.detected) {
-          yield {
-            step: "forecast",
-            status: "running",
-            market: { title: market.title, marketID: market.marketID },
-            message: `🎯 Path-dependent: ${detectedAsset} $${pathDependent.priceA.toLocaleString()} vs $${pathDependent.priceB.toLocaleString()}`,
-            index: i,
-            total: orderedMarkets.length,
-          };
-
-          const pathAnalysis = await analyzePathDependentMarket(
-            detectedAsset,
-            synthForecast?.currentPrice || pathDependent.priceA, // Use current price if available
-            pathDependent.priceA,
-            pathDependent.priceB
-          );
-
-          if (!pathAnalysis.error) {
-            yield {
-              step: "forecast",
-              status: "running",
-              market: { title: market.title, marketID: market.marketID },
-              message: `Calculated path probabilities using ML percentiles`,
-              index: i,
-              total: orderedMarkets.length,
-            };
-
-            // Use path-dependent probabilities
-            aiProbability = pathAnalysis.probabilities.touchAFirst / 100;
-            confidence = pathAnalysis.confidence;
-            reasoning = pathAnalysis.reasoning;
-            keyFactors = [
-              `Path-dependent analysis: ${pathDependent.priceA} before ${pathDependent.priceB}`,
-              `Probability: ${pathAnalysis.probabilities.touchAFirst}% vs ${pathAnalysis.probabilities.touchBFirst}%`,
-              `Volatility ratio: ${pathAnalysis.volatility.ratio.toFixed(2)}x`,
-            ];
-            forecastSource = "synthdata+path";
-            
-            // Skip normal Synth forecast since we have path analysis
-            synthForecast = pathAnalysis;
-          }
-        } else {
-          // Normal price forecast
-          yield {
-            step: "forecast",
-            status: "running",
-            market: { title: market.title, marketID: market.marketID },
-            message: `🤖 Fetching ${detectedAsset} forecast from 200+ ML models...`,
-            index: i,
-            total: orderedMarkets.length,
-          };
-
-          synthForecast = await synthService.buildForecast(detectedAsset, {
-            includePolymarket: market.platform === "polymarket",
-          });
-
-          if (synthForecast) {
-            yield {
-              step: "forecast",
-              status: "running",
-              market: { title: market.title, marketID: market.marketID },
-              message: `Received ML percentiles - comparing vs market odds`,
-              index: i,
-              total: orderedMarkets.length,
-            };
-          }
-        }
-      } catch (err) {
-        console.warn(`SynthData forecast failed for ${detectedAsset}:`, err.message);
-      }
-    }
-
-
     try {
-      if (synthForecast) {
-        // SynthData-powered forecast: use quantitative data + LLM for reasoning
-        forecastSource = "synthdata+llm";
-        confidence = synthForecast.confidence;
-
-        // Use SynthData's up probability if available, otherwise derive from percentiles
-        if (synthForecast.upProbability != null) {
-          aiProbability = synthForecast.upProbability;
-        }
-
-        // If Polymarket edge data is available, use the Synth fair probability directly
-        if (synthForecast.polymarketEdge) {
-          const edge = Array.isArray(synthForecast.polymarketEdge)
-            ? synthForecast.polymarketEdge[0]
-            : synthForecast.polymarketEdge;
-          if (edge?.synthFairProb != null) {
-            aiProbability = edge.synthFairProb;
-          }
-        }
-
-        // Build quantitative context for LLM reasoning
-        const synthContext = [
-          `Asset: ${detectedAsset}, Current Price: $${synthForecast.currentPrice?.toLocaleString()}`,
-          `24h Percentiles: P5=$${synthForecast.percentiles.p5?.toLocaleString()}, P50=$${synthForecast.percentiles.p50?.toLocaleString()}, P95=$${synthForecast.percentiles.p95?.toLocaleString()}`,
-          synthForecast.volatility.forecast ? `Forecast Volatility: ${(synthForecast.volatility.forecast * 100).toFixed(2)}%` : null,
-          synthForecast.volatility.realized ? `Realized Volatility: ${(synthForecast.volatility.realized * 100).toFixed(2)}%` : null,
-        ].filter(Boolean).join('\n');
-
-        keyFactors = [
-          `Ensemble ML forecast (200+ models) via SynthData`,
-          `P5-P95 range: $${synthForecast.percentiles.p5?.toLocaleString()} – $${synthForecast.percentiles.p95?.toLocaleString()}`,
-          synthForecast.volatility.forecast
-            ? `Forecast vol ${(synthForecast.volatility.forecast * 100).toFixed(1)}% vs realized ${(synthForecast.volatility.realized * 100).toFixed(1)}%`
-            : `Volatility data unavailable`,
-        ];
-
-        // LLM generates reasoning on top of quantitative data
-        yield {
-          step: "forecast",
-          status: "running",
-          market: { title: market.title, marketID: market.marketID },
-          message: `Layering AI reasoning on ML data...`,
-          index: i,
-          total: orderedMarkets.length,
-        };
-
-        const response = await client.chat.completions.create({
-          model: "llama-3.3-70b",
-          messages: [
-            {
-              role: "system",
-              content: `You are a quantitative analyst interpreting ML-generated price forecasts for prediction markets. You have been given probabilistic forecast data from an ensemble of 200+ ML models. Your job is to explain the data clearly and assess whether the market is fairly priced.
-
-You MUST respond with ONLY valid JSON, no other text.`,
-            },
-            {
-              role: "user",
-              content: `Market: "${market.title}"
-Current market odds: YES ${yesPrice}, NO ${noPrice}
-
-QUANTITATIVE FORECAST DATA (from SynthData ensemble):
-${synthContext}
-
-ML-derived probability: ${aiProbability != null ? (aiProbability * 100).toFixed(1) + '%' : 'N/A'}
-Confidence: ${confidence}
-
-Provide a brief reasoning explaining the edge (or lack thereof) between the ML forecast and market odds.
-
-Output ONLY valid JSON:
-{ "reasoning": "...", "key_factors": ["..."] }`,
-            },
-          ],
-          temperature: 0.3,
-          max_tokens: 500,
-          venice_parameters: { enable_web_search: "auto" },
-        });
-
-        let content = response.choices[0].message.content.trim();
-        if (content.includes('§THINK_OPEN§')) {
-          const thinkEnd = content.lastIndexOf('§THINK_CLOSE§');
-          if (thinkEnd !== -1) content = content.substring(thinkEnd + 8).trim();
-        }
-        if (content.startsWith('```')) {
-          content = content.replace(/```json\n?|\n?```/g, "").trim();
-        }
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) content = jsonMatch[0];
-
-        const parsed = JSON.parse(content);
-        reasoning = parsed.reasoning || null;
-        if (Array.isArray(parsed.key_factors) && parsed.key_factors.length > 0) {
-          keyFactors = [...keyFactors, ...parsed.key_factors];
-        }
-
-
-      } else {
-        // Fallback: intelligent forecast using Bright Data (SERP API + Scraping Browser + Web Unlocker)
+      // LLM forecast path with optional web-search intelligence.
+        // Intelligent forecast using Bright Data (SERP API + Scraping Browser + Web Unlocker)
         yield {
           step: "forecast",
           status: "running",
@@ -608,7 +400,6 @@ Output ONLY valid JSON:
         reasoning = parsed.reasoning || null;
         keyFactors = Array.isArray(parsed.key_factors) ? parsed.key_factors : [];
         confidence = parsed.confidence || "LOW";
-      }
     } catch (err) {
       console.error(`Agent loop: Forecast failed for ${market.title}:`, err.message);
     }
@@ -624,12 +415,7 @@ Output ONLY valid JSON:
       keyFactors,
       confidence,
       source: forecastSource,
-      synthData: synthForecast ? {
-        asset: synthForecast.asset,
-        currentPrice: synthForecast.currentPrice,
-        percentiles: synthForecast.percentiles,
-        polymarketEdge: synthForecast.polymarketEdge,
-      } : null,
+      synthData: null, // SynthData ML removed 2026-09-29 — key stays null for UI shape stability
       // Bright Data provenance: sources and deep research details
       brightData: brightDataSources.length > 0 ? {
         sources: brightDataSources,
@@ -669,11 +455,7 @@ Output ONLY valid JSON:
         aiProbability,
         currentOdds: market.currentOdds,
         source: forecastSource,
-        synthData: synthForecast ? {
-          asset: synthForecast.asset,
-          currentPrice: synthForecast.currentPrice,
-          confidence: synthForecast.confidence,
-        } : null,
+        synthData: null,
       },
     };
   }
@@ -716,9 +498,9 @@ Output ONLY valid JSON:
       );
       const absEdge = Math.abs(kelly.edge);
 
-      // Calibration guardrail: relax threshold for SynthData-backed forecasts
-      // SynthData uses 200+ ML models so large edges are more credible
-      const edgeThreshold = f.source === "synthdata+llm" ? 0.4 : 0.3;
+      // Calibration guardrail: shrink confidence on very large edges
+      // (high uncertainty). Single threshold now that all forecasts are LLM.
+      const edgeThreshold = 0.3;
       let adjustedConfidence = f.confidence;
       if (absEdge > edgeThreshold) {
         adjustedConfidence = "LOW";

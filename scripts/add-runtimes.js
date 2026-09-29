@@ -20,7 +20,6 @@ const EDGE_ROUTES = [
   'app/api/validate/weather/route.js',
   'app/api/stats/route.js',
   'app/api/defi/arbitrage/route.js',
-  'app/api/synth/warm-cache/route.js',
   'app/api/predictions/health/route.js',
 ];
 

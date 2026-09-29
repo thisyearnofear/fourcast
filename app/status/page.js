@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, BarChart3, LineChart, Bot, Brain, Database, Zap } from 'lucide-react';
+import { Activity, BarChart3, LineChart, Bot, Database, Zap } from 'lucide-react';
 import {
  getProviderStatusAppearance,
  getSummaryAppearance,
@@ -96,7 +96,6 @@ export default function StatusPage() {
  polymarket: BarChart3,
  kalshi: LineChart,
  venice: Bot,
- synthdata: Brain,
  database: Database,
  canton: Zap,
  telegraph: Activity,

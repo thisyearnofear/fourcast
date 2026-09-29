@@ -1,6 +1,6 @@
 /**
  * Health check endpoint for all external providers.
- * Returns structured status for Polymarket, Kalshi, Venice AI, SynthData, and the database.
+ * Returns structured status for Polymarket, Kalshi, Venice AI, and the database.
  * Used by the public /status page for transparency.
  *
  * Runtime: nodejs — uses fetch, not WASM or GPU
@@ -47,13 +47,6 @@ export async function GET() {
     }
   }
 
-  // ── SynthData ─────────────────────────────────────────────────────────
-  const hasSynthKey = !!process.env.SYNTH_API_KEY;
-  let synth = { status: 'disabled', latencyMs: 0, httpStatus: null };
-  if (hasSynthKey) {
-    synth = await pingUrl('https://api.synthdata.co/prediction-percentiles?asset=BTC&horizon=24h', 8000);
-  }
-
   // ── Database ──────────────────────────────────────────────────────────
   let db = { status: 'unknown', latencyMs: 0 };
   try {
@@ -88,7 +81,7 @@ export async function GET() {
   const telegraph = await pingUrl(telegraphUrl, 8000);
 
   // ── Aggregate ─────────────────────────────────────────────────────────
-  const allUp = [pm, ks, venice, synth, canton, telegraph].every(
+  const allUp = [pm, ks, venice, canton, telegraph].every(
     (p) => p.status === 'healthy' || p.status === 'disabled'
   );
 
@@ -112,11 +105,6 @@ export async function GET() {
         label: 'Venice AI',
         description: 'AI reasoning & web-search-enhanced forecasts',
         ...venice,
-      },
-      synthdata: {
-        label: 'SynthData',
-        description: 'ML ensemble price forecasts (200+ models)',
-        ...synth,
       },
       database: {
         label: 'Database',

@@ -1,7 +1,5 @@
-import { polymarketService } from '@/services/polymarketService';
 import { kalshiService } from '@/services/kalshiService';
-import { synthService } from '@/services/synthService';
-import * as pathDependentService from '@/services/pathDependentService';
+import { polymarketService } from '@/services/polymarketService';
 
 export const runtime = 'nodejs';
 
@@ -182,13 +180,13 @@ export async function POST(request) {
         spreadPercent: m.orderBookMetrics?.spreadPercent || 0
       };
 
-      // Detect if this market can benefit from SynthData ML analysis
-      const detectedAsset = synthService.detectAsset(m.title, m.description || '');
-      const isMLReady = !!detectedAsset;
+      // SynthData ML removed 2026-09-29 — keys kept for UI shape stability.
+      const detectedAsset = null;
+      const isMLReady = false;
 
-      // Detect if this is a path-dependent market (e.g. BTC touches $60k before $65k)
-      const pathContext = pathDependentService.detectPathDependentMarket(m.title);
-      const isPathDependent = pathContext.detected;
+      // Path-dependent markets removed with SynthData.
+      const pathContext = { detected: false };
+      const isPathDependent = false;
 
       // Calculate days to resolution
       let daysToResolution = null;
@@ -244,32 +242,6 @@ export async function POST(request) {
       }
       return true;
     });
-
-    // 5. PRE-BAKED INSIGHTS: Pre-calculate ML Fair odds for top 5 ML-ready markets
-    const topMLReadyMarkets = activeMarkets
-      .filter(m => m.isMLReady && m.detectedAsset)
-      .slice(0, 5);
-
-    if (topMLReadyMarkets.length > 0 && synthService.isAvailable()) {
-      console.log(`[Markets API] Pre-calculating ML forecasts for ${topMLReadyMarkets.length} markets...`);
-      
-      const forecastResults = await Promise.allSettled(
-        topMLReadyMarkets.map(m => synthService.buildForecast(m.detectedAsset, { horizon: '24h' }))
-      );
-
-      // Inject forecast data into the activeMarkets objects
-      forecastResults.forEach((result, idx) => {
-        if (result.status === 'fulfilled' && result.value) {
-          const market = topMLReadyMarkets[idx];
-          // Find the actual object in activeMarkets to update it
-          const originalMarket = activeMarkets.find(m => m.marketID === market.marketID);
-          if (originalMarket) {
-            originalMarket.preCalculatedForecast = result.value;
-            console.log(`[Markets API] Pre-calculated forecast for ${market.detectedAsset} (${market.marketID})`);
-          }
-        }
-      });
-    }
 
     // Pre-cache market details for top 5 (fire and forget) - only for Polymarket for now
     const top5PolymarketIds = activeMarkets

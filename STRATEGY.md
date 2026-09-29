@@ -52,7 +52,6 @@ Each source strengthens the agent's forecast without coupling to a specific venu
 |--------|-----------------|--------|------|
 | **TxLINE / TxOdds** | Professional bookmaker consensus odds, Merkle proofs | Live (MLS, NFL, PL Aug 21) — mainnet free tier | Sharpest odds available — most participants don't have this |
 | **Venice AI** | LLM reasoning, evidence synthesis | Live | Handles politics, economics, crypto, tech, current events |
-| **SynthData** | ML forecasting models | Live | Quantitative probability estimates |
 | **Bright Data** | SERP, web scrape, social | Optional | Supplementary web intelligence when available |
 
 The intelligence layer is the agent's information advantage. TxLINE odds in particular represent alpha that most retail participants and competing agents cannot access — professional-grade consensus pricing from the sharpest books in the world.

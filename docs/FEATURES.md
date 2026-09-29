@@ -28,7 +28,7 @@ Primary nav: **Markets · Positions · Private**. Overflow: Signals · Mandate �
 
 ### Markets intelligence
 
-- **Evidence-Based UI** — provenance for AI predictions (SynthData, OpenMeteo, Venice AI when configured)
+- **Evidence-Based UI** — provenance for AI predictions (OpenMeteo, Venice AI when configured)
 - **Progressive Disclosure** — market lists batch-load; analysis factors as compact toggles
 - **One-Click Prediction Deep-Linking** — shareable pre-analyzed market links
 - **Frictionless Capital Flow** — Quick Swap (ETH → USDC) when liquidity is short
@@ -54,7 +54,6 @@ USDC value today.
 
 #### AI-Powered Market Analysis
 - **Venice AI Integration** - Llama 3.3 70B with web search
-- **ML-Backed Forecasts** - SynthData integration for crypto/equities
 - **Sports & Events Intelligence** - Weather-aware analysis for sports and event markets
 - **Confidence Scoring** - HIGH/MEDIUM/LOW with calibration
 - **Edge Detection** - Identify mispriced markets (>5% edge)
@@ -102,7 +101,6 @@ USDC value today.
 | Kalshi | Live odds, trading | ✅ Production |
 | TxLINE | World Cup fixtures, consensus odds, scores, Merkle proofs | ✅ Live/replay |
 | Open-Meteo | Weather forecasts | ✅ Production |
-| SynthData | ML price forecasts | ✅ Production |
 | Venice AI | AI analysis engine | ✅ Production |
 
 ---

@@ -4,7 +4,7 @@
 
 Fourcast is a **flight recorder for autonomous capital**. An agent operates under a versioned mandate — it decides from pre-match TxLINE evidence alone, seals each decision into a SHA-256 receipt, and reconciles against an independently verifiable on-chain outcome after the match finalizes. The route is one unfolding system: **Mandate Control → Proof Theatre → Diligence**.
 
-TxLINE is the primary data layer for fixtures, consensus odds, score events, and Merkle proofs. Fourcast also has a **Solana DevNet** `match-escrow` program whose settlement design CPI-calls TxLINE's `txoracle::validate_stat` for parametric sports policies. The supporting infrastructure (Bright Data, Polymarket/Kalshi, Venice AI, SynthData) remains as secondary enrichment for the `/markets` and `/signals` routes.
+TxLINE is the primary data layer for fixtures, consensus odds, score events, and Merkle proofs. Fourcast also has a **Solana DevNet** `match-escrow` program whose settlement design CPI-calls TxLINE's `txoracle::validate_stat` for parametric sports policies. The supporting infrastructure (Bright Data, Polymarket/Kalshi, Venice AI) remains as secondary enrichment for the `/markets` and `/signals` routes.
 
 ## Flagship Route Architecture
 
@@ -151,8 +151,7 @@ The AI engine generates predictions using Venice AI (Llama 3.3 70B) with multipl
 // Core analysis flow
 1. Fetch market data (Polymarket/Kalshi)
 2. Enrich with weather data (Open-Meteo)
-3. Add ML forecasts (SynthData for crypto/equities)
-4. Generate AI prediction with confidence score
+3. Generate AI prediction with confidence score
 5. Optional: Publish to blockchain
 ```
 
@@ -193,12 +192,6 @@ The former 2,706-line god-file has been decomposed into focused modules:
 - Order placement with JWT authentication
 - Token auto-refresh (30min expiry)
 
-#### SynthData Service (`services/synthService.js`)
-- ML-backed price forecasts for crypto/equities
-- Supported assets: BTC, ETH, SOL, XAU, SPY, NVDA, GOOGL, TSLA, AAPL
-- Prediction percentiles (P5/P50/P95), volatility forecasts
-- Polymarket fair-odds comparison (SynthData vs market odds, used by Kelly sizing)
-
 ### 3. Weather Integration (`services/weatherService.js`)
 
 - **Primary**: Open-Meteo API (GFS forecast models)
@@ -212,7 +205,6 @@ The former 2,706-line god-file has been decomposed into focused modules:
 ┌─────────────────┐
 │ Polymarket      │
 │ Kalshi          │
-│ SynthData       │
 │ Weather API     │
 └────────┬────────┘
          │
@@ -352,7 +344,6 @@ target these chains.
          ▼                       ▼
 ┌─────────────────────────────────────────┐
 │ AI Analysis Engine (Venice AI)          │
-│ + SynthData ML Forecasts               │
 │ + Weather Data (Open-Meteo)            │
 │ + Kelly Criterion Position Sizing      │
 └──────────────────┬──────────────────────┘
@@ -418,7 +409,7 @@ The agent scans markets, filters candidates, generates forecasts, detects arbitr
 
 1. **Discover**: Scan Polymarket/Kalshi for markets
 2. **Filter**: Remove recently analyzed (<6hrs), low-volume markets
-3. **Forecast**: Generate AI predictions using Venice LLMs and SynthData ML percentiles
+3. **Forecast**: Generate AI predictions using Venice LLMs and web-search intelligence
 4. **Sizing (Kelly Criterion)**: Calculate mathematically optimal fractional Kelly sizing ($p \cdot b - q)/b$ scaled by confidence and risk tolerance
 5. **Arbitrage**: Detect cross-platform price discrepancies
 6. **Autopilot Execution**: (Optional) Programmatically sign and submit trades using a server-side private key with Polymarket Builder attribution headers
@@ -514,7 +505,6 @@ legacy/                 # Deprecated — kept for backwards compatibility
 ├── weather             # /api/weather → use intelligence/analyze with weather
 ├── debug               # /api/debug — dev only
 ├── og                  # /api/og — Open Graph image generation
-├── synth/warm-cache    # /api/synth/warm-cache
 └── defi/arbitrage      # /api/defi/arbitrage
 ```
 
@@ -522,7 +512,7 @@ legacy/                 # Deprecated — kept for backwards compatibility
 
 | Path | Canonical Namespace | Description |
 |------|-------------------|-------------|
-| `/api/analyze` → `intelligence/analyze` | intelligence | AI analysis endpoint (Venice AI + weather + SynthData) |
+| `/api/analyze` → `intelligence/analyze` | intelligence | AI analysis endpoint (Venice AI + weather) |
 | `/api/predictions` → `intelligence/predictions` | intelligence | On-chain prediction requests |
 | `/api/validate/*` → `intelligence/validate/*` | intelligence | Input/weather/market validation |
 | `/api/markets` | markets | Market discovery (Polymarket/Kalshi) |
@@ -545,7 +535,7 @@ legacy/                 # Deprecated — kept for backwards compatibility
 ```
 Frontend (markets page, signals page, landing)
   │
-  ├── /api/analyze/stream        ──→ /api/analyze ──→ aiService.server.js ──→ Venice AI + SynthData + Weather
+  ├── /api/analyze/stream        ──→ /api/analyze ──→ aiService.server.js ──→ Venice AI + Weather
   ├── /api/markets               ──→ polymarketService.js / kalshiService.js
   ├── /api/signals               ──→ db.js (SQLite + Movement/Aptos)
   ├── /api/operator/pulse        ──→ db.js (track record + autopilot runs)
@@ -554,7 +544,7 @@ Frontend (markets page, signals page, landing)
 ```
 
 ### Caching Strategy
-- **Redis**: AI analysis results (15min), SynthData forecasts (15min)
+- **Redis**: AI analysis results (15min)
 - **In-memory**: Market catalogs (30min), sports metadata (24hr)
 - **SQLite**: Persistent signals, forecasts, track records
 
@@ -564,7 +554,7 @@ Frontend (markets page, signals page, landing)
 - CI enforces runtime declarations via lint rules
 
 ### Caching Strategy
-- **Redis**: AI analysis results (15min), SynthData forecasts (15min)
+- **Redis**: AI analysis results (15min)
 - **In-memory**: Market catalogs (30min), sports metadata (24hr)
 - **SQLite**: Persistent signals, forecasts, track records
 
@@ -597,6 +587,6 @@ Frontend (markets page, signals page, landing)
 - **Backend**: Node.js 20+, SQLite (Turso), Redis
 - **Primary data**: TxLINE devnet (free World Cup tier, service level 1) — fixtures, odds, scores, Merkle proofs
 - **Settlement/verification**: Solana devnet, TxLINE `txoracle` program, custom `match-escrow` program (CPI → `validate_stat`)
-- **Secondary enrichment**: Polymarket gamma API (cross-venue edge), Kalshi (optional), Venice AI (Llama 3.3 70B), SynthData (ML forecasts), Open-Meteo (weather)
+- **Secondary enrichment**: Polymarket gamma API (cross-venue edge), Kalshi (optional), Venice AI (Llama 3.3 70B), Open-Meteo (weather)
 - **Wallets**: MetaMask, WalletConnect (EVM); Phantom/Solflare (Solana)
 - **Legacy**: Arc (Circle L1), Movement/Aptos, EVM trading contracts — retired or secondary

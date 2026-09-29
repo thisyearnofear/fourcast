@@ -108,7 +108,7 @@ export default function EvidenceBlock({
  {trackRecordOpen && (
  <div className={`mt-2 text-xs bg-white/[0.04] p-3 space-y-2`}>
  <p className={`${textColor} ${muted}`}>
- Fourcast&apos;s agent uses ensemble AI (Venice LLM + SynthData ML) to generate predictions.
+ Fourcast&apos;s agent uses AI reasoning (LLM + web evidence) to generate predictions.
  Performance is tracked retroactively via Brier scores and calibration metrics on resolved markets.
  </p>
  <a

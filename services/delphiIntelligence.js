@@ -5,7 +5,7 @@
  * Intelligence routing:
  * - Sports markets → TxLINE/TxOdds professional odds (primary), LLM fallback
  * - Politics/economics → LLM reasoning
- * - Crypto/technology → LLM reasoning (+ SynthData ML when available)
+ * - Crypto/technology → LLM reasoning
  * - Current events → LLM reasoning
  *
  * LLM access goes through services/llmRouter.js — an OpenAI-compatible
@@ -468,7 +468,7 @@ const NFL_TEAM_HINTS = [
 // ─── Crypto Intelligence ────────────────────────────────────────────────────
 
 async function estimateCryptoProbabilities(market, classification) {
-  // TODO: integrate SynthData ML models for crypto price forecasting
+  // SynthData ML removed 2026-09-29 — LLM router with crypto prompting only.
   // For now, use the LLM router with crypto-specific prompting
   return estimateWithLLM(market, classification);
 }

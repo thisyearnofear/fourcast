@@ -150,7 +150,6 @@ export const BRAND = {
     },
     venice: { name: 'Venice AI', type: 'LLM reasoning + forecasting', status: 'live' },
     brightData: { name: 'Bright Data', type: 'Web scrape + SERP', status: 'optional' },
-    synthData: { name: 'SynthData', type: 'ML forecasting models', status: 'live' },
   },
 
   quad: {

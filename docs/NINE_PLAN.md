@@ -69,7 +69,7 @@ Both facades preserve the exact import interface — zero consumer changes neede
 **Remaining:** The full `services/` directory still has 25+ flat files. The proposed sub-directory structure (`providers/`, `domain/`, `chain/`, `infra/`) is the next step:
 ```
 services/
-  providers/    # polymarket, kalshi, venice, synth, openMeteo, neynar  (pure I/O)
+  providers/    # polymarket, kalshi, venice, openMeteo, neynar  (pure I/O)
   domain/       # analysis, arbitrage, reputation, pathDependent       (pure logic)
   chain/        # movePublisher, chainConfig, cctp                      (on-chain I/O)
   infra/        # db, redis, telemetry, aiRouter                        (cross-cutting)
@@ -232,7 +232,7 @@ That is the headline loop. Autopilot is the execution capability inside it, not 
 
 ### P5.2 — Honest status page
 
-- `app/status` (public) reading `/api/meta/health`. Visitors see whether Polymarket/Kalshi/Venice/Synth are healthy right now.
+- `app/status` (public) reading `/api/meta/health`. Visitors see whether Polymarket/Kalshi/Venice are healthy right now.
 - This converts an embarrassment vector (flaky third parties) into a trust signal.
 
 ### P5.3 — SDK & extension story

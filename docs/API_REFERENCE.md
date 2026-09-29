@@ -250,7 +250,6 @@ Generate AI analysis for a market.
   },
   "options": {
     "useWeather": true,
-    "useSynthData": true,
     "analysisMode": "basic"
   }
 }
@@ -266,8 +265,7 @@ Generate AI analysis for a market.
     "confidence": "HIGH",
     "reasoning": "Weather conditions favor...",
     "keyFactors": ["Heavy rain expected", "Team A struggles in wet conditions"],
-    "weatherData": { ... },
-    "synthData": { ... }
+    "weatherData": { ... }
   }
 }
 ```

@@ -202,16 +202,6 @@ KALSHI_SECRET_KEY=your_secret_key
 2. Generate API key in account settings
 3. Complete KYC if required for trading
 
-### Optional: SynthData (ML Forecasts)
-
-```env
-SYNTH_API_KEY=your_synth_api_key
-```
-
-**Setup:**
-1. Get API key from https://synthdata.co
-2. Enables ML-backed forecasts for BTC, ETH, SOL, SPY, NVDA, etc.
-
 ### Optional: EVM Chains (Trading Contracts)
 
 ```env
@@ -531,6 +521,5 @@ See [Deployment Guide](./docs/DEPLOYMENT.md) for detailed instructions.
 - **Venice AI**: https://docs.venice.ai/
 - **Polymarket**: https://polymarket.com
 - **Kalshi**: https://kalshi.com
-- **SynthData**: https://synthdata.co
 - **Turso**: https://docs.turso.tech/
 - **Upstash Redis**: https://upstash.com/docs

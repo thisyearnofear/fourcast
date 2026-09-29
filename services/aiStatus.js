@@ -3,8 +3,6 @@
  * Reports current AI service configuration and availability.
  */
 
-import { synthService } from "./synthService.js";
-
 export function getAIStatus() {
   const hasRedis = !!process.env.REDIS_URL;
   return {
@@ -17,8 +15,8 @@ export function getAIStatus() {
       redis: { connected: hasRedis, ttl: "6 hours" },
     },
     synthData: {
-      available: synthService.isAvailable(),
-      supportedAssets: synthService.SUPPORTED_ASSETS,
+      available: false, // SynthData ML removed 2026-09-29
+      supportedAssets: [],
     },
   };
 }
