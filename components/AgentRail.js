@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { VERDICT_COLORS, ago } from '@/utils/arenaUi';
+import { VERDICT_COLORS, ago, railLamp } from '@/utils/arenaUi';
 import { emitBackdropPulse, BACKDROP_STATES } from '@/components/BackdropProvider';
 
 /**
@@ -20,13 +20,13 @@ import { emitBackdropPulse, BACKDROP_STATES } from '@/components/BackdropProvide
  * visibly ripples — the whole page reacts to the agent's heartbeat.
  *
  * Truth-first liveness: the lamp only reads LIVE when a cycle landed within
- * STALE_AFTER_MS (the worker runs every 5 min, so 30 min of silence means
+ * CYCLE_STALE_AFTER_MS (the worker runs every 5 min, so 30 min of silence means
  * it stalled). A snapshot-served feed (`stale: true` from the API) or an
  * aged-out cycle renders an amber STALE/STALLED state with the last cycle
- * age — never a fake green lamp, never a blank fold.
+ * age — never a fake green lamp, never a blank fold. The label/color/animation
+ * decision itself lives in the shared grammar module (`railLamp`, utils/arenaUi.js)
+ * so every live surface forks nothing.
  */
-
-const STALE_AFTER_MS = 30 * 60 * 1000; // 6 missed 5-min cycles
 
 function buildFeedItems(runs) {
   const items = [];
@@ -102,12 +102,9 @@ export default function AgentRail() {
   const items = buildFeedItems(runs);
   const dry = latest?.summary?.dryRun;
 
-  // Honest liveness: snapshot-served or aged-out cycles read amber, not green.
-  const cycleAgeMs = latest?.timestamp ? Date.now() - new Date(latest.timestamp).getTime() : null;
-  const stalled = cycleAgeMs != null && cycleAgeMs > STALE_AFTER_MS;
-  const stale = Boolean(feed?.stale) || stalled;
-  const lampLabel = stale ? (stalled ? 'STALLED' : 'STALE') : dry ? 'PAPER' : 'LIVE';
-  const lampColor = stale ? 'var(--color-sealed)' : dry ? 'var(--color-sealed)' : 'var(--color-accent)';
+  // Honest liveness (shared grammar): snapshot-served or aged-out cycles read
+  // amber, not green, and do not animate.
+  const lamp = railLamp({ timestamp: latest?.timestamp, staleFlag: feed?.stale, dryRun: dry });
 
   const counters = [];
   if (runs.length > 0) {
@@ -135,15 +132,18 @@ export default function AgentRail() {
           <>
             <span
               className="inline-flex items-center gap-1.5 text-[11px] font-semibold"
-              style={{ color: lampColor }}
+              style={{ color: lamp.color }}
               title={
-                stale
+                lamp.stale
                   ? 'No fresh cycle in the last 30 minutes — showing the last recorded state'
                   : undefined
               }
             >
-              <span className="mc-lamp mc-lamp--live inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'currentColor' }} />
-              {lampLabel}
+              {/* Pulse only while the lane is genuinely live: a stalled or
+                  snapshot-served feed keeps the amber lamp but stops
+                  animating (design.md: motion is reserved for live state). */}
+              <span className={`mc-lamp ${lamp.animated ? 'mc-lamp--live ' : ''}inline-block h-1.5 w-1.5 rounded-full`} style={{ background: 'currentColor' }} />
+              {lamp.label}
             </span>
             <span className="font-mono text-[10px] text-[var(--color-ink-faint)]">
               cycle · {ago(latest.timestamp)}
@@ -159,7 +159,7 @@ export default function AgentRail() {
           </>
         ) : (
           <span className="font-mono text-[10px] text-[var(--color-ink-faint)]">
-            agent syncing — first cycle lands within the hour
+            no agent cycle recorded yet
           </span>
         )}
       </div>

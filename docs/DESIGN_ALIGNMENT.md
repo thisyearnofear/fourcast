@@ -132,3 +132,51 @@ Candidates reviewed for a signature proof moment (2026-08-13):
 4. Consolidations + redirects (kill `/autopilot`, `/world-cup`, `/month`,
    `/weather` handling; `/positions` depth pass; `/signals` density diet).
 5. Perf pass vs budget.
+
+## Execution status — re-measured 2026-09-29
+
+Evidence: headless Chrome (real browser, production URL) + `curl` route timings +
+repo inspection. What landed, what deviated, what is still open.
+
+### Shipped
+- **Redirects all live** (307, verified with `curl -I`): `/weather → /labs/weather`,
+  `/autopilot → /labs/autopilot`, `/month → /`, `/agent → /arena?lane=mandate`,
+  `/notifications → /signals?tab=alerts`, `/world-cup → /proof` (query string
+  preserved — `/world-cup?fixture=X` → `/proof?fixture=X`).
+- **Nav is the proposal, not the old plan**: primary = Markets · Positions ·
+  **Arena** · Private; overflow = Signals · Agent · Labs. `design.md` and the
+  `PageNav.js` header comment said "Markets · Positions · Private (+ Alerts)"
+  until 2026-09-29 — corrected.
+- **Arena is a real surface** (client-rendered, ~3.9 k chars of text): ledger +
+  mandate lanes, bankroll, counters, decision/execution rows.
+- **Live-presence grammar works as designed**: the rail renders `STALLED` with
+  the cycle age and `0 fresh edges` rather than a fake green lamp.
+
+### Open (measured, not theoretical)
+1. **`/proof?chain=solana` never settles in the browser.** The Solana tab
+   renders `<WorldCupClient bare />` — the retired hackathon page — which opens
+   an unconditional permanent `EventSource('/api/worldcup/stream')`. Measured:
+   `/proof?chain=canton` dumps 41 KB in ≤45 s; `/proof?chain=solana` produced
+   **0 bytes** in the same window, twice. This is the same component this review
+   already recorded as "`/world-cup` times out entirely (30s+) — dead hackathon
+   artifact in production", now re-hosted behind the Private → Solana tab, which
+   is also where every receipt deep link lands (`/world-cup?fixture=X` →
+   `/proof?fixture=X` → Solana chain). The retire-it recommendation was never
+   executed; only the route was redirected.
+2. **Perf budget not implemented as written.** `scripts/check-bundle-size.js`
+   covers *server route bundles* (warn 750 KB / fail 900 KB) and
+   `lighthouserc.json` asserts FCP/TBT/CLS + category scores — no route-transfer
+   budget (≤600 KB desktop / ≤450 KB mobile) and no INP assertion anywhere.
+3. **Stale surfaces behind live redirects**: `app/world-cup/page.js` is
+   unreachable code (the 307 shadows it), `components/RouteGuide.js` still tours
+   `/agent` and `/world-cup`, and `PageNav`'s Private item still carries
+   `onboardId: "world-cup"`.
+4. **Agent lane is stalled, not live**: last cycle **35 d** ago (`STALLED`,
+   `0 fresh edges`) while the hero promises "every decision provable". The
+   `AgentRail` no-data fallback still reads "agent syncing — first cycle lands
+   within the hour", which is the wrong promise when the feed is simply absent.
+5. **No design coverage for the sports-intelligence surface.** The provider
+   list on `/status` already ships "Sports intelligence — TxLINE-backed miner"
+   (healthy, ~200 ms) — our Season II submission — but neither `design.md` nor
+   this review describes a visual language or IA slot for scores/fixtures/
+   results. That is the largest strategy↔design gap left.

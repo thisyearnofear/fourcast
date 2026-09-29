@@ -31,8 +31,9 @@ one tap away. Trade language leads (`Markets`, `Positions`, `Private`, `Settle`,
 4. JSON / hashes collapsed by default behind “Raw ledger”.
 5. Mobile — one primary CTA under the hero metric; no multi-paragraph helpers
    in the first viewport.
-6. Primary nav — Markets · Positions · Private. Overflow holds Signals,
-   Mandate, Labs, Alerts.
+6. Primary nav — Markets · Positions · Arena · Private. Overflow holds Signals,
+   Agent, Labs. (Alerts folded into Signals as a tab; `/agent` and
+   `/notifications` are redirects, not destinations.)
 
 ## Theme
 

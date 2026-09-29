@@ -130,7 +130,9 @@ export async function GET() {
       },
       telegraph: {
         label: 'Sports intelligence',
-        description: 'TxLINE-backed miner — live scores, fixtures, and fact checks',
+        // SPORTS_SCORE + GAME_RESULT only — the miner dropped WEB_SEARCH /
+        // FACT_CHECK after the Aug 25 epoch scored 0 on them (docs/HACKATHONS.md).
+        description: 'TxLINE-backed miner — live scores and final results (SPORTS_SCORE, GAME_RESULT)',
         ...telegraph,
       },
     },

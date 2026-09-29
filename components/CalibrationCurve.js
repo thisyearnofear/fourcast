@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshCw, Target, Crosshair2, BarChart3, ChevronRight } from 'lucide-react';
+import { RefreshCw, Target, Crosshair, BarChart3, ChevronRight } from 'lucide-react';
 import Reveal from '@/components/motion/Reveal';
 
 const mono = { fontFamily: 'var(--font-mono, monospace)' };
@@ -346,7 +346,7 @@ export function CalibrationCurve() {
         <div className="border-t border-[var(--color-rule)] px-4 py-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[10px] leading-relaxed">
             <InterpretationItem
-              icon={<Crosshair2 className="h-3 w-3" />}
+              icon={<Crosshair className="h-3 w-3" />}
               label="On diagonal"
               desc="Bucket is perfectly calibrated — stated confidence matches hit rate."
             />

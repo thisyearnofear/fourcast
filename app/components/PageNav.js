@@ -20,10 +20,13 @@ import { replayTour } from "@/components/RouteGuide";
  */
 
 /**
- * Nav architecture:
- *  - PRIMARY_NAV: Markets · Positions · Private (always visible)
- *  - OVERFLOW_NAV: Signals · Agent · Labs · Alerts
+ * Nav architecture (as implemented — verified 2026-09-29):
+ *  - PRIMARY_NAV: Markets · Positions · Arena · Private (always visible)
+ *  - OVERFLOW_NAV: Signals · Agent · Labs
  *  - UTILITY: tour replay + audience switcher
+ *
+ * `/agent` redirects to `/arena?lane=mandate` and `/notifications` to
+ * `/signals?tab=alerts` (next.config.mjs), so neither is a nav destination.
  *
  * Labels overridden via BRAND.navLabels in constants/brand.js.
  */
