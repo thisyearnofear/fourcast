@@ -8,7 +8,9 @@
  *      auth and execution server-side.
  *   2. Direct Exa REST API (EXA_API_KEY) — fallback if gateway unavailable
  *      or rate-limited.
- *   3. Parallel AI Search REST API (PARALLEL_API_KEY required) — third fallback.
+ *   3. Parallel AI Search REST API — MANUAL-RESEARCH ONLY, never in the
+ *      automated loop (free-only stance 2026-09-29: trial balance, no
+ *      perpetual free tier). Gated behind DELPHI_AGENT_ENABLE_PARALLEL=true.
  *   4. Firecrawl Search (free without key; FIRECRAWL_API_KEY for higher limits) — final fallback.
  *
  * A 6h per-question cache caps spend (hourly agent cycles → ≤4 refreshes/question/day).
@@ -304,8 +306,10 @@ export async function retrieveEvidence(question, { numResults = 5, maxCharacters
     snippets = await retrieveEvidenceDirectExa(question, { numResults, maxCharacters });
   }
 
-  // 3. Fallback to Parallel AI Search (requires PARALLEL_API_KEY)
-  if (!snippets) {
+  // 3. Parallel AI Search — MANUAL-RESEARCH ONLY (free-only stance).
+  // Never fires in the automated loop unless explicitly opted in, so a key
+  // sitting in .env.local for ad-hoc queries can't be drained by hourly cycles.
+  if (!snippets && process.env.DELPHI_AGENT_ENABLE_PARALLEL === 'true') {
     snippets = await retrieveEvidenceViaParallel(question, { numResults, maxCharacters });
   }
 
