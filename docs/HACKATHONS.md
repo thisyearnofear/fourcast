@@ -122,7 +122,16 @@ positioning claims.
 
 #### Season II readiness checklist
 - [ ] Confirm Season II rules, tracks, prize split, and qualification on the
-      official page (do not trust this plan's numbers).
+      official page (do not trust this plan's numbers). **P6 proof inquiry
+      needs no reply first** — the product no longer depends on
+      `stat-validation` clearing (probe exhibit stays attached to the open
+      proof ask; app receipt/SSE paths work offline).
+- [x] honest steady-state lanes (2026-09-29): arena lane is `PAUSED` via
+      `ARENA_LANE_MODE=paused` (rail + feed route + shared `railLamp`
+      grammar), World Cup tab SSE is opt-in ("Connect live feed", off by
+      default), receipt/replay/verify render with the stream off. Kelly suite
+      back to green (stale `sizePct` expectation 0.04 → 0.15, matching the
+      real fractional-Kelly math).
 - [x] P0 instrumentation: `npm run survey`, `GET /api/asked`, outcome counters,
       upstream ledger, and `degraded` `/health` (telegraph-miner v1.1). Its
       first local run caught ESPN answering 403 to custom User-Agents, and
