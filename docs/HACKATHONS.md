@@ -218,7 +218,26 @@ positioning claims.
 - [ ] P4 Track 3 app decision (paid-rail buyer on top of the decision core).
 - [ ] P5 judge/agent packaging: `/openapi.json`, `/llms.txt`, a social card,
       a demo.
-- [ ] P6 bug report drafted from measured findings.
+- [x] P6 inquiry filed with evidence **and worked around without TxLINE**
+  (`2026-09-29`): no support reply is expected, so the product no longer
+  depends on `stat-validation` clearing. The proof-probe exhibit
+  (`scripts/proof-probe*.mjs`, both request shapes 500 on SL1/SL12) stays
+  attached to the open `[ ]` proof item above as the ask. Worked-with-what-we-
+  have posture, decided the same day:
+  - **App receipt chain:** every fixture card derives its score from cached
+    `finalScore`/proof `statsToProve` first and says `pending` otherwise —
+    no TxLINE Merkle fetch in the render path, so the World Cup tab and the
+    `/proof?chain=solana` deep link (`?fixture=`) render fully offline.
+    `/api/worldcup/verify` reconciles receipt + cached proof without calling
+    `stat-validation`; the 404 copy tells the user to snapshot the fixture
+    first instead of implying a live proof can be fetched.
+  - **App SSE:** the client `EventSource` is opt-in ("Connect live feed", off
+    by default, `shouldOpenTxlineStream` in `utils/arenaUi.js`) because the
+    unconditional stream kept `/proof?chain=solana` from reaching idle
+    (0 bytes in 45 s); fixtures/receipts/replay all load with the stream off.
+  - **Miner:** `stat-validation` shapes already tried live, failure ledgered
+    in `txline-proofs`; historical-snapshot/replay + ESPN remain the answer
+    path. No `verified: true` without a real proof.
 
 ---
 

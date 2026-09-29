@@ -14,6 +14,11 @@ import { dismissGuide, isGuideDismissed, resetTour } from '@/lib/tourState';
  * (banner + routes) from one storage key.
  *
  * Routes: 'agent' | 'world-cup' | 'positions'
+ *
+ * NOTE (2026-09-29): 'agent' and 'world-cup' are history. Both URLs are
+ * redirects now (next.config) and the default export renders nothing for
+ * them — the entries below are kept so old dismissal keys in
+ * localStorage still resolve and nothing throws.
  */
 
 // Tour visibility/dismissal lives in one unified storage object — see
@@ -69,6 +74,10 @@ export function replayTour() {
 }
 
 export default function RouteGuide({ route }) {
+  // Retired-route guard: /agent and /world-cup are now redirects (next.config).
+  // Render nothing for them instead of touring a URL that immediately
+  // navigates away — the PageNav "Replay the tour" entry points at live lanes.
+  if (route === 'agent' || route === 'world-cup') return null;
   const [visible, setVisible] = useState(false);
   const guide = ROUTE_GUIDES[route];
 
@@ -132,10 +141,10 @@ export default function RouteGuide({ route }) {
 export function TourLink({ className = '' }) {
   return (
     <Link
-      href="/agent"
+      href="/arena?lane=mandate"
       onClick={replayTour}
       className={`mc-nav-link no-underline inline-flex items-center gap-1.5 ${className}`}
-      title="Re-show the route guides on /agent, /world-cup, and /positions"
+      title="Re-show the route guides on live lanes (arena, positions)"
     >
       <Sparkles className="h-3 w-3" />
       Replay the tour

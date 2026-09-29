@@ -44,16 +44,35 @@ export function cycleLiveness({ timestamp, staleFlag = false, now = Date.now() }
 }
 
 /**
- * The rail lamp in one place: label + token color + whether it may animate.
+ * Rail lamp mode resolution.
+ *
  * Grammar: **motion means the lane just cycled; color means semantics** —
  * STALE/STALLED stop animating entirely, while a fresh PAPER (dry-run) cycle
  * still pulses because the agent is genuinely running, just in simulation.
+ *
+ * laneMode:
+ *   - 'live'   — worker cycling (default): label from freshness (LIVE/PAPER vs
+ *                 STALE/STALLED), emerald when fresh.
+ *   - 'paused' — operator-paused steady state (ARENA_LANE_MODE=paused): label
+ *                 is always PAUSED, lamp sealed-amber, never animates. Chosen
+ *                 because a workerless lane must not imply it will recover.
  */
-export function railLamp({ timestamp, staleFlag = false, dryRun = false, now = Date.now() } = {}) {
+export function railLamp({ timestamp, staleFlag = false, dryRun = false, now = Date.now(), laneMode = 'live' } = {}) {
+  if (laneMode === 'paused') {
+    return {
+      ageMs: timestamp ? Math.max(0, now - new Date(timestamp).getTime()) : null,
+      stalled: false,
+      stale: true,
+      animated: false,
+      label: 'PAUSED',
+      color: 'var(--color-sealed)',
+      laneMode: 'paused',
+    };
+  }
   const liveness = cycleLiveness({ timestamp, staleFlag, now });
   const label = liveness.stale ? (liveness.stalled ? 'STALLED' : 'STALE') : dryRun ? 'PAPER' : 'LIVE';
   const color = liveness.stale || dryRun ? 'var(--color-sealed)' : 'var(--color-accent)';
-  return { ...liveness, label, color };
+  return { ...liveness, label, color, laneMode: 'live' };
 }
 
 /** Past-tense compact age: '12m', '3.2h', '2d' */
@@ -68,6 +87,17 @@ export function ago(ts) {
 /** Past-tense with 'ago' suffix for sentence contexts: '12m ago' */
 export function timeAgo(ts) {
   return `${ago(ts)} ago`;
+}
+
+/**
+ * Whether the World Cup client should open its TxLINE SSE stream.
+ *
+ * Default-off: opening it unconditionally pins an EventSource per page view
+ * (measured: /proof?chain=solana never settles in the browser, 0 bytes in
+ * 45s vs 41KB for the Canton tab). The user opts in via "Connect live feed".
+ */
+export function shouldOpenTxlineStream({ liveEnabled = false } = {}) {
+  return liveEnabled === true;
 }
 
 /** Future-tense countdown: 'in 4h', 'settling' */

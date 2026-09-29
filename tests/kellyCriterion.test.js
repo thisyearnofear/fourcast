@@ -64,8 +64,8 @@ describe('calculateKellySizing', () => {
     const result = calculateKellySizing(0.65, 0.50, 0.5, 'HIGH');
     expect(result.kellyPct).toBeCloseTo(0.3, 2);
     // With riskTolerance=0.5, confidenceMultiplier=1.0 (HIGH)
-    // fractionalKelly = 0.3 * (0.5 * 0.25) * 1.0 = 0.3 * 0.125 = 0.0375
-    expect(result.sizePct).toBeCloseTo(0.04, 2); // rounded
+    // fractionalKelly = 0.3 * 0.5 * 1.0 = 0.15 (the *0.25 double-penalty was removed)
+    expect(result.sizePct).toBeCloseTo(0.15, 2);
     expect(result.actionable).toBe(true);
   });
 

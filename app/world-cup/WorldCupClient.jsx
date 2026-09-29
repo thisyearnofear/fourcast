@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AppShell, SecondaryNav } from '@/app/components/PageNav';
+import GlassPanel from '@/components/ui/GlassPanel';
 import {
   Activity,
   AlertTriangle,
@@ -23,6 +23,7 @@ import RouteGuide from '@/components/RouteGuide';
 import Reveal from '@/components/motion/Reveal';
 import { useCountUp } from '@/hooks/useCountUp';
 import GlowList from '@/components/ui/GlowList';
+import { shouldOpenTxlineStream } from '@/utils/arenaUi';
 
 /* ------------------------------- helpers -------------------------------- */
 
@@ -537,25 +538,25 @@ function ReplayViewer({ replay, onClose }) {
   );
 }
 
-/* --------------------------- proof-loop narrative ------------------------ */
+/* --------------------------- verification explainer ------------------------ */
+/* Static narrative strip: what each expanded fixture card offers. Pure markup,
+   no fixture data — renders even with zero fixtures. */
 
 const PROOF_LOOP_STAGES = [
   { key: 'evidence', label: 'Evidence', detail: 'TxLINE consensus + cross-venue prices recorded pre-match' },
   { key: 'decision', label: 'Policy-bound decision', detail: 'agent allocates or passes under a versioned risk policy' },
   { key: 'receipt', label: 'Receipt', detail: 'evidence + policy + simulation bound into one hash' },
-  { key: 'proof', label: 'Proof', detail: 'TxLINE finalises the stat; Merkle root anchors the outcome' },
+  { key: 'proof', label: 'Proof', detail: 'Cached TxLINE stat bundle — fetched live where the tier serves it' },
   { key: 'reconcile', label: 'Reconciliation', detail: 'Solana PDA check confirms the outcome the receipt predicted' },
 ];
 
-function ProofLoopStrip({ fixtures }) {
-  const proven = fixtures.filter((f) => f.proof?.merkleRoot || f.proof?.dailyRootPda).length;
-  const finals = fixtures.filter((f) => f.status === 'final').length;
+function VerificationExplainer({ proven, finals, tracked }) {
   return (
     <section className="proof-loop platform-open-section px-1 py-5 sm:px-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="mc-kicker">Verified decision → reconciled outcome</div>
+        <div className="mc-kicker">Decision → receipt → reconciled outcome</div>
         <div className="font-mono text-[10px] text-[var(--color-ink-faint)]">
-          {proven} proof-backed · {finals} final · {fixtures.length} tracked
+          {proven} proof-backed · {finals} final · {tracked} tracked
         </div>
       </div>
       <ol className="proof-loop__stages mt-4 grid gap-0 sm:grid-cols-5">
@@ -579,7 +580,7 @@ function ProofLoopStrip({ fixtures }) {
 
 /* --------------------------------- page --------------------------------- */
 
-export default function WorldCupClient({ bare = false }) {
+export default function WorldCupClient({ bare = false, initialLiveEnabled = false }) {
   const [fixtures, setFixtures] = useState([]);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -589,8 +590,14 @@ export default function WorldCupClient({ bare = false }) {
   const [replayingId, setReplayingId] = useState(null);
   const [verifyingId, setVerifyingId] = useState(null);
   const [verifications, setVerifications] = useState({});
-  const [streamStatus, setStreamStatus] = useState('connecting'); // connecting | open | error | closed
+  const [streamStatus, setStreamStatus] = useState('off'); // off | connecting | open | error | closed
   const [streamBackend, setStreamBackend] = useState(null); // 'txline-sse' | 'polling'
+  // Live feed is opt-in (see shouldOpenTxlineStream in utils/arenaUi.js):
+  // opening the SSE unconditionally pins an EventSource per page view and
+  // /proof?chain=solana never reached network idle (0 bytes in 45s).
+  // `initialLiveEnabled` is a test/deployment escape hatch only; the shipped
+  // UI always starts off and lets the user opt in.
+  const [liveEnabled, setLiveEnabled] = useState(initialLiveEnabled);
   const [selectedFixture, setSelectedFixture] = useState(null); // fixture object for Proof Theatre
 
   // Deep-link support: ?fixture=<id> opens Proof Theatre on that fixture.
@@ -633,12 +640,18 @@ export default function WorldCupClient({ bare = false }) {
     load();
   }, [load]);
 
-  // ── SSE stream subscription ────────────────────────────────────────────
+  // ── SSE stream subscription (OPT-IN) ───────────────────────────────────
   // The /api/worldcup/stream route proxies the TxLINE live feed (or falls back
   // to a polling loop) and emits deltas. We merge each delta into the fixtures
-  // state so the UI updates without a refresh.
+  // state so the UI updates without a refresh. Default-off: the connection is
+  // opened only when the user enables "Connect live feed" — see the measured
+  // render hang documented on shouldOpenTxlineStream (utils/arenaUi.js).
   useEffect(() => {
     if (typeof window === 'undefined' || typeof EventSource === 'undefined') return undefined;
+    if (!shouldOpenTxlineStream({ liveEnabled })) {
+      setStreamStatus('off');
+      return undefined;
+    }
     const es = new EventSource('/api/worldcup/stream');
     setStreamStatus('connecting');
 
@@ -686,7 +699,7 @@ export default function WorldCupClient({ bare = false }) {
       es.close();
       setStreamStatus('closed');
     };
-  }, []);
+  }, [liveEnabled]);
 
   const filtered = useMemo(() => {
     if (tab === 'all') return fixtures;
@@ -728,6 +741,9 @@ export default function WorldCupClient({ bare = false }) {
   const cutoffPassed = status ? new Date(status.wcCutoff || status.cutoff || 0).getTime() < Date.now() : false;
 
   const streamBadge = (() => {
+    if (streamStatus === 'off') {
+      return { color: 'border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] text-[var(--color-ink-faint)]', icon: Activity, label: 'Live feed off', toggle: true };
+    }
     if (streamStatus === 'connecting') {
       return { color: 'border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] text-[var(--color-ink-muted)]', icon: Activity, label: 'Connecting\u2026' };
     }
@@ -745,28 +761,50 @@ export default function WorldCupClient({ bare = false }) {
   })();
 
   const subnav = (
-    <SecondaryNav
-      items={[
+    <div className="mc-tab-strip" role="tablist" aria-label="Fixture filter">
+      {[
         { id: 'all', label: 'All fixtures' },
         { id: 'live', label: 'Live' },
         { id: 'scheduled', label: 'Upcoming' },
         { id: 'final', label: 'Final' },
-      ]}
-      activeItem={tab}
-      onChange={setTab}
-    />
+      ].map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={tab === item.id}
+          onClick={() => setTab(item.id)}
+          className={`mc-tab ${tab === item.id ? 'is-active' : ''}`}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
   );
 
   const statusRow = (
     <div className="flex items-center gap-2">
       {streamBadge && (
-        <div
-          data-testid="stream-badge"
-          className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${streamBadge.color}`}
-        >
-          <streamBadge.icon size={12} />
-          {streamBadge.label}
-        </div>
+        liveEnabled ? (
+          <div
+            data-testid="stream-badge"
+            className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${streamBadge.color}`}
+          >
+            <streamBadge.icon size={12} />
+            {streamBadge.label}
+          </div>
+        ) : (
+          <button
+            type="button"
+            data-testid="stream-badge"
+            onClick={() => setLiveEnabled(true)}
+            title="Open the TxLINE live feed connection (SSE). Off by default so the page settles."
+            className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${streamBadge.color} hover:opacity-80`}
+          >
+            <streamBadge.icon size={12} />
+            {streamBadge.label}
+          </button>
+        )
       )}
       {status && (
         <div className={`inline-flex items-center gap-2 border px-3 py-1.5 text-xs ${
@@ -787,9 +825,11 @@ export default function WorldCupClient({ bare = false }) {
         <ProofTheatre fixture={selectedFixture} onClose={() => setSelectedFixture(null)} />
       )}
 
-      <RouteGuide route="world-cup" />
-
-      <ProofLoopStrip fixtures={fixtures} />
+      <VerificationExplainer
+        proven={fixtures.filter((f) => f.proof?.merkleRoot || f.proof?.dailyRootPda).length}
+        finals={fixtures.filter((f) => f.status === 'final').length}
+        tracked={fixtures.length}
+      />
 
       {isReplayMode && (
         <div className="border border-[var(--color-sealed)]/30 bg-[var(--color-sealed)]/[0.06] p-4 flex items-start gap-3">
@@ -797,7 +837,7 @@ export default function WorldCupClient({ bare = false }) {
           <div className="text-sm text-[var(--color-sealed)]/90">
             <strong className="font-semibold">Replay mode active.</strong>{' '}
             {cutoffPassed
-              ? 'TxLINE hackathon access ended on July 19, 2026. The app is serving cached, cryptographically-verified snapshots of completed matches so the product experience remains intact.'
+              ? 'TxLINE hackathon access ended on July 19, 2026. The app is serving cached snapshots of completed matches — scores from cached finals, proofs where the tier served them — so the product experience remains intact.'
               : 'TxLINE token is not configured, so we are showing cached snapshots until live credentials are provided.'}
           </div>
         </div>
@@ -875,14 +915,18 @@ export default function WorldCupClient({ bare = false }) {
   }
 
   return (
-    <AppShell
-      wallet={true}
-      title="Decision receipts"
-      subtitle="Sealed decisions anchored on Solana"
-      actions={statusRow}
-      subheader={subnav}
-    >
-      {content}
-    </AppShell>
+    <main className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+      <GlassPanel className="p-4 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)]">Decision receipts</h1>
+            <p className="mt-1 text-xs text-[var(--color-ink-muted)]">Sealed decisions anchored on Solana</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">{statusRow}</div>
+        </div>
+        <div className="mt-3">{subnav}</div>
+        <div className="mt-4">{content}</div>
+      </GlassPanel>
+    </main>
   );
 }

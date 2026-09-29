@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CYCLE_STALE_AFTER_MS, cycleLiveness, railLamp } from '@/utils/arenaUi';
+import { CYCLE_STALE_AFTER_MS, cycleLiveness, railLamp, shouldOpenTxlineStream } from '@/utils/arenaUi';
 
 /**
  * Honest-liveness grammar (design.md motion policy; AgentRail consumes it).
@@ -86,5 +86,37 @@ describe('railLamp', () => {
   it('keeps a stalled real cycle STALLED rather than PAPER', () => {
     const lamp = railLamp({ timestamp: at(2 * 24 * 60 * 60 * 1000), dryRun: true, now: NOW });
     expect(lamp.label).toBe('STALLED');
+  });
+
+  it('reads PAUSED in paused lane mode regardless of cycle age', () => {
+    const old = railLamp({ timestamp: at(35 * 24 * 60 * 60 * 1000), now: NOW, laneMode: 'paused' });
+    expect(old.label).toBe('PAUSED');
+    expect(old.color).toBe('var(--color-sealed)');
+    expect(old.animated).toBe(false);
+    expect(old.laneMode).toBe('paused');
+    const fresh = railLamp({ timestamp: at(60 * 1000), now: NOW, laneMode: 'paused' });
+    expect(fresh.label).toBe('PAUSED');
+    expect(fresh.animated).toBe(false);
+  });
+
+  it('defaults to live lane mode', () => {
+    expect(railLamp({ timestamp: at(60 * 1000), now: NOW }).laneMode).toBe('live');
+  });
+});
+
+describe('shouldOpenTxlineStream', () => {
+  it('stays off by default so the page settles', () => {
+    expect(shouldOpenTxlineStream()).toBe(false);
+    expect(shouldOpenTxlineStream({})).toBe(false);
+    expect(shouldOpenTxlineStream({ liveEnabled: false })).toBe(false);
+  });
+
+  it('opens only on explicit opt-in', () => {
+    expect(shouldOpenTxlineStream({ liveEnabled: true })).toBe(true);
+  });
+
+  it('treats truthy non-boolean input as off (explicit true only)', () => {
+    expect(shouldOpenTxlineStream({ liveEnabled: 1 })).toBe(false);
+    expect(shouldOpenTxlineStream({ liveEnabled: 'yes' })).toBe(false);
   });
 });

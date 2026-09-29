@@ -103,8 +103,10 @@ export default function AgentRail() {
   const dry = latest?.summary?.dryRun;
 
   // Honest liveness (shared grammar): snapshot-served or aged-out cycles read
-  // amber, not green, and do not animate.
-  const lamp = railLamp({ timestamp: latest?.timestamp, staleFlag: feed?.stale, dryRun: dry });
+  // amber, not green, and do not animate. `laneMode` comes from the feed
+  // route (ARENA_LANE_MODE): 'paused' is the steady state when no worker is
+  // cycling, so the rail reads PAUSED instead of STALLED.
+  const lamp = railLamp({ timestamp: latest?.timestamp, staleFlag: feed?.stale, dryRun: dry, laneMode: feed?.laneMode });
 
   const counters = [];
   if (runs.length > 0) {
@@ -135,7 +137,9 @@ export default function AgentRail() {
               style={{ color: lamp.color }}
               title={
                 lamp.stale
-                  ? 'No fresh cycle in the last 30 minutes — showing the last recorded state'
+                  ? lamp.laneMode === 'paused'
+                    ? 'Agent lane paused by operator — showing the last recorded cycles as archive'
+                    : 'No fresh cycle in the last 30 minutes — showing the last recorded state'
                   : undefined
               }
             >
