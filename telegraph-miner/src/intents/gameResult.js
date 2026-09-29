@@ -6,6 +6,8 @@
  *                The only independently verifiable answer this miner gives.
  *   2. ESPN    — free public scoreboards and team schedules. Signed by this
  *                miner, but `verified: false`: nothing on-chain backs it.
+ *   3. OpenLigaDB — keyless community finals (Bundesliga etc.) for asks the
+ *                first two miss. Same honesty rule: `verified: false`.
  *
  * An answer is only ever about a *completed* game. A live or scheduled game is
  * not a result; it is reported as no result, with the reason.
@@ -16,6 +18,7 @@
 
 import { txline } from '../txline.js';
 import { findGame } from '../espn.js';
+import { findOpenLigaGame } from '../openLigaDb.js';
 import { txlineCompetitionId } from '../utils.js';
 import { describe, resultFromScores, winnerFor } from '../answer.js';
 import { readScores, homeAway, isFinishedState, matchFixtures } from '../txlineScores.js';
@@ -61,10 +64,26 @@ export async function handleGameResult(params = {}) {
     };
   }
 
+  // 3. OpenLigaDB — keyless community finals (Bundesliga etc.). Same honesty
+  // rule as ESPN: signed by this miner, verified: false, proof: null.
+  const openLiga = await findOpenLigaGame({ team, opponent, competition: comp, date }).catch(() => null);
+  if (openLiga?.answer) {
+    openLiga.answer.summary = describe(openLiga.answer);
+    return {
+      answer: openLiga.answer,
+      metadata: {
+        source: 'openligadb',
+        verification: 'none',
+        fallback_from: txlineOutcome.metadata?.error ?? null,
+        fixture_id: openLiga.answer.fixture_id,
+      },
+    };
+  }
+
   return noResult(
     'no_completed_match',
     `No completed match found for ${describeAsk({ team, opponent, competition: comp, date })}`,
-    { txline: txlineOutcome.metadata?.error ?? null, espn_searched: searched }
+    { txline: txlineOutcome.metadata?.error ?? null, espn_searched: searched, openliga_searched: openLiga?.searched ?? null }
   );
 }
 

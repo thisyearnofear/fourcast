@@ -87,6 +87,30 @@ function unstub() {
   globalThis.fetch = realFetch;
 }
 
+// ─── OpenLigaDB (keyless finals) ───────────────────────────────────────────
+
+const openLiga = await import('../src/openLigaDb.js');
+
+function stubOpenLiga() {
+  realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const u = String(url);
+    if (u.includes('api.openligadb.de/getmatchdata/bl1/2026')) {
+      return json([{
+        matchID: 83156,
+        matchDateTime: '2026-08-28T20:30:00',
+        matchDateTimeUTC: '2026-08-28T18:30:00Z',
+        team1: { teamId: 40, teamName: 'FC Bayern München', shortName: 'Bayern' },
+        team2: { teamId: 9, teamName: '1. FC Union Berlin', shortName: 'Union Berlin' },
+        matchIsFinished: true,
+        matchResults: [{ resultName: 'Endergebnis', pointsTeam1: 7, pointsTeam2: 0 }],
+      }]);
+    }
+    if (u.includes('api.openligadb.de')) return json([]);
+    return realFetch(url, init);
+  };
+}
+
 // ─── answer shape ──────────────────────────────────────────────────────────
 
 describe('attributed answers', () => {
@@ -197,6 +221,37 @@ describe('ESPN fallback', () => {
   it('a postponed game is not a final', async () => {
     const { answer } = await espn.findGame({ team: 'Padres', competition: 'MLB', wantFinal: true });
     assert.equal(answer, null);
+  });
+});
+
+describe('OpenLigaDB fallback', () => {
+  before(stubOpenLiga);
+  after(unstub);
+  beforeEach(() => openLiga.clearOpenLigaCache());
+
+  it('answers a Bundesliga final with verified:false and no proof', async () => {
+    const { answer } = await openLiga.findOpenLigaGame({ team: 'Bayern', competition: 'Bundesliga' });
+    assert.equal(answer.status, 'final');
+    assert.equal(answer.result, 'home_win');
+    assert.equal(answer.winner, 'FC Bayern München');
+    assert.equal(answer.home_score, 7);
+    assert.equal(answer.away_score, 0);
+    assert.equal(answer.source, 'openligadb');
+    assert.equal(answer.verified, false);
+    assert.equal(answer.proof, null);
+    assert.match(answer.summary, /FC Bayern München beat 1\. FC Union Berlin 7-0 \(final\)/);
+  });
+
+  it('reports absence instead of guessing an unknown team', async () => {
+    const { answer, searched } = await openLiga.findOpenLigaGame({ team: 'No Such Team Xyz' });
+    assert.equal(answer, null);
+    assert.deepEqual(searched.leagues, ['bl1', 'bl2', 'bl3']);
+  });
+
+  it('a named opponent narrows to their head-to-head game', async () => {
+    const { answer } = await openLiga.findOpenLigaGame({ team: 'Bayern', opponent: 'Union Berlin' });
+    assert.equal(answer.fixture_id, 'openligadb:83156');
+    assert.equal(answer.result, 'home_win');
   });
 });
 

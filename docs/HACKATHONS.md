@@ -229,6 +229,27 @@ positioning claims.
       fires Oct 19/22/25 09:00 UTC into `.renewal-reminders.log`; the full
       resubscribe + env-push runbook is in `telegraph-miner/README.md`
       ("Renewing the subscription").
+- [x] **Free-alternative coverage without TxLINE (2026-09-29, no reply
+      expected).** Instead of conceding asks the free bundle genuinely lacks,
+      the miner now answers from keyless public feeds with the same honesty
+      rule (`verified: false`, `proof: null`, signed attestation only):
+      - **OpenLigaDB finals** (`telegraph-miner/src/openLigaDb.js`, wired as
+        source #3 in both intents): community soccer DB, no key, no account.
+        Measured live: Bundesliga `bl1` serves all 306 matches of 2026/27
+        (e.g. Bayern 7–0 Union Berlin resolves end-to-end). Covers the German
+        leagues TxLINE's bundle and ESPN both miss.
+      - **TheSportsDB secondary** (no-key `api/v1/json/3/`, measured live:
+        Arsenal resolves with ESPN cross-ids `idESPN:359`/`idAPIfootball:42`)
+        for team lookups and cross-league confirmation.
+      - **Parallel AI Search** (`services/evidenceRetriever.js` fallback 3,
+        key in gitignored `chmod 600` `.env.local`, `PARALLEL_API_KEY` blank
+        in `.env.local.example`): turbo mode measured live at HTTP 200 with
+        LLM-ready excerpts (~$0.001/request trial balance). The Delphi
+        forecaster grounds on it when gateway + direct Exa are unavailable;
+        the 6h cache caps spend. Firecrawl (1,000 free credits/mo, no card)
+        stays the final fallback.
+      - TxLINE + ESPN remain sources #1/#2; OpenLigaDB is #3; proofs stay
+        `verified: true` only with a real Merkle root.
 - [ ] P3 evaluator WASM decision: a `GAME_RESULT` attribution scorer. Build it,
       or write it up as a finding.
 - [ ] P4 Track 3 app decision (paid-rail buyer on top of the decision core).

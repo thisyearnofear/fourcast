@@ -2,7 +2,8 @@
  * SPORTS_SCORE — the live or most recent score for a team, fixture or league.
  *
  * Sources: TxLINE first (a final can carry a Merkle proof), ESPN when TxLINE
- * has nothing live or final for the ask. A scheduled TxLINE fixture is only
+ * has nothing live or final for the ask, OpenLigaDB (keyless community
+ * finals) when both miss. A scheduled TxLINE fixture is only
  * returned when ESPN has nothing better, and it carries no score — a game that
  * has not started has no score, not 0-0.
  *
@@ -11,6 +12,7 @@
 
 import { txline } from '../txline.js';
 import { findGame } from '../espn.js';
+import { findOpenLigaGame } from '../openLigaDb.js';
 import { txlineCompetitionId } from '../utils.js';
 import { describe, resultFromScores, winnerFor } from '../answer.js';
 import { readScores, homeAway, matchFixtures } from '../txlineScores.js';
@@ -46,11 +48,28 @@ export async function handleSportsScore(params = {}) {
       },
     };
   }
+
+  // OpenLigaDB — keyless community finals for German-league asks TxLINE and
+  // ESPN both miss. Same honesty rule: verified: false, proof: null.
+  const openLiga = await findOpenLigaGame({ team, opponent, competition: comp, date }).catch(() => null);
+  if (openLiga?.answer) {
+    openLiga.answer.summary = describe(openLiga.answer);
+    return {
+      answer: openLiga.answer,
+      metadata: {
+        source: 'openligadb',
+        verification: 'none',
+        fallback_from: tx.metadata?.error ?? (tx.answer ? `txline_${tx.answer.status}` : null),
+        fixture_id: openLiga.answer.fixture_id,
+      },
+    };
+  }
   if (tx.answer) return tx;
 
   return noResult('no_match', `No game found for ${team ? `team "${team}"` : comp || 'this ask'}`, {
     txline: tx.metadata?.error ?? null,
     espn_searched: searched,
+    openliga_searched: openLiga?.searched ?? null,
   });
 }
 
