@@ -132,6 +132,13 @@ positioning claims.
       default), receipt/replay/verify render with the stream off. Kelly suite
       back to green (stale `sizePct` expectation 0.04 → 0.15, matching the
       real fractional-Kelly math).
+- [ ] **Repositioning: miner-first (plan written 2026-09-29 in
+      `STRATEGY.md`, not implemented).** The agent lane is honestly `PAUSED`
+      but the hero still promises live agent discipline. Recommended: live
+      product = verified sports intelligence via our Season II miner;
+      agent = auditable archive. Bounded copy-first change (brand.js hero +
+      one nav slot for the existing `/proof` Solana "Decision receipts"
+      surface); no new routes, no worker restart, no paid tier.
 - [x] P0 instrumentation: `npm run survey`, `GET /api/asked`, outcome counters,
       upstream ledger, and `degraded` `/health` (telegraph-miner v1.1). Its
       first local run caught ESPN answering 403 to custom User-Agents, and

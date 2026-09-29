@@ -178,6 +178,56 @@ Clarity on scope prevents drift:
 
 ---
 
+## Repositioning plan — miner-first (written 2026-09-29, not yet implemented)
+
+**Situation.** The agent lane is `PAUSED` (no worker cycling, 35-day gap) while
+the TxLINE sports miner is the only thing scoring, serving, and renewing. The
+hero still promises live agent discipline, so the page argues against itself.
+Two honest steady states exist; the plan picks **miner-first** and keeps the
+agent surfaces as a verifiable archive.
+
+**Decision (recommended, awaiting go-ahead):** the live product is verified
+sports intelligence served by our own miner; the autonomous-trading agent is a
+paused lane whose receipts remain auditable history.
+
+**Why miner-first, in one paragraph.** It is the only lane with live data
+(TxLINE free bundle: NFL/MLS/English PL/WC, measured 200s), a live consumer
+(Telegraph Season II, miner active, renewal regime in place to 2026-10-26),
+an honest verification story (Ed25519 attested answers, `verified: true`
+only with a real proof, SSE replay for closed fixtures), and a working demo
+loop (fixture → score → receipt → reconcile) that needs no venue keys, no
+funded wallet, and no TxLINE support reply.
+
+**What changes (bounded, copy-first):**
+1. `constants/brand.js` — hero stops promising a cycling agent; the live
+   proof becomes the miner + France–Sweden receipt chain:
+   - `positioning.headline`: evidence → sealed decisions → verified outcomes,
+     **with the live example being TxLINE sports intelligence served by our
+     own Season II miner** (scores + receipts + reconciliation), agent lanes
+     as auditable archive.
+   - `tagline`: keep "Evidence in. Decision sealed. Outcome verified." —
+     it already describes the receipt chain, not the agent.
+   - `nav.arena`: "The agent archive — every cycle still auditable" (not
+     "proving discipline live"); add `nav.sports`: "Verified sports
+     intelligence — our live Season II miner".
+   - `agent.badge`: "Paused lane — archive" (not "Autonomous operator").
+2. IA: one nav slot for the live surface (`/proof` Solana tab =
+   "Decision receipts" already exists; promote it rather than building a new
+   route). Nothing new to build for v1.
+3. Arena/rail: unchanged code — `PAUSED` + sealed amber is already the
+   steady state; the plan only changes what the hero claims around it.
+4. Strategy log: append the decision + date below when approved.
+
+**What explicitly does NOT change:** no new routes, no worker restart, no
+venue keys, no paid TxLINE tier, no claim that Merkle proofs are served
+(the 500 exhibit stays attached to the open ask).
+
+**Acceptance:** a first-time visitor can answer "what is live right now?"
+(score feed + receipts via our miner) and "what is the agent?" (paused,
+auditable archive) without any sentence contradicting `/status` or the rail.
+
+---
+
 ## Decision Log
 
 | Date | Decision | Rationale |
