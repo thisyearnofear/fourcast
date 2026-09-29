@@ -5,7 +5,9 @@
  *    tried statKeys= and concluded too early.
  *  - /scores/stat-multiproof is not a documented endpoint at all.
  *  - the free tier is documented to include NFL, MLS, Premier League and
- *    World Cup scores — our PL/MLS 403s are a doc-vs-API finding to pin down.
+ *    World Cup scores — our PL/MLS 403s were a doc-vs-API question that
+ *    probes 3+4 resolved: the "PL" 403 was the Kazakh league sharing the
+ *    exact Competition name; MLS measured 403 only pre-renewal. Both 200.
  *  - /api/scores/historical/{fixtureId} exists for completed fixtures.
  * Run: set -a && . ../.env.agent && set +a && node /tmp/proof-probe2.mjs
  */

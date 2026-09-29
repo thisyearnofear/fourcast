@@ -10,10 +10,11 @@ relying on them.
 
 ## Active
 
-### Telegraph Protocol Hackathon Season II — ⏸️ preparing
+### Telegraph Protocol Hackathon Season II — 🔴 live, scoring
 30 days, $10,000 prize pool. Season I closed without a Fourcast placement. This
 section is the plan for Season II so we enter instrumented instead of blind.
-Registration is through the Season II page at
+**Now scoring:** node `fourcast-sports-intelligence` is `active`,
+`last_scored_epoch` 370 as of 2026-09-29 07:04 UTC. Registration is through the Season II page at
 [telegraphprotocol.com](https://telegraphprotocol.com); exact prize split,
 judging criteria, and qualification requirements publish with the final rules —
 **re-verify all of it before relying on this plan.**
@@ -236,10 +237,13 @@ positioning claims.
 - **Runs:** `telegraph-miner/` — process live at
   `https://miner.sportwarren.com/query` (PM2, Traefik SSL). Operator runbook:
   `telegraph-miner/README.md`.
-- **Data tier:** free TxLINE tier covers MLS + future PL fixtures. Historical
-  game results for GAME_RESULT queries require a paid TxLINE tier. Aug 25 epoch
-  scores: both miners scored 0 (evaluator had no matching ground-truth for the
-  free-tier leagues during the current epoch). Aug 25 code update added natural
+- **Data tier:** *believed during Season I* to cover only MLS + future PL
+  fixtures, with historical GAME_RESULT data "requiring a paid tier" — the
+  2026-09-28 docs review above proved that wrong (NFL+MLS+English PL all
+  work; the free `historical` endpoint replays finished games). Aug 25 epoch
+  scores: both miners scored 0 — the evaluator had no matching ground-truth
+  for the free-tier leagues during the current epoch, i.e. a scorer gap, not
+  the data tier. Aug 25 code update added natural
   language query handling and graceful degradation for unsupported intents.
   Sep 1 hardening before the extended deadline: fixed a crash in the
   graceful-degradation path (`new Date.now()` typo took the whole process down

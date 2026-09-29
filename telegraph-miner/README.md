@@ -1,13 +1,14 @@
 # Fourcast Telegraph Miner
 
-Telegraph Protocol miner serving **verified sports intelligence** — live scores and final match results with Solana Merkle proof verification.
+Telegraph Protocol miner serving **verified sports intelligence** — live scores and final match results, with Solana Merkle proof verification where the publisher serves one (proof availability on our tier: see TxLINE Setup below).
 
 > **Season II plan:** Season I scored this miner 0 (structural — we shipped into
-> a near-zero-scored intent family with paid-gated ground truth, and had no
-> instrumentation to notice). The Season II readiness plan — instrument first
+> a near-zero-scored intent family, shipped without seeing the scorer's own
+> measured zero, and had no instrumentation to notice). The Season II
+> readiness plan — instrument first
 > (survey/asked), make verification a one-command independent check, dual-shape
 > `GAME_RESULT`, an evaluator WASM, and a paid-rail Track 3 app — lives in
-> [`docs/HACKATHONS.md`](../docs/HACKATHONS.md#telegraph-protocol-hackathon-season-ii----preparing).
+> [`docs/HACKATHONS.md`](../docs/HACKATHONS.md).
 > Read it before registering into any intent.
 
 ## Intents
@@ -233,9 +234,12 @@ docker run -d --restart=unless-stopped -p 8402:8402 \
   fourcast-telegraph-miner
 ```
 
-## Current registration status (verified 2026-08-20)
+## Current registration status (verified live 2026-09-29)
 
-The **process** and the **on-chain identity** now match.
+The **process** and the **on-chain identity** now match. Node re-checked
+2026-09-29: `activation_status: active`, `scored: true`,
+`last_scored_epoch: 370`, 10 requests served, intents still
+`SPORTS_SCORE` + `GAME_RESULT`.
 
 | Layer | What it says |
 |---|---|
@@ -455,5 +459,5 @@ Telegraph Network (validators, apps, routing)
 - **Track 1 (Miner)** — this is our submission. Status and the on-chain mismatch: `docs/HACKATHONS.md`.
 - **Judging**: 75% Normalized Performance (accuracy vs ground truth), 25% X engagement. Sports intents are Tier A WASM exact match; `WEB_SEARCH` / `FACT_CHECK` are Tier B LLM-judge. We are now on the sports intents (`registrationId` 148).
 - **Guardrail** (as recorded in-repo; confirm on the official page): need 3+ active miners in the same intent + 100 real requests from Track 3 apps. Joining the sports intents currently makes that 2 miners, not 3. Scoring 0 on a crowded wrong intent is worse than being correctly routed in a thin category.
-- **Timeline** (verified 2026-09-01): Track 1 & 2 extended to **Sep 2, 2026 11:59:59 UTC**; Track 3 (apps consume us) coming soon — see `docs/HACKATHONS.md`
+- **Timeline**: Season I closed 2026-09-02. **Season II is live and scoring** — our miner `active`, last scored epoch 370 (2026-09-29); status tracked in `docs/HACKATHONS.md`
 - Tag [@Telegraphprotoc](https://x.com/Telegraphprotoc) in all progress posts
