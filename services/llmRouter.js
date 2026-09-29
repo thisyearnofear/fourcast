@@ -41,7 +41,10 @@ const PROVIDERS = {
     baseURL: 'https://openrouter.ai/api/v1',
     keyEnv: 'OPENROUTER_API_KEY',
     modelEnv: 'OPENROUTER_MODEL',
-    defaultModel: 'meta-llama/llama-3.3-70b-instruct',
+    // Free-only default 2026-09-29: the paid default billed per call whenever
+    // a key was set. :free variants cost nothing (rate-limited). Override via
+    // OPENROUTER_MODEL for paid runs.
+    defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
     timeout: 60_000,
     attempts: (model) => (model.endsWith(':free') ? 1 : 2), // :free 429s are persistent — don't burn 30s/market retrying
     defaultHeaders: {

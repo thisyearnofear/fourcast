@@ -41,8 +41,11 @@ class BrightDataService {
     this.proxySecret = process.env.BRIGHT_DATA_PROXY_SECRET;
     this.proxyEnabled = !!(this.proxyUrl && this.proxySecret);
 
-    // Explicit kill-switch — BD is optional enrichment, not required for analysis.
-    this.forceDisabled = envFlagDisabled(process.env.BRIGHT_DATA_ENABLED);
+    // Explicit opt-in — BD burns paid credits per call, so free-only stance
+    // 2026-09-29: stays off unless BRIGHT_DATA_ENABLED=true. Optional
+    // enrichment, never required for analysis.
+    const enabledFlag = String(process.env.BRIGHT_DATA_ENABLED || '').trim().toLowerCase() === 'true';
+    this.forceDisabled = !enabledFlag;
 
     const configured = !this.forceDisabled;
     this.enabled = configured && (this.proxyEnabled || !!(this.apiKey && this.serpZone));
