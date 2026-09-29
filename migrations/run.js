@@ -111,16 +111,19 @@ async function recordMigration(version, name, hash) {
 }
 
 // Parse SQL file into executable statements.
-// Strips `-- line comments` so statements preceded by header comments
-// (e.g. "-- Positions table\nCREATE TABLE ...") aren't discarded.
+//
+// Comments are stripped BEFORE splitting on ';' — a semicolon inside a
+// `-- comment` (e.g. 0013's "Set on insert via saveForecast; also backfill
+// existing rows.") otherwise splits mid-comment and leaves the comment tail
+// ("also backfill existing rows.") glued to the next real statement, which
+// Turso rejects as `syntax error near "also"` and fails the whole build.
 function parseSqlStatements(sql) {
   return sql
+    .split('\n')
+    .map(line => line.replace(/--.*$/, ''))
+    .join('\n')
     .split(';')
-    .map(chunk => chunk
-      .split('\n')
-      .map(line => line.replace(/--.*$/, ''))
-      .join('\n')
-      .trim())
+    .map(chunk => chunk.trim())
     .filter(s => s.length > 0);
 }
 
