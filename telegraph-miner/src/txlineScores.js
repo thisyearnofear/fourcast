@@ -7,8 +7,12 @@
  *   - Participant1/2 are *not* home/away: `Participant1IsHome` says which.
  *   - The event's own `GameState` can say "scheduled" on the finalised event;
  *     `Action === "game_finalised"` is the reliable signal.
- *   - Score snapshots outside the subscription tier answer 403 "Bundle access
- *     denied" — that is no access, not "no events yet".
+ *   - Score snapshots for fixtures outside the subscribed league bundle answer
+ *     403 "Bundle access denied" — that is no access, not "no events yet".
+ *     Measured 2026-09-28: the free tier does cover NFL, MLS and the English
+ *     Premier League as the docs claim. Careful — Competition "Premier
+ *     League" is ambiguous: the Kazakh league shares the exact name and is
+ *     NOT in the bundle (403), while Arsenal v Chelsea is (200).
  */
 
 import { txline } from './txline.js';
@@ -16,8 +20,16 @@ import { sidesOf, participantScore } from './utils.js';
 
 const NO_ACCESS = /\b403\b|access denied|no tickets/i;
 
-/** Finished-state codes seen in the fixture snapshot. */
-const FINISHED_STATES = new Set(['game_finalised', 'final', 6]);
+/**
+ * Finished-state codes seen in the fixture snapshot. Deliberately does NOT
+ * include 6: the docs state the fixture GameState vocabulary is 1 =
+ * scheduled, 6 = cancelled — measured history (state 6 on Chiefs/Dolphins,
+ * an Arsenal U21) can't distinguish finished from abandoned, so it is not
+ * evidence of a final score. gameResult's likely-over age branch covers
+ * genuinely finished fixtures; readScores only trusts Action
+ * === 'game_finalised'.
+ */
+const FINISHED_STATES = new Set(['game_finalised', 'final']);
 
 function totalOf(event, which) {
   const t = event?.Score?.[`Participant${which}`]?.Total;
@@ -39,6 +51,15 @@ export async function readScores(fixtureId) {
   } catch (err) {
     if (NO_ACCESS.test(err.message)) return { access: false, events: [], final: null, latest: null, p1: null, p2: null, error: err.message };
     events = []; // 404: nothing published yet
+  }
+  if (!events.length) {
+    // Snapshot window closed on older completed fixtures; the documented
+    // historical replay still has the full sequence (measured 2026-09-28:
+    // 3.4 MB of frames incl. game_finalised for a fixture /sequence 404s on).
+    try {
+      const rows = await txline.getHistoricalScores(fixtureId);
+      if (Array.isArray(rows)) events = rows;
+    } catch { /* still nothing: report empty, not failure */ }
   }
   const sorted = [...events].sort((a, b) => (a.Seq || 0) - (b.Seq || 0));
   const final = sorted.findLast((e) => e.Action === 'game_finalised') ?? null;

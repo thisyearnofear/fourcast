@@ -160,26 +160,37 @@ async function getTxlineResult(fixtureId, knownFixtures) {
 /**
  * The TxLINE stat-validation proof, normalised, with the raw payload kept so
  * scripts/verify.mjs can re-check it without trusting our normalisation.
- * TxLINE answers 500 "Stat validation failed" for some fixtures; that is
- * reported as no proof, and the answer says verified: false.
+ * The public endpoint serves two shapes on one path — validateStatV2
+ * (`statKeys=`) and legacy validateStat (`statKey=[&statKey2=]`) — backed by
+ * different on-chain methods, so a failure in one shape does not imply the
+ * other; both are tried. TxLINE answers 500 "Stat validation failed" for
+ * both on our tier (measured 2026-09-28); that is reported as no proof, and
+ * the answer says verified: false.
  */
 async function fetchProof(fixtureId, seq) {
   if (!seq) return { verifiable: false, reason: 'no final sequence number' };
-  try {
-    const p = await txline.getMerkleProof(fixtureId, seq);
-    if (!p) return { verifiable: false, reason: 'TxLINE returned no proof' };
-    const root = p.eventStatRoot || p.root || null;
-    return {
-      merkle_root: root,
-      daily_root_pda: p.dailyRootPda || null,
-      program_id: p.programId || null,
-      sequence: p.sequence ?? seq,
-      stat_keys: p.statKeys || [1, 2],
-      chain: 'solana',
-      verifiable: Boolean(root),
-      source_payload: p,
-    };
-  } catch (err) {
-    return { merkle_root: null, chain: 'solana', verifiable: false, reason: `Proof not available: ${err.message.replace(/^.*-> /, '').slice(0, 120)}` };
+  let lastErr = null;
+  for (const attempt of [
+    () => txline.getMerkleProof(fixtureId, seq),
+    () => txline.getStatProofLegacy(fixtureId, seq, 1, 2),
+  ]) {
+    try {
+      const p = await attempt();
+      if (!p) { lastErr = new Error('TxLINE returned no proof'); continue; }
+      const root = p.eventStatRoot || p.root || null;
+      return {
+        merkle_root: root,
+        daily_root_pda: p.dailyRootPda || null,
+        program_id: p.programId || null,
+        sequence: p.sequence ?? seq,
+        stat_keys: p.statKeys || [1, 2],
+        chain: 'solana',
+        verifiable: Boolean(root),
+        source_payload: p,
+      };
+    } catch (err) {
+      lastErr = err;
+    }
   }
+  return { merkle_root: null, chain: 'solana', verifiable: false, reason: `Proof not available: ${String(lastErr?.message || lastErr).replace(/^.*-> /, '').slice(0, 120)}` };
 }

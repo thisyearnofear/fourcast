@@ -33,7 +33,7 @@ const keySets = [
 
 for (const keys of keySets) {
   const label = `statKeys=${keys.join(',')}`;
-  for (const [ep, fn] of [['proof', txline.getMerkleProof], ['multiproof', txline.getMerkleMultiproof]]) {
+  for (const [ep, fn] of [['proof (V2 statKeys=)', txline.getMerkleProof], ['proof (legacy statKey=)', (f, s) => txline.getStatProofLegacy(f, s, 1, 2)]]) {
     try {
       const r = await fn(F, SEQ, keys);
       console.log(`${ep} ${label} -> OK ${JSON.stringify(r).slice(0, 300)}`);

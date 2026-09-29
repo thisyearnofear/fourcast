@@ -34,11 +34,12 @@ function request(path, opts) {
 }
 
 // The proof endpoints are a separate service from the score feed, and on the
-// free tier they fail independently of it: measured 2026-09-28, every statKey
-// present on a finalised NFL fixture (all ~130 of them) makes
-// stat-validation answer 500 "Stat validation failed", and stat-multiproof
-// answers 404. Tracking them under "txline" made a broken proof endpoint look
-// like a dead score feed in /health. They get their own ledger entry now.
+// free tier they fail independently of it: measured 2026-09-28 on a finalised
+// NFL fixture, BOTH documented request shapes — legacy `statKey=[&statKey2=]`
+// (validateStat) and multi-stat `statKeys=` (validateStatV2) — answer 500
+// "Stat validation failed" for every stat key present on the record.
+// Tracking them under "txline" made a broken proof endpoint look like a dead
+// score feed in /health. They get their own ledger entry now.
 function proofRequest(path) {
   return track('txline-proofs', () => rawRequest(path));
 }
@@ -163,7 +164,51 @@ export async function getScoreSequence(fixtureId) {
 }
 
 /**
- * Get Merkle proof for fixture statistics (stat-validation).
+ * Get score events for a completed fixture (documented historical endpoint;
+ * measured 2026-09-28 to answer 200 for fixtures whose /sequence window has
+ * closed). It answers an SSE-style replay — `data: {…}` lines, not plain
+ * JSON — so the frames are parsed into an event array here. A fixture with
+ * nothing published answers 200 with an empty body: that is [], not an error.
+ */
+export async function getHistoricalScores(fixtureId) {
+  return track('txline', async () => {
+    if (!API_TOKEN) throw new Error('TXLINE_API_TOKEN not configured');
+    if (!cachedJwt) await refreshJwt();
+    const url = `${BASE_URL}/scores/historical/${fixtureId}`;
+    const doFetch = (jwt) => fetch(url, {
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        'X-Api-Token': API_TOKEN,
+        Accept: 'text/event-stream',
+        'User-Agent': 'fourcast-telegraph-miner/1.0',
+      },
+      signal: AbortSignal.timeout(30_000),
+    });
+    let res = await doFetch(cachedJwt);
+    if (res.status === 401) {
+      await refreshJwt();
+      res = await doFetch(cachedJwt);
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      const err = new Error(`TxLINE /scores/historical/${fixtureId} -> ${res.status}: ${text.slice(0, 200)}`);
+      if (res.status === 403 && /access denied|no tickets/i.test(text)) err.expected = true;
+      throw err;
+    }
+    const body = await res.text();
+    const events = [];
+    for (const line of body.split('\n')) {
+      if (!line.startsWith('data:')) continue;
+      try { events.push(JSON.parse(line.slice(5).trim())); } catch { /* partial frame */ }
+    }
+    return events;
+  });
+}
+
+/**
+ * Get a Merkle stat proof (validateStatV2 shape: `statKeys=1,2,...`).
+ * The requested order is significant — on-chain strategy indexes are
+ * positional against this array (docs, On-Chain Validation).
  */
 export async function getMerkleProof(fixtureId, seq, statKeys = [1, 2]) {
   const q = new URLSearchParams({
@@ -175,15 +220,15 @@ export async function getMerkleProof(fixtureId, seq, statKeys = [1, 2]) {
 }
 
 /**
- * Get Merkle multiproof for fixture statistics.
+ * Get a Merkle stat proof in the legacy validateStat shape: a single
+ * `statKey` with an optional second key. (There is no separate
+ * stat-multiproof endpoint — an earlier client method invented one and only
+ * ever measured its own 404.)
  */
-export async function getMerkleMultiproof(fixtureId, seq, statKeys = [1, 2]) {
-  const q = new URLSearchParams({
-    fixtureId: String(fixtureId),
-    seq: String(seq),
-    statKeys: statKeys.join(','),
-  });
-  return proofRequest(`/scores/stat-multiproof?${q}`);
+export async function getStatProofLegacy(fixtureId, seq, statKey = 1, statKey2 = null) {
+  const q = new URLSearchParams({ fixtureId: String(fixtureId), seq: String(seq), statKey: String(statKey) });
+  if (statKey2 != null) q.set('statKey2', String(statKey2));
+  return proofRequest(`/scores/stat-validation?${q}`);
 }
 
 /**
@@ -218,8 +263,9 @@ export const txline = {
   getOddsLive,
   getScoreSnapshot,
   getScoreSequence,
+  getHistoricalScores,
   getMerkleProof,
-  getMerkleMultiproof,
+  getStatProofLegacy,
   getStatus,
   refreshJwt,
 };

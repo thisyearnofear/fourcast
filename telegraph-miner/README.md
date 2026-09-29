@@ -359,8 +359,17 @@ node scripts/txline-generate-wallet.mjs
 node scripts/txline-subscribe-and-activate.mjs
 ```
 
-The free tier covers MLS + International Friendlies + future PL fixtures. Historical
-game results (needed for GAME_RESULT queries on past matches) require a paid tier.
+The free tier (service levels 1 and 12 — both free, 60 s delay vs real-time)
+covers NFL, MLS, the English Premier League, World Cup & Int Friendlies,
+scores and StablePrice odds included (tier docs + measured 2026-09-28).
+Finished games stay readable via `/scores/historical/{fixtureId}` (an
+SSE-style `data:`-frame replay; `readScores` falls back to it when the
+snapshot/sequence window has closed). Caution: `Competition` "Premier
+League" is ambiguous — the Kazakh league shares the exact name and is NOT in
+the bundle (403 "Bundle access denied"); match on country/competition id,
+not the name. The Merkle proof endpoints are the one part that does not
+serve the free tier yet: both documented `stat-validation` shapes answer 500
+(see `docs/HACKATHONS.md`; exhibit: `scripts/proof-probe*.mjs`).
 
 ### Renewing the subscription (every 4 weeks — do not let it lapse)
 

@@ -147,23 +147,33 @@ positioning claims.
       `TXLINE_WALLET_2026_09_*` names. `.env.agent` got the new
       `TXLINE_API_TOKEN`/`TXLINE_GUEST_JWT` (backup `.env.agent.bak-*`).
       `.env.local` is untouched. **Expires ~2026-10-26: resubscribe before then.**
-- [ ] **What the free tier actually gives (measured 2026-09-28):** the
-      fixture snapshot lists ~100k fixtures across every league, but score
-      streams are only readable for NFL. MLS, Premier League and the rest
-      answer 403 "Bundle access denied". So NFL answers come from TxLINE, and
-      everything else from ESPN. Getting TxLINE scores for PL/MLS needs a paid
-      bundle.
-- [ ] **No Merkle proofs yet, even on NFL — probed exhaustively 2026-09-28.**
-      `stat-validation` answers 500 "Stat validation failed" for the finalised
-      Broncos–Rams game with **every** statKey that actually exists on the
-      final event (all ~130 of them: 1–16, 101, 1001–1016, 2001–2016,
-      30001–30016, 40001–40016 — enumerated by `scripts/proof-probe.mjs`), and
-      `stat-multiproof` answers **404** for all of them. So this is not a
-      stat-key question: the proof endpoints do not serve our tier at all.
-      The answer stays correct with `verified: false` + the reason. Ask TxLINE
-      directly (this enumeration is a reproducible P6 bug-report exhibit);
-      /health now tracks `txline-proofs` separately so a dead proof endpoint
-      never reads as a dead score feed.
+- [x] **What the free tier actually gives (corrected 2026-09-28 after the
+      official docs review).** The docs' tier page lists *two* free service
+      levels — 1 (60 s delay) and 12 (real-time), bundle = NFL, MLS, Premier
+      League, World Cup & Int Friendlies, scores + StablePrice odds included.
+      Measured against exact fixtures: NFL 200, MLS 200, English Premier
+      League 200 — the tier does what it says. The earlier "MLS/PL answer 403"
+      was **my probe's fault**: `Competition` "Premier League" is ambiguous —
+      the Kazakh league shares the exact name and is NOT in the bundle
+      (Kairat v Altay → 403), while Arsenal v Chelsea is (200). MLS was
+      measured against the pre-renewal token. ESPN remains the fallback for
+      leagues TxLINE's free bundle genuinely lacks.
+- [ ] **No Merkle proofs yet, even on NFL — now confirmed against BOTH
+      documented request shapes (docs review + re-probe 2026-09-28).** The
+      public `/scores/stat-validation` serves `statKeys=` (validateStatV2)
+      and `statKey=[&statKey2=]` (legacy validateStat) on one path; the 400
+      "Must provide strictly either…" proves the parser works, yet both
+      shapes answer 500 "Stat validation failed" on the finalised Broncos–
+      Rams game for every real statKey (1–16 etc. per the football-feed
+      encoding page). `stat-multiproof` was never an endpoint — our old
+      client invented it and only ever measured its own 404; removed. What
+      the free tier *does* give: `/scores/historical/{id}` replays the full
+      event stream (SSE-style `data:` frames, 2,063 events incl.
+      `game_finalised` where `/sequence` 404s) — wired into `readScores` as
+      a fallback, though the payload contains no Merkle roots. Ask TxLINE
+      why stat-validation 500s on SL1/SL12 (proof-probe output is the
+      exhibit); /health tracks `txline-proofs` separately so a dead proof
+      endpoint never reads as a dead score feed.
 - [x] **The renewed token surfaced TxLINE parsing bugs, now fixed**
       (`ba6edee`, `d4b8e06`, `ba8b672`): the 29 MB snapshot was fetched
       twice per ask (now cached 5 min); a tier 403 was read as "scheduled";
