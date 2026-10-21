@@ -204,3 +204,23 @@ export async function checkRelayerHealth() {
 export function minSamplesRequired() {
   return readConfig().minSamples;
 }
+
+/**
+ * The public Walrus read for a blob id.
+ *
+ * Path and base URLs are the ones the MemWal SDK itself uses (upload via the
+ * relayer, download via the HTTP aggregator), so this is not a guessed deep
+ * link. What comes back is SEAL ciphertext — the link is evidence that a blob
+ * exists at that id and is unreadable without the owner's key, which is exactly
+ * the claim we are willing to make in the UI.
+ */
+export const WALRUS_AGGREGATORS = Object.freeze({
+  mainnet: 'https://aggregator.walrus-mainnet.walrus.space',
+  testnet: 'https://aggregator.walrus-testnet.walrus.space',
+});
+
+export function blobReadUrl(blobId, network = 'mainnet') {
+  if (!blobId) return null;
+  const base = WALRUS_AGGREGATORS[network === 'testnet' ? 'testnet' : 'mainnet'];
+  return `${base}/v1/blobs/${blobId}`;
+}

@@ -1,8 +1,9 @@
-import { memoryStatus } from '@/services/memory/memwalClient.js';
+import { memoryStatus, blobReadUrl } from '@/services/memory/memwalClient.js';
 import { memoryLedgerSummary, listMemoryWrites } from '@/services/memory/writeLedger.js';
 import { listMemoryLadder, listKindMemories, reconcileLedger } from '@/services/memory/memoryStore.js';
 import { KINDS } from '@/services/memory/memoryFormat.js';
 import { assertMemoryObjectOnChain } from '@/services/tatum/tatumSuiClient.js';
+import { readStatus as paymentReadStatus } from '@/services/payments/x402Sui/tatumRpc.js';
 
 export const runtime = 'nodejs';
 
@@ -30,6 +31,7 @@ export const runtime = 'nodejs';
  *   memory: { enabled, configured, writable, network, relayerUrl, reason, … },
  *   ledger: { confirmed, mainnetConfirmed, byNetwork: […], byKind: […] },
  *   rows: [ …latest ledger rows… ],
+ *   chains: { memory, settlement, rpc, aligned },
  *   rungs?: [ { version, key, blobId, asOf, fields, … }, … ],
  *   reconciliation?: { … },
  *   proofs?: [ { memkey, version, blobId, onchain: { exists, render, reason } }, … ],
@@ -63,8 +65,34 @@ export async function GET(request) {
   const memory = memoryStatus();
   const ledger = await memoryLedgerSummary();
   const rows = await listMemoryWrites({ kind: kind || null, memkey: key, limit: 20 });
+  // The blob id is only a string until it is somewhere a reader can go. The
+  // aggregator serves SEAL ciphertext for it, and that is stated in the UI.
+  const withBlobs = rows.map((row) => ({
+    ...row,
+    blobUrl: blobReadUrl(row.blob_id, row.network || memory.network),
+  }));
 
-  const body = { success: true, schema: 'memory-status/v1', memory, ledger, rows, notes };
+  const body = { success: true, schema: 'memory-status/v1', memory, ledger, rows: withBlobs, notes };
+
+  // One environment variable, two chains that do not have to agree.
+  //
+  // `SUI_NETWORK` says where our memories are written (mainnet: the hackathon
+  // counts mainnet memories only) and it is also what Dev C's payment read is
+  // pointed at. `SETTLEMENT_NETWORK` says where a paid answer actually settles,
+  // and it defaults to testnet. The x402 verifier refuses to check a testnet
+  // payment against a mainnet read, so under the documented defaults the paid
+  // rail is dark — which is a decision waiting for 1 Nov, not a bug to discover
+  // in the demo. Print both, and say plainly when they disagree.
+  const paymentRead = paymentReadStatus();
+  body.chains = {
+    memory: memory.network,
+    settlement: paymentRead.alignment?.settlement || null,
+    rpc: paymentRead.network,
+    aligned: Boolean(paymentRead.alignment?.ok),
+  };
+  if (!body.chains.aligned) {
+    notes.push(`Settlement is not aligned with the memory chain: ${paymentRead.alignment?.reason}`);
+  }
 
   if (memory.writable) {
     notes.push(
@@ -77,9 +105,15 @@ export async function GET(request) {
   const wantRungs = truthy(searchParams.get('ladder')) || Boolean(kind && key && truthy(searchParams.get('list')));
   if (wantRungs && memory.writable) {
     if (key) {
-      body.rungs = await listMemoryLadder(kind, key);
+      body.rungs = (await listMemoryLadder(kind, key)).map((rung) => ({
+        ...rung,
+        blobUrl: blobReadUrl(rung.blobId, memory.network),
+      }));
     } else {
-      body.rungs = await listKindMemories(kind || 'window');
+      body.rungs = (await listKindMemories(kind || 'window')).map((rung) => ({
+        ...rung,
+        blobUrl: blobReadUrl(rung.blobId, memory.network),
+      }));
     }
     if (!body.rungs.length) notes.push('The relayer returned no parseable rung for that namespace.');
   } else if (wantRungs) {

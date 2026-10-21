@@ -3,14 +3,9 @@
 Fourcast is a venue-agnostic autonomous agent for prediction markets. It discovers edge, sizes positions under a policy-bound mandate, executes across multiple venues, and produces verifiable decision receipts that prove mandate adherence — before the outcome is known.
 
 > **One agent core. Multiple execution venues. Verifiable decisions.**
->
-> A note on this line: an earlier draft advertised Runware `/v1/systemone`
-> (`typesafe:jev@latest` + `runware:laya@1`) as the decision model behind the
-> win-probability and winner calls. **Nothing in this tree calls it** — no
-> `systemone`, `jev@latest` or `laya@1` reference exists in the code — and the
-> free window it named has passed. Forecasting runs on TxLINE odds,
-> deterministic Monte Carlo, and the configured LLM router. If that integration
-> is built, restore the line with the file that proves it.
+
+Forecasting runs on TxLINE odds, deterministic Monte Carlo, and the configured
+LLM router.
 
 ## The Wedge
 

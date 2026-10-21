@@ -14,6 +14,7 @@ import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
 import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { AgentDashboard } from '@/components/AgentDashboard';
 import { CalibrationCurve } from '@/components/CalibrationCurve';
+import { MemoryDelta } from '@/components/MemoryDelta';
 import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
 import GlowList from '@/components/ui/GlowList';
 
@@ -393,17 +394,40 @@ function MandateLane() {
   );
 }
 
+// ─── Memory lane (Total Recall) ─────────────────────────────────────────────
+
+function MemoryLane() {
+  return (
+    <>
+      <MemoryDelta />
+      <Reveal>
+        <div className="platform-open-section mt-10">
+          <CalibrationCurve />
+        </div>
+      </Reveal>
+      <p className="mt-6 px-1 text-[11px] leading-relaxed text-[var(--color-ink-faint)] sm:px-3" style={mono}>
+        Same numbers as{' '}
+        <a href="/api/memory/status" className="underline" style={{ color: 'var(--color-ink)' }}>
+          /api/memory/status
+        </a>
+        , unstyled — and the text behind each blob id is SEAL ciphertext, readable only by the owner.
+      </p>
+    </>
+  );
+}
+
 // ─── Page w/ lanes ──────────────────────────────────────────────────────────
 
 const LANES = [
   { id: 'ledger', label: 'Ledger' },
   { id: 'mandate', label: 'Mandate' },
+  { id: 'memory', label: 'Memory' },
 ];
 
 function ArenaPageInner() {
   const params = useSearchParams();
   const router = useRouter();
-  const initial = params.get('lane') === 'mandate' ? 'mandate' : 'ledger';
+  const initial = LANES.some((l) => l.id === params.get('lane')) ? params.get('lane') : 'ledger';
   const [lane, setLane] = useState(initial);
 
   const switchLane = (id) => {
@@ -416,7 +440,7 @@ function ArenaPageInner() {
     } else {
       setLane(id);
     }
-    router.replace(id === 'ledger' ? '/arena' : `/arena?lane=${id}`, { scroll: false });
+    router.replace(id === 'ledger' ? '/arena' : `/arena?lane=${encodeURIComponent(id)}`, { scroll: false });
   };
 
   return (
@@ -428,7 +452,9 @@ function ArenaPageInner() {
           {LANES.map((l) => (
             <button
               key={l.id}
+              type="button"
               onClick={() => switchLane(l.id)}
+              aria-current={lane === l.id ? 'page' : undefined}
               className="px-3 py-1.5 text-[13px] transition-colors"
               style={{
                 color: lane === l.id ? 'var(--color-ink)' : 'var(--color-ink-faint)',
@@ -443,7 +469,9 @@ function ArenaPageInner() {
       }
     >
       <div className="arena-lane-host">
-        {lane === 'ledger' ? <LedgerLane /> : <MandateLane />}
+        {lane === 'ledger' && <LedgerLane />}
+        {lane === 'mandate' && <MandateLane />}
+        {lane === 'memory' && <MemoryLane />}
       </div>
       <footer
         className="mt-10 pt-6 border-t text-[11px] flex items-center justify-between gap-4"
@@ -462,7 +490,7 @@ function ArenaPageInner() {
             Methodology
           </a>
         </span>
-        <span className="font-mono">v0.13 · calibration tracking</span>
+        <span className="font-mono">v0.14 · memory + calibration</span>
       </footer>
     </AppShell>
   );

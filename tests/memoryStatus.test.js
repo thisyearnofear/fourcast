@@ -46,6 +46,7 @@ const ENV_KEYS = [
   'MEMWAL_ACCOUNT_ID',
   'MEMWAL_RELAYER_URL',
   'SUI_NETWORK',
+  'SETTLEMENT_NETWORK',
   'TATUM_API_KEY',
   'TATUM_SUI_RPC_URL',
 ];
@@ -124,6 +125,21 @@ describe('/api/memory/status', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
+  it('names both chains and says out loud when they disagree', async () => {
+    // Documented defaults: memories write to mainnet, settlement quotes testnet,
+    // and the x402 verifier refuses a cross-chain read. The route reports that
+    // instead of letting a chip print one network for both.
+    const off = await json(await GET(url()));
+    expect(off.chains).toMatchObject({ memory: 'mainnet', settlement: 'sui:testnet', rpc: 'mainnet', aligned: false });
+    expect(off.notes.join(' ')).toMatch(/settlement is not aligned/i);
+
+    process.env.SETTLEMENT_NETWORK = 'mainnet';
+    const on = await json(await GET(url()));
+    expect(on.chains.aligned).toBe(true);
+    expect(on.notes.join(' ')).not.toMatch(/settlement is not aligned/i);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   it('refuses an unknown kind instead of silently reading the wrong namespace', async () => {
     const response = await GET(url('?kind=secrets'));
     expect(response.status).toBe(400);
@@ -150,6 +166,11 @@ describe('/api/memory/status', () => {
     expect(online.memory.writable).toBe(true);
     expect(online.rungs).toHaveLength(1);
     expect(online.rungs[0]).toMatchObject({ key: '2026-10', version: 3, blobId: 'blob-1' });
+    // The path and host are the ones the MemWal SDK itself downloads from, so
+    // the lane's blob link goes somewhere real — and returns ciphertext.
+    expect(online.rungs[0].blobUrl).toBe(
+      'https://aggregator.walrus-mainnet.walrus.space/v1/blobs/blob-1'
+    );
     expect(online.notes.join(' ')).toMatch(/SEAL-encrypted/i);
     expect(mock.calls.filter((c) => c.op === 'recall')).toHaveLength(1);
   });
@@ -201,6 +222,9 @@ describe('/api/memory/status', () => {
     });
 
     const body = await json(await GET(url('?proof=1')));
+    expect(body.rows[0].blobUrl).toBe(
+      'https://aggregator.walrus-mainnet.walrus.space/v1/blobs/blob-conf-1'
+    );
     expect(body.proofs).toHaveLength(1);
     expect(body.proofs[0]).toMatchObject({ memkey: '2026-10', version: 1, blobId: 'blob-conf-1' });
     expect(body.proofs[0].onchain.exists).toBe(true);

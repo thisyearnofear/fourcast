@@ -271,9 +271,19 @@ calls, so a page load cannot silently spend relayer requests.
               "reason": "FOURCAST_MEMORY_ENABLED is not \"true\"" },
   "ledger": { "confirmed": 0, "mainnetConfirmed": 0, "byNetwork": [], "byKind": [] },
   "rows": [],
+  "chains": { "memory": "mainnet", "settlement": "sui:testnet", "rpc": "mainnet",
+              "aligned": false },
   "notes": ["Memory reads are unavailable: FOURCAST_MEMORY_ENABLED is not \"true\"."]
 }
 ```
+
+`chains` names the two chains this layer can span, because they are configured
+separately: `memory` is where append-only rungs are written (`SUI_NETWORK`),
+`settlement` is where a paid answer settles (`SETTLEMENT_NETWORK`, read through
+`services/payments/x402Sui`). `aligned: false` is printed rather than smoothed
+over — the x402 verifier refuses a cross-chain read, so the paid rail is dark
+until the two name the same chain. Every ledger row and every `ladder=1` rung
+carries `blobUrl`, the public aggregator read (`/v1/blobs/<id>`) for that blob.
 
 `proofs[].onchain` is **tri-state**: `exists: true` with
 `render: "object=<id>@<version> · digest=… · checkpoint=…"` when Tatum confirms
@@ -285,6 +295,57 @@ chain contradicts us when all we know is that we cannot look.
 Memories are **SEAL-encrypted and owner-scoped**: a `blob_id` proves an object
 exists, not that anyone can read its text. The route says so in `notes` rather
 than letting a blob id imply a public ledger.
+
+### GET /decision/whatif
+The question that makes the memory layer worth anything: **would this decision
+have been sized differently?** Recomputes one real decision through the same
+`calculateKellySizing` the agent uses, once per calibration source, side by
+side. No math lives in this route — if it and the worker ever disagreed, the
+demo would be a simulation of a simulation.
+
+**Query params (all optional):**
+
+| Param | Effect |
+|---|---|
+| *(none)* | Sizes the newest **settled** forecast on this host, score included |
+| `probability`, `odds`, `bucket` | Size an ad-hoc what-if instead; all three together or nothing is guessed (`bucket` accepts `MED`) |
+| `buckets`, `counts` | Rates to size on, in the memory field grammar (`HIGH:0.450/MED:0.580`), with the sample sizes that must clear the floor |
+| `blob`, `version`, `asOf` | Provenance to echo on the memory scenario when rates are supplied |
+| `memory=1` | The route reads the newest usable `window` rung from the relayer itself — costs one `recall()` |
+| `riskTolerance`, `minEdge` | Override the mandate inputs (defaults 0.5 / 0.05) |
+
+```
+{
+  "success": true, "schema": "whatif/v1", "minBucketCount": 5,
+  "input": { "origin": "forecast", "forecastId": "…", "probability": 0.72,
+             "odds": 0.6, "bucket": "HIGH",
+             "settled": { "outcome": 1, "brierScore": 0.0784, "logLoss": 0.3285,
+                          "sizedAs": 0.15 } },
+  "scenarios": [ { "key": "uncalibrated|ledger|memory", "label": "…",
+                   "calibrationSource": "none|db|walrus-memory",
+                   "buckets": {}, "bucketField": "HIGH:0.450", "sampleSize": 34,
+                   "droppedBuckets": [], "blobId": "…", "provenance": {},
+                   "sizePct": 0.09, "kellyPct": 0.3, "calibrationFactor": 0.6,
+                   "deltaVsUncalibrated": -0.06, "actionable": true } ],
+  "applied": { "key": "memory", "reason": "…cold-deployment path." },
+  "notes": []
+}
+```
+
+`applied.key` is what the agent would actually size on today, under the
+`db → memory` precedence: the scored ledger outranks any stored snapshot of
+itself, and memory is the fallback that lets a cold deployment size on evidence
+instead of an uncalibrated 1.0x.
+
+Two refusals are the answer, not an error: with no settled forecast and no query
+inputs, `input` is `null` and `scenarios` is empty (HTTP 200 — the surface has
+nothing to show, not a broken route); and a supplied rate whose `counts` fall
+under `minBucketCount()` is dropped into `droppedBuckets` and sizes at 1.0x,
+because a rate with no visible `n` is a claim rather than evidence.
+
+`provenance.how` distinguishes `supplied-by-caller` from `relayer-recall`. The
+`/arena` Memory lane uses the second: rates this page typed into a query string
+cannot prove anything about the blob they name.
 
 ---
 
