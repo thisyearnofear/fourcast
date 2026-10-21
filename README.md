@@ -51,24 +51,30 @@ Read the full methodology → [docs/CALIBRATION.md](docs/CALIBRATION.md)
 
 ## What's Live
 
+*Status as of **2026-10-21**, read from the running services — not aspirational.*
+
 | Surface | URL | Status |
 |---------|-----|--------|
 | Markets (Polymarket + Kalshi aggregation) | `/markets` | Live |
-| Agent Mandate (policy cockpit, dry-run, run ledger) | `/agent` | Live |
-| Positions & Track Record | `/positions` | Live |
-| Signals (publish + follow) | `/signals` | Live |
-| Autonomous VPS Worker | Headless (PM2) | Live |
-| Delphi Competition Agent | Competition completed; worker stopped | Aug 10–24, 2026 |
-| TxLINE MLS Odds | Credential-gated live mode with replay fallback | Provider availability/config dependent |
-| TxLINE Premier League | Credential-gated live mode with replay fallback | Provider availability/config dependent |
-| Canton Private Settlement | DevNet-proven CIP-56/BitSafe CBTC prototype; operator-attested by default | Independent attester + mainnet pending |
+| Arena — proof surface: calibration curve, decision receipts, memory ladder | `/arena` | Live |
+| Mandate cockpit (policy, dry-run, run ledger) | `/arena?lane=mandate` | Live — `/agent` redirects here |
+| Positions & track record | `/positions` | Live |
+| Signals (publish + follow) + paid rail | `/signals` | Live |
+| Decision receipts (Solana, independently verifiable) | `/proof` | Live |
+| Provider health | `/status` | Live |
+| **Telegraph sports miner** (Season II) | `miner.sportwarren.com` | **Live and scoring** — node active, last scored epoch 430 (2026-10-21); 5/14 on `GAME_RESULT` |
+| Walrus memory on Sui (Total Recall) | `/arena` memory lane | **In progress** — layer built and tested; ≥10 mainnet writes pending |
+| Autonomous VPS worker | headless (PM2) | **Paused by design** (`ARENA_LANE_MODE=paused`) — receipts, ledger and audit trail intact |
+| TxLINE MLS / PL odds | credential-gated, replay fallback | **Free tier expires 2026-10-26 — not yet resubscribed.** ESPN fallback covers live scores and recent finals |
+| Delphi competition agent | competition completed; worker stopped | Aug 10–24, 2026 |
+| Canton private settlement | DevNet-proven CIP-56/BitSafe CBTC prototype; operator-attested by default | Independent attester + mainnet pending |
 
 **Production:** [fourcastapp.vercel.app](https://fourcastapp.vercel.app)
 
 ## Execution Venues
 
-### Polymarket & Kalshi (Live)
-The original execution layer. Polymarket CLOB orders via Builder Program (earn USDC per attributed fill). Kalshi as secondary venue. The agent discovers markets, filters by volume/time/category, forecasts, detects edge, and executes autonomously.
+### Polymarket & Kalshi (Implemented — execution paused with the agent lane)
+The original execution layer. Polymarket CLOB orders via Builder Program (earn USDC per attributed fill). Kalshi as secondary venue. The agent discovers markets, filters by volume/time/category, forecasts, detects edge, and executes autonomously. The code is live and exercised in dry-run; the worker itself is paused, so no new orders are being placed.
 
 ### Delphi / Gensyn (Finished — competition Aug 10–24, 2026)
 LMSR-based prediction markets on Gensyn Testnet. The same agent core (policy, sizing, forecasting) routes through the Delphi SDK for market discovery, quoting, and execution. TxLINE odds provide intelligence edge on sports markets that other competitors lack.
@@ -81,10 +87,10 @@ Private settlement for operators who need position size hidden from the market. 
 ### TxLINE / TxOdds (Primary Sports Intelligence)
 Professional bookmaker consensus odds, live scores, and cryptographically verifiable Merkle proofs.
 
-- **MLS**: Live now at 50% coverage
-- **Premier League**: Live — **290 fixtures confirmed 2026-08-18**. Odds hashes still pending on the devnet token; need a **mainnet subscription** for live consensus odds (verify via `scripts/verify-mls-fixtures.mjs`)
-- **Merkle proofs**: On-chain verification via Solana `txoracle` CPI — independently verifiable outcomes
-- **Free data access** continues into the season
+- **Connection**: live — the miner reports `connected: true` with a valid token and JWT, and its cached snapshot holds **110,316 fixtures** (read 2026-10-21). The earlier "290 PL fixtures" figure was a single-day check on 2026-08-18, not the feed size.
+- **Subscription**: free tier, service level 1, renewed 2026-09-28. **It expires ~2026-10-26 and has not been renewed.** Until it is, `SPORTS_SCORE`/`GAME_RESULT` fall back to ESPN's public scoreboards — signed, but *not* independently verifiable.
+- **Merkle proofs**: On-chain verification via Solana `txoracle` CPI — independently verifiable outcomes. `verified: true` is only ever set when a real proof is published.
+- **Renewal watch**: the miner's `/health` reports `txline_renewal: null` — the watchdog is not currently tracking the expiry, so nothing will warn us. Treat 2026-10-26 as a hard date, not an alert.
 
 TxLINE provides the sharpest odds data available to any retail or agent participant. This is a concrete intelligence edge: the agent can compare professional consensus pricing against prediction-market prices to find mispricing.
 
@@ -135,6 +141,8 @@ The VPS worker (`scripts/fourcast-agent-worker.mjs`) runs headlessly under PM2:
 - Posts authenticated heartbeat to `/api/agent/historical-lab`
 - Dry-run by default; live execution requires explicit opt-in
 
+**It is currently paused** (`ARENA_LANE_MODE=paused`, since 2026-09-29). The receipts, the ledger and the calibration history are intact and readable; nothing new is being traded. The live product today is the miner plus the proof surfaces — see [docs/HACKATHONS.md](docs/HACKATHONS.md) for why.
+
 See [OPS.md](OPS.md) for deployment details.
 
 ## Quick Start
@@ -159,12 +167,12 @@ node scripts/txline-subscribe-and-activate.mjs
 ### Delphi Agent (Competition)
 
 ```bash
-# Configure .env.local per docs/DELPHI_AGENT.md, then:
+# Configure .env.local per docs/archive/DELPHI_AGENT.md, then:
 npm run delphi:dry   # one simulated cycle — safe
 npm run delphi:live  # continuous; respects DELPHI_AGENT_DRY_RUN
 ```
 
-See [docs/DELPHI_AGENT.md](docs/DELPHI_AGENT.md) for the full operator guide.
+See [docs/archive/DELPHI_AGENT.md](./docs/archive/DELPHI_AGENT.md) for the full operator guide.
 
 ## Project Layout
 
@@ -207,21 +215,25 @@ constants/
 
 ## Documentation
 
+**Full index: [docs/INDEX.md](docs/INDEX.md)** — every document, what it is for,
+and whether it is live. The short list:
+
 | Document | Purpose |
 |----------|---------|
-| [STRATEGY.md](STRATEGY.md) | Multi-venue roadmap, timeline, and competition plan |
-| [OPS.md](OPS.md) | VPS autonomous worker deployment |
-| [docs/CALIBRATION.md](docs/CALIBRATION.md) | Calibration methodology, confidence buckets, Brier scoring |
-| [docs/CANTON_ATOMIC_SETTLEMENT.md](docs/CANTON_ATOMIC_SETTLEMENT.md) | Canton CIP-56 contract model |
-| [docs/DELPHI_AGENT.md](docs/DELPHI_AGENT.md) | Delphi Agent Arena operator guide |
-| [docs/HACKATHONS.md](docs/HACKATHONS.md) | Hackathon/competition record (active + participated) |
-| [docs/EXECUTION_PLAN.md](docs/EXECUTION_PLAN.md) | Canonical team plan: three-leg split, file ownership, frozen cross-leg contracts, status board, handoffs |
-| [docs/TOTAL_RECALL_HACKATHON.md](docs/TOTAL_RECALL_HACKATHON.md) | Total Recall (Tatum × Walrus) build plan — Track 1, portable credibility memory on Sui |
-| [docs/TATUM_SUI.md](docs/TATUM_SUI.md) | Tatum Sui JSON-RPC reads and the on-chain proof of a memory's owner object |
-| [docs/X402_SUI.md](docs/X402_SUI.md) | x402 settled on Sui, self-facilitated: spend gates → on-chain re-read → replay claim |
-| [docs/SURFACES.md](docs/SURFACES.md) | Surface registry — one row per route: class, owner, job, CTA, states, evidence |
-| [docs/TXLINE_INTEGRATION.md](docs/TXLINE_INTEGRATION.md) | TxLINE/Solana proof chain (hackathon reference) |
-| [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | Product demo walkthrough |
+| [STRATEGY.md](STRATEGY.md) | Multi-venue roadmap, timeline, and the Decision Log |
+| [docs/EXECUTION_PLAN.md](docs/EXECUTION_PLAN.md) | The canonical plan: owners, gates, dates, status board |
+| [docs/HACKATHONS.md](docs/HACKATHONS.md) | Every hackathon and competition, active and past |
+| [docs/TOTAL_RECALL_HACKATHON.md](docs/TOTAL_RECALL_HACKATHON.md) | The live entry: the brief, the track, the deliverables |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the system fits together |
+| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Every API route |
+| [docs/CALIBRATION.md](docs/CALIBRATION.md) | Brier scoring, confidence buckets, the calibration curve |
+| [docs/WALRUS_MEMORY.md](docs/WALRUS_MEMORY.md) | The memory layer: namespaces, the ladder, precedence |
+| [docs/SUI.md](docs/SUI.md) | Tatum Sui JSON-RPC reads + x402 self-settled payments |
+| [docs/SURFACES.md](docs/SURFACES.md) | Surface registry (one row per route) + the design contract |
+| [docs/CANTON.md](docs/CANTON.md) | Canton v2 atomic settlement, the BitSafe gate, the runbook |
+| [docs/TXLINE_INTEGRATION.md](docs/TXLINE_INTEGRATION.md) | Bookmaker odds, Merkle proofs, cross-venue edge |
+| [docs/SETUP.md](docs/SETUP.md) | Install, env, wallets, deployment |
+| [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | The demo, word for word |
 
 ## Tech Stack
 

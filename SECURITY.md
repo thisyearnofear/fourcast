@@ -33,7 +33,7 @@ environment variables. Never put real secrets in these files.
 
 - `--legacy-peer-deps` is currently required for installation due to
   conflicting peer dependency versions. This is tracked as a cleanup item.
-- The ethers/viem dual dependency is documented in `docs/NINE_PLAN.md` as a
+- The ethers/viem dual dependency is documented in `docs/archive/NINE_PLAN.md` as a
   planned consolidation (Phase 1.4). Both are actively used for different
   subsystems (ethers: Polymarket EVM order signing; viem: Arc settlement,
   CCTP, wagmi hooks) and should not be removed until the migration is

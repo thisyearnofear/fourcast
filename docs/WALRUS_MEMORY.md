@@ -163,6 +163,6 @@ utils/kellySizing.js                   the one sizing function everything shares
 app/api/memory/status/route.js         status + ladder + proofs
 app/api/decision/whatif/route.js       the would-it-have-changed answer
 components/MemoryDelta.jsx             the lane
-docs/TATUM_SUI.md                      the on-chain proof path
+docs/SUI.md                            the on-chain proof path
 docs/CALIBRATION.md                    the curve memory is a snapshot of
 ```

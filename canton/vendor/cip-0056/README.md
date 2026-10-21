@@ -33,6 +33,6 @@ paths valid. The main package (`canton/daml.yaml`) consumes them.
 
 For mainnet-parity builds, replace these `data-dependencies` with the exact
 package versions vetted on the target network (see
-`docs/CANTON_ATOMIC_SETTLEMENT.md` → "Path to production cBTC / cETH" — the
+`docs/CANTON.md` → "Path to production cBTC / cETH" — the
 Daml code does not change, only which compiled interface DARs it is built
 against).

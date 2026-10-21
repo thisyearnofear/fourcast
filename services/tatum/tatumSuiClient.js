@@ -10,7 +10,7 @@
  * and Sui has formally deprecated JSON-RPC in favour of gRPC. We still read
  * through Tatum's JSON-RPC gateway because the hackathon grades the *Tatum*
  * integration — a read that doesn't go through Tatum scores nothing. See
- * docs/TATUM_SUI.md.
+ * docs/SUI.md.
  *
  * Failure shape (same contract as services/redisService.js):
  *   - NOT configured -> `tatumSuiRpc` resolves `null` and every helper

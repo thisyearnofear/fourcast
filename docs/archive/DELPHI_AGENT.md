@@ -1,3 +1,6 @@
+> **Archived 2026-10.** The Delphi Agent Arena competition (10–24 Aug 2026) finished
+> and the worker is stopped. Kept as the operator guide for that run.
+
 # Delphi Agent Arena — Operator Guide
 
 Fourcast's entry in the Gensyn **Delphi: Agent Arena** competition: an

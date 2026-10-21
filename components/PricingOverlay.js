@@ -6,7 +6,7 @@ import { useSubscription, TIERS } from '@/hooks/useSubscription';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { ARC_EXPLORER_TX } from '@/constants/appConstants';
 
-// Pricing is operator-first per docs/GO_TO_MARKET.md §3 and constants/brand.js
+// Pricing is operator-first per docs/archive/GO_TO_MARKET.md §3 and constants/brand.js
 // positioning. Premium ($19.99/mo) is the headline — it is the Quant-Operator
 // tier. Pro ($9.99) sits quietly beside it for casual signal publishers.
 const PLANS = [

@@ -679,7 +679,7 @@ export default function CantonSettlementHub() {
             <p className="text-[10px] text-[var(--color-ink-faint)] leading-5">
               Stakes and payouts are <span className="text-[var(--color-ink-muted)]">CIP-56 allocations</span> locked in escrow.
               Settlement executes cancels them in the same transaction that archives the position —
-              no manual payout step, no obligations, nothing outstanding. See docs/CANTON_ATOMIC_SETTLEMENT.md.
+              no manual payout step, no obligations, nothing outstanding. See docs/CANTON.md.
             </p>
           </div>
         </section>

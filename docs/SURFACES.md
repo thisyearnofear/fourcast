@@ -23,7 +23,7 @@ assignment). Nothing in this file is a commitment until the lead says so.
 | Route | Renders | Class | Job | Primary CTA | Owner (proposed) | Gates | Last audit |
 |---|---|---|---|---|---|---|---|
 | `/` | yes | A spine | Hero, live agent rail, latest execution, proof timeline | *See the proof* | C (audit) / A (if editing) | G1–G6 ? · G7 ? | — |
-| `/arena` | yes | A spine | The agent's decisions, positions, calibration — three lanes: Ledger \| Mandate \| Memory | *(none — read surface; the Memory lane's two buttons are spend-gated reads, not CTAs)* | **A** | G1–G6 ? · G7 ? | — |
+| `/arena` | yes | A spine | The agent's decisions, positions, calibration — three lanes: Ledger \| Mandate \| Memory | *(none — read surface; the Memory lane's two buttons are spend-gated reads, not CTAs)* | **A** | G1 ✓ (CalibrationCurve's 12 raw literals moved to named tokens, 21 Oct) · G2 ✓ · G3 ✓ · G5 ✓ (mechanical — `BUDGET['/arena'] = 0`) · G4 ? · G6 ? · G7 ? | 2026-10-21 mech. |
 | `/signals` | yes | A spine | Publish a signal; the paid premium tier | *Publish signal* | **C** | G1–G6 ? · G7 ? | — |
 | `/signal/[id]` | yes | A | One signal, its receipt, its outcome | *(none)* | **A** | G2 G3 G5 ? | — |
 | `/markets` | yes | A spine | The act — find a market, take a side | *Take side* | C (audit) | G1–G6 ? · G7 ? | — |
@@ -49,7 +49,7 @@ surfaces — five of those files never reach a user.
 
 ## Findings already banked (21 Oct, first pass)
 
-These are real, verified, and not yet fixed. They are the work list.
+These were real and verified when written; items 2 and 3 are fixed, the rest are the work list.
 
 1. **Five redirect stubs still have full page bodies.** `/weather`, `/autopilot`, `/world-cup`,
    `/agent` and `/notifications` each have a `page.js` *and* a redirect in `next.config.mjs`.
@@ -57,19 +57,24 @@ These are real, verified, and not yet fixed. They are the work list.
    still passes the runtime check. **Decision needed:** delete the page, or drop the redirect.
    (The `app/weather/page.js` body is already a `router.replace('/labs/weather')` — a redirect
    inside a redirect.)
-2. **The footer carries a second, contradicting link set.** `app/layout.js` lists Markets ·
-   Positions · Private · Signals · Agent · Labs · Status. It links to `/agent` and
-   `/notifications` (both redirects) and **omits Arena**, which is a primary destination.
-   `PageNav.js` already exports `PRIMARY_NAV` / `OVERFLOW_NAV` as the single source of truth —
-   the footer should derive from them. *Owner: A (or C — 20 min).*
-3. **G1 debt: 82 raw colour literals across 15 DOM files** (baseline:
-   `scripts/design-tokens-baseline.json`). Worst offenders: `BackdropProvider.js` (30 — it
+2. **The footer carried a second, contradicting link set.** ~~It links to `/agent` and
+   `/notifications` (both redirects) and **omits Arena**, which is a primary destination.~~
+   **fixed 21 Oct (A)**: the footer reads Markets · Positions · Arena · Private · Signals ·
+   Agent · Labs · Status, which is `PRIMARY_NAV` then `OVERFLOW_NAV` then Status, and the Agent
+   link goes to the mandate lane instead of the `/agent` redirect. It does not *derive* from the
+   exported arrays — `PRIMARY_NAV` lives in a client module and `app/layout.js` is the server
+   root, so importing it there would turn the layout into a client component. The two lists are
+   now the same list; a third one is still possible.
+3. **G1 debt: 70 raw colour literals across 14 DOM files** (baseline:
+   `scripts/design-tokens-baseline.json`, and `--enforce` is in CI as of 21 Oct). Worst offenders:
+   `BackdropProvider.js` (30 — it
    re-declares the semantic palette as rgba() instead of reading the tokens it is supposed to
    *be*),
-   `CalibrationCurve.jsx` (12 — and it spends emerald, which this system reserves for
-   *verified*, on a probability bucket),
    `WalletLayer.js` (5), `ProofTheatre.js` (5), `PersonalStatsDashboard.js` (5),
    `ForecastPortals.js` (4), `HistoricalLabPanel.js` (4).
+   ~~`CalibrationCurve.jsx` (12 — and it spends emerald, which this system reserves for
+   *verified*, on a probability bucket)~~ — **fixed 21 Oct (A)**: the buckets now take
+   `evidence` / `sealed` / `review` by name and all 12 literals are banked out of the baseline.
    `app/api/og`, `components/canvasui`, `components/weather3d` and the three canvas/3D
    renderers are **excluded on purpose** — they paint pixels, where a CSS custom property
    does not exist.
@@ -98,12 +103,12 @@ same commit.
 
 | Route | G2 one `h1` | G3 states | G5 names | Finding |
 |---|---|---|---|---|
-| `/` | ✓ | ✗ | ✓ | failure indistinguishable from empty |
+| `/` | ✓ | ~~✗~~ ✓ fixed | ✓ | failure was indistinguishable from empty — **fixed 21 Oct (A)** |
 | `/arena` | ✓ | ✓ | ✓ | — |
 | `/signals` | ✓ | ✓ | ✓ | — |
 | `/signal/[id]` | — | — | — | not a data surface (server read; a missing signal correctly 404s) |
-| `/positions` | ✓ | ✗ | ✓ | failure indistinguishable from empty |
-| `/markets` | ✓ | ✗ | ✓ | failure indistinguishable from empty |
+| `/positions` | ✓ | ~~✗~~ ✓ fixed | ✓ | failure was indistinguishable from empty — **fixed 21 Oct (A)** |
+| `/markets` | ✓ | ~~✗~~ ✓ fixed | ✓ | failure was indistinguishable from empty — **fixed 21 Oct (A)** |
 | `/proof` | ✓ | ✓ | ✓ | — |
 | `/status` | ✓ | ✓ | ✓ | — |
 | `/labs` | ✓ | n/a | ✓ | not a data surface (a directory, no fetch of its own) |
@@ -116,16 +121,17 @@ same commit.
 | `/agent` | ✓ | ✓ | ✓ | — |
 | `/agent/[operatorId]` | ✓ | n/a | ✓ | not a data surface (server read from the DB) |
 
-**The four G3 findings, precisely.** In each case the surface renders the same text when its own
-request fails as when it succeeds with nothing in it, so a reader cannot tell "it failed" from
-"there is nothing here yet":
+**The four G3 findings, and what each one actually was.** In each case the surface rendered the
+same text when its own request failed as when it succeeded with nothing in it, so a reader could
+not tell "it failed" from "there is nothing here yet". All four are closed; `BUDGET` is 0 for
+every mountable route, so the next one of these fails CI.
 
-| Route | Where | The fix |
+| Route | Where | What it was, and the fix |
 |---|---|---|
-| `/` | `components/AgentRail.js` (the landing's feed) | render the failure, name it, and give it `role="alert"` |
-| `/positions` | `components/PositionsDashboard.js` | same — the fetch error currently never reaches the reader |
-| `/markets` | `app/markets/page.js` (the market list fetch) | same — the page logs "Market fetch failed" and shows the empty state |
-| `/labs/canton` | `CantonSettlementHub.js` parties fetch | same — **fixed 21 Oct (B)**: the catch now calls `setError`, and the failure renders in the breach banner |
+| `/` | `components/AgentRail.js` (the landing's feed) | **fixed 21 Oct (A)** — the request had no error state at all (`.catch(() => {})`), so a dead feed read "no agent cycle recorded yet". It now names why it could not read the feed, in `role="alert"`. |
+| `/positions` | `components/PositionsDashboard.js` | **fixed 21 Oct (A)** — the failure existed in state but was printed bare; it now says "Could not load positions — …" with `role="alert"`. |
+| `/markets` | `app/markets/SportsTab.js`, `app/markets/DiscoveryTab.js` | **fixed 21 Oct (A)** — a failed first fetch left `markets === null`, so `isLoading \|\| !markets` rendered the skeleton forever and the error branch was unreachable. The list now renders the failure with a Retry, and an empty result stopped travelling down the error channel. |
+| `/labs/canton` | `CantonSettlementHub.js` parties fetch | **fixed 21 Oct (B)** — the catch now calls `setError`, and the failure renders in the breach banner |
 
 The pattern, in one line of JSX and one line of state:
 
@@ -142,11 +148,14 @@ setError(err.message || 'The request failed');
 ```
 
 The rule it comes from: **an absent value is `—`/NA/a stated reason, never a confident zero**
-(DESIGN_CONTRACT.md §4). A swallowed failure is the same lie in a different shape.
+(SURFACES.md §4). A swallowed failure is the same lie in a different shape.
 
-**What is still not checked mechanically:** G1 (tokens — `scripts/check-design-tokens.mjs`),
-G4 (evidence one tap — a review gate), G6 (one primary CTA — a review gate), G7 (story legibility
-— a review gate, spine only). The registry rows carry those.
+**What is still not checked mechanically:** G4 (evidence one tap — a review gate), G6 (one primary
+CTA — a review gate), G7 (story legibility — a review gate, spine only). The registry rows carry
+those. G1 is a ratchet, not a review: `scripts/check-design-tokens.mjs --enforce` is in CI, so raw
+colour cannot go up and a new file cannot bring raw colour in. `check:surfaces` and `check:runtimes`
+run in the same job — a registry row that stops matching the app now fails the build instead of
+waiting for someone to notice.
 
 ## The audit procedure (20 minutes per route)
 
@@ -157,3 +166,33 @@ G4 (evidence one tap — a review gate), G6 (one primary CTA — a review gate),
    a finding.
 4. Write the date in this table. Fix what you find in the same session — an audit that defers
    its fixes is a second pass nobody makes.
+
+
+---
+
+## Design contract — the rules a surface cannot break
+
+Twenty lines, not a style guide. `tokens.css` and `design.md` hold the system;
+this file holds the invariants the quality bar enforces (see
+`EXECUTION_PLAN.md` → Surface quality bar). A new surface is built to this
+once, not retrofitted.
+
+1. **Colour by name, never literal.** No `#hex`, `rgb()`, or `hsl()` in
+   `components/` or `app/`. Semantic tokens only: `ink`/`ink-muted`/`ink-faint`,
+   `rule`/`rule-strong`, `accent`, `evidence`, `breach`, `sealed`, `paper-*`.
+   Emerald means *verified* — do not spend it on decoration.
+2. **Zero radius.** Sharp corners everywhere. No `rounded` unless the token
+   provides it (status pills are the documented exception).
+3. **Mono for evidence.** Numbers that are claims — sizes, latencies, hashes,
+   hit rates, blob/object ids — render in `--font-mono`. Prose does not.
+4. **`NA` over `0`.** An absent value is `—`/`NA`/a stated reason, never a
+   confident zero, an empty string dressed as a status, or a guessed name.
+5. **Three states, always.** Every data surface renders loading, empty and
+   error — and the empty state says *why* it is empty.
+6. **`verified: true` means a real Merkle root.** Nothing else earns the word.
+7. **One job per section, one `<h1>` per route, one primary CTA** — verb-led,
+   square, emerald.
+8. **Evidence is one tap.** Every claim row expands to its receipt, hash, or
+   raw ledger. A claim you cannot expand is a claim you cannot audit.
+9. **The floor:** `:focus-visible` on every control, accessible names,
+   reduced motion honoured, AA contrast on body text.

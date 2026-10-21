@@ -76,7 +76,7 @@ const IFACE_PKG = {
 
 // Package name (used for query template IDs — Canton v2 expects names, not hashes).
 // v2 ships under a NEW lineage: `fourcast` (the legacy `canton` v1 package stays
-// resolvable at #canton — see docs/CANTON_V2_DEPLOY.md).
+// resolvable at #canton — see docs/CANTON.md).
 const PACKAGE_NAME = 'fourcast';
 
 let cachedToken = null;

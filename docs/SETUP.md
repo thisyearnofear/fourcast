@@ -175,7 +175,7 @@ NEXT_PUBLIC_USE_MARKETPLACE_CONTRACT=true
 1. Install Petra wallet: https://petra.app
 2. Switch to Movement testnet (Bardock, Chain ID 250)
 3. Fund via faucet: https://faucet.testnet.movementnetwork.xyz/
-4. Deploy contracts (see [Deployment Guide](./docs/DEPLOYMENT.md))
+4. Deploy contracts (see [Deployment guide](#deployment-guide))
 
 ### Optional: Polymarket Trading
 
@@ -323,7 +323,7 @@ Arc testnet USDC can be obtained through:
 
 ### 7. Deploy Contracts on Arc
 
-See [Deployment Guide](./DEPLOYMENT.md#arc-contract-deployment-agora-agents-hackathon) for full deployment instructions.
+See the [Deployment guide](#deployment-guide) for full deployment instructions.
 
 Quick start:
 ```bash
@@ -509,7 +509,7 @@ npm run lint
 npm run typecheck
 ```
 
-See [Deployment Guide](./docs/DEPLOYMENT.md) for detailed instructions.
+See [Deployment guide](#deployment-guide) for detailed instructions.
 
 ---
 
@@ -523,3 +523,509 @@ See [Deployment Guide](./docs/DEPLOYMENT.md) for detailed instructions.
 - **Kalshi**: https://kalshi.com
 - **Turso**: https://docs.turso.tech/
 - **Upstash Redis**: https://upstash.com/docs
+
+
+---
+
+## Deployment Guide
+
+> **Note (2026-07):** The flagship route is the TxLINE-primary Mandate Control
+> → Proof Theatre → Diligence flow. TxLINE env vars are required for live mode;
+> without them the app falls back to cached replay mode (still renders, just no
+> live odds or fixtures). The Movement/Aptos and Arc stacks below are
+> legacy/secondary; see docs/ARCHITECTURE.md ("Supporting Infrastructure").
+
+### Frontend Deployment (Vercel)
+
+#### Quick Deploy
+
+```bash
+## Install Vercel CLI
+npm i -g vercel
+
+## Deploy
+vercel --prod
+```
+
+#### Function / deployment storage hygiene
+
+Hobby teams meter **Functions** and **Deployment** storage across retained
+deploys. Prefer pruning historic URLs over raising plan limits:
+
+```bash
+## Confirm live production (note deployment URL + aliases)
+vercel inspect https://fourcastapp.vercel.app --scope papas-projects-5b188431
+
+## List every deployment URL (paginate with --next when prompted)
+vercel ls fourcast --scope papas-projects-5b188431
+
+## Delete only by URL; --safe keeps active production / git-main / live preview aliases
+vercel rm <urls...> --safe --yes --scope papas-projects-5b188431
+```
+
+Never `vercel rm fourcast` by project name. Do not change env or DNS while
+pruning — old builds are regenerable from git.
+
+**Packaging controls (keep serverless NFTs lean):**
+
+| Control | Purpose |
+|---------|---------|
+| `.vercelignore` | Exclude Solidity/video/docs/tooling trees from uploads (`scripts/` and `onchain/` must ship for prepare + WalletLayer) |
+| `outputFileTracingExcludes` in `next.config.mjs` | Keep those trees + `better-sqlite3` / `puppeteer*` out of λ traces |
+| `services/db.js` | Load `better-sqlite3` only on the local SQLite path; production uses Turso |
+| `services/brightDataService.js` | Dynamic-import `puppeteer-core` only for direct Scraping Browser (prefer `BRIGHT_DATA_PROXY_URL` → VPS) |
+
+Heavy work (scraping browser, miners, local SQLite) belongs on the VPS, not in
+every Vercel Node function. After a prune, Usage meters can lag before totals drop.
+
+#### Environment Variables
+
+Set these in Vercel dashboard. **TxLINE vars are primary** — without them the
+flagship route falls back to cached replay mode.
+
+```env
+## Primary — TxLINE (required for live mode)
+TXLINE_API_TOKEN=<activated API token>
+TXLINE_GUEST_JWT=<guest JWT; renewable without re-subscribing>
+TXLINE_API_ORIGIN=https://txline-dev.txodds.com
+TXLINE_SOLANA_NETWORK=devnet
+TXLINE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
+TXLINE_SERVICE_LEVEL=1
+TXLINE_MODE=live
+TXLINE_LAST_TX_SIG=<subscribe tx signature>
+TXLINE_SOLANA_PUBLIC_KEY=<wallet public address>
+
+## Match-escrow program (on-chain settlement)
+NEXT_PUBLIC_MATCH_ESCROW_PROGRAM_ID=AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ
+NEXT_PUBLIC_TXORACLE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
+
+## Worker heartbeat auth (for the autonomous VPS worker)
+FOURCAST_AGENT_WORKER_SECRET=<your bearer token>
+
+## Secondary — AI & weather (for /markets and /signals routes)
+VENICE_API_KEY=your_venice_api_key
+NEXT_PUBLIC_WEATHER_API_KEY=your_weather_api_key
+
+## Recommended
+REDIS_URL=redis://localhost:6379
+## Or Upstash:
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+
+## Optional: Trading (for /markets route)
+POLYMARKET_PRIVATE_KEY=your_private_key
+KALSHI_API_KEY=your_api_key
+KALSHI_SECRET_KEY=your_secret_key
+```
+
+#### TxLINE World Cup (primary sports data layer)
+
+The `/world-cup` route needs these on Vercel to run in live mode. Without
+them it falls back to cached replay mode (still renders, just no live odds or
+fixtures). All values below are placeholders — see `.env.local.example` and
+the README onboarding flow for how to obtain real values.
+
+```env
+TXLINE_API_TOKEN=<activated API token from POST /api/token/activate>
+TXLINE_GUEST_JWT=<guest JWT from POST /auth/guest/start; renewable without re-subscribing>
+TXLINE_API_ORIGIN=https://txline-dev.txodds.com   # devnet host (must match the network used for subscribe)
+TXLINE_SOLANA_NETWORK=devnet
+TXLINE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
+TXLINE_SERVICE_LEVEL=1
+TXLINE_MODE=live
+TXLINE_LAST_TX_SIG=<subscribe tx signature from the on-chain subscribe transaction>
+TXLINE_SOLANA_PUBLIC_KEY=<wallet public address; non-sensitive>
+
+## Match-escrow program for on-chain settlement (CPI → txoracle validate_stat)
+## Defaults to devnet program ID below if unset.
+NEXT_PUBLIC_MATCH_ESCROW_PROGRAM_ID=AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ
+NEXT_PUBLIC_TXORACLE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
+```
+
+**`TXLINE_SOLANA_SECRET_KEY` MUST NOT be set on Vercel** — it is a signing
+key used only locally to (re-)activate the subscription. The deployed app
+only needs the activated `TXLINE_API_TOKEN` + `TXLINE_GUEST_JWT` for data
+access. The guest JWT is renewable anytime via `POST /auth/guest/start`
+without re-signing.
+
+To push these from local `.env.local` to Vercel production in one shot:
+
+```bash
+## After `vercel login` (one-time, browser-based)
+bash scripts/deploy-txline-env.sh                # production env (default)
+bash scripts/deploy-txline-env.sh --env=preview  # preview env instead
+```
+
+The script reads each var from `.env.local` and pipes it to `vercel env add`
+via stdin — values never appear in argv or stdout. It skips
+`TXLINE_SOLANA_SECRET_KEY` by design.
+
+After pushing new env vars, Vercel requires a redeploy for them to take
+effect. Autodeploy picks them up on the next push; for an immediate refresh
+without a code change, use:
+
+```bash
+npx vercel redeploy <latest-prod-url> --target production
+```
+
+See [README](../README.md) for the full TxLINE onboarding flow (wallet
+generation, on-chain subscribe + activate, snapshot script).
+
+---
+
+### Movement Contract Deployment
+
+#### Prerequisites
+
+1. **Install Movement CLI**
+```bash
+curl -fsSL "https://aptos.dev/scripts/install_cli.py" | python3
+aptos --version
+```
+
+2. **Setup Testnet Profile**
+```bash
+aptos init --profile movement \
+  --network custom \
+  --rest-url https://testnet.movementnetwork.xyz/v1 \
+  --faucet-url https://faucet.testnet.movementnetwork.xyz
+```
+
+3. **Fund Account**
+- Web faucet: https://faucet.testnet.movementnetwork.xyz/
+- Or request in Movement Discord
+
+#### Deploy Signal Registry
+
+```bash
+cd move
+
+## Compile
+aptos move compile --profile movement \
+  --named-addresses fourcast_addr=0xYOUR_ADDRESS
+
+## Deploy
+aptos move publish --profile movement \
+  --named-addresses fourcast_addr=0xYOUR_ADDRESS \
+  --assume-yes
+```
+
+#### Update Environment
+
+After deployment, update your `.env.local`:
+
+```env
+NEXT_PUBLIC_MOVEMENT_MODULE_ADDRESS=0x<your_deployed_address>
+NEXT_PUBLIC_USE_MARKETPLACE_CONTRACT=true
+```
+
+#### Verify Deployment
+
+Check on explorer: https://explorer.movementnetwork.xyz/account/0xYOUR_ADDRESS
+
+---
+
+### EVM Contract Deployment
+
+#### PredictionReceipt Contract
+
+Deploy to each supported chain (BNB, Polygon, Arbitrum):
+
+```bash
+## Install Hardhat
+npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox
+
+## Compile contracts
+npx hardhat compile
+
+## Deploy to BNB Chain
+npx hardhat run scripts/deploy.js --network bnb
+
+## Deploy to Polygon
+npx hardhat run scripts/deploy.js --network polygon
+
+## Deploy to Arbitrum
+npx hardhat run scripts/deploy.js --network arbitrum
+```
+
+#### Update Environment
+
+```env
+PREDICTION_CONTRACT_ADDRESS_BNB=0x...
+PREDICTION_CONTRACT_ADDRESS_POLYGON=0x...
+PREDICTION_CONTRACT_ADDRESS_ARBITRUM=0x...
+```
+
+---
+
+### Database Setup
+
+#### SQLite (Local Development)
+
+SQLite is used by default. No setup required.
+
+#### Turso (Production)
+
+1. **Create Account**: https://turso.tech
+
+2. **Create Database**
+```bash
+## Install Turso CLI
+npm install -g @libsql/client
+
+## Create database
+turso db create fourcast-production
+```
+
+3. **Get Connection URL**
+```bash
+turso db show fourcast-production --url
+```
+
+4. **Update Environment**
+```env
+TURSO_DATABASE_URL=libsql://...
+TURSO_AUTH_TOKEN=your_auth_token
+```
+
+---
+
+### Redis Setup
+
+#### Local Redis (Development)
+
+```bash
+## macOS
+brew install redis
+brew services start redis
+
+## Verify
+redis-cli ping  # Should return: PONG
+```
+
+#### Upstash Redis (Production)
+
+1. **Create Account**: https://upstash.com
+
+2. **Create Database**
+   - Go to Upstash Console
+   - Create new Redis database
+   - Copy REST URL and Token
+
+3. **Update Environment**
+```env
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=...
+```
+
+---
+
+### Monitoring & Health Checks
+
+#### Health Check Endpoint
+
+```bash
+curl https://yourdomain.com/api/predictions/health
+```
+
+**Expected Response:**
+```json
+{
+  "status": "ok",
+  "services": {
+    "database": "connected",
+    "redis": "connected",
+    "ai": "available"
+  }
+}
+```
+
+#### Logging
+
+Fourcast uses Pino for structured logging:
+
+```bash
+## Development (pretty-printed)
+npm run dev
+
+## Production (JSON logs)
+NODE_ENV=production npm start
+```
+
+---
+
+### Troubleshooting
+
+#### Module Not Found (Movement)
+- Verify `NEXT_PUBLIC_MOVEMENT_MODULE_ADDRESS` matches deployed address
+- Check network is set to `custom` for Movement testnet
+
+#### Insufficient Gas
+```bash
+## Fund via faucet
+https://faucet.testnet.movementnetwork.xyz/
+```
+
+#### Transaction Pending
+- Movement testnet can have delays (30-60s)
+- Check Explorer: https://explorer.movementnetwork.xyz/
+- Wait before retrying
+
+#### Database Connection Failed
+- Check Turso URL and auth token
+- Verify database is not suspended
+- Test connection: `turso db shell <database>`
+
+#### Redis Connection Failed
+- For local: `brew services restart redis`
+- For Upstash: Check URL and token
+- App works without Redis (falls back to in-memory)
+
+---
+
+### Cost Estimates
+
+#### Monthly Operating Costs (Production)
+
+| Service | Tier | Cost |
+|---------|------|------|
+| Vercel | Pro | $20/mo |
+| Upstash Redis | Pay-as-you-go | ~$5/mo |
+| Turso Database | Free tier | $0/mo |
+| Venice AI | Pay-per-use | ~$30/mo (3000 analyses) |
+| TxLINE devnet | Free World Cup tier | $0/mo |
+| Solana devnet | Free | $0/mo |
+| **Total** | | **~$55/mo** |
+
+#### Gas Costs (Solana devnet)
+
+| Operation | Gas Cost |
+|-----------|----------|
+| TxLINE subscribe | ~0.001 SOL |
+| Create policy (lock SOL) | ~0.0005 SOL |
+| Settle policy (CPI → validate_stat) | ~0.002 SOL |
+
+---
+
+### Security Best Practices
+
+#### Private Keys
+- Never commit `.env` or `.env.local` to git
+- Use environment variables in Vercel dashboard
+- Rotate API keys periodically
+- Use separate wallets for development and production
+
+#### API Keys
+- Restrict API key permissions where possible
+- Use rate limiting
+- Monitor usage for anomalies
+
+#### Database
+- Enable authentication (Turso auth tokens)
+- Use connection pooling
+- Regular backups (Turso automatic)
+
+---
+
+### Rollback Plan
+
+If deployment issues occur:
+
+```bash
+## Revert Vercel deployment
+vercel rollback
+
+## Or redeploy previous version
+vercel --prod --commit <previous-commit>
+```
+
+For contract issues:
+- Keep backup of previous Move contract version
+- Document upgrade path before deploying changes
+
+---
+
+### Resources
+
+- **Vercel Docs**: https://vercel.com/docs
+- **TxLINE Quickstart**: https://txline.txodds.com/documentation/quickstart
+- **Solana Docs**: https://solana.com/docs
+- **Turso Docs**: https://docs.turso.tech/
+- **Upstash Docs**: https://upstash.com/docs
+- **Venice AI**: https://docs.venice.ai/
+
+
+---
+
+## Git Hooks
+
+Fourcast uses git hooks to prevent committing sensitive files and secrets.
+
+### Pre-commit Hook
+
+Automatically runs before every commit to check for:
+
+#### Blocked Files
+- `.env` files (except `.env.local.example`)
+- Private keys (`.pem`, `.key`, `.pub`)
+- Blockchain config files (`.aptos/`, `.movement/`, `movement-key.txt`, `config.yaml`)
+- Certificates (`.crt`, `.cert`)
+
+#### Secret Scanning
+Scans staged changes for patterns like:
+- `API_KEY=...`
+- `PRIVATE_KEY=0x...`
+- `SECRET=...`
+- `PASSWORD=...`
+
+### Installation
+
+The hook installs automatically when you run:
+
+```bash
+npm install
+```
+
+Or manually:
+
+```bash
+npm run hooks:install
+```
+
+### Testing
+
+To test the hook before committing:
+
+```bash
+npm run hooks:test
+```
+
+### Bypassing
+
+If you need to commit something that triggers a false positive:
+
+```bash
+git commit --no-verify
+```
+
+⚠️ **Use with caution** - only bypass if you're certain the content is safe.
+
+### Scripts
+
+- `scripts/pre-commit.sh` - The actual hook script
+- `scripts/install-hooks.sh` - Installs all hooks
+- `.git/hooks/pre-commit` - Installed hook location
+
+### Troubleshooting
+
+#### Hook not running?
+1. Check if script is executable: `chmod +x scripts/pre-commit.sh`
+2. Reinstall: `npm run hooks:install`
+
+#### False positive?
+- Review the pattern that matched
+- If it's truly safe, use `--no-verify`
+- Consider using environment variables instead of hardcoded values
+
+#### Hook file missing?
+Run `npm install` or `npm run hooks:install` to reinstall.

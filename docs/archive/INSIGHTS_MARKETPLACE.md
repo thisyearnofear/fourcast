@@ -1,3 +1,6 @@
+> **Archived.** The signals/follow surface is live in code; this is the original
+> design note for the acquisition layer. See [`docs/FEATURES.md`](../FEATURES.md).
+
 # Insights Marketplace — The Acquisition Layer
 
 ## Position

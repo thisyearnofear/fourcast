@@ -10,7 +10,7 @@ import { ChevronDown } from 'lucide-react';
  * back-end trick, not a product. This strip is the receipt surface: what the
  * rail is worth, what it settled, and the digest that proves it.
  *
- * Design rules it obeys (docs/DESIGN_CONTRACT.md):
+ * Design rules it obeys (docs/SURFACES.md):
  *   - colour by token name, never a literal; zero radius
  *   - mono for every number that is a claim (amount, digest, timestamps)
  *   - `NA` over `0`: "none yet" is not a zero

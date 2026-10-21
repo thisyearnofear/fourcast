@@ -25,13 +25,18 @@
 
 **Mandatory deliverables**
 
-- [ ] Walrus Memory integrated and **writing on Mainnet**
-- [ ] **At least 10 memories stored on Mainnet**
-- [ ] Tatum RPC used for onchain data *where relevant*
-- [ ] Published blog post — what it does, how it uses Tatum + Walrus, **how it learned over time**
-- [ ] Working demo + public repo
-- [ ] Tatum dashboard account ID on the submission form
-- [ ] `MEMWAL_AGENT_ID` (the public key under *Delegate keys*) on the form
+- [ ] Walrus Memory integrated and **writing on Mainnet** — integrated (client, ledger,
+      store, resolution triggers, tests green); **no mainnet write yet**
+- [ ] **At least 10 memories stored on Mainnet** — 0. **The binding constraint.**
+- [ ] Tatum RPC used for onchain data *where relevant* — client + proof helper built
+      and tested; **no live key, no real read yet**
+- [ ] Published blog post — what it does, how it uses Tatum + Walrus, **how it learned
+      over time** — not started; it needs the learning curve, which needs real rungs
+- [ ] Working demo + public repo — public repo yes; the memory demo lane exists on
+      `/arena` but has nothing to show yet
+- [ ] Tatum dashboard account ID on the submission form — **account not created**
+- [ ] `MEMWAL_AGENT_ID` (the public key under *Delegate keys*) on the form — **agent not
+      created**
 
 **Judging:** 30% Walrus + Tatum integration · 30% technical quality (incl.
 successful **Tatum Sui RPC** integration) · 20% creativity · 20% presentation.
@@ -49,7 +54,7 @@ That is a description of machinery Fourcast already runs:
 
 | Brief clause | What we already have | Where |
 |---|---|---|
-| "Track which voices were right" | `analyst_address → prediction → outcome → Brier_score`; analyst leaderboard, follow graph, verified public track record | `docs/INSIGHTS_MARKETPLACE.md` |
+| "Track which voices were right" | `analyst_address → prediction → outcome → Brier_score`; analyst leaderboard, follow graph, verified public track record | `docs/archive/INSIGHTS_MARKETPLACE.md` |
 | "Memory stores credibility scores" | Source-level calibration — per-platform Brier scores; confidence buckets; calibration curve; calibration-aware Kelly sizing | `docs/CALIBRATION.md` |
 | "Odds dashboards that flag when sources disagree" | Cross-venue edge detection: TxLINE consensus vs Polymarket/Kalshi price | `docs/TXLINE_INTEGRATION.md`, `STRATEGY.md` |
 | "how it learned over time" | The calibration curve is *already* a chart of learning over time; the all-forecasts ledger exists specifically to kill the traded-only selection bias | `docs/CALIBRATION.md` |
@@ -135,22 +140,41 @@ that only shows the wins will read as marketing.
 ## Build plan (3 weeks)
 
 **Week 1 · 20–26 Oct — substrate**
-- [ ] Tatum account + API key; read the Sui RPC and Data API docs.
-- [ ] Walrus Memory agent created; `MEMWAL_AGENT_ID` captured.
-- [ ] Read the Walrus Memory docs; decide the memory schema; **write the first
-      10+ memories on mainnet early** — the deliverable must not be left to
-      hour 48.
-- [ ] Prove one meaningful Sui read through Tatum RPC (floor: option c).
-- [ ] Decide (c) or (b). Write the decision down before building.
+- [x] Tatum Sui JSON-RPC client landed — `services/tatum/tatumSuiClient.js`, with a
+      tri-state object-proof helper (`assertMemoryObjectOnChain`) and mocked-fetch
+      tests. The deliberate gRPC deviation is documented in
+      [`docs/SUI.md`](./SUI.md). **Still needed: a Tatum account + API key, and one
+      real mainnet read through it.**
+- [ ] Walrus Memory agent created; `MEMWAL_AGENT_ID` captured. The client
+      (`services/memory/memwalClient.js`) is built and configured, but no agent
+      exists on the dashboard yet, so the public key the form asks for is not yet
+      ours to paste.
+- [x] Memory schema decided and implemented — four flat namespaces, the append-only
+      version ladder, and the `fourcast.memory/v1` text contract
+      ([`docs/WALRUS_MEMORY.md`](./WALRUS_MEMORY.md)). **Still needed: the first
+      10+ mainnet writes.**
+- [x] Prove one meaningful Sui read through Tatum RPC (floor: option c) — the code
+      path exists and is tested against mocked responses. **Still needed: one real
+      read against a live key.**
+- [x] Decide (c) or (b) — written down: **(c) is the floor and ships; (b) is the
+      stretch and stays dark unless the `SUI_NETWORK` conflict is resolved
+      separately.** See the decision log in [`STRATEGY.md`](../STRATEGY.md).
 
 **Week 2 · 27 Oct – 3 Nov — wiring**
-- [ ] Memory writes driven by the calibration pipeline (per-analyst + per-source
-      on resolution, not on a timer).
-- [ ] Reads that visibly change the product: credibility re-ranking surfaces in
-      the analyst list; calibration-aware sizing reads the memory.
-- [ ] Demo route; capture the learning curve as images as they accrue.
-- [ ] x402-on-Sui spike (stretch, option b) — decide by 31 Oct whether it is in
-      or out.
+- [x] Memory writes driven by the calibration pipeline (per-analyst + per-source
+      on resolution, not on a timer) — `services/memory/{ledgerMemory,writeLedger,
+      memoryStore,resolutionTrigger}.js`, with the resolution hooks wired into the
+      agent resolve route, the VPS worker and the Delphi sweep.
+- [x] Reads that visibly change the product: `readSizingCalibration()` feeds
+      `utils/kellySizing.js` on a **db → memory** precedence, and the receipt
+      stamps the `blobId`/`textHash` that moved the size. The `/arena` memory lane
+      renders the version ladder.
+- [ ] Demo route; capture the learning curve as images as they accrue. **Blocked
+      on real rungs** — with no confirmed write there is no ladder to photograph.
+- [ ] x402-on-Sui spike (stretch, option b) — implemented and tested
+      (48 assertions), but inert by construction: settlement defaults to testnet
+      while the memory leg is mainnet, and one `SUI_NETWORK` cannot name both
+      chains. Decision gate **1 Nov**.
 
 **Week 3 · 4–10 Nov — ship**
 - [ ] Blog post (the learning curve + the honest failures).
@@ -194,4 +218,8 @@ that only shows the wins will read as marketing.
 
 ---
 
-*Added 2026-10-20. Plan only — nothing built.*
+*Added 2026-10-20 (plan). Updated 2026-10-21 with build state: the memory layer, the
+Tatum client and the x402 rail are built and tested; **no memory has been written to
+Sui mainnet yet**, and the ≥10-memory deliverable is the binding constraint. The
+canonical plan and the status board live in
+[`docs/EXECUTION_PLAN.md`](./EXECUTION_PLAN.md).*

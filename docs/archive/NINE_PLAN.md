@@ -1,3 +1,7 @@
+> **Paused 2026-08-18.** The 6-week product/architecture plan was superseded by the
+> hackathon execution plan; most P0–P2 items shipped, the rest were not started.
+> **Current plan: [`docs/EXECUTION_PLAN.md`](../EXECUTION_PLAN.md).**
+
 # Fourcast → 9/10 on Product & Architecture
 
 A 6-week, opinionated plan. Each phase ships a tangible artifact and a measurable improvement. The order matters: foundation → focus → polish.

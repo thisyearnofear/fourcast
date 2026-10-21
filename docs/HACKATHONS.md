@@ -47,7 +47,13 @@ relying on them.
 30 days, $10,000 prize pool. Season I closed without a Fourcast placement. This
 section is the plan for Season II so we enter instrumented instead of blind.
 **Now scoring:** node `fourcast-sports-intelligence` is `active`,
-`last_scored_epoch` 370 as of 2026-09-29 07:04 UTC. Registration is through the Season II page at
+`last_scored_epoch` **430** as of 2026-10-21 21:21 UTC (read live via
+`npm run survey` in `telegraph-miner/`), 11 requests served, `GAME_RESULT` rank
+**5/14** of 14 measured miners at 3.8e-6. `SPORTS_SCORE` remains **unmeasured by
+the network** (1.8e-12, rank 8/14) — a score there means nothing, so it is not
+an optimisation target. The miner's own `/health` is `ok` with zero upstream
+failures (txline 16 ok, espn 761 ok) and a 110,316-fixture snapshot.
+Registration is through the Season II page at
 [telegraphprotocol.com](https://telegraphprotocol.com); exact prize split,
 judging criteria, and qualification requirements publish with the final rules —
 **re-verify all of it before relying on this plan.**
@@ -285,7 +291,7 @@ positioning claims.
         `verified: true` only with a real Merkle root.
 - [x] P3 evaluator WASM decision: a `GAME_RESULT` attribution scorer. Build it,
       or write it up as a finding. **Written up (`2026-10-21`,
-      `docs/TELEGRAPH_SCORER_FINDING.md`):** the agreement gate makes a
+      `docs/TELEGRAPH_FINDINGS.md`):** the agreement gate makes a
       *corrected* `GAME_RESULT` scorer structurally unpassable, so building WASM
       would buy a slot that cannot score. The handler itself shipped behind
       `TELEGRAPH_INTENT_EVENT_OUTCOME`, **default off and unregistered** — the
@@ -381,7 +387,7 @@ positioning claims.
   `contracts/SubscriptionManager.sol`.
 
 ### TxLINE Hackathon · Solana — ✅ Jul 19, 2026
-- **Submission:** `docs/TXLINE_SUBMISSION.md` (live yet kept) — "Verifiable Agent
+- **Submission:** `docs/archive/TXLINE_SUBMISSION.md` (live yet kept) — "Verifiable Agent
   Mandates with TxLINE Outcome Proofs". Live demo
   [fourcastapp.vercel.app/world-cup](https://fourcastapp.vercel.app/world-cup),
   Solana program on devnet
@@ -404,7 +410,7 @@ positioning claims.
 - **What:** autonomous agent trading LMSR prediction markets on Gensyn testnet
   (chain 685685), driven by the same decision core as the Polymarket agent.
 - **Submission:** [DoraHacks](https://dorahacks.io/hackathon/delphi-agent-competition/detail) —
-  submitted 2026-08-19. Operator guide: `docs/DELPHI_AGENT.md`.
+  submitted 2026-08-19. Operator guide: `docs/archive/DELPHI_AGENT.md`.
 - **Agent:** live since Aug 12, 68 fills on 25 markets, 138.8 TST gross deployed,
   31.26 TST swept to date.
 - **Last board (2026-08-20):** rank 80/159, account 1,000.35 TST, PnL −0.15 TST,

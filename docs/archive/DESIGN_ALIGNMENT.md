@@ -1,3 +1,6 @@
+> **Archived.** The 12 Aug 2026 design review. Its conclusions are implemented
+> (nav consolidation, `/arena` as the proof surface, dead routes retired).
+
 # Design Alignment Review — 2026-08-12
 
 Holistic review of fourcastapp.vercel.app ahead of the agent-proof (`/arena`)

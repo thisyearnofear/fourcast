@@ -11,7 +11,7 @@ import TweenNumber from '@/components/motion/TweenNumber';
 /**
  * /agent/[operatorId] — the public Track Record URL for a single operator.
  *
- * This is the surface a concierge DM points a prospect at (docs/GO_TO_MARKET.md
+ * This is the surface a concierge DM points a prospect at (docs/archive/GO_TO_MARKET.md
  * §2.2 step 4): "here is the mandate this operator runs under, and here is the
  * track record produced under that mandate." It composes the same data the
  * global /positions page shows, scoped to one operator_id (migration 0010) and

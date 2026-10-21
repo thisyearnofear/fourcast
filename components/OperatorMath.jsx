@@ -16,7 +16,7 @@ const PricingOverlay = dynamic(
 /**
  * OperatorMath — the headline product claim rendered as a self-contained
  * emerald hero block. Surfaces BRAND.positioning.operatorMath end-to-end so
- * the concierge DM (docs/GO_TO_MARKET.md) and the daily Telegram report can
+ * the concierge DM (docs/archive/GO_TO_MARKET.md) and the daily Telegram report can
  * quote the same numbers verbatim.
  *
  * Drop-in: <OperatorMath /> mounts its own PricingOverlay when the user clicks

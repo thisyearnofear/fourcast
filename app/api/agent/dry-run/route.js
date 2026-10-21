@@ -35,7 +35,7 @@ const DEMO_FIXTURE = {
  * policy } shape the VPS worker produces — WITHOUT writing a receipt to disk,
  * posting a heartbeat, or executing anything. This is the self-serve version
  * of the concierge test's "hand-roll a mandate and see what it would have
- * decided" step (docs/GO_TO_MARKET.md §2.2).
+ * decided" step (docs/archive/GO_TO_MARKET.md §2.2).
  *
  * Reuses the canonical decision domain modules so the verdict is identical to
  * what the worker would produce under the same policy.

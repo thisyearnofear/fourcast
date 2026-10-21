@@ -10,7 +10,7 @@ import TweenNumber from '@/components/motion/TweenNumber';
  * MandateBuilder — self-serve mandate config + dry-run preview.
  *
  * This is the in-browser version of the concierge test's "hand-roll a mandate
- * and see what it would have decided" step (docs/GO_TO_MARKET.md §2.2). A
+ * and see what it would have decided" step (docs/archive/GO_TO_MARKET.md §2.2). A
  * prospect adjusts the four real policy knobs from decisionPolicy.js, runs a
  * dry-run against the canonical France–Sweden fixture, and sees the verdict,
  * gate checks, and allocation — without an account, a VPS, or a private key.

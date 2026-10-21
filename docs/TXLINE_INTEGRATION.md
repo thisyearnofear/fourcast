@@ -105,4 +105,4 @@ The `match-escrow` program at `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ` on 
 
 ## Historical Reference
 
-The original TxLINE hackathon submission (World Cup 2026 scope, Autonomous Historical Lab, replay mode) is preserved at [`docs/TXLINE_SUBMISSION.md`](TXLINE_SUBMISSION.md). That document captures the proof-of-concept work that established the integration. The ongoing integration described above builds on that foundation for live season coverage.
+The original TxLINE hackathon submission (World Cup 2026 scope, Autonomous Historical Lab, replay mode) is preserved at [`docs/archive/TXLINE_SUBMISSION.md`](./archive/TXLINE_SUBMISSION.md). That document captures the proof-of-concept work that established the integration. The ongoing integration described above builds on that foundation for live season coverage.

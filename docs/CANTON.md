@@ -4,7 +4,7 @@
 >
 > **Resolution status:** each market has a configurable designated attester. The current DevNet workflow defaults to the Fourcast operator as attester, so it is **self-attested**. An independent oracle/attester is supported by the contract design but is not yet integrated or deployed. Mainnet is not deployed.
 >
-> The v2 contract set supersedes the historical v1 IOU-bookkeeping material retained below. `docs/CANTON_ATOMIC_SETTLEMENT.md` is the authoritative capability/status document; `docs/CANTON_V2_DEPLOY.md` is the DevNet deployment runbook.
+> The v2 contract set supersedes the historical v1 IOU-bookkeeping material retained below. `docs/CANTON.md` is the authoritative capability/status document; `docs/CANTON.md` is the DevNet deployment runbook.
 
 **Event**: HackCanton League Season 2 (finished)
 **Host**: NODERS & Canton Foundation  
@@ -264,7 +264,717 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
 
 ### Post-Submission
 1. **Multi-party flow** — Holder dashboard (`/canton/holder`) with Console Wallet connect is live. On-ledger consent is **delivered in v2** (holder-signed PositionOffer → operator AcceptOffer; unilateral creation provably impossible). Remaining: wallet-EXTERNAL signing so holders sign offers with their own keys (roadmap Phase 1)
-2. ~~**CIP-56 automation**~~ — **delivered as v2**: no "automated transfer" needed; settlement itself moves the funds atomically (allocations execute/cancel in-transaction). See docs/CANTON_ATOMIC_SETTLEMENT.md
+2. ~~**CIP-56 automation**~~ — **delivered as v2**: no "automated transfer" needed; settlement itself moves the funds atomically (allocations execute/cancel in-transaction). See docs/CANTON.md
 3. **Position creation UI** — Currently positions are created via API call. Need a form in the SettlementHub for users to place positions
 4. **Settled P&L leaderboard** — Show verified results without leaked entries (whales keep clout, privacy preserved)
 5. **Telegram bot integration** — Push private settlement confirmations to whale channels
+
+
+---
+
+## Canton v2 — Atomic Settlement Upgrade
+
+### Current implementation status
+
+This document is the source of truth for the HackCanton claim set.
+
+| Capability | Status |
+|---|---|
+| Private Daml positions | Implemented and DevNet-tested |
+| Holder-signed consent | Implemented and script-tested |
+| CIP-56 atomic escrow/settlement | Implemented with Fourcast's reference registry + real BitSafe CBTC |
+| Actual BitSafe CBTC registry settlement | ✅ Proven end-to-end (`canton-bitsafe-lifecycle.mjs`) |
+| External holder-wallet signing | Partial; operator flow remains the judge path |
+| Independent attestation | Configurable; current DevNet demo is operator-attested |
+| Mainnet deployment | Not deployed |
+
+> Responds to reviewer feedback on the v1 integration. The v1 Daml model tracked
+> IOUs and required manual wallet payouts. v2 locks real token holdings in
+> escrow at position-entry and settles them **atomically** — stake and payout
+> move in the *same transaction* that archives the position. Built directly on
+> the **CIP-56 token standard V1 interfaces** (the standard that cBTC and cETH
+> implement on DevNet), vendored verbatim from `canton-network/splice`.
+
+- **DAR:** `canton/.daml/dist/fourcast-2.0.0.dar` (package name `fourcast`, version 2.0.0,
+  main package `550828d2…930a`). Built against the **DevNet's own vetted CIP-56 interface DARs**
+  (`vendor/network-cip-0056/`, package IDs verified PRESENT on the participant via
+  `scripts/canton-package-check.mjs`) — its `Holding`/`Allocation`/`AllocationRequest` references
+  are byte-identical to what the real cBTC/cETH registries implement.
+- **Tests:** `dpm test` in `canton/` — 7/7 Daml Scripts pass (balances, conservation of token supply, consent guards, privacy)
+- **Feedback addressed:** every structural point raised in the Canton review; see the mapping table below
+
+---
+
+### Feedback → fix mapping
+
+| # | Reviewer feedback | v2 change |
+|---|---|---|
+| 1 | No value ever moves on-ledger; settlement is a manual wallet transfer | Stakes are locked as **CIP-56 allocations** at position entry, executed/cancelled inside `Settle`/`SettleAsHolder`. `SettlementObligation`, manual transfers, and the dispute flow are **deleted** — there is nothing left to pay out after settlement. |
+| 2 | Operator is a trusted oracle (bare `ResolveMarket`) | `ResolveMarket` requires a `ResolutionAttestation` signed by the **attester named at market creation**, records `evidenceHash`/`evidenceUri`, and is gated on the market deadline. DevNet may self-attest; swapping in an independent oracle/attestation service is a *market-creation parameter*, not a code change. This re-anchors the Canton side to the same verify-don't-trust posture TxLINE gives us on Solana. |
+| 3 | Non-idiomatic consent (`signatory operator, observer holder`) | Holder-signed `PositionOffer` → operator `AcceptOffer`. The position's signatories are **operator + holder**; a position cannot exist without holder authorization (tested: `submitMustFail` on unilateral creation). No-op `observer operator` removed. Holder can settle own win (`SettleAsHolder`). `ExpirePosition` now enforces `settleBefore`. |
+| 4 | Web2 auth on a user-keys chain | Unchanged in this PR (CantonWalletRoadmap Phase 1/3) — but v2 makes holder-side flows *wallet-native in shape*: positions are standard `AllocationRequest`s, stakes are standard allocations, settlement is holder-submittable. Nothing about the v2 model assumes server-held user keys. |
+| 5 | "Canton as a checkbox" optics | v2 demos Canton's signature capability (private, atomic multi-party settlement of standard tokens) and survives "why not an EVM + DB" scrutiny: positions private via subtransactions, escrow non-custodial, settlement atomic, resolution evidence-anchored. |
+
+---
+
+### The v2 model (5 pieces)
+
+1. **`PositionOffer`** (signatory: holder) — the consent primitive. The operator
+   accepts (position created with both parties as signatories) or rejects.
+
+2. **`PredictionPosition` implements CIP-56 `AllocationRequest`** — declares two
+   escrow legs: `stake` (holder → operator, `stake`) and `payout`
+   (operator → holder, `stake * (oddsMultiplier - 1)`). Each party locks its own
+   side via the registry's `AllocationFactory`. Wallets show these as locked
+   holdings.
+
+3. **`Settle` / `SettleAsHolder`** — one choice per settling lane (each party
+   can act alone). The choice fetches the attestation-anchored
+   `MarketResolution`, validates both allocations byte-for-byte against the
+   position's expected `AllocationSpecification`s, then in the same transaction:
+   holder wins → cancel stake leg (stake returned) + execute payout leg;
+   holder loses → execute stake leg + cancel payout leg; void → cancel both.
+   Receipt `PositionSettled` records outcome, payout, and the evidence
+   commitment. Economics are fixed by the contract — the settler can't alter
+   them, whoever it is.
+
+4. **`ResolutionAttestation`** (signatory: designated attester) — what the
+   operator must present to resolve. Carries outcome + `evidenceHash` +
+   `evidenceUri`. On DevNet the attester defaults to the operator (self-attested
+   — same trust as v1, now explicit); point `PredictionMarket.attester` at an
+   independent oracle party and the operator *cannot resolve without that
+   oracle's signature*. No contract code changes.
+
+5. **`ExpirePosition` / `ExpirePositionAsHolder`** — after `settleBefore`
+   (deadline + 365d grace), either party reclaims the escrow atomically.
+   Deadline enforced by the contract.
+
+`Fourcast.Token` is a **reference CIP-56 registry** (admin = `FourcastOperator`)
+so the whole lifecycle runs on DevNet without BitSafe/OnRails mint permissions.
+The market contracts never touch its concrete templates — they consume only the
+standard interfaces. The production swap still requires registry discovery,
+instrument configuration, allocation-factory context, funding, and a complete
+live lifecycle run against BitSafe's contracts (see below).
+
+---
+
+### Verification evidence
+
+`dpm test` (SDK 3.5.2) — all scripts in `canton/daml/Main.daml`:
+
+```
+setup:                              ok
+demo:                               ok, 27 transactions   (full lifecycle, holder-settled win)
+main:                               ok
+test_losingStakeFlowsToOperator:    ok                    (operator-settled loss)
+test_consentAndGuardRails:          ok                    (4 negative guards)
+test_voidedMarketRefundsEveryone:   ok                    (atomic refund)
+test_expireRefundsAfterGrace:       ok                    (deadline-enforced expiry)
+```
+
+Asserted in scripts, not narrated:
+
+- **Balances move atomically.** Alice starts with 2,000, locks 500, wins, and
+  settles *her own* position → 2,500 (stake returned + 500 payout executed in
+  the same transaction). Bob locks 300, loses, operator settles → 700,
+  operator 4,800. Total supply 8,000 conserved; nothing remains locked.
+- **Holder self-settle works.** The winning `Settle` in the demo is submitted
+  by the *holder*.
+- **Consent is structural.** `submitMustFail operator (createCmd PredictionPosition …)`
+  — operator cannot conjure a position without the holder's signature.
+- **Attestation can't be forged.** Market with `attester = bob`:
+  `submitMustFail operator (createCmd ResolutionAttestation …)` — the operator
+  literally cannot produce the artifact needed to resolve.
+- **Deadline enforced.** Early `ResolveMarket` with an otherwise-genuine
+  attestation fails; cross-market attestation fails.
+- **Privacy unchanged.** Charlie (non-stakeholder) queries return empty for
+  positions, allocations *and* receipts — the dual-party privacy demo from v1
+  extends to the escrow layer.
+
+The settle transaction for the loser-settle case (extracted from the script's
+transaction trace) is one ledger transaction: `Settle` on the position fetches
+the resolution + both `TokenAllocation`s → `Allocation_ExecuteTransfer`
+creates a 300 cBTC holding for the operator → `Allocation_Cancel` returns the
+operator's 300 payout escrow → `PositionSettled` receipt created → position
+and both allocations archived. Nothing dangles; there is no step 2.
+
+#### Reproducing
+
+```bash
+cd canton
+# vendor interfaces already built: vendor/cip-0056/*/.daml/dist/*.dar
+~/.dpm/bin/dpm build
+export JAVA_HOME=~/.local/share/jre21/Contents/Home   # script service needs a JVM
+export PATH="$JAVA_HOME/bin:$PATH"
+~/.dpm/bin/dpm test
+```
+
+---
+
+### Path to production cBTC / cETH (BitSafe / OnRails)
+
+The Daml code **does not change**. The v2 DAR references token contracts only
+through `Splice.Api.Token.{HoldingV1, AllocationV1, AllocationInstructionV1}`.
+
+**BitSafe CBTC is proven end-to-end.** `scripts/canton-bitsafe-lifecycle.mjs`
+runs the full lifecycle (allocate → settle → verify balances + privacy) against
+real BitSafe CBTC on Canton DevNet. See
+`docs/CANTON.md` for the full
+integration record.
+
+| Layer | Reference | BitSafe CBTC (proven) |
+|---|---|---|
+| Interface packages | DONE — built against the DevNet-vetted DALFs (`vendor/network-cip-0056/`, IDs in `manifest.json`) | same |
+| Registry contracts | `Fourcast.Token` (`TokenRules`, admin = FourcastOperator) | BitSafe cBTC registry factories (`00d58a5f…`, package `82798df0`) |
+| Instrument | `InstrumentId{admin = FourcastOperator, id = "cBTC"}` | `InstrumentId{admin = cbtc-network::…, id = "CBTC"}` |
+| Minting | `MintRequest` on the reference registry | faucet-issued holdings (two-phase `TransferInstruction_Accept`) |
+| Allocation factory | `toInterfaceCid rulesCid` | registry-provided factory cid; client submits with `expectedAdmin = <BitSafe admin>` |
+| Utility DARs | N/A | `utility-registry-app-v0-0.2.0.dar` + `utility-registry-v0-0.4.0.dar` (uploaded by operator) |
+
+Known integration nuances for the client (honest list):
+
+1. **Interface-contract disclosure.** Exercises reference registry contracts
+   the caller doesn't see (factory, and — depending on registry — the
+   counterparty's allocation). JSON Ledger API v2: attach them under
+   `disclosedContracts` in `/v2/commands/submit-and-wait`. (Our reference
+   registry observes allocation *receivers* so holder-side settle needs no
+   disclosure; TestTokenV1-derived registries may not.)
+2. **Allocation discovery.** The app backend queries `Allocation` by
+   interface and matches `allocation.settlement.settlementRef` against each
+   position, then hands the two cids + `ExtraArgs` to the settle endpoint.
+   `ExtraArgs{context, meta}` is plumbed through `SettleParams` already; the
+   reference registry ignores it, BitSafe/OnRails may require context provided
+   by their app backend.
+3. **Wallet UX.** Because positions implement `AllocationRequest`, generic
+   CIP-0103 wallets can display and fund the escrow legs. Console Wallet +
+   external signing (roadmap Phase 1) turns holder consent into holder keys
+   without touching the model.
+
+---
+
+### App-side changes (DELIVERED with the v2 DAR)
+
+- `services/cantonLedgerClient.js` — v2 command surface: `createPositionOffer`/
+  `acceptOffer` (holder-signed consent), reference-registry mint,
+  `allocateLeg` (CIP-56 AllocationFactory + holding selection),
+  `settlePositionV2` (Settle/SettleAsHolder + escrow auto-discovery),
+  `expirePosition`, `uploadDar`/`listPackages`. The `SettlementObligation`
+  flow is gone.
+- API routes: `markets/resolve` issues attestations + computes viewers from
+  holders; `positions` gains offers/allocations/expired + POST actions
+  (create-offer/accept/reject/allocate); `settle` auto-discovers resolution +
+  allocations; `settle-transfer` reports escrow status (obligations gone);
+  `balance` reports unlocked vs escrow-locked.
+- Components: `CantonSettlementHub` (escrow status panel replaces "pending
+  payouts" + the Console-Wallet payment detour); `CantonHolderDashboard`
+  (escrowed-funds view replaces obligations + the dispute flow).
+
+### Holder-keyed settlement + proof dossier (Grand Final cut)
+
+- `prepareSettleSubmission()` splits payload assembly from submission, so an
+  external holder wallet can sign `SettleAsHolder` itself: the server
+  assembles the exact payload (resolution cid, both escrow allocation cids,
+  CIP-56 choice-context extraArgs, BitSafe disclosed contracts); the holder's
+  Console Wallet key authorizes it. The server never signs.
+- `POST /api/canton/settle/prepare` serves that unsigned payload (package-name
+  template ref `#fourcast:...`, surviving DAR re-uploads); `settlePositionV2`
+  still submits the identical payload server-side for the operator lane.
+- Holder dashboard (Positions → Private): "Settle" per resolved open position
+  (`useCantonHolderWallet.settleAsHolder`), with busy/error/receipt states.
+- Proof dossier: `scripts/canton-bitsafe-lifecycle.mjs` pins
+  `public/proof/canton-receipts.json` (all cids, settle update id, receipt
+  payload, balance deltas, privacy observation, per-check results); the Proof
+  Private proof surface renders it as the "Settled · CBTC" wall. Re-running the
+  script refreshes the wall — nothing is mocked.
+- Deployment: `docs/CANTON.md` runbook + `scripts/canton-v2-preflight.mjs`
+  (package check/upload attempt → registry provision → mints → full live
+  lifecycle with asserts).
+- Package-id env var flips via `scripts/canton-v2-preflight.mjs` after upload
+  (`NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID=550828d2…`, `CANTON_REFERENCE_RULES_CID=…`).
+
+---
+
+### What is deliberately NOT in v2 (scope honesty)
+
+- **Independent attester on DevNet.** The mechanism exists and is tested
+  (guards test (b)); wiring a live third-party oracle into the hackathon
+  DevNet flow is a deployment task. Today: self-attested, explicitly
+  configured at market creation, evidence-committed.
+- **External user keys.** Still roadmap Phase 1/3. The model no longer
+  *depends* on server-held keys for correctness — escrow and settlement
+  execute under contract control — but holder flows are server-brokered until
+  CIP-0103 wallet signing lands.
+- **Pooled/parimutuel markets.** v2 keeps the house-margin payout model
+  (bilateral: holder vs operator, oddsMultiplier). A peer-pooled variant
+  (many-to-one legs in one settlement) is the same `AllocationRequest`
+  pattern with N legs — an extension, not a redesign.
+- **v1 routes still exist.** `SettlementObligation` remains in the deployed
+  v1 DAR until DevNet is re-pointed at the 2.0.0 package; then it's dead code.
+
+
+---
+
+## Canton v2 Deployment Runbook — atomic settlement (fourcast 2.0.0)
+
+Deploys the CIP-56 atomic-settlement contract set and verifies it live on
+DevNet. Everything except step 2 is scripted.
+
+> **Package lineage:** v2 ships as a NEW package named `fourcast`, NOT an
+> upgrade of the legacy `canton` v1 package. Built with the SAME toolchain and
+> LF target as v1 (SDK 3.5.2, LF 2.2) per NODERS's env requirement. The lineage
+> split is deliberate: SCU forbids the template/choice restructures v2 makes
+> (e.g. SettlementObligation deleted, consent/signatory model changed), so v2
+> starts a new lineage instead of pretending to be an upgrade. Legacy v1 stays
+> resolvable at `#canton`, v2 at `#fourcast` — neither app's name resolution
+> can break the other. Upgrade-check evidence is included in the deploy request.
+
+### Package IDs
+
+| Artifact | Package ID |
+|---|---|
+| fourcast 2.0.0 (main) | `550828d219effd88bc03fadd856403ab42795e33c185cbea4ff2e055a2ed930a` |
+| splice-api-token-metadata-v1 | `4ded6b66…3354f` |
+| splice-api-token-holding-v1 | `718a0f77…8d35b` |
+| splice-api-token-transfer-instruction-v1 | `55ba4deb…17281` |
+| splice-api-token-allocation-v1 | `93c942ae…8cce1d` |
+| splice-api-token-allocation-instruction-v1 | `275064aa…bc520` |
+| splice-api-token-allocation-request-v1 | `6fe84853…2e193` |
+
+Interface IDs are the **network's own vetted packages** (full values in
+`canton/vendor/network-cip-0056/manifest.json`), discovered from the
+participant and verified present via `node scripts/canton-package-check.mjs`.
+The fourcast DAR bundles them — uploading it requires no other uploads.
+
+### Steps
+
+#### 1. Build + test locally
+
+```bash
+export JAVA_HOME=~/.local/share/jre21/Contents/Home   # script service needs a JVM
+export PATH="$JAVA_HOME/bin:$PATH"
+cd canton
+~/.dpm/bin/dpm build && ~/.dpm/bin/dpm test   # expect 7/7 ok
+```
+
+#### 2. Upload the DAR (the one manual step)
+
+The NODERS participant denies `POST /v2/packages` to the operator user (403
+PERMISSION_DENIED — confirmed). Same process as the v1 DAR:
+
+- Send `canton/.daml/dist/fourcast-2.0.0.dar` to NODERS with the expected
+  package id above, or
+- Upload via the validator/wallet admin UI if you have that access.
+
+Verify: `node scripts/canton-package-check.mjs` → `canton-2.0.0 (main)` flips
+to `PRESENT`.
+
+#### 3. Provision + live-verify (scripted)
+
+```bash
+node scripts/canton-v2-preflight.mjs
+```
+
+**Status: PASS on live DevNet (2026-07-31).** Full atomic lifecycle on the
+real ledger: market → Alice-signed offer → operator accept → both escrow legs
+locked (500/500) → attestation → resolve → **Alice settled her own win** via
+SettleAsHolder. Assertions passed: stake+500 paid to Alice in the settlement
+transaction, operator payout sourced from escrow, both escrows cleared,
+receipt `payout=1000` with evidence commitment. Orphaned runs cleanable with
+`node scripts/canton-v2-cleanup-orphans.mjs`.
+
+The script will, in order:
+1. Detect the uploaded package and patch `.env.local`:
+   `NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID=550828d2…`.
+2. Create the reference registry (`TokenRules`) and patch
+   `CANTON_REFERENCE_RULES_CID=<rules contract id>`.
+3. Mint demo balances (operator 5000; Alice 2000; Bob 1000 reference cBTC).
+4. Run the full atomic lifecycle on the live ledger: market → Alice-signed
+   offer → operator accept → both escrow legs allocated → attestation →
+   resolve → **Alice settles her own win** (SettleAsHolder).
+5. Assert balances, receipts, conservation (and exit non-zero on failure).
+
+Requires the ledger user to have actAs rights over the Alice/Bob parties
+(they were allocated by it). If a holder-submit fails with an authorization
+error, ask NODERS to extend the user's rights — the holder lane is
+demonstrable with `lane: 'operator'` meanwhile (economics identical, contract-
+fixed).
+
+#### 4. Propagate env to deployments
+
+Same values as `.env.local`, on Vercel:
+
+```
+NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID=550828d219effd88bc03fadd856403ab42795e33c185cbea4ff2e055a2ed930a
+CANTON_REFERENCE_RULES_CID=<rules contract id from preflight step 2>
+## optional: CANTON_ATTESTER_PARTY_ID=<independent attester party> (default operator)
+```
+
+#### 5. Verify the app
+
+```bash
+curl "$APP/api/canton/health"
+curl "$APP/api/canton/balance"                      # escrow balances
+curl "$APP/api/canton/settle-transfer"              # per-position escrow status
+curl "$APP/api/canton/positions?type=allocations"   # locked CIP-56 allocations
+```
+
+`/canton` shows escrow status (was "pending payouts"); `/canton/holder` shows
+"Escrowed funds" (was "Pending payouts / dispute").
+
+### What changed client-side (inventory)
+
+- `services/cantonLedgerClient.js` — v2 command surface: offers/accept,
+  registry mint, `allocateLeg`, `settlePositionV2` (Settle/SettleAsHolder),
+  `expirePosition`, allocation discovery, `uploadDar`, `listPackages`.
+  Removed: SettlementObligation flow.
+- Routes: `markets/resolve` (attestation flow), `positions` (offers /
+  allocations / expired types + POST actions), `settle` (auto-discovery),
+  `settle-transfer` (deprecated → escrow status), `balance` (escrow balances).
+- Components: `CantonSettlementHub` (escrow panel), `CantonHolderDashboard`
+  (escrowed funds instead of obligations/dispute).
+- `services/cantonPublisher.js` — marked v1-legacy; wallet-side publishing
+  (Console Wallet signed offers) is roadmap Phase 1.
+
+### Rollback
+
+The v1 package (`canton` 1.0.0, `1fdf1b33…`) stays on the ledger and stays
+resolvable at `#canton:` (v2 is a DIFFERENT package name, so it never
+shadow-resolves). Rollback = simply don't point env at fourcast (leave
+`NEXT_PUBLIC_CANTON_DAR_PACKAGE_ID` on the v1 id) + redeploy.
+
+
+---
+
+## Canton Wallet & Settlement UX Roadmap
+
+> **Current status (2026-08):** DevNet prototype. The holder dashboard
+> (`/canton/holder`) supports private queries and a **holder-signed settlement
+> lane**: `/api/canton/settle/prepare` assembles an unsigned `SettleAsHolder`
+> payload and `useCantonHolderWallet.settleAsHolder` signs it with the holder's
+> own key. The real BitSafe CBTC lifecycle is verified on DevNet; mainnet is
+> not deployed. Remaining product work is holder-signed position creation and
+> an independent attester integration. The current DevNet resolver defaults to
+> operator self-attestation, and the server-side ledger client remains the
+> fallback judge-demo path.
+
+---
+
+### Goals
+
+1. Move from a **server-only operator model** to a **true multi-party Canton dApp** where end users connect their own wallets.
+2. Use the v2 atomic allocation flow so the demo does not rely on manual payout transfers.
+3. Improve security of operator authentication without risking the live demo.
+
+---
+
+### Phase 1: Prototype Console Wallet connect (CIP-0103 dApp SDK)
+
+**Why first:** highest impact, lowest risk, additive to existing operator hub.
+
+#### Status: Partially implemented
+- [x] Holder / Trader view at `/canton/holder` (was `/canton/trader` in the original plan)
+- [x] `components/CantonHolderDashboard.js` — wallet connect, private position queries, dispute flow, **"Settle with my wallet" sovereignty lane**
+- [x] `hooks/useCantonHolderWallet.js` — Console Wallet connection + contract queries + dispute + `settleAsHolder`
+- [x] Connected party sees only contracts they are a signatory/observer on
+- [x] Holder-signed `SettleAsHolder`: `services/cantonLedgerClient.prepareSettleSubmission()` builds the exact payload; `POST /api/canton/settle/prepare` serves it unsigned; wallet signs and submits via `prepareExecuteAndWait`
+- [ ] "Take position" form (YES/NO, stake, asset) — currently the operator creates positions on behalf of holders
+- [ ] `POST /api/canton/positions` (holder takes a position) — not yet wired
+- [ ] Update `components/CantonMarkets.js` CTA to route to `/canton/holder`
+
+#### Scope (remaining)
+- Leave `CantonSettlementHub` (operator view) unchanged.
+- Add a new **Holder / Trader** view (e.g., `/canton/trader`) that uses the Console Wallet browser extension.
+- Integrate the Canton dApp SDK (`@canton-network/wallet-adapter`) for:
+  - Wallet discovery
+  - Connect / disconnect
+  - Querying active contracts as the signed-in party
+  - Signing `Create` and `Exercise` commands
+
+#### Implementation steps
+1. Add `@canton-network/wallet-adapter` (or current equivalent) to dependencies.
+2. Create `app/canton/trader/page.js` as a new route.
+3. Build `components/CantonTraderHub.js`:
+   - Wallet connect button with party/address display
+   - List of markets the holder can participate in
+   - “Take position” form (YES/NO, stake, asset)
+   - “Settle position” button after market resolution
+4. Add API routes where needed:
+   - `POST /api/canton/positions` (holder takes a position)
+   - Reuse `/api/canton/markets` for read-only market discovery
+5. Update `components/CantonMarkets.js` CTA to route to `/canton/trader`.
+
+#### Acceptance criteria
+- A user with the Console Wallet extension can connect.
+- Connected party sees only contracts they are a signatory/observer on.
+- Taking a position creates a `PredictionPosition` on Canton Devnet visible to the holder and operator, but not to a non-signatory.
+
+#### Risks & mitigations
+- **Risk:** dApp SDK may not support Devnet party creation. **Mitigation:** pre-seed known parties (Alice/Bob) and allow wallet to act as them.
+- **Risk:** Browser extension required. **Mitigation:** keep the server-side operator flow as fallback for judges without Console Wallet.
+
+---
+
+### Phase 2: Automate CIP-56 settlement
+
+**Why second:** high demo impact, but touches Daml contracts and working settlement logic.
+
+#### Status: Delivered and verified on DevNet
+
+The v2 contract model and real BitSafe CBTC lifecycle are complete on Canton
+DevNet. The recorded lifecycle is `scripts/canton-bitsafe-lifecycle.mjs`, with
+captured evidence in `public/proof/canton-receipts.json` (2026-08-04). It uses
+real BitSafe CBTC holdings, CIP-56 allocations, and holder-side
+`SettleAsHolder`; it is not merely the Fourcast reference-registry flow.
+
+Remaining production work is not a second BitSafe qualification pass. It is:
+
+1. integrate an independent attester instead of the current operator
+   self-attestation default;
+2. complete holder-signed position creation, rather than only holder-signed
+   settlement; and
+3. establish the target-network registry, wallet, permissions, and operational
+   runbook before any mainnet deployment.
+
+#### Scope
+- Keep the DevNet BitSafe lifecycle reproducible as a regression/operational check.
+- Retain the server-side operator lane only as a judge/demo fallback; it is not the intended production holder-authority model.
+- Do not claim mainnet deployment, independent oracle resolution, or cETH registry integration until each has separate evidence.
+
+#### Acceptance criteria
+- The DevNet BitSafe lifecycle continues to pass with real CBTC and recorded evidence.
+- A market cannot resolve without an attestation from its designated attester.
+- A holder can sign settlement with their own wallet; holder-signed position creation and independent attester operation remain tracked production work.
+
+#### Risks & mitigations
+- **Risk:** Target-network token registries, package versions, and party permissions differ from DevNet. **Mitigation:** obtain the production registry configuration and rerun the complete lifecycle before enabling real assets.
+- **Risk:** The current self-attested DevNet resolver is mistaken for independent oracle operation. **Mitigation:** state this distinction explicitly in product and partner material; require a distinct attester party for production.
+
+---
+
+### Phase 3: Refactor operator auth to OAuth / Wallet Gateway
+
+**Why third:** important for production security but low hackathon ROI and high risk.
+
+#### Scope
+- Replace the server-side OIDC password grant in `services/cantonLedgerClient.js` with a short-lived OAuth flow via a Wallet Gateway.
+- Operator credentials should no longer be stored as environment variables accessible to the app runtime.
+
+#### Implementation steps
+1. Register the app with the NODERS Wallet Gateway / OAuth provider.
+2. Replace `getToken()` with an OAuth2 authorization-code or client-credentials flow.
+3. Store tokens in a short-lived cache and refresh as needed.
+4. Rotate and remove `CANTON_OIDC_PASSWORD` from Vercel env vars once the Gateway flow works.
+
+#### Acceptance criteria
+- No plaintext passwords in environment variables.
+- Server can still authenticate and submit operator commands.
+
+#### Risks & mitigations
+- **Risk:** High chance of breaking the live demo during the refactor. **Mitigation:** do this only after the hackathon, or run it on a separate preview branch with a full end-to-end test.
+
+---
+
+### Recommended order
+
+| Order | Phase | Effort | Risk | Hackathon Value |
+|-------|-------|--------|------|-----------------|
+| 1 | Independent attester integration | Medium | Medium | Critical |
+| ~~2~~ | ~~Complete external holder signing~~ — **DELIVERED for settlement** (`SettleAsHolder` via `/api/canton/settle/prepare` + dashboard). Position *creation* signing remains open (Phase 1) | Medium | Medium | High |
+| 3 | Mainnet / production registry deployment | High | High | Medium |
+| 4 | OAuth/Wallet Gateway auth | Medium | High | Low |
+
+---
+
+### Open questions
+
+- Does the current Canton Devnet support Console Wallet extension connections, or do we need a specific NODERS Devnet wallet build?
+- Are CIP-56 token DARs available for the HackCanton Devnet, or do we need to request them?
+- Should the trader view be public (`/canton/trader`) or gated behind the feature flag (`NEXT_PUBLIC_CANTON_ENABLED`)?
+
+---
+
+### Files likely to change by phase
+
+- **Phase 1:** `app/canton/trader/page.js`, `components/CantonTraderHub.js`, `app/api/canton/positions/route.js`, `components/CantonMarkets.js`
+- **Phase 2:** `canton/daml/Fourcast/`, `services/cantonLedgerClient.js`, `components/CantonSettlementHub.js`, `app/api/canton/settle/route.js`
+- **Phase 3:** `services/cantonLedgerClient.js`, `.env.local.example`, Vercel env vars
+
+
+---
+
+## BitSafe CBTC integration — the qualification gate
+
+HackCanton's CBTC challenge requires "integrating CBTC in a meaningful way,
+not a passing mention." The reference-registry preflight
+(`scripts/canton-v2-preflight.mjs`) settles a token named `cBTC` against
+Fourcast's own `Fourcast.Token` registry. That proves the atomic-settlement
+model but **does not prove BitSafe CBTC settlement**.
+
+This document tracks the path from reference → real CBTC. **The Daml does not
+change** — the market and position contracts reference tokens only through the
+CIP-56 interfaces `Splice.Api.Token.{HoldingV1, AllocationV1,
+AllocationInstructionV1}`. Swapping in BitSafe is a configuration change, not a
+code change. See the path-to-production table in
+`CANTON.md`.
+
+### Status — ✅ LIVE: real CBTC settlement proven end-to-end
+
+The `canton-bitsafe-lifecycle.mjs` script passes all checks against real BitSafe
+CBTC on Canton DevNet. Alice and the operator each hold faucet-funded CBTC,
+escrow both legs of a position, settle atomically, and the receipt shows
+`instrument.id = CBTC`. A non-signatory's read is refused by the ledger.
+
+```
+✅ BITSAFE LIFECYCLE PASSED — real CBTC settled atomically on Canton DevNet.
+
+   alice:    3 → 3.4 (Δ +0.4 CBTC)
+   operator: 2 → 1.6 (Δ -0.4 CBTC)
+   escrow:   alice 0.4→0, operator 0.4→0 (both cleared)
+   receipt:  payout=0.8 CBTC · instrument=CBTC · evidence=sha256:bitsafe-attestation
+   privacy:  non-signatory query: refused
+
+   ✓ alice net += winnings (stake*(mult-1))
+   ✓ operator net -= payout (stake*(mult-1))
+   ✓ both escrow legs cleared
+   ✓ settled receipt exists with payout
+   ✓ receipt instrument is the real CBTC id
+   ✓ non-signatory cannot read the position
+```
+
+All integration parameters are **public and self-service** (BitSafe runs the
+Canton DevNet registry openly). No bespoke BitSafe request is needed.
+
+#### What is proven live on Canton DevNet
+
+| Parameter | Value | Source |
+|---|---|---|
+| CBTC instrument admin | `cbtc-network::12202a83c6f4082217c175e29bc53da5f2703ba2675778ab99217a5a881a949203ff` | `instrument-admin` endpoint |
+| CBTC instrument id | `CBTC` | registry metadata |
+| Registry (DA Utility) URL | `https://api.utilities.digitalasset-dev.com` | manifest + docs |
+| BitSafe API URL | `https://api.devnet.bitsafe.finance` | `docs.bitsafe.finance` |
+| Faucet | `https://cbtc-faucet.devnet.bitsafe.finance/api/faucet` (`POST /api/faucet`, `{network:'devnet', recipient_party, amount}`) | faucet API |
+| AllocationFactory contract id | `00d58a5f…` (package `82798df0…`) | `/cbtc/v1/token-standard-contracts` |
+
+The CBTC instrument is live and queryable: total supply ≈ 1014, decimals 10,
+all CIP-56 interfaces (`HoldingV1`, `AllocationV1`, `AllocationInstructionV1`,
+`AllocationRequestV1`, `MetadataV1`, `TransferInstructionV1`) supported.
+
+**Two-phase transfer — proven working.** The faucet issues a `TransferOffer`
+that the receiver must accept. Operator + Alice were each funded 1.0 CBTC and
+each accepted via the `TransferInstructionV1` interface choice
+`TransferInstruction_Accept` (choice-context fetched from the DA Utility
+`choice-contexts/accept` endpoint, passed as `extraArgs.context`). Each party
+owns a `Utility.Registry.Holding` with `instrument.id = CBTC`, `amount = 1.0`.
+
+**Settlement wiring — complete and proven.** `services/cantonLedgerClient.js`
+reads and exercises CBTC entirely through the CIP-56 interfaces +
+`disclosedContracts`:
+
+- `getHoldings` / `getBalances` / `getAllocations` — read CBTC via
+  `Utility.Registry` `Holding` / `Allocation` templates (discovered through
+  `queryAllActiveContracts`). `getAllocations` filters for both `:Allocation`
+  and `:DvpLegAllocation` (BitSafe uses the latter).
+- `allocateLeg` — builds the full `AllocationFactory_Allocate` choiceArgument,
+  fetches per-allocation choice-context from the DA Utility allocation-factory
+  endpoint, merges the BitSafe disclosed set (factory + instrument-config +
+  issuer credential), fills the real global-domain synchronizer id, and
+  exercises via the interface id. **`submitForContractId` forwards
+  `disclosedContracts`** (a prior version silently dropped them, causing
+  "Contract could not be found").
+- `findPositionAllocations` — robust to both the reference (`.allocation`
+  nesting) and BitSafe (top-level) allocation payload shapes.
+- `settlePositionV2` — fetches per-allocation **execute-transfer**
+  choice-contexts (not `withdraw` — the Settle choice internally calls
+  `Allocation_ExecuteTransfer`, which requires the
+  `utility.digitalasset.com/instrument-configuration` context entry that only
+  the `execute-transfer` endpoint returns). Also adds the allocation contracts
+  themselves to the `disclosedContracts` set (via
+  `queryInterfaceContractsWithBlob`) since the participant needs their
+  `createdEventBlob` to deserialize them.
+- `expirePosition` — same pattern, but uses the `withdraw` choice-context
+  (expire = refund, not transfer).
+- `getCbtcHoldings` / `getCbtcSynchronizerId` / `isPackageUploaded` — helpers.
+- `queryInterfaceContractsWithBlob` — queries contracts by interface id WITH
+  `createdEventBlob: true` (for building `disclosedContracts`).
+
+#### What was needed from the node operator
+
+The participant has the CIP-56 *interface* packages but also needed three
+utility **implementation** packages uploaded (our credentials lack
+package-upload rights — `POST /v2/packages` returns 403):
+
+| Package | Hash | DAR (devnet bundle 0.12.5) |
+|---|---|---|
+| `Utility.Registry.App.V0.Service` (AllocationFactory) | `82798df0…` | `utility-registry-app-v0-0.2.0.dar` |
+| `Utility.Registry.V0.Configuration` (InstrumentConfiguration) | `ed73d5b9…` | `utility-registry-v0-0.4.0.dar` |
+| `Utility.Credential.V0` (issuer credential) | `77df4e7b…` | bundled inside the two above |
+
+Bundle: `https://get.digitalasset.com/utility-dars/canton-network-utility-dars-0.12.5.tar.gz`
+
+**Important:** the factory contract was created under version `0.2.0` of the
+registry-app, not the latest (`0.7.0`). The dalf filename inside each DAR
+embeds the package hash — match by hash, not by version number.
+
+### Configure and run
+
+Add to `.env.local` (transport + package + party envs are already set by the
+reference preflight):
+
+```
+CANTON_BTC_REGISTRY_CID=00d58a5f…   # AllocationFactory contract id
+CANTON_BTC_INSTRUMENT_ADMIN=cbtc-network::12202a83c6f4082217c175e29bc53da5f2703ba2675778ab99217a5a881a949203ff
+CANTON_BTC_INSTRUMENT_ID=CBTC
+CANTON_REGISTRY_URL=https://api.utilities.digitalasset-dev.com
+CANTON_BITSAFE_API_URL=https://api.devnet.bitsafe.finance
+```
+
+Then:
+
+```bash
+## 1. fund operator + Alice (1.0 CBTC each):
+##    POST https://cbtc-faucet.devnet.bitsafe.finance/api/faucet
+##    { "network": "devnet", "recipient_party": "<party>", "amount": "1" }
+##    Then accept the pending TransferOffer via acceptTransferOffer().
+## 2. run the lifecycle against real CBTC:
+node scripts/canton-bitsafe-lifecycle.mjs
+```
+
+The script validates the BitSafe envs and exits with the ask above if any are
+missing — it never silently falls back to the reference registry. On success it
+prints: before/after CBTC balances, the settle `updateId`, the settled receipt
+(stake, payout, instrument id, evidence hash), and the privacy contrast
+(operator sees the receipt; a non-signatory's read is refused by the ledger).
+
+### Known integration nuances
+
+Honest list (from `CANTON.md`), to expect with BitSafe:
+
+1. **Interface-contract disclosure.** Allocation exercises a registry factory
+   contract the caller may not otherwise see. JSON Ledger API v2: attach such
+   contracts under `disclosedContracts` in `/v2/commands/submit-and-wait`. The
+   reference registry observes allocation *receivers*, so holder-side settle
+   needs no disclosure; a BitSafe registry may differ. If the lifecycle fails
+   at `allocateLeg` with a contract-not-visible error, this is the cause — add
+   the disclosed contract(s).
+2. **Allocation discovery.** The backend queries `Allocation` by interface and
+   matches `allocation.settlement.settlementRef` to each position, then hands
+   the two allocation cids + `ExtraArgs` to the settle endpoint. This is
+   registry-agnostic and unchanged.
+3. **`expectedAdmin`.** The factory choice takes `expectedAdmin = <BitSafe
+   registry admin>` (set via `CANTON_BTC_INSTRUMENT_ADMIN`). The reference path
+   uses the Fourcast operator; BitSafe uses BitSafe's admin.
+4. **`execute-transfer` vs `withdraw` context.** The Settle choice internally
+   calls `Allocation_ExecuteTransfer` (not `Allocation_Withdraw`). The
+   `choice-contexts/execute-transfer` endpoint returns the
+   `instrument-configuration` context entry that the `withdraw` endpoint does
+   not. Using the wrong endpoint produces "Missing context entry for:
+   utility.digitalasset.com/transfer-rule".
+5. **Allocation template name.** BitSafe uses
+   `Utility.Registry.V0.Holding.Allocation:DvpLegAllocation`, not
+   `:Allocation`. The `getAllocations` filter matches both suffixes.
+6. **Package versions.** The factory contract was created under
+   `utility-registry-app-v0-0.2.0` (package hash `82798df0`). Uploading the
+   latest version (`0.7.0`) installs a different package hash (`b7356fbb`) and
+   the factory blob cannot be deserialized. Match by hash, not version.
+7. **Faucet endpoint.** The faucet lives at `cbtc-faucet.devnet.bitsafe.finance`
+   (not `cbtc-faucet.bitsafe.finance`) and expects `network: "devnet"`.

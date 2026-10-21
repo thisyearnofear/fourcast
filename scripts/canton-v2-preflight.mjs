@@ -58,7 +58,7 @@ if (!packages.includes(EXPECTED_PACKAGE)) {
     console.log('');
     console.log('     Everything after the upload is scripted: registry, mints, escrow,');
     console.log('     attestation, resolution, holder-settled win, balance assertions.');
-    console.log('     See docs/CANTON_V2_DEPLOY.md for the full runbook.');
+    console.log('     See docs/CANTON.md for the full runbook.');
     process.exit(3);
   }
   packages = await client.listPackages();

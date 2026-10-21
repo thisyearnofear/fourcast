@@ -1,3 +1,7 @@
+> **Paused 2026-08.** The operator-first acquisition plan is dormant — no concierge
+> test was run. The live work is the Total Recall + Telegraph entry, tracked in
+> [`docs/EXECUTION_PLAN.md`](../EXECUTION_PLAN.md). Kept for the acquisition thesis.
+
 # Go-To-Market — Quant Operator First
 
 This is the document that turns the strategic decision into a 30-day plan. It is the authoritative reference for who we acquire, how we acquire them, and the tests we will *not* use to validate product-market fit.

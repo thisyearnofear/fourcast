@@ -952,7 +952,7 @@ Generate OpenGraph image for sharing.
 
 Private prediction markets on Canton: Daml-enforced stakeholder privacy, holder-consent
 positions, CIP-56 escrow, attestation-bound resolution, atomic settlement.
-See `docs/CANTON_ATOMIC_SETTLEMENT.md` for the full model.
+See `docs/CANTON.md` for the full model.
 
 ### GET /api/canton/health
 Ledger connectivity + configuration status.

@@ -70,7 +70,7 @@ if (missing.length) {
   console.log('   to the reference registry — that would defeat the CBTC integration gate.');
   console.log('\n   Missing:');
   for (const k of missing) console.log(`     • ${k}`);
-  console.log('\n   ➜ Ask BitSafe for (see docs/BITSAFE_INTEGRATION.md):');
+  console.log('\n   ➜ Ask BitSafe for (see docs/CANTON.md):');
   console.log('     • the CBTC AllocationFactory contract id  → CANTON_BTC_REGISTRY_CID');
   console.log('     • the BitSafe registry admin party        → CANTON_BTC_INSTRUMENT_ADMIN');
   console.log('     • the real CBTC InstrumentId (admin + id)  → CANTON_BTC_INSTRUMENT_ID');

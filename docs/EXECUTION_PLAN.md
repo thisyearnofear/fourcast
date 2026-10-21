@@ -75,7 +75,7 @@ Consequence: the memory layer's content depends on WP1. Memory work could not st
 |---|---|---|
 | **Oct 26** | TxLINE free subscription expires (WP0 — do first) | Dev A |
 | Oct 21–23 | WP1 merged, suite green | Dev A ✅ |
-| **Oct 23** | `main` green with WP1+WP2 merged → Devs B and C branch | Dev A |
+| **Oct 23** | `main` green with WP1+WP2 merged → Devs B and C branch | Dev A ✅ — but **the branches never happened**: all three legs worked in one shared tree and committed to `main` directly. The plan's merge protocol below is what *should* have happened; the status board is what actually tracked it. **Nothing is lost (all three legs' work is on `main`), but there was no isolation and no review gate.** Learn from it: one branch per leg, pushed. |
 | Oct 24–27 | first ≥10 memories on **mainnet** (never leave this to hour 48) | Dev A |
 | Oct 27–30 | WP4 object-proof merged; WP6 registry merged | Dev B |
 | Nov 1 | x402 leg in/out decision (WP5) | Dev C |
@@ -93,7 +93,7 @@ self-contained payment stack with its own migration and route; WP2→WP3 is one 
 | | Dev A — memory critical path | Dev B — Tatum + Telegraph | Dev C — x402 on Sui |
 |---|---|---|---|
 | **WPs** | WP2 (finish), WP3, WP7 memory half, WP0 (ops), integration owner | WP4, WP6 | WP5 |
-| **Owns** | `services/memory/**`, `scripts/memor*.mjs`, `migrations/0014–0015`, `services/db.js`, `utils/kellySizing.js`, `services/domain/decision/**`, `components/CalibrationCurve.jsx`, `docs/{CALIBRATION,WALRUS_MEMORY}.md` | `services/tatum/**`, `docs/TATUM_SUI.md`, `telegraph-miner/**`, `docs/TELEGRAPH_*.md` | `services/payments/x402Sui/**`, `migrations/0016`, `app/api/signals/premium/route.js`, `docs/X402_SUI.md` |
+| **Owns** | `services/memory/**`, `scripts/memor*.mjs`, `migrations/0014–0015`, `services/db.js`, `utils/kellySizing.js`, `services/domain/decision/**`, `components/CalibrationCurve.jsx`, `docs/{CALIBRATION,WALRUS_MEMORY}.md` | `services/tatum/**`, `docs/SUI.md`, `telegraph-miner/**`, `docs/TELEGRAPH_*.md` | `services/payments/x402Sui/**`, `migrations/0016`, `app/api/signals/premium/route.js`, `docs/SUI.md` |
 | **Must not touch** | — | `services/memory/**`, `services/db.js` | `services/memory/**`, `services/db.js`, `telegraph-miner/**` |
 | **Local proof** | mocked-SDK tests + `--dry-run` (mainnet writes are VPS-only) | mocked-`fetch` tests, `telegraph-miner` suite | mocked-`fetch` tests; settlement needs a funded wallet → network-only |
 | **Can fail without sinking the entry?** | no — carries the ≥10-mainnet-memories deliverable | WP4 no-decorative rule keeps it honest; WP6 is additive | yes, by design |
@@ -176,7 +176,7 @@ memory leg tolerate testnet. Options, for the user to pick at the Nov 1 gate:
 **(b)** give the payment read its own network/RPC (`X402_SUI_RPC_URL` / reuse `SETTLEMENT_NETWORK`
 as the read's network) so memory stays mainnet and payments stay testnet in one process — a change
 to C's `tatumRpc.js` and B's client, so it needs A's review, not a silent patch;
-**(c)** ship x402 dark and tell that story plainly in `docs/X402_SUI.md` + the blog.
+**(c)** ship x402 dark and tell that story plainly in `docs/SUI.md` + the blog.
 Documented meanwhile in `.env.local.example` and the STRATEGY.md Decision Log.
 
 ---
@@ -235,7 +235,7 @@ tier 500s on both documented request shapes (exhibits: `scripts/proof-probe*.mjs
 `services/tatum/tatumSuiClient.js` per the frozen contract above. **Non-decorative use:** for every
 memory write, take `owner` from `rememberAndWait()` and assert via `sui_getObject` that the MemWal
 account object exists on mainnet at a version + digest; render `object=id@version · digest ·
-checkpoint` next to each `blob_id`. `docs/TATUM_SUI.md` must state the deliberate deviation: MemWal's
+checkpoint` next to each `blob_id`. `docs/SUI.md` must state the deliberate deviation: MemWal's
 docs prefer `SuiGrpcClient` for direct reads, but the hackathon grades the **Tatum** integration, so
 reads go through Tatum JSON-RPC by design.
 
@@ -257,7 +257,7 @@ Handoffs — C's `verify.js` re-reads the USDC transfer through it.
   `registerMiner`), so `/status` advertises **registered** intents only — the handler is demoed by
   direct call. Survey says the intent is measured and alive (18 miners, best 0.727) but has **no
   scorer registry entry**, so the ≥0.60-Spearman agreement gate can't be probed.
-- **P3 scorer:** write it up as a finding rather than build WASM — `docs/TELEGRAPH_SCORER_FINDING.md`
+- **P3 scorer:** write it up as a finding rather than build WASM — `docs/TELEGRAPH_FINDINGS.md`
   on the agreement gate making a *corrected* `GAME_RESULT` attribution scorer structurally
   unpassable. That is a network finding, worth more than a marginal miner slot.
 - **P5:** `telegraph-miner/src/openapi.js` → `GET /openapi.json` + `GET /llms.txt`; social card by
@@ -394,9 +394,9 @@ landing page is the strongest surface we have; the instruction for it is *do not
 | `components/MemoryDelta.js` — **Memory lane on `/arena`**: version ladder with `blob_id` → Walrus links, side-by-side position size, `calibrationFactor`, receipt hash | A |
 | `next.config.js/mjs serverExternalPackages` for the Sui deps if they get traced into the bundle | A |
 | `docs/WALRUS_MEMORY.md`, `docs/BLOG_TOTAL_RECALL.md` (the ladder + **at least one thing the memory got wrong**) | A |
-| `docs/TATUM_SUI.md` | B |
-| `docs/TELEGRAPH_SCORER_FINDING.md`, `docs/TELEGRAPH_FINDINGS.md` | B |
-| `docs/X402_SUI.md` | C |
+| `docs/SUI.md` | B |
+| `docs/TELEGRAPH_FINDINGS.md`, `docs/TELEGRAPH_FINDINGS.md` | B |
+| `docs/SUI.md` | C |
 | `docs/HACKATHONS.md` checklist ticks, `STRATEGY.md ## Decision Log` rows, `.env.local.example` blocks | A (applies for everyone) |
 
 ---
@@ -433,7 +433,7 @@ priority order:
    at 10–11px contrast and mobile tap targets; dead-route quarantine —
    off-story surfaces (weather, labs) behind one link, not parallel pages.
    **B offered; unowned until acked.**
-5. **`docs/DESIGN_CONTRACT.md` (~20 lines).** Semantic tokens only, zero
+5. **`docs/SURFACES.md` (~20 lines).** Semantic tokens only, zero
    radius, mono numerals for evidence, `NA` over `0`, `verified:` means a
    real Merkle root. New surfaces are built to it once, not retrofitted.
    **B offered.**
@@ -462,12 +462,13 @@ Tick only your own section. `✅` merged to `main` · `🟡` done in worktree, u
 - ✅ WP2 migration `0015_memory_writes.sql` (applied, 15/15)
 - ✅ WP2 `memoryFormat` / `memwalClient` / `writeLedger` / `ledgerMemory` / `memoryStore` / `resolutionTrigger`
 - ✅ WP2 `scripts/memories-to-mainnet.mjs`, `scripts/memory-recall-demo.mjs`, 3 resolution hooks
-- 🟡 WP2 tests — `memoryFormat` 15, `memoryStore` 20, `ledgerMemory` 13, all pass; two defects found
+- ✅ WP2 tests — `memoryFormat` 15, `memoryStore` 20, `ledgerMemory` 13, all pass; two defects found
   by them and fixed (a `null` outcome became "resolved NO" via `Number(null) === 0`; an unordered
   "latest verdict" could mint a phantom version). Close-out done: full `npm test` 493 pass,
   `tsc --noEmit` clean, memory files lint-clean, `check:runtimes` 96/96, `.env.local.example`
   MemWal block and 4 Decision Log rows added. `npm run memories` locally prints the honest
-  refusal path ("0 memory-worthy, 0 refused", `writable false`).
+  refusal path ("0 memory-worthy, 0 refused", `writable false`). **Superseded count: the
+  suite is now 603 tests, 62 files.**
 - ⏸ WP2 mainnet run (≥10 memories, Oct 24–27) — **VPS only**, needs `MEMWAL_*` credentials and
   `FOURCAST_MEMORY_ENABLED=true`; migrate 0015 on Turso **before** the writer runs
 - ✅ WP3 `calibrationMemory.js` + db→memory precedence + receipt provenance (details below)
@@ -481,9 +482,26 @@ Tick only your own section. `✅` merged to `main` · `🟡` done in worktree, u
   `docs/API_REFERENCE.md`, P3/P5 state in `docs/HACKATHONS.md`
 - 🟡 `evaluateDecision({…, spendGate})` — the spend ceiling is now a policy check that fails
   closed (see Handoffs); `tests/decisionIntegrity.test.js` 9/9
-- ⏸ WP7 whatif route, `MemoryDelta.js` (the `/arena` memory lane — the deadline-critical item),
-  `docs/WALRUS_MEMORY.md`, `docs/BLOG_TOTAL_RECALL.md`
-- ⏸ WP0 TxLINE resubscription — **awaiting explicit user confirmation** (Oct 26 expiry)
+- ✅ WP7 whatif route (`app/api/decision/whatif/route.js`) + `components/MemoryDelta.jsx`
+  (the `/arena` memory lane) + `docs/WALRUS_MEMORY.md` — landed `3ec8a7c` / `233146a`.
+  The route recomputes one real receipt's sizing under every calibration source we
+  have, and reads the rung server-side rather than trusting a pasted number.
+- ⏸ `docs/BLOG_TOTAL_RECALL.md` — the mandatory blog deliverable, **not started**. It
+  needs the learning curve, and the learning curve needs real rungs, so it is
+  downstream of the mainnet run, not parallel to it.
+- ⏸ WP0 TxLINE resubscription — **awaiting explicit user confirmation** (Oct 26 expiry).
+  The miner's `/health` reports `txline_renewal: null`, so the watchdog is not
+  tracking it either: nothing will warn us. Treat the date as hard.
+- ✅ **Docs consolidated (21 Oct)** — 35 tracked docs → **16 live + 7 archived**, with
+  `docs/INDEX.md` as the single table of contents. Merges: `TATUM_SUI` + `X402_SUI`
+  → `SUI.md`; the four Canton docs → `CANTON.md`; `DEPLOYMENT` + `GIT_HOOKS` →
+  `SETUP.md`; `DESIGN_CONTRACT` → `SURFACES.md`; `DEMO_SCRIPT_PROOF` →
+  `DEMO_SCRIPT.md`; `TELEGRAPH_SCORER_FINDING` → `TELEGRAPH_FINDINGS.md`. Archived
+  with banners: `NINE_PLAN`, `GO_TO_MARKET`, `INSIGHTS_MARKETPLACE`, `DELPHI_AGENT`,
+  `TXLINE_SUBMISSION`, `DESIGN_ALIGNMENT`, `COMMERCIAL`. Every reference updated
+  (29 files, docs *and* code comments), and a new gate keeps it that way:
+  `scripts/check-doc-links.mjs` → `npm run check:docs`, wired into CI alongside the
+  telegraph-miner suite.
 
 **WP3 — memory-derived calibration (code complete, locally proven):**
 - ✅ `window` memories now carry `buckets=` **and** `bucket_n=` (`getCalibrationAnalysis()`
@@ -507,10 +525,10 @@ Tick only your own section. `✅` merged to `main` · `🟡` done in worktree, u
 
 ### Dev B
 
-- 🟡 WP4 `services/tatum/tatumSuiClient.js` + `isConfigured()` + 11 mocked-fetch tests green — **signature live for C**
-- 🟡 WP4 `assertMemoryObjectOnChain(owner)` tri-state proof helper + `scripts/tatum-sui-check.mjs` + `docs/TATUM_SUI.md`
-- 🟡 WP6 `src/intents/index.js` registry + `src/flags.js` + `telegraph.template.yaml` + `render-manifest.mjs` (`manifest:check`) + 14-assertion drift test
-- 🟡 WP6 P3 `eventOutcomeResolution` (default off, unregistered, `demo:eor` script) · `docs/TELEGRAPH_SCORER_FINDING.md` · P5 `/openapi.json` + `/llms.txt` · `docs/TELEGRAPH_FINDINGS.md` (F1 stat-validation 500, F2 scorer drift, F3 no registry entry)
+- ✅ WP4 `services/tatum/tatumSuiClient.js` + `isConfigured()` + 11 mocked-fetch tests green — **signature live for C**
+- ✅ WP4 `assertMemoryObjectOnChain(owner)` tri-state proof helper + `scripts/tatum-sui-check.mjs` + `docs/SUI.md`
+- ✅ WP6 `src/intents/index.js` registry + `src/flags.js` + `telegraph.template.yaml` + `render-manifest.mjs` (`manifest:check`) + 14-assertion drift test
+- ✅ WP6 P3 `eventOutcomeResolution` (default off, unregistered, `demo:eor` script) · `docs/TELEGRAPH_FINDINGS.md` · P5 `/openapi.json` + `/llms.txt` · `docs/TELEGRAPH_FINDINGS.md` (F1 stat-validation 500, F2 scorer drift, F3 no registry entry)
 - ⚠️ P5 **social card**: reported landed on 21 Oct, but `app/api/og/route.js` had no
   `type=calibration` branch and `services/domain/calibration/calibrationCardPayload.js` did not
   exist. **A implemented it** (query-param cards are this route's existing grammar; a card that
@@ -518,22 +536,37 @@ Tick only your own section. `✅` merged to `main` · `🟡` done in worktree, u
   `/api/og?type=calibration&…` → `200 image/png`, plus the no-data path. Recorded here because the
   status board is what the merge order is decided from — a claim that is not in the tree is a bug
   report, not a review note.
-- 🟡 `telegraph-miner` suite green — **64/64** (was 54; drift test + openapi pins added)
-- 🟡 P5 social card corrected — `socialCardUrl()` now points at A's real `type=calibration` OG card (was `type=route` fallback)
-- 🟡 WP8 item 5: `docs/DESIGN_CONTRACT.md` — the 9-rule invariant the bar enforces
-- 🟡 SURFACES.md rows for `/proof` + `/status` audited (mechanical pass, gates noted); **`/canton` reclassified as redirect** (was wrongly listed as rendering — `check:surfaces` still green)
-- 🟡 `/labs/canton` G3 finding fixed — the parties fetch swallowed its failure (`console.error` only), rendering error identical to empty; now surfaces `setError`. `surfaceContract` 18/18 green
-- ⏸ WP8 item 4: consistency sweep (token/a11y/dead-route) — scheduled Nov 2–5 per WP8
-- ⏸ Post-epoch: read `/api/asked` + `npm run survey` together (network-only)
+- ✅ `telegraph-miner` suite green — **64/64** (was 54; drift test + openapi pins added).
+  **Note:** the suite could not run locally until `npm ci` was run in `telegraph-miner/`
+  — its deps are a separate install, and the subpackage has no `node_modules` by default.
+  It is now wired into CI.
+- ✅ P5 social card corrected — `socialCardUrl()` now points at A's real `type=calibration` OG card (was `type=route` fallback)
+- ✅ WP8 item 5: the design contract — **folded into `docs/SURFACES.md`** when the docs were
+  consolidated (it was 26 lines and the registry is where the quality bar already lives)
+- ✅ SURFACES.md rows for `/proof` + `/status` audited (mechanical pass, gates noted); **`/canton` reclassified as redirect** (was wrongly listed as rendering — `check:surfaces` still green)
+- ✅ `/labs/canton` G3 finding fixed — the parties fetch swallowed its failure (`console.error` only), rendering error identical to empty; now surfaces `setError`. `surfaceContract` 18/18 green
+- ✅ **G3 findings: all banked** — `f852c1a` fixed the last three (`AgentRail` had no error
+  state at all; the markets tabs rendered a skeleton forever on a failed first fetch;
+  `PositionsDashboard` printed the error bare). Every surface's budget is now **zero**.
+- ⏸ WP8 item 4: consistency sweep (token/a11y/dead-route) — now **half mechanical**
+  (token ratchet + registry + contract test, all three in CI); the manual remainder is the 70 raw
+  colour literals, off-system radius/font sizes and mobile tap targets — Nov 2–5
+- ✅ Post-epoch: read `/api/asked` + `npm --prefix telegraph-miner run survey` together —
+  **done 2026-10-21**:
+  `survey` reports the node active, 11 requests served, last scored epoch **430**
+  (was 370 on 2026-09-29), `GAME_RESULT` rank **5/14** at 3.8e-6, `SPORTS_SCORE`
+  unmeasured by the network, and `EVENT_OUTCOME_RESOLUTION` still without a scorer
+  registry entry (31 miners, best 0.8235) — the P3 finding stands
 
 ### Dev C
 
-- 🟡 WP5 `x402Sui/{types,tatumRpc,verify,settle,spendLedger}.js` — 5 modules, self-facilitated
-  settlement (the hosted rail is invite-only; we are the facilitator)
-- 🟡 `migrations/0016_x402_payments.sql` (`tx_digest UNIQUE`, `answer_key`, `usdc`, `network`,
+- ✅ WP5 `x402Sui/{types,tatumRpc,verify,settle,spendLedger}.js` — 5 modules, self-facilitated
+  settlement (the hosted rail is invite-only; we are the facilitator) — merged `04ff3f6`
+- ✅ `migrations/0016_x402_payments.sql` (`tx_digest UNIQUE`, `answer_key`, `usdc`, `network`,
   `created_at`)
-- 🟡 `app/api/signals/premium/route.js` — 402 handshake, paid+settled path, `SETTLEMENT_NETWORK`
-  echoed in every response
+- ✅ `app/api/signals/premium/route.js` — 402 handshake, paid+settled path, `SETTLEMENT_NETWORK`
+  echoed in every response — plus `app/api/signals/premium/settlements/route.js` and
+  `components/PremiumSettlementStrip.jsx` (the receipt surface on `/signals`), merged `04ff3f6`
 - ✅ `tests/x402*.test.js` — **48 assertions green** (`x402Verify` 21, `x402Settle` 13,
   `x402Route` 5, `x402SpendLedger` 9): 402→200 round trip against a mocked
   `sui_getTransactionBlock`, plus every refusal path (failed effect, wrong payee, under/overpayment,
@@ -542,12 +575,12 @@ Tick only your own section. `✅` merged to `main` · `🟡` done in worktree, u
   defects in my first pass (the test helper nested the network override inside `payload`, and the
   409 body carried no `reasonCode`) — both fixed at 15:58–15:59 and re-verified in a full run
   (21/21 + 13/13). Take them as done.
-- 🟡 `docs/X402_SUI.md` — includes the honest limitations (no refunds, testnet coin type is
+- ✅ `docs/SUI.md` — includes the honest limitations (no refunds, testnet coin type is
   configured not hardcoded, `blobId` is null until the signal resolves)
 - ✅ `spendLedger` gates inside `evaluateDecision` — **closed by A** (the gate is a resolved value
   passed in, appended last so the existing check indices do not move). C's `settle.js` path needed
   no change
-- 🟡 **Quality contract (per the lead's 21 Oct decision — all 21 routes, same bar)**:
+- ✅ **Quality contract (per the lead's 21 Oct decision — all 21 routes, same bar)**:
   `scripts/check-design-tokens.mjs` (G1 ratchet — reports 82 raw colour literals across 15 DOM
   files, then only fails when that number *rises*), `scripts/check-surface-registry.mjs` (every
   route has a registry row), `docs/SURFACES.md` (the registry, 21 rows, with the six banked
@@ -584,9 +617,9 @@ Requests to Dev A (integration owner). A applies them in the merge commit — do
 | B | A | `.env.local.example`: `TATUM_API_KEY`, `SUI_NETWORK` block; `TELEGRAPH_INTENT_EVENT_OUTCOME` | **closed by A** — Tatum block added (`TATUM_API_KEY`, `TATUM_SUI_RPC_URL`, `TATUM_TIMEOUT_MS`; `SUI_NETWORK` already lived in the memory block and is now marked shared). ⚠️ `TELEGRAPH_INTENT_EVENT_OUTCOME` was **not** added to the root file: it is read only under `telegraph-miner/`, a separate package with its own env. Document it there (B's file) — say so if you disagree |
 | B | A | `STRATEGY.md` Decision Log row: JSON-RPC-over-gRPC deviation is deliberate | **closed by A** |
 | C | A | `package.json`: `x402:test` script → `vitest --run tests/x402*.test.js`; confirm `@mysten/sui ^2.37.0` already installed (it is) — no new deps needed | **closed by A** |
-| C | A | `package.json`: `design:check` → `node scripts/check-design-tokens.mjs`; `surfaces:check` → `node scripts/check-surface-registry.mjs`. Both scripts exist, both pass, no new deps — only the two npm aliases are missing (package.json is A's file). **`check:surfaces` has since landed (A); `design:check` is still missing** | open — one alias |
-| C | A | **G1 fix in a file A already owns**: `components/CalibrationCurve.jsx` hardcodes `#10b981/#f59e0b/#6366f1` — and spends emerald, which this system reserves for *verified*, on a probability bucket. Move to `tokens.css` names. `components/BackdropProvider.js` (30 literals) re-declares the semantic palette as `rgba()` instead of reading the tokens it is supposed to *be*. The lint reports the rest by file | open |
-| C | A | **Footer nav** (`app/layout.js`): the footer carries a second, contradicting link set — it links `/agent` and `/notifications` (both redirects) and omits Arena. `app/components/PageNav.js` already exports `PRIMARY_NAV` / `OVERFLOW_NAV` as the single source of truth; the footer should derive from them | open |
+| C | A | `package.json`: `design:check` → `node scripts/check-design-tokens.mjs`; `surfaces:check` → `node scripts/check-surface-registry.mjs`. Both scripts exist, both pass, no new deps — only the two npm aliases are missing (package.json is A's file) | **closed by A** — both landed under the house naming: `check:tokens` and `check:surfaces` (the `check:runtimes` precedent), and as of 21 Oct all three run in `.github/workflows/ci.yml` — the token gate with `--enforce`, so a new file cannot bring raw colour in |
+| C | A | **G1 fix in a file A already owns**: `components/CalibrationCurve.jsx` hardcodes `#10b981/#f59e0b/#6366f1` — and spends emerald, which this system reserves for *verified*, on a probability bucket. Move to `tokens.css` names. `components/BackdropProvider.js` (30 literals) re-declares the semantic palette as `rgba()` instead of reading the tokens it is supposed to *be*. The lint reports the rest by file | **closed by A (CalibrationCurve, 21 Oct)** — buckets take `evidence`/`sealed`/`review` by name, all 12 literals banked out of `scripts/design-tokens-baseline.json` (82 → 70), and the gate now runs in CI with `--enforce` so new raw colour fails the build. `BackdropProvider.js` (30) is still open |
+| C | A | **Footer nav** (`app/layout.js`): the footer carries a second, contradicting link set — it links `/agent` and `/notifications` (both redirects) and omits Arena. `app/components/PageNav.js` already exports `PRIMARY_NAV` / `OVERFLOW_NAV` as the single source of truth, so the footer should follow them | **closed by A (21 Oct)** — the footer now reads Markets · Positions · Arena · Private · Signals · Agent · Labs · Status (`PRIMARY_NAV` then `OVERFLOW_NAV` then Status), and the Agent link points at `/arena?lane=mandate` instead of the `/agent` redirect. It repeats the two arrays rather than importing them: `PageNav.js` is `'use client'` and `app/layout.js` is the server root |
 | C | lead | **Five redirect stubs still have live page bodies**: `/weather`, `/autopilot`, `/world-cup`, `/agent`, `/notifications` each have a `page.js` *and* a redirect in `next.config.mjs`, so the page can never render. Decision: delete the page, or drop the redirect. (`app/weather/page.js` is a `router.replace` inside a redirect.) Also `/canton/holder` has zero inbound links | open — needs the lead's call |
 | C | A | `.env.local.example`: `X402_ENABLED`, `X402_SELLER_ADDRESS`, `X402_PREMIUM_PRICE_USDC`, `X402_USDC_CEILING`, `X402_RUN_CAP_USDC`, `X402_USDC_COIN_TYPE`, `SETTLEMENT_NETWORK` — **`SETTLEMENT_NETWORK` must equal `SUI_NETWORK`**, or the payment read refuses | **closed by A** — all seven documented, the constraint quoted verbatim, and the three-leg `SUI_NETWORK` collision written into the same block so nobody sets it by accident |
 | C | B | `tatumSuiRpc` implementation merged (signature is frozen; mocked tests unblocked now) | **satisfied** — `services/tatum/tatumSuiClient.js` landed 21 Oct 15:49; WP5 codes against it and imports it directly |
@@ -594,7 +627,7 @@ Requests to Dev A (integration owner). A applies them in the merge commit — do
 | C | A | **Wire the spend gates into `evaluateDecision`**: `services/domain/decision/decisionPolicy.js` is A's file, so C did not touch it. One call, fail-closed: `checkSpendGates({answerKey, amountUsdc, runId})` from `services/payments/x402Sui/spendLedger.js` — a missing `X402_USDC_CEILING` must block, not pass. Import from `@/services/payments/x402Sui/spendLedger.js`; it is server-only (no Edge import) | **closed by A** — `evaluateDecision({…, spendGate = null})` appends a `spend-ceiling` check **last**, so index 0/1 stay inputs/edge and everything from 2 on remains the risk group; `spendGate.allowed === true` is required, so a gate object with no verdict fails closed. 4 new tests in `tests/decisionIntegrity.test.js` (9/9). One shape change worth reading: the param is a **resolved value**, not a call — `checkSpendGates` is async and `evaluateDecision` is sync, so the caller resolves it before money moves (`settle.js:166` already does). C's `settle.js` path needs no change |
 | C | A | `STRATEGY.md` Decision Log row: "x402 settled on Sui, self-facilitated; settlement network defaults to testnet" | **closed by A** — plus a second row recording the `SUI_NETWORK` conflict as **unresolved**: a row saying "defaults to testnet" without the collision is how we end up demoing a rail that refuses every payment |
 | C | lead | **WP8 item 4 (the consistency sweep) is now half mechanical.** The token audit is `scripts/check-design-tokens.mjs` (a ratchet: 82 raw colour literals across 15 DOM files, failing only when that number rises) and the dead-route part is `scripts/check-surface-registry.mjs` + the contract test, which found **7 redirect stubs** (`/weather`, `/autopilot`, `/world-cup`, `/agent`, `/notifications` in `next.config.mjs`; `/canton`, `/canton/holder` at the component level) — five of them still have full page bodies that can never render. The a11y half is `tests/surfaceContract.test.jsx`. What is left for the Nov 2–5 sweep is the manual part: the 82 literals, the off-system radius/font sizes, and the mobile tap targets | open — for the lead's decision on the redirect stubs |
-| C | A | **Four G3 findings from the surface contract** — a surface that renders byte-identical text on failure and on empty, so a reader cannot tell "it failed" from "there is nothing here yet": `/` → `components/AgentRail.js` · `/positions` → `components/PositionsDashboard.js` · `/markets` → the market-list fetch in `app/markets/page.js` · `/labs/canton` → its own fetch. The fix is one state + one line of JSX with `role="alert"`; the exact snippet is in `docs/SURFACES.md` → *Mechanical audit*. Fix one and lower that surface's `BUDGET` in `tests/surfaceContract.test.jsx` in the same commit | open |
+| C | A | **Four G3 findings from the surface contract** — a surface that renders byte-identical text on failure and on empty, so a reader cannot tell "it failed" from "there is nothing here yet": `/` → `components/AgentRail.js` · `/positions` → `components/PositionsDashboard.js` · `/markets` → the market-list fetch in `app/markets/page.js` · `/labs/canton` → its own fetch. The fix is one state + one line of JSX with `role="alert"`; the exact snippet is in `docs/SURFACES.md` → *Mechanical audit*. Fix one and lower that surface's `BUDGET` in `tests/surfaceContract.test.jsx` in the same commit | **closed by A (21 Oct, `f852c1a`)** — all four fixed; the markets case needed two files (`SportsTab.js`/`DiscoveryTab.js` render the failure with a Retry, and `useMarketsData.js` no longer routes an empty result through the error channel, so `error` means failure and nothing else). Every surface's budget is now zero. |
 | C | A | **`vitest.config.js`**: vite does not compile JSX inside `.js` files the way Next does, so the esbuild `loader: 'jsx'` is now scoped to our own source (`app|components|tests|utils|services|hooks`) with `exclude: /node_modules/`. Without it no app page can be mounted in a test. FYI, not a request — please do not revert it, and A's own new tests can mount pages now too | informed |
 | C | A | `docs/API_REFERENCE.md`: `/api/signals/premium` — the 402 handshake, the `X-PAYMENT` header, the `settlementNetwork` field | **closed by A** — GET (402 vs 503 reasons) and POST (gate → on-chain re-read → UNIQUE claim → produce) documented; `maxAmountRequired` shown as the string the code actually emits |
 | C | A | **Print the settlement network on `/arena`** (`sui:testnet` by default) — the paid rail's network has to be visible where the ladder is shown. C does not edit `/arena` (A owns the memory lane there) | open — A's WP7 turn; will read `settlementNetwork(process.env)` rather than hardcode a literal |

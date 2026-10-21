@@ -5,7 +5,7 @@
 > operator-attested by default and mainnet/independent-attester deployment remain
 > open. Arc sections describe a finished testnet hackathon integration, not an
 > active primary settlement rail. For authoritative Canton status, see
-> [`CANTON_ATOMIC_SETTLEMENT.md`](CANTON_ATOMIC_SETTLEMENT.md).
+> [`CANTON.md`](./CANTON.md).
 
 ## What Works Today
 
@@ -18,7 +18,7 @@ Primary nav: **Markets · Positions · Private**. Overflow: Signals · Mandate �
 - **Talk to us** — operator interview intake under the privacy check on Private (`POST /api/talk` → `operator_leads`). Not a vanity waitlist; feeds the HackCanton prior-submission pipeline (see [`docs/HACKATHONS.md`](HACKATHONS.md))
 - **Markets** — Polymarket/Kalshi browse; densified analyze → act (odds / fair / edge, Trade · Publish · Share). Analyze works with `BOT_API_SECRET` set (same-origin UI allowed; bots still send `x-fourcast-auth`)
 - **Positions** — **Public** tab: EVM venue book (empty states chain to Markets + privacy proof). **Private** tab: Canton holder surface; primary CTA is privacy proof (no wallet). Optional holder-wallet connect under Advanced when a CIP-0103 gateway exists
-- **Private Canton settlement** — DevNet: private Daml positions, CIP-56 escrow, **BitSafe CBTC atomic settle proven** (`canton-bitsafe-lifecycle.mjs`). External wallet gateway + mainnet incomplete — see `docs/CANTON_ATOMIC_SETTLEMENT.md`
+- **Private Canton settlement** — DevNet: private Daml positions, CIP-56 escrow, **BitSafe CBTC atomic settle proven** (`canton-bitsafe-lifecycle.mjs`). External wallet gateway + mainnet incomplete — see `docs/CANTON.md`
 
 ### Supporting surfaces (not the HackCanton pitch)
 

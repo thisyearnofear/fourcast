@@ -45,7 +45,7 @@ Production DB is **Turso**. `better-sqlite3` must stay behind a conditional
 
 Edge still has a hard CI budget (below). Node routes have no CI fail limit, but
 retained Hobby deployments multiply each λ payload — keep imports lean and prune
-historic deploys (see `docs/DEPLOYMENT.md`).
+historic deploys (see `docs/SETUP.md`).
 
 ## Enforcement
 

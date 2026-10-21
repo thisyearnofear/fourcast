@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
  * GET /api/agent/track-record/[operatorId]
  *
  * Per-operator Track Record URL — the public surface a concierge DM points a
- * prospect at (docs/GO_TO_MARKET.md §2.2 step 4). Returns the same shape as
+ * prospect at (docs/archive/GO_TO_MARKET.md §2.2 step 4). Returns the same shape as
  * the global /api/agent/track-record, scoped to forecasts the operator wrote
  * with their operator_id (migration 0010), plus their persisted mandate
  * (migration 0011) so the /agent/[operatorId] page can show the policy the

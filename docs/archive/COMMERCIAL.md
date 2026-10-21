@@ -1,3 +1,6 @@
+> **Archived.** A one-pager for a fundraising conversation that is not currently
+> active. Numbers in it are from Aug 2026 and should be re-derived before reuse.
+
 # Fourcast — Commercial One-Pager
 
 The buyer-facing story, the concierge path, and the interview script. Strategy and the 14-day test live in `docs/GO_TO_MARKET.md`; this document is what we say to a customer.

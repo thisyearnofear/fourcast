@@ -1,3 +1,6 @@
+> **Archived.** The TxLINE hackathon submission was made. Kept as the record of
+> what was submitted. Integration notes: [`docs/TXLINE_INTEGRATION.md`](../TXLINE_INTEGRATION.md).
+
 # Fourcast × TxLINE Hackathon Submission
 
 ## Project: Fourcast — Verifiable Agent Mandates with TxLINE Outcome Proofs
@@ -100,7 +103,7 @@ The on-chain settlement path remains novel too: Fourcast can CPI directly into T
 ## The `match-escrow` Solana program
 
 **Program ID:** `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ`
-**Source:** [`onchain/match-escrow/programs/match-escrow/src/lib.rs`](onchain/match-escrow/programs/match-escrow/src/lib.rs)
+**Source:** [`onchain/match-escrow/programs/match-escrow/src/lib.rs`](../../onchain/match-escrow/programs/match-escrow/src/lib.rs)
 **Network:** Solana devnet
 
 ### Instructions
