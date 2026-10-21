@@ -175,8 +175,8 @@ export function PositionsDashboard({ isNight = false }) {
       </div>
       {/* Error */}
       {error && (
-        <div className={`text-xs p-3 bg-[var(--color-breach)]/10 text-[var(--color-breach)]`}>
-          {error}
+        <div role="alert" className={`text-xs p-3 bg-[var(--color-breach)]/10 text-[var(--color-breach)]`}>
+          Could not load positions — {error}
         </div>
       )}
       {/* Loading */}

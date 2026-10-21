@@ -4,7 +4,6 @@
   "components/AgentRunLedger.js": 3,
   "components/ArbitrageExecutor.js": 1,
   "components/BackdropProvider.js": 30,
-  "components/CalibrationCurve.jsx": 12,
   "components/DecisionDossier.js": 2,
   "components/ForecastPortals.js": 4,
   "components/HistoricalLabPanel.js": 4,

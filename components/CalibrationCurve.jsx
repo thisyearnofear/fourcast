@@ -6,10 +6,13 @@ import Reveal from '@/components/motion/Reveal';
 
 const mono = { fontFamily: 'var(--font-mono, monospace)' };
 
+// Confidence is an evidence grade, not a traffic light. The tiers take the
+// tokens the rest of the app already gives them (evidence / sealed / review);
+// emerald stays reserved for "verified" and is not spent on a bucket label.
 const BUCKET_COLORS = {
-  HIGH:  { bg: 'rgba(16,185,129,0.15)', stroke: '#10b981', text: '#10b981', dot: '#10b981' },
-  MEDIUM:{ bg: 'rgba(245,158,11,0.15)', stroke: '#f59e0b', text: '#f59e0b', dot: '#f59e0b' },
-  LOW:   { bg: 'rgba(99,102,241,0.15)', stroke: '#6366f1', text: '#6366f1', dot: '#6366f1' },
+  HIGH:   { line: 'var(--color-evidence)', text: 'var(--color-evidence)' },
+  MEDIUM: { line: 'var(--color-sealed)',   text: 'var(--color-sealed)' },
+  LOW:    { line: 'var(--color-review)',   text: 'var(--color-review)' },
 };
 
 const MIDPOINTS = { HIGH: 0.875, MEDIUM: 0.625, LOW: 0.25 };
@@ -104,12 +107,12 @@ function CalibrationPlot({ buckets, width = 520, height = 280 }) {
         return (
           <g key={i}>
             {/* Glow */}
-            <circle cx={d.x} cy={d.y} r={r + 3} fill={c.bg} opacity="0.5" />
+            <circle cx={d.x} cy={d.y} r={r + 3} style={{ fill: c.line }} opacity="0.18" />
             {/* Dot */}
-            <circle cx={d.x} cy={d.y} r={r} fill={c.bg} stroke={c.stroke} strokeWidth="1.5" />
+            <circle cx={d.x} cy={d.y} r={r} style={{ fill: c.line, stroke: c.line }} fillOpacity="0.4" strokeWidth="1.5" />
             {/* Label below */}
             <text x={d.x} y={d.y + r + 14} textAnchor="middle"
-                  fill={c.text} fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
+                  style={{ fill: c.text }} fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
               {d.bucket}
             </text>
             {/* Count above */}
@@ -164,7 +167,7 @@ function BucketRow({ b, index, first }) {
     >
       {/* Bucket label + hit rate */}
       <div className="flex items-center gap-2">
-        <span className="inline-block h-2 w-2" style={{ background: c.dot, borderRadius: 0 }} />
+        <span className="inline-block h-2 w-2" style={{ background: c.line, borderRadius: 0 }} />
         <span className="text-[12px] font-semibold" style={{ color: c.text }}>{b.bucket}</span>
         <span className="text-[11px] text-[var(--color-ink-faint)]" style={mono}>
           {b.hitRate != null ? (b.hitRate * 100).toFixed(0) + '%' : '—'}

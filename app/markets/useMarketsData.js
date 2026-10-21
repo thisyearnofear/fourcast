@@ -120,10 +120,8 @@ export function useMarketsData({
  setMarkets(result.markets);
  setSelectedMarket(result.markets[0]);
  } else {
+ // Empty is a result, not a failure — the list says so in its own voice.
  setMarkets([]);
- setError(
- result.message || 'No markets found. Try adjusting filters.'
- );
  }
  } else {
  console.error(

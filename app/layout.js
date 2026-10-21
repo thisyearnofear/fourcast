@@ -77,11 +77,13 @@ export default function RootLayout({ children }) {
                 <span className="text-[var(--color-rule-strong)]">·</span>
                 <Link href="/positions" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.positions ?? 'Positions'}</Link>
                 <span className="text-[var(--color-rule-strong)]">·</span>
+                <Link href="/arena" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.arena ?? 'Arena'}</Link>
+                <span className="text-[var(--color-rule-strong)]">·</span>
                 <Link href="/proof?chain=canton" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.canton ?? 'Private'}</Link>
                 <span className="text-[var(--color-rule-strong)]">·</span>
                 <Link href="/signals" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.signals ?? 'Signals'}</Link>
                 <span className="text-[var(--color-rule-strong)]">·</span>
-                <Link href="/agent" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.agent ?? 'Agent'}</Link>
+                <Link href="/arena?lane=mandate" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.agent ?? 'Agent'}</Link>
                 <span className="text-[var(--color-rule-strong)]">·</span>
                 <Link href="/labs" className="text-[11px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors no-underline sm:text-[12px]">{BRAND.navLabels.labs ?? 'Labs'}</Link>
                 <span className="text-[var(--color-rule-strong)]">·</span>

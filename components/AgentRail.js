@@ -23,7 +23,9 @@ import { emitBackdropPulse, BACKDROP_STATES } from '@/components/BackdropProvide
  * CYCLE_STALE_AFTER_MS (the worker runs every 5 min, so 30 min of silence means
  * it stalled). A snapshot-served feed (`stale: true` from the API) or an
  * aged-out cycle renders an amber STALE/STALLED state with the last cycle
- * age — never a fake green lamp, never a blank fold. The label/color/animation
+ * age — never a fake green lamp, never a blank fold. A feed request that fails
+ * before anything was loaded renders the reason in breach-red, so "the agent is
+ * quiet" is never confused with "we could not ask it". The label/color/animation
  * decision itself lives in the shared grammar module (`railLamp`, utils/arenaUi.js)
  * so every live surface forks nothing.
  */
@@ -61,15 +63,24 @@ function buildFeedItems(runs) {
 export default function AgentRail() {
   const [feed, setFeed] = useState(null);
   const [latest, setLatest] = useState(null);
+  const [error, setError] = useState(null);
   const lastCycleRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
     const load = () =>
       fetch('/api/arena/feed?limit=40')
-        .then((r) => (r.ok ? r.json() : null))
+        .then(async (r) => {
+          if (!r.ok) throw new Error(`the feed returned HTTP ${r.status}`);
+          return r.json();
+        })
         .then((d) => {
-          if (!alive || !d?.success) return;
+          if (!alive) return;
+          if (!d?.success) {
+            setError(d?.error || 'the feed returned no readable payload');
+            return;
+          }
+          setError(null);
           setFeed(d);
           const latestRun = d.latest || null;
           setLatest(latestRun);
@@ -92,7 +103,9 @@ export default function AgentRail() {
           }
           lastCycleRef.current = ts;
         })
-        .catch(() => {});
+        .catch(() => {
+          if (alive) setError('the feed request did not complete');
+        });
     load();
     const id = setInterval(load, 60_000);
     return () => { alive = false; clearInterval(id); };
@@ -161,6 +174,10 @@ export default function AgentRail() {
               {counters.join(' · ')}
             </span>
           </>
+        ) : error ? (
+          <span role="alert" className="font-mono text-[10px] text-[var(--color-breach)]">
+            agent feed unreadable — {error}
+          </span>
         ) : (
           <span className="font-mono text-[10px] text-[var(--color-ink-faint)]">
             no agent cycle recorded yet

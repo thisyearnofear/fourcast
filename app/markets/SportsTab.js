@@ -164,7 +164,7 @@ export function SportsTabContent({
   )}
 
   {/* Markets List */}
-  {isLoading || !markets ? (
+  {isLoading || (!markets && !error) ? (
     <div className="space-y-3">
       {[1, 2, 3].map((i) => (
         <div key={i} className="p-5 border border-[var(--color-rule)] bg-[var(--color-paper)]">
@@ -178,6 +178,19 @@ export function SportsTabContent({
           </div>
         </div>
       ))}
+    </div>
+  ) : error && !markets ? (
+    <div className="border border-[var(--color-rule)] bg-[var(--color-paper)] px-5 py-8 text-center">
+      <p role="alert" className="text-[12px] text-[var(--color-breach)]">
+        Could not load markets — {error}
+      </p>
+      <button
+        type="button"
+        onClick={() => fetchMarkets?.()}
+        className="mt-4 border border-[var(--color-rule-strong)] bg-[var(--color-paper-soft)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition-colors hover:bg-white/20"
+      >
+        Retry
+      </button>
     </div>
   ) : error ? (
     <EmptyMarketState

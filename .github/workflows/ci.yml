@@ -32,6 +32,12 @@ jobs:
       - name: Check runtime declarations
         run: node scripts/check-runtimes.js
       
+      - name: Check design tokens
+        run: node scripts/check-design-tokens.mjs --enforce
+      
+      - name: Check surface registry
+        run: node scripts/check-surface-registry.mjs
+      
       - name: Run tests
         run: npm run test
 

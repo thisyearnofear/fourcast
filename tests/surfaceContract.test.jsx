@@ -252,27 +252,28 @@ function collectFindings(container, { route, state, states = {}, dataSurface = t
 // ─── the budget (frozen after the first run) ────────────────────────────────
 
 /**
- * What each surface is allowed to still get wrong. Every number here was a
- * real finding on 21 Oct; the list of findings is printed by the test run.
- * Lower a number in the same commit that fixes the finding.
+ * What each surface is allowed to still get wrong. Every number here was a real
+ * finding on 21 Oct; the last of them was banked on 21 Oct, so the bar is now
+ * zero everywhere. A new route has to declare its own entry before it can fail
+ * quietly — an unlisted route is a test error, not a pass.
  */
 const BUDGET = {
-  // The surfaces that distinguish a failure from an empty result already.
+  // Every route in ROUTES holds its three states apart: a failure says it
+  // failed. The entries below are the bar, not the debt — a new finding on any
+  // of them fails the suite, and a new route has to declare one before it ships.
+  '/': 0,
   '/arena': 0,
   '/signals': 0,
+  '/positions': 0,
   '/status': 0,
+  '/markets': 0,
   '/proof': 0,
+  '/labs': 0,
   '/labs/autopilot': 0,
+  '/labs/builder': 0,
+  '/labs/canton': 0,
   '/agent': 0,
-  // The surfaces that render byte-identical text on failure and on empty.
-  // A reader cannot tell "it failed" from "there is nothing here yet".
-  '/': 1,
-  '/positions': 1,
-  '/markets': 1,
-  '/labs': 1,
-  '/labs/builder': 1,
-  '/labs/canton': 1,
-  '/agent/[operatorId]': 1,
+  '/agent/[operatorId]': 0,
 };
 
 const allFindings = [];
