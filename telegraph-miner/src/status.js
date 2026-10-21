@@ -8,6 +8,7 @@ import { LEAGUES } from './espn.js';
 import { txlineRenewal } from './utils.js';
 import { publicKey, keyIsPersistent } from './attest.js';
 import { upstreamReport } from './observe.js';
+import { registeredIntentNames } from './intents/index.js';
 
 export async function getMinerStatus() {
   const txlineStatus = await txline.getStatus();
@@ -16,7 +17,9 @@ export async function getMinerStatus() {
     miner: {
       name: 'Fourcast Telegraph Miner',
       version: '1.1.0',
-      intents: ['SPORTS_SCORE', 'GAME_RESULT'],
+      // The on-chain intent set only — an unregistered handler is never
+      // advertised here. Registry-derived, like every other copy of this list.
+      intents: registeredIntentNames(),
       deterministic: false, // live data changes over time
     },
     sources: {

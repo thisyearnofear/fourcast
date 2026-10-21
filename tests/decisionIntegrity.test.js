@@ -59,3 +59,39 @@ describe('decision integrity', () => {
     expect(verifyDecisionReceipt(receipt).valid).toBe(false);
   });
 });
+
+describe('spend gate as a policy check', () => {
+  const recommendation = { aiProbability: 0.65, marketOdds: 0.5, edge: 0.15, sizePct: 0.08 };
+  const simulation = simulateBinaryMarket({ probability: 0.65, marketOdds: 0.5, direction: 'BUY YES', runs: 1_000, seed: 42 });
+
+  it('is unchanged when no spend is in play', () => {
+    const result = evaluateDecision({ recommendation, simulation });
+    expect(result.verdict).toBe('ALLOCATE');
+    expect(result.riskChecks.map((c) => c.id)).not.toContain('spend-ceiling');
+  });
+
+  it('refuses an allocation whose ceiling failed, and says which one', () => {
+    const result = evaluateDecision({
+      recommendation,
+      simulation,
+      spendGate: { allowed: false, reason: 'X402_USDC_CEILING is not set — there is no spend ceiling, so no spend is allowed.', reasonCode: 'SPEND_CEILING_UNSET' },
+    });
+    expect(result.verdict).toBe('PASS');
+    expect(result.executionEligible).toBe(false);
+    expect(result.allocationPct).toBe(0);
+    expect(result.rationale).toContain('spend ceiling');
+    expect(isPolicyAdherentDecision(result)).toBe(true);
+  });
+
+  it('fails closed on a gate object that carries no verdict', () => {
+    const result = evaluateDecision({ recommendation, simulation, spendGate: { reason: 'evaluator threw' } });
+    expect(result.verdict).toBe('PASS');
+    expect(result.riskChecks.find((c) => c.id === 'spend-ceiling').passed).toBe(false);
+  });
+
+  it('clears when the gate is genuinely allowed', () => {
+    const result = evaluateDecision({ recommendation, simulation, spendGate: { allowed: true } });
+    expect(result.verdict).toBe('ALLOCATE');
+    expect(result.riskChecks.find((c) => c.id === 'spend-ceiling').passed).toBe(true);
+  });
+});

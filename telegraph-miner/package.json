@@ -10,7 +10,10 @@
     "test": "node --test test/*.test.js",
     "survey": "node scripts/survey.mjs",
     "verify": "node scripts/verify.mjs",
-    "keygen": "node scripts/keygen.mjs"
+    "keygen": "node scripts/keygen.mjs",
+    "render:manifest": "node scripts/render-manifest.mjs",
+    "manifest:check": "node scripts/render-manifest.mjs --check",
+    "demo:eor": "node scripts/demo-event-outcome.mjs"
   },
   "dependencies": {
     "@solana/web3.js": "^1.95.0",

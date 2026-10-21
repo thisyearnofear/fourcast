@@ -11,6 +11,10 @@
  * Idempotent — running twice will not duplicate rows. Rows are keyed by
  * the receipt content hash so re-runs are no-ops.
  *
+ * Only receipts whose file carries a real reconciliation outcome are resolved.
+ * The rest are saved unresolved and scored later by the worker — the curve
+ * fills in as evidence arrives, never by inventing a result.
+ *
  * Usage:
  *   node scripts/backfill-calibration.mjs
  *   node scripts/backfill-calibration.mjs --dry-run
@@ -61,6 +65,7 @@ function extractForecastFromReceipt(filePath) {
     verdict: decision.decision?.verdict,
     contentHash: receipt.proof.integrity?.contentHash,
     createdAt: receipt.proof.createdAt,
+    winner: parsed?.reconciliation?.outcome?.winner || null,
   };
 }
 
@@ -71,14 +76,19 @@ function verdictToConfidence(verdict) {
 }
 
 /**
- * Compute the synthetic outcome the original forecaster would have had to
- * call to land on the recorded forecast. For the backfill we use 0.5 as a
- * neutral result — enough to populate every bucket with one resolved row
- * without inflating the Brier score. Real outcomes are wired in Phase 2
- * via resolveForecast() in the worker & sweep.
+ * Real recorded outcome, or null.
+ *
+ * A receipt is pre-outcome by construction — that is what makes it provable —
+ * so the settled result only exists when the reconciliation attached to the
+ * same file carries one. Anything else stays unresolved and gets scored by the
+ * worker the moment its fixture settles. Inventing a neutral 0.5 outcome to
+ * populate the curve was the old behaviour; it wrote facts nobody observed into
+ * the ledger that calibration, sizing and memory all read as evidence.
  */
-function syntheticOutcome(_forecast) {
-  return 0.5;
+function recordedOutcome(forecast) {
+  if (forecast.winner === 'home') return 1;
+  if (forecast.winner === 'away' || forecast.winner === 'draw') return 0;
+  return null;
 }
 
 async function main() {
@@ -89,6 +99,7 @@ async function main() {
 
   let saved = 0;
   let resolved = 0;
+  let awaitingOutcome = 0;
   let skipped = 0;
 
   for (const file of files) {
@@ -98,6 +109,7 @@ async function main() {
       continue;
     }
     const confidence = verdictToConfidence(parsed.verdict);
+    const outcome = recordedOutcome(parsed);
     const id = `backfill-${parsed.fixtureId}-${parsed.contentHash?.slice(0, 12) || 'unknown'}`;
     const ts = parsed.createdAt
       ? Math.floor(new Date(parsed.createdAt).getTime() / 1000)
@@ -105,9 +117,11 @@ async function main() {
 
     if (DRY_RUN) {
       console.log(
-        `[dry-run] ${id} fixture=${parsed.fixtureId} p=${parsed.aiProbability.toFixed(3)} conf=${confidence}`
+        `[dry-run] ${id} fixture=${parsed.fixtureId} p=${parsed.aiProbability.toFixed(3)} conf=${confidence} outcome=${outcome === null ? 'pending (no recorded result)' : outcome}`
       );
       saved++;
+      if (outcome !== null) resolved++;
+      else awaitingOutcome++;
       continue;
     }
 
@@ -128,14 +142,17 @@ async function main() {
 
     if (saveResult.success) {
       saved++;
-      // Resolve immediately with the synthetic outcome so the curve
-      // receives one data point per backfilled row.
-      const resolveResult = await resolveForecast(
-        parsed.fixtureId,
-        syntheticOutcome(parsed)
-      );
+      if (outcome === null) {
+        // Left unresolved on purpose: the worker scores it when the fixture's
+        // real result is read. No invented outcome.
+        awaitingOutcome++;
+        continue;
+      }
+      const resolveResult = await resolveForecast(parsed.fixtureId, outcome);
       if (resolveResult.success) {
         resolved += resolveResult.resolved || 0;
+      } else {
+        console.warn(`[backfill-calibration] resolve failed for ${parsed.fixtureId}: ${resolveResult.error}`);
       }
     } else {
       skipped++;
@@ -143,7 +160,7 @@ async function main() {
   }
 
   console.log(
-    `[backfill-calibration] saved=${saved} resolved=${resolved} skipped=${skipped}${DRY_RUN ? ' (dry-run)' : ''}`
+    `[backfill-calibration] saved=${saved} resolved=${resolved} awaiting-outcome=${awaitingOutcome} skipped=${skipped}${DRY_RUN ? ' (dry-run)' : ''}`
   );
 }
 

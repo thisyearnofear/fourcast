@@ -21,8 +21,8 @@ import 'dotenv/config';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import express from 'express';
-import { handleSportsScore } from './intents/sportsScore.js';
-import { handleGameResult } from './intents/gameResult.js';
+import { handlers } from './intents/index.js';
+import { openApiDocument, llmsTxt } from './openapi.js';
 import { getMinerStatus } from './status.js';
 import { SUPPORTED_INTENTS, normalizeQueryRequest } from './query.js';
 import { signalFieldsFromAnswer } from './answer.js';
@@ -48,10 +48,10 @@ const PORT = Number(process.env.PORT) || 8402;
 const HOST = process.env.HOST || '0.0.0.0';
 const SITE = process.env.MINER_PUBLIC_URL || 'https://miner.sportwarren.com';
 
-const INTENT_HANDLERS = {
-  SPORTS_SCORE: handleSportsScore,
-  GAME_RESULT: handleGameResult,
-};
+// Derived from the registry: every registered intent plus any flag-enabled
+// unregistered handler. /query can still only *resolve* registered intents —
+// normalizeQueryRequest rejects the rest before dispatch.
+const INTENT_HANDLERS = handlers();
 
 // A miner that stops answering is deregistered; one bad upstream body must
 // drop one request, not the process.
@@ -163,6 +163,18 @@ app.get('/api/asked', (_req, res) => {
   res.json(askedReport());
 });
 
+// Agent-readable surfaces. Both are generated from the registry — an agent
+// can never be documented an intent we do not serve.
+app.get('/openapi.json', (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json(openApiDocument(SITE));
+});
+
+app.get('/llms.txt', (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.type('text/plain').send(llmsTxt(SITE));
+});
+
 app.get('/.well-known/fourcast-miner.json', (_req, res) => {
   res.set('Cache-Control', 'public, max-age=300');
   res.json({
@@ -204,6 +216,8 @@ app.get('/', (_req, res) => {
       status: 'GET /status',
       asked: 'GET /api/asked',
       keys: 'GET /.well-known/fourcast-miner.json',
+      openapi: 'GET /openapi.json',
+      llms: 'GET /llms.txt',
     },
   });
 });

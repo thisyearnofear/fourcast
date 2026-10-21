@@ -6,7 +6,11 @@
  * with no intent — the node forwards that payload verbatim.
  */
 
-export const SUPPORTED_INTENTS = ['SPORTS_SCORE', 'GAME_RESULT'];
+import { registeredIntentNames } from './intents/index.js';
+
+// Derived from the registry — the only intents advertised anywhere are the
+// ones on the on-chain intent set. See src/intents/index.js.
+export const SUPPORTED_INTENTS = registeredIntentNames();
 
 const PARAM_KEYS = [
   'fixture_id',
@@ -193,7 +197,7 @@ export function normalizeQueryRequest(body) {
         ok: false,
         status: 200,
         error: 'unsupported_intent',
-        message: `This miner serves SPORTS_SCORE and GAME_RESULT intents. Try asking about a specific team, fixture, or competition — e.g. "What was the Manchester City score?"`,
+        message: `This miner serves ${SUPPORTED_INTENTS.join(' and ')} intents. Try asking about a specific team, fixture, or competition — e.g. "What was the Manchester City score?"`,
         extra: { supported_intents: SUPPORTED_INTENTS },
       };
     }

@@ -8,16 +8,18 @@ export const runtime = 'nodejs';
  * Returns bucketed calibration data that proves the system's confidence
  * levels are well-calibrated — not overconfident, not random.
  *
- * Response shape:
+ * Response shape (schema 'calibration/v2' — every metric also appears in its
+ * legacy snake_case form while consumers migrate):
  * {
  *   success: true,
- *   summary: { totalResovled, avgBrier, minBucket, maxBucket },
+ *   schema: 'calibration/v2',
+ *   summary: { totalResolved, avgBrier, avgLogLoss, minBucket, maxBucket },
  *   buckets: [
- *     { bucket, count, hitRate, avgBrier, avgProbability, midpointConfidence },
+ *     { bucket, count, hitRate, avgBrier, avgLogLoss, avgProbability, midpointConfidence },
  *     ...
  *   ],
- *   trend: [{ month, count, avgBrier }, ...],
- *   sourceCal: [{ source, count, avgBrier, hitRate }, ...]
+ *   trend: [{ month, count, avgBrier, avgLogLoss }, ...],
+ *   sourceCal: [{ source, count, avgBrier, avgLogLoss, hitRate }, ...]
  * }
  *
  * Query params:

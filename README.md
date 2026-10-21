@@ -3,6 +3,14 @@
 Fourcast is a venue-agnostic autonomous agent for prediction markets. It discovers edge, sizes positions under a policy-bound mandate, executes across multiple venues, and produces verifiable decision receipts that prove mandate adherence — before the outcome is known.
 
 > **One agent core. Multiple execution venues. Verifiable decisions.**
+>
+> A note on this line: an earlier draft advertised Runware `/v1/systemone`
+> (`typesafe:jev@latest` + `runware:laya@1`) as the decision model behind the
+> win-probability and winner calls. **Nothing in this tree calls it** — no
+> `systemone`, `jev@latest` or `laya@1` reference exists in the code — and the
+> free window it named has passed. Forecasting runs on TxLINE odds,
+> deterministic Monte Carlo, and the configured LLM router. If that integration
+> is built, restore the line with the file that proves it.
 
 ## The Wedge
 
@@ -42,7 +50,7 @@ Read the full methodology → [docs/CALIBRATION.md](docs/CALIBRATION.md)
 │  TxLINE/TxOdds         Venice AI        Bright Data     │
 │  Professional odds     LLM reasoning    Web scrape      │
 │  Merkle proofs         Forecasting      SERP + social   │
-│  MLS + PL (live)                       SynthData ML     │
+│  MLS + PL (live)                                        │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -85,7 +93,7 @@ Professional bookmaker consensus odds, live scores, and cryptographically verifi
 
 TxLINE provides the sharpest odds data available to any retail or agent participant. This is a concrete intelligence edge: the agent can compare professional consensus pricing against prediction-market prices to find mispricing.
 
-### Venice AI + SynthData ML
+### Venice AI (LLM reasoning)
 LLM-based reasoning for non-sports markets (politics, economics, crypto, technology). Deterministic Monte Carlo simulation with persisted seeds for reproducible forecasting.
 
 ### Bright Data (Optional Enrichment)
@@ -96,7 +104,7 @@ Web intelligence via SERP API, Scraping Browser, and Web Unlocker. Supplements t
 The decision engine is venue-agnostic. It operates identically whether executing on Polymarket, Delphi, or any future venue:
 
 1. **Discover** — scan available markets across connected venues
-2. **Forecast** — combine odds intelligence (TxLINE), LLM reasoning (Venice), ML models (SynthData), and web data (Bright Data)
+2. **Forecast** — combine odds intelligence (TxLINE), LLM reasoning (Venice), and web data (Bright Data)
 3. **Detect Edge** — fair value vs market price, minimum threshold gate
 4. **Size** — Kelly criterion with allocation cap, tail-loss limit, **and calibration-aware shrinkage** when bucket hit-rates are available
 5. **Decide** — five-gate policy: min edge, allocation cap, tail-loss probability, simulation validation, mandate bounds
@@ -212,6 +220,11 @@ constants/
 | [docs/CANTON_ATOMIC_SETTLEMENT.md](docs/CANTON_ATOMIC_SETTLEMENT.md) | Canton CIP-56 contract model |
 | [docs/DELPHI_AGENT.md](docs/DELPHI_AGENT.md) | Delphi Agent Arena operator guide |
 | [docs/HACKATHONS.md](docs/HACKATHONS.md) | Hackathon/competition record (active + participated) |
+| [docs/EXECUTION_PLAN.md](docs/EXECUTION_PLAN.md) | Canonical team plan: three-leg split, file ownership, frozen cross-leg contracts, status board, handoffs |
+| [docs/TOTAL_RECALL_HACKATHON.md](docs/TOTAL_RECALL_HACKATHON.md) | Total Recall (Tatum × Walrus) build plan — Track 1, portable credibility memory on Sui |
+| [docs/TATUM_SUI.md](docs/TATUM_SUI.md) | Tatum Sui JSON-RPC reads and the on-chain proof of a memory's owner object |
+| [docs/X402_SUI.md](docs/X402_SUI.md) | x402 settled on Sui, self-facilitated: spend gates → on-chain re-read → replay claim |
+| [docs/SURFACES.md](docs/SURFACES.md) | Surface registry — one row per route: class, owner, job, CTA, states, evidence |
 | [docs/TXLINE_INTEGRATION.md](docs/TXLINE_INTEGRATION.md) | TxLINE/Solana proof chain (hackathon reference) |
 | [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | Product demo walkthrough |
 
@@ -220,7 +233,7 @@ constants/
 - **Runtime:** Node.js 20+, Next.js 16, React 19
 - **Execution:** Polymarket CLOB, Delphi SDK (LMSR), Canton DApp SDK
 - **Chain:** EVM (wagmi/viem/ethers), Solana (Anchor), Gensyn Testnet
-- **Intelligence:** TxLINE/TxOdds, Venice AI, Bright Data, SynthData
+- **Intelligence:** TxLINE/TxOdds, Venice AI, Bright Data
 - **Infra:** Vercel (web), VPS + PM2 (agent worker), Redis/Upstash, Turso DB
 
 ## License

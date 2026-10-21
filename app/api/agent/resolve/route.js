@@ -1,9 +1,16 @@
 import { resolveForecast } from '@/services/db';
+import { rememberResolution } from '@/services/memory/resolutionTrigger';
 
 /**
  * Resolve a forecast with actual outcome and calculate Brier score
  * POST /api/agent/resolve
  * Body: { marketId: string, actualOutcome: number (0 or 1) }
+ *
+ * A resolution is also the trigger for a Walrus Memory append — the moment a
+ * belief becomes evidence. With FOURCAST_MEMORY_ENABLED unset, memoryStatus()
+ * reports not-writable and the call returns without touching the network: the
+ * delegate key is server-only (never on Vercel) and memory is never load-bearing
+ * for scoring.
  */
 export const runtime = 'nodejs';
 
@@ -34,9 +41,16 @@ export async function POST(request) {
       );
     }
 
+    const memory = await rememberResolution({ marketId, triggerReceipt: null });
+
     return Response.json({
       success: true,
       resolved: result.resolved,
+      memory: {
+        written: memory.written?.filter((w) => w.ok).length || 0,
+        skipped: Boolean(memory.skipped),
+        reason: memory.reason || memory.error || null,
+      },
       message: `Resolved ${result.resolved} forecast(s) for market ${marketId}`,
     });
   } catch (error) {

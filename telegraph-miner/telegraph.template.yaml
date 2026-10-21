@@ -1,0 +1,241 @@
+# Telegraph miner YAML — Fourcast sports intelligence
+#
+# Pin / updateMiner this file at https://integrate.telegraphprotocol.com
+# Schema: https://github.com/telegraphprotocol/telegraph-docs/blob/main/miners/yaml-config.md
+# Operator notes: telegraph-miner/README.md
+#
+# On-chain (as of 2026-08-20) still has WEB_SEARCH + FACT_CHECK from the first
+# pin (ipfs://QmWtdBnELzsxXVf3pd5AMGeS2fYCf2UvbbZiEbcmBUQDJx). This file is the
+# correction. Use updateMiner with the same wallet — do not registerMiner again.
+# Keep id: 1 and slug: fourcast-sports-intelligence.
+#
+# GENERATED FILE — do not edit.
+# Source of truth for intents: src/intents/index.js (INTENT_REGISTRY).
+# Editable template: telegraph.template.yaml. Render: node scripts/render-manifest.mjs
+# Drift guard: test/intentRegistry.test.js fails when this file and the
+# registry disagree.
+
+version: "1"
+kind: miner
+id: 1
+slug: fourcast-sports-intelligence
+protocol: generic
+name: Fourcast Sports Intelligence
+description: >
+  Verified sports scores and match results powered by TxLINE professional
+  bookmaker consensus with Solana Merkle proofs. Every result is independently
+  verifiable on-chain, no trust required.
+
+base_url: https://miner.sportwarren.com
+
+docs:
+  website: https://fourcastapp.vercel.app
+  repository: https://github.com/thisyearnofear/fourcast
+
+auth:
+  type: none
+
+rate_limit_per_sec: 10
+cache_ttl_sec: 30
+circuit_threshold: 5
+circuit_cooldown_seconds: 30
+
+limitations:
+  - code: DATA_FRESHNESS
+    message: >
+      Sports scores delayed up to 60s. Coverage includes MLS, NFL,
+      Premier League, La Liga, Bundesliga.
+
+# Express 400/500 bodies use { error, message }. Real HTTP status codes, so
+# no in-body status_path.
+errors:
+  message_path: message
+  code_path: error
+
+endpoints:
+  - path: /query
+    external_path: /query
+    method: POST
+    description: Live score or final result for a named team, fixture, or competition
+
+# Accepts both our envelope {intent, params} and the flatter body the Engine
+# auto-router may build. The node does not enforce this schema.
+input_schema:
+  type: object
+  properties:
+    intent:
+      type: string
+      enum: [{{INTENT_ENUM}}]
+      description: >
+        {{INTENT_DESCRIPTIONS}} Omitted on auto-routed asks — inferred
+        from query text.
+    params:
+      type: object
+      description: Envelope form. Same keys as the top-level fields below.
+      properties:
+        team:
+          type: string
+        fixture_id:
+          type: string
+        competition:
+          type: string
+        league:
+          type: string
+        date:
+          type: string
+    request_id:
+      type: string
+    query:
+      type: string
+      description: Natural-language question from auto-routed /engine/v1/ask
+    team:
+      type: string
+      description: Team name to match (fuzzy)
+    fixture_id:
+      type: string
+      description: TxLINE fixture ID
+    competition:
+      type: string
+    league:
+      type: string
+      description: Alias for competition
+    date:
+      type: string
+      description: ISO date (YYYY-MM-DD) to filter fixtures
+    home_team:
+      type: string
+    away_team:
+      type: string
+
+output_schema:
+  type: object
+  properties:
+    request_id:
+      type: string
+    intent:
+      type: string
+    score:
+      type: string
+      description: Canonical score string such as "2-1". Empty if not yet available.
+    label:
+      type: string
+      description: Match status — scheduled, live, or final
+    winner:
+      type: string
+      description: Winning team name, "draw", or empty if not final
+    reason:
+      type: string
+      description: One-line human-readable verdict
+    answer:
+      type: object
+    metadata:
+      type: object
+  required:
+    - intent
+    - score
+    - label
+    - reason
+
+semantics:
+  signal_mapping:
+    label_field: score
+    reason_field: reason
+  supported_intents:
+{{SUPPORTED_INTENTS}}
+
+on_chain:
+  description: >
+    Sports match scores and results from TxLINE professional bookmaker
+    consensus, stored on-chain for trustless verification. Consumers can
+    independently verify each result against its Solana Merkle proof without
+    relying on the miner. Captures fixture identity, team names, match status,
+    winner, and the Solana transaction hash anchoring the proof on-chain.
+  transform: direct
+  min_price_usdc: 0.01
+  fields:
+    strings:
+      - index: 0
+        name: request_id
+        description: Unique request identifier for deduplication
+        source_path: request_id
+      - index: 1
+        name: intent
+        description: Intent type SPORTS_SCORE or GAME_RESULT
+        source_path: intent
+      - index: 2
+        name: score
+        description: Canonical score string such as 2-1
+        source_path: score
+      - index: 3
+        name: reason
+        description: One-line human-readable verdict
+        source_path: reason
+      - index: 4
+        name: answer_fixture_id
+        description: TxLINE fixture ID for the matched game
+        source_path: answer.fixture_id
+      - index: 5
+        name: answer_competition
+        description: League or competition name such as MLS or NFL
+        source_path: answer.competition
+      - index: 6
+        name: answer_home_team
+        description: Home team name
+        source_path: answer.home_team
+      - index: 7
+        name: answer_away_team
+        description: Away team name
+        source_path: answer.away_team
+      - index: 8
+        name: answer_status
+        description: Match status scheduled, live, or final
+        source_path: answer.status
+      - index: 9
+        name: winner
+        description: Winning team name, or draw, for completed matches
+        source_path: winner
+      - index: 10
+        name: metadata_source
+        description: Data source identifier
+        source_path: metadata.source
+      - index: 11
+        name: metadata_verification
+        description: Verification method
+        source_path: metadata.verification
+    integers:
+      - index: 0
+        name: answer_home_score
+        description: Home team score
+        source_path: answer.home_score
+      - index: 1
+        name: answer_away_score
+        description: Away team score
+        source_path: answer.away_score
+      - index: 2
+        name: metadata_latency_ms
+        description: Response latency in milliseconds
+        source_path: metadata.latency_ms
+    bools:
+      - index: 0
+        name: answer_verified
+        description: Whether the result is verified
+        source_path: answer.verified
+        transform_rule: "bool_from_eq:true"
+      - index: 1
+        name: answer_proof_available
+        description: Whether a Solana Merkle proof is available
+        source_path: answer.proof_available
+        transform_rule: "bool_from_eq:true"
+  # On-chain jobs build the HTTP body from OnChainData. Indices here are the
+  # caller's request slots, not the response field list above. Flat keys so
+  # /query does not need a nested params object.
+  request:
+    - endpoint: query
+      method: POST
+      body:
+        intent: { source: strings.0 }
+        request_id: { source: strings.1, optional: true }
+        team: { source: strings.2, optional: true }
+        fixture_id: { source: strings.3, optional: true }
+        competition: { source: strings.4, optional: true }
+        date: { source: strings.5, optional: true }

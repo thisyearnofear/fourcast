@@ -17,7 +17,7 @@ import { kalshiService } from "./kalshiService.js";
 import { brightDataService } from "./brightDataService.js";
 import { MarketIntelligenceAnalyzer } from "./analysis/MarketIntelligenceAnalyzer.js";
 import { arbitrageService } from "./arbitrageService.js";
-import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution, getAutopilotExecutionsSince, getCalibrationAnalysis } from "./db.js";
+import { saveForecast, wasRecentlyAnalyzed, updateForecastExecution, getAutopilotExecutionsSince } from "./db.js";
 import {
   buildTradedTodaySet,
   computeSpentToday,
@@ -28,6 +28,7 @@ import {
 } from "./autopilotSafety.js";
 import { calculateKellySizing } from "../utils/kellySizing.js";
 import { createDecisionPolicy, evaluateDecision } from "./domain/decision/decisionPolicy.js";
+import { readSizingCalibration } from "./memory/calibrationMemory.js";
 import { deriveSimulationSeed, simulateBinaryMarket } from "./domain/decision/simulation.js";
 
 /**
@@ -465,19 +466,18 @@ Output ONLY valid JSON:
   yield { step: "edge", status: "running", message: "Calculating edges..." };
 
   // Pull live bucket hit-rates so Kelly sizing shrinks or expands based on
-  // observed calibration. If the DB is cold we fall back to identity (1.0×)
-  // multipliers — every bucket effectively passes through uncalibrated.
+  // observed calibration. If the DB is cold we fall back to a calibration
+  // snapshot stored on Sui (same evidence floor, provenance attached); only if
+  // neither has enough evidence does sizing run uncalibrated at 1.0x.
   let bucketCalibration = null;
   try {
-    const cal = await getCalibrationAnalysis();
-    if (cal?.success && Array.isArray(cal.buckets)) {
-      bucketCalibration = cal.buckets.reduce((acc, b) => {
-        if (b?.bucket && Number.isFinite(b.hitRate)) {
-          acc[b.bucket] = b.hitRate;
-        }
-        return acc;
-      }, {});
-      if (Object.keys(bucketCalibration).length === 0) bucketCalibration = null;
+    const calibration = await readSizingCalibration();
+    bucketCalibration = calibration.bucketCalibration;
+    if (calibration.calibrationSource === 'walrus-memory') {
+      console.info(
+        `Agent loop: sizing on memory-derived calibration (blob ${calibration.memory.blobId}, ` +
+          `as of ${calibration.memory.asOf}) — local ledger had no usable buckets`
+      );
     }
   } catch (err) {
     console.warn("Agent loop: calibration lookup failed (using identity):", err.message);

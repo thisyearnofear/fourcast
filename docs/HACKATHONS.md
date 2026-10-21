@@ -10,6 +10,39 @@ relying on them.
 
 ## Active
 
+### Total Recall — Tatum × Walrus Memory — 🔴 open, build window 20 Oct – 10 Nov 2026
+- **What:** build an app that **remembers** — Walrus Memory on Sui mainnet as
+  the memory substrate, Tatum Sui RPC + Data APIs for onchain reads. 3 tracks
+  ($1,000 each) + 3 special awards ($500 each). Fully online, global.
+- **Track:** **1 — Markets & Sports Prediction.** The brief asks for an app that
+  "track[s] which voices were right" and where "memory stores credibility
+  scores so the app learns who to trust" — that is our existing
+  `analyst_address → prediction → outcome → Brier_score` credibility ledger and
+  source-level calibration, with the memory layer still missing.
+- **Submission:** [`docs/TOTAL_RECALL_HACKATHON.md`](TOTAL_RECALL_HACKATHON.md) —
+  the build plan, memory schema, and week-by-week schedule.
+- **Timeline (verified on the official page 2026-10-20):** build 20 Oct – 10 Nov;
+  **submissions close 10 Nov 2026, 17:00 UTC**; judging 11–16 Nov; winners
+  17 Nov. Existing projects allowed **if the submitted work is new progress
+  during the build window** — so the memory layer must be built inside it.
+- **Mandatory deliverables:** Walrus Memory writing on mainnet · **10+ memories
+  stored on mainnet** · Tatum RPC where relevant · published blog post (incl.
+  "how it learned over time") · working demo · public repo · Tatum account ID +
+  `MEMWAL_AGENT_ID` on the form.
+- **Special awards targeted:** *Best Walrus Memory* ($500) — our strongest
+  shot, the credibility re-ranking is a learning loop that visibly changes the
+  product. *Best Use of Agent Payments* ($500) — x402 settled on Sui, stretch.
+  *Best Tatum AI Builder* ($500) — fallback only; a generated shell risks the
+  creativity and presentation marks.
+- **Risk:** **the Sui RPC is our weak leg** — 30% of judging is technical
+  quality with "successful Tatum Sui RPC integration" named in it, and our
+  onchain state is Solana/Base/Movement/Canton with no Sui component. Plan: make
+  Sui the settlement rail (x402) rather than a decorative read. Do **not** port
+  the miner or the receipts.
+- **Not doing:** not resurrecting the paused agent lane — this entry is built on
+  the miner + calibration + credibility surface, per the miner-first
+  repositioning recorded below. Not entering more than one track.
+
 ### Telegraph Protocol Hackathon Season II — 🔴 live, scoring
 30 days, $10,000 prize pool. Season I closed without a Fourcast placement. This
 section is the plan for Season II so we enter instrumented instead of blind.
@@ -250,11 +283,24 @@ positioning claims.
         stays the final fallback.
       - TxLINE + ESPN remain sources #1/#2; OpenLigaDB is #3; proofs stay
         `verified: true` only with a real Merkle root.
-- [ ] P3 evaluator WASM decision: a `GAME_RESULT` attribution scorer. Build it,
-      or write it up as a finding.
+- [x] P3 evaluator WASM decision: a `GAME_RESULT` attribution scorer. Build it,
+      or write it up as a finding. **Written up (`2026-10-21`,
+      `docs/TELEGRAPH_SCORER_FINDING.md`):** the agreement gate makes a
+      *corrected* `GAME_RESULT` scorer structurally unpassable, so building WASM
+      would buy a slot that cannot score. The handler itself shipped behind
+      `TELEGRAPH_INTENT_EVENT_OUTCOME`, **default off and unregistered** — the
+      intent set is on-chain and closed, so `/status` advertises registered
+      intents only and the handler is demoed by direct call.
 - [ ] P4 Track 3 app decision (paid-rail buyer on top of the decision core).
+      Shared surface with Total Recall WP5: P4 is a **consumer** of
+      `services/payments/x402Sui/` (`deliverAfterSettlement`, per-answer ceiling,
+      per-run cap), not a second payment stack.
 - [ ] P5 judge/agent packaging: `/openapi.json`, `/llms.txt`, a social card,
-      a demo.
+      a demo. **Landed `2026-10-21`:** `GET /openapi.json` + `GET /llms.txt`
+      (`telegraph-miner/src/openapi.js`, derived from the intent registry so it
+      cannot drift), and the calibration social card
+      (`/api/og?type=calibration`, same `LOW:/MED:/HIGH:` bucket grammar the
+      memory layer writes). **Remaining:** a recorded demo.
 - [x] P6 inquiry filed with evidence **and worked around without TxLINE**
   (`2026-09-29`): no support reply is expected, so the product no longer
   depends on `stat-validation` clearing. The proof-probe exhibit

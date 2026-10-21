@@ -32,6 +32,16 @@
     "delphi:sweep:run": "node --env-file=.env.local scripts/delphi-sweep.mjs --sweep",
     "backfill:calibration": "node --env-file=.env.local scripts/backfill-calibration.mjs",
     "backfill:calibration:dry": "node --env-file=.env.local scripts/backfill-calibration.mjs --dry-run",
+    "backfill:log-loss": "node --env-file=.env.local scripts/backfill-log-loss.mjs",
+    "backfill:log-loss:dry": "node --env-file=.env.local scripts/backfill-log-loss.mjs --dry-run",
+    "memories": "node scripts/memories-to-mainnet.mjs",
+    "memories:write": "node scripts/memories-to-mainnet.mjs --write",
+    "memories:reconcile": "node scripts/memories-to-mainnet.mjs --reconcile",
+    "memory:recall": "node scripts/memory-recall-demo.mjs",
+    "tatum:sui-check": "node scripts/tatum-sui-check.mjs",
+    "x402:test": "vitest --run tests/x402*.test.js",
+    "check:tokens": "node scripts/check-design-tokens.mjs",
+    "check:surfaces": "node scripts/check-surface-registry.mjs",
     "check:runtimes": "node scripts/check-runtimes.js",
     "check:bundles": "node scripts/check-bundle-size.js"
   },
@@ -39,10 +49,12 @@
     "@canton-network/dapp-sdk": "^1.4.0",
     "@canton-network/wallet-sdk": "^1.4.0",
     "@console-wallet/dapp-sdk": "^2.2.5",
-    "ai": "^7.0.65",
     "@coral-xyz/anchor": "^0.31.1",
     "@gensyn-ai/gensyn-delphi-sdk": "^2.1.0",
     "@libsql/client": "^0.15.15",
+    "@mysten-incubation/memwal": "^0.1.9",
+    "@mysten/seal": "^1.5.1",
+    "@mysten/sui": "^2.37.0",
     "@neynar/nodejs-sdk": "^2.0.0",
     "@noble/curves": "^2.0.1",
     "@polymarket/builder-signing-sdk": "^0.0.8",
@@ -55,6 +67,7 @@
     "@solana/web3.js": "^1.98.4",
     "@tanstack/react-query": "5.90.8",
     "@vercel/og": "^0.8.5",
+    "ai": "^7.0.65",
     "axios": "1.13.6",
     "better-sqlite3": "^11.7.0",
     "connectkit": "^1.9.1",
@@ -90,7 +103,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.1.0",
-    "vitest": "^2.1.3"
+    "vitest": "^2.1.9"
   },
   "overrides": {
     "framer-motion": "^11.18.2"

@@ -222,6 +222,70 @@ Per-operator OG share card (1200×630 PNG) — the viral distribution surface pe
 
 **Query params:** `type=operator`, `name`, `total`, `resolved`, `brier`, `minEdge`, `maxAlloc`, `maxLoss`, `simRuns`. Populated automatically by `generateMetadata` on `/agent/[operatorId]`.
 
+### GET /og?type=calibration
+Calibration OG card (1200×630 PNG) — the shareable form of "our confidence is
+measured, not asserted", and Telegraph P5's social surface.
+
+**Query params:** `type=calibration`, `resolved`, `brier`, `logloss`, `buckets`,
+`source`, `schema`. `buckets` takes the same field grammar the memory layer
+writes — `LOW:0.410/MED:0.580/HIGH:0.790` — so the card, the curve and the
+`window` memory are three renderings of one shape rather than three dialects.
+
+The numbers are passed in by the caller, which reads `/api/agent/calibration`.
+A missing metric renders `NA`, never `0`: an absent sample size read as zero is
+the bug that once plotted every calibration bucket at hit rate 0.
+
+```
+/api/og?type=calibration&resolved=142&brier=0.1871&logloss=0.5123&buckets=LOW:0.410/MED:0.580/HIGH:0.790
+```
+
+---
+
+## Memory Endpoints (Total Recall)
+
+### GET /memory/status
+What the memory layer is, and whether the memories it claims are actually on
+chain. Reports the **local `memory_writes` ledger** (what we intended to append)
+and the **chain read** (what exists) side by side and never blends them — if
+they disagree, the disagreement is the answer.
+
+Default response is local-only: config plus ledger counts, with **zero** network
+calls, so a page load cannot silently spend relayer requests.
+
+**Query params (all opt-in):**
+
+| Param | Effect |
+|---|---|
+| `kind`, `key` | Scope the ledger rows to one memory kind / key |
+| `ladder=1` | Recall the version rungs from the relayer (needs credentials) |
+| `reconcile=1` | Diff our ledger against the relayer's memory inventory |
+| `proof=1` | Assert each ledger row's `owner` object exists on chain, via Tatum `sui_getObject` |
+
+```
+{
+  "success": true,
+  "schema": "memory-status/v1",
+  "memory": { "enabled": false, "configured": false, "writable": false,
+              "network": "mainnet", "relayerUrl": "https://relayer.memory.walrus.xyz",
+              "minSamples": 20, "accountIdTail": null,
+              "reason": "FOURCAST_MEMORY_ENABLED is not \"true\"" },
+  "ledger": { "confirmed": 0, "mainnetConfirmed": 0, "byNetwork": [], "byKind": [] },
+  "rows": [],
+  "notes": ["Memory reads are unavailable: FOURCAST_MEMORY_ENABLED is not \"true\"."]
+}
+```
+
+`proofs[].onchain` is **tri-state**: `exists: true` with
+`render: "object=<id>@<version> · digest=… · checkpoint=…"` when Tatum confirms
+it, `exists: false` when the chain contradicts us, and `exists: null` with a
+reason when the gateway is unreachable or the write was never confirmed. The
+last is not a failure — reporting an unproven write as `false` would claim the
+chain contradicts us when all we know is that we cannot look.
+
+Memories are **SEAL-encrypted and owner-scoped**: a `blob_id` proves an object
+exists, not that anyone can read its text. The route says so in `notes` rather
+than letting a blob id imply a public ledger.
+
 ---
 
 ## Supporting Endpoints — Markets, Signals, Trading
@@ -418,6 +482,68 @@ Resolve a signal with outcome.
 
 ---
 
+## Paid rail — x402 settled on Sui
+
+### GET /signals/premium
+Quote the premium signal. **This is the unpaid answer**: it costs nothing and
+returns `402 Payment Required` with a `Payment-Required` header naming the
+price, the payee, the settlement network and the accepted scheme (`exact`).
+
+```
+{
+  "success": false,
+  "error": "payment required",
+  "x402Version": 1,
+  "accepts": [ { "scheme": "exact", "network": "sui:testnet", "maxAmountRequired": "10000", ... } ],
+  "price": { "baseUnits": 10000, "usdc": 0.01 },
+  "settlementNetwork": "sui:testnet"
+}
+```
+
+`503` (not `402`) when the leg is deliberately dark or incomplete — the answer
+is different depending on why:
+`X402_DISABLED` when `X402_ENABLED` is not the literal `"true"`, and
+`SELLER_NOT_CONFIGURED` when `X402_SELLER_ADDRESS` is unset (we refuse to quote
+a price nobody can pay rather than quote a bogus payee).
+
+### POST /signals/premium
+Buy the premium signal. Send the market + analysis in the body and the buyer's
+payment in the `X-PAYMENT` header (base64/JSON `x402Version 1` envelope
+carrying the Sui transaction digest).
+
+Ordering is the guarantee, and it is the opposite of a metered API:
+
+1. **Spend gates** (`checkSpendGates`) — per-answer ceiling `X402_USDC_CEILING`
+   and per-run cap `X402_RUN_CAP_USDC`, pure arithmetic over `x402_payments`,
+   evaluated *before* the payment is accepted. A missing ceiling is a refusal
+   (`SPEND_CEILING_UNSET`), never "unlimited".
+2. **On-chain re-read** through the Tatum Sui RPC: the digest must exist,
+   `effects.status` must be `success`, the transfer must reach
+   `X402_SELLER_ADDRESS`, in the expected USDC coin, at least the quoted
+   amount, **on the settlement network**.
+3. **Claim** the digest (`tx_digest` is `UNIQUE`) — replay can never settle a
+   second request.
+4. **Then** the resource is produced: the signal is published and returned with
+   `txHash`, the `memoryStatus` of its `signal:{id}` memory and its `blobId`
+   when the memory layer has already written one (memories are written on
+   resolution, so a fresh signal usually reports `null` — reported, not
+   guessed).
+
+Body: `market`, `analysis` (required); `answerKey` (defaults to
+`signal:{eventId}:{snapshotHash}`, the scope of the per-answer ceiling);
+`runId` (optional, scopes the per-run cap — a Telegraph job passes one so a
+ladder of paid calls has a total, not just a per-step, cost).
+
+`settlementNetwork` is in every response, including errors, because the value
+is a property of the money, not of the request. Note the unresolved conflict
+documented in `.env.local.example` and `docs/EXECUTION_PLAN.md`: verification
+refuses to read a payment on a network other than `SUI_NETWORK`, while the
+memory legs require `SUI_NETWORK=mainnet` — so with the default
+`SETTLEMENT_NETWORK=testnet` this rail refuses every payment, by design, until
+the network question is decided.
+
+---
+
 ## DeFi Arbitrage
 
 ### GET /defi/arbitrage
@@ -476,6 +602,46 @@ Get agent forecasting performance.
 ### GET /agent
 Get agent run history.
 
+### GET /agent/calibration
+Bucketed calibration over **resolved** forecasts — the evidence the calibration
+curve plots and the Kelly shrinkage consumes.
+
+**Query Parameters:**
+| Param | Type | Description | Default |
+|-------|------|-------------|---------|
+| `operatorId` | uuid | Scope to one operator's track record | global |
+
+**Response** (`schema: "calibration/v2"`):
+```json
+{
+  "success": true,
+  "schema": "calibration/v2",
+  "operatorId": null,
+  "summary": {
+    "totalResolved": 142, "avgBrier": 0.1871, "avgLogLoss": 0.5123,
+    "minBucket": "LOW", "maxBucket": "HIGH",
+    "total_resolved": 142, "avg_brier": 0.1871, "avg_log_loss": 0.5123,
+    "min_bucket": "LOW", "max_bucket": "HIGH"
+  },
+  "buckets": [
+    {
+      "bucket": "HIGH", "count": 61, "hitRate": 0.7869, "avgBrier": 0.1428,
+      "avgLogLoss": 0.4351, "avgProbability": 0.83, "midpointConfidence": 0.875,
+      "hit_rate": 0.7869, "avg_brier": 0.1428, "avg_log_loss": 0.4351,
+      "avg_probability": 0.83
+    }
+  ],
+  "trend": [{ "month": "2026-10", "count": 38, "avgBrier": 0.1702, "avgLogLoss": 0.4881 }],
+  "sourceCal": [{ "source": "polymarket", "count": 142, "hitRate": 0.7394, "avgBrier": 0.1871, "avgLogLoss": 0.5123 }]
+}
+```
+
+Every metric is returned **twice** — camelCase (canonical, what consumers read)
+and the original snake_case SQL alias. That duplication is deliberate: the curve
+and the sizing loop read camelCase while older callers still read snake_case, and
+the mismatch between the two is what made the shrinkage silently do nothing for
+its first months. New code reads camelCase.
+
 ### POST /agent/resolve
 Resolve a forecast with actual outcome.
 
@@ -487,12 +653,25 @@ Resolve a forecast with actual outcome.
 }
 ```
 
+`actualOutcome` must be exactly `1` (won) or `0` (lost). Anything else — a
+fraction, a null, a market string — is refused with 400 rather than stored: a
+resolution is an observation, and Brier, log-loss, calibration buckets and the
+memories derived from them all treat the row as evidence.
+
 ---
 
 ## Leaderboard & Stats
 
 ### GET /leaderboard
 Get top analysts leaderboard.
+
+> **`winRate` here is not a hit rate.** `getLeaderboard()` computes it as
+> `AVG(odds_efficiency = 'EFFICIENT')` — how often the *market price* was
+> efficient around a signal, not whether the author's pick won. It is a fine
+> ranking signal for a UI and a wrong thing to publish as credibility. For
+> "was this voice right", use `getAnalystCalibration(address)` in
+> `services/db.js`, which counts only explicit `WIN`/`LOSS` verdicts and refuses
+> samples below 3 (see `docs/CALIBRATION.md`).
 
 **Query Parameters:**
 | Param | Type | Description | Default |

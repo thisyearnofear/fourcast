@@ -51,6 +51,10 @@ export async function GET(req) {
     return renderReceiptOG(searchParams);
   }
 
+  if (type === "calibration") {
+    return renderCalibrationOG(searchParams);
+  }
+
   return renderWeatherOG(searchParams);
 }
 
@@ -860,6 +864,221 @@ async function renderOperatorOG(searchParams) {
             </span>
             <span style={{ fontSize: "18px", color: "#6ee7b7", fontWeight: 500 }}>
               View track record →
+            </span>
+          </div>
+        </div>
+      </div>
+    ),
+    await ogOptions()
+  );
+}
+/**
+ * OG card for the calibration curve (/api/og?type=calibration) — Telegraph P5's
+ * shareable surface, and the card the blog post embeds.
+ *
+ * The numbers arrive as query params, exactly as every other card here works:
+ * the caller reads `/api/agent/calibration` (schema `calibration/v2`) and passes
+ * what it got. A card that fetched the API itself would still be a copy of the
+ * same numbers, and would add a failure mode instead of evidence.
+ *
+ * `buckets` uses the same field syntax the memory layer writes
+ * (`LOW:0.410/MED:0.580/HIGH:0.790`), so the card, the memory text and the curve
+ * are three renderings of one shape rather than three dialects.
+ *
+ * A missing metric renders `NA`, never `0` — an absent sample size read as zero
+ * is the bug that made every calibration bucket plot at hit rate 0.
+ *
+ * Query params: resolved, brier, logloss, buckets, source, schema.
+ */
+const CALIBRATION_BUCKETS = {
+  LOW: { color: "#6366f1", label: "LOW" },
+  MED: { color: "#f59e0b", label: "MED" },
+  MEDIUM: { color: "#f59e0b", label: "MED" },
+  HIGH: { color: "#10b981", label: "HIGH" },
+};
+
+/** Ideal-diagonal rate for a bucket label — where a calibrated agent should land. */
+const CALIBRATION_IDEAL = { LOW: 0.25, MED: 0.625, MEDIUM: 0.625, HIGH: 0.875 };
+
+function calibrationMetric(value, digits = 4) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(digits) : "NA";
+}
+
+function parseBucketField(raw) {
+  if (!raw) return [];
+  return String(raw)
+    .split("/")
+    .map((part) => part.split(":"))
+    .filter(([label, rate]) => label && CALIBRATION_BUCKETS[label.toUpperCase()])
+    .map(([label, rate]) => {
+      const key = label.toUpperCase();
+      const hit = Number(rate);
+      return {
+        label: CALIBRATION_BUCKETS[key].label,
+        color: CALIBRATION_BUCKETS[key].color,
+        hit: Number.isFinite(hit) ? hit : null,
+        ideal: CALIBRATION_IDEAL[key],
+      };
+    });
+}
+
+async function renderCalibrationOG(searchParams) {
+  const resolved = searchParams.get("resolved");
+  const brier = searchParams.get("brier");
+  const logloss = searchParams.get("logloss");
+  const source = searchParams.get("source") || "db:agent_forecasts";
+  const schema = searchParams.get("schema") || "calibration/v2";
+  const buckets = parseBucketField(searchParams.get("buckets"));
+  const hasSample = resolved !== null && String(resolved).trim() !== "";
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#080a0d",
+          color: "white",
+          fontFamily: OG_FONTS,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+        <div
+          style={{
+            height: "4px",
+            width: "100%",
+            background: "linear-gradient(90deg, #6366f1, #f59e0b, #10b981)",
+          }}
+        />
+
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            padding: "48px 56px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "28px", opacity: 0.5 }}>fourcast</span>
+            <span
+              style={{
+                fontSize: "14px",
+                padding: "6px 14px",
+                background: "rgba(16,185,129,0.15)",
+                color: "#6ee7b7",
+                border: "1px solid rgba(16,185,129,0.3)",
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                fontWeight: 600,
+              }}
+            >
+              Calibration
+            </span>
+            <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", fontFamily: "monospace" }}>{schema}</span>
+          </div>
+
+          <div
+            style={{
+              fontSize: "50px",
+              fontWeight: 700,
+              lineHeight: 1.08,
+              letterSpacing: "-0.02em",
+              marginTop: "32px",
+              maxWidth: "1000px",
+            }}
+          >
+            {hasSample
+              ? `${resolved} settled forecasts. Here is how wrong we were.`
+              : "No settled forecasts yet — the curve is empty until it is not."}
+          </div>
+
+          <div style={{ display: "flex", gap: "20px", marginTop: "28px" }}>
+            {[
+              { label: "Resolved", value: hasSample ? String(resolved) : "NA" },
+              { label: "Avg Brier", value: calibrationMetric(brier) },
+              { label: "Avg log-loss", value: calibrationMetric(logloss) },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  padding: "16px 22px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  minWidth: "180px",
+                }}
+              >
+                <span style={{ fontSize: "12px", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
+                  {stat.label}
+                </span>
+                <span style={{ fontSize: "32px", fontWeight: 700, fontFamily: "monospace" }}>{stat.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {buckets.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                gap: "18px",
+                marginTop: "30px",
+                padding: "20px 22px",
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.07)",
+              }}
+            >
+              {buckets.map((bucket) => (
+                <div key={bucket.label} style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
+                  <span style={{ fontSize: "12px", color: bucket.color, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>
+                    {bucket.label}
+                  </span>
+                  <span style={{ fontSize: "26px", fontWeight: 700, fontFamily: "monospace" }}>
+                    {bucket.hit === null ? "NA" : (bucket.hit * 100).toFixed(1) + "%"}
+                  </span>
+                  <div style={{ height: "6px", width: "100%", background: "rgba(255,255,255,0.07)", display: "flex" }}>
+                    <div style={{ height: "100%", width: `${Math.min(100, (bucket.hit ?? 0) * 100)}%`, background: bucket.color }} />
+                  </div>
+                  <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>
+                    ideal {(bucket.ideal * 100).toFixed(0)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "auto",
+              paddingTop: "22px",
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", fontFamily: "monospace" }}>
+              source: {source}
+            </span>
+            <span style={{ fontSize: "17px", color: "#6ee7b7", fontWeight: 600 }}>
+              Position size is derived from this curve →
             </span>
           </div>
         </div>

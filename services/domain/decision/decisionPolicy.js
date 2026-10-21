@@ -30,7 +30,7 @@ export function createDecisionPolicy(overrides = {}) {
  * Returns a terminal verdict and every gate considered. PASS is intentional:
  * a policy-bound refusal is a successful autonomous decision.
  */
-export function evaluateDecision({ recommendation, simulation, policy = DEFAULT_DECISION_POLICY }) {
+export function evaluateDecision({ recommendation, simulation, policy = DEFAULT_DECISION_POLICY, spendGate = null }) {
   const activePolicy = createDecisionPolicy(policy);
   const edge = Number(recommendation?.edge);
   const allocationPct = Number(recommendation?.sizePct);
@@ -43,6 +43,20 @@ export function evaluateDecision({ recommendation, simulation, policy = DEFAULT_
     check('allocation-cap', Number.isFinite(allocationPct) && allocationPct <= activePolicy.maxAllocationPct, `Allocation must not exceed ${(activePolicy.maxAllocationPct * 100).toFixed(1)}% of capital.`),
     check('tail-loss-limit', Number.isFinite(simulation?.lossProbability) && simulation.lossProbability <= activePolicy.maxLossProbability, `Simulated loss probability must not exceed ${(activePolicy.maxLossProbability * 100).toFixed(0)}%.`),
   ];
+
+  // A spend gate reads the payment ledger, so it is async and is evaluated by the
+  // caller BEFORE money moves; the resolved result is handed in here. Appended
+  // last on purpose: checks[0] is inputs and checks[1] is edge, and everything
+  // from index 2 onward is the risk group — so a ceiling that failed cannot
+  // ALLOCATE. `allowed` must be exactly true: a gate object with no verdict
+  // fails closed rather than passing on silence.
+  if (spendGate) {
+    checks.push(check(
+      'spend-ceiling',
+      spendGate.allowed === true,
+      spendGate.reason || 'No spend-gate verdict was supplied, so no spend is authorised.'
+    ));
+  }
 
   const invalidInputs = !checks[0].passed;
   const riskFailure = checks.slice(2).some((item) => !item.passed);

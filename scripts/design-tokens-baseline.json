@@ -1,0 +1,17 @@
+{
+  "app/global-error.js": 6,
+  "app/WalletLayer.js": 5,
+  "components/AgentRunLedger.js": 3,
+  "components/ArbitrageExecutor.js": 1,
+  "components/BackdropProvider.js": 30,
+  "components/CalibrationCurve.jsx": 12,
+  "components/DecisionDossier.js": 2,
+  "components/ForecastPortals.js": 4,
+  "components/HistoricalLabPanel.js": 4,
+  "components/MandateControl.js": 2,
+  "components/motion/AgentPulse.jsx": 1,
+  "components/PersonalStatsDashboard.js": 5,
+  "components/PricingOverlay.js": 1,
+  "components/ProofTheatre.js": 5,
+  "components/WeatherVisualization.js": 1
+}

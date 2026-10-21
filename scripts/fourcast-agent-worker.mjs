@@ -19,7 +19,9 @@ import { buildDecisionReceipt } from '../services/domain/decision/decisionReceip
 import { deriveSimulationSeed, simulateBinaryMarket } from '../services/domain/decision/simulation.js';
 import { assertNoLookahead, historicalPhase, historicalTimeline } from '../services/domain/decision/historicalLab.js';
 import { reconcile } from '../services/txline/reconciliationService.js';
-import { getMandate, migrationsReady, saveForecast, resolveForecast, getCalibrationAnalysis } from '../services/db.js';
+import { getMandate, migrationsReady, saveForecast, resolveForecast } from '../services/db.js';
+import { readSizingCalibration } from '../services/memory/calibrationMemory.js';
+import { rememberResolution } from '../services/memory/resolutionTrigger.js';
 
 dotenv.config({ path: process.env.FOURCAST_AGENT_ENV_FILE || '.env.agent' });
 dotenv.config();
@@ -131,21 +133,27 @@ async function runCycle() {
   const agentTime = lab ? advanceHistoricalClock(lab, candidates) : null;
 
   // Pull bucket hit-rates once per cycle so every receipt in this run
-  // shares a consistent calibration snapshot. Failures fall back to null,
-  // in which case the receipt omits the calibration block entirely.
+  // shares a consistent calibration snapshot. Our own ledger first; a stored
+  // memory only when the ledger has no usable buckets. Failures fall back to
+  // null, in which case the receipt records no evidence and sizing runs unshrunk.
   let calibrationBuckets = null;
   let calibrationSampleSize = 0;
+  let calibrationDropped = [];
+  let calibrationSource = 'db';
+  let calibrationMemory = null;
   try {
     await migrationsReady;
-    const cal = await getCalibrationAnalysis();
-    if (cal?.success && Array.isArray(cal.buckets)) {
-      calibrationBuckets = cal.buckets.reduce((acc, b) => {
-        if (b?.bucket && Number.isFinite(b.hitRate)) {
-          acc[b.bucket] = b.hitRate;
-        }
-        return acc;
-      }, {});
-      calibrationSampleSize = cal.summary?.totalResolved || 0;
+    const calibration = await readSizingCalibration();
+    calibrationBuckets = calibration.bucketCalibration;
+    calibrationSampleSize = calibration.sampleSize;
+    calibrationDropped = calibration.droppedBuckets;
+    calibrationSource = calibration.calibrationSource;
+    calibrationMemory = calibration.memory;
+    if (calibrationSource === 'walrus-memory') {
+      console.log(
+        `[fourcast-agent] sizing calibrated from Walrus Memory rung ${calibrationMemory.key} ` +
+          `v${calibrationMemory.version} (blob ${calibrationMemory.blobId}, as of ${calibrationMemory.asOf})`
+      );
     }
   } catch (err) {
     console.warn(`[fourcast-agent] calibration lookup failed (continuing without):`, err.message);
@@ -162,12 +170,32 @@ async function runCycle() {
         if (activity.phase === 'proof_reconciled' && activity.timeline?.outcomeAvailableAt) {
           try {
             const detail = txlineService.readReplayFixture(fixture.id);
-            const outcome = detail?.proof?.outcome?.homeWon === false ? 0 : 1;
-            if (typeof outcome === 'number') {
+            const homeWon = detail?.proof?.outcome?.homeWon;
+            // Only a recorded boolean is a result. Treating "missing" as a win
+            // would score the forecast against something nobody observed.
+            if (homeWon === true || homeWon === false) {
+              const outcome = homeWon ? 1 : 0;
               const r = await resolveForecast(fixture.id, outcome);
               if (r.success && r.resolved > 0) {
                 console.log(`[fourcast-agent] resolved ${r.resolved} forecast(s) for ${fixture.id} → outcome=${outcome}`);
+                // Memory is written by the resolution, not a cron: a resolution
+                // is a belief revision, and that is the only event worth an
+                // append on a ledger we cannot edit afterwards.
+                const memory = await rememberResolution({
+                  marketId: fixture.id,
+                  triggerReceipt: lab.fixtures[fixture.id]?.receiptHash || null,
+                });
+                if (memory.written?.length) {
+                  const rungs = memory.written
+                    .map((w) => `${w.kind}:${w.key} v${w.version}${w.blobId ? ` blob=${w.blobId}` : ''}`)
+                    .join(', ');
+                  console.log(`[fourcast-agent] memory appended → ${rungs}`);
+                } else if (memory.skipped || memory.refused?.length) {
+                  console.log(`[fourcast-agent] memory: ${memory.reason || `refused ${memory.refused.join(' | ')}`}`);
+                }
               }
+            } else {
+              console.warn(`[fourcast-agent] fixture ${fixture.id} settled without a recorded homeWon; leaving forecast unresolved`);
             }
           } catch (err) {
             console.warn(`[fourcast-agent] resolution skipped for ${fixture.id}:`, err.message);
@@ -181,6 +209,9 @@ async function runCycle() {
         policy: mandatePolicy,
         calibrationBuckets,
         calibrationSampleSize,
+        calibrationDropped,
+        calibrationSource,
+        calibrationMemory,
       }));
     }
   }
@@ -236,7 +267,18 @@ async function runHistoricalFixture({ fixture, mode, lab, agentTime, policy = nu
   return { ...stored.receipt, reconciliation, file: existing.file, phase: 'proof_reconciled', timeline };
 }
 
-async function evaluateFixture({ fixture, mode, createdAt = new Date().toISOString(), historical = null, policy: overridePolicy = null, calibrationBuckets = null, calibrationSampleSize = 0 }) {
+async function evaluateFixture({
+  fixture,
+  mode,
+  createdAt = new Date().toISOString(),
+  historical = null,
+  policy: overridePolicy = null,
+  calibrationBuckets = null,
+  calibrationSampleSize = 0,
+  calibrationDropped = [],
+  calibrationSource = 'db',
+  calibrationMemory = null,
+}) {
   const policy = overridePolicy || createDecisionPolicy({
     minAbsoluteEdge: toNumber(process.env.FOURCAST_AGENT_MIN_EDGE, 0.05),
     maxAllocationPct: toNumber(process.env.FOURCAST_AGENT_MAX_ALLOCATION_PCT, 0.03),
@@ -319,16 +361,38 @@ async function evaluateFixture({ fixture, mode, createdAt = new Date().toISOStri
         runMode: dryRun ? 'autonomous-dry-run' : 'autonomous-live',
       },
     },
-    calibration: calibrationBuckets
-      ? {
-          buckets: calibrationBuckets,
-          bucket: confBucket,
-          // Calibration-aware shrinkage applied to this decision's sizing
-          shrinkageFactor: computeShrinkageFactor(calibrationBuckets, confBucket),
-          sampleSize: calibrationSampleSize,
-          message: 'Sized on calibrated confidence, not vibes.',
-        }
-      : null,
+    calibration:
+      calibrationBuckets || calibrationSampleSize > 0 || calibrationDropped.length > 0
+        ? {
+            buckets: calibrationBuckets,
+            bucket: confBucket,
+            // Calibration-aware shrinkage applied to this decision's sizing
+            shrinkageFactor: computeShrinkageFactor(calibrationBuckets, confBucket),
+            sampleSize: calibrationSampleSize,
+            // Buckets held back for lack of evidence — a receipt that shows no
+            // shrinkage must also show whether that was "no data" or "not enough".
+            droppedBuckets: calibrationDropped,
+            // Which evidence moved the size. A memory-derived snapshot carries
+            // the blob it was read from, so an auditor can start at something
+            // on chain instead of at our word. Excluded from the integrity hash
+            // (as the whole calibration block is), so historical receipts still
+            // verify.
+            source: calibrationSource,
+            ...(calibrationMemory
+              ? {
+                  memory: {
+                    key: calibrationMemory.key,
+                    version: calibrationMemory.version,
+                    blobId: calibrationMemory.blobId,
+                    textHash: calibrationMemory.textHash,
+                    asOf: calibrationMemory.asOf,
+                    counts: calibrationMemory.counts,
+                  },
+                }
+              : {}),
+            message: 'Sized on calibrated confidence, not vibes.',
+          }
+        : null,
   });
 
   const reconciliation = !historical && replay?.proof

@@ -61,9 +61,18 @@ When a market resolves, `resolveForecast()` computes:
 
 ```
 brier_score = (ai_probability - actual_outcome)²
+log_loss    = -(o·ln(p) + (1-o)·ln(1-p))
 ```
 
-Where `actual_outcome` is 1 (win) or 0 (loss).
+Where `actual_outcome` is 1 (win) or 0 (loss) — and only those two values.
+`resolveForecast()` refuses any other outcome, because a resolution is an
+observation, not a placeholder.
+
+Brier is scale-stable and easy to read; log-loss is the stricter sibling that
+punishes a confident wrong call hard (a literal `p = 1` on a loss costs ~13.8,
+against Brier's 1.0). Log-loss clamps `p` into `[1e-6, 1-1e-6]` before taking the
+log — the ledger does contain literal 0 and 1 predictions, and `ln(0)` is
+`-Infinity`, which would poison every average it appears in.
 
 ### Step 3: Aggregate into Buckets
 
@@ -71,8 +80,15 @@ The calibration endpoint groups resolved forecasts by their confidence bucket an
 
 - **Hit rate** — fraction of forecasts in this bucket that won
 - **Average Brier** — mean Brier score for this bucket
+- **Average log-loss** — mean binary cross-entropy for this bucket
 - **Mean probability** — average predicted probability for this bucket
 - **Count** — number of resolved forecasts
+
+Response is `schema: "calibration/v2"`: every metric is camelCase **and** the
+original snake_case SQL alias, with the two guaranteed identical
+(`tests/calibrationShape.test.js` asserts it). The duplication exists because the
+curve, the agent loop and the worker read camelCase while the SQL returned
+snake_case — and nothing raised an error about it. Read camelCase in new code.
 
 ### Step 4: Visualize
 
@@ -118,6 +134,7 @@ Every resolved forecast lives in `agent_forecasts` with these fields:
 | `ai_probability` | REAL | The agent's predicted probability |
 | `actual_outcome` | REAL | 1 or 0, set on resolution |
 | `brier_score` | REAL | `(ai_probability - actual_outcome)²` |
+| `log_loss` | REAL | binary cross-entropy, clamped `p` (migration 0014) |
 | `confidence` | TEXT | UI confidence level (HIGH/MEDIUM/LOW) |
 | `confidence_bucket` | TEXT | Same, normalized for queries |
 | `resolved` | BOOLEAN | 1 when the market has settled |
@@ -141,6 +158,34 @@ GROUP BY confidence_bucket
 
 ---
 
+## Whose word is it? Per-analyst credibility
+
+`getAnalystCalibration(address)` in `services/db.js` answers a different question
+from the curve: not "is the agent calibrated" but "was **this voice** right".
+It is the source for any credibility figure we publish or write to memory, and it
+is deliberately narrow:
+
+- Counts a signal only when its `outcome` is an explicit **`WIN`/`LOSS` verdict**.
+- Reports other values — notably the `'YES'`/`'NO'` **market results** that
+  `reputationService.determineSignalOutcome()` writes — in `unmappedOutcomes` and
+  **excludes them from the hit rate**. A market that settled YES says nothing
+  about whether the author's pick won.
+- Returns `ok: false, reason: 'insufficient_sample'` under 3 resolved verdicts
+  (`minSamples` option). A credibility figure we cannot support is not produced.
+- Attaches `latestTrace` (receipt hash, tx hash, resolved-at) so the number can be
+  pointed at a row, plus `venueBreakdown` and `buckets` by confidence.
+- Joins `agent_forecasts` **by `operator_id`** for Brier/log-loss evidence. That
+  table is keyed by an operator UUID, not a wallet address, so the forecast block
+  is usually empty for a signal author and is reported empty rather than filled in.
+
+**What it replaces:** `getLeaderboard().win_rate`, which is
+`AVG(odds_efficiency = 'EFFICIENT')` — how often the price around a signal was
+efficient, not whether the call was right. It stays in the leaderboard UI because
+it is a reasonable ranking signal there, and it is a wrong thing to print as
+credibility. `tests/analystCalibration.test.js` pins the difference.
+
+---
+
 ## Roadmap
 
 ### Phase 1: Calibration Tracking (done)
@@ -154,15 +199,25 @@ GROUP BY confidence_bucket
 ### Phase 2: Calibration-Driven Sizing (shipped)
 - [x] Confidence-based Kelly shrinkage: `kelly_adjusted = kelly_base * shrinkage_factor(bucket)`
   - `kellySizing.calculateKellySizing()` accepts `bucketCalibration` and applies shrink capped at [0.25×, 1.5×]
-  - `aiAgentLoop.runAgentLoop()` pulls live bucket hit-rates each cycle and threads them into sizing
+  - `readCalibrationForSizing()` (`services/domain/decision/bucketCalibration.js`) is the single
+    translation from analysis to sizing map — the agent loop and the headless worker both call it
 - [x] Bucket hit-rates feed into the agent loop as feedback for future confidence tagging
 - [ ] Per-source Brier tracking feeds into probability fusion weights (still single-platform)
 
 ### Phase 3: Receipt Integration (shipped)
-- [x] Calibration block embedded in decision receipts: `buckets`, `bucket`, `shrinkageFactor`, `sampleSize`
+- [x] Calibration block embedded in decision receipts: `buckets`, `bucket`, `shrinkageFactor`, `sampleSize`, `droppedBuckets`
 - [x] Sample size surfaced so allocators see whether shrinkage is data-driven or default
 - [ ] Per-operator calibration dashboards (visible to allocators)
 - [ ] Calibration-based operator ranking in signal marketplace
+
+### Phase 4: Make the numbers true (shipped)
+- [x] `calibration/v2`: camelCase canonical, snake_case aliases retained, both asserted identical in tests
+- [x] Binary log-loss stored on resolution (migration 0014) + `backfillForecastLogLoss()` for rows predating it
+- [x] One shared reader (`readCalibrationForSizing()`) replacing the two copies of the broken reduce
+- [x] Per-bucket minimum sample floor, so shrinkage engages on evidence rather than on n=1
+- [x] `resolveForecast()` accepts 0/1 only — a resolution is an observation, not a placeholder
+- [x] `getAnalystCalibration(address)` — per-voice credibility from verdicts only, the source for on-chain memory
+- [ ] Memory-derived calibration feeding the same sizing path (`docs/WALRUS_MEMORY.md`, WP3)
 
 ---
 
@@ -175,11 +230,17 @@ receipts already on disk:
 
 ```bash
 npm run backfill:calibration:dry   # preview what would be inserted
-npm run backfill:calibration       # persist one resolved forecast per receipt
+npm run backfill:calibration       # persist one forecast per receipt
 ```
 
 The script is idempotent: re-running is safe. Each row is keyed by the receipt
 content hash.
+
+Only receipts whose file carries a real reconciliation outcome (`reconciliation.
+outcome.winner` from the TxLINE proof) are resolved during the backfill. The rest
+are saved **unresolved** and get scored by the worker once their fixture settles —
+the curve fills in as evidence arrives, never by inventing a result. The dry run
+prints `outcome=pending (no recorded result)` for those rows.
 
 ### Closing the loop each cycle
 
@@ -206,9 +267,52 @@ A HIGH bucket that hits 60% will have its sizing multiplied by 0.8×. A LOW
 bucket that hits 50% will see 1.43× — a confidence boost. The cap at 1.5×
 keeps uncalibrated hot streaks from runaway Kelly oversizing.
 
-When `getCalibrationAnalysis()` returns fewer than ~20 resolved forecasts per
-bucket, the factor defaults to 1.0× (no shrinkage) via the agent loop's
-graceful fallback. This avoids shrinking on insufficient data.
+**Thin buckets are dropped, not trusted.** `services/domain/decision/bucketCalibration.js`
+reads the analysis and omits any bucket with fewer than
+`FOURCAST_CALIBRATION_MIN_BUCKET` resolved forecasts (default **5**). An absent
+bucket means "no evidence", which `calculateKellySizing()` already treats as a
+1.0× factor, so sizing does not move on one lucky call. `readCalibrationForSizing()`
+returns the omitted buckets in `droppedBuckets` so a receipt can show *why* a
+bucket did not shrink.
+
+**A cold deployment reads the same rule off the chain.** `readCalibrationForSizing()`
+is the DB path; `readSizingCalibration()` in `services/memory/calibrationMemory.js`
+wraps it with `db → memory` precedence and is what `services/aiAgentLoop.js` and
+`scripts/fourcast-agent-worker.mjs` call. Our own ledger always wins — a stored
+snapshot is a fallback for a deployment whose `agent_forecasts` is empty, never an
+override. The fallback reads the newest `fourcast.window` rung that carries enough
+evidence, and it applies the **identical** `FOURCAST_CALIBRATION_MIN_BUCKET` floor:
+window memories store `buckets=HIGH:0.900/…` *and* `bucket_n=HIGH:20/…`, and a rate
+whose count is not visible in the memory is refused outright. So a memory can never
+outrank the live ledger on thinner evidence. Whatever moves the size is stamped into
+the receipt as `calibration.source` (`'db'` or `'walrus-memory'`) plus the memory's
+`blobId`, `textHash`, `version` and `asOf` — the calibration block stays outside the
+integrity hash, so historical receipts still verify.
+
+This floor is new: before the camelCase fix the shrinkage never fired at all
+(`Number.isFinite(b.hitRate)` was reading a field the query never returned, so
+every bucket looked uncalibrated), which means every resolved forecast count in
+the ledger is evidence for shrinkage that has not been applied until now. Turning
+it on against n=1 buckets would have been the same mistake in the other direction.
+
+**The 25% position cap can hide the shrink.** At a large edge, Kelly saturates
+`sizePct` at 0.25 both before and after calibration, so the factor shows up in
+`calibrationFactor` on the receipt but not in size. Only below saturation does it
+change the allocation.
+
+### Backfilling log-loss
+
+Forecasts resolved before migration 0014 have `brier_score` and a NULL
+`log_loss`. Nothing new is scored by the backfill — each value is recomputed from
+the `ai_probability` and `actual_outcome` already in the row, so it is the same
+number `resolveForecast()` would have written at the time. Rows whose outcome is
+not 0/1 (the old synthetic backfill wrote 0.5) are skipped and counted in
+`skippedNonBinary`.
+
+```bash
+npm run backfill:log-loss:dry   # how many rows would be filled
+npm run backfill:log-loss       # persist them
+```
 
 ---
 

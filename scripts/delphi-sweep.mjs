@@ -16,6 +16,7 @@
 import 'dotenv/config';
 import { delphiService } from '../services/delphiService.js';
 import { resolveForecast, migrationsReady } from '../services/db.js';
+import { rememberResolution } from '../services/memory/resolutionTrigger.js';
 
 const SWEEP = process.argv.includes('--sweep');
 
@@ -51,17 +52,33 @@ async function main() {
   try {
     await migrationsReady;
     let scored = 0;
+    const settled = [];
     for (const pos of agg.redeemedList || []) {
-      const r = await resolveForecast(pos.marketId || pos.market_id || pos.id, 1);
-      if (r.success) scored += r.resolved || 0;
+      const marketId = pos.marketId || pos.market_id || pos.id;
+      const r = await resolveForecast(marketId, 1);
+      if (r.success && r.resolved) {
+        scored += r.resolved;
+        settled.push(marketId);
+      }
     }
     for (const pos of agg.liquidatedList || agg.open || []) {
       if ((agg.liquidatedList || []).includes(pos)) {
-        const r = await resolveForecast(pos.marketId || pos.market_id || pos.id, 0);
-        if (r.success) scored += r.resolved || 0;
+        const marketId = pos.marketId || pos.market_id || pos.id;
+        const r = await resolveForecast(marketId, 0);
+        if (r.success && r.resolved) {
+          scored += r.resolved;
+          settled.push(marketId);
+        }
       }
     }
     if (scored > 0) console.log(`Calibration   : scored ${scored} settled forecast(s)`);
+    // Settlement is a resolution, so it remembers. triggerReceipt stays null:
+    // the sweep holds an on-chain settlement, not a pre-outcome decision
+    // receipt, and a memory must not cite a hash it does not have.
+    for (const marketId of settled) {
+      const memory = await rememberResolution({ marketId, triggerReceipt: null });
+      if (memory.written?.length) console.log(`Memory        : appended ${memory.written.length} for ${marketId}`);
+    }
   } catch (err) {
     console.warn(`Calibration scoring skipped: ${err.message}`);
   }

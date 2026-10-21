@@ -14,13 +14,17 @@ const BUCKET_COLORS = {
 
 const MIDPOINTS = { HIGH: 0.875, MEDIUM: 0.625, LOW: 0.25 };
 
+// calibration/v2 serves camelCase canonically with snake_case aliases; read
+// camelCase first and fall back so the curve survives either shape.
+const num = (value, digits) => (value != null ? Number(value).toFixed(digits) : '—');
+
 /**
  * CalibrationCurve — the proof surface for "sized on calibrated confidence, not vibes."
  *
  * Reads from /api/agent/calibration and renders:
- * 1. Summary strip: total resolved, avg Brier, bucket range
+ * 1. Summary strip: total resolved, avg Brier, avg log loss, bucket range
  * 2. SVG calibration plot with y=x diagonal reference
- * 3. Bucket table with hit rate, Brier, mean probability, Δ from diagonal
+ * 3. Bucket table with hit rate, Brier, log loss, mean probability, Δ from diagonal
  * 4. Monthly Brier trend bars
  *
  * Designed as a dense data panel matching the arena's Ledger/mandate density.
@@ -29,9 +33,10 @@ const MIDPOINTS = { HIGH: 0.875, MEDIUM: 0.625, LOW: 0.25 };
 function SummaryStrip({ summary }) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-y border-[var(--color-rule)] py-2.5 px-3">
-      <StatBadge label="resolved" value={summary?.total_resolved || '—'} />
-      <StatBadge label="avg brier" value={summary?.avg_brier != null ? summary.avg_brier.toFixed(4) : '—'} accent />
-      <StatBadge label="buckets" value={`${summary?.min_bucket || '—'} → ${summary?.max_bucket || '—'}`} />
+      <StatBadge label="resolved" value={summary?.totalResolved ?? summary?.total_resolved ?? '—'} />
+      <StatBadge label="avg brier" value={num(summary?.avgBrier ?? summary?.avg_brier, 4)} accent />
+      <StatBadge label="avg log loss" value={num(summary?.avgLogLoss ?? summary?.avg_log_loss, 4)} />
+      <StatBadge label="buckets" value={`${summary?.minBucket || summary?.min_bucket || '—'} → ${summary?.maxBucket || summary?.max_bucket || '—'}`} />
     </div>
   );
 }
@@ -171,7 +176,12 @@ function BucketRow({ b, index, first }) {
 
       {/* Brier */}
       <span className="text-[11px] text-[var(--color-ink-faint)]" style={mono}>
-        brier={b.avg_brier != null ? b.avg_brier.toFixed(3) : '—'}
+        brier={num(b.avgBrier ?? b.avg_brier, 3)}
+      </span>
+
+      {/* Log loss */}
+      <span className="text-[11px] text-[var(--color-ink-faint)]" style={mono}>
+        logloss={num(b.avgLogLoss ?? b.avg_log_loss, 3)}
       </span>
 
       {/* Mean prob */}
@@ -209,11 +219,12 @@ function TrendBars({ trend }) {
       <div className="flex items-end gap-1.5">
         {trend.slice().reverse().map((t, i) => {
           const maxBrier = 0.25;
-          const h = Math.max(4, (1 - Math.min(t.avg_brier, maxBrier) / maxBrier) * 40);
-          const isGood = t.avg_brier < 0.2;
+          const brier = t.avgBrier ?? t.avg_brier ?? 0;
+          const h = Math.max(4, (1 - Math.min(brier, maxBrier) / maxBrier) * 40);
+          const isGood = brier < 0.2;
           return (
             <div key={i} className="flex flex-col items-center gap-0.5 group relative"
-                 title={`${t.month}: Brier ${t.avg_brier?.toFixed(3)} (n=${t.count})`}>
+                 title={`${t.month}: Brier ${brier.toFixed(3)} (n=${t.count})`}>
               <span className="text-[7px] font-mono text-[var(--color-ink-faint)] opacity-0 group-hover:opacity-100 transition-opacity">
                 {t.count}
               </span>
@@ -222,7 +233,7 @@ function TrendBars({ trend }) {
                 style={{
                   height: `${h}px`,
                   background: isGood ? 'var(--color-accent)' : 'var(--color-evidence)',
-                  opacity: 0.5 + (1 - Math.min(t.avg_brier, maxBrier) / maxBrier) * 0.5,
+                  opacity: 0.5 + (1 - Math.min(brier, maxBrier) / maxBrier) * 0.5,
                   borderRadius: 0,
                 }}
               />
@@ -260,7 +271,7 @@ export function CalibrationCurve() {
   const { loading, error, result } = data;
 
   /* ── Empty state: the curve is building, not built ─────────────── */
-  if (!result || result.summary?.total_resolved === 0) {
+  if (!result || (result.summary?.totalResolved ?? result.summary?.total_resolved) === 0) {
     return (
       <Reveal>
         <div className="overflow-hidden border border-[var(--color-rule)] bg-[var(--color-paper-deep)]">
@@ -271,7 +282,7 @@ export function CalibrationCurve() {
                 calibration
               </span>
               <span className="text-[10px] text-[var(--color-ink-faint)]" style={mono}>
-                {result?.summary ? `${result.summary.total_resolved} resolved` : '0 resolved'}
+                {result?.summary ? `${result.summary.totalResolved ?? result.summary.total_resolved} resolved` : '0 resolved'}
               </span>
             </div>
           </div>

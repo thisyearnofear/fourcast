@@ -9,6 +9,12 @@
 # correction. Use updateMiner with the same wallet — do not registerMiner again.
 # Keep id: 1 and slug: fourcast-sports-intelligence.
 #
+# GENERATED FILE — do not edit.
+# Source of truth for intents: src/intents/index.js (INTENT_REGISTRY).
+# Editable template: telegraph.template.yaml. Render: node scripts/render-manifest.mjs
+# Drift guard: test/intentRegistry.test.js fails when this file and the
+# registry disagree.
+
 version: "1"
 kind: miner
 id: 1
@@ -61,8 +67,7 @@ input_schema:
       type: string
       enum: [SPORTS_SCORE, GAME_RESULT]
       description: >
-        SPORTS_SCORE for a live or most-recent score; GAME_RESULT for a
-        completed fixture's winner. Omitted on auto-routed asks — inferred
+        SPORTS_SCORE for a live or most-recent score; GAME_RESULT for a completed fixture's winner. Omitted on auto-routed asks — inferred
         from query text.
     params:
       type: object

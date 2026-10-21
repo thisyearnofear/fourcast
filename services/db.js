@@ -637,6 +637,32 @@ export async function getLeaderboard(limit = 50) {
   }
 }
 
+const LOG_LOSS_PROB_CLAMP = 1e-6;
+
+function toScorableNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Binary log-loss — Brier's stricter sibling: -(o·ln(p) + (1-o)·ln(1-p)).
+ *
+ * Probability is clamped away from 0/1 because the ledger does contain literal
+ * 0 and 1 predictions, and ln(0) is -Infinity, which would poison every average
+ * the value appears in.
+ *
+ * Returns null when either input is absent or off-scale: Number(null) is 0, and
+ * an unscored forecast must never be recorded as the worst possible log loss.
+ */
+export function computeLogLoss(probability, outcome) {
+  const p = toScorableNumber(probability);
+  const o = toScorableNumber(outcome);
+  if (p === null || o === null || p < 0 || p > 1 || o < 0 || o > 1) return null;
+  const clamped = Math.min(1 - LOG_LOSS_PROB_CLAMP, Math.max(LOG_LOSS_PROB_CLAMP, p));
+  return -(o * Math.log(clamped) + (1 - o) * Math.log(1 - clamped));
+}
+
 /**
  * Derive a confidence bucket from a forecast's confidence level.
  *
@@ -700,9 +726,21 @@ export async function saveForecast(forecast) {
 }
 
 /**
- * Update forecast with actual outcome and calculate Brier score
+ * Update forecast with actual outcome and score it (Brier point + log-loss)
  */
 export async function resolveForecast(marketId, actualOutcome) {
+  // A resolution is a fact, not a guess: 1 or 0 only. Anything else — including
+  // the 0.5 "neutral" the calibration backfill used to invent — would put an
+  // outcome nobody observed into the ledger that calibration, sizing and memory
+  // all read as evidence.
+  const outcome = Number(actualOutcome);
+  if (outcome !== 0 && outcome !== 1) {
+    return {
+      success: false,
+      resolved: 0,
+      error: `actual_outcome must be 1 (won) or 0 (lost); got ${JSON.stringify(actualOutcome)}`,
+    };
+  }
   try {
     const rows = await query(
       `SELECT * FROM agent_forecasts WHERE market_id = ? AND resolved = 0`,
@@ -710,18 +748,63 @@ export async function resolveForecast(marketId, actualOutcome) {
     );
 
     for (const forecast of rows) {
-      const brierScore = Math.pow(forecast.ai_probability - actualOutcome, 2);
+      const brierScore = Math.pow(forecast.ai_probability - outcome, 2);
+      const logLoss = computeLogLoss(forecast.ai_probability, outcome);
       await execute(
         `UPDATE agent_forecasts 
-         SET resolved = 1, actual_outcome = ?, brier_score = ?, resolution_time = ?
+         SET resolved = 1, actual_outcome = ?, brier_score = ?, log_loss = ?, resolution_time = ?
          WHERE id = ?`,
-        [actualOutcome, brierScore, Math.floor(Date.now() / 1000), forecast.id]
+        [outcome, brierScore, logLoss, Math.floor(Date.now() / 1000), forecast.id]
       );
     }
 
     return { success: true, resolved: rows.length };
   } catch (error) {
     console.error('Failed to resolve forecast:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Derive log_loss for resolved forecasts that pre-date the 0014 migration.
+ *
+ * Backfill rather than re-scoring: the inputs (ai_probability, actual_outcome)
+ * are already in the row, so the derived number is the same one resolveForecast
+ * would have written. Nothing is invented.
+ */
+export async function backfillForecastLogLoss({ dryRun = false } = {}) {
+  try {
+    await migrationsReady;
+    const rows = await query(
+      `SELECT id, ai_probability, actual_outcome FROM agent_forecasts
+       WHERE resolved = 1 AND log_loss IS NULL
+         AND ai_probability IS NOT NULL AND actual_outcome IN (0, 1)`
+    );
+    const updates = rows
+      .map((row) => ({
+        id: row.id,
+        logLoss: computeLogLoss(row.ai_probability, row.actual_outcome),
+      }))
+      .filter((update) => update.logLoss != null);
+
+    if (!dryRun) {
+      for (const update of updates) {
+        await execute(`UPDATE agent_forecasts SET log_loss = ? WHERE id = ?`, [
+          update.logLoss,
+          update.id,
+        ]);
+      }
+    }
+
+    return {
+      success: true,
+      scanned: rows.length,
+      updated: dryRun ? 0 : updates.length,
+      skippedNonBinary: rows.length - updates.length,
+      dryRun: !!dryRun,
+    };
+  } catch (error) {
+    console.error('Failed to backfill log-loss:', error);
     return { success: false, error: error.message };
   }
 }
@@ -737,18 +820,41 @@ export async function resolveForecast(marketId, actualOutcome) {
  *   - count: resolved forecasts in this bucket
  *   - hitRate: fraction that won (0–1)
  *   - avgBrier: mean Brier score within bucket
+ *   - avgLogLoss: mean binary log-loss within bucket
  *   - avgProbability: mean predicted probability (for curve x-axis)
  *   - midpointConfidence: the bucket's representative confidence value
  *
  * Plus a top-level summary:
- *   - totalResolved, avgBrier, minConfidenceBucket, maxConfidenceBucket
+ *   - totalResolved, avgBrier, avgLogLoss, minBucket, maxBucket
+ *
+ * Every metric is emitted in BOTH camelCase (canonical, `schema:
+ * 'calibration/v2'`) and the original SQL snake_case. That duplication is
+ * deliberate: SQL aliases are snake_case, the UI and worker read camelCase, and
+ * the two disagreed silently — CalibrationCurve plotted every bucket at hit
+ * rate 0 and the calibration-aware Kelly shrinkage never fired. Aliases stay
+ * until every consumer is migrated.
  *
  * operatorId is optional for per-operator calibration.
  */
+export const CALIBRATION_SCHEMA = 'calibration/v2';
+
+const BUCKET_MIDPOINTS = { HIGH: 0.875, MEDIUM: 0.625, LOW: 0.25 };
+
+function toNumber(value) {
+  if (value === null || value === undefined) return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 export async function getCalibrationAnalysis(operatorId = null) {
   try {
     await migrationsReady;
-    const whereClause = operatorId ? 'WHERE operator_id = ?' : '';
+    // Every aggregation below already opens with `WHERE resolved = 1 AND ...`,
+    // so the operator scope has to be an AND. As written with a second WHERE it
+    // was a syntax error, which `catch` turned into `{success: false}` — so
+    // per-operator calibration (the track-record page, and any memory built for
+    // one operator) silently reported "no calibration" rather than failing loud.
+    const whereClause = operatorId ? 'AND operator_id = ?' : '';
     const params = operatorId ? [operatorId] : [];
 
     // Bucketed aggregation
@@ -758,6 +864,7 @@ export async function getCalibrationAnalysis(operatorId = null) {
         COUNT(*) as count,
         SUM(CASE WHEN actual_outcome = 1 THEN 1 ELSE 0 END) / CAST(COUNT(*) AS REAL) as hit_rate,
         AVG(brier_score) as avg_brier,
+        AVG(log_loss) as avg_log_loss,
         AVG(ai_probability) as avg_probability
        FROM agent_forecasts
        WHERE resolved = 1 AND confidence_bucket IS NOT NULL
@@ -772,6 +879,7 @@ export async function getCalibrationAnalysis(operatorId = null) {
       `SELECT
         COUNT(*) as total_resolved,
         AVG(brier_score) as avg_brier,
+        AVG(log_loss) as avg_log_loss,
         MIN(confidence_bucket) as min_bucket,
         MAX(confidence_bucket) as max_bucket
        FROM agent_forecasts
@@ -785,7 +893,9 @@ export async function getCalibrationAnalysis(operatorId = null) {
       `SELECT
         strftime('%Y-%m', datetime(resolution_time, 'unixepoch')) as month,
         COUNT(*) as count,
-        AVG(brier_score) as avg_brier
+        AVG(brier_score) as avg_brier,
+        AVG(log_loss) as avg_log_loss,
+        MAX(resolution_time) as last_resolved
        FROM agent_forecasts
        WHERE resolved = 1 AND resolution_time IS NOT NULL
        ${whereClause}
@@ -801,7 +911,9 @@ export async function getCalibrationAnalysis(operatorId = null) {
         platform as source,
         COUNT(*) as count,
         AVG(brier_score) as avg_brier,
-        SUM(CASE WHEN actual_outcome = 1 THEN 1 ELSE 0 END) / CAST(COUNT(*) AS REAL) as hit_rate
+        AVG(log_loss) as avg_log_loss,
+        SUM(CASE WHEN actual_outcome = 1 THEN 1 ELSE 0 END) / CAST(COUNT(*) AS REAL) as hit_rate,
+        MAX(resolution_time) as last_resolved
        FROM agent_forecasts
        WHERE resolved = 1 AND platform IS NOT NULL
        ${whereClause}
@@ -810,21 +922,293 @@ export async function getCalibrationAnalysis(operatorId = null) {
       params
     );
 
+    // Per-month bucket hit rates. The `window` memory carries these so a stored
+    // memory can do what the local curve does in a deployment whose DB is cold —
+    // and it carries the sample sizes beside them, because a hit rate with no
+    // `n` next to it is precisely the claim WP1 refused to let sizing consume.
+    const monthBuckets = await query(
+      `SELECT
+        strftime('%Y-%m', datetime(resolution_time, 'unixepoch')) as month,
+        confidence_bucket as bucket,
+        COUNT(*) as count,
+        SUM(CASE WHEN actual_outcome = 1 THEN 1 ELSE 0 END) / CAST(COUNT(*) AS REAL) as hit_rate
+       FROM agent_forecasts
+       WHERE resolved = 1 AND resolution_time IS NOT NULL AND confidence_bucket IS NOT NULL
+       ${whereClause}
+       GROUP BY month, confidence_bucket
+       ORDER BY month, CASE confidence_bucket WHEN 'LOW' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'HIGH' THEN 3 END`,
+      params
+    );
+    const bucketsByMonth = new Map();
+    for (const row of monthBuckets) {
+      const hitRate = toNumber(row.hit_rate);
+      const list = bucketsByMonth.get(row.month) || [];
+      list.push({ bucket: row.bucket, count: toNumber(row.count), hitRate, hit_rate: hitRate });
+      bucketsByMonth.set(row.month, list);
+    }
+
+    const summaryRow = summary[0] || null;
+    const summaryOut = summaryRow
+      ? {
+          totalResolved: toNumber(summaryRow.total_resolved),
+          avgBrier: toNumber(summaryRow.avg_brier),
+          avgLogLoss: toNumber(summaryRow.avg_log_loss),
+          minBucket: summaryRow.min_bucket ?? null,
+          maxBucket: summaryRow.max_bucket ?? null,
+          total_resolved: toNumber(summaryRow.total_resolved),
+          avg_brier: toNumber(summaryRow.avg_brier),
+          avg_log_loss: toNumber(summaryRow.avg_log_loss),
+          min_bucket: summaryRow.min_bucket ?? null,
+          max_bucket: summaryRow.max_bucket ?? null,
+        }
+      : null;
+
     return {
       success: true,
-      summary: summary[0] || null,
-      buckets: buckets.map((b) => ({
-        ...b,
-        // Fixed midpoints for each bucket (used for x-axis on calibration curve)
-        midpointConfidence: b.bucket === 'HIGH' ? 0.875 : b.bucket === 'MEDIUM' ? 0.625 : 0.25,
+      schema: CALIBRATION_SCHEMA,
+      summary: summaryOut,
+      buckets: buckets.map((b) => {
+        const hitRate = toNumber(b.hit_rate);
+        const avgBrier = toNumber(b.avg_brier);
+        const avgLogLoss = toNumber(b.avg_log_loss);
+        const avgProbability = toNumber(b.avg_probability);
+        return {
+          bucket: b.bucket,
+          count: toNumber(b.count),
+          hitRate,
+          avgBrier,
+          avgLogLoss,
+          avgProbability,
+          midpointConfidence: BUCKET_MIDPOINTS[b.bucket] ?? null,
+          hit_rate: hitRate,
+          avg_brier: avgBrier,
+          avg_log_loss: avgLogLoss,
+          avg_probability: avgProbability,
+        };
+      }),
+      trend: trend.map((t) => ({
+        ...t,
+        count: toNumber(t.count),
+        avgBrier: toNumber(t.avg_brier),
+        avg_brier: toNumber(t.avg_brier),
+        avgLogLoss: toNumber(t.avg_log_loss),
+        avg_log_loss: toNumber(t.avg_log_loss),
+        lastResolved: toNumber(t.last_resolved),
+        last_resolved: toNumber(t.last_resolved),
+        buckets: bucketsByMonth.get(t.month) || [],
       })),
-      trend: trend.map((t) => ({ ...t, count: Number(t.count), avg_brier: Number(t.avg_brier) })),
-      sourceCal: sourceCal.map((s) => ({ ...s, count: Number(s.count), avg_brier: Number(s.avg_brier), hit_rate: Number(s.hit_rate) })),
+      sourceCal: sourceCal.map((s) => {
+        const hitRate = toNumber(s.hit_rate);
+        const avgBrier = toNumber(s.avg_brier);
+        const avgLogLoss = toNumber(s.avg_log_loss);
+        const lastResolved = toNumber(s.last_resolved);
+        return {
+          source: s.source,
+          count: toNumber(s.count),
+          avgBrier,
+          avgLogLoss,
+          hitRate,
+          lastResolved,
+          avg_brier: avgBrier,
+          avg_log_loss: avgLogLoss,
+          hit_rate: hitRate,
+          last_resolved: lastResolved,
+        };
+      }),
       operatorId: operatorId || null,
     };
   } catch (error) {
     console.error('Failed to get calibration analysis:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Per-analyst credibility — "which voices were right", from verdicts only.
+ *
+ * Reads `signals` rows whose outcome is an explicit WIN/LOSS verdict. Rows
+ * resolved by reputationService.determineSignalOutcome store the *market*
+ * result ('YES'/'NO'), which is not a verdict about the author's pick — those
+ * are counted in `unmappedOutcomes` and excluded, never silently scored as a
+ * miss. `agent_forecasts` is keyed by an operator UUID, so Brier/log-loss only
+ * appear when a forecast row carries this same id; an empty forecast block is
+ * reported as such rather than filled in.
+ *
+ * Returns ok:false with reason 'insufficient_sample' below `minSamples` — a
+ * credibility figure we cannot support is not surfaced (and never written to
+ * memory).
+ */
+export async function getAnalystCalibration(address, { minSamples = 3 } = {}) {
+  try {
+    await migrationsReady;
+    const normalized = String(address || '').trim().toLowerCase();
+    if (!normalized) return { success: false, reason: 'missing_address', ok: false };
+
+    const verdicts = await query(
+      // `id ASC` is not decoration: the memory writer cites the newest
+      // verdict's snapshot hash, and a memory's content hash includes it. With
+      // ties left unordered, two reads of an unchanged ledger could disagree
+      // and mint a phantom ladder version.
+      `SELECT outcome, confidence, market_snapshot_hash, tx_hash, resolved_at, venue
+       FROM signals
+       WHERE author_address = ? AND outcome IN ('WIN','LOSS')
+       ORDER BY resolved_at DESC, id ASC`,
+      [normalized]
+    );
+
+    const unmapped = await query(
+      `SELECT outcome, COUNT(*) as count
+       FROM signals
+       WHERE author_address = ? AND outcome IS NOT NULL AND outcome != 'PENDING'
+         AND outcome NOT IN ('WIN','LOSS')
+       GROUP BY outcome`,
+      [normalized]
+    );
+
+    const forecastRow = await query(
+      `SELECT COUNT(*) as count, AVG(brier_score) as avg_brier, AVG(log_loss) as avg_log_loss
+       FROM agent_forecasts
+       WHERE resolved = 1 AND operator_id = ?`,
+      [normalized]
+    );
+
+    const n = verdicts.length;
+    const wins = verdicts.filter((s) => s.outcome === 'WIN').length;
+    const hitRate = n > 0 ? wins / n : null;
+
+    const bucketRows = {};
+    for (const signal of verdicts) {
+      const bucket = deriveConfidenceBucket(signal.confidence);
+      bucketRows[bucket] = bucketRows[bucket] || { count: 0, wins: 0 };
+      bucketRows[bucket].count += 1;
+      if (signal.outcome === 'WIN') bucketRows[bucket].wins += 1;
+    }
+    const buckets = Object.fromEntries(
+      Object.entries(bucketRows).map(([bucket, stats]) => [
+        bucket,
+        { count: stats.count, hitRate: stats.count ? stats.wins / stats.count : null },
+      ])
+    );
+
+    const byVenue = {};
+    for (const signal of verdicts) {
+      const venue = signal.venue || 'unknown';
+      byVenue[venue] = byVenue[venue] || { count: 0, wins: 0 };
+      byVenue[venue].count += 1;
+      if (signal.outcome === 'WIN') byVenue[venue].wins += 1;
+    }
+    const venueBreakdown = Object.entries(byVenue).map(([venue, stats]) => ({
+      venue,
+      count: stats.count,
+      hitRate: stats.count ? stats.wins / stats.count : null,
+    }));
+
+    const latest = verdicts[0] || null;
+    const forecastStats = forecastRow[0] || null;
+    const sufficient = n >= minSamples;
+
+    return {
+      success: true,
+      ok: sufficient,
+      reason: sufficient ? null : 'insufficient_sample',
+      address: normalized,
+      n,
+      wins,
+      losses: n - wins,
+      hitRate,
+      buckets,
+      venueBreakdown,
+      forecastEvidence: forecastStats
+        ? {
+            count: toNumber(forecastStats.count) || 0,
+            avgBrier: toNumber(forecastStats.avg_brier),
+            avgLogLoss: toNumber(forecastStats.avg_log_loss),
+          }
+        : { count: 0, avgBrier: null, avgLogLoss: null },
+      unmappedOutcomes: unmapped.map((u) => ({ outcome: u.outcome, count: toNumber(u.count) })),
+      latestTrace: latest
+        ? {
+            receipt: latest.market_snapshot_hash || null,
+            txHash: latest.tx_hash || null,
+            resolvedAt: latest.resolved_at || null,
+          }
+        : null,
+      source: 'db:signals+agent_forecasts',
+    };
+  } catch (error) {
+    console.error('Failed to get analyst calibration:', error);
+    return { success: false, ok: false, reason: 'error', error: error.message };
+  }
+}
+
+/**
+ * Every address that has at least `minVerdicts` WIN/LOSS verdicts on record.
+ * The roster the memory writer walks to build `analyst:*` memories — grouped
+ * case-insensitively, because the same wallet has shown up in mixed casing and
+ * two spellings of one address would write two conflicting credibility records.
+ */
+export async function listAnalystAddresses({ minVerdicts = 1, limit = 100 } = {}) {
+  try {
+    await migrationsReady;
+    const rows = await query(
+      `SELECT MIN(author_address) as address,
+              COUNT(*) as verdicts,
+              SUM(CASE WHEN outcome = 'WIN' THEN 1 ELSE 0 END) as wins
+       FROM signals
+       WHERE outcome IN ('WIN','LOSS')
+         AND author_address IS NOT NULL AND author_address != ''
+       GROUP BY LOWER(author_address)
+       HAVING COUNT(*) >= ?
+       ORDER BY verdicts DESC
+       LIMIT ?`,
+      [Math.max(1, Number(minVerdicts) || 1), Math.max(1, Number(limit) || 100)]
+    );
+    return {
+      success: true,
+      addresses: rows.map((r) => ({
+        address: String(r.address || '').toLowerCase(),
+        verdicts: toNumber(r.verdicts) || 0,
+        wins: toNumber(r.wins) || 0,
+      })),
+    };
+  } catch (error) {
+    console.error('Failed to list analyst addresses:', error);
+    return { success: false, error: error.message, addresses: [] };
+  }
+}
+
+/**
+ * Resolved forecasts backed by a real recorded outcome (0 or 1 only). Rows
+ * resolved before the outcome guard existed, or carrying any other value, are
+ * excluded: a memory must cite an observation, not a placeholder.
+ */
+export async function listResolvedForecasts({ limit = 200, operatorId = null, marketId = null } = {}) {
+  try {
+    await migrationsReady;
+    const filters = ['resolved = 1 AND actual_outcome IN (0, 1)'];
+    const params = [];
+    if (marketId) {
+      filters.push('market_id = ?');
+      params.push(marketId);
+    }
+    if (operatorId) {
+      filters.push('operator_id = ?');
+      params.push(operatorId);
+    }
+    params.push(Math.max(1, Number(limit) || 200));
+    const where = filters.join(' AND ');
+    const rows = await query(
+      // `id ASC` makes the `LIMIT` window stable, so two runs of the batch
+      // writer cannot disagree about which forecasts were memory-worthy.
+      `SELECT * FROM agent_forecasts WHERE ${where}
+       ORDER BY resolution_time DESC, timestamp DESC, id ASC
+       LIMIT ?`,
+      params
+    );
+    return { success: true, forecasts: rows };
+  } catch (error) {
+    console.error('Failed to list resolved forecasts:', error);
+    return { success: false, error: error.message, forecasts: [] };
   }
 }
 
