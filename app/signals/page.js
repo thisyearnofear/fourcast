@@ -17,6 +17,7 @@ import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ChainSelector } from '@/components/ChainSelector';
 import useFilterStore from '@/hooks/useFilterStore';
 import AgentRail from '@/components/AgentRail';
+import PremiumSettlementStrip from '@/components/PremiumSettlementStrip';
 import Reveal from '@/components/motion/Reveal';
 import { useCountUp } from '@/hooks/useCountUp';
 import { BRAND } from '@/constants/brand';
@@ -228,6 +229,9 @@ export default function SignalsPage() {
           </Link>
         </div>
       </section>
+
+      {/* Premium rail — the paid half of the feed, with its receipts */}
+      <PremiumSettlementStrip />
 
       {/* Leaderboard spotlight — always above feed unless on leaderboard tab */}
       {leaderboard.length > 0 && activeTab !== 'leaderboard' && (

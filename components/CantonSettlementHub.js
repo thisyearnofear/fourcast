@@ -385,6 +385,9 @@ export default function CantonSettlementHub() {
         }
       } catch (e) {
         console.error('Failed to load parties:', e);
+        // A failed parties fetch must read as a failure, not as "no parties" —
+        // they are indistinguishable downstream otherwise (G3).
+        setError(`Could not load parties — ${e.message}`);
       }
     })();
   }, []);

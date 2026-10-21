@@ -226,3 +226,37 @@ export async function spendSummary({ env = process.env } = {}) {
     totalPayments: byStatus.reduce((sum, row) => sum + toInt(row.total), 0),
   };
 }
+
+/**
+ * The settlement receipts, newest first.
+ *
+ * Every row is returned with its status — including `failed`, because the money
+ * moved even when the resource did not. A receipt surface that hid failures
+ * would be the dishonest kind of receipt.
+ *
+ * @param {object} [options]
+ * @param {number} [options.limit]
+ * @returns {Promise<Array<{txDigest, signalId, blobId, usdc, network, status, answerKey, createdAt}>>}
+ */
+export async function recentSettlements({ limit = 5, env = process.env } = {}) {
+  await migrationsReady;
+  const capped = Math.min(Math.max(toInt(limit) || 5, 1), 50);
+  const rows = await query(
+    `SELECT tx_digest, signal_id, blob_id, usdc, network, status, answer_key, created_at, delivered_at
+       FROM x402_payments
+      ORDER BY created_at DESC, id DESC
+      LIMIT ?`,
+    [capped]
+  );
+  return rows.map((row) => ({
+    txDigest: row.tx_digest,
+    signalId: row.signal_id || null,
+    blobId: row.blob_id || null,
+    usdc: toInt(row.usdc),
+    network: row.network || 'unknown',
+    status: row.status || 'unknown',
+    answerKey: row.answer_key || null,
+    createdAt: toInt(row.created_at) || null,
+    deliveredAt: toInt(row.delivered_at) || null,
+  }));
+}

@@ -27,9 +27,17 @@ export default defineConfig({
     // Use the automatic JSX runtime in .jsx test files so JSX compiles to
     // imports from `react/jsx-runtime` instead of `React.createElement(...)`
     // (which would require `import React from 'react'` in every test file).
-    // The previous `loader: 'jsx'` block was too broad (reclassified every
-    // .js file in the dep graph as JSX) and is no longer needed because the
-    // OperatorMath component has been renamed to `.jsx`.
     jsx: 'automatic',
+    // Next.js compiles JSX inside .js files; vite does not. Our app pages
+    // (app/arena/page.js, app/signals/page.js, …) are .js WITH JSX, so any
+    // test that mounts a real page — see tests/surfaceContract.test.jsx —
+    // needs the jsx loader on them. Scoped to our own source: the earlier
+    // broad `loader: 'jsx'` reclassified every .js file in the dep graph,
+    // and there are no .ts/.tsx files under app/ or components/ to lose.
+    // `exclude` has to be set too: vite's default is /\.js$/, which would
+    // keep .js out of the esbuild step entirely.
+    include: [/(^|\/)(app|components|tests|utils|services|hooks)\/.*\.jsx?$/],
+    exclude: /node_modules/,
+    loader: 'jsx',
   },
 });

@@ -12,10 +12,10 @@
 
 import { INTENT_REGISTRY, registeredIntentNames } from './intents/index.js';
 
-const OG_CARD =
-  'https://fourcastapp.vercel.app/api/og?type=route&name=signals' +
-  '&title=Fourcast%20Telegraph%20Miner' +
-  '&line=Verified%20sports%20scores%20and%20results%20%E2%80%94%20TxLINE%20consensus%20with%20Solana%20Merkle%20proofs';
+// The calibration OG card — the product story rendered as an image. It takes
+// its numbers as query params (resolved, brier, logloss, buckets, source,
+// schema); bare, it renders NA honestly rather than inventing a score.
+const OG_CARD = 'https://fourcastapp.vercel.app/api/og?type=calibration';
 
 export function socialCardUrl() {
   return OG_CARD;

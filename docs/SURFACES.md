@@ -23,20 +23,20 @@ assignment). Nothing in this file is a commitment until the lead says so.
 | Route | Renders | Class | Job | Primary CTA | Owner (proposed) | Gates | Last audit |
 |---|---|---|---|---|---|---|---|
 | `/` | yes | A spine | Hero, live agent rail, latest execution, proof timeline | *See the proof* | C (audit) / A (if editing) | G1–G6 ? · G7 ? | — |
-| `/arena` | yes | A spine | The agent's decisions, positions, calibration | *(none — read surface)* | **A** | G1–G6 ? · G7 ? | — |
+| `/arena` | yes | A spine | The agent's decisions, positions, calibration — three lanes: Ledger \| Mandate \| Memory | *(none — read surface; the Memory lane's two buttons are spend-gated reads, not CTAs)* | **A** | G1–G6 ? · G7 ? | — |
 | `/signals` | yes | A spine | Publish a signal; the paid premium tier | *Publish signal* | **C** | G1–G6 ? · G7 ? | — |
 | `/signal/[id]` | yes | A | One signal, its receipt, its outcome | *(none)* | **A** | G2 G3 G5 ? | — |
 | `/markets` | yes | A spine | The act — find a market, take a side | *Take side* | C (audit) | G1–G6 ? · G7 ? | — |
 | `/positions` | yes | A | Open and closed positions | *(none)* | C (audit) | G2 G3 G5 ? | — |
-| `/proof` | yes | A spine | Private (Canton) settlement + the proof theatre | *Create private market* | **B** | G1–G6 ? · G7 ? | — |
-| `/status` | yes | A | Provider health | *(none — read surface)* | **B** | G2 G3 G5 ? | — |
+| `/proof` | yes | A spine | Private (Canton) settlement + the proof theatre | *Create private market* | **B** | G1 ✓ (0 literals in shell/CantonProof; ProofTheatre.js 2 in baseline) · G2 ✓ (h1 via AppShell, chain tabs) · G3 ✓ (6 state branches) · G4 ✓ (the surface *is* the receipt expander) · G6 ? · G7 ? | 2026-10-21 mech. |
+| `/status` | yes | A | Provider health | *(none — read surface)* | **B** | G1 ✓ (0 literals) · G2 ✓ · G3 ✓ (spinner + error-retry + emptyLabel) · G5 ✓ (named controls; a11y-contrast not yet measured) | 2026-10-21 mech. |
 | `/labs` | yes | B | The labs hub | *(none)* | C (audit) | G2 G3 G5 ? | — |
 | `/labs/autopilot` | yes | B | Kelly sizing + Builder fills | *(none)* | C (audit) | G2 G3 G5 ? | — |
 | `/labs/builder` | yes | B | Polymarket Builder volume + gasless trades | *(none)* | C (audit) | G2 G3 G5 ? | — |
-| `/labs/canton` | yes | B | Create · resolve · settle private CBTC markets | *Create market* | **B** | G2 G3 G5 G6 ? | — |
+| `/labs/canton` | yes | B | Create · resolve · settle private CBTC markets | *Create market* | **B** | G2 ✓ · G3 ✓ (parties-fetch failure now renders, 21 Oct) · G5 ✓ · G6 ? | 2026-10-21 |
 | `/labs/weather` | yes | B | Weather visualisation lab | *(none)* | C (audit) | G2 G3 G5 ? | — |
-| `/canton` | yes | B | Canton entry | *Connect* | **B** | G2 G3 G5 ? | — |
-| `/canton/holder` | yes — **orphan** | B | Holder-wallet flow ("CIP-0103 when available") | *(none)* | **B** | — | — |
+| `/canton` | **no — redirect** | — | → `/proof?chain=canton` (verified in page.js, 2026-10-21) | — | **B** | — | 2026-10-21 |
+| `/canton/holder` | **no — redirect** | — | → `/positions?view=private` (verified in page.js, 2026-10-21 — it is not an orphan, it is a redirect) | — | **B** | — | 2026-10-21 |
 | `/agent/[operatorId]` | yes | B | One operator's track record | *(none)* | **A** | G2 G3 G5 ? | — |
 | `/weather` | **no — redirect** | — | → `/labs/weather` | — | — | — | — |
 | `/autopilot` | **no — redirect** | — | → `/labs/autopilot` | — | — | — | — |
@@ -83,6 +83,70 @@ These are real, verified, and not yet fixed. They are the work list.
    credibility strip are all G7 work: making a non-operator able to say what the surface is
    for in ten seconds. A is closest to the memory lane, C to the paid rail, and the credibility
    strip is unassigned.
+
+## Mechanical audit — 21 Oct 2026 (`tests/surfaceContract.test.jsx`)
+
+Every route that renders was mounted in jsdom inside the app's own Providers, with the app's own
+router semantics (`redirect()` and `notFound()` throw, as in Next), and driven through three
+states: **empty**, **error**, **loading**. The check that matters is behavioural, not textual:
+*if the request failed, can a reader tell it apart from "there is nothing here"?* A surface whose
+error render is byte-identical to its empty render fails G3.
+
+The ratchet lives in `tests/surfaceContract.test.jsx` — `BUDGET` holds each surface's remaining
+allowance, and the suite fails when a number goes UP. Fix a finding and lower its budget in the
+same commit.
+
+| Route | G2 one `h1` | G3 states | G5 names | Finding |
+|---|---|---|---|---|
+| `/` | ✓ | ✗ | ✓ | failure indistinguishable from empty |
+| `/arena` | ✓ | ✓ | ✓ | — |
+| `/signals` | ✓ | ✓ | ✓ | — |
+| `/signal/[id]` | — | — | — | not a data surface (server read; a missing signal correctly 404s) |
+| `/positions` | ✓ | ✗ | ✓ | failure indistinguishable from empty |
+| `/markets` | ✓ | ✗ | ✓ | failure indistinguishable from empty |
+| `/proof` | ✓ | ✓ | ✓ | — |
+| `/status` | ✓ | ✓ | ✓ | — |
+| `/labs` | ✓ | n/a | ✓ | not a data surface (a directory, no fetch of its own) |
+| `/labs/autopilot` | ✓ | ✓ | ✓ | — |
+| `/labs/builder` | ✓ | n/a | ✓ | not a data surface |
+| `/labs/canton` | ✓ | ~~✗~~ ✓ fixed | ✓ | failure was indistinguishable from empty — **fixed 21 Oct (B)** |
+| `/labs/weather` | — | — | — | not mountable (three.js, no WebGL in jsdom) |
+| `/canton` | — | — | — | redirect → `/proof?chain=canton` |
+| `/canton/holder` | — | — | — | redirect → `/positions?view=private` |
+| `/agent` | ✓ | ✓ | ✓ | — |
+| `/agent/[operatorId]` | ✓ | n/a | ✓ | not a data surface (server read from the DB) |
+
+**The four G3 findings, precisely.** In each case the surface renders the same text when its own
+request fails as when it succeeds with nothing in it, so a reader cannot tell "it failed" from
+"there is nothing here yet":
+
+| Route | Where | The fix |
+|---|---|---|
+| `/` | `components/AgentRail.js` (the landing's feed) | render the failure, name it, and give it `role="alert"` |
+| `/positions` | `components/PositionsDashboard.js` | same — the fetch error currently never reaches the reader |
+| `/markets` | `app/markets/page.js` (the market list fetch) | same — the page logs "Market fetch failed" and shows the empty state |
+| `/labs/canton` | `CantonSettlementHub.js` parties fetch | same — **fixed 21 Oct (B)**: the catch now calls `setError`, and the failure renders in the breach banner |
+
+The pattern, in one line of JSX and one line of state:
+
+```jsx
+const [error, setError] = useState(null);
+// …on failure:
+setError(err.message || 'The request failed');
+// …in the render, next to the empty state:
+{error && (
+  <p role="alert" className="text-[12px] text-[var(--color-breach)]">
+    Could not load markets — {error}
+  </p>
+)}
+```
+
+The rule it comes from: **an absent value is `—`/NA/a stated reason, never a confident zero**
+(DESIGN_CONTRACT.md §4). A swallowed failure is the same lie in a different shape.
+
+**What is still not checked mechanically:** G1 (tokens — `scripts/check-design-tokens.mjs`),
+G4 (evidence one tap — a review gate), G6 (one primary CTA — a review gate), G7 (story legibility
+— a review gate, spine only). The registry rows carry those.
 
 ## The audit procedure (20 minutes per route)
 
