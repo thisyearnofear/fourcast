@@ -217,7 +217,7 @@ credibility. `tests/analystCalibration.test.js` pins the difference.
 - [x] Per-bucket minimum sample floor, so shrinkage engages on evidence rather than on n=1
 - [x] `resolveForecast()` accepts 0/1 only — a resolution is an observation, not a placeholder
 - [x] `getAnalystCalibration(address)` — per-voice credibility from verdicts only, the source for on-chain memory
-- [ ] Memory-derived calibration feeding the same sizing path (`docs/WALRUS_MEMORY.md`, WP3)
+- [x] Memory-derived calibration feeding the same sizing path (`docs/WALRUS_MEMORY.md`, WP3) — `readSizingCalibration()` is the `db → memory` precedence both `aiAgentLoop.js` and the agent worker call, so a stored rung changes `sizePct` through the shared Kelly function; `/api/decision/whatif` is the surface that shows the difference
 
 ---
 
