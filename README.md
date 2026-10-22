@@ -143,8 +143,6 @@ The VPS worker (`scripts/fourcast-agent-worker.mjs`) runs headlessly under PM2:
 
 **It is currently paused** (`ARENA_LANE_MODE=paused`, since 2026-09-29). The receipts, the ledger and the calibration history are intact and readable; nothing new is being traded. The live product today is the miner plus the proof surfaces — see [docs/HACKATHONS.md](docs/HACKATHONS.md) for why.
 
-See [OPS.md](OPS.md) for deployment details.
-
 ## Quick Start
 
 ```bash
