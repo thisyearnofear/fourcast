@@ -505,7 +505,6 @@ export default function Ripple({ children, className, style, priority = 5, motio
             // The layoutsubtree attribute is required for html-in-canvas to walk
             // the DOM tree. It's experimental; the @ts-expect-error suppresses
             // the React type warning while we keep the original canvas-ui API.
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             layoutsubtree="true"
             suppressHydrationWarning
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}

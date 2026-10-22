@@ -126,7 +126,7 @@ function EdgePanel({ fixture, onToggle }) {
 
       {!data && !loading && !error && (
         <div className="text-[11px] text-[var(--color-ink-faint)]">
-          Click "Compare vs Polymarket" to check cross-venue pricing.
+          Click &quot;Compare vs Polymarket&quot; to check cross-venue pricing.
         </div>
       )}
 
@@ -511,7 +511,7 @@ function ReplayViewer({ replay, onClose }) {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-[var(--color-ink-muted)]">Event {index + 1} of {events.length}</span>
-            <span className="font-mono text-xs text-[var(--color-accent)]">{current.minute ?? '—'}'</span>
+            <span className="font-mono text-xs text-[var(--color-accent)]">{current.minute ?? '—'}&apos;</span>
           </div>
           <div className="bg-[var(--color-paper-deep)] border border-[var(--color-rule)] p-3 text-sm">
             <div className="font-medium text-[var(--color-ink)]">{current.type || 'update'}</div>

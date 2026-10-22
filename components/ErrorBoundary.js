@@ -48,7 +48,7 @@ export class ErrorBoundary extends Component {
             Something went wrong
           </div>
           <div className="text-[var(--color-ink-muted)] text-sm mb-4">
-            This component encountered an error and couldn't render.
+            This component encountered an error and couldn&apos;t render.
           </div>
           
           {showDetails && this.state.error && (

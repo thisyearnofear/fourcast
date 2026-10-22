@@ -523,7 +523,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  </div>
 
  <p className={`text-xs ${textColor} opacity-60 text-center`}>
- You'll sign this order in MetaMask. No fees charged by fourcast.
+ You&apos;ll sign this order in MetaMask. No fees charged by fourcast.
  </p>
 
  <div className="flex gap-3 pt-4 mt-auto">

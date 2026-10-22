@@ -1,5 +1,6 @@
 'use client';
 
+import GlassPanel from '@/components/ui/GlassPanel';
 import { tierInfoFor, shortAddress } from '@/utils/signalTier';
 
 /**

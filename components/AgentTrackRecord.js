@@ -114,7 +114,7 @@ export default function AgentTrackRecord() {
       {/* ── Agent's open book ───────────────────────────────────────── */}
       <section className="mt-8">
         <div className="mb-2 flex items-baseline justify-between px-1 sm:px-3">
-          <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">Agent's open book</h2>
+          <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">Agent&apos;s open book</h2>
           <span className="text-[11px] text-[var(--color-ink-faint)]" style={mono}>cycle {ago(latest.timestamp)} ago</span>
         </div>
         <div style={{ borderTop: '1px solid var(--color-rule-strong)', borderBottom: '1px solid var(--color-rule)' }}>

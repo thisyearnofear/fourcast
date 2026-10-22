@@ -257,7 +257,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
 
  {!isAuthenticated && (
  <p className={`text-xs ${textColor} opacity-50 mt-4 text-center`}>
- You'll be prompted to connect your Kalshi account
+ You&apos;ll be prompted to connect your Kalshi account
  </p>
  )}
  </div>

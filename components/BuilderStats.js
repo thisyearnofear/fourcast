@@ -10,11 +10,6 @@ import { useBuilder } from '@/hooks/useBuilder';
  */
 export function BuilderStats({ isNight = false }) {
  const { stats, loading, isConfigured, relayerConfig } = useBuilder();
-
- if (!isConfigured) {
- return null; // Don't render if builder not configured
- }
-
  const textColor = 'text-[var(--color-ink)]';
  const subtleText = 'text-[var(--color-ink-muted)]';
  const badgeBg = 'bg-[var(--color-evidence)]/20';
@@ -45,6 +40,7 @@ export function BuilderStats({ isNight = false }) {
  }, [stats]);
 
  if (loading || !displayData) {
+ if (!isConfigured) return null; // Don't render if builder not configured
  return (
  <div className={`flex items-center gap-2 ${subtleText}`}>
  <div className="w-3 h-3 bg-current opacity-50 animate-pulse" />

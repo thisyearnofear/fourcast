@@ -137,7 +137,7 @@ export default function KalshiLoginModal({ isOpen, onClose, onSuccess, isNight =
  </form>
 
  <p className={`text-xs ${textColor} opacity-50 mt-4 text-center`}>
- Don't have a Kalshi account?{' '}
+ Don&apos;t have a Kalshi account?{' '}
  <a
  href="https://kalshi.com/sign-up"
  target="_blank"

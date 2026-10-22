@@ -24,10 +24,7 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  // Hook stays active for the lifetime of the rendered modal (parent controls
  // visibility by passing / withdrawing `opportunity`).
  const modalRef = useFocusTrap({ isOpen: !!opportunity, onClose });
-
- if (!opportunity) return null;
-
- const { polymarket, kalshi, arbitrage } = opportunity;
+ const { polymarket, kalshi, arbitrage = {} } = opportunity ?? {};
 
  const buyPlatform = arbitrage.buy_platform;
  const sellPlatform = arbitrage.sell_platform;
@@ -133,6 +130,8 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  else if (leg0ok || leg1ok) setOverallStatus('partial');
  else setOverallStatus('failed');
  }, [buyPlatform, sellPlatform, buyLeg, sellLeg, arbitrage, address]);
+ 
+ if (!opportunity) return null;
 
  return (
  <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 overflow-y-auto"

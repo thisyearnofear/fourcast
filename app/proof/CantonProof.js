@@ -313,7 +313,7 @@ export default function CantonProof({ present = false, flow = 'auto' }) {
             </div>
             <div className="px-4 py-3 sm:px-5">
               <p className="text-xs text-[var(--color-ink-muted)]">
-                At settlement: {holderPossessive} {formatFixed1(pinnedStake)} stake + operator's{' '}
+                At settlement: {holderPossessive} {formatFixed1(pinnedStake)} stake + operator&apos;s{' '}
                 {formatFixed1(pinnedLocked - (pinnedStake ?? 0))} exposure locked on-ledger —
                 both legs cleared by one atomic transaction. Live escrow now reads 0 / 0.
               </p>
@@ -404,7 +404,7 @@ export default function CantonProof({ present = false, flow = 'auto' }) {
             <p className="text-xs leading-5 text-[var(--color-ink-muted)]">
               <span className="font-semibold text-[var(--color-ink)]">vs centralized venues (Kalshi):</span>{' '}
               they hide positions inside a private database — the venue still sees every position.
-              Here privacy is the ledger's data model: query the same contract as a non-signatory
+              Here privacy is the ledger&apos;s data model: query the same contract as a non-signatory
               and it isn&apos;t there. Policy vs protocol.
             </p>
             <p className="text-xs leading-5 text-[var(--color-ink-muted)]">

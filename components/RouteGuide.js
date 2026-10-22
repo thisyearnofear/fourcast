@@ -77,7 +77,6 @@ export default function RouteGuide({ route }) {
   // Retired-route guard: /agent and /world-cup are now redirects (next.config).
   // Render nothing for them instead of touring a URL that immediately
   // navigates away — the PageNav "Replay the tour" entry points at live lanes.
-  if (route === 'agent' || route === 'world-cup') return null;
   const [visible, setVisible] = useState(false);
   const guide = ROUTE_GUIDES[route];
 
@@ -95,6 +94,8 @@ export default function RouteGuide({ route }) {
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, [route, guide]);
+ 
+  if (route === 'agent' || route === 'world-cup') return null;
 
   if (!guide || !visible) return null;
 
