@@ -235,7 +235,7 @@ and whether it is live. The short list:
 
 ## Tech Stack
 
-- **Runtime:** Node.js 20+, Next.js 16, React 19
+- **Runtime:** Node.js 24+, Next.js 16, React 19
 - **Execution:** Polymarket CLOB, Delphi SDK (LMSR), Canton DApp SDK
 - **Chain:** EVM (wagmi/viem/ethers), Solana (Anchor), Gensyn Testnet
 - **Intelligence:** TxLINE/TxOdds, Venice AI, Bright Data

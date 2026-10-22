@@ -584,7 +584,7 @@ Frontend (markets page, signals page, landing)
 ## Tech Stack
 
 - **Frontend**: Next.js 16, React 19, Tailwind CSS
-- **Backend**: Node.js 20+, SQLite (Turso), Redis
+- **Backend**: Node.js 24+, SQLite (Turso), Redis
 - **Primary data**: TxLINE devnet (free World Cup tier, service level 1) — fixtures, odds, scores, Merkle proofs
 - **Settlement/verification**: Solana devnet, TxLINE `txoracle` program, custom `match-escrow` program (CPI → `validate_stat`)
 - **Secondary enrichment**: Polymarket gamma API (cross-venue edge), Kalshi (optional), Venice AI (Llama 3.3 70B), Open-Meteo (weather)
