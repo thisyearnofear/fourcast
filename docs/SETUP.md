@@ -6,7 +6,7 @@
 > see docs/ARCHITECTURE.md ("Supporting Infrastructure").
 
 ## Prerequisites
-- Node.js 20+
+- Node.js 24+ (CI and `.nvmrc` both pin 24; see `package.json` `engines`)
 - npm or yarn
 - Git
 - Solana wallet (for TxLINE on-chain subscribe)
