@@ -68,7 +68,7 @@ export default function RecentPredictions({ chainId = 56, isNight = false }) {
  
  {!loading && filteredSignals.length === 0 && (
  <div className={`text-center py-8 opacity-50 text-sm ${textColor}`}>
- No active signals found.
+ No active signals found. Adjust the filters or publish one from Markets.
  </div>
  )}
 

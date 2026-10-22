@@ -22,6 +22,7 @@ import { ProofTheatre } from '@/components/ProofTheatre';
 import RouteGuide from '@/components/RouteGuide';
 import Reveal from '@/components/motion/Reveal';
 import { useCountUp } from '@/hooks/useCountUp';
+import useTabArrowKeys from '@/hooks/useTabArrowKeys';
 import GlowList from '@/components/ui/GlowList';
 import { shouldOpenTxlineStream } from '@/utils/arenaUi';
 
@@ -760,19 +761,28 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
     return null;
   })();
 
+  const fixtureTabs = [
+    { id: 'all', label: 'All fixtures' },
+    { id: 'live', label: 'Live' },
+    { id: 'scheduled', label: 'Upcoming' },
+    { id: 'final', label: 'Final' },
+  ];
+  const { onKeyDown: onTabKeyDown, tabProps: fixtureTabProps } = useTabArrowKeys(
+    fixtureTabs.map((t) => t.id),
+    tab,
+    setTab
+  );
   const subnav = (
-    <div className="mc-tab-strip" role="tablist" aria-label="Fixture filter">
-      {[
-        { id: 'all', label: 'All fixtures' },
-        { id: 'live', label: 'Live' },
-        { id: 'scheduled', label: 'Upcoming' },
-        { id: 'final', label: 'Final' },
-      ].map((item) => (
+    <div className="mc-tab-strip" role="tablist" aria-label="Fixture filter" onKeyDown={onTabKeyDown}>
+      {fixtureTabs.map((item) => (
         <button
           key={item.id}
           type="button"
           role="tab"
+          id={`fixture-tab-${item.id}`}
           aria-selected={tab === item.id}
+          aria-controls="fixture-panel"
+          {...fixtureTabProps(item.id)}
           onClick={() => setTab(item.id)}
           className={`mc-tab ${tab === item.id ? 'is-active' : ''}`}
         >
@@ -909,7 +919,9 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
           <div className="min-w-0 flex-1">{subnav}</div>
           {statusRow}
         </div>
-        {content}
+        <div role="tabpanel" id="fixture-panel" aria-labelledby={`fixture-tab-${tab}`}>
+          {content}
+        </div>
       </div>
     );
   }
@@ -925,7 +937,11 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
           <div className="flex flex-wrap items-center gap-2">{statusRow}</div>
         </div>
         <div className="mt-3">{subnav}</div>
-        <div className="mt-4">{content}</div>
+        <div className="mt-4">
+          <div role="tabpanel" id="fixture-panel" aria-labelledby={`fixture-tab-${tab}`}>
+            {content}
+          </div>
+        </div>
       </GlassPanel>
     </main>
   );

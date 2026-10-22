@@ -6,6 +6,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createPortal } from "react-dom";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { BRAND } from "@/constants/brand";
+import useTabArrowKeys from "@/hooks/useTabArrowKeys";
 import WalletConnect from "@/app/components/WalletConnect";
 import StatusBadge from "@/components/StatusBadge";
 import OperatorPulse from "@/components/OperatorPulse";
@@ -311,16 +312,27 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
 
 /**
  * Secondary Navigation — page-level tab switcher.
+ *
+ * Pass `ariaLabel` and `idPrefix` so consumers can wire a matching
+ * `role="tabpanel" id={`${idPrefix}-panel`}` around the switched content.
  */
-export function SecondaryNav({ items, activeItem, onChange }) {
+export function SecondaryNav({ items, activeItem, onChange, ariaLabel, idPrefix }) {
+  const { onKeyDown, tabProps } = useTabArrowKeys(
+    items.map((item) => item.id),
+    activeItem,
+    onChange
+  );
   return (
-    <div className="mc-tab-strip" role="tablist">
+    <div className="mc-tab-strip" role="tablist" aria-label={ariaLabel} onKeyDown={onKeyDown}>
       {items.map((item) => (
         <button
           key={item.id}
           type="button"
           role="tab"
+          id={idPrefix ? `${idPrefix}-tab-${item.id}` : undefined}
           aria-selected={activeItem === item.id}
+          aria-controls={idPrefix ? `${idPrefix}-panel` : undefined}
+          {...tabProps(item.id)}
           onClick={() => onChange(item.id)}
           className={`mc-tab ${activeItem === item.id ? "is-active" : ""}`}
         >

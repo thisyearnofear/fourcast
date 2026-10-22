@@ -573,9 +573,12 @@ export default function MarketsPage() {
  ]}
  activeItem={activeTab}
  onChange={setActiveTab}
+ ariaLabel="Markets view"
+ idPrefix="markets"
  />
  }
  >
+ <div role="tabpanel" id="markets-panel" aria-labelledby={`markets-tab-${activeTab}`}>
  <div className="mb-2">
  <AgentRail />
 </div>
@@ -733,6 +736,7 @@ export default function MarketsPage() {
  />
  )
  }
+ </div>
  </AppShell>
  );
 }

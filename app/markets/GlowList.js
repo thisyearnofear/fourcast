@@ -66,7 +66,7 @@ export default function GlowList({
         <div className="overflow-hidden">
           {children}
           {open && !emptyLabel && !children && (
-            <span className="text-[12px] text-ink-3">No markets to display</span>
+            <span className="text-[12px] text-ink-3">No markets to display. Clear a filter or switch category.</span>
           )}
         </div>
       </div>

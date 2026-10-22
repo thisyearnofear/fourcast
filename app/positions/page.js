@@ -8,6 +8,7 @@ import AgentTrackRecord from "@/components/AgentTrackRecord";
 import AgentRail from "@/components/AgentRail";
 import Reveal from "@/components/motion/Reveal";
 import { BRAND } from "@/constants/brand";
+import useTabArrowKeys from '@/hooks/useTabArrowKeys';
 import { useBackdrop, BACKDROP_STATES } from '@/components/BackdropProvider';
 import { useAccount } from 'wagmi';
 
@@ -42,13 +43,19 @@ export default function PositionsPage() {
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   };
 
+  const { onKeyDown: onTabKeyDown, tabProps: viewTabProps } = useTabArrowKeys(
+    ["public", "private", "agent"],
+    view,
+    selectView
+  );
+
   return (
     <AppShell
       title="Positions"
       subtitle={BRAND.pages.positions}
       maxWidth="max-w-4xl"
       subheader={
-        <div className="mc-tab-strip" role="tablist" aria-label="Positions view">
+        <div className="mc-tab-strip" role="tablist" aria-label="Positions view" onKeyDown={onTabKeyDown}>
           {["public", "private", "agent"].map((id) => (
             <button
               key={id}
@@ -57,6 +64,7 @@ export default function PositionsPage() {
               id={`positions-tab-${id}`}
               aria-selected={view === id}
               aria-controls="positions-panel"
+              {...viewTabProps(id)}
               onClick={() => selectView(id)}
               className={`mc-tab ${view === id ? "is-active" : ""}`}
             >

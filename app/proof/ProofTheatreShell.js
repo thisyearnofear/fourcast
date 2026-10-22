@@ -112,11 +112,15 @@ export default function ProofTheatreShell() {
             items={CHAINS}
             activeItem={chain}
             onChange={selectChain}
+            ariaLabel="Proof chain"
+            idPrefix="proof-chain"
           />
         </div>
       }
     >
-      {isCanton ? <CantonProof /> : <WorldCupClient bare />}
+      <div role="tabpanel" id="proof-chain-panel" aria-labelledby={`proof-chain-tab-${chain}`}>
+        {isCanton ? <CantonProof /> : <WorldCupClient bare />}
+      </div>
     </AppShell>
   );
 }

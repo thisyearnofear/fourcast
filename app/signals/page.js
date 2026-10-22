@@ -16,6 +16,7 @@ import MySignalsTab from '@/app/components/signals/MySignalsTab';
 import DeFiArbitrageTab from '@/app/components/signals/DeFiArbitrageTab';
 import { ChainSelector } from '@/components/ChainSelector';
 import useFilterStore from '@/hooks/useFilterStore';
+import useTabArrowKeys from '@/hooks/useTabArrowKeys';
 import AgentRail from '@/components/AgentRail';
 import PremiumSettlementStrip from '@/components/PremiumSettlementStrip';
 import Reveal from '@/components/motion/Reveal';
@@ -35,6 +36,19 @@ export default function SignalsPage() {
   const filterStore = useFilterStore();
   const activeTab = filterStore.signalsActiveTab;
   const setActiveTab = (tab) => filterStore.setSignalsActiveTab(tab);
+
+  const signalTabs = [
+    { id: 'feed', label: 'Feed' },
+    { id: 'defi', label: 'DeFi' },
+    ...(connected ? [{ id: 'my-signals', label: 'Mine' }] : []),
+    { id: 'leaderboard', label: 'Leaders' },
+    { id: 'alerts', label: 'Alerts' },
+  ];
+  const { onKeyDown: onTabKeyDown, tabProps: signalTabProps } = useTabArrowKeys(
+    signalTabs.map((t) => t.id),
+    activeTab,
+    setActiveTab
+  );
 
   // Deep-link: ?tab=alerts
   useEffect(() => {
@@ -189,19 +203,16 @@ export default function SignalsPage() {
       title="Signals"
       subtitle={BRAND.pages.signals}
       subheader={
-        <div className="mc-tab-strip" role="tablist" aria-label="Signals view">
-          {[
-            { id: 'feed', label: 'Feed' },
-            { id: 'defi', label: 'DeFi' },
-            ...(connected ? [{ id: 'my-signals', label: 'Mine' }] : []),
-            { id: 'leaderboard', label: 'Leaders' },
-            { id: 'alerts', label: 'Alerts' },
-          ].map(item => (
+        <div className="mc-tab-strip" role="tablist" aria-label="Signals view" onKeyDown={onTabKeyDown}>
+          {signalTabs.map(item => (
             <button
               key={item.id}
               type="button"
               role="tab"
+              id={`signals-tab-${item.id}`}
               aria-selected={activeTab === item.id}
+              aria-controls="signals-panel"
+              {...signalTabProps(item.id)}
               onClick={() => setActiveTab(item.id)}
               className={`mc-tab ${activeTab === item.id ? 'is-active' : ''}`}
             >
@@ -212,6 +223,8 @@ export default function SignalsPage() {
       }
     >
       <AgentRail />
+
+      <div role="tabpanel" id="signals-panel" aria-labelledby={`signals-tab-${activeTab}`}>
 
       {/* Early-stage banner — open section, not glass panel */}
       <section className="mt-2 border-t border-[var(--color-rule)] border-b border-[var(--color-wash)] py-3">
@@ -406,6 +419,8 @@ export default function SignalsPage() {
           </div>
         </Reveal>
       )}
+
+      </div>
 
       <ProfileDrawer
         isOpen={!!selectedProfile}
