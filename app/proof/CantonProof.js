@@ -405,7 +405,7 @@ export default function CantonProof({ present = false, flow = 'auto' }) {
               <span className="font-semibold text-[var(--color-ink)]">vs centralized venues (Kalshi):</span>{' '}
               they hide positions inside a private database — the venue still sees every position.
               Here privacy is the ledger's data model: query the same contract as a non-signatory
-              and it isn't there. Policy vs protocol.
+              and it isn&apos;t there. Policy vs protocol.
             </p>
             <p className="text-xs leading-5 text-[var(--color-ink-muted)]">
               <span className="font-semibold text-[var(--color-ink)]">vs Canton venues (unhedged.gg):</span>{' '}
