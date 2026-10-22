@@ -48,10 +48,15 @@ export default function PositionsPage() {
       subtitle={BRAND.pages.positions}
       maxWidth="max-w-4xl"
       subheader={
-        <div className="mc-tab-strip">
+        <div className="mc-tab-strip" role="tablist" aria-label="Positions view">
           {["public", "private", "agent"].map((id) => (
             <button
               key={id}
+              type="button"
+              role="tab"
+              id={`positions-tab-${id}`}
+              aria-selected={view === id}
+              aria-controls="positions-panel"
               onClick={() => selectView(id)}
               className={`mc-tab ${view === id ? "is-active" : ""}`}
             >
@@ -63,21 +68,23 @@ export default function PositionsPage() {
     >
       <AgentRail />
 
-      {view === "agent" ? (
-        <Reveal>
-          <AgentTrackRecord />
-        </Reveal>
-      ) : view === "private" ? (
-        <Reveal>
-          <div className="fc-view-swap fc-life-stage">
-            <CantonHolderDashboard />
-          </div>
-        </Reveal>
-      ) : (
-        <Reveal>
-          <PositionsDashboard />
-        </Reveal>
-      )}
+      <div role="tabpanel" id="positions-panel" aria-labelledby={`positions-tab-${view}`}>
+        {view === "agent" ? (
+          <Reveal>
+            <AgentTrackRecord />
+          </Reveal>
+        ) : view === "private" ? (
+          <Reveal>
+            <div className="fc-view-swap fc-life-stage">
+              <CantonHolderDashboard />
+            </div>
+          </Reveal>
+        ) : (
+          <Reveal>
+            <PositionsDashboard />
+          </Reveal>
+        )}
+      </div>
     </AppShell>
   );
 }

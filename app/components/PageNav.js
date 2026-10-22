@@ -314,10 +314,13 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
  */
 export function SecondaryNav({ items, activeItem, onChange }) {
   return (
-    <div className="mc-tab-strip">
+    <div className="mc-tab-strip" role="tablist">
       {items.map((item) => (
         <button
           key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={activeItem === item.id}
           onClick={() => onChange(item.id)}
           className={`mc-tab ${activeItem === item.id ? "is-active" : ""}`}
         >

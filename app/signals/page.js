@@ -189,7 +189,7 @@ export default function SignalsPage() {
       title="Signals"
       subtitle={BRAND.pages.signals}
       subheader={
-        <div className="mc-tab-strip">
+        <div className="mc-tab-strip" role="tablist" aria-label="Signals view">
           {[
             { id: 'feed', label: 'Feed' },
             { id: 'defi', label: 'DeFi' },
@@ -199,6 +199,9 @@ export default function SignalsPage() {
           ].map(item => (
             <button
               key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === item.id}
               onClick={() => setActiveTab(item.id)}
               className={`mc-tab ${activeTab === item.id ? 'is-active' : ''}`}
             >
