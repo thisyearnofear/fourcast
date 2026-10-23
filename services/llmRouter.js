@@ -368,4 +368,6 @@ function _logProviderFailures(failures, order) {
   }
 }
 
-export default { chatCompletion, listConfiguredProviders };
+const llmRouter = { chatCompletion, listConfiguredProviders };
+
+export default llmRouter;

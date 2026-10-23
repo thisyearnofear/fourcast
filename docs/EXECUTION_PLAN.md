@@ -15,6 +15,21 @@ If you are a dev reading this cold, in order:
 
 ---
 
+## Execution mode (updated 2026-10-23)
+
+**Single developer now drives this plan.** The three-leg split (Dev A/B/C), the handoff tables, and the merge-protocol sequencing are retained as historical context but no longer gate work — one developer owns all legs and merges directly to `main` after the verification block for the affected surface.
+
+Consolidated critical path:
+
+1. Phase 0 (needs user): TxLINE resubscription go-ahead · `SUI_NETWORK` conflict decision · mainnet memory credentials.
+2. Phase 1: apply migrations 0014→0015→0016 on Turso → `memories-to-mainnet.mjs --write` (≥10 real memories) → merge 🟡 work → run recall demo.
+3. Phase 2: WP8 items 1–3 + `docs/BLOG_TOTAL_RECALL.md` + items 4–5.
+4. Phase 3: judge-path walkthrough (Nov 6–8) → submit (Nov 10 17:00 UTC).
+
+Baseline verified green on 2026-10-23: 603 tests / 62 files, `tsc --noEmit` clean, `check:runtimes` 100/100, `check:docs` 58/58.
+
+---
+
 ## Context
 
 Two live initiatives share one foundation. **Total Recall** (Tatum × Walrus Memory, Track 1:

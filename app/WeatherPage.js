@@ -94,12 +94,10 @@ export default function WeatherPage() {
 
 
 
- // Memoized calculated values
- const isNight = useMemo(() => isNightTime(), [weatherData?.location?.localtime]);
- const textColor = useMemo(() =>
- 'text-[var(--color-ink)]',
- [isNight]
- );
+ // Neither of these earned a memo: isNightTime() reads one timestamp off the
+ // weather payload and textColor is a constant string.
+ const isNight = isNightTime();
+ const textColor = 'text-[var(--color-ink)]';
 
  // Show hero/onboarding on first visit
  const [showHero, setShowHero] = useState(() => {

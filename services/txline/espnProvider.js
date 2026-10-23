@@ -308,4 +308,6 @@ export async function getConsensusGame({ question, description, resolvesAt }) {
   }
 }
 
-export default { americanToProbability, normalize1x2, classifyLeague, getConsensusGame, mergeScoreboardEvents };
+const espnProvider = { americanToProbability, normalize1x2, classifyLeague, getConsensusGame, mergeScoreboardEvents };
+
+export default espnProvider;

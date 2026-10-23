@@ -585,4 +585,6 @@ Output ONLY valid JSON:
   }
 }
 
-export default { classifyMarket, estimateProbabilities };
+const delphiIntelligence = { classifyMarket, estimateProbabilities };
+
+export default delphiIntelligence;

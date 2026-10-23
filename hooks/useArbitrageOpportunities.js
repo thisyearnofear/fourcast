@@ -34,10 +34,12 @@ export function useArbitrageOpportunities(initialFilters = { minSpread: 5, limit
         }
     };
 
-    // Re-fetch when filters change
+    // Re-fetch when filters change. fetchArbitrage is memoised on `filters`, so
+    // naming it here cannot re-trigger the effect any more often than the
+    // filters themselves change.
     useEffect(() => {
         fetchArbitrage();
-    }, [filters]);
+    }, [filters, fetchArbitrage]);
 
     const setMinSpread = (spread) => {
         setFilters(prev => ({ ...prev, minSpread: spread }));

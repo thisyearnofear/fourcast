@@ -325,4 +325,6 @@ export async function retrieveEvidence(question, { numResults = 5, maxCharacters
   return value;
 }
 
-export default { retrieveEvidence };
+const evidenceRetriever = { retrieveEvidence };
+
+export default evidenceRetriever;

@@ -235,6 +235,10 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
                   disabled={solanaConnecting}
                   className="w-full bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/30 text-[var(--color-accent)] text-xs font-medium py-2 hover:bg-[var(--color-accent)]/30 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
+                  {/* Connector logos are arbitrary data:/third-party URIs from the wallet
+                      provider — next/image rejects data: URIs and would route unknown hosts
+                      through the optimizer for a 16px glyph. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   {connector.icon && <img src={connector.icon} alt="" className="w-4 h-4" />}
                   {solanaConnecting ? 'Connecting...' : `Connect ${connector.name}`}
                 </button>

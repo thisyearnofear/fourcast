@@ -54,7 +54,7 @@ describe('scheduler', () => {
     });
 
     it('returns error summary when the loop throws', async () => {
-      runAgentLoop.mockReturnValue((async function* () { // eslint-disable-line require-yield
+      runAgentLoop.mockReturnValue((async function* () {
         throw new Error('loop exploded');
       })());
 

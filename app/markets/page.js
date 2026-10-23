@@ -94,6 +94,14 @@ export default function MarketsPage() {
  const { chains, canPerform, canPublish = false } = chainConnections || {};
  // console.log('[Markets Page] chains:', chains, 'canPerform:', canPerform, 'canPublish:', canPublish);
 
+ // One persisted filter store for the whole page. The three wrappers below are
+ // the setters the URL-params effect uses, so they are declared before it and
+ // memoised — an effect can then name them as real dependencies.
+ const filterStore = useFilterStore();
+ const setActiveTab = useCallback((tab) => filterStore.setMarketsActiveTab(tab), [filterStore]);
+ const setDiscoveryFilters = useCallback((f) => filterStore.setDiscoveryFilters(f), [filterStore]);
+ const setDiscoveryDateRange = useCallback((r) => filterStore.setDiscoveryDateRange(r), [filterStore]);
+
  // Read URL search params for pre-filtering from carousel landing
  const [urlParamsRead, setUrlParamsRead] = useState(false);
  const [landingQuery, setLandingQuery] = useState('');
@@ -150,7 +158,7 @@ export default function MarketsPage() {
  }
 
  setUrlParamsRead(true);
- }, [urlParamsRead]);
+ }, [urlParamsRead, setActiveTab, setDiscoveryFilters, setDiscoveryDateRange]);
 
  // NOTE: The chains-loading guard was previously an early return placed here,
  // BETWEEN hook calls. That violated React's Rules of Hooks (hook count changed
@@ -171,10 +179,8 @@ export default function MarketsPage() {
  // Tab state: 'sports' or 'discovery' (persisted). The chain-named 'canton'
  // tab was removed — private markets are a property, not a category. A
  // persisted 'canton' value falls back to 'discovery' so old sessions render.
- const filterStore = useFilterStore();
  const persistedTab = filterStore.marketsActiveTab;
  const activeTab = persistedTab === "sports" ? "sports" : "discovery";
- const setActiveTab = (tab) => filterStore.setMarketsActiveTab(tab);
 
  // Weather state (for UI theming and discovery mode)
  const { weatherData, isNight } = useWeather();
@@ -191,21 +197,6 @@ export default function MarketsPage() {
  45,
  setVisibleMarketCount
  );
-
- // Shared analysis deep-link: auto-analyze specific market by share_id
- useEffect(() => {
- const shareId = window.__fourcast_autoAnalyzeId;
- if (!shareId || !markets || markets.length === 0) return;
- if (shareId === 'auto') return; // No longer supported — user must click Analyze
-
- const target = markets.find(m =>
- (m.marketID === shareId) || (m.id === shareId) || (m.tokenID === shareId)
- );
- if (target) {
- window.__fourcast_autoAnalyzeId = null;
- setTimeout(() => analyzeMarket(target), 300);
- }
- }, [markets]);
 
  // Analysis state (shared across tabs)
  const [analysis, setAnalysis] = useState(null);
@@ -243,9 +234,10 @@ export default function MarketsPage() {
 
  // Discovery-specific filters (persisted)
  const discoveryFilters = filterStore.discoveryFilters;
- const setDiscoveryFilters = (f) => filterStore.setDiscoveryFilters(f);
  const discoveryDateRange = filterStore.discoveryDateRange;
- const setDiscoveryDateRange = (r) => filterStore.setDiscoveryDateRange(r);
+ // setDiscoveryFilters / setDiscoveryDateRange come from the store block at the
+ // top of the component — they are memoised so the URL-params effect can depend
+ // on them.
 
  // Track record state (Brier scores, calibration)
  const [agentTrackStats, setAgentTrackStats] = useState(null);
@@ -293,18 +285,6 @@ export default function MarketsPage() {
  // Reset display limit when markets change (tab switch, filter change)
  useEffect(() => { setDisplayLimit(10); }, [markets]);
 
- // Fetch markets when tab or filters change (independent of user weather)
- useEffect(() => {
- fetchMarkets();
- }, [
- activeTab,
- sportsFilters,
- selectedDateRange,
- sportsMinVolume,
- discoveryFilters,
- discoveryDateRange,
- ]);
-
  useEffect(() => {
  if (canPublish && walletAddress) {
  fetch(`/api/signals?author=${encodeURIComponent(walletAddress)}&countOnly=1`)
@@ -347,6 +327,38 @@ export default function MarketsPage() {
  setFreeAnalysesUsed,
  addToast,
  });
+
+ // Both effects below read callbacks from useMarketsData, so they sit after it:
+ // a dependency array is evaluated during render and cannot name a const that
+ // is initialised further down.
+
+ // Fetch markets when tab or filters change (independent of user weather)
+ useEffect(() => {
+ fetchMarkets();
+ }, [
+ activeTab,
+ sportsFilters,
+ selectedDateRange,
+ sportsMinVolume,
+ discoveryFilters,
+ discoveryDateRange,
+ fetchMarkets,
+ ]);
+
+ // Shared analysis deep-link: auto-analyze specific market by share_id
+ useEffect(() => {
+ const shareId = window.__fourcast_autoAnalyzeId;
+ if (!shareId || !markets || markets.length === 0) return;
+ if (shareId === 'auto') return; // No longer supported — user must click Analyze
+
+ const target = markets.find(m =>
+ (m.marketID === shareId) || (m.id === shareId) || (m.tokenID === shareId)
+ );
+ if (target) {
+ window.__fourcast_autoAnalyzeId = null;
+ setTimeout(() => analyzeMarket(target), 300);
+ }
+ }, [markets, analyzeMarket]);
 
  const handlePublishSignal = useCallback(async (settlementLayer = 'arc') => {
  if (!selectedMarket || !analysis) return;

@@ -285,4 +285,6 @@ export async function estimateFromDataFeed(market) {
   }
 }
 
-export default { estimateFromDataFeed };
+const delphiDataFeeds = { estimateFromDataFeed };
+
+export default delphiDataFeeds;

@@ -264,6 +264,10 @@ export default function WalletConnect({ isNight = false }) {
  disabled={solanaConnecting}
  className={`w-full px-3 py-2 text-xs font-medium transition-colors bg-[var(--color-review)]/30 text-[var(--color-review)] border border-[var(--color-review)]/60 hover:bg-[var(--color-review)]/45 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
  >
+ {/* Connector logos are arbitrary data:/third-party URIs from the wallet
+     provider — next/image rejects data: URIs and would route unknown hosts
+     through the optimizer for a 16px glyph. */}
+ {/* eslint-disable-next-line @next/next/no-img-element */}
  {connector.icon && <img src={connector.icon} alt="" className="w-4 h-4" />}
  {solanaConnecting ? 'Connecting...' : `Connect ${connector.name}`}
  </button>

@@ -180,18 +180,24 @@ function LedgerLane() {
 
   const { setState: setBackdrop } = useBackdrop();
 
-  const seen = new Set();
-  const ledger = [];
-  for (const r of runs) {
-    for (const d of r.decisions || []) {
-      const key = `${d.question}::${d.outcome}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      ledger.push({ ...d, runTs: r.timestamp });
-      if (ledger.length >= 14) break;
+  // Deduped decision ledger across runs — memoised on `runs`, otherwise the
+  // array is rebuilt (and re-identity'd) on every render, which made the
+  // latestVerdict memo below it useless.
+  const ledger = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    for (const r of runs) {
+      for (const d of r.decisions || []) {
+        const key = `${d.question}::${d.outcome}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ ...d, runTs: r.timestamp });
+        if (out.length >= 14) break;
+      }
+      if (out.length >= 14) break;
     }
-    if (ledger.length >= 14) break;
-  }
+    return out;
+  }, [runs]);
 
   // Backdrop state — driven by latest ledger decision verdict
   const latestVerdict = useMemo(() => {
