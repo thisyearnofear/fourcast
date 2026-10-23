@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 }
 
 
-import OpenAI from "openai";
+import { chatCompletion } from "./llmRouter.js";
 import { getRedisClient } from "./redisService.js";
 import { polymarketService } from "./polymarketService.js";
 import { kalshiService } from "./kalshiService.js";
@@ -172,11 +172,6 @@ export async function* runAgentLoop(config = {}) {
   }
 
   // ── Step 3: Forecast probabilities ────────────────────────────────────
-
-  const client = new OpenAI({
-    apiKey: process.env.VENICE_API_KEY,
-    baseURL: "https://api.venice.ai/api/v1",
-  });
 
   const intelligenceAnalyzer = new MarketIntelligenceAnalyzer();
   const forecasts = [];
@@ -349,12 +344,12 @@ export async function* runAgentLoop(config = {}) {
           };
         }
 
-        const response = await client.chat.completions.create({
-          model: "llama-3.3-70b",
-          messages: [
-            {
-              role: "system",
-              content: `You are a Superforecaster tasked with estimating probabilities for prediction market outcomes.
+        // Failover chain (vercel → bai → venice → nvidia → openrouter);
+        // web search is honoured only by providers that support it
+        // (venice/openrouter) and only requested when no gathered
+        // intelligence already covers it.
+        const completion = await chatCompletion({
+          system: `You are a Superforecaster tasked with estimating probabilities for prediction market outcomes.
 
 ${intelligenceContext ? `You have been provided with real-time search intelligence gathered via Bright Data SERP API${deepResearchData ? ` and deep research via ${brightDataDeepResearch?.product || 'Scraping Browser'}` : ''}.` : "Use your internal knowledge and logic to estimate the probability."}
 
@@ -365,10 +360,7 @@ Process:
 4. Synthesize into a final probability estimate
 
 You MUST respond with ONLY valid JSON, no other text.`,
-            },
-            {
-              role: "user",
-              content: `Market: "${market.title}"
+          user: `Market: "${market.title}"
 Current market odds: YES ${yesPrice}, NO ${noPrice}
 Description: ${market.description || "N/A"}
 
@@ -378,14 +370,16 @@ ${deepResearchData ? `DEEP RESEARCH EVIDENCE (Extracted from top source via ${br
 
 Output ONLY valid JSON:
 { "probability": 0.XX, "reasoning": "...", "key_factors": ["..."], "confidence": "HIGH|MEDIUM|LOW" }`,
-            },
-          ],
           temperature: 0.3,
-          max_tokens: 1500,
-          venice_parameters: intelligenceContext ? {} : { enable_web_search: "auto" },
+          maxTokens: 1500,
+          webSearch: !intelligenceContext,
         });
 
-        let content = response.choices[0].message.content.trim();
+        if (!completion) throw new Error("no LLM provider answered");
+
+        forecastSource = `${forecastSource === 'llm' ? 'llm' : forecastSource}:${completion.provider}/${completion.model}`;
+
+        let content = completion.content;
         if (content.includes("§THINK_OPEN§")) {
           const thinkEnd = content.lastIndexOf("§THINK_CLOSE§");
           if (thinkEnd !== -1) content = content.substring(thinkEnd + 8).trim();
@@ -403,6 +397,13 @@ Output ONLY valid JSON:
         confidence = parsed.confidence || "LOW";
     } catch (err) {
       console.error(`Agent loop: Forecast failed for ${market.title}:`, err.message);
+    }
+
+    // A null/NaN probability is a failed forecast, not evidence — it must
+    // never reach the ledger, recommendations, or the memory pipeline.
+    const probValid = Number.isFinite(aiProbability) && aiProbability >= 0 && aiProbability <= 1;
+    if (!probValid) {
+      console.warn(`no forecast for ${market.title}: LLM step produced no probability — not recorded`);
     }
 
     const forecast = {
@@ -427,10 +428,10 @@ Output ONLY valid JSON:
         },
       } : null,
     };
-    forecasts.push(forecast);
+    if (probValid) forecasts.push(forecast);
 
     // Save forecast to database for track record
-    await saveForecast({
+    if (probValid) await saveForecast({
       id: `forecast-${market.marketID}-${loopTimestamp}`,
       marketID: market.marketID,
       title: market.title,

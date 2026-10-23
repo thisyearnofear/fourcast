@@ -694,6 +694,12 @@ export function deriveConfidenceBucket(confidence) {
  * Also persists confidence_bucket for calibration analysis (migration 0013).
  */
 export async function saveForecast(forecast) {
+  // A row without a real probability is a guess recorded as evidence —
+  // everything downstream (calibration, sizing, memory) reads it as true.
+  const p = forecast?.aiProbability;
+  if (typeof p !== 'number' || !Number.isFinite(p) || p < 0 || p > 1) {
+    return { success: false, error: 'aiProbability must be a finite number in [0,1]' };
+  }
   try {
     const bucket = deriveConfidenceBucket(forecast.confidence);
     await execute(
