@@ -12,15 +12,15 @@ const pm = (over) => ({
 
 describe('deriveOutcome — polymarket', () => {
   it('resolves [1,0] to outcome 1', () => {
-    expect(deriveOutcome('polymarket', pm({}))).toEqual({ outcome: 1 });
+    expect(deriveOutcome('polymarket', pm({}))).toEqual({ outcome: 1, label: 'Yes' });
   });
 
   it('resolves [0,1] to outcome 0', () => {
-    expect(deriveOutcome('polymarket', pm({ outcomePrices: '["0","1"]' }))).toEqual({ outcome: 0 });
+    expect(deriveOutcome('polymarket', pm({ outcomePrices: '["0","1"]' }))).toEqual({ outcome: 0, label: 'No' });
   });
 
   it('accepts real arrays as well as JSON-encoded strings', () => {
-    expect(deriveOutcome('polymarket', pm({ outcomes: ['Yes', 'No'], outcomePrices: [0, 1] }))).toEqual({ outcome: 0 });
+    expect(deriveOutcome('polymarket', pm({ outcomes: ['Yes', 'No'], outcomePrices: [0, 1] }))).toEqual({ outcome: 0, label: 'No' });
   });
 
   it('skips 0.5/0.5 and any other ambiguous price pair', () => {
@@ -36,8 +36,17 @@ describe('deriveOutcome — polymarket', () => {
     expect(deriveOutcome('polymarket', pm({ umaResolutionStatus: 'proposed' })).skip).toMatch(/proposed/);
   });
 
-  it('skips non-Yes/No outcome markets', () => {
-    expect(deriveOutcome('polymarket', pm({ outcomes: '["Over","Under"]' }))).toEqual({ skip: 'non-Yes/No outcomes' });
+  it('resolves any two-outcome market — outcome 1 means outcome[0] won', () => {
+    expect(deriveOutcome('polymarket', pm({ outcomes: '["Over","Under"]', outcomePrices: '["0","1"]' })))
+      .toEqual({ outcome: 0, label: 'Under' });
+    expect(deriveOutcome('polymarket', pm({ outcomes: '["Lakers","Celtics"]', outcomePrices: '["1","0"]' })))
+      .toEqual({ outcome: 1, label: 'Lakers' });
+  });
+
+  it('skips non-binary markets and mismatched shapes', () => {
+    expect(deriveOutcome('polymarket', pm({ outcomes: '["A","B","C"]', outcomePrices: '["1","0","0"]' })).skip).toMatch(/two-outcome/);
+    expect(deriveOutcome('polymarket', pm({ outcomes: '["Yes","No"]', outcomePrices: '["1","0","0"]' }))).toEqual({ skip: 'unparseable outcomePrices' });
+    expect(deriveOutcome('polymarket', pm({ outcomes: '["","No"]', outcomePrices: '["1","0"]' })).skip).toMatch(/two-outcome/);
   });
 });
 
@@ -45,12 +54,12 @@ describe('deriveOutcome — kalshi', () => {
   const k = (over) => ({ market: { ticker: 'T', status: 'finalized', result: 'yes', ...over } });
 
   it('resolves result "yes" to 1 and "no" to 0', () => {
-    expect(deriveOutcome('kalshi', k({}))).toEqual({ outcome: 1 });
-    expect(deriveOutcome('kalshi', k({ result: 'no' }))).toEqual({ outcome: 0 });
+    expect(deriveOutcome('kalshi', k({}))).toEqual({ outcome: 1, label: 'yes' });
+    expect(deriveOutcome('kalshi', k({ result: 'no' }))).toEqual({ outcome: 0, label: 'no' });
   });
 
   it('accepts a bare market object (no {market} wrapper)', () => {
-    expect(deriveOutcome('kalshi', { status: 'settled', result: 'yes' })).toEqual({ outcome: 1 });
+    expect(deriveOutcome('kalshi', { status: 'settled', result: 'yes' })).toEqual({ outcome: 1, label: 'yes' });
   });
 
   it('skips empty, void, or missing results', () => {

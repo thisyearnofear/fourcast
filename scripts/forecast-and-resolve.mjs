@@ -54,6 +54,9 @@ const parseMaybeJson = (v) => {
 /**
  * Strict settlement rules — a forecast resolves only on an unambiguous
  * terminal state. Anything else is { skip: reason } and stays unresolved.
+ * Outcome 1 means the market's first listed outcome won — the side the
+ * loop's aiProbability refers to (discovery sets currentOdds.yes =
+ * outcomePrices[0]); outcome 0 means the second outcome won.
  *
  * @returns {{ outcome: 0|1 } | { skip: string }}
  */
@@ -66,12 +69,12 @@ export function deriveOutcome(platform, rawMarket) {
     }
     const outcomes = parseMaybeJson(rawMarket.outcomes);
     const prices = parseMaybeJson(rawMarket.outcomePrices)?.map(Number);
-    if (!outcomes || outcomes.length !== 2 || outcomes[0] !== 'Yes' || outcomes[1] !== 'No') {
-      return { skip: 'non-Yes/No outcomes' };
+    if (!outcomes || outcomes.length !== 2 || outcomes.some((o) => typeof o !== 'string' || !o)) {
+      return { skip: 'not a two-outcome market' };
     }
     if (!prices || prices.length !== 2) return { skip: 'unparseable outcomePrices' };
-    if (prices[0] === 1 && prices[1] === 0) return { outcome: 1 };
-    if (prices[0] === 0 && prices[1] === 1) return { outcome: 0 };
+    if (prices[0] === 1 && prices[1] === 0) return { outcome: 1, label: outcomes[0] };
+    if (prices[0] === 0 && prices[1] === 1) return { outcome: 0, label: outcomes[1] };
     return { skip: `ambiguous outcomePrices ${JSON.stringify(prices)}` };
   }
 
@@ -81,8 +84,8 @@ export function deriveOutcome(platform, rawMarket) {
     if (!['settled', 'finalized'].includes(market.status)) {
       return { skip: `status=${market.status}` };
     }
-    if (market.result === 'yes') return { outcome: 1 };
-    if (market.result === 'no') return { outcome: 0 };
+    if (market.result === 'yes') return { outcome: 1, label: 'yes' };
+    if (market.result === 'no') return { outcome: 0, label: 'no' };
     return { skip: `result=${JSON.stringify(market.result)}` };
   }
 
@@ -153,7 +156,7 @@ export async function sweepResolve({
         log(`  open ${platform}:${market_id} — ${decision.skip}`);
         skipped++;
       } else {
-        log(`  RESOLVED ${platform}:${market_id} → outcome ${decision.outcome}${dryRun ? ' (dry-run)' : ''}`);
+        log(`  RESOLVED ${platform}:${market_id} → outcome ${decision.outcome}${decision.label ? ` (${decision.label})` : ''}${dryRun ? ' (dry-run)' : ''}`);
         if (!dryRun) {
           const res = await resolve(market_id, decision.outcome);
           log(`    resolveForecast: ${JSON.stringify(res)}`);
