@@ -140,13 +140,13 @@ function rpcError(code, message, rpcError = null, cause = undefined) {
  */
 const METHODS = {
   sui_getChainIdentifier: {
-    query: 'query chainId { chainIdentifier }',
+    query: 'query sui_getChainIdentifier { chainIdentifier }',
     variables: () => ({}),
     map: (data) => data?.chainIdentifier ?? null,
   },
 
   sui_getLatestCheckpointSequenceNumber: {
-    query: 'query latestCheckpoint { checkpoint { sequenceNumber } }',
+    query: 'query sui_getLatestCheckpointSequenceNumber { checkpoint { sequenceNumber } }',
     variables: () => ({}),
     map: (data) => data?.checkpoint?.sequenceNumber ?? null,
   },
@@ -158,7 +158,7 @@ const METHODS = {
   // from "could not ask" (the caller catches a throw → exists:null).
   sui_getObject: {
     query:
-      'query getObject($address: SuiAddress!) { ' +
+      'query sui_getObject($address: SuiAddress!) { ' +
       'object(address: $address) { address version digest } }',
     variables: (params) => ({ address: params[0] }),
     map: (data) => {
@@ -180,7 +180,7 @@ const METHODS = {
   // nodes become { coinType: <repr string>, owner: { address }, amount }.
   sui_getTransactionBlock: {
     query:
-      'query getTx($digest: String!) { transactionBlock(digest: $digest) { ' +
+      'query sui_getTransactionBlock($digest: String!) { transactionBlock(digest: $digest) { ' +
       'digest effects { status } ' +
       'balanceChanges(first: 50) { nodes { coinType { repr } amount owner { address } } } } }',
     variables: (params) => ({ digest: params[0] }),
