@@ -205,14 +205,26 @@ const migrationsReady = runMigrations().catch(err => {
   console.error('Migration error:', err.message);
 });
 
+// Turso connections die on the wire during long runs (keepalive sockets
+// reaped between queries — "other side closed" / UND_ERR_SOCKET). The dead
+// socket is discarded on failure, so one retry on a fresh connection lands.
+const isTransientNetErr = (err) =>
+  err?.code === 'UND_ERR_SOCKET' ||
+  (err?.message === 'fetch failed' && err?.cause?.code === 'UND_ERR_SOCKET');
+
 // Database operation helpers
 async function execute(sql, params = []) {
   if (isTurso) {
     try {
-      return await db.execute({
-        sql,
-        args: params,
-      });
+      try {
+        return await db.execute({ sql, args: params });
+      } catch (err) {
+        if (isTransientNetErr(err)) {
+          console.warn('Turso socket dropped — retrying once on a fresh connection');
+          return await db.execute({ sql, args: params });
+        }
+        throw err;
+      }
     } catch (err) {
       console.error('Execute error:', err, 'SQL:', sql);
       throw err;
@@ -230,12 +242,18 @@ async function execute(sql, params = []) {
 async function query(sql, params = []) {
   if (isTurso) {
     try {
-      const result = await db.execute({
-        sql,
-        args: params,
-      });
-      // Turso returns rows as an array of objects
-      return Array.isArray(result) ? result : (result.rows || []);
+      try {
+        const result = await db.execute({ sql, args: params });
+        // Turso returns rows as an array of objects
+        return Array.isArray(result) ? result : (result.rows || []);
+      } catch (err) {
+        if (isTransientNetErr(err)) {
+          console.warn('Turso socket dropped — retrying once on a fresh connection');
+          const result = await db.execute({ sql, args: params });
+          return Array.isArray(result) ? result : (result.rows || []);
+        }
+        throw err;
+      }
     } catch (err) {
       console.error('Query error:', err);
       throw err;
