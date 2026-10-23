@@ -21,8 +21,14 @@ If you are a dev reading this cold, in order:
 
 Consolidated critical path:
 
-1. Phase 0 (needs user): TxLINE resubscription go-ahead · `SUI_NETWORK` conflict decision · mainnet memory credentials.
-2. Phase 1: apply migrations 0014→0015→0016 on Turso → `memories-to-mainnet.mjs --write` (≥10 real memories) → merge 🟡 work → run recall demo.
+1. Phase 0 — **DONE 2026-10-23**: TxLINE renewed (to Nov 20), `SUI_NETWORK` split
+   into `SUI_MEMORY_NETWORK`/`SETTLEMENT_NETWORK`, MemWal account + delegate key
+   created and the writer enabled on the VPS; Tatum mainnet read verified.
+2. Phase 1 — **in progress**: migrations 0014→0016 applied; forecast pipeline now
+   feeds real resolutions via short-horizon discovery (4×/day cron, one forecast
+   per market); first mainnet memory writes expected as forecasts settle
+   (~Oct 24 → Nov 4); `memories-to-mainnet.mjs --write` (≥10 real memories) →
+   merge 🟡 work → run recall demo.
 3. Phase 2: WP8 items 1–3 + `docs/BLOG_TOTAL_RECALL.md` + items 4–5.
 4. Phase 3: judge-path walkthrough (Nov 6–8) → submit Total Recall (Nov 10 17:00 UTC).
 5. Phase 4 — **Telegraph H2, Nov 1 – Dec 1 23:59 UTC** (rules published 2026-10-22, summarised in
@@ -43,7 +49,7 @@ Three Phase-0 calls, all resolved:
 
 1. **TxLINE resubscription — DONE 2026-10-23, free tier, no real money.** Fresh wallet `CBTbcmw8…2MHv` funded with 0.01 SOL from stoppage's agent wallet; service level 1, 4 weeks, valid until **2026-11-20**. `/health` → `txline_renewal: {until: 2026-11-20, days_left: 28, expired: false}`, and `npm run survey` scores are non-zero (GAME_RESULT rank 5/14). Wallet, tx sigs and key locations: `docs/HACKATHONS.md`. `stat-validation` 500s remain a known free-tier limitation, not a blocker.
 2. **`SUI_NETWORK` conflict — split the read var.** MemWal now reads `SUI_MEMORY_NETWORK` first (defaulting to `SUI_NETWORK`, then mainnet), so the memory chain is named independently of the shared Tatum client. The x402 rail keeps its fail-closed cross-chain check against `SETTLEMENT_NETWORK`: memory stays mainnet (Total Recall deliverable), x402 stays testnet (demo rail, no real money), and the rail is dark by default unless `TATUM_SUI_RPC_URL` is configured for the settlement network. No deliverable sacrificed; the refusal is intended, not a bug.
-3. **Mainnet memory credentials — provide now, run Oct 24–27.** Apply Turso migrations 0014→0015→0016 first, dry-run `scripts/memories-to-mainnet.mjs`, then `--write` (≥10 real memories). `FOURCAST_MEMORY_MIN_SAMPLES` (default 20) gates thin claims.
+3. **Mainnet memory credentials — DONE 2026-10-23.** MemWal account `0xa65e…893c` + delegate key created; writer enabled on the VPS (`writable true`); migrations 0014→0015→0016 already applied; hourly `--resolve` writes a signal + window memory per settlement. `FOURCAST_MEMORY_MIN_SAMPLES` (default 20) gates thin claims — untouched.
 
 ---
 
@@ -107,7 +113,7 @@ Consequence: the memory layer's content depends on WP1. Memory work could not st
 
 | Date | Gate | Owner |
 |---|---|---|
-| **Oct 26** | TxLINE free subscription expires (WP0 — do first) | Dev A |
+| ~~Oct 26~~ | ~~TxLINE free subscription expires~~ — **renewed early 2026-10-23; next expiry 2026-11-20** | Dev A ✅ |
 | Oct 21–23 | WP1 merged, suite green | Dev A ✅ |
 | **Oct 23** | `main` green with WP1+WP2 merged → Devs B and C branch | Dev A ✅ — but **the branches never happened**: all three legs worked in one shared tree and committed to `main` directly. The plan's merge protocol below is what *should* have happened; the status board is what actually tracked it. **Nothing is lost (all three legs' work is on `main`), but there was no isolation and no review gate.** Learn from it: one branch per leg, pushed. |
 | Oct 24–27 | first ≥10 memories on **mainnet** (never leave this to hour 48) | Dev A |
@@ -185,11 +191,14 @@ never page length; watch `must_resync`); `destroy()` wipes key material. Peers: 
 client default namespace — namespace is positional.
 
 **`tatumSuiRpc(method, params, opts?)` → `Promise<object>`** (B owns, `services/tatum/tatumSuiClient.js`).
-JSON-RPC 2.0 POST over `fetchWithBudget(url, {provider:'tatum', headers:{'X-Api-Key': TATUM_API_KEY}})`.
-Resolves with the envelope's `result`; rejects with `Error & {code, rpcError}` on transport failure,
-non-2xx, or a JSON-RPC `error`. Methods in scope: `sui_getObject`, `sui_getTransactionBlock`,
-`sui_getEvents`, `suix_getBalance`. **C codes against this signature and mocked fetch; it does not
-wait for B's implementation.** `TATUM_API_KEY` unset ⇒ `isConfigured()` false ⇒ `null`/reason, never throw.
+**Update 2026-10-23: the gateway serves GraphQL only.** The signature is unchanged; the
+client translates each method to a GraphQL operation on `{gateway}/graphql` and maps
+results back to the JSON-RPC shapes below. Methods in scope: `sui_getObject`,
+`sui_getTransactionBlock`, `sui_getChainIdentifier`, `sui_getLatestCheckpointSequenceNumber`;
+others reject `TATUM_UNSUPPORTED_METHOD`. Rejects with `Error & {code, rpcError}` on transport
+failure, non-2xx, GraphQL `errors`, or a malformed envelope. **C codes against this
+signature and mocked fetch; it does not wait for B's implementation.** `TATUM_API_KEY`
+unset ⇒ `isConfigured()` false ⇒ `null`/reason, never throw.
 
 **`x402` module surface** (C owns): `parsePaymentRequirement(res)`,
 `verifyPayment({payment, expectedUsdc, seller, network})` → `{valid, reason?, txDigest?, usdc?}`,
@@ -274,9 +283,10 @@ tier 500s on both documented request shapes (exhibits: `scripts/proof-probe*.mjs
 `services/tatum/tatumSuiClient.js` per the frozen contract above. **Non-decorative use:** for every
 memory write, take `owner` from `rememberAndWait()` and assert via `sui_getObject` that the MemWal
 account object exists on mainnet at a version + digest; render `object=id@version · digest ·
-checkpoint` next to each `blob_id`. `docs/SUI.md` must state the deliberate deviation: MemWal's
-docs prefer `SuiGrpcClient` for direct reads, but the hackathon grades the **Tatum** integration, so
-reads go through Tatum JSON-RPC by design.
+checkpoint` next to each `blob_id`. `docs/SUI.md` states the transport reality: MemWal's
+docs prefer `SuiGrpcClient` for direct reads, but the hackathon grades the **Tatum**
+integration, so reads go through Tatum's gateway (GraphQL since 2026-10-23 — the
+JSON-RPC endpoint no longer exists). **Verified live on mainnet 2026-10-23.**
 
 Land `tatumSuiClient.js` (the one exported function + `docs` header) **first** and tick it in
 Handoffs — C's `verify.js` re-reads the USDC transfer through it.
