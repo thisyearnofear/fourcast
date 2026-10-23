@@ -27,7 +27,9 @@
  */
 
 export const MAINNET_RELAYER_URL = 'https://relayer.memory.walrus.xyz';
-export const TESTNET_RELAYER_URL = 'https://relayer.testnet.memory.walrus.xyz';
+// The official docs name the testnet relayer "staging" — there is no
+// relayer.testnet.memory.walrus.xyz host.
+export const TESTNET_RELAYER_URL = 'https://relayer-staging.memory.walrus.xyz';
 
 const DEFAULT_MIN_SAMPLES = 20;
 const DEFAULT_TIMEOUT_MS = 30_000;

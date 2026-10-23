@@ -28,13 +28,16 @@
 - [ ] Walrus Memory integrated and **writing on Mainnet** — integrated (client, ledger,
       store, resolution triggers, tests green); **no mainnet write yet**
 - [ ] **At least 10 memories stored on Mainnet** — 0. **The binding constraint.**
-- [ ] Tatum RPC used for onchain data *where relevant* — client + proof helper built
-      and tested; **no live key, no real read yet**
+- [x] Tatum RPC used for onchain data *where relevant* — **real mainnet read done
+      2026-10-23**: chain id + latest checkpoint + the MemWal account object proof
+      (`0xa65e…893c@1051062028`, checkpoint 337299825) through
+      `scripts/tatum-sui-check.mjs`. Transport is GraphQL — Tatum's Sui gateway
+      no longer serves JSON-RPC; see [`docs/SUI.md`](./SUI.md).
 - [ ] Published blog post — what it does, how it uses Tatum + Walrus, **how it learned
       over time** — not started; it needs the learning curve, which needs real rungs
 - [ ] Working demo + public repo — public repo yes; the memory demo lane exists on
       `/arena` but has nothing to show yet
-- [ ] Tatum dashboard account ID on the submission form — **account not created**
+- [x] Tatum dashboard account ID on the submission form: **64f72e0e0c34f3d88de98881**
 - [x] `MEMWAL_AGENT_ID` (the public key under *Delegate keys*) for the form: **created
       2026-10-23**. Account `0xa65e57ae15eaf308f17ee6c218033e30d122fd454733cca3e320c510ab69893c`,
       delegate public key `0de77bec7ae0f7c5c4a63c7609fd08e96af1840c6db4a4533a775cc406d70db3`.
@@ -142,22 +145,26 @@ that only shows the wins will read as marketing.
 ## Build plan (3 weeks)
 
 **Week 1 · 20–26 Oct — substrate**
-- [x] Tatum Sui JSON-RPC client landed — `services/tatum/tatumSuiClient.js`, with a
-      tri-state object-proof helper (`assertMemoryObjectOnChain`) and mocked-fetch
-      tests. The deliberate gRPC deviation is documented in
-      [`docs/SUI.md`](./SUI.md). **Still needed: a Tatum account + API key, and one
-      real mainnet read through it.**
+- [x] Tatum Sui client landed and **verified live** — `services/tatum/tatumSuiClient.js`
+      reads through Tatum's GraphQL gateway (the JSON-RPC path no longer exists),
+      with the tri-state object-proof helper (`assertMemoryObjectOnChain`) and
+      mocked-fetch tests. Real mainnet read done 2026-10-23. See
+      [`docs/SUI.md`](./SUI.md).
 - [x] Walrus Memory agent created and `MEMWAL_AGENT_ID` captured (2026-10-23, see the
       deliverables list above). The writer is configured on the server and switched on.
-      Memories are written when real forecasts resolve; the first ones settle around
-      Nov 4.
+      Memories are written when real forecasts resolve. As of 2026-10-23 the
+      ledger holds 11 open forecasts (3 California-governor + 8 from the new
+      short-horizon discovery: NBA and esports games, the Fed decision,
+      midterms) —
+      the first settle within ~24h, the rest by Nov 4. The forecast job runs
+      4×/day with one-forecast-per-market dedup.
 - [x] Memory schema decided and implemented — four flat namespaces, the append-only
       version ladder, and the `fourcast.memory/v1` text contract
       ([`docs/WALRUS_MEMORY.md`](./WALRUS_MEMORY.md)). **Still needed: the first
       10+ mainnet writes.**
-- [x] Prove one meaningful Sui read through Tatum RPC (floor: option c) — the code
-      path exists and is tested against mocked responses. **Still needed: one real
-      read against a live key.**
+- [x] Prove one meaningful Sui read through Tatum RPC (floor: option c) — **done
+      2026-10-23**: the check script re-read the MemWal account object on mainnet
+      (`0xa65e…893c@1051062028 · digest=Gfxy6yvY… · checkpoint=337299825`).
 - [x] Decide (c) or (b) — written down: **(c) is the floor and ships; (b) is the
       stretch and stays dark unless the `SUI_NETWORK` conflict is resolved
       separately.** See the decision log in [`STRATEGY.md`](../STRATEGY.md).

@@ -2,23 +2,31 @@
 
 ## The Claim
 
-**Every Sui read in this repo goes through Tatum's JSON-RPC gateway — not the
+**Every Sui read in this repo goes through Tatum's Sui gateway — not the
 Sui SDK, not gRPC.**
 
 That is a deliberate deviation, and it is worth stating because both MemWal's
-docs and Sui itself point the other way: Sui has formally deprecated JSON-RPC
-in favour of gRPC, and the MemWal SKILL.md recommends `SuiGrpcClient` for
-direct reads. We still read through Tatum because the hackathon grades the
-**Tatum** integration — a Sui read that does not go through Tatum scores
-nothing, no matter how idiomatic it is. When the constraint lifts, the swap is
-one module (`services/tatum/tatumSuiClient.js`), not a refactor.
+docs and Sui itself point the other way: the MemWal SKILL.md recommends
+`SuiGrpcClient` for direct reads. We still read through Tatum because the
+hackathon grades the **Tatum** integration — a Sui read that does not go
+through Tatum scores nothing, no matter how idiomatic it is. When the
+constraint lifts, the swap is one module (`services/tatum/tatumSuiClient.js`),
+not a refactor.
+
+**Transport reality (2026-10-23):** Tatum's Sui gateways serve **GraphQL
+only** — Sui deprecated JSON-RPC, and the gateway's method discovery
+(`GET {endpoint}/_methods`) returns just `POST {endpoint}/graphql`.
+`tatumSuiRpc` keeps its frozen `(method, params)` seam and translates the
+methods we use into GraphQL operations, mapping results back to the
+JSON-RPC shapes callers were written against. Unsupported methods reject
+with `TATUM_UNSUPPORTED_METHOD` rather than guess.
 
 ## What's Live
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| `tatumSuiRpc(method, params, opts?)` | **Live** | JSON-RPC 2.0 POST over the shared `fetchWithBudget` primitive — timeout, retries, circuit breaker. Resolves the envelope's `result`; rejects `Error & {code, rpcError}` on transport failure, non-2xx, JSON-RPC `error`, or malformed envelope. |
-| `assertMemoryObjectOnChain(objectId)` | **Live** | Proof-of-existence for a memory write's `owner` object: `sui_getObject` + latest-checkpoint anchor, rendered `object=id@version · digest · checkpoint · network`. |
+| `tatumSuiRpc(method, params, opts?)` | **Live** | GraphQL POST to `{gateway}/graphql` over the shared `fetchWithBudget` primitive — timeout, retries, circuit breaker. Resolves the mapped result (JSON-RPC shape preserved); rejects `Error & {code, rpcError}` on transport failure, non-2xx, GraphQL `errors`, malformed envelope, or an unmapped method. |
+| `assertMemoryObjectOnChain(objectId)` | **Live — verified on mainnet 2026-10-23** | Proof-of-existence for a memory write's `owner` object: `object(address:)` + latest-checkpoint anchor, rendered `object=id@version · digest · checkpoint · network`. The MemWal account object read: `0xa65e…893c@1051062028`, checkpoint 337299825. |
 | `scripts/tatum-sui-check.mjs` | **Live** | CLI: selftest (chain id + latest checkpoint), per-object proof, `--tx=<digest>` re-read. |
 | x402 settlement read | **Planned (Dev C)** | `verify.js` re-reads the USDC transfer via `sui_getTransactionBlock` through this client — the same read path, a second consumer. |
 | `/api/memory/status` Tatum block | **Planned (Dev A)** | `tatumStatus()` is already shaped for it. |
@@ -76,7 +84,7 @@ unknown, never guessed.
 |---|---|---|
 | `TATUM_API_KEY` | — | Tatum dashboard key. **Server only, never on Vercel.** |
 | `SUI_NETWORK` | `mainnet` | Shared with the memory layer — unset means mainnet because the deliverable is mainnet memories. |
-| `TATUM_SUI_RPC_URL` | `https://sui-{network}.gateway.tatum.io` | Override for a self-hosted or paid-tier endpoint. |
+| `TATUM_SUI_RPC_URL` | `https://sui-{network}.gateway.tatum.io` | Override for a self-hosted or paid-tier endpoint. The client appends `/graphql` unless the URL already ends in it. |
 | `TATUM_TIMEOUT_MS` | `10000` | Per-request deadline. |
 
 ## Verification
