@@ -43,9 +43,6 @@ only plan; the others here describe how the system works, not what to do next.
 | [`../design.md`](../design.md) | Visual language: tokens, type, spacing, colour |
 | [`../SECURITY.md`](../SECURITY.md) | Key handling, signing, and the rules that are not negotiable |
 
-Ops notes that must never be committed (`OPS.md`, `docs/OPS.md`) are gitignored
-by design and live on the host.
-
 ## Archive
 
 Superseded, kept for the record. Each carries a banner saying why.

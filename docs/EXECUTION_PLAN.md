@@ -34,7 +34,7 @@ Baseline verified green on 2026-10-23: 603 tests / 62 files, `tsc --noEmit` clea
 
 Three Phase-0 calls, all resolved:
 
-1. **TxLINE resubscription — renew before ~2026-10-26.** Go-ahead given (subject to confirming the renewal price). Run `scripts/txline-subscribe-and-activate.mjs`, rewrite `TXLINE_API_TOKEN` / `TXLINE_GUEST_JWT` / `TXLINE_SUBSCRIBED_UNTIL` in `/home/linuxuser/fourcast/.env.agent` on `nuncio-vultr`, `pm2 restart telegraph-miner --update-env`, verify `GET :8402/health` → `txline_renewal.expired:false`. `stat-validation` 500s remain a known free-tier limitation — not a blocker.
+1. **TxLINE resubscription — DONE 2026-10-23, free tier, no real money.** Fresh wallet `CBTbcmw8…2MHv` funded with 0.01 SOL from stoppage's agent wallet; service level 1, 4 weeks, valid until **2026-11-20**. `/health` → `txline_renewal: {until: 2026-11-20, days_left: 28, expired: false}`, and `npm run survey` scores are non-zero (GAME_RESULT rank 5/14). Wallet, tx sigs and key locations: `docs/HACKATHONS.md`. `stat-validation` 500s remain a known free-tier limitation, not a blocker.
 2. **`SUI_NETWORK` conflict — split the read var.** MemWal now reads `SUI_MEMORY_NETWORK` first (defaulting to `SUI_NETWORK`, then mainnet), so the memory chain is named independently of the shared Tatum client. The x402 rail keeps its fail-closed cross-chain check against `SETTLEMENT_NETWORK`: memory stays mainnet (Total Recall deliverable), x402 stays testnet (demo rail, no real money), and the rail is dark by default unless `TATUM_SUI_RPC_URL` is configured for the settlement network. No deliverable sacrificed; the refusal is intended, not a bug.
 3. **Mainnet memory credentials — provide now, run Oct 24–27.** Apply Turso migrations 0014→0015→0016 first, dry-run `scripts/memories-to-mainnet.mjs`, then `--write` (≥10 real memories). `FOURCAST_MEMORY_MIN_SAMPLES` (default 20) gates thin claims.
 
@@ -241,7 +241,7 @@ in `aiAgentLoop.js` / worker with **`db → memory` precedence**, feed
 `{blobId, textHash, source:'walrus-memory'}` inside `buildDecisionReceipt({calibration})`. A memory
 stored on Sui becomes load-bearing on a hashed pre-outcome receipt — that is the story.
 
-### WP0 — TxLINE resubscription (ops, no code) — **GATED ON USER CONFIRMATION**
+### WP0 — TxLINE resubscription (ops, no code) — **DONE 2026-10-23 (valid until 2026-11-20)**
 
 Spends from the `TXLINE_SOLANA_SECRET_KEY` wallet **and** restarts a live scoring miner on shared
 infra. Do not run without an explicit go-ahead. Then: `scripts/txline-subscribe-and-activate.mjs`;
@@ -718,7 +718,7 @@ shared-file rules are live constraints, not merge-time formalities. Observed sta
 4. A reviews the **diff** (not the summary) and merges in dependency order: `WP4 tatumSuiClient.js`
    → `WP6 registry + P3/P5/P6` → `WP3` → `WP5`. Re-apply each leg's Handoffs lines during its merge.
 5. Migrations apply in number order on the VPS **before** any writer runs: 0014 → 0015 → 0016.
-   Turso must be migrated ahead of the memory writer (`docs/OPS.md` runbook, A owns).
+   Turso must be migrated ahead of the memory writer (A owns).
 6. Any leg that changes shared behaviour (`evaluateDecision` gates, receipt fields) gets A's review
    specifically — those paths are calibration-critical and shared with Telegraph.
 

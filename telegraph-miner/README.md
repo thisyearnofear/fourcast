@@ -410,9 +410,11 @@ PYEOF
 ```
 
 Set `TXLINE_SUBSCRIBED_UNTIL=<subscription end date>` in `.env.agent` when
-renewing so /health keeps counting down. A renewal reminder is scheduled on
-the VPS (`crontab -l` on `nuncio-vultr`). The subscription tx from 2026-09-28
-and the wallet are recorded in `docs/HACKATHONS.md`.
+renewing so /health keeps counting down. Restart through the ecosystem file
+as shown: a bare `pm2 restart telegraph-miner --update-env` reuses pm2's stored
+env and never re-reads `.env.agent`. A renewal reminder is scheduled on
+the VPS (`crontab -l` on `nuncio-vultr`). The current wallet and its subscription
+tx are recorded in `docs/HACKATHONS.md`.
 
 ## Architecture
 

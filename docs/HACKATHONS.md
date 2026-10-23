@@ -198,11 +198,15 @@ positioning claims.
       lost; its 0.0179 SOL is stranded). Free tier, service level 1, 4 weeks:
       subscribe tx
       [`54ca7Uyz…pVvG`](https://explorer.solana.com/tx/54ca7UyzrWHDaWgFrYKC4obB8rMuqZyqrcKjQSb56NEvK24S6reiDRpeAqbWzvt4RtKpvSiU5uhNL9XdkryYpVvG).
-      The secret, API token and tx are in
-      `nuncio-vultr:~/.secrets/txline-wallet-2026-09.env` under
-      `TXLINE_WALLET_2026_09_*` names. `.env.agent` got the new
-      `TXLINE_API_TOKEN`/`TXLINE_GUEST_JWT` (backup `.env.agent.bak-*`).
-      `.env.local` is untouched. **Expires ~2026-10-26: resubscribe before then.**
+      `.env.agent` got the new `TXLINE_API_TOKEN`/`TXLINE_GUEST_JWT`.
+      Superseded by the 2026-10-23 renewal below.
+- [x] **TxLINE renewed 2026-10-23** with a fresh wallet
+      `CBTbcmw8q9i1xWhoLGkqXXM9t8royrGpp1xAmsbd2MHv`, funded with 0.01 SOL
+      from stoppage's agent wallet `28nQV9…CUwX`
+      ([`55iBYtBn…4rZR`](https://explorer.solana.com/tx/55iBYtBn8S4BSL5jZjjeJAL1SGRd6TUYGiNzQRZC7UagBYFeRBzxXBNdryouPUFWWrBybUsCzhhyEXRDChQ84rZR)).
+      Free tier, service level 1, 4 weeks: subscribe tx
+      [`3Ht2Rdhb…uAHS`](https://explorer.solana.com/tx/3Ht2Rdhb55cu9E19odj8RiZBQXez4xou3nwBioNyvogFCAsLD1R7UFpgPLuMT1PLZucnEtaVqeqkHNozYHfUuAHS).
+      No real money spent. **Expires 2026-11-20: resubscribe before then.**
 - [x] **What the free tier actually gives (corrected 2026-09-28 after the
       official docs review).** The docs' tier page lists *two* free service
       levels — 1 (60 s delay) and 12 (real-time), bundle = NFL, MLS, Premier
@@ -262,10 +266,10 @@ positioning claims.
       Decision: build the handler behind a flag this cycle; only add the intent
       via `updateMiner(148, …)` after Season II rules confirm multi-intent
       miners score per-intent and the gate mechanics are confirmed.
-- [x] **Renewal regime in place** (token expires ~2026-10-26): `TXLINE_-
-      SUBSCRIBED_UNTIL=2026-10-26` in `.env.agent` is published by /health
+- [x] **Renewal regime in place** (token expires 2026-11-20): `TXLINE_-
+      SUBSCRIBED_UNTIL=2026-11-20` in `.env.agent` is published by /health
       (`txline_renewal.days_left/due_soon/expired`); reminders cron on the VPS
-      fires Oct 19/22/25 09:00 UTC into `.renewal-reminders.log`; the full
+      fires Nov 13/17/19 09:00 UTC into `.renewal-reminders.log`; the full
       resubscribe + env-push runbook is in `telegraph-miner/README.md`
       ("Renewing the subscription").
 - [x] **Free-alternative coverage without TxLINE (2026-09-29, no reply
