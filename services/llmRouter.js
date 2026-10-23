@@ -44,7 +44,12 @@ const PROVIDERS = {
     // Free-only default 2026-09-29: the paid default billed per call whenever
     // a key was set. :free variants cost nothing (rate-limited). Override via
     // OPENROUTER_MODEL for paid runs.
-    defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
+    // Ordered fallbacks verified against the live :free pool 2026-10-23 —
+    // meta-llama/:free and gemma :free rotated out of availability.
+    defaultModels: [
+      'nvidia/nemotron-3-ultra-550b-a55b:free',
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+    ],
     timeout: 60_000,
     attempts: (model) => (model.endsWith(':free') ? 1 : 2), // :free 429s are persistent — don't burn 30s/market retrying
     defaultHeaders: {
@@ -55,7 +60,14 @@ const PROVIDERS = {
     baseURL: 'https://integrate.api.nvidia.com/v1',
     keyEnv: 'NVIDIA_API_KEY',
     modelEnv: 'NVIDIA_MODEL',
-    defaultModel: 'meta/llama-3.3-70b-instruct',
+    // integrate.api.nvidia.com retired meta/llama-3.3-70b-instruct (410) and
+    // several catalog ids answer 404 "Function not found" for older keys —
+    // ordered fallbacks from the current catalog (verified 2026-10-23).
+    defaultModels: [
+      'z-ai/glm-5.3',
+      'nvidia/nemotron-3-super-120b-a12b',
+      'deepseek-ai/deepseek-v4.1-flash',
+    ],
     timeout: 120_000, // free tier is slow on long prompts (>30s observed)
     attempts: 3, // 503s intersperse with wins — worth retrying
   },
@@ -144,6 +156,27 @@ function parseOrder(providerOrder) {
     .filter(Boolean);
 }
 
+// Models a provider should try, best first. A model env var pins the choice
+// to exactly one model (unchanged semantics); otherwise defaultModels (or a
+// legacy single defaultModel) supplies the ordered list. Shared by both
+// sequential and parallel modes.
+function providerModels(name, modelOverride) {
+  const cfg = PROVIDERS[name];
+  if (!cfg) return [];
+  if (modelOverride) return [modelOverride];
+  if (process.env[cfg.modelEnv]) return [process.env[cfg.modelEnv]];
+  return cfg.defaultModels || (cfg.defaultModel ? [cfg.defaultModel] : []);
+}
+
+// 404/410 or "not found"/"unavailable" means the model id is gone — retrying
+// the same id never helps, so the provider's next model takes over instead
+// of burning retry budget.
+function isModelGone(err) {
+  const status = err?.status || err?.code;
+  if (status === 404 || status === 410) return true;
+  return /not found|does not exist|unavailable|no endpoints|not supported/i.test(String(err?.message || ''));
+}
+
 // ─── Chat Completion With Failover ─────────────────────────────────────────
 
 /**
@@ -193,9 +226,15 @@ async function chatCompletionSequential({
     const client = getClient(name);
     if (!client) continue;
 
-    const model = modelOverride || process.env[cfg.modelEnv] || cfg.defaultModel;
+    const models = providerModels(name, modelOverride);
+    if (!models.length) { failures.push(`${name}: no models`); continue; }
     const webSupported = name === 'openrouter' || name === 'venice';
-    const maxAttempts = typeof cfg.attempts === 'function' ? cfg.attempts(model) : (cfg.attempts ?? 2);
+
+    let providerDone = false;
+    for (const model of models) {
+      if (providerDone) break;
+      const maxAttempts = typeof cfg.attempts === 'function' ? cfg.attempts(model) : (cfg.attempts ?? 2);
+      let modelGone = false;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -247,8 +286,17 @@ async function chatCompletionSequential({
         }
         const detail = `${err.name || 'Error'}: ${String(err.message || err).slice(0, 140)}`;
         failures.push(`${name}: ${status} (${err.name})`);
+        if (isModelGone(err)) {
+          console.warn(`[llmRouter] ${name}/${model} is gone (${status}) — trying next model`);
+          modelGone = true;
+          break; // next model for this provider
+        }
         console.warn(`[llmRouter] ${name}/${model} failed (${status}: ${detail}) — trying next provider`);
+        providerDone = true;
+        break;
       }
+    }
+    if (!modelGone) providerDone = true; // attempts exhausted — next provider
     }
   }
 
@@ -272,9 +320,10 @@ async function chatCompletionParallel({
     .filter((name) => PROVIDERS[name] && getClient(name))
     .map((name) => {
       const cfg = PROVIDERS[name];
-      const model = modelOverride || process.env[cfg.modelEnv] || cfg.defaultModel;
-      return { name, cfg, model };
-    });
+      const models = providerModels(name, modelOverride);
+      return { name, cfg, models };
+    })
+    .filter(({ models }) => models.length);
 
   if (configured.length === 0) {
     console.warn(`[llmRouter] no configured providers in parallel mode`);
@@ -282,12 +331,13 @@ async function chatCompletionParallel({
   }
 
   const ac = getAbortController();
-  const promises = configured.map(({ name, cfg, model }) => {
+  const promises = configured.map(({ name, cfg, models }) => {
     const client = getClient(name);
     const webSupported = name === 'openrouter' || name === 'venice';
-    const maxAttempts = typeof cfg.attempts === 'function' ? cfg.attempts(model) : (cfg.attempts ?? 1);
 
     return (async () => {
+      for (const model of models) {
+      const maxAttempts = typeof cfg.attempts === 'function' ? cfg.attempts(model) : (cfg.attempts ?? 1);
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         if (ac.signal.aborted) return null;
         try {
@@ -333,9 +383,14 @@ async function chatCompletionParallel({
             await new Promise((r) => setTimeout(r, waitMs));
             continue;
           }
+          if (isModelGone(err)) {
+            console.warn(`[llmRouter] parallel: ${name}/${model} is gone (${status}) — trying next model`);
+            break; // next model for this provider
+          }
           console.warn(`[llmRouter] parallel: ${name}/${model} failed (${status})`);
           return null; // exit this promise, don't retry — another provider may win
         }
+      }
       }
       return null;
     })();
