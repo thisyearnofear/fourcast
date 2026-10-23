@@ -41,6 +41,9 @@ import { deriveSimulationSeed, simulateBinaryMarket } from "./domain/decision/si
  * @param {number} [config.minVolume] - Minimum 24h volume filter (default 10000)
  * @param {number} [config.maxDaysOut] - Max days until resolution (default 30)
  * @param {number} [config.riskTolerance] - 0-1 scale for sizing (default 0.5)
+ * @param {Function} [config.candidateProvider] - async () => market[].
+ *        When set, discovery uses its result instead of the built-in
+ *        Polymarket + Kalshi scans. Normal loop filtering still applies.
  * @yields {{ step: string, status: string, data?: any, message?: string }}
  */
 export async function* runAgentLoop(config = {}) {
@@ -51,6 +54,7 @@ export async function* runAgentLoop(config = {}) {
     maxDaysOut = 30,
     riskTolerance = 0.5,
     decisionPolicy: policyOverrides = {},
+    candidateProvider = null,
     runId = `run-${Date.now()}`,
   } = config;
 
@@ -62,27 +66,37 @@ export async function* runAgentLoop(config = {}) {
 
   // ── Step 1: Discover markets ──────────────────────────────────────────
 
-  yield { step: "discover", status: "running", message: "Scanning Polymarket..." };
-
   let polymarkets = [];
-  try {
-    const result = await polymarketService.getTopWeatherSensitiveMarkets(50, {
-      minVolume,
-      analysisType: "discovery",
-    });
-    polymarkets = result?.markets || [];
-  } catch (err) {
-    console.error("Agent loop: Polymarket discovery failed:", err.message);
-  }
-
-  yield { step: "discover", status: "running", message: "Scanning Kalshi..." };
-
   let kalshiMarkets = [];
-  try {
-    const categoryToFetch = categories.length === 1 ? categories[0] : "all";
-    kalshiMarkets = await kalshiService.getMarketsByCategory(categoryToFetch, 50);
-  } catch (err) {
-    console.error("Agent loop: Kalshi discovery failed:", err.message);
+
+  if (candidateProvider) {
+    yield { step: "discover", status: "running", message: "Fetching candidates..." };
+    try {
+      polymarkets = (await candidateProvider()) || [];
+    } catch (err) {
+      console.error("Agent loop: candidate provider failed:", err.message);
+    }
+  } else {
+    yield { step: "discover", status: "running", message: "Scanning Polymarket..." };
+
+    try {
+      const result = await polymarketService.getTopWeatherSensitiveMarkets(50, {
+        minVolume,
+        analysisType: "discovery",
+      });
+      polymarkets = result?.markets || [];
+    } catch (err) {
+      console.error("Agent loop: Polymarket discovery failed:", err.message);
+    }
+
+    yield { step: "discover", status: "running", message: "Scanning Kalshi..." };
+
+    try {
+      const categoryToFetch = categories.length === 1 ? categories[0] : "all";
+      kalshiMarkets = await kalshiService.getMarketsByCategory(categoryToFetch, 50);
+    } catch (err) {
+      console.error("Agent loop: Kalshi discovery failed:", err.message);
+    }
   }
 
   const allMarkets = [

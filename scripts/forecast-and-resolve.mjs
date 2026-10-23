@@ -111,6 +111,92 @@ export function marketApiUrl(platform, marketId) {
   return null;
 }
 
+// ── Short-horizon discovery ────────────────────────────────────────────
+//
+// The loop's built-in discovery scans the top-50 weather-sensitive markets,
+// which mostly settle weeks out. For the track record we want markets that
+// settle SOON: gamma's events endpoint filters server-side by end_date_max
+// and orders by 24h volume. Kalshi is not used here — its public list
+// endpoints no longer return price/volume fields, so candidates would carry
+// fabricated 0.5 odds and zero volume.
+
+/**
+ * Pick the single best binary market inside a gamma event — the highest
+ * 24h-volume market that is open, two-outcome, still trading (prices strictly
+ * inside 0..1 so already-decided games are excluded), and dated inside the
+ * settlement window. One market per event keeps the ledger diverse: game
+ * events carry the moneyline plus dozens of props, and we want the moneyline.
+ *
+ * @returns {object|null} normalized market, or null if the event has no
+ *   eligible binary market
+ */
+export function pickEventCandidate(event, { minVolume = 0, now = Date.now(), maxDaysOut = 14 } = {}) {
+  if (!event || !Array.isArray(event.markets)) return null;
+  const horizonMs = maxDaysOut * 24 * 60 * 60 * 1000;
+
+  let best = null;
+  for (const m of event.markets) {
+    if (m?.closed === true || m?.active === false) continue;
+    const outcomes = parseMaybeJson(m.outcomes);
+    const prices = parseMaybeJson(m.outcomePrices)?.map(Number);
+    if (!outcomes || outcomes.length !== 2 || outcomes.some((o) => typeof o !== 'string' || !o)) continue;
+    if (!prices || prices.length !== 2 || !prices.every(Number.isFinite)) continue;
+    if (prices.some((p) => p <= 0 || p >= 1)) continue; // terminal or not yet trading
+
+    const vol = Number(m.volume24hr ?? m.volume ?? 0) || 0;
+    if (vol < minVolume) continue;
+
+    const end = m.endDate || event.endDate;
+    const endMs = end ? Date.parse(end) : NaN;
+    if (!Number.isFinite(endMs)) continue;
+    if (endMs <= now || endMs - now > horizonMs) continue;
+
+    if (!best || vol > best.volume24h) {
+      const yesNo = outcomes[0].toLowerCase() === 'yes' && outcomes[1].toLowerCase() === 'no';
+      best = {
+        marketID: String(m.id),
+        title: m.question || event.title || '',
+        // For team-named outcomes ("Raptors"/"Wizards") the YES side is
+        // meaningless without the mapping — state it explicitly rather than
+        // fabricating a title, so the forecast refers to outcomes[0] and the
+        // resolver reads the same index.
+        description: yesNo
+          ? (m.description || event.description || null)
+          : `Binary market — the YES side is "${outcomes[0]}", the NO side is "${outcomes[1]}". ${m.description || event.description || ''}`.trim(),
+        platform: 'polymarket',
+        currentOdds: { yes: prices[0], no: prices[1] },
+        volume24h: vol,
+        resolutionDate: end,
+        eventType: event.category || 'Other',
+      };
+    }
+  }
+  return best;
+}
+
+/**
+ * Fetch short-horizon Polymarket candidates: open events ending inside
+ * maxDaysOut, ordered by 24h volume, best binary market per event.
+ */
+export async function fetchShortHorizonPolymarket({
+  maxDaysOut = 14,
+  minVolume = 0,
+  eventLimit = 40,
+  now = Date.now(),
+  fetchImpl = fetch,
+} = {}) {
+  const endMax = new Date(now + maxDaysOut * 24 * 60 * 60 * 1000).toISOString();
+  const url =
+    'https://gamma-api.polymarket.com/events' +
+    `?closed=false&limit=${eventLimit}&order=volume24hr&ascending=false` +
+    `&end_date_max=${encodeURIComponent(endMax)}`;
+  const events = await fetchJson(url, fetchImpl);
+  if (!Array.isArray(events)) return [];
+  return events
+    .map((event) => pickEventCandidate(event, { minVolume, now, maxDaysOut }))
+    .filter(Boolean);
+}
+
 // ── Resolve sweep ──────────────────────────────────────────────────────
 
 /**
@@ -220,12 +306,27 @@ async function main() {
     const maxMarkets = Number(val('max-markets') || 6);
     const minVolume = Number(val('min-volume') || 10000);
     const maxDaysOut = Number(val('max-days') || 10);
+    const legacyDiscovery = has('--legacy-discovery');
 
-    console.log(`forecast: maxMarkets=${maxMarkets} minVolume=${minVolume} maxDaysOut=${maxDaysOut}`);
+    console.log(`forecast: maxMarkets=${maxMarkets} minVolume=${minVolume} maxDaysOut=${maxDaysOut} discovery=${legacyDiscovery ? 'legacy' : 'short-horizon'}`);
+
+    const loopConfig = { categories: ['all'], maxMarkets, minVolume, maxDaysOut };
+    if (!legacyDiscovery) {
+      const { listUnresolvedForecasts } = await import('../services/db.js');
+      loopConfig.candidateProvider = async () => {
+        const markets = await fetchShortHorizonPolymarket({ maxDaysOut, minVolume });
+        // One forecast per market: a market with an open forecast is skipped,
+        // so repeated runs add NEW coverage instead of duplicate evidence.
+        const open = new Set((await listUnresolvedForecasts()).map((r) => String(r.market_id)));
+        const fresh = markets.filter((m) => !open.has(String(m.marketID)));
+        console.log(`discovery: ${markets.length} short-horizon candidates, ${markets.length - fresh.length} already forecast, ${fresh.length} fresh`);
+        return fresh;
+      };
+    }
 
     const saved = [];
     let steps = 0;
-    for await (const ev of runAgentLoop({ categories: ['all'], maxMarkets, minVolume, maxDaysOut })) {
+    for await (const ev of runAgentLoop(loopConfig)) {
       steps++;
       const tag = ev.market?.marketID ? ` [${ev.market.marketID}]` : '';
       console.log(`  ${ev.step}/${ev.status}${tag} ${ev.message || ''}`);
