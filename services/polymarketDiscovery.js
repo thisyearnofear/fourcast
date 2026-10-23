@@ -9,6 +9,21 @@ import { weatherService } from './weatherService.js';
 import { cache, getCachedMarkets, setCachedMarkets, getCachedCatalog, setCachedCatalog } from './polymarketCache.js';
 import * as helpers from './polymarketHelpers.js';
 
+// Gamma returns outcomes/outcomePrices as JSON-encoded strings ("[\"Yes\",\"No\"]")
+// on the events endpoint but as real arrays elsewhere — index either shape.
+function asArray(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 /**
  * Fetch sports metadata including tag IDs for each sport
  */
@@ -682,8 +697,8 @@ export async function buildMarketCatalog(minVolume = 50000, eventTypeFilter = nu
         teams: metadata.teams,
         eventType: eventType,
         currentOdds: {
-          yes: parseFloat(market.outcomePrices?.[0] || enrichedData.orderBook?.bestAsk || 0.5),
-          no: parseFloat(market.outcomePrices?.[1] || enrichedData.orderBook?.bestBid || 0.5)
+          yes: parseFloat(asArray(market.outcomePrices)[0] || enrichedData.orderBook?.bestAsk || 0.5),
+          no: parseFloat(asArray(market.outcomePrices)[1] || enrichedData.orderBook?.bestBid || 0.5)
         },
         volume24h: enrichedData.volumeMetrics?.vol24h || parseFloat(market.volume24h || market.volume || 0),
         liquidity: enrichedData.marketEfficiency?.liquidityScore || parseFloat(market.liquidity || 0),

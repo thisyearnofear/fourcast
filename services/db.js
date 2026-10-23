@@ -766,6 +766,21 @@ export async function resolveForecast(marketId, actualOutcome) {
 }
 
 /**
+ * List forecasts still waiting on an outcome — the resolver sweep's input.
+ */
+export async function listUnresolvedForecasts() {
+  try {
+    const rows = await query(
+      `SELECT id, market_id, platform, market_title FROM agent_forecasts WHERE resolved = 0`
+    );
+    return rows;
+  } catch (error) {
+    console.error('Failed to list unresolved forecasts:', error);
+    return [];
+  }
+}
+
+/**
  * Derive log_loss for resolved forecasts that pre-date the 0014 migration.
  *
  * Backfill rather than re-scoring: the inputs (ai_probability, actual_outcome)

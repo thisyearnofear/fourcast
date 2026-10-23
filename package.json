@@ -44,7 +44,9 @@
     "check:surfaces": "node scripts/check-surface-registry.mjs",
     "check:docs": "node scripts/check-doc-links.mjs",
     "check:runtimes": "node scripts/check-runtimes.js",
-    "check:bundles": "node scripts/check-bundle-size.js"
+    "check:bundles": "node scripts/check-bundle-size.js",
+    "forecast:run": "node scripts/forecast-and-resolve.mjs --forecast",
+    "forecast:resolve": "node scripts/forecast-and-resolve.mjs --resolve"
   },
   "dependencies": {
     "@canton-network/dapp-sdk": "^1.4.0",
