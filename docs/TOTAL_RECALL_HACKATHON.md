@@ -35,8 +35,10 @@
 - [ ] Working demo + public repo — public repo yes; the memory demo lane exists on
       `/arena` but has nothing to show yet
 - [ ] Tatum dashboard account ID on the submission form — **account not created**
-- [ ] `MEMWAL_AGENT_ID` (the public key under *Delegate keys*) on the form — **agent not
-      created**
+- [x] `MEMWAL_AGENT_ID` (the public key under *Delegate keys*) for the form: **created
+      2026-10-23**. Account `0xa65e57ae15eaf308f17ee6c218033e30d122fd454733cca3e320c510ab69893c`,
+      delegate public key `0de77bec7ae0f7c5c4a63c7609fd08e96af1840c6db4a4533a775cc406d70db3`.
+      The mainnet relayer health check returns `write_ready: true`.
 
 **Judging:** 30% Walrus + Tatum integration · 30% technical quality (incl.
 successful **Tatum Sui RPC** integration) · 20% creativity · 20% presentation.
@@ -145,10 +147,10 @@ that only shows the wins will read as marketing.
       tests. The deliberate gRPC deviation is documented in
       [`docs/SUI.md`](./SUI.md). **Still needed: a Tatum account + API key, and one
       real mainnet read through it.**
-- [ ] Walrus Memory agent created; `MEMWAL_AGENT_ID` captured. The client
-      (`services/memory/memwalClient.js`) is built and configured, but no agent
-      exists on the dashboard yet, so the public key the form asks for is not yet
-      ours to paste.
+- [x] Walrus Memory agent created and `MEMWAL_AGENT_ID` captured (2026-10-23, see the
+      deliverables list above). The writer is configured on the server and switched on.
+      Memories are written when real forecasts resolve; the first ones settle around
+      Nov 4.
 - [x] Memory schema decided and implemented — four flat namespaces, the append-only
       version ladder, and the `fourcast.memory/v1` text contract
       ([`docs/WALRUS_MEMORY.md`](./WALRUS_MEMORY.md)). **Still needed: the first
