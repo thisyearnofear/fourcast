@@ -81,8 +81,13 @@ axis.
 — it is not in telegraph.yaml, /status, or /.well-known, and /query cannot
 reach it. It is exercised by direct call
 (`scripts/demo-event-outcome.mjs`). Adding it to the on-chain set takes
-`updateMiner(148, …)` on Base Sepolia — never `registerMiner` — and waits on
-Season II rules confirming multi-intent miners score per-intent.
+`updateMiner(148, …)` on Base Sepolia, never `registerMiner`. The H2 rules
+(published 2026-10-22) settle the per-intent question: "Each Miner–Intent pair
+is tested for its specific task and against relevant same-Intent competition."
+The missing scorer registry entry is still a finding. Mission 14 lists this
+Intent as mission-critical (the self-settling conditional escrow), which is
+the case for registering it; see `docs/HACKATHONS.md` → *What the rules mean
+for us*.
 
 ---
 

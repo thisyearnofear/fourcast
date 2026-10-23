@@ -43,20 +43,87 @@ relying on them.
   the miner + calibration + credibility surface, per the miner-first
   repositioning recorded below. Not entering more than one track.
 
-### Telegraph Protocol Hackathon Season II — 🔴 live, scoring
-30 days, $10,000 prize pool. Season I closed without a Fourcast placement. This
-section is the plan for Season II so we enter instrumented instead of blind.
-**Now scoring:** node `fourcast-sports-intelligence` is `active`,
+### Telegraph Protocol Hackathon Season II (H2) — rules published 2026-10-22; opens Nov 1
+Season I closed without a Fourcast placement. This section is the plan for
+Season II so we enter instrumented instead of blind.
+
+#### Official rules (read 2026-10-23 from [hackathon.telegraphprotocol.com/rules](https://hackathon.telegraphprotocol.com/rules))
+- **Window:** Nov 1 – **Dec 1, 2026 23:59 UTC** (one deadline for all three
+  tracks). Nov 14 = Apps first-integration milestone (a progress check, not a
+  cut). Nov 20 = community showcase. Dec 2–8 = verification + judging; provisional
+  results from Dec 9, with a 72 h appeal window.
+- **Evidence must come from the event period.** "H2-specific activity and
+  transaction evidence must come from the event period": miner activity before
+  Nov 1 (epoch 430 etc.) is background, not H2 evidence. Earlier code may be
+  reused, but major reused components must be disclosed.
+- **Prizes: $10,000** = $7,000 main + $3,000 for separate December challenges
+  (own rules, no deadline extension).
+  - Apps & Agents $3,000: 8 delivery × $225, excellence $700 / $350 / $150.
+  - Miners/Providers $2,000: 4 delivery × $300, excellence $500 / $300.
+  - Evaluators $2,000: 4 delivery × $300, excellence $500 / $300.
+  A group can win one delivery + one excellence award per track. Related
+  wallets and jointly controlled teams count as **one group**.
+- **To win:** ≥70/100 and the track's technical minimum.
+  - **Providers (our miner):** independently tested intelligence quality 35
+    (**min 24**) · reliability/uptime/capacity 20 · useful Intent coverage and
+    apps enabled 15 · verified use by H2 mission apps 10 · cost/latency/serving
+    economics 10 · integration/docs 10. Each Miner–Intent pair is tested on its
+    own task against same-Intent competitors, **so multi-intent miners are
+    scored per intent** (this answers the open question in
+    `TELEGRAPH_FINDINGS.md` F3). The coverage points favour Intents the 15
+    missions need. A new capability can qualify before demand exists.
+  - **Apps & Agents:** technical quality and mainnet readiness 35 (**min 24**) ·
+    commercial viability 30 · independent adoption 15 · Telegraph integration 10 ·
+    proof/demo/repeatability 10. A hard requirement is **at least one genuinely
+    autonomous machine-to-machine purchase or sale through the supported
+    Telegraph flow**; testnet qualifies.
+  - **Evaluators:** measurement validity 40 (**min 28**) · integrity 20 ·
+    repeatability 15 · coverage/improvement 20 · docs 5.
+- **Delivery awards favour breadth:** the most distinct completed missions,
+  then distinct apps, then missions only one group covers.
+- **Submission (by Dec 1):** project details + a reviewer-access link, a 2–5
+  minute demo, beginner-friendly run steps (stating the network, costs and
+  limitations), evidence (receipts, requests, endpoints, tests), a short public
+  summary, and showcase permissions. **Social posts, tags and views are not
+  scored** (Season I's X weighting is gone).
+- **Accurate claims:** state the network (we run on Base Sepolia, i.e. testnet)
+  and what was actually verified. Testnet traffic is never presented as paying
+  production use.
+
+#### What the rules mean for us (proposal, pending the user's track decision)
+- **Sports is not one of the 15 missions** (Exchange, Stablecoin, Institutional
+  Markets, Legal, Conflict Intelligence, Resources & Agriculture, Consumer
+  Platform, Commodities, Personal Agent, Model Economy, Autonomous Systems,
+  Mining & Power, Asset Management, Web3 Native & DeFi, Consumer Automation).
+  `GAME_RESULT` / `SPORTS_SCORE` alone therefore earn little of the 15
+  coverage points.
+- **`EVENT_OUTCOME_RESOLUTION` is mission-critical.** Mission 14 (Web3 Native &
+  DeFi) has the example build "self-settling conditional escrow", which buys
+  `EVENT_OUTCOME_RESOLUTION` (Hybrid, target < 5 s, shared by 4 missions). That
+  is our prediction-market core, and the handler already exists, flag-gated and
+  unregistered.
+- **Providers track (primary):** keep `GAME_RESULT` and register
+  `EVENT_OUTCOME_RESOLUTION` via `updateMiner(148, …)` early in the window
+  (never `registerMiner`). Its quality has to clear 24/35 on its own.
+- **Apps & Agents track (stretch):** the Fourcast agent autonomously buys
+  `EVENT_OUTCOME_RESOLUTION` through Telegraph to resolve a position or
+  conditional settlement (Mission 14), and its pre-outcome receipt cites the
+  purchase. This is the old P4 work. It needs the Telegraph purchase flow
+  working by the Nov 14 milestone. Our app consuming our own miner does not
+  count as independent use.
+- **Evaluators: skip.** The agreement-gate finding stands, and it ships as the
+  P6 findings report, not as a track entry.
+
+#### Network state before H2
+**Scoring (pre-H2):** node `fourcast-sports-intelligence` is `active`,
 `last_scored_epoch` **430** as of 2026-10-21 21:21 UTC (read live via
 `npm run survey` in `telegraph-miner/`), 11 requests served, `GAME_RESULT` rank
 **5/14** of 14 measured miners at 3.8e-6. `SPORTS_SCORE` remains **unmeasured by
 the network** (1.8e-12, rank 8/14) — a score there means nothing, so it is not
 an optimisation target. The miner's own `/health` is `ok` with zero upstream
 failures (txline 16 ok, espn 761 ok) and a 110,316-fixture snapshot.
-Registration is through the Season II page at
-[telegraphprotocol.com](https://telegraphprotocol.com); exact prize split,
-judging criteria, and qualification requirements publish with the final rules —
-**re-verify all of it before relying on this plan.**
+Registration is on [hackathon.telegraphprotocol.com](https://hackathon.telegraphprotocol.com)
+(one registration covers all three tracks; app builders pick a mission in week one).
 
 #### Why we did not win Season I (root cause, not vibes)
 Our Season I entry was `fourcast-sports-intelligence` (Track 1 miner,
@@ -134,9 +201,10 @@ before sizing, and commits a receipt before the outcome" is a stronger Track 3
 app than any Season I winner and reuses machinery we already ship.
 
 **P5 · Package for a judge with 3 minutes and an agent with 0 patience.**
-`/openapi.json`, `/llms.txt`, `/.well-known/`, a generated social card (X
-engagement was ~25% of Season I score), a short demo film cut from real
-sessions, and one link-to-chain per claim.
+`/openapi.json`, `/llms.txt`, `/.well-known/`, a generated social card, a
+short demo film cut from real sessions, and one link-to-chain per claim. (X
+engagement was ~25% of the Season I score; the H2 rules **do not score social
+at all**, so the 2–5 minute demo and the reproducible run steps carry this now.)
 
 **P6 · Publish our own bug report.**
 We already found real network issues (the `new Date.now()` crash in the
@@ -160,8 +228,10 @@ positioning claims.
   worth a look for Season II.
 
 #### Season II readiness checklist
-- [ ] Confirm Season II rules, tracks, prize split, and qualification on the
-      official page (do not trust this plan's numbers). **P6 proof inquiry
+- [x] Confirm Season II rules, tracks, prize split, and qualification on the
+      official page: **done 2026-10-23**, summarised under *Official rules*
+      above. Still open: **register** on the H2 site and pick tracks (pending
+      the user's decision). **P6 proof inquiry
       needs no reply first** — the product no longer depends on
       `stat-validation` clearing (probe exhibit stays attached to the open
       proof ask; app receipt/SSE paths work offline).

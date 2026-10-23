@@ -24,7 +24,14 @@ Consolidated critical path:
 1. Phase 0 (needs user): TxLINE resubscription go-ahead · `SUI_NETWORK` conflict decision · mainnet memory credentials.
 2. Phase 1: apply migrations 0014→0015→0016 on Turso → `memories-to-mainnet.mjs --write` (≥10 real memories) → merge 🟡 work → run recall demo.
 3. Phase 2: WP8 items 1–3 + `docs/BLOG_TOTAL_RECALL.md` + items 4–5.
-4. Phase 3: judge-path walkthrough (Nov 6–8) → submit (Nov 10 17:00 UTC).
+4. Phase 3: judge-path walkthrough (Nov 6–8) → submit Total Recall (Nov 10 17:00 UTC).
+5. Phase 4 — **Telegraph H2, Nov 1 – Dec 1 23:59 UTC** (rules published 2026-10-22, summarised in
+   `docs/HACKATHONS.md`): register; Providers track = `GAME_RESULT` + register
+   `EVENT_OUTCOME_RESOLUTION` (Mission 14 mission-critical) via `updateMiner(148, …)`; stretch
+   Apps & Agents entry (agent autonomously buys `EVENT_OUTCOME_RESOLUTION` through Telegraph) with
+   a first purchase by the Nov 14 milestone. Track choice is pending the user. Only H2-period
+   activity counts as evidence. Nov 1–10 overlaps Total Recall, so Total Recall has priority
+   until Nov 10.
 
 Baseline verified green on 2026-10-23: 603 tests / 62 files, `tsc --noEmit` clean, `check:runtimes` 100/100, `check:docs` 58/58.
 
@@ -46,8 +53,10 @@ Two live initiatives share one foundation. **Total Recall** (Tatum × Walrus Mem
 Markets & Sports Prediction) requires ≥10 memories written to **Sui mainnet** by 10 Nov 2026
 17:00 UTC, and rewards a *learning loop that visibly changes the product*. Our credibility /
 calibration state exists but is (a) computed with a silent bug and (b) trapped in one
-deployment. **Telegraph Season II** is already scoring our miner and needs the P3–P6 items plus
-a TxLINE renewal that expires ~5 days from now.
+deployment. **Telegraph Season II (H2)** runs Nov 1 – Dec 1 2026 (rules published 2026-10-22).
+The network already scores our miner, but only activity from Nov 1 onward counts as H2
+evidence. TxLINE was renewed on 2026-10-23 and is valid until 2026-11-20, so it **must be renewed
+again before Dec 1**.
 
 Decisions taken (user): cover both in full; commit to the x402-settled-on-Sui leg; ship the
 memory writer as a batch script first, then wire it into the resolution pipeline; **no synthetic
@@ -106,6 +115,11 @@ Consequence: the memory layer's content depends on WP1. Memory work could not st
 | Nov 1 | x402 leg in/out decision (WP5) | Dev C |
 | Nov 2–6 | Telegraph P3/P5/P6, demo route, blog | B (P3/P5/P6), A (demo/blog) |
 | **Nov 9** | submit (Nov 10 17:00 UTC is the hard close; submission always takes longer than it thinks) | Dev A |
+| **Nov 1** | Telegraph H2 opens; register, pick tracks, `updateMiner(148, …)` if `EVENT_OUTCOME_RESOLUTION` is approved | lead |
+| Nov 14 | Telegraph Apps first-integration milestone (progress check; first Telegraph purchase or a stated blocker) | lead |
+| **by Nov 19** | TxLINE renewal #2 (expires 2026-11-20; cron reminders Nov 13/17/19) | lead |
+| Nov 20 | Telegraph community showcase | lead |
+| **Dec 1 23:59 UTC** | Telegraph H2 submission (all tracks): demo 2–5 min, run steps, evidence, summary | lead |
 
 ---
 
@@ -514,9 +528,8 @@ Tick only your own section. `✅` merged to `main` · `🟡` done in worktree, u
 - ⏸ `docs/BLOG_TOTAL_RECALL.md` — the mandatory blog deliverable, **not started**. It
   needs the learning curve, and the learning curve needs real rungs, so it is
   downstream of the mainnet run, not parallel to it.
-- ⏸ WP0 TxLINE resubscription — **awaiting explicit user confirmation** (Oct 26 expiry).
-  The miner's `/health` reports `txline_renewal: null`, so the watchdog is not
-  tracking it either: nothing will warn us. Treat the date as hard.
+- ✅ WP0 TxLINE resubscription: done 2026-10-23 (free tier, valid until 2026-11-20). `/health`
+  now reports `txline_renewal` with `days_left`, and reminders fire Nov 13/17/19.
 - ✅ **Docs consolidated (21 Oct)** — 35 tracked docs → **16 live + 7 archived**, with
   `docs/INDEX.md` as the single table of contents. Merges: `TATUM_SUI` + `X402_SUI`
   → `SUI.md`; the four Canton docs → `CANTON.md`; `DEPLOYMENT` + `GIT_HOOKS` →
