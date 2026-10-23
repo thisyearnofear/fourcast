@@ -30,6 +30,16 @@ Baseline verified green on 2026-10-23: 603 tests / 62 files, `tsc --noEmit` clea
 
 ---
 
+## Decisions (2026-10-23)
+
+Three Phase-0 calls, all resolved:
+
+1. **TxLINE resubscription — renew before ~2026-10-26.** Go-ahead given (subject to confirming the renewal price). Run `scripts/txline-subscribe-and-activate.mjs`, rewrite `TXLINE_API_TOKEN` / `TXLINE_GUEST_JWT` / `TXLINE_SUBSCRIBED_UNTIL` in `/home/linuxuser/fourcast/.env.agent` on `nuncio-vultr`, `pm2 restart telegraph-miner --update-env`, verify `GET :8402/health` → `txline_renewal.expired:false`. `stat-validation` 500s remain a known free-tier limitation — not a blocker.
+2. **`SUI_NETWORK` conflict — split the read var.** MemWal now reads `SUI_MEMORY_NETWORK` first (defaulting to `SUI_NETWORK`, then mainnet), so the memory chain is named independently of the shared Tatum client. The x402 rail keeps its fail-closed cross-chain check against `SETTLEMENT_NETWORK`: memory stays mainnet (Total Recall deliverable), x402 stays testnet (demo rail, no real money), and the rail is dark by default unless `TATUM_SUI_RPC_URL` is configured for the settlement network. No deliverable sacrificed; the refusal is intended, not a bug.
+3. **Mainnet memory credentials — provide now, run Oct 24–27.** Apply Turso migrations 0014→0015→0016 first, dry-run `scripts/memories-to-mainnet.mjs`, then `--write` (≥10 real memories). `FOURCAST_MEMORY_MIN_SAMPLES` (default 20) gates thin claims.
+
+---
+
 ## Context
 
 Two live initiatives share one foundation. **Total Recall** (Tatum × Walrus Memory, Track 1:

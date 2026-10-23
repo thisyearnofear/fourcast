@@ -44,7 +44,7 @@ function readConfig() {
     privateKey,
     accountId: process.env.MEMWAL_ACCOUNT_ID || '',
     relayerUrl: relayerUrl.replace(/\/+$/, ''),
-    network: normaliseNetwork(process.env.SUI_NETWORK),
+    network: normaliseNetwork(process.env.SUI_MEMORY_NETWORK || process.env.SUI_NETWORK),
     minSamples: positiveInt(process.env.FOURCAST_MEMORY_MIN_SAMPLES, DEFAULT_MIN_SAMPLES),
     timeoutMs: positiveInt(process.env.FOURCAST_MEMORY_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),
   };
