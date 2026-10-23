@@ -105,6 +105,20 @@ Season II so we enter instrumented instead of blind.
 - **Providers track (primary):** keep `GAME_RESULT` and register
   `EVENT_OUTCOME_RESOLUTION` via `updateMiner(148, …)` early in the window
   (never `registerMiner`). Its quality has to clear 24/35 on its own.
+  - **Gap to close first:** the network defines this Intent broadly. From the
+    H2 intents catalogue: "Resolves objective real-world event outcomes for
+    prediction markets and conditional contracts using quorum oracles";
+    reference sources "Polymarket API / NewsAPI"; miners "scrape consensus
+    from 10+ independent news outlets, sports APIs, or flight statuses";
+    target < 5 s. Our handler (`src/intents/eventOutcomeResolution.js`) only
+    wraps `GAME_RESULT`, so it would return `no_result` for every non-sports
+    question and score badly.
+  - **The cheapest way to broaden it:** use settled prediction-market state as
+    one oracle. `scripts/forecast-and-resolve.mjs` already contains a strict,
+    tested reader for Polymarket (Gamma) and Kalshi settlement
+    (`deriveOutcome`). Combined with the sports path, that gives two
+    independent legs; any question neither can settle is still reported as
+    absent. Do this after Total Recall (Nov 10), before `updateMiner`.
 - **Apps & Agents track (stretch):** the Fourcast agent autonomously buys
   `EVENT_OUTCOME_RESOLUTION` through Telegraph to resolve a position or
   conditional settlement (Mission 14), and its pre-outcome receipt cites the
