@@ -2,15 +2,20 @@
  * Tatum Sui RPC client
  *
  * The onchain read path for everything Sui. One function — `tatumSuiRpc` —
- * speaks JSON-RPC 2.0 to the Tatum gateway over the shared
- * `fetchWithBudget` primitive (timeout, retries, circuit breaker), and every
- * other export is a convenience built on it.
+ * is the frozen seam callers use; under it we speak GraphQL to the Tatum
+ * gateway over the shared `fetchWithBudget` primitive (timeout, retries,
+ * circuit breaker). Every other export is a convenience built on it.
  *
- * Deliberate deviation: MemWal's docs prefer `SuiGrpcClient` for direct reads,
- * and Sui has formally deprecated JSON-RPC in favour of gRPC. We still read
- * through Tatum's JSON-RPC gateway because the hackathon grades the *Tatum*
- * integration — a read that doesn't go through Tatum scores nothing. See
- * docs/SUI.md.
+ * Transport note: Tatum's Sui gateways now expose GraphQL only — Sui
+ * deprecated JSON-RPC, and the gateway's method discovery returns just
+ * `POST {endpoint}/graphql`. `tatumSuiRpc` keeps its (method, params)
+ * signature and translates the handful of methods we use into GraphQL
+ * queries, mapping results back to the JSON-RPC shapes callers were written
+ * against. Unknown methods reject rather than guess.
+ *
+ * We read through Tatum (rather than MemWal's preferred SuiGrpcClient)
+ * because the hackathon grades the *Tatum* integration — a read that
+ * doesn't go through Tatum scores nothing. See docs/SUI.md.
  *
  * Failure shape (same contract as services/redisService.js):
  *   - NOT configured -> `tatumSuiRpc` resolves `null` and every helper
@@ -126,35 +131,118 @@ function rpcError(code, message, rpcError = null, cause = undefined) {
   return err;
 }
 
-let nextRequestId = 1;
+/**
+ * Supported read methods, expressed as GraphQL operations against the
+ * Sui schema Tatum proxies. `variables` builds the request variables from
+ * the JSON-RPC-style params array; `map` turns `data` back into the shape
+ * callers were written against, so nothing above this table knows the
+ * transport changed.
+ */
+const METHODS = {
+  sui_getChainIdentifier: {
+    query: 'query chainId { chainIdentifier }',
+    variables: () => ({}),
+    map: (data) => data?.chainIdentifier ?? null,
+  },
+
+  sui_getLatestCheckpointSequenceNumber: {
+    query: 'query latestCheckpoint { checkpoint { sequenceNumber } }',
+    variables: () => ({}),
+    map: (data) => data?.checkpoint?.sequenceNumber ?? null,
+  },
+
+  // params: [objectId, options?]. Returns the JSON-RPC-ish
+  // { data: {objectId, version, digest} } / { error: {code} } pair that
+  // assertMemoryObjectOnChain consumes — including the tri-state: a null
+  // `object` means the chain answered "not here" (exists:false), distinct
+  // from "could not ask" (the caller catches a throw → exists:null).
+  sui_getObject: {
+    query:
+      'query getObject($address: SuiAddress!) { ' +
+      'object(address: $address) { address version digest } }',
+    variables: (params) => ({ address: params[0] }),
+    map: (data) => {
+      if (!data || !('object' in data)) {
+        throw rpcError('TATUM_BAD_ENVELOPE', 'tatum sui_getObject: data has no object field');
+      }
+      const o = data.object;
+      if (!o) return { error: { code: 'notExists' }, data: null };
+      return {
+        data: { objectId: o.address, version: o.version, digest: o.digest },
+        error: null,
+      };
+    },
+  },
+
+  // params: [digest, options?]. Maps GraphQL connections/enums back to the
+  // flat arrays and lowercase status strings the payment verifier reads:
+  // effects.status becomes { status: 'success'|'failure' }, balanceChanges
+  // nodes become { coinType: <repr string>, owner: { address }, amount }.
+  sui_getTransactionBlock: {
+    query:
+      'query getTx($digest: String!) { transactionBlock(digest: $digest) { ' +
+      'digest effects { status } ' +
+      'balanceChanges(first: 50) { nodes { coinType { repr } amount owner { address } } } } }',
+    variables: (params) => ({ digest: params[0] }),
+    map: (data) => {
+      if (!data || !('transactionBlock' in data)) {
+        throw rpcError('TATUM_BAD_ENVELOPE', 'tatum sui_getTransactionBlock: data has no transactionBlock field');
+      }
+      const tx = data.transactionBlock;
+      if (!tx) return null;
+      return {
+        digest: tx.digest,
+        effects: { status: { status: String(tx.effects?.status || '').toLowerCase() } },
+        balanceChanges: (tx.balanceChanges?.nodes || []).map((n) => ({
+          coinType: n?.coinType?.repr ?? null,
+          owner: n?.owner?.address ? { address: n.owner.address } : null,
+          amount: n?.amount,
+        })),
+      };
+    },
+  },
+};
 
 /**
- * JSON-RPC 2.0 POST to the Tatum Sui gateway.
+ * Sui read through the Tatum gateway (GraphQL transport).
  *
- * @param {string} method   e.g. 'sui_getObject', 'sui_getTransactionBlock',
- *                          'sui_getEvents', 'suix_getBalance'
- * @param {Array|object} params  passed through verbatim
+ * @param {string} method   one of METHODS — the JSON-RPC method name kept
+ *                          for the frozen cross-leg contract
+ * @param {Array|object} params  positional params as before ([objectId],
+ *                          [digest], or [] for parameterless reads)
  * @param {object} [opts]
  * @param {number} [opts.timeoutMs]
  * @param {number} [opts.retries]
- * @returns {Promise<object|null>} the envelope's `result`, or null when
+ * @returns {Promise<object|null>} the mapped result, or null when
  *   TATUM_API_KEY is unset (fail-closed, never throws for missing config).
  * @throws {Error & {code, rpcError}} on transport failure, non-2xx, a
- *   JSON-RPC `error` member, or a malformed envelope.
+ *   GraphQL `errors` member, a malformed envelope, or an unsupported method.
  */
 export async function tatumSuiRpc(method, params = [], opts = {}) {
   const cfg = readConfig();
   if (!cfg.apiKey) return null;
 
-  const url = resolvedUrl(cfg);
-  const id = nextRequestId++;
+  const spec = METHODS[method];
+  if (!spec) {
+    throw rpcError(
+      'TATUM_UNSUPPORTED_METHOD',
+      `tatum ${method}: no GraphQL mapping — add one to METHODS in tatumSuiClient.js`,
+    );
+  }
+
+  const base = resolvedUrl(cfg);
+  const url = base.endsWith('/graphql') ? base : `${base}/graphql`;
   let envelope;
   try {
     const res = await fetchWithBudget(url, {
       provider: PROVIDER,
       method: 'POST',
       headers: { 'x-api-key': cfg.apiKey },
-      body: { jsonrpc: '2.0', id, method, params },
+      body: {
+        operationName: method,
+        query: spec.query,
+        variables: spec.variables(params),
+      },
       timeoutMs: opts.timeoutMs ?? cfg.timeoutMs,
       retries: opts.retries ?? 2,
     });
@@ -173,18 +261,17 @@ export async function tatumSuiRpc(method, params = [], opts = {}) {
   if (!envelope || typeof envelope !== 'object') {
     throw rpcError('TATUM_BAD_ENVELOPE', `tatum ${method} returned a non-object envelope`);
   }
-  if (envelope.error) {
-    const e = envelope.error;
+  if (Array.isArray(envelope.errors) && envelope.errors.length > 0) {
     throw rpcError(
       'TATUM_RPC_ERROR',
-      `tatum ${method} rejected: ${e.code} ${e.message || ''}`.trim(),
-      e,
+      `tatum ${method} rejected: ${envelope.errors.map((e) => e.message || e).join('; ')}`,
+      envelope.errors,
     );
   }
-  if (!('result' in envelope)) {
-    throw rpcError('TATUM_BAD_ENVELOPE', `tatum ${method} envelope has neither result nor error`);
+  if (!envelope.data || typeof envelope.data !== 'object') {
+    throw rpcError('TATUM_BAD_ENVELOPE', `tatum ${method} envelope has neither data nor errors`);
   }
-  return envelope.result;
+  return spec.map(envelope.data);
 }
 
 /**

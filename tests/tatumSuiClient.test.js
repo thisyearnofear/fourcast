@@ -3,9 +3,10 @@
  *
  * Pins the frozen cross-leg contract:
  *   tatumSuiRpc(method, params, opts?) -> Promise<object|null>
- *   - resolves with the envelope's `result`
+ *   - resolves with the mapped result (JSON-RPC-shaped even though the
+ *     wire transport is GraphQL — callers above never see the change)
  *   - rejects with Error & {code, rpcError} on transport failure, non-2xx,
- *     a JSON-RPC `error`, or a malformed envelope
+ *     a GraphQL `errors` member, or a malformed envelope
  *   - TATUM_API_KEY unset -> resolves null, never throws, never calls fetch
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -30,13 +31,13 @@ function jsonResponse(body, status = 200) {
   };
 }
 
-/** Route mock by the JSON-RPC method in the request body. */
+/** Route mock by the operationName in the GraphQL request body. */
 function fetchRouter(handlers) {
   return vi.fn(async (url, opts) => {
     const req = JSON.parse(opts.body);
-    const handler = handlers[req.method];
-    if (!handler) throw new Error(`no mock for ${req.method}`);
-    const out = handler(req.params, req);
+    const handler = handlers[req.operationName];
+    if (!handler) throw new Error(`no mock for ${req.operationName}`);
+    const out = handler(req.variables, req);
     return out instanceof Response ? out : jsonResponse(out);
   });
 }
@@ -65,23 +66,32 @@ describe('configuration', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it('defaults to the mainnet gateway and sends the key as x-api-key', async () => {
-    global.fetch = fetchRouter({ sui_getChainIdentifier: () => ({ result: 'abc123', id: 1, jsonrpc: '2.0' }) });
+  it('defaults to the mainnet gateway /graphql and sends the key as x-api-key', async () => {
+    global.fetch = fetchRouter({ sui_getChainIdentifier: () => ({ data: { chainIdentifier: 'abc123' } }) });
     const out = await tatumSuiRpc('sui_getChainIdentifier');
     expect(out).toBe('abc123');
     const [url, opts] = global.fetch.mock.calls[0];
-    expect(url).toBe('https://sui-mainnet.gateway.tatum.io');
+    expect(url).toBe('https://sui-mainnet.gateway.tatum.io/graphql');
     expect(opts.method).toBe('POST');
     expect(opts.headers['x-api-key']).toBe(KEY);
     const body = JSON.parse(opts.body);
-    expect(body).toMatchObject({ jsonrpc: '2.0', method: 'sui_getChainIdentifier', params: [] });
+    expect(body.operationName).toBe('sui_getChainIdentifier');
+    expect(body.query).toContain('chainIdentifier');
   });
 
   it('honours SUI_NETWORK=testnet', async () => {
     process.env.SUI_NETWORK = 'testnet';
-    global.fetch = fetchRouter({ m: () => ({ result: null }) });
-    await tatumSuiRpc('m');
-    expect(global.fetch.mock.calls[0][0]).toBe('https://sui-testnet.gateway.tatum.io');
+    global.fetch = fetchRouter({ sui_getChainIdentifier: () => ({ data: { chainIdentifier: 't' } }) });
+    await tatumSuiRpc('sui_getChainIdentifier');
+    expect(global.fetch.mock.calls[0][0]).toBe('https://sui-testnet.gateway.tatum.io/graphql');
+  });
+
+  it('rejects methods with no GraphQL mapping rather than guessing', async () => {
+    global.fetch = vi.fn();
+    await expect(tatumSuiRpc('suix_getBalance', ['0x1'])).rejects.toMatchObject({
+      code: 'TATUM_UNSUPPORTED_METHOD',
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('refuses a TATUM_SUI_RPC_URL on the wrong network rather than answering wrong', async () => {
@@ -95,13 +105,12 @@ describe('configuration', () => {
 });
 
 describe('envelope handling', () => {
-  it('rejects with code + rpcError on a JSON-RPC error', async () => {
-    global.fetch = fetchRouter({
-      sui_getObject: () => ({ error: { code: -32602, message: 'Invalid object id' } }),
-    });
+  it('rejects with code + rpcError on a GraphQL errors member', async () => {
+    const errors = [{ message: 'Invalid object id' }];
+    global.fetch = fetchRouter({ sui_getObject: () => ({ errors }) });
     await expect(tatumSuiRpc('sui_getObject', ['0xZZ'])).rejects.toMatchObject({
       code: 'TATUM_RPC_ERROR',
-      rpcError: { code: -32602, message: 'Invalid object id' },
+      rpcError: errors,
     });
   });
 
@@ -113,8 +122,8 @@ describe('envelope handling', () => {
     });
   });
 
-  it('rejects on an envelope with neither result nor error', async () => {
-    global.fetch = fetchRouter({ sui_getObject: () => ({ id: 1, jsonrpc: '2.0' }) });
+  it('rejects on an envelope with neither data nor errors', async () => {
+    global.fetch = fetchRouter({ sui_getObject: () => ({ statusCode: 200 }) });
     await expect(tatumSuiRpc('sui_getObject', ['0x1'])).rejects.toMatchObject({
       code: 'TATUM_BAD_ENVELOPE',
     });
@@ -126,18 +135,16 @@ describe('assertMemoryObjectOnChain', () => {
 
   it('renders object=id@version · digest · checkpoint on success', async () => {
     global.fetch = fetchRouter({
-      sui_getObject: (params) => ({
-        result: {
-          data: {
-            objectId: params[0],
-            version: '412',
+      sui_getObject: (vars) => ({
+        data: {
+          object: {
+            address: vars.address,
+            version: 412,
             digest: 'Dg1aBcDeFgH2iJkLmNoPqRsTuVwXyZ',
-            type: '0x2::memwal::Account',
-            owner: { AddressOwner: '0x'.concat('b'.repeat(64)) },
           },
         },
       }),
-      sui_getLatestCheckpointSequenceNumber: () => ({ result: '987654' }),
+      sui_getLatestCheckpointSequenceNumber: () => ({ data: { checkpoint: { sequenceNumber: 987654 } } }),
     });
     const out = await assertMemoryObjectOnChain(OBJECT_ID);
     expect(out).toMatchObject({
@@ -155,7 +162,7 @@ describe('assertMemoryObjectOnChain', () => {
 
   it('exists:false only when the chain actually says no', async () => {
     global.fetch = fetchRouter({
-      sui_getObject: () => ({ result: { error: { code: 'notExists', object_id: OBJECT_ID } } }),
+      sui_getObject: () => ({ data: { object: null } }),
     });
     const out = await assertMemoryObjectOnChain(OBJECT_ID);
     expect(out.exists).toBe(false);
