@@ -60,11 +60,12 @@ const PROVIDERS = {
     baseURL: 'https://integrate.api.nvidia.com/v1',
     keyEnv: 'NVIDIA_API_KEY',
     modelEnv: 'NVIDIA_MODEL',
-    // integrate.api.nvidia.com retired meta/llama-3.3-70b-instruct (410) and
-    // several catalog ids answer 404 "Function not found" for older keys —
-    // ordered fallbacks from the current catalog (verified 2026-10-23).
+    // integrate.api.nvidia.com retired meta/llama-3.3-70b-instruct (410).
+    // These ids are from the 2026-10-23 catalog but did NOT answer live for
+    // our key (404 "Function not found"); z-ai/glm-5.3 was left out because
+    // it timed out at 75s, which would stall failover for minutes. Re-verify
+    // before relying on this leg.
     defaultModels: [
-      'z-ai/glm-5.3',
       'nvidia/nemotron-3-super-120b-a12b',
       'deepseek-ai/deepseek-v4.1-flash',
     ],
