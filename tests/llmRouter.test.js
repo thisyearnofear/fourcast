@@ -83,7 +83,7 @@ describe('chatCompletion model fallback', () => {
 
   it('429 retries the same model before moving on', async () => {
     for (const k of ['VERCEL_GATEWAY_API_KEY', 'BAI_API_KEY', 'VENICE_API_KEY', 'OPENROUTER_API_KEY']) delete process.env[k];
-    const model = 'z-ai/glm-5.3'; // nvidia defaultModels[0], attempts=3
+    const model = 'nvidia/nemotron-3-super-120b-a12b'; // nvidia defaultModels[0], attempts=3
     const key = `${BASE_URLS.nvidia}|${model}`;
     behavior.set(key, [new APIError(429, 'slow'), new APIError(429, 'slow'), GOOD]);
     const res = await ask();
