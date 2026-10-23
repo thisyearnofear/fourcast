@@ -10,6 +10,31 @@ relying on them.
 
 ## Active
 
+### Strike Hackathon — perps on V2 CLOB — 🟡 candidate, deadline extended (announced 21–23 Oct 2026)
+- **What:** Strike (perpetuals protocol on Cardano/Ethereum/Solana; V2 = CLOB +
+  dedicated execution layer with on-chain locker settlement) invites integrations
+  across trading tools, automation, social trading, data, and new apps. Prize
+  pool 6,000 STRIKE (3k/2k/1k); top projects may get direct investment.
+- **Our entry:** **Fourcast with a Strike venue adapter** — the mandate-bound
+  autonomous trader lane. Every submission will claim AI-trading performance;
+  we prove mandate adherence with pre-fill decision receipts reconciled against
+  Strike's own fills/positions record, calibrated Brier-style. Enter nothing
+  else — perps dashboards (Hizz), global copy trading (Strike Copilot), and
+  memecoin copy-trade (Bolt) lanes are already occupied by named submissions.
+- **Submission:** [`docs/STRIKE_INTEGRATION.md`](STRIKE_INTEGRATION.md) —
+  verified API facts, the frozen adapter contract (`services/strike/*`),
+  the five-gate mandate mapped to perps physics, phase plan, and checklist.
+- **Timeline:** original deadline 23 Oct 2026 was extended per the organizers
+  (confirmation + new date + the submission form link come via Strike's official
+  channels — join the Discord; verify before relying on any date here).
+- **Prerequisites to start Phase 0:** builder-code registration
+  (`app.strikefinance.org/builder-codes`) and a **testnet** API wallet
+  (`app.strikefinance.org/api-keys`); funding only needed for a mainnet demo.
+- **Risk:** the calendar was extended into ambiguity — lock the new date the
+  moment the form publishes. Second risk: our edge discovery is
+  prediction-market native; the perps physics (funding, liquidation) is new, so
+  gate 3 (tail-loss) and gate 1 (edge net of fees+funding) carry the real work.
+
 ### Total Recall — Tatum × Walrus Memory — 🔴 open, build window 20 Oct – 10 Nov 2026
 - **What:** build an app that **remembers** — Walrus Memory on Sui mainnet as
   the memory substrate, Tatum Sui RPC + Data APIs for onchain reads. 3 tracks

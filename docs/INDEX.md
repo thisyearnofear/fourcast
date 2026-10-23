@@ -28,6 +28,7 @@ only plan; the others here describe how the system works, not what to do next.
 | [`WALRUS_MEMORY.md`](./WALRUS_MEMORY.md) | The memory layer: namespaces, the ladder, precedence, cost |
 | [`SUI.md`](./SUI.md) | Sui as a chain: Tatum JSON-RPC reads + x402 self-settled payments |
 | [`TXLINE_INTEGRATION.md`](./TXLINE_INTEGRATION.md) | Bookmaker consensus odds, Merkle proofs, cross-venue edge |
+| [`STRIKE_INTEGRATION.md`](./STRIKE_INTEGRATION.md) | Strike V2 perps as a venue: Ed25519 API-wallet adapter, mandate-mapped gates, receipts reconciled against Strike's own fills record |
 | [`CANTON.md`](./CANTON.md) | Canton: v2 atomic settlement, the BitSafe gate, the runbook, the wallet roadmap |
 | [`FEATURES.md`](./FEATURES.md) | What the product can do, surface by surface |
 
