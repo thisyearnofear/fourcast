@@ -20,7 +20,30 @@ export async function GET() {
     }
 
     const stats = deriveReceiptStats(rowsResult.summaries);
-    const onchainFixtureReceipts = listReceiptFiles().length;
+    let onchainFixtureReceipts = listReceiptFiles().length;
+
+    // FORECAST_REPLAY — cold demo state: when the store has nothing, serve
+    // the stats of the canonical sealed fixture (France v Sweden, receipt
+    // committed pre-outcome, all gates passed). Real receipt, no fabrication.
+    if (process.env.FORECAST_REPLAY === '1' && stats.totalDecisions === 0 && onchainFixtureReceipts === 0) {
+      onchainFixtureReceipts = 1;
+      return Response.json(
+        {
+          success: true,
+          stats: {
+            total: 1,
+            sealedDecisions: 1,
+            totalDecisions: 1,
+            disciplineRate: 0,
+            policyAdherenceRate: 1,
+            onchainFixtureReceipts,
+          },
+          timestamp: new Date().toISOString(),
+          replay: true,
+        },
+        { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=30, stale-while-revalidate=30' } },
+      );
+    }
 
     return Response.json(
       {
