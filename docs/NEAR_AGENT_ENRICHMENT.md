@@ -19,13 +19,12 @@ and the judges' rubric ("non-custodial, verifiable, multichain agent") reward.
 Goal: every agent decision carries a NEAR-anchored commitment a judge can
 verify independently. ~2 days.
 
-- [ ] 0.1 Wire `anchorReceiptCommitment` into the arena worker pipeline at the
-      SEAL step (decision hash → social.near `set`, async via `nearAnchorQueue`).
-      Non-blocking: queue retries, worker never blocks on NEAR RPC.
+- [x] 0.1 ~~Wire `anchorReceiptCommitment`~~ — already wired: worker enqueues +
+      drains via `nearAnchorQueue` (verified `fourcast-agent-worker.mjs:405-422`).
 - [ ] 0.2 Surface verification in `/proof`: "anchored on NEAR" row → explorer
       link + `verifyCommitmentTx` status (anchored / pending / mismatched).
-- [ ] 0.3 `/api/arena/feed`: include `nearAnchor: { txHash, status }` on runs
-      that anchored; AgentRail shows the lamp.
+- [x] 0.3 `nearAnchor`/`nearTx` flow through feed; rail shows `⬡ anchored`
+      explorer link.
 - [ ] 0.4 `FORECAST_REPLAY` path carries a pre-anchored canonical receipt so the
       demo shows the verified state cold.
 
@@ -34,23 +33,25 @@ verify independently. ~2 days.
 Goal: the five gates stop being app code and become contract rules — "stops
 unauthorized actions even if the runtime is compromised." ~3 days.
 
-- [ ] 1.1 `contracts/near/agent-mandate/` — NEAR contract (Rust) storing the
-      mandate: allowed venues, max notional, min liquidity, cooldown. Mirrors
-      `lib/gates/*` semantics; the contract is the source of truth.
-- [ ] 1.2 `request_signature(payload)` method: validates payload against
-      mandate, calls `sign()` via Chain Signatures MPC — refuses out-of-policy
-      requests. This IS the gate engine, on-chain.
+- [x] 1.1 `contracts/near/agent-mandate/` — DEPLOYED testnet
+      `inexpensive-mother.testnet` (tx J9LzABT…): venues, notional cap,
+      liquidity floor, slippage, cooldown + code-hash gate. `get_mandate`
+      verified via RPC.
+- [x] 1.2 `request_signature` → MPC `sign()` on `v1.signer-prod.testnet`.
+      Out-of-policy = refused signature. Unit tests 4/4 (venue/cap/cooldown/
+      code-hash).
 - [ ] 1.3 Worker refactor: gates check local policy first (UX), then the
       contract re-checks (trust). Failure = rejected signature = no tx.
-- [ ] 1.4 Tests: contract unit tests mirroring existing gate cases.
+- [x] 1.4 Unit tests pass (4/4). cargo-near dev-dep via `unit-testing` feature.
 
 ## Phase 2 — Chain Signatures funding account
 
 Goal: agent's venue account derived from `agent.fourcast.near` — no key on
 the VPS → honestly "non-custodial." ~2 days.
 
-- [ ] 2.1 Derive EVM address: path `arena/v1` on the MPC contract
-      (`v1.signer` testnet). Store derivation in `nearConfig`.
+- [x] 2.1 Derived via `v1.signer-prod.testnet` `derived_public_key`
+      (path `arena/v1`, predecessor `inexpensive-mother.testnet`) →
+      `0x6940B97505567816A75B1A952f234630af81c61F`. No private key exists.
 - [ ] 2.2 Worker signs venue txns through the mandate contract's
       `request_signature` (Phase 1) instead of a local key.
 - [ ] 2.3 `/agent` surface shows the derived address + "controlled by
