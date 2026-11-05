@@ -40,8 +40,7 @@ pub struct AgentMandate {
 
 /// A trade the worker wants signed. Fields are exactly what the gates check —
 /// nothing more passes the contract boundary.
-#[derive(Serialize, Deserialize)]
-#[serde(crate = "near_sdk::serde")]
+#[near_sdk::near(serializers = [json])]
 pub struct TradeRequest {
     pub venue: String,
     pub market_id: String,
@@ -59,8 +58,7 @@ pub struct TradeRequest {
 }
 
 /// Serializable view of the mandate for off-chain readers (proof surface).
-#[derive(Serialize)]
-#[serde(crate = "near_sdk::serde")]
+#[near_sdk::near(serializers = [json])]
 pub struct MandateView {
     pub owner: AccountId,
     pub allowed_venues: Vec<String>,
