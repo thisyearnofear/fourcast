@@ -31,6 +31,26 @@ Node.js 24+, Next.js 16, React 19 · Polymarket CLOB, Delphi (LMSR), Canton DApp
 
 MIT
 
+## NEAR integration
+
+The agent's trading account is a NEAR contract account — no private key
+exists. The `agent-mandate` contract enforces venue/risk/liquidity/
+slippage/cooldown policy on-chain and only asks the MPC signer for a
+signature when a trade is in-policy.
+
+```bash
+# do X, see Y — read the live mandate + derived agent account (testnet, read-only)
+node scripts/near-derive-address.mjs
+# → contract policy, MPC pubkey, derived EVM address (0x6940…c61F)
+
+# demo cold state (no worker/Redis needed)
+FORECAST_REPLAY=1 npm run dev
+```
+
+Receipts are anchored on NEAR (`fourcast:receipt-v1:<fixtureId>:<hash>`
+via NEAR Social `set`) — the agent rail shows `⬡ anchored` with an
+explorer link per anchored cycle.
+
 ## NEAR HACKATHON
 
 Fourcast is being adapted for the NEAR HACKATHON (Nov 1–14, 2026) under the **Unstoppable DeFi** track. See [`HACKATHON.md`](./HACKATHON.md) and [`docs/NEAR_HACKATHON.md`](./docs/NEAR_HACKATHON.md) for the NEAR integration plan, tools, demo script, and submission checklist.

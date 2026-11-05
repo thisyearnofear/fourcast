@@ -41,8 +41,8 @@ Show an autonomous trading agent moving value across chains via NEAR and committ
 ## Week 1 plan (integration)
 - [x] Add NEAR env vars (account IDs, RPC, keys).
 - [x] Create NEAR client helper.
-- [~] Implement one NEAR Intent value movement for a demo trade. *(dry quote path proven 2026-11-02; real deposit leg needs a funded Intents balance)*
-- [~] Anchor decision receipt hash on NEAR. *(service implemented + unit-tested; needs `NEAR_ACCOUNT_ID`/`NEAR_PRIVATE_KEY` on testnet for the on-chain leg)*
+- [~] Implement one NEAR Intent value movement for a demo trade. *(dry quote path proven 2026-11-02; real deposit leg needs a funded Intents balance — the only remaining blocker)*
+- [x] Anchor decision receipt hash on NEAR. *(worker enqueues + drains via `nearAnchorQueue`; `nearAnchor`/`nearTx` flow to the feed and the rail shows `⬡ anchored`; on-chain leg lands whenever the NEAR key is set)*
 - [x] Keep existing venues as context; do not port all of them.
 
 ### Verified API facts (2026-11-02, probed live)
@@ -104,6 +104,27 @@ no-ops until `NEAR_ACCOUNT_ID`/`NEAR_PRIVATE_KEY` are set; anchored receipts get
 written back into the receipt file. Opt out per-run with
 `NEAR_ANCHOR_ENABLED=false`.
 
+## Nov 5 — enrichment landed (see NEAR_AGENT_ENRICHMENT.md)
+
+- **agent-mandate contract deployed**: `inexpensive-mother.testnet` —
+  venues, notional cap, liquidity floor, slippage, cooldown and a
+  code-hash gate enforced on-chain via `request_signature` → MPC `sign`.
+  Verified: `get_mandate` returns the initialized policy via RPC.
+- **Chain Signatures account proven**: derived EVM address
+  `0x6940B97505567816A75B1A952f234630af81c61F` from path `arena/v1` —
+  no private key exists anywhere.
+- **ChainSignatureSigner** (`services/near/chainSigSigner.js`): ethers-
+  compatible signer backed by `request_signature`; `executeServerOrder`
+  accepts signer objects; `aiAgentLoop` uses it when
+  `NEAR_MANDATE_CONTRACT` is set (legacy key path unchanged).
+- **Surfaces**: `NearMandateCard` in Arena → Mandate lane shows the
+  contract policy + derived account (`/api/near/mandate`, read-only).
+- **Demo support**: `FORECAST_REPLAY=1` covers `/api/arena/feed` +
+  `/api/receipts/stats` cold state; 90s shoot script in
+  `docs/NEAR_AGENT_ENRICHMENT.md` §5.1.
+- **Build**: `npm run build` now uses Turbopack (the `--webpack` build
+  had a flaky API-route manifest bug under Next 16).
+
 ## Week 2 plan (demo + submission)
 - [ ] Polish one end-to-end trade + receipt verification.
 - [ ] Add README “do X, see Y” steps.
@@ -112,10 +133,10 @@ written back into the receipt file. Opt out per-run with
 - [ ] Submit form.
 
 ## Demo script
-1. Agent detects edge → see mandate and policy gates.
-2. Agent moves value via NEAR Intent → see transaction.
-3. Agent commits receipt → see receipt hash on NEAR.
-4. Outcome resolves → see reconciliation + mandate adherence.
+Full 90s shoot script lives in `docs/NEAR_AGENT_ENRICHMENT.md` §5.1.
+Spine: landing → live decision row + dossier gates → Mandate lane
+(chain-sig account) → Intents funding leg → /proof receipt walk →
+settle + withdraw via Intents.
 
 ## Risks and fallbacks
 - If multi-venue complexity slows integration, simulate/record one successful NEAR Intent trade and anchor receipts.
