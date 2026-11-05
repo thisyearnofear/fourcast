@@ -14,3 +14,6 @@ borsh = "1.5"
 [profile.release]
 opt-level = "z"
 lto = true
+
+[dev-dependencies]
+near-sdk = { version = "5.5", features = ["unit-testing"] }

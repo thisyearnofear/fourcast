@@ -254,7 +254,7 @@ mod tests {
         testing_env!(ctx(&accounts(0)).build());
         let mut t = good_trade();
         t.venue = "rogue".to_string();
-        c.request_signature(t);
+        let _ = c.request_signature(t);
     }
 
     #[test]
@@ -264,7 +264,7 @@ mod tests {
         testing_env!(ctx(&accounts(0)).build());
         let mut t = good_trade();
         t.notional = U128(2_000_000);
-        c.request_signature(t);
+        let _ = c.request_signature(t);
     }
 
     #[test]
@@ -277,7 +277,7 @@ mod tests {
         testing_env!(cx.block_timestamp(2_000_000_000).build());
         c.last_trade_ns = 2_000_000_000;
         testing_env!(cx.block_timestamp(3_000_000_000).build());
-        c.request_signature(good_trade());
+        let _ = c.request_signature(good_trade());
     }
 
     #[test]
@@ -288,6 +288,6 @@ mod tests {
         c.set_approved_code_hash("sha256:good".to_string());
         let mut t = good_trade();
         t.code_hash = Some("sha256:evil".to_string());
-        c.request_signature(t);
+        let _ = c.request_signature(t);
     }
 }
