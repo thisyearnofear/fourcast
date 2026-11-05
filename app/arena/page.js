@@ -10,6 +10,7 @@ import { AppShell } from '@/app/components/PageNav';
 import Reveal from '@/components/motion/Reveal';
 import MandateBuilder from '@/components/MandateBuilder';
 import { MandateControl } from '@/components/MandateControl';
+import NearMandateCard from '@/components/NearMandateCard';
 import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
 import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { AgentDashboard } from '@/components/AgentDashboard';
@@ -353,6 +354,9 @@ function MandateLane() {
     <>
       <Reveal>
         <MandateBuilder />
+      </Reveal>
+      <Reveal>
+        <NearMandateCard />
       </Reveal>
       <Reveal>
         <MandateControl />
