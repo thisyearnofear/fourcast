@@ -188,3 +188,4 @@ docs/OPS.md
 
 # Telegraph miner PM2 logs (written by deploy/telegraph-miner.ecosystem.config.cjs)
 telegraph-miner/logs/
+contracts/near/agent-mandate/target/

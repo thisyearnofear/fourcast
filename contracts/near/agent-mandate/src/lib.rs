@@ -1,6 +1,5 @@
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::U128;
-use near_sdk::serde::Serialize;
+use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, near_bindgen, require, AccountId, Gas, NearToken, PanicOnDefault, Promise};
 
 /// Cross-contract call to the MPC signer (chain signatures).
@@ -12,8 +11,8 @@ const MPC_DEPOSIT: NearToken = NearToken::from_yoctonear(50_000_000_000_000_000_
 /// mandate scope, risk cap, liquidity floor, cooldown — but the contract is
 /// the source of truth: an out-of-policy signature request is REFUSED, so no
 /// signed payload exists even if the worker runtime is compromised.
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+#[near_sdk::near(contract_state)]
+#[derive(PanicOnDefault)]
 pub struct AgentMandate {
     /// Operator account — the only account allowed to update the mandate and
     /// request signatures. The agent's identity, not a raw key.
@@ -41,7 +40,7 @@ pub struct AgentMandate {
 
 /// A trade the worker wants signed. Fields are exactly what the gates check —
 /// nothing more passes the contract boundary.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct TradeRequest {
     pub venue: String,
@@ -57,6 +56,22 @@ pub struct TradeRequest {
     pub payload: Vec<u8>,
     /// Worker code hash — required iff approved_code_hash is set.
     pub code_hash: Option<String>,
+}
+
+/// Serializable view of the mandate for off-chain readers (proof surface).
+#[derive(Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct MandateView {
+    pub owner: AccountId,
+    pub allowed_venues: Vec<String>,
+    pub max_notional: U128,
+    pub min_liquidity: U128,
+    pub max_slippage_bps: u32,
+    pub cooldown_secs: u64,
+    pub last_trade_ns: u64,
+    pub mpc_contract: AccountId,
+    pub derivation_path: String,
+    pub approved_code_hash: Option<String>,
 }
 
 #[near_bindgen]
@@ -169,9 +184,9 @@ impl AgentMandate {
         )
     }
 
-    /// Read views — the proof surface renders these.
-    pub fn get_mandate(&self) -> Self {
-        AgentMandate {
+    /// Read view — the proof surface renders this.
+    pub fn get_mandate(&self) -> MandateView {
+        MandateView {
             owner: self.owner.clone(),
             allowed_venues: self.allowed_venues.clone(),
             max_notional: self.max_notional,
