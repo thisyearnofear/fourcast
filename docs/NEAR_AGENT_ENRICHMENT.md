@@ -52,11 +52,12 @@ the VPS → honestly "non-custodial." ~2 days.
 - [x] 2.1 Derived via `v1.signer-prod.testnet` `derived_public_key`
       (path `arena/v1`, predecessor `inexpensive-mother.testnet`) →
       `0x6940B97505567816A75B1A952f234630af81c61F`. No private key exists.
-- [ ] 2.2 Worker signs venue txns through the mandate contract's
-      `request_signature` (Phase 1) instead of a local key.
-- [ ] 2.3 `/agent` surface shows the derived address + "controlled by
-      fourcast-agent.near via chain signatures" — judges can verify the
-      account↔contract link.
+- [x] 2.2 `ChainSignatureSigner` (ethers-compatible, no key) —
+      `executeServerOrder` accepts signer objects; `aiAgentLoop` uses it
+      when `NEAR_MANDATE_CONTRACT` is set. Digest → contract gates → MPC.
+- [x] 2.3 `NearMandateCard` in Arena → Mandate lane shows the derived
+      EVM address + contract policy + "no private key exists" (via
+      `/api/near/mandate`, read-only RPC).
 
 ## Phase 3 — Intents: funding + settlement leg
 
@@ -96,8 +97,7 @@ judges verify *which binary* made decisions. ~3 days; can ship partially.
       walkthrough records without full infra.
 - [ ] 5.3 X video + post ("built for NEAR HACKATHON"), form (project, 20–2000
       char desc, NEAR payout address, repo + demo links).
-- [ ] 5.4 Switch `build` script to Turbopack (webpack build is flaky on
-      API-route manifest collection — verified: `next build` passes).
+- [x] 5.4 `build` script now `next build` (Turbopack, verified).
 
 ## Defer
 
