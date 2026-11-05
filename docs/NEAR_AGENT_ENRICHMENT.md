@@ -90,11 +90,34 @@ judges verify *which binary* made decisions. ~3 days; can ship partially.
 
 ## Phase 5 — Demo loop + submission (Nov 9–13)
 
-- [ ] 5.1 Demo script (90s): deposit on Solana → Intent converts →
-      contract-gated agent allocates → receipt anchored pre-outcome →
-      settles → withdraws via Intents. "Do X, see Y" end-to-end.
-- [ ] 5.2 Extend `FORECAST_REPLAY` to markets/receipts endpoints so the
-      walkthrough records without full infra.
+- [x] 5.1 Demo script (90s, shoot order):
+
+      1. (0–8s) `/` — hero: "Every prediction deserves a proof trail."
+         TrustStatsStrip shows sealed receipts (replay fills cold state).
+      2. (8–22s) `/arena` → Ledger lane — live decision row: verdict,
+         gates all green, edge vs market price. Voiceover: "The agent
+         scans, sizes under Kelly, and *seals its decision before the
+         outcome is known*."
+      3. (22–34s) Same row → expand to DecisionDossier — the five gates
+         render (slippage/mandate/risk/liquidity/cooldown). "This
+         envelope is enforced *on-chain*, not in app code."
+      4. (34–46s) `/arena` → Mandate lane — NearMandateCard: contract
+         account on nearblocks, derived EVM address, "no private key
+         exists." Voiceover: "The agent's key doesn't exist — it's a
+         NEAR contract account via Chain Signatures."
+      5. (46–62s) THE NEAR LEG: user deposits USDC on Solana → Intents
+         converts to venue collateral (COCA pattern) → agent allocates.
+         This is the Intents moment the track wants.
+      6. (62–76s) `/proof` — walk the canonical receipt: SEAL
+         timestamped pre-outcome, anchor on NEAR social.near, verdict
+         reconciled. "Every claim independently verifiable."
+      7. (76–90s) Settle + withdraw via Intents back to Solana. Close on
+         the rail lamp + "⬡ anchored". Title card: "FORECAST — non-
+         custodial, contract-gated, NEAR-anchored. Built for the NEAR
+         HACKATHON."
+- [x] 5.2 `FORECAST_REPLAY=1` covers `/api/arena/feed` (demo cycle) +
+      `/api/receipts/stats` (canonical fixture metrics). Markets hit live
+      venue APIs — no replay needed.
 - [ ] 5.3 X video + post ("built for NEAR HACKATHON"), form (project, 20–2000
       char desc, NEAR payout address, repo + demo links).
 - [x] 5.4 `build` script now `next build` (Turbopack, verified).
