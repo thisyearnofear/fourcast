@@ -122,7 +122,7 @@ export default function FollowButton({ authorAddress, currentAddress }) {
  <button
  onClick={handleToggle}
  disabled={loading}
- className={`text-xs font-medium px-4 py-2 border transition-all inline-flex items-center gap-1.5 ${
+ className={`text-xs font-medium px-4 py-2 border transition-colors inline-flex items-center gap-1.5 ${
  following
  ? 'bg-white/[0.04] text-[var(--color-ink-muted)] border-[var(--color-rule)] hover:bg-[var(--color-breach)]/10 hover:border-[var(--color-breach)]/20 hover:text-[var(--color-breach)]'
  : 'bg-[var(--color-accent)] text-[var(--color-paper-deep)] border-transparent hover:opacity-90'

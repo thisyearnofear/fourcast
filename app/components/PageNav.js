@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, Menu, Sparkles, X } from "lucide-react";
 import { BRAND } from "@/constants/brand";
 import useTabArrowKeys from "@/hooks/useTabArrowKeys";
 import WalletConnect from "@/app/components/WalletConnect";
@@ -55,7 +55,13 @@ function useIsActive() {
   return (item) => pathMatches(pathname, typeof item === "string" ? { href: item } : item);
 }
 
-function MoreMenu({ items, isActive }) {
+/**
+ * Anchored dropdown — shared by MoreMenu (overflow items) and MobileNavMenu
+ * (hamburger, all destinations). Portal-mounted so it escapes sticky-header
+ * clipping; repositions on scroll/resize; closes on outside click, Escape,
+ * or navigation.
+ */
+function useAnchoredMenu() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [coords, setCoords] = useState(null);
@@ -112,41 +118,64 @@ function MoreMenu({ items, isActive }) {
     setOpen(false);
   }, [pathname]);
 
-  const active = items.find((i) => isActive(i));
+  return { open, setOpen, mounted, coords, rootRef, menuRef };
+}
+
+function MenuPanel({ coords, menuRef, items, isActive, ariaLabel, onClose }) {
+  return createPortal(
+    <div
+      ref={menuRef}
+      role="menu"
+      aria-label={ariaLabel}
+      style={{ top: coords.top, right: coords.right }}
+      className="fixed z-[200] w-56 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] p-1 shadow-xl backdrop-blur-[18px] backdrop-saturate-[1.2]"
+    >
+      {items.map((item) => (
+        <Link
+          key={item.name}
+          href={item.href}
+          role="menuitem"
+          data-onboard={item.onboardId}
+          title={item.description}
+          aria-current={isActive?.(item) ? "page" : undefined}
+          onClick={onClose}
+          className={`flex w-full flex-col gap-0.5 px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.1em] no-underline transition-colors ${
+            isActive?.(item)
+              ? "bg-[var(--color-accent-quiet)] text-[var(--color-accent)]"
+              : "text-[var(--color-ink)] hover:bg-white/[0.04]"
+          }`}
+        >
+          <span className="font-semibold">{item.name}</span>
+          {item.description && (
+            <span className="text-[10px] font-normal normal-case tracking-normal text-[var(--color-ink-muted)]">
+              {item.description}
+            </span>
+          )}
+        </Link>
+      ))}
+    </div>,
+    document.body
+  );
+}
+
+function MoreMenu({ items, isActive, suppressActive = false }) {
+  const { open, setOpen, mounted, coords, rootRef, menuRef } = useAnchoredMenu();
+  // suppressActive: when a PRIMARY destination already matches (e.g. /arena
+  // matches both Arena and the overflow "Agent" alias), the overflow button
+  // must not light up — one active route, one active indicator.
+  const active = suppressActive ? null : items.find((i) => isActive(i));
 
   const menu =
     open && mounted && coords
-      ? createPortal(
-          <div
-            ref={menuRef}
-            role="menu"
-            aria-label="More navigation"
-            style={{ top: coords.top, right: coords.right }}
-            className="fixed z-[200] w-56 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] p-1 shadow-xl backdrop-blur-[18px] backdrop-saturate-[1.2]"
-          >
-            {items.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                role="menuitem"
-                data-onboard={item.onboardId}
-                title={item.description}
-                aria-current={isActive(item) ? "page" : undefined}
-                onClick={() => setOpen(false)}
-                className={`flex w-full flex-col gap-0.5 px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.1em] no-underline transition ${
-                  isActive(item)
-                    ? "bg-[var(--color-accent-quiet)] text-[var(--color-accent)]"
-                    : "text-[var(--color-ink)] hover:bg-white/[0.04]"
-                }`}
-              >
-                <span className="font-semibold">{item.name}</span>
-                <span className="text-[10px] font-normal normal-case tracking-normal text-[var(--color-ink-muted)]">
-                  {item.description}
-                </span>
-              </Link>
-            ))}
-          </div>,
-          document.body
+      ? (
+          <MenuPanel
+            coords={coords}
+            menuRef={menuRef}
+            items={items}
+            isActive={isActive}
+            ariaLabel="More navigation"
+            onClose={() => setOpen(false)}
+          />
         )
       : null;
 
@@ -178,11 +207,57 @@ function MoreMenu({ items, isActive }) {
 }
 
 /**
+ * MobileNavMenu — hamburger holding every destination. Used below `sm` in
+ * AppShell and on the landing header so the chrome never collides with
+ * Connect Wallet at narrow widths.
+ */
+export function MobileNavMenu({ className = "" }) {
+  const isActive = useIsActive();
+  const { open, setOpen, mounted, coords, rootRef, menuRef } = useAnchoredMenu();
+  const links = [
+    ...PRIMARY_NAV.map((i) => ({ name: i.name, href: i.href, description: i.description, onboardId: i.onboardId })),
+    ...OVERFLOW_NAV.map((i) => ({ name: i.name, href: i.href, description: i.description, onboardId: i.onboardId })),
+    { name: "Status", href: "/status" },
+  ];
+
+  const menu =
+    open && mounted && coords
+      ? (
+          <MenuPanel
+            coords={coords}
+            menuRef={menuRef}
+            items={links}
+            isActive={isActive}
+            ariaLabel="All navigation"
+            onClose={() => setOpen(false)}
+          />
+        )
+      : null;
+
+  return (
+    <div ref={rootRef} className={`relative ${className}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={open ? "Close navigation" : "Open navigation"}
+        className="mc-nav-link no-underline inline-flex items-center gap-1 px-2.5 py-2"
+      >
+        {open ? <X className="h-4 w-4" aria-hidden /> : <Menu className="h-4 w-4" aria-hidden />}
+      </button>
+      {menu}
+    </div>
+  );
+}
+
+/**
  * Primary navigation links. Used by AppShell and the landing header so the
  * link set can never drift between surfaces.
  */
 export default function PageNav() {
   const isActive = useIsActive();
+  const primaryActive = PRIMARY_NAV.some((item) => isActive(item));
 
   return (
     <nav className="platform-nav flex min-w-0 items-center gap-1" aria-label="Primary navigation">
@@ -200,7 +275,7 @@ export default function PageNav() {
             {item.name}
           </Link>
         ))}
-        <MoreMenu items={OVERFLOW_NAV} isActive={isActive} />
+        <MoreMenu items={OVERFLOW_NAV} isActive={isActive} suppressActive={primaryActive} />
         <span className="mx-2 h-4 w-px bg-[var(--color-rule)]" aria-hidden="true" />
         <Link
           href="/agent"
@@ -215,8 +290,14 @@ export default function PageNav() {
         <AudienceSwitcher />
       </div>
 
-      {/* Mobile: compact labels, tap-friendly targets */}
-      <div className="flex min-w-0 items-center gap-1 md:hidden">
+      {/* Below sm: a single menu holds every destination — four primary links
+          plus More plus Connect Wallet cannot coexist without collisions. */}
+      <div className="flex items-center gap-1 sm:hidden">
+        <MobileNavMenu />
+      </div>
+
+      {/* sm–md: compact labels, tap-friendly targets */}
+      <div className="hidden min-w-0 items-center gap-1 sm:flex md:hidden">
         {PRIMARY_NAV.map((item) => (
           <Link
             key={item.name}
@@ -229,7 +310,7 @@ export default function PageNav() {
             {item.name}
           </Link>
         ))}
-        <MoreMenu items={OVERFLOW_NAV} isActive={isActive} />
+        <MoreMenu items={OVERFLOW_NAV} isActive={isActive} suppressActive={primaryActive} />
       </div>
     </nav>
   );

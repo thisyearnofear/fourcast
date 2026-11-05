@@ -78,7 +78,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  <button
  onClick={handleRefresh}
  disabled={refreshing || loading}
- className={`p-2 transition-all ${
+ className={`p-2 transition-colors ${
  refreshing
  ? 'opacity-50 cursor-not-allowed'
  : 'hover:bg-[var(--color-paper-soft)]'
@@ -96,7 +96,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  {onClose && (
  <button
  onClick={onClose}
- className={`p-2 transition-all hover:bg-[var(--color-paper-soft)]`}
+ className={`p-2 transition-colors hover:bg-[var(--color-paper-soft)]`}
  >
  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -159,7 +159,7 @@ export function BuilderDashboard({ isNight = false, onClose = null, variant = 'f
  href="https://builders.polymarket.com/"
  target="_blank"
  rel="noopener noreferrer"
- className={`block w-full py-2 px-3 font-medium text-center text-sm transition-all bg-[var(--color-evidence)]/20 hover:bg-[var(--color-evidence)]/30 text-[var(--color-evidence)]`}
+ className={`block w-full py-2 px-3 font-medium text-center text-sm transition-colors bg-[var(--color-evidence)]/20 hover:bg-[var(--color-evidence)]/30 text-[var(--color-evidence)]`}
  >
  View Full Leaderboard →
  </a>

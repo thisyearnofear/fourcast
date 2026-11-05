@@ -32,63 +32,68 @@ export const BACKDROP_STATES = /** @type {const} */ ({
   reconciled: 'reconciled',
 });
 
+/** mix() keeps every backdrop colour token-sourced — one source in
+ *  tokens.css, alpha tuned per state. (Canvas surfaces that cannot resolve
+ *  CSS colour functions use BRAND_RGB from constants/brandColors instead.) */
+const mix = (token, pct) => `color-mix(in oklab, var(${token}) ${pct}%, transparent)`;
+
 /** Pulse color for each backdrop state. */
 const PULSE_COLORS = {
-  idle: 'rgba(121, 245, 183, 0.15)',
-  scanning: 'rgba(121, 245, 183, 0.18)',
-  sealed: 'rgba(245, 197, 107, 0.15)',
-  breach: 'rgba(255, 122, 111, 0.22)',
-  review: 'rgba(196, 181, 253, 0.18)',
-  reconciled: 'rgba(121, 245, 183, 0.25)',
+  idle: mix('--color-accent', 15),
+  scanning: mix('--color-accent', 18),
+  sealed: mix('--color-sealed', 15),
+  breach: mix('--color-breach', 22),
+  review: mix('--color-review', 18),
+  reconciled: mix('--color-accent', 25),
 };
 
 /** Palette for each backdrop state. */
 const PALETTES = {
   idle: {
-    glow: 'rgba(121, 245, 183, 0.05)',     // subtle green hint
-    glow2: 'rgba(245, 197, 107, 0.03)',    // faint amber
-    grid: 'rgba(243, 240, 231, 0.035)',    // hairline
-    grid2: 'rgba(243, 240, 231, 0.035)',
+    glow: mix('--color-accent', 5),        // subtle green hint
+    glow2: mix('--color-sealed', 3),       // faint amber
+    grid: mix('--color-ink', 3.5),         // hairline
+    grid2: mix('--color-ink', 3.5),
     breatheMin: 0.25,
     breatheMax: 0.4,
   },
   scanning: {
-    glow: 'rgba(121, 245, 183, 0.1)',
-    glow2: 'rgba(121, 245, 183, 0.04)',
-    grid: 'rgba(243, 240, 231, 0.06)',
-    grid2: 'rgba(243, 240, 231, 0.055)',
+    glow: mix('--color-accent', 10),
+    glow2: mix('--color-accent', 4),
+    grid: mix('--color-ink', 6),
+    grid2: mix('--color-ink', 5.5),
     breatheMin: 0.35,
     breatheMax: 0.55,
   },
   sealed: {
-    glow: 'rgba(245, 197, 107, 0.08)',
-    glow2: 'rgba(245, 197, 107, 0.04)',
-    grid: 'rgba(245, 197, 107, 0.05)',
-    grid2: 'rgba(243, 240, 231, 0.04)',
+    glow: mix('--color-sealed', 8),
+    glow2: mix('--color-sealed', 4),
+    grid: mix('--color-sealed', 5),
+    grid2: mix('--color-ink', 4),
     breatheMin: 0.3,
     breatheMax: 0.5,
   },
   breach: {
-    glow: 'rgba(255, 122, 111, 0.1)',
-    glow2: 'rgba(255, 122, 111, 0.05)',
-    grid: 'rgba(255, 122, 111, 0.05)',
-    grid2: 'rgba(255, 150, 140, 0.03)',
+    glow: mix('--color-breach', 10),
+    glow2: mix('--color-breach', 5),
+    grid: mix('--color-breach', 5),
+    grid2: mix('--color-breach', 3),
     breatheMin: 0.4,
     breatheMax: 0.7,
   },
   review: {
-    glow: 'rgba(196, 181, 253, 0.1)',
-    glow2: 'rgba(196, 181, 253, 0.05)',
-    grid: 'rgba(196, 181, 253, 0.045)',
-    grid2: 'rgba(243, 240, 231, 0.03)',
+    glow: mix('--color-review', 10),
+    glow2: mix('--color-review', 5),
+    grid: mix('--color-review', 4.5),
+    grid2: mix('--color-ink', 3),
     breatheMin: 0.3,
     breatheMax: 0.55,
   },
   reconciled: {
-    glow: 'rgba(121, 245, 183, 0.14)',
-    glow2: 'rgba(121, 245, 183, 0.06)',
-    grid: 'rgba(121, 245, 183, 0.07)',
-    grid2: 'rgba(243, 240, 231, 0.05)',
+    glow: mix('--color-accent', 14),
+    glow2: mix('--color-accent', 6),
+    grid: mix('--color-accent', 7),
+    grid2: mix('--color-ink', 5),
     breatheMin: 0.35,
     breatheMax: 0.6,
   },

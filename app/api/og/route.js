@@ -1,3 +1,4 @@
+import { BRAND_HEX } from '@/constants/brandColors';
 import { ImageResponse } from "@vercel/og";
 import { promises as fs } from "fs";
 import path from "path";
@@ -126,8 +127,8 @@ async function renderRouteOG(searchParams) {
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#080a0d",
-          color: "white",
+          backgroundColor: BRAND_HEX.paperDeep,
+          color: BRAND_HEX.ink,
           fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
@@ -139,7 +140,7 @@ async function renderRouteOG(searchParams) {
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 85% 10%, rgba(16,185,129,0.18), transparent 40%), radial-gradient(circle at 10% 90%, rgba(59,130,246,0.10), transparent 40%)",
+              "radial-gradient(circle at 85% 10%, rgba(99,240,168,0.18), transparent 40%), radial-gradient(circle at 10% 90%, rgba(59,130,246,0.10), transparent 40%)",
           }}
         />
         <div
@@ -158,9 +159,9 @@ async function renderRouteOG(searchParams) {
               fontSize: "12px",
               padding: "6px 12px",
               borderRadius: "999px",
-              background: "rgba(16,185,129,0.15)",
-              color: "#6ee7b7",
-              border: "1px solid rgba(16,185,129,0.3)",
+              background: "rgba(99,240,168,0.15)",
+              color: BRAND_HEX.accent,
+              border: "1px solid rgba(99,240,168,0.3)",
               textTransform: "uppercase",
               letterSpacing: "0.12em",
               fontFamily: "'DM Sans', system-ui",
@@ -188,7 +189,7 @@ async function renderRouteOG(searchParams) {
               letterSpacing: "-0.02em",
               fontFamily: "Syne, 'DM Sans', system-ui",
               maxWidth: "860px",
-              color: "white",
+              color: BRAND_HEX.ink,
             }}
           >
             {title.length > 80 ? title.substring(0, 80) + "…" : title}
@@ -211,7 +212,7 @@ async function renderRouteOG(searchParams) {
               display: "flex",
               alignItems: "center",
               gap: "10px",
-              color: "#6ee7b7",
+              color: BRAND_HEX.accent,
               fontSize: "18px",
               fontFamily: "'DM Sans', system-ui",
             }}
@@ -233,9 +234,9 @@ async function renderRouteOG(searchParams) {
  * Query params: home, away, score, verdict, hash, stage.
  */
 const RECEIPT_VERDICT_STYLES = {
-  ALLOCATE: { color: "#6ee7b7", border: "rgba(16,185,129,0.4)", bg: "rgba(16,185,129,0.12)" },
-  PASS: { color: "#fcd34d", border: "rgba(245,158,11,0.4)", bg: "rgba(245,158,11,0.10)" },
-  REVIEW: { color: "#c4b5fd", border: "rgba(167,139,250,0.4)", bg: "rgba(167,139,250,0.10)" },
+  ALLOCATE: { color: BRAND_HEX.accent, border: "rgba(99,240,168,0.4)", bg: "rgba(99,240,168,0.12)" },
+  PASS: { color: BRAND_HEX.sealed, border: "rgba(247,193,95,0.4)", bg: "rgba(247,193,95,0.10)" },
+  REVIEW: { color: BRAND_HEX.review, border: "rgba(185,170,248,0.4)", bg: "rgba(185,170,248,0.10)" },
 };
 
 async function renderReceiptOG(searchParams) {
@@ -244,7 +245,7 @@ async function renderReceiptOG(searchParams) {
   const score = searchParams.get("score");
   const verdict = (searchParams.get("verdict") || "").toUpperCase();
   const hash = searchParams.get("hash");
-  const stage = searchParams.get("stage") || "World Cup";
+  const stage = searchParams.get("stage") || "Sealed receipt";
   const verdictStyle = RECEIPT_VERDICT_STYLES[verdict] || RECEIPT_VERDICT_STYLES.REVIEW;
   const hashDisplay = hash ? (hash.length > 24 ? `${hash.slice(0, 12)}…${hash.slice(-8)}` : hash) : null;
 
@@ -256,8 +257,8 @@ async function renderReceiptOG(searchParams) {
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#080a0d",
-          color: "white",
+          backgroundColor: BRAND_HEX.paperDeep,
+          color: BRAND_HEX.ink,
           fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
@@ -270,7 +271,7 @@ async function renderReceiptOG(searchParams) {
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 88% 8%, rgba(16,185,129,0.18), transparent 38%), radial-gradient(circle at 8% 92%, rgba(245,158,11,0.08), transparent 36%)",
+              "radial-gradient(circle at 88% 8%, rgba(99,240,168,0.18), transparent 38%), radial-gradient(circle at 8% 92%, rgba(247,193,95,0.08), transparent 36%)",
           }}
         />
         <div
@@ -302,9 +303,9 @@ async function renderReceiptOG(searchParams) {
               style={{
                 fontSize: "11px",
                 padding: "5px 11px",
-                background: "rgba(16,185,129,0.12)",
-                color: "#6ee7b7",
-                border: "1px solid rgba(16,185,129,0.3)",
+                background: "rgba(99,240,168,0.12)",
+                color: BRAND_HEX.accent,
+                border: "1px solid rgba(99,240,168,0.3)",
                 textTransform: "uppercase",
                 letterSpacing: "0.14em",
                 fontFamily: "'DM Sans', system-ui",
@@ -321,8 +322,8 @@ async function renderReceiptOG(searchParams) {
               alignItems: "center",
               gap: "8px",
               padding: "8px 14px",
-              border: "1.5px solid rgba(245,158,11,0.5)",
-              background: "rgba(245,158,11,0.08)",
+              border: "1.5px solid rgba(247,193,95,0.5)",
+              background: "rgba(247,193,95,0.08)",
             }}
           >
             <div
@@ -330,14 +331,14 @@ async function renderReceiptOG(searchParams) {
                 width: "8px",
                 height: "8px",
                 borderRadius: "50%",
-                background: "#fcd34d",
-                boxShadow: "0 0 8px rgba(245,158,11,0.6)",
+                background: BRAND_HEX.sealed,
+                boxShadow: "0 0 8px rgba(247,193,95,0.6)",
               }}
             />
             <span
               style={{
                 fontSize: "12px",
-                color: "#fcd34d",
+                color: BRAND_HEX.sealed,
                 fontFamily: "'DM Sans', system-ui",
                 fontWeight: 700,
                 textTransform: "uppercase",
@@ -371,7 +372,7 @@ async function renderReceiptOG(searchParams) {
               lineHeight: 1.02,
               letterSpacing: "-0.02em",
               fontFamily: "Syne, 'DM Sans', system-ui",
-              color: "white",
+              color: BRAND_HEX.ink,
               display: "flex",
               alignItems: "baseline",
               gap: "18px",
@@ -382,7 +383,7 @@ async function renderReceiptOG(searchParams) {
             <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "40px", fontWeight: 400 }}>v</span>
             <span>{away}</span>
             {score && (
-              <span style={{ color: "#6ee7b7", fontSize: "40px", fontFamily: "'DM Sans', system-ui", fontWeight: 600 }}>
+              <span style={{ color: BRAND_HEX.accent, fontSize: "40px", fontFamily: "'DM Sans', system-ui", fontWeight: 600 }}>
                 {score}
               </span>
             )}
@@ -434,8 +435,8 @@ async function renderReceiptOG(searchParams) {
             style={{
               marginTop: "auto",
               padding: "18px 20px",
-              border: "1px solid rgba(245,158,11,0.25)",
-              background: "rgba(245,158,11,0.04)",
+              border: "1px solid rgba(247,193,95,0.25)",
+              background: "rgba(247,193,95,0.04)",
               display: "flex",
               flexDirection: "column",
               gap: "6px",
@@ -446,7 +447,7 @@ async function renderReceiptOG(searchParams) {
             <span
               style={{
                 fontSize: "10px",
-                color: "rgba(245,158,11,0.7)",
+                color: "rgba(247,193,95,0.7)",
                 fontFamily: "'DM Sans', system-ui",
                 textTransform: "uppercase",
                 letterSpacing: "0.16em",
@@ -484,7 +485,7 @@ async function renderReceiptOG(searchParams) {
           <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", fontFamily: "'DM Sans', system-ui" }}>
             Public · verifiable on-chain · no trust required
           </span>
-          <span style={{ fontSize: "17px", color: "#6ee7b7", fontFamily: "'DM Sans', system-ui", fontWeight: 600 }}>
+          <span style={{ fontSize: "17px", color: BRAND_HEX.accent, fontFamily: "'DM Sans', system-ui", fontWeight: 600 }}>
             Audit the proof chain →
           </span>
         </div>
@@ -505,8 +506,8 @@ async function renderLandingOG() {
           height: "100%",
           width: "100%",
           display: "flex",
-          backgroundColor: "#080a0d",
-          color: "white",
+          backgroundColor: BRAND_HEX.paperDeep,
+          color: BRAND_HEX.ink,
           fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
@@ -518,7 +519,7 @@ async function renderLandingOG() {
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 30% 0%, rgba(16,185,129,0.32), transparent 34%), linear-gradient(135deg, rgba(255,255,255,0.08), transparent 30%, rgba(245,158,11,0.12) 78%, transparent)",
+              "radial-gradient(circle at 30% 0%, rgba(99,240,168,0.32), transparent 34%), linear-gradient(135deg, rgba(255,255,255,0.08), transparent 30%, rgba(247,193,95,0.12) 78%, transparent)",
           }}
         />
         <div
@@ -552,7 +553,7 @@ async function renderLandingOG() {
                 </div>
                 <div style={{ fontSize: "24px", fontWeight: 700 }}>Fourcast</div>
               </div>
-              <div style={{ color: "#a7f3d0", fontSize: "13px", fontWeight: 800, letterSpacing: "0.18em" }}>
+              <div style={{ color: BRAND_HEX.accent, fontSize: "13px", fontWeight: 800, letterSpacing: "0.18em" }}>
                 EVIDENCE &amp; SETTLEMENT
               </div>
               <div style={{ marginTop: "18px", fontSize: "58px", fontWeight: 760, lineHeight: 0.98, letterSpacing: "-0.04em", maxWidth: "620px" }}>
@@ -588,7 +589,7 @@ async function renderLandingOG() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ color: "#a7f3d0", fontSize: "13px", fontWeight: 800, letterSpacing: "0.18em" }}>
+                <div style={{ color: BRAND_HEX.accent, fontSize: "13px", fontWeight: 800, letterSpacing: "0.18em" }}>
                   DECISION PROOF
                 </div>
                 <div style={{ marginTop: "8px", fontSize: "21px", fontWeight: 650, lineHeight: 1.18 }}>
@@ -599,9 +600,9 @@ async function renderLandingOG() {
                 style={{
                   borderRadius: "999px",
                   padding: "8px 12px",
-                  background: "rgba(16,185,129,0.14)",
+                  background: "rgba(99,240,168,0.14)",
                   border: "1px solid rgba(110,231,183,0.3)",
-                  color: "#d1fae5",
+                  color: BRAND_HEX.accent,
                   fontSize: "13px",
                   fontWeight: 800,
                 }}
@@ -627,7 +628,7 @@ async function renderLandingOG() {
                   }}
                 >
                   <div style={{ color: "rgba(255,255,255,0.42)", fontSize: "12px", textTransform: "uppercase" }}>{label}</div>
-                  <div style={{ marginTop: "10px", fontSize: "24px", fontWeight: 760, color: label === "Outcome" ? "#a7f3d0" : "white" }}>
+                  <div style={{ marginTop: "10px", fontSize: "24px", fontWeight: 760, color: label === "Outcome" ? BRAND_HEX.accent : BRAND_HEX.ink }}>
                     {value}
                   </div>
                 </div>
@@ -637,14 +638,14 @@ async function renderLandingOG() {
             <div style={{ borderRadius: "16px", background: "rgba(0,0,0,0.26)", border: "1px solid rgba(255,255,255,0.1)", padding: "18px" }}>
               {["Market + oracle inputs", "Policy-bound decision", "Public proof / private settlement"].map((item, index) => (
                 <div key={item} style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: index === 0 ? 0 : "14px" }}>
-                  <div style={{ height: "9px", width: "9px", borderRadius: "99px", background: ["#22d3ee", "#34d399", "#fcd34d"][index] }} />
+                  <div style={{ height: "9px", width: "9px", borderRadius: "99px", background: [BRAND_HEX.evidence, BRAND_HEX.accent, BRAND_HEX.sealed][index] }} />
                   <div style={{ fontSize: "17px", color: "rgba(255,255,255,0.78)" }}>{item}</div>
                 </div>
               ))}
             </div>
 
             <div style={{ borderRadius: "16px", background: "rgba(6,182,212,0.12)", border: "1px solid rgba(103,232,249,0.26)", padding: "18px" }}>
-              <div style={{ fontSize: "17px", color: "#cffafe", fontWeight: 700 }}>Evidence → decision → resolution</div>
+              <div style={{ fontSize: "17px", color: BRAND_HEX.evidence, fontWeight: 700 }}>Evidence → decision → resolution</div>
               <div style={{ marginTop: "6px", fontSize: "14px", color: "rgba(207,250,254,0.62)" }}>
                 Receipt · outcome attestation · public proof or private settlement
               </div>
@@ -694,8 +695,8 @@ async function renderOperatorOG(searchParams) {
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#080a0d",
-          color: "white",
+          backgroundColor: BRAND_HEX.paperDeep,
+          color: BRAND_HEX.ink,
           fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
@@ -735,9 +736,9 @@ async function renderOperatorOG(searchParams) {
                 fontSize: "14px",
                 padding: "6px 14px",
                 borderRadius: "999px",
-                background: "rgba(16,185,129,0.15)",
-                color: "#6ee7b7",
-                border: "1px solid rgba(16,185,129,0.3)",
+                background: "rgba(99,240,168,0.15)",
+                color: BRAND_HEX.accent,
+                border: "1px solid rgba(99,240,168,0.3)",
               }}
             >
               Track Record
@@ -751,7 +752,7 @@ async function renderOperatorOG(searchParams) {
               lineHeight: 1.1,
               marginTop: "24px",
               marginBottom: "12px",
-              color: "#f1f5f9",
+              color: BRAND_HEX.ink,
               letterSpacing: "-0.02em",
             }}
           >
@@ -790,14 +791,14 @@ async function renderOperatorOG(searchParams) {
                 <span
                   style={{
                     fontSize: "12px",
-                    color: "#94a3b8",
+                    color: BRAND_HEX.inkMuted,
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
                   }}
                 >
                   {stat.label}
                 </span>
-                <span style={{ fontSize: "32px", fontWeight: 700, color: "white" }}>
+                <span style={{ fontSize: "32px", fontWeight: 700, color: BRAND_HEX.ink }}>
                   {stat.value}
                 </span>
               </div>
@@ -811,14 +812,14 @@ async function renderOperatorOG(searchParams) {
                 gap: "16px",
                 padding: "20px 24px",
                 borderRadius: "12px",
-                background: "rgba(16,185,129,0.06)",
-                border: "1px solid rgba(16,185,129,0.15)",
+                background: "rgba(99,240,168,0.06)",
+                border: "1px solid rgba(99,240,168,0.15)",
               }}
             >
               <span
                 style={{
                   fontSize: "12px",
-                  color: "#6ee7b7",
+                  color: BRAND_HEX.accent,
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",
                   fontWeight: 700,
@@ -862,7 +863,7 @@ async function renderOperatorOG(searchParams) {
             <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)" }}>
               Public · verifiable on-chain
             </span>
-            <span style={{ fontSize: "18px", color: "#6ee7b7", fontWeight: 500 }}>
+            <span style={{ fontSize: "18px", color: BRAND_HEX.accent, fontWeight: 500 }}>
               View track record →
             </span>
           </div>
@@ -891,10 +892,10 @@ async function renderOperatorOG(searchParams) {
  * Query params: resolved, brier, logloss, buckets, source, schema.
  */
 const CALIBRATION_BUCKETS = {
-  LOW: { color: "#6366f1", label: "LOW" },
-  MED: { color: "#f59e0b", label: "MED" },
-  MEDIUM: { color: "#f59e0b", label: "MED" },
-  HIGH: { color: "#10b981", label: "HIGH" },
+  LOW: { color: BRAND_HEX.review, label: "LOW" },
+  MED: { color: BRAND_HEX.sealed, label: "MED" },
+  MEDIUM: { color: BRAND_HEX.sealed, label: "MED" },
+  HIGH: { color: BRAND_HEX.accent, label: "HIGH" },
 };
 
 /** Ideal-diagonal rate for a bucket label — where a calibrated agent should land. */
@@ -940,8 +941,8 @@ async function renderCalibrationOG(searchParams) {
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#080a0d",
-          color: "white",
+          backgroundColor: BRAND_HEX.paperDeep,
+          color: BRAND_HEX.ink,
           fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
@@ -980,9 +981,9 @@ async function renderCalibrationOG(searchParams) {
               style={{
                 fontSize: "14px",
                 padding: "6px 14px",
-                background: "rgba(16,185,129,0.15)",
-                color: "#6ee7b7",
-                border: "1px solid rgba(16,185,129,0.3)",
+                background: "rgba(99,240,168,0.15)",
+                color: BRAND_HEX.accent,
+                border: "1px solid rgba(99,240,168,0.3)",
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
                 fontWeight: 600,
@@ -1026,7 +1027,7 @@ async function renderCalibrationOG(searchParams) {
                   minWidth: "180px",
                 }}
               >
-                <span style={{ fontSize: "12px", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
+                <span style={{ fontSize: "12px", color: BRAND_HEX.inkMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
                   {stat.label}
                 </span>
                 <span style={{ fontSize: "32px", fontWeight: 700, fontFamily: "monospace" }}>{stat.value}</span>
@@ -1077,7 +1078,7 @@ async function renderCalibrationOG(searchParams) {
             <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", fontFamily: "monospace" }}>
               source: {source}
             </span>
-            <span style={{ fontSize: "17px", color: "#6ee7b7", fontWeight: 600 }}>
+            <span style={{ fontSize: "17px", color: BRAND_HEX.accent, fontWeight: 600 }}>
               Position size is derived from this curve →
             </span>
           </div>
@@ -1107,7 +1108,7 @@ async function renderWeatherOG(searchParams) {
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: "#1f2937",
-          color: "white",
+          color: BRAND_HEX.ink,
           padding: "40px",
           fontFamily: OG_FONTS,
         }}
@@ -1154,16 +1155,16 @@ async function renderSignalOG(searchParams) {
 
   // Confidence colors
   const confidenceColors = {
-    HIGH: { bg: "#065f46", text: "#6ee7b7", border: "#10b981" },
-    MEDIUM: { bg: "#78350f", text: "#fcd34d", border: "#f59e0b" },
+    HIGH: { bg: "#065f46", text: BRAND_HEX.accent, border: BRAND_HEX.accent },
+    MEDIUM: { bg: "#78350f", text: BRAND_HEX.sealed, border: BRAND_HEX.sealed },
     LOW: { bg: "#451a03", text: "#fb923c", border: "#f97316" },
-    DEFAULT: { bg: "#1e293b", text: "#94a3b8", border: "#475569" },
+    DEFAULT: { bg: "#1e293b", text: BRAND_HEX.inkMuted, border: "#475569" },
   };
   const cc = confidenceColors[confidence] || confidenceColors.DEFAULT;
 
   // Edge display
   const edgeValue = edge ? parseFloat(edge) : null;
-  const edgeColor = edgeValue !== null && edgeValue > 0 ? "#34d399" : edgeValue !== null && edgeValue < 0 ? "#f87171" : "#94a3b8";
+  const edgeColor = edgeValue !== null && edgeValue > 0 ? BRAND_HEX.accent : edgeValue !== null && edgeValue < 0 ? BRAND_HEX.breach : BRAND_HEX.inkMuted;
   const edgeLabel = edgeValue !== null ? `${edgeValue > 0 ? "+" : ""}${(edgeValue * 100).toFixed(1)}%` : null;
 
   // Probability display
@@ -1182,8 +1183,8 @@ async function renderSignalOG(searchParams) {
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#080a0d",
-          color: "white",
+          backgroundColor: BRAND_HEX.paperDeep,
+          color: BRAND_HEX.ink,
           fontFamily: OG_FONTS,
           position: "relative",
           overflow: "hidden",
@@ -1251,7 +1252,7 @@ async function renderSignalOG(searchParams) {
                   padding: "6px 14px",
                   borderRadius: "999px",
                   background: "rgba(255,255,255,0.05)",
-                  color: "#94a3b8",
+                  color: BRAND_HEX.inkMuted,
                   border: "1px solid rgba(255,255,255,0.1)",
                 }}
               >
@@ -1269,7 +1270,7 @@ async function renderSignalOG(searchParams) {
               maxWidth: "900px",
               marginTop: "24px",
               marginBottom: "32px",
-              color: "#f1f5f9",
+              color: BRAND_HEX.ink,
             }}
           >
             {title.length > 100 ? title.substring(0, 100) + "..." : title}
@@ -1310,7 +1311,7 @@ async function renderSignalOG(searchParams) {
                   border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
-                <span style={{ fontSize: "12px", color: "#94a3b8", opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <span style={{ fontSize: "12px", color: BRAND_HEX.inkMuted, opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   Edge
                 </span>
                 <span style={{ fontSize: "28px", fontWeight: 700, color: edgeColor }}>
@@ -1332,7 +1333,7 @@ async function renderSignalOG(searchParams) {
                   border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
-                <span style={{ fontSize: "12px", color: "#94a3b8", opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <span style={{ fontSize: "12px", color: BRAND_HEX.inkMuted, opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   AI Probability
                 </span>
                 <span style={{ fontSize: "28px", fontWeight: 700, color: "#60a5fa" }}>
@@ -1371,7 +1372,7 @@ async function renderSignalOG(searchParams) {
                   >
                     {author[0]?.toUpperCase() || "?"}
                   </div>
-                  <span style={{ fontSize: "16px", color: "#94a3b8" }}>
+                  <span style={{ fontSize: "16px", color: BRAND_HEX.inkMuted }}>
                     {authorDisplay}
                   </span>
                 </>

@@ -72,7 +72,7 @@ export function SportsTabContent({
 
   {/* Compact Filter Bar — open section */}
   <GlassPanel>
-    <ExpandPanel title="Filters" subtitle="event type · date · volume" defaultOpen>
+    <ExpandPanel title="Filters" subtitle="event type · date · volume">
       <div className="space-y-2">
         {/* Event Type */}
         <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -98,7 +98,7 @@ export function SportsTabContent({
               <button
                 key={key}
                 onClick={() => setDateRange(key)}
-                className={`px-3 py-1.5 text-xs border transition-all font-light ${dateRange === key
+                className={`px-3 py-1.5 text-xs border transition-colors font-light ${dateRange === key
                   ? "bg-[var(--color-accent)]/30 text-[var(--color-ink)] border-[var(--color-accent)]/40"
                   : "bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink-muted)] border-[var(--color-rule-strong)]"
                   }`}
@@ -141,7 +141,7 @@ export function SportsTabContent({
           <label className={`${textColor} text-xs opacity-60 min-w-max`}>Include Futures</label>
           <button
             onClick={() => setFilters((prev) => ({ ...prev, includeFutures: !prev.includeFutures }))}
-            className={`inline-flex items-center w-12 h-6 border transition-all ${filters.includeFutures
+            className={`inline-flex items-center w-12 h-6 border transition-colors ${filters.includeFutures
               ? "bg-[var(--color-accent)]/40 border-[var(--color-accent)]/40"
               : "bg-[var(--color-paper-soft)] border-[var(--color-rule-strong)]"
               }`}

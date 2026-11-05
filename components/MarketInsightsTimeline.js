@@ -85,7 +85,7 @@ export function MarketInsightsTimeline({ userAddress, isNight = true }) {
  <button
  key={f}
  onClick={() => setFilter(f)}
- className={`px-4 py-2 text-sm font-light whitespace-nowrap transition-all ${
+ className={`px-4 py-2 text-sm font-light whitespace-nowrap transition-colors ${
  filter === f
  ? 'bg-[var(--color-evidence)]/30 border-[var(--color-evidence)] text-[var(--color-evidence)]'
  : 'mc-panel text-[var(--color-ink-muted)] hover:bg-[var(--color-paper-soft)]'
@@ -204,7 +204,7 @@ function PredictionCard({ prediction, isNight }) {
  </div>
  {/* Share Button (if resolved win) */}
  {isWin && (
- <button className={`text-xs font-light px-3 py-1.5 transition-all bg-[var(--color-evidence)]/20 hover:bg-[var(--color-evidence)]/30 text-[var(--color-evidence)] border border-[var(--color-evidence)]/30`}>
+ <button className={`text-xs font-light px-3 py-1.5 transition-colors bg-[var(--color-evidence)]/20 hover:bg-[var(--color-evidence)]/30 text-[var(--color-evidence)] border border-[var(--color-evidence)]/30`}>
  🔗 Share this win
  </button>
  )}

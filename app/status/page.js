@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, BarChart3, LineChart, Bot, Database, Zap } from 'lucide-react';
+import { Activity, Anchor, BarChart3, LineChart, Bot, Database, Zap } from 'lucide-react';
 import {
  getProviderStatusAppearance,
  getSummaryAppearance,
@@ -47,7 +47,7 @@ export default function StatusPage() {
  const fetchHealth = useCallback(async (showLoading = false) => {
  if (showLoading) setLoading(true);
  try {
- const res = await fetch('/api/meta/health');
+ const res = await fetch('/api/meta/health', { signal: AbortSignal.timeout(8000) });
  const data = await res.json();
  if (data.success) {
  setHealth(data);
@@ -99,6 +99,7 @@ export default function StatusPage() {
  database: Database,
  canton: Zap,
  telegraph: Activity,
+ near: Anchor,
  };
  const Icon = icons[key] || Activity;
  return <Icon className="h-5 w-5 text-[var(--color-ink-muted)]" aria-hidden="true" />;
@@ -120,11 +121,25 @@ export default function StatusPage() {
  maxWidth="max-w-3xl"
  wallet={false}
  >
- {/* Loading State */}
+ {/* Loading State — skeleton provider rows, not a lone spinner */}
  {loading && !health && (
- <div className="flex flex-col items-center gap-4 py-16">
- <div className="w-8 h-8 border-[3px] border-[var(--color-rule)] border-t-[var(--color-accent)] animate-spin" />
- <p className="text-[13px] text-[var(--color-ink-faint)] font-light">Checking provider health...</p>
+ <div className="w-full flex flex-col gap-3" aria-busy="true" aria-label="Checking provider health">
+ <div className="w-full mb-5 h-[68px] animate-pulse border border-[var(--color-rule)] bg-[var(--color-paper-soft)]" />
+ {[0, 1, 2, 3, 4].map((i) => (
+ <div key={i} className="w-full animate-pulse border border-[var(--color-rule)] bg-[var(--color-paper-soft)] p-[18px_20px]">
+ <div className="flex items-start justify-between">
+ <div className="flex gap-3 items-start">
+ <div className="h-5 w-5 bg-[var(--color-wash)]" />
+ <div>
+ <div className="h-3.5 w-32 bg-[var(--color-wash)]" />
+ <div className="mt-2 h-2.5 w-56 max-w-full bg-[var(--color-wash)]" />
+ </div>
+ </div>
+ <div className="h-3.5 w-10 bg-[var(--color-wash)]" />
+ </div>
+ </div>
+ ))}
+ <p className="text-center text-[12px] text-[var(--color-ink-faint)] font-light">Checking provider health...</p>
  </div>
  )}
 

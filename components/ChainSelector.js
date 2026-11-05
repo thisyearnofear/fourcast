@@ -93,7 +93,7 @@ function FullChainSelector({ options, onNetworkChange }) {
  {options.map((option) => (
  <div
  key={option.chainId}
- className="mc-panel p-4 hover:border-[var(--color-rule-strong)] transition-all"
+ className="mc-panel p-4 hover:border-[var(--color-rule-strong)] transition-colors"
  >
  <div className="flex items-center justify-between mb-3">
  <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ function FullChainSelector({ options, onNetworkChange }) {
  option.onSwitch(net.id);
  onNetworkChange?.({ chainId: option.chainId, networkId: net.id });
  }}
- className={`px-3 py-1.5 text-xs font-light transition-all ${
+ className={`px-3 py-1.5 text-xs font-light transition-colors ${
  option.currentNetwork.id === net.id
  ? 'bg-white/20 text-[var(--color-ink)] border border-white/30'
  : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] border border-[var(--color-rule)] hover:bg-[var(--color-paper-soft)] hover:text-[var(--color-ink)]'

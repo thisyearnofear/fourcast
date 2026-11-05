@@ -30,8 +30,7 @@ export default function WeatherPage() {
  );
 
  useEffect(() => {
- console.log('Page loaded, calling loadCurrentLocationWeather');
- loadCurrentLocationWeather();
+  loadCurrentLocationWeather();
  }, []);
 
  // ... (existing loadCurrentLocationWeather) ...
@@ -66,8 +65,7 @@ export default function WeatherPage() {
 
  try {
  const data = await weatherService.getCurrentWeather(location);
- console.log('Setting weather data:', data);
- setWeatherData(data);
+  setWeatherData(data);
  setCurrentLocationName(`${data.location.name}, ${data.location.region}`);
  } catch (error) {
  console.error('Error loading weather for location:', error);
@@ -111,10 +109,10 @@ export default function WeatherPage() {
  };
 
  return (
- <div className="w-screen h-screen min-h-dvh relative flex flex-col bg-black">
+ <div className="w-full min-h-dvh relative flex flex-col bg-[var(--color-paper-deep)]">
  {/* Hero Overlay - First Visit */}
  {showHero && (
- <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 overflow-y-auto">
+ <div className="fixed inset-0 z-[100] bg-[color-mix(in_oklab,var(--color-paper-deep)_95%,transparent)] flex items-center justify-center p-4 overflow-y-auto">
  <div className="max-w-lg w-full bg-[var(--color-paper-raised)] border border-[var(--color-rule)] p-6 sm:p-8 shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
  <div className="flex h-9 w-9 items-center justify-center bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/25">
@@ -376,7 +374,7 @@ export default function WeatherPage() {
  </div>
  )}
  {error && (
- <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/80 z-50">
+ <div className="fixed inset-0 flex flex-col items-center justify-center bg-[color-mix(in_oklab,var(--color-paper-deep)_80%,transparent)] z-50">
  <div className="animate-fade-in bg-[var(--color-paper-soft)] p-8 max-w-sm mx-4 text-center border border-[var(--color-rule-strong)]">
  <p className="text-[var(--color-ink)] text-lg font-light mb-6 leading-relaxed">
  {error}
@@ -417,7 +415,7 @@ export default function WeatherPage() {
  <div className="flex space-x-3">
  <button
  onClick={loadCurrentLocationWeather}
- className="flex-1 bg-white/20 hover:bg-white/30 px-4 py-3 text-[var(--color-ink)] font-light transition-colors duration-300 border border-white/30 active:scale-[0.98] text-sm"
+ className="flex-1 bg-[var(--color-paper-soft)] hover:bg-white/[0.08] px-4 py-3 text-[var(--color-ink)] font-light transition-colors duration-300 border border-[var(--color-rule-strong)] active:scale-[0.98] text-sm"
  disabled={isLoading}
  >
  Try Location Again

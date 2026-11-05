@@ -49,7 +49,7 @@ export default function EvidenceBlock({
  const confidenceMethod = getConfidenceMethod(signal);
 
  return (
- <div className={`fc-proof-rail ${bg} border ${border} overflow-hidden transition-all ${className}`}>
+ <div className={`fc-proof-rail ${bg} border ${border} overflow-hidden transition-colors ${className}`}>
  {/* Reputation Spine — always visible */}
  {(calibrationScore != null || agentBrierScore != null) && (
  <div className={`px-4 pt-3 pb-2 bg-white/[0.02]`}>
@@ -63,7 +63,7 @@ export default function EvidenceBlock({
  {/* Gauge bar */}
  <div className="relative w-16 h-1.5 overflow-hidden bg-[var(--color-paper-soft)]">
  <div
- className={`absolute inset-y-0 left-0 transition-all duration-700 ${
+ className={`absolute inset-y-0 left-0 transition-colors duration-700 ${
  calibrationScore >= 70 ? 'bg-[var(--color-accent)]' : calibrationScore >= 50 ? 'bg-[var(--color-sealed)]' : 'bg-[var(--color-breach)]'
  }`}
  style={{ width: `${Math.min(100, Math.max(0, calibrationScore))}%` }}
@@ -99,7 +99,7 @@ export default function EvidenceBlock({
  e.stopPropagation();
  setTrackRecordOpen(!trackRecordOpen);
  }}
- className={`ml-auto text-[10px] font-medium tracking-wider px-2.5 py-1 transition-all whitespace-nowrap bg-[var(--color-evidence)]/10 hover:bg-[var(--color-evidence)]/20 text-[var(--color-evidence)]`}
+ className={`ml-auto text-[10px] font-medium tracking-wider px-2.5 py-1 transition-colors whitespace-nowrap bg-[var(--color-evidence)]/10 hover:bg-[var(--color-evidence)]/20 text-[var(--color-evidence)]`}
  >
  How has Fourcast done? →
  </button>

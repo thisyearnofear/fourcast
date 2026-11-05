@@ -298,7 +298,7 @@ export default function WalletConnect({ isNight = false }) {
  </span>
  <button
  onClick={() => { canton.disconnect(); setShowDropdown(false); }}
- className={`text-xs px-2 py-1 transition-all hover:bg-[var(--color-paper-soft)] ${textColor} text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
+ className={`text-xs px-2 py-1 transition-colors hover:bg-[var(--color-paper-soft)] ${textColor} text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  >
  Disconnect
  </button>

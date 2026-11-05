@@ -7,7 +7,7 @@ import { TradingValidator } from '@/services/validators/index.js';
  * Comprehensive order validation with risk assessment
  */
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {

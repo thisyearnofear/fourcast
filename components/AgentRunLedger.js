@@ -324,7 +324,7 @@ export function AgentRunLedger() {
  }, [loadRuns]);
 
  return (
- <section className="mt-8 border border-[var(--color-rule)] bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.12),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.04),rgba(0,0,0,0.22))] p-1" aria-labelledby="run-ledger-heading">
+ <section className="mt-8 border border-[var(--color-rule)] bg-[radial-gradient(circle_at_top_right,var(--color-accent-soft),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.04),rgba(0,0,0,0.22))] p-1" aria-labelledby="run-ledger-heading">
  <div className="border border-white/[0.07] bg-[var(--color-paper-deep)] p-4 sm:p-5">
  <div className="flex items-start justify-between gap-3">
  <div>

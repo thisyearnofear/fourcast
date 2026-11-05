@@ -88,11 +88,9 @@ const ArbitrageExecutionPanel = dynamic(
 export default function MarketsPage() {
  // Unified chain connection state - single source of truth
  const chainConnections = useChainConnections();
- // console.log('[Markets Page] chainConnections:', chainConnections);
 
  // Provide default values to prevent undefined errors during initial render
  const { chains, canPerform, canPublish = false } = chainConnections || {};
- // console.log('[Markets Page] chains:', chains, 'canPerform:', canPerform, 'canPublish:', canPublish);
 
  // One persisted filter store for the whole page. The three wrappers below are
  // the setters the URL-params effect uses, so they are declared before it and
@@ -164,7 +162,6 @@ export default function MarketsPage() {
  // BETWEEN hook calls. That violated React's Rules of Hooks (hook count changed
  // between renders when `chains` became available, crashing the page). The guard
  // has been moved to AFTER all hooks — see below, just before the main return.
- // console.log('[Markets Page] ChainConnections initialized successfully');
 
  const {
  publishSignal,
@@ -528,12 +525,6 @@ export default function MarketsPage() {
  // useCallback above) so that the hook call order/count stays consistent across
  // every render, complying with React's Rules of Hooks.
  if (!chains) {
- console.error('[Markets Page] ChainConnections initialization failed:', {
- chains: !!chains,
- canPerform: !!canPerform,
- canPublish: typeof canPublish,
- chainConnections
- });
  return (
  <AppShell title="Markets" subtitle="Connecting wallet providers…">
  <div className="space-y-3 py-6" aria-busy="true" aria-label="Loading wallet connections">
@@ -608,82 +599,64 @@ export default function MarketsPage() {
  <div>
  {landingQuery ? <FirstRunBanner searchQuery={landingQuery} /> : null}
 
- {/* Sports Tab Content */}
+ {/* Tab contents share one record contract — filters differ per lane, the
+    rest of the ~25-prop bundle is identical. */}
+ {(() => {
+ const sharedTabProps = {
+ markets,
+ isLoading: isLoadingMarkets,
+ error,
+ onAnalyze: openAnalyzeConfig,
+ isNight,
+ textColor,
+ cardBgColor,
+ expandedMarketId,
+ setExpandedMarketId,
+ analysis,
+ isAnalyzing: isLoadingAnalysis,
+ analysisStage,
+ selectedMarket,
+ onPublishSignal: () => setShowPublishConfirm(true),
+ fetchMarkets,
+ chains,
+ canPublish,
+ setShowOrderPanel,
+ setSelectedMarketForOrder,
+ setSelectedKalshiMarket,
+ setOrderSide,
+ setSelectedArbitrage,
+ agentBrierScore,
+ calibrationScore,
+ visibleMarketCount,
+ displayLimit,
+ onLoadMore: () => setDisplayLimit(prev => prev + 10),
+ };
+ return (
+ <>
  {activeTab === "sports" && (
  <SportsTabContent
- markets={markets}
- isLoading={isLoadingMarkets}
- error={error}
+ {...sharedTabProps}
  filters={sportsFilters}
  setFilters={setSportsFilters}
  dateRange={selectedDateRange}
  setDateRange={setSelectedDateRange}
  minVolume={sportsMinVolume}
  setMinVolume={setSportsMinVolume}
- onAnalyze={openAnalyzeConfig}
- isNight={isNight}
- textColor={textColor}
- cardBgColor={cardBgColor}
- expandedMarketId={expandedMarketId}
- setExpandedMarketId={setExpandedMarketId}
- analysis={analysis}
- isAnalyzing={isLoadingAnalysis}
- analysisStage={analysisStage}
- selectedMarket={selectedMarket}
- onPublishSignal={() => setShowPublishConfirm(true)}
  analysisMode={analysisMode}
- fetchMarkets={fetchMarkets}
- chains={chains}
- canPublish={canPublish}
- setShowOrderPanel={setShowOrderPanel}
- setSelectedMarketForOrder={setSelectedMarketForOrder}
- setSelectedKalshiMarket={setSelectedKalshiMarket}
- setOrderSide={setOrderSide}
- setSelectedArbitrage={setSelectedArbitrage}
- agentBrierScore={agentBrierScore}
- calibrationScore={calibrationScore}
- visibleMarketCount={visibleMarketCount}
- displayLimit={displayLimit}
- onLoadMore={() => setDisplayLimit(prev => prev + 10)}
  />
  )}
-
- {/* Discovery Tab Content */}
  {activeTab === "discovery" && (
  <DiscoveryTabContent
- markets={markets}
- isLoading={isLoadingMarkets}
- error={error}
+ {...sharedTabProps}
  filters={discoveryFilters}
  setFilters={setDiscoveryFilters}
  dateRange={discoveryDateRange}
  setDateRange={setDiscoveryDateRange}
- onAnalyze={openAnalyzeConfig}
- isNight={isNight}
- textColor={textColor}
- cardBgColor={cardBgColor}
- expandedMarketId={expandedMarketId}
- setExpandedMarketId={setExpandedMarketId}
- analysis={analysis}
- isAnalyzing={isLoadingAnalysis}
- analysisStage={analysisStage}
- selectedMarket={selectedMarket}
- onPublishSignal={() => setShowPublishConfirm(true)}
- fetchMarkets={fetchMarkets}
- chains={chains}
- canPublish={canPublish}
- setShowOrderPanel={setShowOrderPanel}
- setSelectedMarketForOrder={setSelectedMarketForOrder}
- setSelectedKalshiMarket={setSelectedKalshiMarket}
- setOrderSide={setOrderSide}
- setSelectedArbitrage={setSelectedArbitrage}
- agentBrierScore={agentBrierScore}
- calibrationScore={calibrationScore}
- visibleMarketCount={visibleMarketCount}
- displayLimit={displayLimit}
- onLoadMore={() => setDisplayLimit(prev => prev + 10)}
  />
  )}
+ </>
+ );
+ })()}
 
  {/* Canton tab removed — private markets are a property, not a category. */}
  </div>

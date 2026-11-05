@@ -102,7 +102,7 @@ function CreateMarketPanel({ onCreated, onStatus }) {
                 type="button"
                 onClick={() => setAsset(key)}
                 disabled={submitting}
-                className={`px-3 py-2 text-xs font-medium transition-all border ${
+                className={`px-3 py-2 text-xs font-medium transition-colors border ${
                   asset === key
                     ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]/30 text-[var(--color-accent)]'
                     : 'bg-white/[0.03] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
@@ -123,7 +123,7 @@ function CreateMarketPanel({ onCreated, onStatus }) {
                 type="button"
                 onClick={() => setDays(d)}
                 disabled={submitting}
-                className={`flex-1 px-2 py-2 text-xs font-medium transition-all border ${
+                className={`flex-1 px-2 py-2 text-xs font-medium transition-colors border ${
                   days === d
                     ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]/30 text-[var(--color-accent)]'
                     : 'bg-white/[0.03] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'

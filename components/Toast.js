@@ -97,7 +97,7 @@ function Toast({ toast, onRemove, isNight }) {
 
  return (
  <div
- className={`pointer-events-auto transform transition-all duration-300 ${
+ className={`pointer-events-auto transform transition-colors duration-300 ${
  toast.isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
  }`}
  >

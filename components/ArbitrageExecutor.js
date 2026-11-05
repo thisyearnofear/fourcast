@@ -135,7 +135,7 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
 
  return (
  <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 overflow-y-auto"
- style={{ background: 'rgba(10,10,15,0.7)', backdropFilter: 'blur(6px)' }}
+ style={{ background: 'color-mix(in oklab, var(--color-paper-deep) 70%, transparent)', backdropFilter: 'blur(6px)' }}
  onClick={onClose}
  >
  <div
@@ -158,7 +158,7 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  </p>
  </div>
  </div>
- <button onClick={onClose} className={`text-sm px-3 py-1.5 bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] hover:bg-white/20 transition-all`}>
+ <button onClick={onClose} className={`text-sm px-3 py-1.5 bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] hover:bg-white/20 transition-colors`}>
  Close
  </button>
  </div>
@@ -253,7 +253,7 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  <button
  onClick={executeAll}
  disabled={!address}
- className={`w-full py-3 text-sm font-semibold transition-all ${
+ className={`w-full py-3 text-sm font-semibold transition-colors ${
  address
  ? 'bg-[var(--color-accent)] text-[var(--color-paper-deep)] hover:opacity-90 shadow-lg'
  : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)] cursor-not-allowed'
@@ -273,7 +273,7 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  {(overallStatus === 'success' || overallStatus === 'partial' || overallStatus === 'failed') && (
  <button
  onClick={onClose}
- className={`w-full py-3 text-sm font-semibold transition-all ${
+ className={`w-full py-3 text-sm font-semibold transition-colors ${
  overallStatus === 'success'
  ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/30'
  : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] hover:bg-white/20'

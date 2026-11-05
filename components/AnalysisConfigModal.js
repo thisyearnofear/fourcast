@@ -264,7 +264,7 @@ export default function AnalysisConfigModal({
  <button
  key={depth.id}
  onClick={() => setAnalysisDepth(depth.id)}
- className={`flex-1 p-3 border transition-all ${
+ className={`flex-1 p-3 border transition-colors ${
  analysisDepth === depth.id
  ? 'bg-[var(--color-accent)]/20 border-[var(--color-accent)]/50 text-[var(--color-ink)]'
  : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-muted)] hover:bg-[var(--color-paper-soft)]'
@@ -375,7 +375,7 @@ function ToggleChip({ label, active, onClick, auto = false }) {
  return (
  <button
  onClick={onClick}
- className={`px-3 py-2 text-sm font-medium transition-all ${
+ className={`px-3 py-2 text-sm font-medium transition-colors ${
  active
  ? 'bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/40'
  : 'bg-[var(--color-paper-raised)] text-[var(--color-ink-faint)] border border-[var(--color-rule)] hover:bg-[var(--color-paper-soft)]'

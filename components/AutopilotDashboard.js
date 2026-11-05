@@ -414,13 +414,13 @@ export function AutopilotDashboard({ isNight = false }) {
  {/* Config Toggle */}
  <button
  onClick={() => setShowConfig(!showConfig)}
- className={`flex-shrink-0 px-2.5 py-1.5 text-xs font-medium transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] border-[var(--color-rule)]`}
+ className={`flex-shrink-0 px-2.5 py-1.5 text-xs font-medium transition-colors border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] border-[var(--color-rule)]`}
  aria-label="Toggle agent config"
  >
  ⚙
  </button>
  {/* Schedule Toggle */}
- <div className={`flex items-center gap-2 px-2 py-1.5 text-xs font-medium transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] border-[var(--color-rule)] ${scheduleLoading || scheduleSaving ? 'opacity-60' : ''}`}>
+ <div className={`flex items-center gap-2 px-2 py-1.5 text-xs font-medium transition-colors border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] border-[var(--color-rule)] ${scheduleLoading || scheduleSaving ? 'opacity-60' : ''}`}>
  <span className={subtleText}>Schedule</span>
  <button
  onClick={handleToggleSchedule}
@@ -450,7 +450,7 @@ export function AutopilotDashboard({ isNight = false }) {
  {agentRunning ? (
  <button
  onClick={stopAgent}
- className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-[var(--color-breach)]/20 hover:bg-[var(--color-breach)]/30 text-[var(--color-breach)] border-[var(--color-breach)]/30"
+ className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-colors border bg-[var(--color-breach)]/20 hover:bg-[var(--color-breach)]/30 text-[var(--color-breach)] border-[var(--color-breach)]/30"
  aria-label="Stop agent"
  >
  ⏹ Stop
@@ -458,7 +458,7 @@ export function AutopilotDashboard({ isNight = false }) {
  ) : (
  <button
  onClick={runAgent}
- className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-all border bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)] border-[var(--color-accent)]/30"
+ className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-colors border bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)] border-[var(--color-accent)]/30"
  aria-label="Run agent"
  >
  ▶ Run Agent
@@ -681,7 +681,7 @@ export function AutopilotDashboard({ isNight = false }) {
  {hasMore && (
  <button
  onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
- className={`w-full py-2.5 text-sm font-medium transition-all border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] border-[var(--color-rule)]`}
+ className={`w-full py-2.5 text-sm font-medium transition-colors border bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] text-[var(--color-ink-muted)] border-[var(--color-rule)]`}
  >
  Show More ({executions.length - visibleCount} remaining)
  </button>

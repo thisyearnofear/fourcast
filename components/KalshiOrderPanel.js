@@ -128,7 +128,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  <div className="grid grid-cols-2 gap-3">
  <button
  onClick={() => setOrderSide('yes')}
- className={`px-4 py-3 transition-all border ${orderSide === 'yes'
+ className={`px-4 py-3 transition-colors border ${orderSide === 'yes'
  ? 'bg-[var(--color-accent)]/30 border-[var(--color-accent)] text-[var(--color-accent)]'
  : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
  }`}
@@ -138,7 +138,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  </button>
  <button
  onClick={() => setOrderSide('no')}
- className={`px-4 py-3 transition-all border ${orderSide === 'no'
+ className={`px-4 py-3 transition-colors border ${orderSide === 'no'
  ? 'bg-[var(--color-breach)]/30 border-[var(--color-breach)] text-[var(--color-breach)]'
  : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
  }`}
@@ -155,7 +155,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  <div className="grid grid-cols-2 gap-3">
  <button
  onClick={() => setOrderType('limit')}
- className={`px-4 py-3 transition-all border ${orderType === 'limit'
+ className={`px-4 py-3 transition-colors border ${orderType === 'limit'
  ? 'bg-[var(--color-evidence)]/30 border-[var(--color-evidence)] text-[var(--color-evidence)]'
  : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
  }`}
@@ -164,7 +164,7 @@ export default function KalshiOrderPanel({ market, isNight, onClose, embedded = 
  </button>
  <button
  onClick={() => setOrderType('market')}
- className={`px-4 py-3 transition-all border ${orderType === 'market'
+ className={`px-4 py-3 transition-colors border ${orderType === 'market'
  ? 'bg-[var(--color-evidence)]/30 border-[var(--color-evidence)] text-[var(--color-evidence)]'
  : `${inputBg} border-transparent hover:bg-opacity-70 ${textColor}`
  }`}

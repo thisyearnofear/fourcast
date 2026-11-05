@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import InfoTip from './InfoTip';
+import { BRAND_HEX, RULE_HEX } from '@/constants/brandColors';
 
 /**
  * Personal Stats Dashboard
@@ -132,17 +133,17 @@ export function PersonalStatsDashboard({ userAddress, isNight = true, compact = 
  <div className="h-48 w-full">
  <ResponsiveContainer width="100%" height="100%">
  <LineChart data={positions}>
- <CartesianGrid strokeDasharray="3 3" stroke='#ffffff10' />
+ <CartesianGrid strokeDasharray="3 3" stroke={RULE_HEX.hairline} />
  <XAxis dataKey="created_at" hide />
  <YAxis hide domain={['auto', 'auto']} />
  <Tooltip 
- contentStyle={{ backgroundColor: '#1e293b', borderColor: 'transparent' }}
- itemStyle={{ color: '#fff' }}
+ contentStyle={{ backgroundColor: BRAND_HEX.paperRaised, borderColor: 'transparent' }}
+ itemStyle={{ color: BRAND_HEX.ink }}
  />
  <Line 
  type="monotone" 
  dataKey="realized_pnl" 
- stroke={positions.length > 0 && positions[positions.length - 1].realized_pnl >= 0 ? '#22c55e' : '#ef4444'} 
+ stroke={positions.length > 0 && positions[positions.length - 1].realized_pnl >= 0 ? BRAND_HEX.accent : BRAND_HEX.breach} 
  strokeWidth={2} 
  dot={false} 
  />

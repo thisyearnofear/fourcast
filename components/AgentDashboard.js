@@ -128,7 +128,7 @@ export function AgentDashboard({ isNight = false }) {
  onClick={isRunning ? stop : handleRun}
  aria-label={isRunning ? 'Stop agent execution' : 'Run agent to scan markets'}
  aria-busy={isRunning}
- className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 font-medium text-sm transition-all ${
+ className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 font-medium text-sm transition-colors ${
  isRunning
  ? 'bg-[var(--color-breach)]/20 hover:bg-[var(--color-breach)]/30 text-[var(--color-breach)]'
  : 'bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)]'
@@ -164,7 +164,7 @@ export function AgentDashboard({ isNight = false }) {
  aria-valuemax={100}
  >
  <div 
- className={`h-full transition-all duration-500 ease-out bg-[var(--color-evidence)]`}
+ className={`h-full transition-colors duration-500 ease-out bg-[var(--color-evidence)]`}
  style={{
  width: `${
  currentStep.step === 'discover' ? '25%' :
@@ -271,14 +271,14 @@ function StepIndicator({ step, label, current, isNight, result, forecastSteps })
  const completeText = 'text-[var(--color-accent)]';
 
  return (
- <div className="space-y-1 transition-all duration-300">
+ <div className="space-y-1 transition-colors duration-300">
  <div className={`flex items-center gap-2 text-sm transition-colors duration-300 ${
  isComplete ? completeText : isActive ? activeText : subtleText
  }`}>
  <span className={`transition-transform duration-200 ${isActive ? 'animate-pulse scale-110' : ''}`}>
  {statusIcon}
  </span>
- <span className="transition-all duration-200">{label}</span>
+ <span className="transition-colors duration-200">{label}</span>
  {detail && <span className={`text-xs ${subtleText} transition-opacity duration-200`}>· {detail}</span>}
  </div>
  {subMessage && (

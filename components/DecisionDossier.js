@@ -10,7 +10,7 @@ import Glass from '@/components/canvasui/Glass';
    Decision Dossier — one judge-friendly explanation of a complete decision.
 
    Opens as a right-side drawer from Mandate Control. Fetches the canonical
-   /api/worldcup/verify chain (receipt → TxLINE proof → Solana validation →
+   /api/txline/verify chain (receipt → TxLINE proof → Solana validation →
    reconciliation) and answers the five questions an allocator would ask,
    in order. The full JSON remains available behind "View raw receipt."
 
@@ -71,7 +71,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/worldcup/verify?fixtureId=${encodeURIComponent(fixtureId)}`, { cache: 'no-store' });
+      const res = await fetch(`/api/txline/verify?fixtureId=${encodeURIComponent(fixtureId)}`, { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Verification unavailable');
       setState({ loading: false, data, error: null });
@@ -101,6 +101,8 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
   const forecast = receipt.decisions?.[0]?.forecast || {};
   const reconciliation = state.data?.reconciliation || {};
   const verification = state.data?.verification || {};
+  const commitment = state.data?.commitment || null;
+  const nearCommitment = state.data?.nearCommitment || null;
   const proof = state.data?.proof || {};
   const outcome = reconciliation.outcome || {};
   const comparison = reconciliation.decisionVsOutcome || {};
@@ -266,6 +268,41 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
                     </a>
                   )}
                 </div>
+                {(commitment || nearCommitment) && (
+                  <div className="mt-3 border-t border-[var(--mc-rule)] pt-3">
+                    <p className="mc-kicker mb-2">Chain anchors</p>
+                    {commitment && (
+                      <DossierRow
+                        label="Solana memo"
+                        value={commitment.ok ? `committed · slot ${commitment.slot ?? '—'}` : (commitment.reason || 'unverified')}
+                        accent={commitment.ok === true}
+                      />
+                    )}
+                    {nearCommitment && (
+                      <DossierRow
+                        label="NEAR anchor"
+                        value={
+                          nearCommitment.ok
+                            ? `anchored${nearCommitment.blockTime ? ` · ${formatTime(nearCommitment.blockTime * 1000)}` : ''}`
+                            : nearCommitment.state === 'not-anchored'
+                              ? 'not anchored yet'
+                              : (nearCommitment.reason || 'verification failed')
+                        }
+                        accent={nearCommitment.ok === true}
+                      />
+                    )}
+                    {nearCommitment?.ok && nearCommitment.explorerUrl && (
+                      <a
+                        href={nearCommitment.explorerUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 font-mono text-[10px] text-[var(--mc-reconciled)]/85 underline decoration-[var(--mc-reconciled)]/40 underline-offset-4 hover:text-[var(--color-ink)]"
+                      >
+                        View anchor on nearblocks <ArrowUpRight className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                )}
               </DossierAccordionItem>
 
               {/* Raw receipt toggle */}
@@ -298,7 +335,7 @@ export function DecisionDossier({ fixtureId, fixture, onClose }) {
                 >
                   <a
                     className="mc-action mc-action--primary"
-                    href={`/api/worldcup/verify?fixtureId=${encodeURIComponent(fixtureId)}`}
+                    href={`/api/txline/verify?fixtureId=${encodeURIComponent(fixtureId)}`}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -400,7 +437,7 @@ function RiskGate({ gate }) {
         style={{
           borderColor: passed ? 'var(--mc-reconciled)' : 'var(--mc-breach)',
           color: passed ? 'var(--mc-reconciled)' : 'var(--mc-breach)',
-          background: passed ? 'rgba(121,245,183,0.08)' : 'rgba(255,122,111,0.08)',
+          background: passed ? 'color-mix(in oklab, var(--color-accent) 8%, transparent)' : 'color-mix(in oklab, var(--color-breach) 8%, transparent)',
         }}
       >
         {passed ? '✓' : '✕'}

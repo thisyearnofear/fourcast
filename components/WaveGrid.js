@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { onBackdropPulse } from '@/components/BackdropProvider';
+import { BRAND_RGB } from '@/constants/brandColors';
 
 /**
  * WaveGrid — the landing's living backdrop.
@@ -33,16 +34,18 @@ import { onBackdropPulse } from '@/components/BackdropProvider';
 // same emitBackdropPulse() that ripples the CSS grid also sweeps this wave
 // field. One source of truth for every surface.
 
-/** Backdrop state → pulse color (rgb). Mirrors BackdropProvider semantics. */
+/** Backdrop state → pulse color. Canvas needs rgb triplets; the token
+ *  source is BRAND_RGB (constants/brandColors.js), mirrors the
+ *  BackdropProvider semantics. */
 const STATE_COLORS = {
-  idle: [121, 245, 183],
-  scanning: [121, 245, 183], // --color-accent
-  sealed: [245, 197, 107], // --color-sealed (amber)
-  breach: [255, 122, 111], // --color-breach (red)
-  review: [196, 181, 253], // --color-review (violet)
-  reconciled: [121, 245, 183], // strong green
+  idle: BRAND_RGB.accent,
+  scanning: BRAND_RGB.accent,
+  sealed: BRAND_RGB.sealed,
+  breach: BRAND_RGB.breach,
+  review: BRAND_RGB.review,
+  reconciled: BRAND_RGB.accent,
 };
-const DEFAULT_COLOR = [121, 245, 183];
+const DEFAULT_COLOR = BRAND_RGB.accent;
 
 // ── Venue peaks ────────────────────────────────────────────────────────────
 // Presentational landmarks in field space: nx = horizontal (0..1),
@@ -53,8 +56,8 @@ const VENUES = [
   { name: 'Delphi', nx: 0.84, ny: 0.68 },
   { name: 'Canton', nx: 0.38, ny: 0.26, quiet: true },
 ];
-const EMERALD = [121, 245, 183];
-const AMBER = [240, 190, 110]; // --color-sealed
+const EMERALD = BRAND_RGB.accent;
+const AMBER = BRAND_RGB.sealed;
 
 export default function WaveGrid() {
   const canvasRef = useRef(null);
@@ -175,8 +178,8 @@ export default function WaveGrid() {
       const hY = horizonY();
       // Horizon glow — the field's light source.
       const glow = ctx.createRadialGradient(W * 0.5, hY, 0, W * 0.5, hY, W * 0.45);
-      glow.addColorStop(0, 'rgba(121, 245, 183, 0.05)');
-      glow.addColorStop(0.5, 'rgba(121, 245, 183, 0.015)');
+      glow.addColorStop(0, `rgba(${EMERALD.join(',')}, 0.05)`);
+      glow.addColorStop(0.5, `rgba(${EMERALD.join(',')}, 0.015)`);
       glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, W, H);

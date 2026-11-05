@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Bot, Hammer, MessageCircle, FlaskConical, ArrowUpRight, ArrowRight, Zap } from 'lucide-react';
 import { AppShell } from '@/app/components/PageNav';
 import { BRAND } from '@/constants/brand';
@@ -44,7 +45,7 @@ const LAB_FEATURES = [
 export default function LabsPage() {
   return (
     <AppShell title="Labs" subtitle={BRAND.labs.subtitle} maxWidth="max-w-5xl">
-      <section className="mb-6 border-b border-[var(--color-wash)] py-3">
+      <section className="mb-4 border-b border-[var(--color-wash)] py-3">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 flex h-8 w-8 items-center justify-center border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
             <FlaskConical className="h-4 w-4" strokeWidth={2} />
@@ -58,55 +59,59 @@ export default function LabsPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Linked rows — workbench voice, not icon-tile cards */}
+      <div className="border-t border-[var(--color-rule-strong)] border-b border-[var(--color-rule)]">
         {LAB_FEATURES.map((feature) => (
-          <FeatureCard key={feature.id} feature={feature} />
+          <LabRow key={feature.id} feature={feature} />
         ))}
       </div>
     </AppShell>
   );
 }
 
-function FeatureCard({ feature }) {
-  const isStable = feature.status === 'stable';
-  const isCore = feature.status === 'core';
-  const isExternal = feature.external;
+function LabRow({ feature }) {
   const Icon = feature.icon;
+  const isExternal = feature.external;
+  const isBeta = feature.status === 'beta';
 
-  const extraProps = isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {};
-
-  return (
-    <a
-      href={feature.href}
-      {...extraProps}
-      className="group flex flex-col border border-[var(--color-rule)] bg-white/[0.02] p-4 no-underline transition-colors hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-accent)]/[0.04]"
-    >
-      <div className="w-10 h-10 border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 flex items-center justify-center text-[var(--color-accent)] mb-3">
-        <Icon className="h-5 w-5" strokeWidth={2} />
+  const row = (
+    <>
+      <Icon className="h-4 w-4 shrink-0 text-[var(--color-ink-muted)] transition-colors group-hover:text-[var(--color-accent)]" aria-hidden />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-[var(--color-ink)]">{feature.title}</h3>
+          <span
+            className={`px-1.5 py-0.5 text-[9px] font-medium ${
+              isBeta
+                ? 'bg-[var(--color-sealed)]/15 text-[var(--color-sealed)]'
+                : 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+            }`}
+          >
+            {isBeta ? 'Beta' : feature.status === 'core' ? 'Core' : 'Stable'}
+          </span>
+        </div>
+        <p className="mt-0.5 text-xs leading-relaxed text-[var(--color-ink-faint)]">
+          {feature.description}
+        </p>
       </div>
+      {isExternal ? (
+        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[var(--color-ink-faint)] transition-colors group-hover:text-[var(--color-accent)]" aria-hidden />
+      ) : (
+        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[var(--color-ink-faint)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--color-accent)]" aria-hidden />
+      )}
+    </>
+  );
 
-      <div className="mb-2 flex items-center gap-2">
-        <h3 className="text-sm font-semibold text-[var(--color-ink)]">
-          {feature.title}
-        </h3>
-        <span className={`px-1.5 py-0.5 text-[9px] font-medium ${
-          isCore ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
-          : isStable ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
-          : 'bg-[var(--color-sealed)]/15 text-[var(--color-sealed)]'
-        }`}>
-          {isCore ? 'Core' : isStable ? 'Stable' : 'Beta'}
-        </span>
-        {isExternal && <ArrowUpRight className="h-3 w-3 text-[var(--color-ink-faint)]" />}
-      </div>
+  const cls =
+    'group flex items-center gap-3 border-t border-[var(--color-rule)] px-1 py-4 no-underline transition-colors first:border-t-0 hover:bg-white/[0.03] sm:px-3';
 
-      <p className="flex-1 text-xs leading-relaxed text-[var(--color-ink-faint)]">
-        {feature.description}
-      </p>
-
-      <div className="mt-2 flex items-center gap-1 text-[10px] font-medium text-[var(--color-accent)] opacity-0 transition-opacity group-hover:opacity-100">
-        {isExternal ? 'Open' : 'Explore'}
-        <ArrowRight className="h-3 w-3" />
-      </div>
+  return isExternal ? (
+    <a href={feature.href} target="_blank" rel="noopener noreferrer" className={cls}>
+      {row}
     </a>
+  ) : (
+    <Link href={feature.href} className={cls}>
+      {row}
+    </Link>
   );
 }

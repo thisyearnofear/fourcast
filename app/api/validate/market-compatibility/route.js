@@ -7,7 +7,7 @@ import { FuturesBetValidator, MarketDataValidator } from '@/services/validators/
  * Validates market compatibility with weather analysis and data quality
  */
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {

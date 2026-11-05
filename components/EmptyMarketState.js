@@ -51,7 +51,7 @@ export default function EmptyMarketState({ category, onSwitchCategory, message }
  }}
  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium
  bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)] border border-[var(--color-rule)] hover:border-[var(--color-rule-strong)]
- text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-all"
+ text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors"
  >
  {SuggestionIcon && <SuggestionIcon className="h-3.5 w-3.5" />}
  <span>Browse {cat}</span>

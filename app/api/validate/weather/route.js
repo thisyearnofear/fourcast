@@ -7,7 +7,7 @@ import { WeatherDataValidator } from '@/services/validators/index.js';
  * Validates weather data quality and completeness
  */
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {

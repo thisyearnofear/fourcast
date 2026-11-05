@@ -3,6 +3,7 @@
 import { WagmiProvider } from 'wagmi';
 import { ConnectKitProvider } from 'connectkit';
 import { config } from '../onchain/config';
+import { BRAND_HEX } from '@/constants/brandColors';
 
 export default function WalletLayer({ children }) {
   return (
@@ -10,11 +11,11 @@ export default function WalletLayer({ children }) {
       <ConnectKitProvider
         mode="dark"
         customTheme={{
-          "--ck-accent-color": "#34d399",
-          "--ck-accent-text": "#04110c",
-          "--ck-primary-button-background": "#0f1a16",
-          "--ck-primary-button-hover-background": "#1a2e26",
-          "--ck-secondary-button-background": "#374151",
+          "--ck-accent-color": BRAND_HEX.accent,
+          "--ck-accent-text": BRAND_HEX.accentInk,
+          "--ck-primary-button-background": BRAND_HEX.paper,
+          "--ck-primary-button-hover-background": BRAND_HEX.paperRaised,
+          "--ck-secondary-button-background": BRAND_HEX.paperSoft,
         }}
       >
         {children}

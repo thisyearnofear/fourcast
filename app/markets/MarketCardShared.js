@@ -102,7 +102,7 @@ export function ChainActionWidget({
  }
  }}
  disabled={isDisabled}
- className={`shrink-0 px-3 py-1.5 text-xs font-light transition-all border ${!isDisabled
+ className={`shrink-0 px-3 py-1.5 text-xs font-light transition-colors border ${!isDisabled
  ? `${chainDef.color === 'purple'
  ? `${TINT.review} hover:bg-review/25`
  : `${TINT.evidence} hover:bg-evidence/25`}`
@@ -174,7 +174,7 @@ export function StaggeredMarketCard({
 
  return (
  <div
- className={`transition-all duration-500 ease-out ${
+ className={`transition-colors duration-500 ease-out ${
  isVisible
  ? "opacity-100 translate-y-0"
  : "opacity-0 translate-y-4 pointer-events-none"
@@ -395,7 +395,7 @@ export function MarketCard({
  <>
  {/* Inline Card (always visible when not hidden) */}
  <div
- className={`fc-market-row transition-all duration-500 p-5 sm:p-6
+ className={`fc-market-row transition-colors duration-500 p-5 sm:p-6
  ${isHidden
  ? "opacity-0 pointer-events-none translate-y-2"
  : "opacity-100"
@@ -558,7 +558,7 @@ export function MarketCard({
  e.stopPropagation();
  onPublishSignal();
  }}
- className={`px-3 py-1 font-medium border transition-all bg-accent/15 text-accent border-accent/40 hover:bg-accent/25`}
+ className={`px-3 py-1 font-medium border transition-colors bg-accent/15 text-accent border-accent/40 hover:bg-accent/25`}
  title="Seal this call as a public, timestamped receipt"
  >
  Publish My Receipt
@@ -579,7 +579,7 @@ export function MarketCard({
  <button
  onClick={() => setExpandedMarketId(null)}
  aria-label="Close expanded market view"
- className={`px-4 sm:px-6 py-3 font-light text-sm transition-all border bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink)] border-[var(--color-rule-strong)]`}
+ className={`px-4 sm:px-6 py-3 font-light text-sm transition-colors border bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink)] border-[var(--color-rule-strong)]`}
  >
  ← Back
  </button>

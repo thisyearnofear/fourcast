@@ -115,8 +115,8 @@
   /* Overscan the top so the parallax shift (≤40px) never exposes an edge. */
   inset: -48px 0 0 0;
   background-image:
-    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(243,240,231,.07) calc(100% - 1px)),
-    repeating-linear-gradient(180deg, transparent 0, transparent 5.7rem, rgba(243,240,231,.07) 5.75rem, rgba(243,240,231,.07) 5.8rem);
+    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), color-mix(in oklab, var(--color-ink) 7.0%, transparent) calc(100% - 1px)),
+    repeating-linear-gradient(180deg, transparent 0, transparent 5.7rem, color-mix(in oklab, var(--color-ink) 7.0%, transparent) 5.75rem, color-mix(in oklab, var(--color-ink) 7.0%, transparent) 5.8rem);
   background-size: min(16vw, 14rem) 100%, 100% 100%;
   mask-image: linear-gradient(180deg, black, transparent 74%);
   animation: fc-grid-breathe 8s ease-in-out infinite;
@@ -150,7 +150,7 @@
   position: absolute;
   inset: -3px;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0deg, rgba(121,245,183,.35) 40deg, transparent 80deg);
+  background: conic-gradient(from 0deg, transparent 0deg, color-mix(in oklab, var(--color-accent) 35.0%, transparent) 40deg, transparent 80deg);
   animation: fc-radar-sweep 3s linear infinite;
   content: '';
 }
@@ -159,7 +159,7 @@
   inset: 0;
   border-radius: 50%;
   background: var(--color-accent);
-  box-shadow: 0 0 8px rgba(121,245,183,.6);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--color-accent) 60.0%, transparent);
   content: '';
 }
 
@@ -228,7 +228,7 @@
   gap: 0.5rem;
   font: 500 11px/1 var(--font-mono);
   letter-spacing: 0.06em;
-  color: rgba(243,240,231,.55);
+  color: color-mix(in oklab, var(--color-ink) 55.0%, transparent);
 }
 .fc-marquee__dot {
   width: 0.3rem;
@@ -242,7 +242,7 @@
   align-items: center;
   gap: 0.35rem;
   border: 1px solid var(--color-accent);
-  background: rgba(121,245,183,.08);
+  background: color-mix(in oklab, var(--color-accent) 8.0%, transparent);
   padding: 0.15rem 0.4rem;
   font: 700 9px/1 var(--font-mono);
   letter-spacing: 0.12em;
@@ -367,7 +367,7 @@ body::before {
   pointer-events: none;
   --pulse-x: 50%;
   --pulse-y: 50%;
-  --pulse-color: rgba(121, 245, 183, 0.18);
+  --pulse-color: color-mix(in oklab, var(--color-accent) 18.0%, transparent);
 }
 .fc-backdrop-pulse::before {
   content: '';
@@ -394,8 +394,8 @@ body::before {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(243,240,231,.035) calc(100% - 1px)),
-    repeating-linear-gradient(180deg, transparent 0, transparent 5.7rem, rgba(243,240,231,.035) 5.75rem, rgba(243,240,231,.035) 5.8rem);
+    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), color-mix(in oklab, var(--color-ink) 3.5%, transparent) calc(100% - 1px)),
+    repeating-linear-gradient(180deg, transparent 0, transparent 5.7rem, color-mix(in oklab, var(--color-ink) 3.5%, transparent) 5.75rem, color-mix(in oklab, var(--color-ink) 3.5%, transparent) 5.8rem);
   background-size: min(16vw, 14rem) 100%, 100% 100%;
   mask-image: linear-gradient(180deg, black, transparent 74%);
   opacity: .48;
@@ -411,29 +411,29 @@ body::before {
 }
 
 .fc-display { letter-spacing: -.055em; }
-.fc-kicker { color: rgba(121,245,183,.78); font: 600 10px/1 var(--font-sans); letter-spacing: .18em; text-transform: uppercase; }
-.fc-query { border: 1px solid rgba(243,240,231,.18); background: rgba(12,16,15,.86); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
-.fc-query.is-focused { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(121,245,183,.12), inset 0 1px 0 rgba(255,255,255,.06); }
-.fc-query label { border-left: 2px solid rgba(121,245,183,.55); }
+.fc-kicker { color: color-mix(in oklab, var(--color-accent) 78.0%, transparent); font: 600 10px/1 var(--font-sans); letter-spacing: .18em; text-transform: uppercase; }
+.fc-query { border: 1px solid color-mix(in oklab, var(--color-ink) 18.0%, transparent); background: color-mix(in oklab, var(--color-paper-deep) 86.0%, transparent); box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-ink) 4.0%, transparent); }
+.fc-query.is-focused { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 12.0%, transparent), inset 0 1px 0 color-mix(in oklab, var(--color-ink) 6.0%, transparent); }
+.fc-query label { border-left: 2px solid color-mix(in oklab, var(--color-accent) 55.0%, transparent); }
 .fc-action { border: 1px solid var(--accent); background: var(--accent); color: #08100d; font-weight: 800; letter-spacing: .02em; transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
 .fc-action:hover { background: #b3ffd5; }
-.fc-action--quiet { background: transparent; color: var(--accent); border-color: rgba(121,245,183,.42); }
-.fc-action--quiet:hover { background: rgba(121,245,183,.1); }
-.fc-chip { border: 1px solid rgba(243,240,231,.13); background: rgba(243,240,231,.025); color: rgba(243,240,231,.62); transition: border-color .2s ease, color .2s ease, transform .2s ease; }
-.fc-chip:hover { border-color: rgba(121,245,183,.6); color: var(--ink); }
-.fc-instrument { border: 1px solid rgba(121,245,183,.37); background: #080b0a; box-shadow: inset 0 0 0 1px rgba(255,255,255,.025); }
-.fc-instrument__inner { background: linear-gradient(145deg, rgba(121,245,183,.085), transparent 38%), var(--panel-deep); }
-.fc-metric { border: 1px solid rgba(243,240,231,.13); background: rgba(0,0,0,.23); }
+.fc-action--quiet { background: transparent; color: var(--accent); border-color: color-mix(in oklab, var(--color-accent) 42.0%, transparent); }
+.fc-action--quiet:hover { background: color-mix(in oklab, var(--color-accent) 10.0%, transparent); }
+.fc-chip { border: 1px solid color-mix(in oklab, var(--color-ink) 13.0%, transparent); background: color-mix(in oklab, var(--color-ink) 2.5%, transparent); color: color-mix(in oklab, var(--color-ink) 62.0%, transparent); transition: border-color .2s ease, color .2s ease, transform .2s ease; }
+.fc-chip:hover { border-color: color-mix(in oklab, var(--color-accent) 60.0%, transparent); color: var(--ink); }
+.fc-instrument { border: 1px solid color-mix(in oklab, var(--color-accent) 37.0%, transparent); background: var(--color-paper-deep); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 2.5%, transparent); }
+.fc-instrument__inner { background: linear-gradient(145deg, color-mix(in oklab, var(--color-accent) 8.5%, transparent), transparent 38%), var(--panel-deep); }
+.fc-metric { border: 1px solid color-mix(in oklab, var(--color-ink) 13.0%, transparent); background: color-mix(in oklab, var(--color-paper-deep) 23.0%, transparent); }
 .fc-status { border: 1px solid currentColor; font: 700 10px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
-.fc-status--positive { background: rgba(121,245,183,.1); color: var(--accent); }
+.fc-status--positive { background: color-mix(in oklab, var(--color-accent) 10.0%, transparent); color: var(--accent); }
 
 .fc-market-row { position: relative; transition: background var(--dur-state) linear; }
 .fc-market-row:hover { background: var(--color-grid); }
 .fc-market-row__question { letter-spacing: -.025em; }
 .fc-market-row__prices { border-block: 1px solid var(--color-rule); }
-.fc-market-price { border: 1px solid rgba(243,240,231,.12); background: rgba(0,0,0,.18); transition: border-color .18s ease, background .18s ease, transform .18s ease; }
-.fc-market-price--yes:hover { border-color: rgba(121,245,183,.65); background: rgba(121,245,183,.09); }
-.fc-market-price--no:hover { border-color: rgba(255,122,111,.6); background: rgba(255,122,111,.08); }
+.fc-market-price { border: 1px solid color-mix(in oklab, var(--color-ink) 12.0%, transparent); background: color-mix(in oklab, var(--color-paper-deep) 18.0%, transparent); transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.fc-market-price--yes:hover { border-color: color-mix(in oklab, var(--color-accent) 65.0%, transparent); background: color-mix(in oklab, var(--color-accent) 9.0%, transparent); }
+.fc-market-price--no:hover { border-color: color-mix(in oklab, var(--color-breach) 60.0%, transparent); background: color-mix(in oklab, var(--color-breach) 8.0%, transparent); }
 .fc-market-row::before {
   position: absolute;
   inset-block: 0;
@@ -461,43 +461,43 @@ body::before {
   transition: transform var(--dur-panel) var(--ease-out);
 }
 .fc-door:focus-visible::before { transform: scaleX(1); }
-.fc-edge-readout { border: 1px solid rgba(121,245,183,.32); background: rgba(121,245,183,.08); }
-.fc-proof-rail { border-radius: 0; border-color: rgba(243,240,231,.14); background: rgba(12,16,15,.76); }
+.fc-edge-readout { border: 1px solid color-mix(in oklab, var(--color-accent) 32.0%, transparent); background: color-mix(in oklab, var(--color-accent) 8.0%, transparent); }
+.fc-proof-rail { border-radius: 0; border-color: color-mix(in oklab, var(--color-ink) 14.0%, transparent); background: color-mix(in oklab, var(--color-paper-deep) 76.0%, transparent); }
 .fc-proof-rail > :first-child { border-left: 3px solid var(--accent); }
 
-.fc-analysis-rail { border-top: 1px solid rgba(243,240,231,.14); border-bottom: 1px solid rgba(243,240,231,.14); background: rgba(8,11,10,.62); padding: 1.5rem; }
+.fc-analysis-rail { border-top: 1px solid color-mix(in oklab, var(--color-ink) 14.0%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 14.0%, transparent); background: rgba(8,11,10,.62); padding: 1.5rem; }
 .fc-analysis-rail__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .fc-analysis-rail__steps { position: relative; display: grid; gap: 0; margin-top: 1.5rem; list-style: none; }
-.fc-analysis-rail__steps::before { position: absolute; top: .7rem; bottom: .7rem; left: .56rem; width: 1px; background: rgba(243,240,231,.14); content: ''; }
-.fc-analysis-rail__steps li { position: relative; z-index: 1; display: grid; grid-template-columns: 1.2rem 1fr auto; gap: .8rem; align-items: start; padding: .55rem 0; color: rgba(243,240,231,.42); font-size: .82rem; }
+.fc-analysis-rail__steps::before { position: absolute; top: .7rem; bottom: .7rem; left: .56rem; width: 1px; background: color-mix(in oklab, var(--color-ink) 14.0%, transparent); content: ''; }
+.fc-analysis-rail__steps li { position: relative; z-index: 1; display: grid; grid-template-columns: 1.2rem 1fr auto; gap: .8rem; align-items: start; padding: .55rem 0; color: color-mix(in oklab, var(--color-ink) 42.0%, transparent); font-size: .82rem; }
 .fc-analysis-rail__steps li.is-current { color: var(--ink); }
-.fc-analysis-rail__steps li.is-complete { color: rgba(243,240,231,.74); }
-.fc-analysis-rail__index { display: grid; width: 1.15rem; height: 1.15rem; place-items: center; border: 1px solid rgba(243,240,231,.2); background: var(--panel-deep); color: rgba(243,240,231,.54); font: 600 8px/1 var(--font-mono); }
+.fc-analysis-rail__steps li.is-complete { color: color-mix(in oklab, var(--color-ink) 74.0%, transparent); }
+.fc-analysis-rail__index { display: grid; width: 1.15rem; height: 1.15rem; place-items: center; border: 1px solid color-mix(in oklab, var(--color-ink) 20.0%, transparent); background: var(--panel-deep); color: color-mix(in oklab, var(--color-ink) 54.0%, transparent); font: 600 8px/1 var(--font-mono); }
 .fc-analysis-rail__steps li.is-current .fc-analysis-rail__index, .fc-analysis-rail__steps li.is-complete .fc-analysis-rail__index { border-color: var(--accent); color: var(--accent); }
 .fc-analysis-rail__steps p { font-weight: 600; }
-.fc-analysis-rail__steps span:not(.fc-analysis-rail__index):not(.fc-analysis-rail__active) { display: block; margin-top: .18rem; color: rgba(243,240,231,.38); font-size: .72rem; }
+.fc-analysis-rail__steps span:not(.fc-analysis-rail__index):not(.fc-analysis-rail__active) { display: block; margin-top: .18rem; color: color-mix(in oklab, var(--color-ink) 38.0%, transparent); font-size: .72rem; }
 .fc-analysis-rail__active { width: .45rem; height: .45rem; margin-top: .35rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px var(--accent); animation: fc-lamp 1.8s ease-in-out infinite; }
-.fc-analysis-rail__note { margin-top: 1.2rem; border-top: 1px solid rgba(243,240,231,.1); padding-top: .8rem; color: rgba(243,240,231,.38); font: 500 9px/1.55 var(--font-mono); letter-spacing: .05em; text-transform: uppercase; }
+.fc-analysis-rail__note { margin-top: 1.2rem; border-top: 1px solid color-mix(in oklab, var(--color-ink) 10.0%, transparent); padding-top: .8rem; color: color-mix(in oklab, var(--color-ink) 38.0%, transparent); font: 500 9px/1.55 var(--font-mono); letter-spacing: .05em; text-transform: uppercase; }
 .fc-proof-group { }
 .fc-signal-record { }
-.fc-decision-chain { display: flex; flex-wrap: wrap; gap: .45rem; border-top: 1px solid rgba(243,240,231,.1); padding-top: .75rem; }
-.fc-decision-chain span { color: rgba(243,240,231,.38); font: 600 8px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
-.fc-decision-chain span::before { display: inline-block; width: .42rem; height: .42rem; margin-right: .35rem; border: 1px solid rgba(243,240,231,.3); content: ''; }
-.fc-decision-chain span.is-complete { color: rgba(243,240,231,.78); }
-.fc-decision-chain span.is-complete::before { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 7px rgba(121,245,183,.6); }
-.fc-position-record { border: 1px solid rgba(243,240,231,.14); background: rgba(12,16,15,.78); box-shadow: inset 3px 0 0 transparent; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
-.fc-position-record:hover { border-color: rgba(121,245,183,.48); box-shadow: inset 3px 0 0 var(--accent), 6px 6px 0 rgba(0,0,0,.14); transform: translate(-1px, -1px); }
+.fc-decision-chain { display: flex; flex-wrap: wrap; gap: .45rem; border-top: 1px solid color-mix(in oklab, var(--color-ink) 10.0%, transparent); padding-top: .75rem; }
+.fc-decision-chain span { color: color-mix(in oklab, var(--color-ink) 38.0%, transparent); font: 600 8px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.fc-decision-chain span::before { display: inline-block; width: .42rem; height: .42rem; margin-right: .35rem; border: 1px solid color-mix(in oklab, var(--color-ink) 30.0%, transparent); content: ''; }
+.fc-decision-chain span.is-complete { color: color-mix(in oklab, var(--color-ink) 78.0%, transparent); }
+.fc-decision-chain span.is-complete::before { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 7px color-mix(in oklab, var(--color-accent) 60.0%, transparent); }
+.fc-position-record { border: 1px solid color-mix(in oklab, var(--color-ink) 14.0%, transparent); background: color-mix(in oklab, var(--color-paper-deep) 78.0%, transparent); box-shadow: inset 3px 0 0 transparent; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.fc-position-record:hover { border-color: color-mix(in oklab, var(--color-accent) 48.0%, transparent); box-shadow: inset 3px 0 0 var(--accent), 6px 6px 0 color-mix(in oklab, var(--color-paper-deep) 14.0%, transparent); transform: translate(-1px, -1px); }
 
-.operator-pulse { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem 1.25rem; min-height: 2.9rem; border-block: 1px solid rgba(243,240,231,.13); background: rgba(6,9,8,.48); padding: .55rem .8rem; color: rgba(243,240,231,.55); font: 500 10px/1.4 var(--font-sans); letter-spacing: .075em; text-transform: uppercase; }
+.operator-pulse { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem 1.25rem; min-height: 2.9rem; border-block: 1px solid color-mix(in oklab, var(--color-ink) 13.0%, transparent); background: rgba(6,9,8,.48); padding: .55rem .8rem; color: color-mix(in oklab, var(--color-ink) 55.0%, transparent); font: 500 10px/1.4 var(--font-sans); letter-spacing: .075em; text-transform: uppercase; }
 .operator-pulse__primary, .operator-pulse__metrics { display: flex; align-items: center; gap: .55rem; }
 .operator-pulse__primary strong { color: var(--ink); font-weight: 700; }
 .operator-pulse__metrics { gap: 1.2rem; margin-left: auto; }
 .operator-pulse__metrics b { color: var(--accent); font-weight: 700; }
 .operator-pulse__lamp { width: .48rem; height: .48rem; border-radius: 50%; background: #58605c; box-shadow: 0 0 0 3px rgba(88,96,92,.12); }
-.operator-pulse__lamp.is-active { background: var(--accent); box-shadow: 0 0 0 3px rgba(121,245,183,.1), 0 0 13px rgba(121,245,183,.8); animation: fc-lamp 2.4s ease-in-out infinite; }
+.operator-pulse__lamp.is-active { background: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 10.0%, transparent), 0 0 13px color-mix(in oklab, var(--color-accent) 80.0%, transparent); animation: fc-lamp 2.4s ease-in-out infinite; }
 .operator-pulse--compact { min-height: 0; border: 0; background: transparent; padding: .35rem .25rem; gap: .4rem; font-size: 9px; white-space: nowrap; }
-.operator-pulse__quiet { color: rgba(243,240,231,.38); }
-@keyframes fc-lamp { 50% { box-shadow: 0 0 0 5px rgba(121,245,183,.04), 0 0 17px rgba(121,245,183,.85); } }
+.operator-pulse__quiet { color: color-mix(in oklab, var(--color-ink) 38.0%, transparent); }
+@keyframes fc-lamp { 50% { box-shadow: 0 0 0 5px color-mix(in oklab, var(--color-accent) 4.0%, transparent), 0 0 17px color-mix(in oklab, var(--color-accent) 85.0%, transparent); } }
 
 @media (max-width: 640px) { .operator-pulse__metrics { width: 100%; margin-left: 0; justify-content: space-between; gap: .5rem; } .operator-pulse__label { display: none; } }
 
@@ -659,7 +659,7 @@ body { overflow-x: clip; }
   height: 18rem;
   border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(121,245,183,.07), transparent 70%);
+  background: radial-gradient(circle, color-mix(in oklab, var(--color-accent) 7.0%, transparent), transparent 70%);
   transform: translate3d(calc(var(--glow-x, -100rem) - 9rem), calc(var(--glow-y, -100rem) - 9rem), 0);
   opacity: 0;
   transition: opacity var(--dur-state) linear;
@@ -687,8 +687,8 @@ body { overflow-x: clip; }
 }
 
 /* Confidence tints — sealed (amber) and review (violet) for MED/LOW. */
-.fc-status--sealed { background: rgba(245,197,107,.1); color: var(--color-sealed); }
-.fc-status--review { background: rgba(196,181,253,.1); color: var(--color-review); }
+.fc-status--sealed { background: color-mix(in oklab, var(--color-sealed) 10.0%, transparent); color: var(--color-sealed); }
+.fc-status--review { background: color-mix(in oklab, var(--color-review) 10.0%, transparent); color: var(--color-review); }
 
 /* Signal ticker — compact live feed strip inside the instrument panel. */
 .fc-signal-ticker {
@@ -707,7 +707,7 @@ body { overflow-x: clip; }
   height: 0.35rem;
   border-radius: 50%;
   background: var(--color-accent);
-  box-shadow: 0 0 6px rgba(121,245,183,.5);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--color-accent) 50.0%, transparent);
   flex-shrink: 0;
 }
 
@@ -719,9 +719,6 @@ body { overflow-x: clip; }
    up on hover/focus or auto-cycles on a timer. Nodes and connecting lines
    draw in left-to-right when the chain first scrolls into view, staggered
    per-node via --node-delay. */
-.fc-proof-chain__rail {
-  gap: 0.25rem;
-}
 .fc-proof-chain__node {
   display: flex;
   align-items: center;
@@ -744,32 +741,33 @@ body { overflow-x: clip; }
   place-items: center;
   width: 1.5rem;
   height: 1.5rem;
-  border: 1px solid rgba(243,240,231,.15);
-  background: rgba(0,0,0,.3);
-  color: rgba(243,240,231,.35);
+  border: 1px solid color-mix(in oklab, var(--color-ink) 15.0%, transparent);
+  background: color-mix(in oklab, var(--color-paper-deep) 30.0%, transparent);
+  color: color-mix(in oklab, var(--color-ink) 35.0%, transparent);
   font-size: 10px;
   transition: border-color var(--dur-state) linear, background var(--dur-state) linear, color var(--dur-state) linear, box-shadow var(--dur-state) linear;
 }
 .fc-proof-chain__node:hover .fc-proof-chain__icon,
 .fc-proof-chain__node:focus-visible .fc-proof-chain__icon {
-  border-color: rgba(121,245,183,.5);
+  border-color: color-mix(in oklab, var(--color-accent) 50.0%, transparent);
   color: var(--color-accent);
 }
 .fc-proof-chain__node.is-active .fc-proof-chain__icon {
   border-color: var(--color-accent);
-  background: rgba(121,245,183,.12);
+  background: color-mix(in oklab, var(--color-accent) 12.0%, transparent);
   color: var(--color-accent);
-  box-shadow: 0 0 12px rgba(121,245,183,.4);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--color-accent) 40.0%, transparent);
 }
 .fc-proof-chain__node.is-complete .fc-proof-chain__icon {
-  border-color: rgba(121,245,183,.35);
-  color: rgba(121,245,183,.6);
+  border-color: color-mix(in oklab, var(--color-accent) 35.0%, transparent);
+  color: color-mix(in oklab, var(--color-accent) 60.0%, transparent);
 }
 .fc-proof-chain__line {
   display: block;
-  width: 1.5rem;
+  flex: 1;
+  margin: 0 0.5rem 0 0.25rem;
   height: 1px;
-  background: rgba(243,240,231,.1);
+  background: color-mix(in oklab, var(--color-ink) 10.0%, transparent);
   transform: scaleX(0);
   transform-origin: left;
   transition: background var(--dur-state) linear;
@@ -779,7 +777,7 @@ body { overflow-x: clip; }
   transition: transform var(--dur-panel) var(--ease-out) calc(var(--node-delay, 0ms) + 100ms), background var(--dur-state) linear;
 }
 .fc-proof-chain__node.is-complete .fc-proof-chain__line {
-  background: rgba(121,245,183,.3);
+  background: color-mix(in oklab, var(--color-accent) 30.0%, transparent);
 }
 
 /* Door hover preview — a strip at the bottom of each door that slides up
@@ -807,10 +805,10 @@ body { overflow-x: clip; }
   align-items: center;
   gap: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(243,240,231,.08);
+  border-top: 1px solid color-mix(in oklab, var(--color-ink) 8.0%, transparent);
   font: 500 10px/1.4 var(--font-mono);
   letter-spacing: 0.06em;
-  color: rgba(243,240,231,.4);
+  color: color-mix(in oklab, var(--color-ink) 40.0%, transparent);
 }
 .fc-door__preview-dot {
   width: 0.3rem;
@@ -991,9 +989,9 @@ body { overflow-x: clip; }
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 100%
+    color-mix(in oklab, var(--color-ink) 5.0%, transparent) 0%,
+    color-mix(in oklab, var(--color-ink) 10.0%, transparent) 50%,
+    color-mix(in oklab, var(--color-ink) 5.0%, transparent) 100%
   );
   background-size: 1000px 100%;
   animation: shimmer 2s infinite linear;
@@ -1003,9 +1001,9 @@ body { overflow-x: clip; }
 .skeleton-light {
   background: linear-gradient(
     90deg,
-    rgba(0, 0, 0, 0.05) 0%,
-    rgba(0, 0, 0, 0.1) 50%,
-    rgba(0, 0, 0, 0.05) 100%
+    color-mix(in oklab, var(--color-paper-deep) 5.0%, transparent) 0%,
+    color-mix(in oklab, var(--color-paper-deep) 10.0%, transparent) 50%,
+    color-mix(in oklab, var(--color-paper-deep) 5.0%, transparent) 100%
   );
   background-size: 1000px 100%;
   animation: shimmer 2s infinite linear;
@@ -1203,7 +1201,7 @@ code {
     height: 0.5rem;
     border-radius: 50%;
     background: currentColor;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.02);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ink) 2.0%, transparent);
   }
   .mc-lamp--live { animation: mc-pulse 2.4s ease-in-out infinite; }
 
@@ -1218,7 +1216,7 @@ code {
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
-  .mc-stamp--allocate { color: var(--mc-reconciled); background: rgba(121, 245, 183, 0.08); }
+  .mc-stamp--allocate { color: var(--mc-reconciled); background: color-mix(in oklab, var(--color-accent) 8.0%, transparent); }
   .mc-stamp--pass { color: var(--mc-sealed); background: rgba(245, 197, 107, 0.08); }
   .mc-stamp--review { color: var(--mc-review); background: rgba(196, 181, 253, 0.08); }
   .mc-stamp--breach { color: var(--mc-breach); background: rgba(255, 122, 111, 0.08); }
@@ -1242,16 +1240,16 @@ code {
   .mc-action:hover {
     border-color: var(--mc-reconciled);
     color: var(--mc-reconciled);
-    background: rgba(121, 245, 183, 0.05);
+    background: color-mix(in oklab, var(--color-accent) 5.0%, transparent);
   }
   .mc-action--primary {
     border-color: var(--mc-reconciled);
     color: var(--mc-reconciled);
-    background: rgba(121, 245, 183, 0.06);
+    background: color-mix(in oklab, var(--color-accent) 6.0%, transparent);
   }
   .mc-action--primary:hover {
-    background: rgba(121, 245, 183, 0.12);
-    box-shadow: 0 0 0 1px rgba(121, 245, 183, 0.25);
+    background: color-mix(in oklab, var(--color-accent) 12.0%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 25.0%, transparent);
   }
   .mc-action:focus-visible, .mc-nav-link:focus-visible, .mc-tab:focus-visible {
     outline: 2px solid var(--color-focus);
@@ -1336,8 +1334,8 @@ code {
   .mc-tab:hover { color: var(--ink); }
   .mc-tab.is-active {
     color: var(--mc-reconciled);
-    border-color: rgba(121, 245, 183, 0.3);
-    background: rgba(121, 245, 183, 0.06);
+    border-color: color-mix(in oklab, var(--color-accent) 30.0%, transparent);
+    background: color-mix(in oklab, var(--color-accent) 6.0%, transparent);
   }
 
   /* Departure-board row — dense monospace list item, no rounded card. */
@@ -1364,7 +1362,7 @@ code {
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
-  .mc-badge--live { color: var(--mc-reconciled); background: rgba(121, 245, 183, 0.08); }
+  .mc-badge--live { color: var(--mc-reconciled); background: color-mix(in oklab, var(--color-accent) 8.0%, transparent); }
   .mc-badge--sealed { color: var(--mc-sealed); background: rgba(245, 197, 107, 0.08); }
   .mc-badge--breach { color: var(--mc-breach); background: rgba(255, 122, 111, 0.08); }
   .mc-badge--review { color: var(--mc-review); background: rgba(196, 181, 253, 0.08); }
@@ -1390,7 +1388,7 @@ code {
     pointer-events: none;
     opacity: 0;
     transition: opacity var(--dur-state) linear;
-    background: radial-gradient(180px circle at var(--cursor-x, 50%) var(--cursor-y, 50%), rgba(121, 245, 183, 0.05), transparent 70%);
+    background: radial-gradient(180px circle at var(--cursor-x, 50%) var(--cursor-y, 50%), color-mix(in oklab, var(--color-accent) 5.0%, transparent), transparent 70%);
   }
   .position-record:hover::after,
   .mc-card:hover::after {
@@ -1401,8 +1399,8 @@ code {
 /* Replay pulse — the one calm animated detail. The timeline visibly
    crosses from "outcome withheld" into "proof available". */
 @keyframes mc-pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.02); }
-  50% { box-shadow: 0 0 0 4px rgba(121, 245, 183, 0.08), 0 0 12px rgba(121, 245, 183, 0.55); }
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ink) 2.0%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-accent) 8.0%, transparent), 0 0 12px color-mix(in oklab, var(--color-accent) 55.0%, transparent); }
 }
 
 @keyframes mc-timeline-advance {
@@ -1414,9 +1412,9 @@ code {
 
 /* Radar sweep — the worker lamp sweeps like an ATC scope. */
 @keyframes mc-radar-sweep {
-  0% { box-shadow: 0 0 0 3px rgba(255,255,255,0.02), 0 0 8px rgba(121,245,183,0.3); }
-  50% { box-shadow: 0 0 0 6px rgba(121,245,183,0.06), 0 0 20px rgba(121,245,183,0.7); }
-  100% { box-shadow: 0 0 0 3px rgba(255,255,255,0.02), 0 0 8px rgba(121,245,183,0.3); }
+  0% { box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ink) 2.0%, transparent), 0 0 8px color-mix(in oklab, var(--color-accent) 30.0%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-accent) 6.0%, transparent), 0 0 20px color-mix(in oklab, var(--color-accent) 70.0%, transparent); }
+  100% { box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ink) 2.0%, transparent), 0 0 8px color-mix(in oklab, var(--color-accent) 30.0%, transparent); }
 }
 .mc-lamp--radar { animation: mc-radar-sweep 2.4s ease-in-out infinite; }
 
@@ -1427,7 +1425,7 @@ code {
   100% { background-position: 200% 0; }
 }
 .mc-proof-flash {
-  background: linear-gradient(90deg, transparent 0%, rgba(121,245,183,0.15) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, color-mix(in oklab, var(--color-accent) 15.0%, transparent) 50%, transparent 100%);
   background-size: 50% 100%;
   background-repeat: no-repeat;
   animation: mc-proof-crossing 0.8s ease-out;
@@ -1436,7 +1434,7 @@ code {
 /* Receipt seal — a brief lock flash when the SHA-256 hash is computed. */
 @keyframes mc-seal-flash {
   0% { box-shadow: 0 0 0 0 rgba(245,197,107,0); border-color: var(--mc-rule); }
-  30% { box-shadow: 0 0 0 4px rgba(245,197,107,0.2), 0 0 20px rgba(245,197,107,0.5); border-color: var(--mc-sealed); }
+  30% { box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-sealed) 20.0%, transparent), 0 0 20px color-mix(in oklab, var(--color-sealed) 50.0%, transparent); border-color: var(--mc-sealed); }
   100% { box-shadow: 0 0 0 0 rgba(245,197,107,0); border-color: var(--mc-rule); }
 }
 .mc-seal-animate { animation: mc-seal-flash 0.6s ease-out; }
@@ -1511,7 +1509,7 @@ code {
   transform-origin: left center;
 }
 .mc-timeline-track.is-crossed {
-  background: rgba(121, 245, 183, 0.25);
+  background: color-mix(in oklab, var(--color-accent) 25.0%, transparent);
 }
 .mc-timeline-track__progress {
   position: absolute;
@@ -1526,11 +1524,11 @@ code {
 .mc-timeline-crossing {
   position: absolute;
   inset: -1px 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(121, 245, 183, 0.9) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, color-mix(in oklab, var(--color-accent) 90.0%, transparent) 50%, transparent 100%);
   background-size: 40% 100%;
   background-repeat: no-repeat;
   animation: mc-timeline-crossing-sweep 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-  box-shadow: 0 0 8px rgba(121, 245, 183, 0.5);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--color-accent) 50.0%, transparent);
 }
 @keyframes mc-timeline-crossing-sweep {
   0% { background-position: -50% 0; opacity: 0; }
@@ -1543,7 +1541,7 @@ code {
 }
 @keyframes fc-reconciled-glow {
   0% { text-shadow: 0 0 0 rgba(121, 245, 183, 0); }
-  40% { text-shadow: 0 0 10px rgba(121, 245, 183, 0.6); }
+  40% { text-shadow: 0 0 10px color-mix(in oklab, var(--color-accent) 60.0%, transparent); }
   100% { text-shadow: 0 0 0 rgba(121, 245, 183, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1568,7 +1566,7 @@ code {
   width: min(640px, 100vw);
   background: var(--mc-panel);
   border-left: 1px solid var(--mc-rule-strong);
-  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.45);
+  box-shadow: -24px 0 60px color-mix(in oklab, var(--color-paper-deep) 45.0%, transparent);
   z-index: 61;
   overflow-y: auto;
   animation: mc-drawer-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -1603,8 +1601,8 @@ code {
   animation: fc-agent-breathe 3.2s ease-in-out infinite;
 }
 @keyframes fc-agent-sweep {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(121, 245, 183, 0.04), 0 0 6px rgba(121, 245, 183, 0.3); }
-  50% { box-shadow: 0 0 0 6px rgba(121, 245, 183, 0.08), 0 0 16px rgba(121, 245, 183, 0.7); }
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 4.0%, transparent), 0 0 6px color-mix(in oklab, var(--color-accent) 30.0%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-accent) 8.0%, transparent), 0 0 16px color-mix(in oklab, var(--color-accent) 70.0%, transparent); }
 }
 @keyframes fc-agent-breathe {
   0%, 100% { opacity: 0.5; }
@@ -1702,7 +1700,7 @@ code {
   font-size: 11px;
   line-height: 1.45;
   font-weight: 400;
-  color: var(--ink-muted, rgba(255, 255, 255, 0.7));
+  color: var(--ink-muted, color-mix(in oklab, var(--color-ink) 70.0%, transparent));
   text-align: left;
   white-space: normal;
   pointer-events: none;
@@ -2421,7 +2419,7 @@ body[data-fc-present='1'] .fc-weight-cell--pulse { animation: none; }
   margin: -3.5px 0 0 -3.5px;
   border-radius: 50%;
   background: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(121, 245, 183, 0.12);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 12.0%, transparent);
 }
 .fc-radar__legend {
   display: flex;

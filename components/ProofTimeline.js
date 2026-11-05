@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useInView } from '@/hooks/useInView';
+import { CANONICAL_RECEIPT } from '@/constants/canonicalReceipt';
 
 /**
  * ProofTimeline — scroll-driven proof lifecycle.
@@ -30,14 +31,7 @@ const STEPS = [
 ];
 
 // Canonical Solana receipt — lives inside the "Settle" node.
-const RECEIPT = {
-  fixtureId: '18175981',
-  fixture: 'France v Sweden',
-  stage: 'World Cup · Round of 32',
-  score: '3–0',
-  escrow: 'AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ',
-  tx: '3W6Y7rtQGgcBuD8ih8hUK2pZTSFZM4yDwXRfAudxmhdzDDjDnpNqEN2TZzGBW6F4PEKhmUbfv2NWXWAQf8wwhduB',
-};
+const RECEIPT = CANONICAL_RECEIPT;
 
 export default function ProofTimeline() {
   const [ref, inView] = useInView({ threshold: 0.25 });
@@ -100,7 +94,7 @@ export default function ProofTimeline() {
           ref={chainRef}
           className={`fc-proof-chain ${inView ? 'is-visible' : ''}`}
         >
-          <div className="fc-proof-chain__rail flex items-center gap-1 overflow-x-auto pb-2">
+          <div className="fc-proof-chain__rail grid grid-cols-5 gap-x-1 pb-2 sm:gap-x-6">
             {STEPS.map((step, i) => {
               const isComplete = i < complete;
               const isActive = i === activeIdx && !isComplete;
@@ -111,7 +105,7 @@ export default function ProofTimeline() {
                   type="button"
                   style={{ '--node-delay': `${i * 90}ms` }}
                   className={[
-                    'fc-proof-chain__node',
+                    'fc-proof-chain__node w-full',
                     isActive ? 'is-active' : '',
                     isComplete ? 'is-complete' : '',
                   ].join(' ').trim()}

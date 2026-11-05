@@ -87,7 +87,7 @@ export function DiscoveryTabContent({
           </div>
           <button
             onClick={() => setShowArbitrage(!showArbitrage)}
-            className={`px-3 py-1.5 text-xs border transition-all ${showArbitrage
+            className={`px-3 py-1.5 text-xs border transition-colors ${showArbitrage
               ? "bg-[var(--color-accent)]/30 text-[var(--color-ink)] border-[var(--color-accent)]/40"
               : "bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink-muted)] border-[var(--color-rule-strong)]"
               }`}
@@ -120,7 +120,7 @@ export function DiscoveryTabContent({
                     <div className={`text-xs ${textColor} opacity-60`}>spread</div>
                     <button
                       onClick={() => setSelectedArbitrage(opp)}
-                      className={`mt-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-tight transition-all bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/30`}
+                      className={`mt-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-tight transition-colors bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/30`}
                     >
                       Capture Spread
                     </button>
@@ -139,7 +139,7 @@ export function DiscoveryTabContent({
   <div className="space-y-8">
     {/* Compact Filter Bar — open section */}
     <GlassPanel>
-      <ExpandPanel title="Filters" subtitle="category · platform · date" defaultOpen>
+      <ExpandPanel title="Filters" subtitle="category · platform · date">
         {/* Category */}
         <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
           <label className={`${textColor} text-xs opacity-60 min-w-max`}>Category</label>
@@ -181,7 +181,7 @@ export function DiscoveryTabContent({
               <button
                 key={key}
                 onClick={() => setDateRange(key)}
-                className={`px-3 py-1.5 text-xs border transition-all font-light ${dateRange === key
+                className={`px-3 py-1.5 text-xs border transition-colors font-light ${dateRange === key
                   ? "bg-[var(--color-accent)]/30 text-[var(--color-ink)] border-[var(--color-accent)]/40"
                   : "bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink-muted)] border-[var(--color-rule-strong)]"
                   }`}
@@ -224,7 +224,7 @@ export function DiscoveryTabContent({
           <label className={`${textColor} text-xs opacity-60 min-w-max`}>Include Futures</label>
           <button
             onClick={() => setFilters((prev) => ({ ...prev, includeFutures: !prev.includeFutures }))}
-            className={`inline-flex items-center w-12 h-6 border transition-all ${filters.includeFutures
+            className={`inline-flex items-center w-12 h-6 border transition-colors ${filters.includeFutures
               ? "bg-[var(--color-accent)]/40 border-[var(--color-accent)]/40"
               : "bg-[var(--color-paper-soft)] border-[var(--color-rule-strong)]"
               }`}

@@ -1,5 +1,5 @@
 import '../tokens.css';
-import './global.css/index.css';
+import './global.css';
 import { Providers } from './providers';
 import Link from 'next/link';
 import { Syne, DM_Sans, JetBrains_Mono } from 'next/font/google';

@@ -71,7 +71,7 @@ export function CantonMarkets({ isNight = false }) {
             <button
               key={asset}
               onClick={() => setSelectedAsset(asset)}
-              className={`px-3 py-1.5 text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                 selectedAsset === asset
                   ? asset === 'CETH'
                     ? 'bg-[var(--color-evidence)]/20 text-[var(--color-evidence)] border border-[var(--color-evidence)]/40'
@@ -172,7 +172,7 @@ export function CantonMarkets({ isNight = false }) {
       <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
         <Link
           href="/canton"
-          className="px-6 py-3 bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/40 text-[var(--color-accent)] text-sm font-medium hover:bg-[var(--color-accent)]/30 transition-all text-center"
+          className="px-6 py-3 bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/40 text-[var(--color-accent)] text-sm font-medium hover:bg-[var(--color-accent)]/30 transition-colors text-center"
         >
           Create Live Market on Canton Devnet →
         </Link>
@@ -180,7 +180,7 @@ export function CantonMarkets({ isNight = false }) {
           href="https://docs.bitsafe.finance/developers"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-6 py-3 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-[var(--color-ink-muted)] text-sm hover:bg-[var(--color-paper-soft)] transition-all text-center"
+          className="px-6 py-3 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-[var(--color-ink-muted)] text-sm hover:bg-[var(--color-paper-soft)] transition-colors text-center"
         >
           BitSafe Docs (cBTC)
         </a>
@@ -188,7 +188,7 @@ export function CantonMarkets({ isNight = false }) {
           href="https://forms.gle/qY1Eq4AxuTFrxf49A"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-6 py-3 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-[var(--color-ink-muted)] text-sm hover:bg-[var(--color-paper-soft)] transition-all text-center"
+          className="px-6 py-3 bg-[var(--color-paper-raised)] border border-[var(--color-rule)] text-[var(--color-ink-muted)] text-sm hover:bg-[var(--color-paper-soft)] transition-colors text-center"
         >
           Request cETH Testnet Tokens
         </a>
@@ -269,7 +269,7 @@ function CantonMarketCard({ market, isNight }) {
         ) : (
           <Link
             href="/canton"
-            className="px-4 py-2 bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/40 text-[var(--color-accent)] text-sm font-medium hover:bg-[var(--color-accent)]/30 transition-all"
+            className="px-4 py-2 bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/40 text-[var(--color-accent)] text-sm font-medium hover:bg-[var(--color-accent)]/30 transition-colors"
           >
             Create Market →
           </Link>

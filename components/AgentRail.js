@@ -136,6 +136,12 @@ export default function AgentRail() {
   const headlineDecisions = (latest?.decisions || []);
   const firstDecision = headlineDecisions[0];
 
+  // Empty or still-loading: render nothing. A hairline strip reading "no
+  // agent cycle recorded yet" is dead weight on every page — silence is the
+  // honest empty state here (one job per section, design.md). A feed error
+  // still surfaces; it is information, not noise.
+  if (!latest && !error) return null;
+
   return (
     <div
       className="border-b border-[var(--color-rule)]"

@@ -9,7 +9,7 @@ export default function SignalsError({ error, reset }) {
  <p className="text-sm text-[var(--color-ink-faint)] mb-6">{error?.message || 'An unexpected error occurred'}</p>
  <button
  onClick={reset}
- className="px-6 py-2.5 bg-[var(--color-paper-soft)] border border-[var(--color-rule-strong)] text-[var(--color-ink)] text-sm hover:bg-white/20 transition-all"
+ className="px-6 py-2.5 bg-[var(--color-paper-soft)] border border-[var(--color-rule-strong)] text-[var(--color-ink)] text-sm hover:bg-white/20 transition-colors"
  >
  Try Again
  </button>

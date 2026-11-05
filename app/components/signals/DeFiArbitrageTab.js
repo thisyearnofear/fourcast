@@ -313,7 +313,7 @@ export default function DeFiArbitrageTab({
                        href={`https://polymarket.com/market/${opp.polymarket.id}`}
                        target="_blank"
                        rel="noopener noreferrer"
-                       className={`flex-1 px-3 py-2 text-xs font-light text-center transition-all bg-[var(--color-accent)]/15 hover:bg-[var(--color-accent)]/25 text-[var(--color-accent)]`}
+                       className={`flex-1 px-3 py-2 text-xs font-light text-center transition-colors bg-[var(--color-accent)]/15 hover:bg-[var(--color-accent)]/25 text-[var(--color-accent)]`}
                      >
                        View on Polymarket ↗
                      </a>
@@ -328,7 +328,7 @@ export default function DeFiArbitrageTab({
                          odds_yes: opp.kalshi.odds_yes,
                          odds_no: 1 - opp.kalshi.odds_yes
                        })}
-                       className={`flex-1 px-3 py-2 text-xs font-light text-center transition-all bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)]`}
+                       className={`flex-1 px-3 py-2 text-xs font-light text-center transition-colors bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-accent)]`}
                      >
                        Trade on Kalshi 📊
                      </button>

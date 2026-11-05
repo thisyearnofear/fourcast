@@ -83,7 +83,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  <button
  type="button"
  onClick={() => setSettlementLayer('arc')}
- className={` p-2.5 text-left transition-all border ${
+ className={` p-2.5 text-left transition-colors border ${
  settlementLayer === 'arc'
  ? 'bg-[var(--color-review)]/20 border-[var(--color-review)]/50 text-[var(--color-review)]'
  : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
@@ -125,7 +125,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  <button
  type="button"
  onClick={() => setCantonAsset('CBTC')}
- className={`p-2 text-left transition-all border ${
+ className={`p-2 text-left transition-colors border ${
  cantonAsset === 'CBTC'
  ? 'bg-[var(--color-sealed)]/20 border-[var(--color-sealed)]/50 text-[var(--color-sealed)]'
  : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
@@ -137,7 +137,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  <button
  type="button"
  onClick={() => setCantonAsset('CETH')}
- className={`p-2 text-left transition-all border ${
+ className={`p-2 text-left transition-colors border ${
  cantonAsset === 'CETH'
  ? 'bg-[var(--color-evidence)]/20 border-[var(--color-evidence)]/50 text-[var(--color-evidence)]'
  : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'

@@ -21,7 +21,7 @@ export default function AnimatedBackground({ isNight = true, timeOfDay = 'day' }
 
  return (
  <div className="absolute inset-0 z-0">
- <div className={`w-full h-full ${bgGradient} transition-all duration-1000`} />
+ <div className={`w-full h-full ${bgGradient} transition-colors duration-1000`} />
  
  {/* Animated gradient overlay */}
  <div className="absolute inset-0 overflow-hidden">

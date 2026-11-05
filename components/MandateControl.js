@@ -81,7 +81,7 @@ export function MandateControl() {
       let verification = null;
       if (latest?.fixtureId) {
         try {
-          const proofRes = await fetch(`/api/worldcup/verify?fixtureId=${encodeURIComponent(latest.fixtureId)}`, { cache: 'no-store' });
+          const proofRes = await fetch(`/api/txline/verify?fixtureId=${encodeURIComponent(latest.fixtureId)}`, { cache: 'no-store' });
           if (proofRes.ok) {
             const proofData = await proofRes.json();
             if (proofData.success) verification = proofData;
@@ -95,7 +95,7 @@ export function MandateControl() {
 
       // Fixture names are best-effort enrichment for the headline.
       try {
-        const fxRes = await fetch('/api/worldcup/fixtures', { cache: 'no-store' });
+        const fxRes = await fetch('/api/txline/fixtures', { cache: 'no-store' });
         if (fxRes.ok) {
           const fxData = await fxRes.json();
           const map = {};
@@ -314,7 +314,7 @@ export function MandateControl() {
                 </Ripple>
                 <a
                   className="mc-action"
-                  href={`/api/worldcup/verify?fixtureId=${encodeURIComponent(latest.fixtureId)}`}
+                  href={`/api/txline/verify?fixtureId=${encodeURIComponent(latest.fixtureId)}`}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -448,12 +448,12 @@ function StageNode({ stage, index }) {
   const color =
     stage.state === 'complete' ? 'var(--mc-reconciled)' :
     stage.state === 'live' ? 'var(--mc-evidence)' :
-    stage.state === 'breach' ? 'var(--mc-breach)' : 'rgba(243,240,231,0.25)';
+    stage.state === 'breach' ? 'var(--mc-breach)' : 'var(--color-ink-faint)';
   return (
     <div className="flex items-center gap-2">
       <span
         className={`inline-flex h-5 w-5 items-center justify-center border font-mono text-[9px] ${stage.state === 'live' ? 'animate-pulse' : ''}`}
-        style={{ borderColor: color, color, background: stage.state === 'complete' ? 'rgba(121,245,183,0.08)' : 'transparent' }}
+        style={{ borderColor: color, color, background: stage.state === 'complete' ? 'color-mix(in oklab, var(--color-accent) 8%, transparent)' : 'transparent' }}
       >
         {stage.state === 'complete' ? '✓' : index + 1}
       </span>

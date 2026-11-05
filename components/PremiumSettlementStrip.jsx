@@ -209,8 +209,8 @@ export default function PremiumSettlementStrip() {
 
       {state.status === 'ready' && data && data.enabled === false && (
         <p className="mt-2 px-1 text-[12px] text-[var(--color-ink-muted)] sm:px-3">
-          The paid rail is off — <span style={{ fontFamily: 'var(--font-mono)' }}>X402_ENABLED</span> is not set, so a
-          premium signal cannot be bought. The free feed is unaffected.
+          The paid rail is off in this deployment, so a premium signal cannot
+          be bought. The free feed is unaffected.
         </p>
       )}
 

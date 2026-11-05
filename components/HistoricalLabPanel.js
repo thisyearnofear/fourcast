@@ -39,9 +39,9 @@ export function HistoricalLabPanel() {
   const timeline = latest?.timeline;
 
   return (
-    <section className="mt-8 overflow-hidden border border-[var(--color-accent)]/20 bg-[#08110f]" aria-labelledby="historical-lab-heading">
-      <div className="relative border-b border-[var(--color-accent)]/15 bg-[linear-gradient(90deg,rgba(16,185,129,0.12),transparent_55%)] px-4 py-4 sm:px-5">
-        <div className="absolute right-0 top-0 h-full w-1/3 opacity-40 [background-image:linear-gradient(rgba(110,231,183,.14)_1px,transparent_1px),linear-gradient(90deg,rgba(110,231,183,.14)_1px,transparent_1px)] [background-size:12px_12px]" />
+    <section className="mt-8 overflow-hidden border border-[var(--color-accent)]/20 bg-[var(--color-paper-deep)]" aria-labelledby="historical-lab-heading">
+      <div className="relative border-b border-[var(--color-accent)]/15 bg-[linear-gradient(90deg,var(--color-accent-soft),transparent_55%)] px-4 py-4 sm:px-5">
+        <div className="absolute right-0 top-0 h-full w-1/3 opacity-40 [background-image:linear-gradient(color-mix(in oklab, var(--color-accent) 14%, transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in oklab, var(--color-accent) 14%, transparent)_1px,transparent_1px)] [background-size:12px_12px]" />
         <div className="relative flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--color-accent)]"><Radio className="h-3.5 w-3.5 animate-pulse" /> VPS telemetry · replay-only</div>
@@ -67,7 +67,7 @@ export function HistoricalLabPanel() {
               <TimelineCell icon={Fingerprint} label="Receipt hash" value={latest?.receiptHash ? `${latest.receiptHash.slice(0, 12)}…` : 'pending'} mono />
               <TimelineCell icon={ShieldCheck} label="Proof visibility" value={latest?.reconciliationStatus ? 'Reconciled' : `${formatTime(timeline?.outcomeAvailableAt)} locked`} />
             </div>
-            {latest && <a href={`/api/worldcup/verify?fixtureId=${encodeURIComponent(latest.fixtureId)}`} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-xs text-[var(--color-accent)] underline decoration-[var(--color-accent)]/40 underline-offset-4 transition hover:text-[var(--color-ink)]">Verify this TxLINE proof chain <ArrowUpRight className="h-3.5 w-3.5" /></a>}
+            {latest && <a href={`/api/txline/verify?fixtureId=${encodeURIComponent(latest.fixtureId)}`} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-xs text-[var(--color-accent)] underline decoration-[var(--color-accent)]/40 underline-offset-4 transition hover:text-[var(--color-ink)]">Verify this TxLINE proof chain <ArrowUpRight className="h-3.5 w-3.5" /></a>}
           </>
         )}
       </div>

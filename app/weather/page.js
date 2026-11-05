@@ -1,21 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
+// Legacy redirect — /weather moved to /labs/weather
 export default function WeatherRedirect() {
- const router = useRouter();
-
- useEffect(() => {
- router.replace('/labs/weather');
- }, [router]);
-
- return (
- <div className="w-screen h-screen flex items-center justify-center bg-black">
- <div className="flex flex-col items-center">
- <div className="w-8 h-8 border-3 border-current/30 border-t-current animate-spin text-[var(--color-ink)] mb-3" />
- <p className="text-[var(--color-ink-muted)] text-sm font-light">Redirecting to Labs...</p>
- </div>
- </div>
- );
+  redirect('/labs/weather');
 }

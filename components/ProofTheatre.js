@@ -18,7 +18,7 @@ import ShareReceiptButton from '@/components/ShareReceiptButton';
      5. TxLINE Merkle proof + Solana validation
      6. Reconciliation: decision quality, policy adherence, calibration
 
-   Composed entirely from /api/worldcup/verify — no parallel data model.
+   Composed entirely from /api/txline/verify — no parallel data model.
 
    Mode-aware emphasis: each audience has a primary stage (analyst →
    evidence, operator → decision/policy, allocator → reconciliation). The
@@ -88,7 +88,7 @@ export function ProofTheatre({ fixture, onClose }) {
   const load = useCallback(async () => {
     if (!fixture?.id) return;
     try {
-      const res = await fetch(`/api/worldcup/verify?fixtureId=${encodeURIComponent(fixture.id)}`, { cache: 'no-store' });
+      const res = await fetch(`/api/txline/verify?fixtureId=${encodeURIComponent(fixture.id)}`, { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Verification unavailable');
       setState({ loading: false, data, error: null });
@@ -273,7 +273,7 @@ export function ProofTheatre({ fixture, onClose }) {
                   className={`mc-stamp ${(verification.verdict === 'verified' || verification.verdict === 'proof-present') ? 'mc-signal-animate' : ''}`}
                   style={{
                     color: verification.verdict === 'verified' || verification.verdict === 'proof-present' ? 'var(--mc-reconciled)' : verification.verdict?.includes('error') ? 'var(--mc-breach)' : 'var(--mc-sealed)',
-                    background: verification.verdict === 'verified' || verification.verdict === 'proof-present' ? 'rgba(121,245,183,0.08)' : 'rgba(245,197,107,0.08)',
+                    background: verification.verdict === 'verified' || verification.verdict === 'proof-present' ? 'color-mix(in oklab, var(--color-accent) 8%, transparent)' : 'rgba(245,197,107,0.08)',
                   }}
                 >
                   Solana · {verification.verdict || 'pending'}
@@ -333,7 +333,7 @@ function TheatreStage({ index, stage, color, last = false, children, isLead = fa
       <span
         aria-hidden="true"
         className="absolute left-0 top-0.5 inline-flex h-6 w-6 items-center justify-center border font-mono text-[10px]"
-        style={{ borderColor: color, color, background: `${color === 'var(--mc-reconciled)' ? 'rgba(121,245,183,0.08)' : color === 'var(--mc-evidence)' ? 'rgba(91,156,255,0.08)' : 'rgba(245,197,107,0.08)'}` }}
+        style={{ borderColor: color, color, background: `${color === 'var(--mc-reconciled)' ? 'color-mix(in oklab, var(--color-accent) 8%, transparent)' : color === 'var(--mc-evidence)' ? 'rgba(91,156,255,0.08)' : 'rgba(245,197,107,0.08)'}` }}
       >
         {index}
       </span>

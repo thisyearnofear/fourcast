@@ -62,7 +62,7 @@ export default function PortfolioCard({ isNight = false }) {
  : '—';
 
  return (
- <div className={` border ${cardBg} ${glassClass} p-4 mb-4 transition-all`}>
+ <div className={` border ${cardBg} ${glassClass} p-4 mb-4 transition-colors`}>
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-6 flex-wrap">
  {/* Signals */}
@@ -99,7 +99,7 @@ export default function PortfolioCard({ isNight = false }) {
 
  <button
  onClick={() => router.push('/signals')}
- className={`text-xs font-medium px-3 py-1.5 transition-all whitespace-nowrap
+ className={`text-xs font-medium px-3 py-1.5 transition-colors whitespace-nowrap
  bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  >
  Full stats →

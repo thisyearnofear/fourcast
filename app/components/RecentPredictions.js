@@ -40,7 +40,7 @@ export default function RecentPredictions({ chainId = 56, isNight = false }) {
 
  const textColor = 'text-[var(--color-ink)]';
  const tabClass = (active) => `
- text-xs px-3 py-1 transition-all 
+ text-xs px-3 py-1 transition-colors 
  ${active 
  ? ('bg-white text-black font-medium') 
  : 'opacity-60 hover:opacity-100'}

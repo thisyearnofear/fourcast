@@ -48,7 +48,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  <span className={`ml-auto text-xs opacity-40 ${isExpanded ? 'rotate-180' : ''} transition-transform`}>▼</span>
  </div>
  {signal.ai_digest && (
- <p className={`text-sm ${textColor} opacity-70 ${isExpanded ? '' : 'line-clamp-1'} transition-all`}>
+ <p className={`text-sm ${textColor} opacity-70 ${isExpanded ? '' : 'line-clamp-1'} transition-colors`}>
  {signal.ai_digest}
  </p>
  )}
@@ -101,7 +101,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  e.stopPropagation();
  setShareOpen(!shareOpen);
  }}
- className="text-xs px-3 py-1.5 transition-all flex items-center gap-1 bg-[var(--color-accent)]/15 hover:bg-[var(--color-accent)]/25 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
+ className="text-xs px-3 py-1.5 transition-colors flex items-center gap-1 bg-[var(--color-accent)]/15 hover:bg-[var(--color-accent)]/25 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
  >
  Share
  </button>
@@ -118,7 +118,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  href={generateXUrl(signal, userStats)}
  target="_blank"
  rel="noopener noreferrer"
- className={`flex-1 text-xs px-3 py-2 transition-all text-center bg-[var(--color-paper-deep)] hover:bg-[var(--color-paper)] text-[var(--color-ink)] border border-[var(--color-rule-strong)]`}
+ className={`flex-1 text-xs px-3 py-2 transition-colors text-center bg-[var(--color-paper-deep)] hover:bg-[var(--color-paper)] text-[var(--color-ink)] border border-[var(--color-rule-strong)]`}
  >
  𝕏 Share
  </a>
@@ -126,7 +126,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  href={generateFarcasterUrl(signal, userStats)}
  target="_blank"
  rel="noopener noreferrer"
- className={`flex-1 text-xs px-3 py-2 transition-all text-center bg-[var(--color-accent)]/15 hover:bg-[var(--color-accent)]/25 text-[var(--color-accent)] border border-[var(--color-accent)]/30`}
+ className={`flex-1 text-xs px-3 py-2 transition-colors text-center bg-[var(--color-accent)]/15 hover:bg-[var(--color-accent)]/25 text-[var(--color-accent)] border border-[var(--color-accent)]/30`}
  >
  Warpcast
  </a>
@@ -137,7 +137,7 @@ export default function SignalCard({ signal, index, isExpanded, onToggle, format
  setCopied(true);
  setTimeout(() => setCopied(false), 2000);
  }}
- className={`w-full text-xs px-3 py-2 transition-all text-center flex items-center justify-center gap-1.5 bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/20 text-[var(--color-accent)] border border-[var(--color-accent)]/20`}
+ className={`w-full text-xs px-3 py-2 transition-colors text-center flex items-center justify-center gap-1.5 bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/20 text-[var(--color-accent)] border border-[var(--color-accent)]/20`}
  >
  <span>{copied ? 'Copied' : 'Copy signal link'}</span>
  </button>

@@ -316,7 +316,7 @@ function ToggleButton({ label, isActive, onClick, autoDetected = false, compact 
  <button
  onClick={onClick}
  className={`
- px-3 py-1.5 text-xs font-medium transition-all
+ px-3 py-1.5 text-xs font-medium transition-colors
  ${isActive 
  ? 'bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/50' 
  : 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)] border border-[var(--color-rule)]'

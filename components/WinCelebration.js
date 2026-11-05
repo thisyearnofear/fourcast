@@ -96,7 +96,7 @@ export function WinCelebration({ isOpen, signal, onClose }) {
  {/* Close Button */}
  <button
  onClick={onClose}
- className="w-full py-3 bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink)] font-light transition-all"
+ className="w-full py-3 bg-[var(--color-paper-soft)] hover:bg-white/20 text-[var(--color-ink)] font-light transition-colors"
  >
  Dismiss
  </button>
@@ -124,7 +124,7 @@ function ShareButton({ platform, signal }) {
  return (
  <button
  onClick={handleShare}
- className={`flex-1 py-2 font-light text-sm transition-all border ${
+ className={`flex-1 py-2 font-light text-sm transition-colors border ${
  platform === 'x'
  ? 'bg-[var(--color-paper)] hover:bg-[var(--color-paper-deep)] border-[var(--color-rule)] text-[var(--color-ink)]'
  : 'bg-[var(--color-review)]/20 hover:bg-[var(--color-review)]/30 border-[var(--color-review)]/30 text-[var(--color-review)]'

@@ -59,7 +59,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  return (
  <div
  className="fixed inset-0 z-[300] flex items-center justify-center p-4 overflow-y-auto"
- style={{ background: 'rgba(10,10,15,0.85)', backdropFilter: 'blur(8px)' }}
+ style={{ background: 'color-mix(in oklab, var(--color-paper-deep) 85%, transparent)', backdropFilter: 'blur(8px)' }}
  onClick={onClose}
  >
  <div
@@ -101,7 +101,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  key={plan.id}
  onClick={() => !plan.disabled && !isProcessing && setSelectedPlan(plan.id)}
  disabled={plan.disabled || isProcessing}
- className={`relative flex flex-col p-5 text-left transition-all border ${
+ className={`relative flex flex-col p-5 text-left transition-colors border ${
  isProPlan
  ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]/40 ring-1 ring-[var(--color-accent)]/30'
  : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] hover:border-[var(--color-rule-strong)]'
@@ -134,7 +134,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  ))}
  </ul>
  <div
- className={`w-full py-2.5 text-sm font-medium text-center transition-all ${
+ className={`w-full py-2.5 text-sm font-medium text-center transition-colors ${
  plan.disabled
  ? 'bg-[var(--color-paper-soft)] text-[var(--color-ink-faint)]'
  : isSelected
@@ -179,13 +179,13 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
  <div className={`flex items-center justify-center gap-4 px-6 pb-6`}>
  <button
  onClick={() => { onClose(); resetTx(); }}
- className={`text-sm font-medium px-4 py-2 transition-all text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
+ className={`text-sm font-medium px-4 py-2 transition-colors text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]`}
  >
  {txState.status === 'success' ? 'Close' : 'Maybe later'}
  </button>
  {selectedPlan !== 'free' && (
  <button
- className={`px-6 py-2.5 text-sm font-semibold transition-all shadow-lg ${
+ className={`px-6 py-2.5 text-sm font-semibold transition-colors shadow-lg ${
  txState.status === 'success'
  ? 'bg-[var(--color-accent)] text-[var(--color-ink)] cursor-default'
  : isProcessing

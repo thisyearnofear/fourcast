@@ -22,7 +22,7 @@ const PHASE_META = {
   sealed: { label: 'Decision sealed', lamp: 'var(--color-sealed)', sweep: false },
   awaiting: { label: 'Awaiting outcome', lamp: 'var(--color-sealed)', sweep: false },
   reconciled: { label: 'Reconciled', lamp: 'var(--color-accent)', sweep: false },
-  idle: { label: 'Idle', lamp: 'rgba(243,240,231,0.3)', sweep: false },
+  idle: { label: 'Idle', lamp: 'var(--color-ink-faint)', sweep: false },
 };
 
 function useRelativeClock(agentTime) {

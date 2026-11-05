@@ -47,7 +47,7 @@ export default function LocationSettings({ isOpen, onClose, isNight, currentLoca
  <div className="space-y-3 mb-6">
  <button
  onClick={() => handleModeChange('random')}
- className={`w-full text-left p-4 border transition-all ${mode === 'random' ? 'border-[var(--color-review)]/50 bg-[var(--color-review)]/10' : 'border-[var(--color-rule)] bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)]'}`}
+ className={`w-full text-left p-4 border transition-colors ${mode === 'random' ? 'border-[var(--color-review)]/50 bg-[var(--color-review)]/10' : 'border-[var(--color-rule)] bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)]'}`}
  >
  <div className="text-sm text-[var(--color-ink)] font-medium">Random</div>
  <div className="text-xs text-[var(--color-ink-faint)] mt-1">Cycle through worldwide cities automatically</div>
@@ -55,7 +55,7 @@ export default function LocationSettings({ isOpen, onClose, isNight, currentLoca
 
  <button
  onClick={() => handleModeChange('manual')}
- className={`w-full text-left p-4 border transition-all ${mode === 'manual' ? 'border-[var(--color-review)]/50 bg-[var(--color-review)]/10' : 'border-[var(--color-rule)] bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)]'}`}
+ className={`w-full text-left p-4 border transition-colors ${mode === 'manual' ? 'border-[var(--color-review)]/50 bg-[var(--color-review)]/10' : 'border-[var(--color-rule)] bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)]'}`}
  >
  <div className="text-sm text-[var(--color-ink)] font-medium">Custom City</div>
  <div className="text-xs text-[var(--color-ink-faint)] mt-1">Set your preferred location</div>
@@ -74,7 +74,7 @@ export default function LocationSettings({ isOpen, onClose, isNight, currentLoca
 
  <button
  onClick={() => handleModeChange('geolocation')}
- className={`w-full text-left p-4 border transition-all ${mode === 'geolocation' ? 'border-[var(--color-review)]/50 bg-[var(--color-review)]/10' : 'border-[var(--color-rule)] bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)]'}`}
+ className={`w-full text-left p-4 border transition-colors ${mode === 'geolocation' ? 'border-[var(--color-review)]/50 bg-[var(--color-review)]/10' : 'border-[var(--color-rule)] bg-[var(--color-paper-raised)] hover:bg-[var(--color-paper-soft)]'}`}
  >
  <div className="text-sm text-[var(--color-ink)] font-medium">Use My Location</div>
  <div className="text-xs text-[var(--color-ink-faint)] mt-1">Browser geolocation (prompts once)</div>
@@ -84,7 +84,7 @@ export default function LocationSettings({ isOpen, onClose, isNight, currentLoca
  <div className="flex gap-3">
  <button
  onClick={onClose}
- className="flex-1 px-4 py-2 border border-[var(--color-rule)] text-[var(--color-ink-faint)] text-sm hover:text-[var(--color-ink-muted)] hover:bg-[var(--color-paper-raised)] transition-all"
+ className="flex-1 px-4 py-2 border border-[var(--color-rule)] text-[var(--color-ink-faint)] text-sm hover:text-[var(--color-ink-muted)] hover:bg-[var(--color-paper-raised)] transition-colors"
  >
  Cancel
  </button>

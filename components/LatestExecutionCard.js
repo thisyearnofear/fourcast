@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ExternalLink } from 'lucide-react';
 import { timeAgo as ago } from '@/utils/arenaUi';
+import { CANONICAL_RECEIPT } from '@/constants/canonicalReceipt';
 
 /**
  * LatestExecutionCard — surfaces the most recent live arena execution.
@@ -28,7 +29,7 @@ function findLatestExecution(runs) {
 }
 
 export default function LatestExecutionCard() {
-  const [exec, setExec] = useState(null);
+  const [state, setState] = useState({ loaded: false, exec: null });
 
   useEffect(() => {
     let alive = true;
@@ -37,7 +38,7 @@ export default function LatestExecutionCard() {
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
           if (!alive || !d?.success) return;
-          setExec(findLatestExecution(d.runs));
+          setState({ loaded: true, exec: findLatestExecution(d.runs) });
         })
         .catch(() => {});
     load();
@@ -48,37 +49,60 @@ export default function LatestExecutionCard() {
     };
   }, []);
 
-  if (!exec) return null;
+  if (!state.loaded) return null;
 
-  const explorer = exec.txHash
+  // Fallback: no live execution yet — surface the canonical sealed receipt
+  // instead of leaving a void on the landing. Real, auditable proof beats an
+  // empty section.
+  const exec = state.exec;
+
+  const explorer = exec?.txHash
     ? `https://gensyn-testnet.explorer.alchemy.com/tx/${exec.txHash}`
-    : null;
+    : `https://explorer.solana.com/tx/${CANONICAL_RECEIPT.tx}?cluster=devnet`;
 
   return (
     <div className="fc-instrument mt-4 overflow-hidden p-1">
       <div className="fc-instrument__inner flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
-            Latest live execution · {ago(exec.runTs)}
-          </p>
-          <p className="mt-1 font-display text-[17px] font-semibold text-[var(--color-ink)]">
-            {exec.shares} sh <span className="text-[var(--color-accent)]">{exec.outcome}</span>
-          </p>
-          <p className="mt-1 max-w-lg text-xs leading-5 text-[var(--color-ink-muted)]">
-            {shortenQuestion(exec.question)}
-          </p>
-          {exec.cost != null && (
-            <p className="mt-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
-              {exec.cost.toFixed(3)} TST · policy-gated · hash-bound
-            </p>
+          {exec ? (
+            <>
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
+                Latest live execution · {ago(exec.runTs)}
+              </p>
+              <p className="mt-1 font-display text-[17px] font-semibold text-[var(--color-ink)]">
+                {exec.shares} sh <span className="text-[var(--color-accent)]">{exec.outcome}</span>
+              </p>
+              <p className="mt-1 max-w-lg text-xs leading-5 text-[var(--color-ink-muted)]">
+                {shortenQuestion(exec.question)}
+              </p>
+              {exec.cost != null && (
+                <p className="mt-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
+                  {exec.cost.toFixed(3)} TST · policy-gated · hash-bound
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-faint)]">
+                Sealed receipt · {CANONICAL_RECEIPT.stage}
+              </p>
+              <p className="mt-1 font-display text-[17px] font-semibold text-[var(--color-ink)]">
+                {CANONICAL_RECEIPT.fixture}{' '}
+                <span className="font-mono text-[var(--color-accent)]">{CANONICAL_RECEIPT.score}</span>
+              </p>
+              <p className="mt-1 max-w-lg text-xs leading-5 text-[var(--color-ink-muted)]">
+                Receipt committed before the outcome, reconciled against the
+                verified result — walk the full proof chain.
+              </p>
+            </>
           )}
         </div>
         <div className="flex shrink-0 flex-col items-stretch gap-2">
           <Link
-            href="/arena"
+            href={exec ? '/arena' : `/proof?chain=solana&fixture=${CANONICAL_RECEIPT.fixtureId}`}
             className="fc-action inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm"
           >
-            Open ledger
+            {exec ? 'Open ledger' : 'Open receipt'}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
           {explorer && (

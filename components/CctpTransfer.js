@@ -111,7 +111,7 @@ export default function CctpTransfer({ isNight = false }) {
  <div className="flex gap-2 mb-4">
  <button
  onClick={() => setDirection('arc-to-polygon')}
- className={`flex-1 py-2 text-xs font-medium transition-all ${
+ className={`flex-1 py-2 text-xs font-medium transition-colors ${
  direction === 'arc-to-polygon'
  ? 'bg-[var(--color-review)]/20 text-[var(--color-review)] border border-[var(--color-review)]/30'
  : 'bg-[var(--color-paper-raised)] text-[var(--color-ink-faint)] border border-[var(--color-rule)]'
@@ -121,7 +121,7 @@ export default function CctpTransfer({ isNight = false }) {
  </button>
  <button
  onClick={() => setDirection('polygon-to-arc')}
- className={`flex-1 py-2 text-xs font-medium transition-all ${
+ className={`flex-1 py-2 text-xs font-medium transition-colors ${
  direction === 'polygon-to-arc'
  ? 'bg-[var(--color-review)]/20 text-[var(--color-review)] border border-[var(--color-review)]/30'
  : 'bg-[var(--color-paper-raised)] text-[var(--color-ink-faint)] border border-[var(--color-rule)]'
@@ -158,7 +158,7 @@ export default function CctpTransfer({ isNight = false }) {
  <button
  onClick={handleTransfer}
  disabled={!canTransfer || txState.status === 'approving' || txState.status === 'transferring'}
- className={`w-full py-2.5 text-sm font-medium transition-all ${
+ className={`w-full py-2.5 text-sm font-medium transition-colors ${
  txState.status === 'success'
  ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] cursor-default'
  : canTransfer

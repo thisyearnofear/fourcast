@@ -7,7 +7,7 @@ import { LocationValidator } from '@/services/validators/index.js';
  * Validates location appropriateness for market types
  */
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {

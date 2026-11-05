@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 const WeatherPage = dynamic(() => import('@/app/WeatherPage'), {
  ssr: false,
  loading: () => (
- <div className="w-screen h-screen flex items-center justify-center bg-black">
+ <div className="w-full h-dvh flex items-center justify-center bg-[var(--color-paper-deep)]">
  <div className="flex flex-col items-center">
  <div className="w-12 h-12 border-4 border-current/30 border-t-current animate-spin text-[var(--color-ink)] mb-4" />
  <p className="text-[var(--color-ink)] font-light">Loading...</p>
