@@ -597,10 +597,25 @@ Output ONLY valid JSON:
   };
 
   // ── Autopilot: Execute actionable trades ──────────────────────────────
-  if (config.autopilot && process.env.POLYMARKET_PRIVATE_KEY) {
+  // Execution credentials resolve to ONE of:
+  //   a) POLYMARKET_PRIVATE_KEY — legacy raw key path, or
+  //   b) NEAR_MANDATE_CONTRACT — ChainSignatureSigner: signatures come from
+  //      the on-chain mandate contract (no key exists anywhere).
+  const mandateSigning = Boolean(process.env.NEAR_MANDATE_CONTRACT);
+  const hasExecCred = Boolean(process.env.POLYMARKET_PRIVATE_KEY) || mandateSigning;
+  if (config.autopilot && hasExecCred) {
     yield { step: "execute", status: "running", message: "Autopilot executing trades..." };
 
-    const privateKey = process.env.POLYMARKET_PRIVATE_KEY;
+    let signer;
+    if (mandateSigning) {
+      const { createChainSignatureSigner } = await import('./near/chainSigSigner.js');
+      signer = await createChainSignatureSigner({
+        venue: 'polymarket',
+        slippageBps: 100,
+      });
+      yield { step: "execute", status: "running", message: `Chain-signature account ${signer.address} — mandate-contract gated` };
+    }
+    const keyOrSigner = mandateSigning ? signer : process.env.POLYMARKET_PRIVATE_KEY;
     const executedTrades = [];
     const dryRun = config.dryRun === true;
     const dailyCapPct = typeof config.dailyCapPct === "number" ? config.dailyCapPct : 0.5;
@@ -693,7 +708,7 @@ Output ONLY valid JSON:
             size: (rec.sizePct * 100).toFixed(2),
             tickSize: "0.01",
           },
-          privateKey
+          keyOrSigner
         );
 
         const execResult = {

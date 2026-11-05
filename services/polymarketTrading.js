@@ -227,14 +227,17 @@ export function getOrderMetadata(order, marketData) {
  * Execute a trade server-side using a private key and the Polymarket Builder SDK
  * Handles EIP-712 order signing and submission with builder attribution
  */
-export async function executeServerOrder(orderData, privateKey) {
+export async function executeServerOrder(orderData, keyOrSigner) {
   try {
     const { tokenID, price, side, size, tickSize } = orderData;
-    if (!privateKey) {
-      throw new Error('Private key is required for server-side order execution');
+    if (!keyOrSigner) {
+      throw new Error('Signer or private key is required for server-side order execution');
     }
 
-    const signer = new Wallet(privateKey);
+    // Accepts either a raw private key OR any signer-like object — e.g. the
+    // ChainSignatureSigner, whose ECDSA signatures come from the on-chain
+    // mandate contract (no private key exists for the derived account).
+    const signer = typeof keyOrSigner === 'string' ? new Wallet(keyOrSigner) : keyOrSigner;
 
     // Initialize BuilderConfig if builder credentials are configured
     let builderConfig;
