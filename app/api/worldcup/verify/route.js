@@ -32,6 +32,12 @@ export const dynamic = 'force-dynamic';
  *                   the endpoint verifies the memo matches the receipt hash
  *                   and surfaces slot + block time so a judge can confirm the
  *                   commitment happened before kickoff.
+ *   nearTx        — optional, a NEAR tx hash committing the same contentHash
+ *                   via NEAR Social `set`. The receipt's own
+ *                   integrity.onchainCommitments.near (written by the anchor
+ *                   queue) is verified automatically when present; with an
+ *                   account id known the contract state itself is checked, so
+ *                   anchoring verifies even with no tx hash at all.
  *
  * GET /api/worldcup/verify
  *   Returns TxLINE status only.
@@ -93,6 +99,55 @@ export async function GET(request) {
       }
     }
 
+    // NEAR receipt anchor — same commitment role as the Solana memo, verified
+    // server-side (the agent treasury signs, no client wallet step). Sources,
+    // in precedence order:
+    //   a) ?nearTx= param for ad-hoc verification
+    //   b) the receipt's integrity.onchainCommitments.near — written by the
+    //      anchor queue (services/near/nearAnchorQueue.js) after a drain
+    //   c) the social contract's current state, when an account id is known —
+    //      the judge-facing "no tx hash needed" check
+    // A NEAR RPC failure degrades to a reason, never a route failure.
+    let nearCommitment = null;
+    const nearTxParam = searchParams.get('nearTx');
+    const nearRecorded = rawReceipt?.proof?.integrity?.onchainCommitments?.near;
+    const nearTxHash = nearTxParam || nearRecorded?.txHash || null;
+    if (nearTxHash && rawReceipt?.proof?.integrity?.contentHash) {
+      try {
+        const { verifyCommitmentTx } = await import('@/services/near/nearReceiptCommitment');
+        nearCommitment = {
+          state: 'anchored',
+          ...(await verifyCommitmentTx(nearTxHash, rawReceipt.proof.integrity.contentHash, {
+            senderId: nearRecorded?.accountId || undefined,
+          })),
+        };
+      } catch (err) {
+        nearCommitment = { state: 'anchored', ok: false, reason: err.message, txHash: nearTxHash };
+      }
+    } else if (rawReceipt?.proof?.integrity?.contentHash) {
+      nearCommitment = { state: 'not-anchored' };
+      try {
+        const { readAnchoredCommitment } = await import('@/services/near/nearReceiptCommitment');
+        const { getNearConfig } = await import('@/services/near/nearConfig');
+        const accountId = nearRecorded?.accountId || getNearConfig().accountId;
+        if (accountId) {
+          const found = await readAnchoredCommitment({ accountId, fixtureId });
+          if (found.found && found.parsed?.contentHash === rawReceipt.proof.integrity.contentHash) {
+            nearCommitment = {
+              state: 'anchored',
+              ok: true,
+              match: true,
+              via: 'contract-state',
+              memo: found.memo,
+              socialKey: found.socialKey,
+            };
+          }
+        }
+      } catch {
+        // contract-state check is a bonus — 'not-anchored' already tells the truth
+      }
+    }
+
     // reconcile() accepts the raw (canonical) receipt and normalizes internally
     // so Person 1's verifyDecisionReceipt hashes the original proof payload.
     const reconciliation = reconcile({
@@ -111,6 +166,7 @@ export async function GET(request) {
       proof: replay.proof,
       verification,
       commitment,
+      nearCommitment,
       reconciliation,
       timestamp: new Date().toISOString(),
     });

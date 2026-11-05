@@ -251,5 +251,5 @@ Proof Theatre timeline: `components/ProofTheatre.js`
 Receipt + policy + simulation contract: `services/domain/decision/`
 Ledger API: `/api/agent/runs`
 Worker heartbeat: `/api/agent/historical-lab`
-World Cup verification: `/api/worldcup/verify?fixtureId=18175981`
+TxLINE verification: `/api/txline/verify?fixtureId=18175981`
 Nav order: Mandate (`/agent`) → Proof Theatre (`/world-cup`) → Diligence (`/positions`)

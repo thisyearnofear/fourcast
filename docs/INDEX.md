@@ -39,6 +39,7 @@ only plan; the others here describe how the system works, not what to do next.
 | [`SETUP.md`](./SETUP.md) | Install, env, wallets, deployment, git hooks |
 | [`HACKATHONS.md`](./HACKATHONS.md) | **Every** hackathon and competition, with what we learned |
 | [`TOTAL_RECALL_HACKATHON.md`](./TOTAL_RECALL_HACKATHON.md) | The live entry: the brief, the track, the deliverables |
+| [`TOTAL_RECALL_BLOG_DRAFT.md`](./TOTAL_RECALL_BLOG_DRAFT.md) | Blog post draft for the submission — learning curve, honest misses, verify-it-yourself links |
 | [`TELEGRAPH_FINDINGS.md`](./TELEGRAPH_FINDINGS.md) | Telegraph Season II: what the network does, what it refuses |
 | [`DEMO_SCRIPT.md`](./DEMO_SCRIPT.md) | The demo, word for word — and the 4-minute judge path |
 | [`../design.md`](../design.md) | Visual language: tokens, type, spacing, colour |

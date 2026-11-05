@@ -95,7 +95,7 @@ export default function AgentPage() {
   useEffect(() => {
     Promise.all([
       fetch('/api/agent/historical-lab', { cache: 'no-store' }).then(r => r.json()),
-      fetch('/api/worldcup/fixtures', { cache: 'no-store' }).then(r => r.json()),
+      fetch('/api/txline/fixtures', { cache: 'no-store' }).then(r => r.json()),
     ])
       .then(([labData, fxData]) => {
         if (!labData.status?.dryRun) return;

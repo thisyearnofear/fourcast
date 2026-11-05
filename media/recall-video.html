@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;600&display=swap');
+*{margin:0;box-sizing:border-box}
+body{width:1920px;height:1080px;background:#0a0f0d;color:#e8e6df;font-family:Syne,system-ui;overflow:hidden;position:relative}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 140px;opacity:0;transition:opacity .7s}
+.scene.on{opacity:1}
+.k{font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:.28em;text-transform:uppercase;color:#34d399;margin-bottom:28px;opacity:.85}
+h1{font-size:104px;font-weight:800;line-height:1.02;letter-spacing:-.02em}
+h2{font-size:76px;font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.sub{font-family:'IBM Plex Mono',monospace;font-size:26px;color:#9aa39c;margin-top:34px;line-height:1.5}
+.em{color:#34d399}
+.amber{color:#fbbf24}
+.mono{font-family:'IBM Plex Mono',monospace}
+.big-num{font-size:220px;font-weight:800;letter-spacing:-.03em;color:#34d399;line-height:1}
+.dim{color:#5a625c}
+.rung{height:14px;background:#1c2620;border-left:3px solid #34d399;margin:7px 0;width:0;transition:width .12s}
+.rungs{width:760px;margin-top:30px}
+.versus{display:flex;gap:60px;margin-top:40px}
+.vcard{flex:1;border:1px solid #232d27;background:#0e1512;padding:34px}
+.vcard .lbl{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.2em;color:#8a938c;text-transform:uppercase}
+.vcard .pct{font-size:96px;font-weight:800;margin-top:12px}
+.badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:20px;padding:8px 16px;border:1px solid #34d399;color:#34d399;margin-top:30px}
+.imgframe{border:1px solid #232d27;background:#0e1512;padding:14px;max-height:620px;overflow:hidden}
+.imgframe img{display:block;width:100%;opacity:.92}
+.row{display:flex;gap:60px;align-items:center}
+.blob{font-family:'IBM Plex Mono',monospace;font-size:21px;color:#8a938c;background:#0e1512;border:1px solid #232d27;padding:14px 18px;margin-top:14px;word-break:break-all}
+.footer{position:absolute;bottom:60px;left:140px;right:140px;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:16px;color:#5a625c}
+</style></head><body>
+<div class="scene" id="s1"><div class="k">Total Recall · Tatum × Walrus Memory</div><h1>Every AI trading agent<br>claims performance.</h1><div class="sub">None of them publish their misses.</div></div>
+<div class="scene" id="s2"><div class="k">Fourcast</div><h1>This one remembers<br>being <span class="amber">wrong</span>.</h1><div class="sub">Autonomous prediction-market operator. Every decision sealed in a receipt<br>before the outcome exists — now with portable memory on Sui mainnet.</div></div>
+<div class="scene" id="s3"><div class="k">Walrus Memory · Sui mainnet</div><div class="big-num" id="counter">0</div><h2 style="font-size:54px">memories written on-chain.<br><span class="dim">Each one traceable to a resolved forecast.</span></h2></div>
+<div class="scene" id="s4"><div class="k">The learning curve is literal</div><h2>window:2026-11<br><span class="em">v1 → v92</span></h2><div class="rungs" id="rungs"></div><div class="sub">Every resolved forecast appends a new rung to the same key.<br>That's not a chart of learning — it <em>is</em> the learning.</div></div>
+<div class="scene" id="s5"><div class="k">The miss that proves it's real</div><h2>"Will Verstappen win<br>the F1 Mexican Grand Prix?"</h2><div class="versus"><div class="vcard"><div class="lbl">The market said</div><div class="pct">99.95%</div></div><div class="vcard"><div class="lbl">Our model said</div><div class="pct amber">15%</div></div></div><div class="sub">He won. Brier 0.72 — our worst score on the board.<br><span class="em">The memory wrote it anyway.</span></div></div>
+<div class="scene" id="s6"><div class="k">Hits and misses, one ledger</div><div class="row"><div class="imgframe" style="width:1100px"><img src="recall-arena-memory.png" style="object-fit:cover;object-position:top center;height:560px"></div><div style="flex:1"><h2 style="font-size:52px">309 forecasts scored.<br>359 logged.</h2><div class="sub">Reporting misses as misses —<br>memory comes from the all-forecasts ledger,<br>not the traded-only one.</div></div></div></div>
+<div class="scene" id="s7"><div class="k">Memory isn't a report</div><h1 style="font-size:88px">It changes the<br><span class="em">next</span> decision.</h1><div class="sub">readSizingCalibration() feeds Kelly sizing on a db → memory precedence.<br>Every receipt stamps the blobId that moved its size.</div></div>
+<div class="scene" id="s8"><div class="k">Verify it yourself</div><h2>Every number sits<br>beside its evidence.</h2><div class="blob">kFQxC8udGm1WJ7IEfggX91s4LyfGRQM5t4j0Bc31ZdU</div><div class="blob">nnDhOYQy1tfwpXA4QCnQWthZHTyoKUq1Sbzq5tIFf_o</div><div class="sub">Tatum's Sui gateway re-reads the MemWal account object on mainnet.<br>No trust in our API required.</div></div>
+<div class="scene" id="s9"><div class="k">Total Recall · Track 1 · Markets &amp; Sports Prediction</div><h1 style="font-size:84px">The agent that<br>remembers being wrong.</h1><div class="sub">fourcastapp.vercel.app → Arena → Memory lane<br>github.com/thisyearnofear/fourcast · @thisyearnofear</div></div>
+<div class="footer"><span>fourcast · memory on Sui mainnet</span><span>built for Total Recall — Tatum × Walrus</span></div>
+<script>
+const T=[[0,'s1'],[8,'s2'],[19,'s3'],[33,'s4'],[48,'s5'],[66,'s6'],[82,'s7'],[96,'s8'],[110,'s9']];
+T.forEach(([t,id])=>setTimeout(()=>{document.querySelectorAll('.scene').forEach(e=>e.classList.remove('on'));document.getElementById(id).classList.add('on')},t*1000));
+let n=0;setInterval(()=>{if(n<598){n+=Math.ceil((598-n)/14);document.getElementById('counter').textContent=n}},55);
+const R=document.getElementById('rungs');let i=0;setInterval(()=>{if(i<30){const d=document.createElement('div');d.className='rung';R.appendChild(d);requestAnimationFrame(()=>d.style.width=(120+Math.random()*600)+'px');i++}},180);
+document.getElementById('s1').classList.add('on');
+</script></body></html>

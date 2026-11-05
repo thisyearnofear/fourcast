@@ -25,18 +25,29 @@
 
 **Mandatory deliverables**
 
-- [ ] Walrus Memory integrated and **writing on Mainnet** — integrated (client, ledger,
-      store, resolution triggers, tests green); **no mainnet write yet**
-- [ ] **At least 10 memories stored on Mainnet** — 0. **The binding constraint.**
+- [x] Walrus Memory integrated and **writing on Mainnet** — **598 confirmed writes verified 2026-11-02** (Turso `memory_writes` + relayer inventory). Writes
+      flow automatically from the hourly `--resolve` cron → `rememberResolution`,
+      real `blobId`s logged with `ok:true, dryRun:false`.
+- [x] **At least 10 memories stored on Mainnet** — **598**: `fourcast.signal`
+      + `fourcast.window`. The `window:2026-11` key alone runs **v1 → v92** —
+      that version ladder *is* the learning curve.
+      *Known gap: `analyst`/`source` kinds have produced no candidates (dry run at
+      min-samples=5 still returns 0 — the local SQLite ledger lacks per-analyst
+      resolved evidence). Quality gap for the Best Walrus Memory award, not a
+      submission blocker. Note on reconciliation: `reconcileLedger` reports 0
+      locally-recorded blobs vs 550 on relayer — that check reads the local
+      SQLite `fourcast.db` (empty on the VPS), while `rememberResolution`
+      records `memory_writes` against the live Turso ledger. Blob_ids live in
+      Turso; the relayer inventory is the authoritative public evidence.*
 - [x] Tatum RPC used for onchain data *where relevant* — **real mainnet read done
       2026-10-23**: chain id + latest checkpoint + the MemWal account object proof
       (`0xa65e…893c@1051062028`, checkpoint 337299825) through
       `scripts/tatum-sui-check.mjs`. Transport is GraphQL — Tatum's Sui gateway
       no longer serves JSON-RPC; see [`docs/SUI.md`](./SUI.md).
-- [ ] Published blog post — what it does, how it uses Tatum + Walrus, **how it learned
-      over time** — not started; it needs the learning curve, which needs real rungs
-- [ ] Working demo + public repo — public repo yes; the memory demo lane exists on
-      `/arena` but has nothing to show yet
+- [x] Published blog post — ["The agent that remembers being wrong"](https://dev.to/papajams/the-agent-that-remembers-being-wrong-3n45),
+      published 2026-11-02 with the learning curve + the Verstappen miss (Brier 0.72)
+- [x] Working demo + public repo — `/arena` → Memory lane live; 1080p demo video
+      cut (`media/recall-video.html` source) covering hook → ladder → miss → verify
 - [x] Tatum dashboard account ID on the submission form: **64f72e0e0c34f3d88de98881**
 - [x] `MEMWAL_AGENT_ID` (the public key under *Delegate keys*) for the form: **created
       2026-10-23**. Account `0xa65e57ae15eaf308f17ee6c218033e30d122fd454733cca3e320c510ab69893c`,
@@ -188,8 +199,9 @@ that only shows the wins will read as marketing.
 **Week 3 · 4–10 Nov — ship**
 - [ ] Blog post (the learning curve + the honest failures).
 - [ ] Demo video; public repo clean.
-- [ ] **Submit by 9 Nov.** 10 Nov 17:00 UTC is the hard close and submission
-      always takes longer than it thinks.
+- [x] **Submitted 2026-11-02** — form filed with Tatum ID `64f72e…8881`, Sui agent
+      object `0xa65e…893c`, delegate key `0de77b…70db3`. Judging 11–16 Nov;
+      winners 17 Nov.
 
 ## Judging map
 

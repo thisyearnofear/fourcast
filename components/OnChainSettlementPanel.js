@@ -47,7 +47,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
 
   // Fetch program info
   useEffect(() => {
-    fetch('/api/worldcup/settle/status')
+    fetch('/api/txline/settle/status')
       .then(r => r.json())
       .then(d => setProgramInfo(d.program))
       .catch(() => {});
@@ -75,7 +75,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/worldcup/settle/status?locker=${walletPubkey}&fixtureId=${fixtureId}&minTs=${minTs}&paysRecipient=${paysRecipientOnHomeWin}`
+        `/api/txline/settle/status?locker=${walletPubkey}&fixtureId=${fixtureId}&minTs=${minTs}&paysRecipient=${paysRecipientOnHomeWin}`
       ).then(r => r.json());
       setPolicyState(res.policy);
     } catch (e) {
@@ -115,7 +115,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
       const locker = walletPubkey;
       const recipient = locker;
 
-      const res = await fetch('/api/worldcup/settle/create', {
+      const res = await fetch('/api/txline/settle/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -150,7 +150,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
       const locker = policyState?.locker || caller;
       const recipient = policyState?.recipient || caller;
 
-      const res = await fetch('/api/worldcup/settle/policy', {
+      const res = await fetch('/api/txline/settle/policy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -15,12 +15,16 @@ Operator **Talk to us** capture (under Privacy check). Body: `{ email, sizes?, n
 
 ---
 
-## Decision-receipt endpoints (supporting — Mandate / world-cup / positions)
+## Decision-receipt endpoints (supporting — Mandate / proof / positions)
 
-HackCanton wedge APIs are under `/api/canton/*` (see Canton section below). The routes here power Mandate (`/agent`), decision receipts (`/world-cup`), and public track record (`/positions`).
+HackCanton wedge APIs are under `/api/canton/*` (see Canton section below). The routes here power Mandate (`/agent`), decision receipts (`/proof`), and public track record (`/positions`).
 
-### GET /worldcup/fixtures
-Fetch World Cup fixtures (live TxLINE or cached replay).
+Canonical paths are `/api/txline/*`. The older `/api/worldcup/*` namespace
+remains as live aliases of the same handlers — existing links and demo docs
+keep working.
+
+### GET /txline/fixtures
+Fetch fixtures (live TxLINE or cached replay).
 
 **Response:**
 ```json
@@ -40,7 +44,7 @@ Fetch World Cup fixtures (live TxLINE or cached replay).
 }
 ```
 
-### GET /worldcup/verify?fixtureId=X
+### GET /txline/verify?fixtureId=X
 The canonical verification chain — walks the full proof path in one call. Used by Mandate Control (eagerly), Decision Dossier, and Proof Theatre.
 
 **Response:**
@@ -62,13 +66,13 @@ The canonical verification chain — walks the full proof path in one call. Used
 }
 ```
 
-### GET /worldcup/edge?fixtureId=X
+### GET /txline/edge?fixtureId=X
 Cross-venue edge detection — TxLINE demargined consensus vs Polymarket binary YES prices.
 
-### GET /worldcup/replay?fixtureId=X
+### GET /txline/replay?fixtureId=X
 Cached TxLINE event timeline for the replay viewer.
 
-### GET /worldcup/status
+### GET /txline/status
 Adapter mode (live vs replay), cutoff timestamp, replay count.
 
 ### GET /agent/historical-lab

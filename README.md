@@ -30,3 +30,7 @@ Node.js 24+, Next.js 16, React 19 · Polymarket CLOB, Delphi (LMSR), Canton DApp
 ## License
 
 MIT
+
+## NEAR HACKATHON
+
+Fourcast is being adapted for the NEAR HACKATHON (Nov 1–14, 2026) under the **Unstoppable DeFi** track. See [`HACKATHON.md`](./HACKATHON.md) and [`docs/NEAR_HACKATHON.md`](./docs/NEAR_HACKATHON.md) for the NEAR integration plan, tools, demo script, and submission checklist.

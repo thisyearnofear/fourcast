@@ -22,6 +22,7 @@ import { reconcile } from '../services/txline/reconciliationService.js';
 import { getMandate, migrationsReady, saveForecast, resolveForecast } from '../services/db.js';
 import { readSizingCalibration } from '../services/memory/calibrationMemory.js';
 import { rememberResolution } from '../services/memory/resolutionTrigger.js';
+import { enqueueNearAnchor, drainNearAnchors } from '../services/near/nearAnchorQueue.js';
 
 dotenv.config({ path: process.env.FOURCAST_AGENT_ENV_FILE || '.env.agent' });
 dotenv.config();
@@ -401,6 +402,26 @@ async function evaluateFixture({
   const out = path.join(receiptDir, `${Date.now()}-${fixture.id}-${receipt.proof.integrity.contentHash.slice(0, 10)}.receipt.json`);
   fs.writeFileSync(out, JSON.stringify({ receipt, reconciliation }, null, 2) + '\n');
 
+  // NEAR anchor: queue every receipt so it commits on-chain the moment a
+  // treasury key exists (drain no-ops until then). Must never break the cycle.
+  let nearAnchor = { status: 'queued' };
+  try {
+    enqueueNearAnchor({
+      stateDir,
+      fixtureId: fixture.id,
+      contentHash: receipt.proof.integrity.contentHash,
+      receiptFile: out,
+    });
+    const drain = await drainNearAnchors({ stateDir });
+    if (drain.anchored > 0) {
+      const mine = drain.items.find((i) => i.contentHash === receipt.proof.integrity.contentHash);
+      nearAnchor = { status: 'anchored', txHash: mine?.txHash || null, explorerUrl: mine?.explorerUrl || null };
+    }
+  } catch (err) {
+    nearAnchor = { status: 'queue-error', error: err.message };
+    console.warn(`[fourcast-agent] NEAR anchor skipped for ${fixture.id}:`, err.message);
+  }
+
   // Lift confBucket before the receipt build so the calibration block can
   // reference it without a TDZ-style linter warning.
   const confBucket =
@@ -434,7 +455,7 @@ async function evaluateFixture({
     console.warn(`[fourcast-agent] forecast save skipped for ${fixture.id}:`, err.message);
   }
 
-  return { ...receipt, reconciliation, file: out };
+  return { ...receipt, reconciliation, file: out, nearAnchor };
 }
 
 function historicalStateFile() {
@@ -501,6 +522,8 @@ function summarizeReceipt(receipt) {
     allocationPct: decision.allocationPct,
     receiptHash: receipt.proof.integrity.contentHash,
     reconciliationStatus: receipt.reconciliation?.status || null,
+    nearAnchor: receipt.nearAnchor?.status || null,
+    nearTx: receipt.nearAnchor?.txHash || null,
     phase: receipt.phase || null,
     timeline: receipt.timeline || null,
     file: receipt.file,

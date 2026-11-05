@@ -143,7 +143,7 @@ async function main() {
             hash: bytesToHex(node?.hash) || bytesToHex(node),
             direction: node?.direction || null,
           })),
-          // The on-chain program ID and PDA - populated by /api/worldcup/verify
+          // The on-chain program ID and PDA - populated by /api/txline/verify
           // by reading the TxLINE program ID from the active network config.
           programId: null,
           dailyRootPda: null,

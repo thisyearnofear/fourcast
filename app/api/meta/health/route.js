@@ -28,6 +28,28 @@ async function pingUrl(url, timeoutMs = 5000) {
   }
 }
 
+/** JSON-RPC POST ping (NEAR `status` method) — same shape as pingUrl. */
+async function pingNearRpc(url, timeoutMs = 5000) {
+  const start = Date.now();
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 'health', method: 'status', params: [] }),
+      signal: controller.signal,
+    });
+    clearTimeout(id);
+    const latencyMs = Date.now() - start;
+    if (!res.ok) return { status: 'degraded', latencyMs, httpStatus: res.status };
+    const json = await res.json();
+    return { status: json?.result ? 'healthy' : 'degraded', latencyMs, httpStatus: res.status };
+  } catch {
+    return { status: 'unreachable', latencyMs: Date.now() - start, httpStatus: null };
+  }
+}
+
 export async function GET() {
   const startedAt = Date.now();
 
@@ -80,8 +102,22 @@ export async function GET() {
   const telegraphUrl = process.env.TELEGRAPH_MINER_URL || 'https://miner.sportwarren.com/health';
   const telegraph = await pingUrl(telegraphUrl, 8000);
 
+  // ── NEAR (receipt anchoring + Intents rail) ──────────────────────────
+  // Venice pattern: probe the RPC only when the treasury is configured —
+  // 'disabled' is the honest state for a rail the deploy hasn't opted into.
+  let near = { status: 'disabled', latencyMs: 0, httpStatus: null, type: 'unconfigured' };
+  try {
+    const { getNearConfig, isNearConfigured } = await import('@/services/near/nearConfig.js');
+    const nearConfig = getNearConfig();
+    if (isNearConfigured()) {
+      near = { ...(await pingNearRpc(nearConfig.rpcUrl)), type: `configured · ${nearConfig.network}` };
+    }
+  } catch {
+    near = { status: 'unreachable', latencyMs: 0, httpStatus: null, type: 'config-error' };
+  }
+
   // ── Aggregate ─────────────────────────────────────────────────────────
-  const allUp = [pm, ks, venice, canton, telegraph].every(
+  const allUp = [pm, ks, venice, canton, telegraph, near].every(
     (p) => p.status === 'healthy' || p.status === 'disabled'
   );
 
@@ -122,6 +158,11 @@ export async function GET() {
         // FACT_CHECK after the Aug 25 epoch scored 0 on them (docs/HACKATHONS.md).
         description: 'TxLINE-backed miner — live scores and final results (SPORTS_SCORE, GAME_RESULT)',
         ...telegraph,
+      },
+      near: {
+        label: 'NEAR rail',
+        description: 'Decision-receipt anchoring (NEAR Social) + Intents value movement',
+        ...near,
       },
     },
   };

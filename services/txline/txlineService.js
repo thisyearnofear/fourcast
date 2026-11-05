@@ -834,7 +834,7 @@ export function parseStreamEvent(rawData) {
 
 /**
  * Stream fixture updates as an async generator. Yields delta envelopes
- * consumable by the /api/worldcup/stream SSE route.
+ * consumable by the /api/txline/stream SSE route.
  *
  * Two backends:
  *   1. Real SSE (if TXLINE_SSE_URL is set) - opens an upstream EventSource-style

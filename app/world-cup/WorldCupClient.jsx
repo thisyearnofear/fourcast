@@ -75,7 +75,7 @@ function EdgePanel({ fixture, onToggle }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/worldcup/edge?fixtureId=${encodeURIComponent(fixture.id)}`).then((r) => r.json());
+      const res = await fetch(`/api/txline/edge?fixtureId=${encodeURIComponent(fixture.id)}`).then((r) => r.json());
       if (res.success) {
         setData(res.edge);
       } else {
@@ -607,7 +607,7 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
     const params = new URLSearchParams(window.location.search);
     const fixtureId = params.get('fixture');
     if (!fixtureId) return;
-    fetch('/api/worldcup/fixtures', { cache: 'no-store' })
+    fetch('/api/txline/fixtures', { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
         const fx = (data.fixtures || []).find((f) => String(f.id) === String(fixtureId));
@@ -621,8 +621,8 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
     setError(null);
     try {
       const [fxRes, stRes] = await Promise.all([
-        fetch('/api/worldcup/fixtures').then((r) => r.json()),
-        fetch('/api/worldcup/status').then((r) => r.json()),
+        fetch('/api/txline/fixtures').then((r) => r.json()),
+        fetch('/api/txline/status').then((r) => r.json()),
       ]);
       if (fxRes.success) {
         setFixtures(fxRes.fixtures || []);
@@ -642,7 +642,7 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
   }, [load]);
 
   // ── SSE stream subscription (OPT-IN) ───────────────────────────────────
-  // The /api/worldcup/stream route proxies the TxLINE live feed (or falls back
+  // The /api/txline/stream route proxies the TxLINE live feed (or falls back
   // to a polling loop) and emits deltas. We merge each delta into the fixtures
   // state so the UI updates without a refresh. Default-off: the connection is
   // opened only when the user enables "Connect live feed" — see the measured
@@ -653,7 +653,7 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
       setStreamStatus('off');
       return undefined;
     }
-    const es = new EventSource('/api/worldcup/stream');
+    const es = new EventSource('/api/txline/stream');
     setStreamStatus('connecting');
 
     const onMeta = (e) => {
@@ -710,7 +710,7 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
   const handleReplay = useCallback(async (fixture) => {
     setReplayingId(fixture.id);
     try {
-      const res = await fetch(`/api/worldcup/replay?fixtureId=${encodeURIComponent(fixture.id)}`).then((r) => r.json());
+      const res = await fetch(`/api/txline/replay?fixtureId=${encodeURIComponent(fixture.id)}`).then((r) => r.json());
       if (res.success) {
         setReplay(res);
       } else {
@@ -726,7 +726,7 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
   const handleVerify = useCallback(async (fixture) => {
     setVerifyingId(fixture.id);
     try {
-      const res = await fetch(`/api/worldcup/verify?fixtureId=${encodeURIComponent(fixture.id)}`).then((r) => r.json());
+      const res = await fetch(`/api/txline/verify?fixtureId=${encodeURIComponent(fixture.id)}`).then((r) => r.json());
       setVerifications((prev) => ({ ...prev, [fixture.id]: res }));
     } catch (err) {
       setVerifications((prev) => ({
@@ -874,7 +874,7 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
           <Activity size={32} className="mx-auto text-[var(--color-ink-faint)] mb-3" />
           <div className="text-sm text-[var(--color-ink-muted)]">
             {fixtures.length === 0
-              ? 'No World Cup fixtures available yet. Complete TxLINE onboarding to seed live data, or add cached replays under cache/txline/replays/.'
+              ? 'No fixtures available yet. Complete TxLINE onboarding to seed live data, or add cached replays under cache/txline/replays/.'
               : 'No fixtures match the selected filter.'}
           </div>
         </div>

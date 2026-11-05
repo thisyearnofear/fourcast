@@ -62,7 +62,7 @@ TxLINE is the primary data layer for fixtures, consensus odds, score events, and
 
 ### Mandate Control (`/agent`)
 
-The flagship hero. A live VPS worker (`scripts/fourcast-agent-worker.mjs`) operates under a versioned policy (`services/domain/decision/decisionPolicy.js`), decides from pre-match TxLINE evidence, and seals each decision into a canonical receipt (`services/domain/decision/decisionReceipt.js`). The hero eagerly fetches `/api/worldcup/verify` for the latest receipt so the proof timeline shows real reconciliation + on-chain Solana verdict.
+The flagship hero. A live VPS worker (`scripts/fourcast-agent-worker.mjs`) operates under a versioned policy (`services/domain/decision/decisionPolicy.js`), decides from pre-match TxLINE evidence, and seals each decision into a canonical receipt (`services/domain/decision/decisionReceipt.js`). The hero eagerly fetches `/api/txline/verify` for the latest receipt so the proof timeline shows real reconciliation + on-chain Solana verdict.
 
 Key components:
 - **`components/MandateControl.js`** — live worker state, current mandate decision (ALLOCATE/PASS/REVIEW), proof timeline crossing from "outcome withheld" to "proof available", operator telemetry strip

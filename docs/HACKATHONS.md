@@ -487,6 +487,16 @@ positioning claims.
   notes: `telegraph-miner/README.md`.
 - **Tag** [@Telegraphprotoc](https://x.com/Telegraphprotoc) in progress posts.
 
+
+### NEAR HACKATHON — AI + money — 🔴 active, build window Nov 1–14, 2026
+- **What:** NEAR hackathon for intelligent agents, autonomous payments, and apps that move value across chains. Tracks include Unstoppable DeFi, Agent Economy, Autonomous Business, and more. Prize pool $250k in NEAR.
+- **Our entry:** **Fourcast as a cross-chain autonomous trading agent** — mandate-bound positions moved via NEAR Intents, with verifiable decision receipts anchored on NEAR.
+- **Track:** **Unstoppable DeFi** (secondary: **Agent Economy**).
+- **Submission:** [`HACKATHON.md`](../HACKATHON.md) and [`docs/NEAR_HACKATHON.md`](NEAR_HACKATHON.md).
+- **Timeline:** build Nov 1–14, 2026; judging Nov 16–18; results by Nov 18 23:59 UTC. Repo public by Nov 14 23:59 UTC; public X demo post required.
+- **NEAR tools:** NEAR Intents, Chain Signatures, sub-accounts/function-call keys, NEAR AI Cloud, 1-Click Swap SDK.
+- **Minimum win:** one market, one NEAR Intent trade, one anchored decision receipt, one reconciliation demo.
+
 ## Participated (finished)
 
 ### Arc / Agora Agents Hackathon (Canteen × Circle) — ✅ May 2026
