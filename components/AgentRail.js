@@ -176,6 +176,17 @@ export default function AgentRail() {
                 {latest.balances.tokenBalance.toFixed(0)} {latest.balances.tokenSymbol}
               </span>
             )}
+            {latest.nearTx && (
+              <a
+                href={`https://explorer.near.org/transactions/${latest.nearTx}`}
+                target="_blank" rel="noreferrer"
+                title="Decision receipt anchored on NEAR — independently verifiable"
+                className="font-mono text-[10px] text-[var(--color-accent)] no-underline hover:opacity-80"
+                onClick={(e) => e.stopPropagation()}
+              >
+                ⬡ anchored
+              </a>
+            )}
             <span className="ml-auto hidden font-mono text-[10px] text-[var(--color-ink-faint)] sm:inline">
               {counters.join(' · ')}
             </span>
