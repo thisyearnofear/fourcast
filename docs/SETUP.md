@@ -23,6 +23,12 @@ npm run dev
 
 Navigate to `http://localhost:3000/agent` — the Mandate Control hero.
 
+> **`better-sqlite3` native build**: newer npm blocks package install
+> scripts by default (`install-scripts` warnings). If `require('better-sqlite3')`
+> fails after `npm install`, run `npm run install` inside
+> `node_modules/better-sqlite3` — it needs Node 24 (the `.nvmrc` pin) to
+> compile; Node ≥26 headers break the build.
+
 ---
 
 ## TxLINE Onboarding (primary, ~2 minutes)
