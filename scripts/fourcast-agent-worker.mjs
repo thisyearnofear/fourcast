@@ -237,6 +237,9 @@ async function runCycle() {
   writeStatus(status);
   appendJsonl('runs.ndjson', status);
   await postWebhook(status);
+  // Arena feed: same ingest contract as the Delphi worker — this is what puts
+  // nearTx on the public run record so the rail can show `⬡ anchored`.
+  await postArenaIngest(collectArenaPayload({ receipts, startedAt, dryRun }));
   console.log(`[fourcast-agent] cycle complete fixtures=${fixtures.length} receipts=${receipts.length}`);
 }
 
@@ -528,6 +531,77 @@ function summarizeReceipt(receipt) {
     timeline: receipt.timeline || null,
     file: receipt.file,
   };
+}
+
+// ── Arena feed ingest ──────────────────────────────────────────────────────
+// Same contract as scripts/delphi-agent-worker.mjs: ARENA_INGEST_URL +
+// ADMIN_SECRET → POST /api/arena/ingest. Without this the worker's anchored
+// receipts never reach the public feed and the rail's `⬡ anchored` chip has
+// no data — nearTx must ride on the run record itself.
+
+function decisionFromReceipt(receipt) {
+  const d = receipt?.proof?.decisions?.[0];
+  if (!d) return null;
+  const market = d.market || {};
+  const forecast = d.forecast || {};
+  const decision = d.decision || {};
+  const fixture = receipt.proof?.evidence?.fixture || {};
+  const odds = receipt.proof?.evidence?.snapshot?.consensusOdds?.implied || {};
+  return {
+    verdict: decision.verdict,
+    outcome: fixture.home?.name || market.title || 'home',
+    question: market.title || market.fixtureId || receipt.fixtureId,
+    yourProb: forecast.probability ?? null,
+    marketProb: odds.home ?? null,
+    edge: forecast.edge ?? null,
+    shares: decision.allocationPct ? Math.round(decision.allocationPct * 10000) / 100 : null,
+    source: forecast.source || 'fourcast-agent',
+    category: 'sports',
+    gates: (decision.riskChecks || []).map((g) => ({ label: g.label, passed: g.passed })),
+    receiptHash: receipt.proof?.integrity?.contentHash || null,
+    nearTx: receipt.nearAnchor?.txHash || null,
+    nearExplorer: receipt.nearAnchor?.explorerUrl || null,
+  };
+}
+
+function collectArenaPayload({ receipts, startedAt, dryRun }) {
+  const decisions = receipts.map(decisionFromReceipt).filter(Boolean);
+  const anchored = receipts.find((r) => r.nearAnchor?.txHash);
+  return {
+    runId: `fourcast-${startedAt}`,
+    timestamp: startedAt,
+    summary: {
+      dryRun,
+      marketsScanned: receipts.length,
+      tradesExecuted: 0,
+      tradesPaper: 0,
+      mode: 'txline',
+    },
+    balances: null,
+    decisions,
+    executions: [],
+    positions: [],
+    nearTx: anchored?.nearAnchor?.txHash || null,
+    nearExplorer: anchored?.nearAnchor?.explorerUrl || null,
+  };
+}
+
+async function postArenaIngest(payload) {
+  const base = process.env.ARENA_INGEST_URL;
+  const secret = process.env.ADMIN_SECRET;
+  if (!base || !secret) return; // feed unconfigured — skip quietly
+  try {
+    const res = await fetch(`${base}/api/arena/ingest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) console.warn(`[fourcast-agent] arena ingest ${res.status}`);
+    else console.log('[fourcast-agent] cycle published to arena feed');
+  } catch (err) {
+    console.warn(`[fourcast-agent] arena ingest failed: ${err.message}`);
+  }
 }
 
 function writeStatus(status) {

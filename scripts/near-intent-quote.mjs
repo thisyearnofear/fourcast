@@ -37,9 +37,10 @@ const line = (s = '') => console.log(s);
 const config = getNearConfig();
 // Intents has no testnet — recipients are mainnet NEAR accounts.
 const account = config.accountId || 'fourcast-agent.near';
-const ONE_NEAR_YOCTO = '1000000000000000000000000';
-// wrap.near → USDC on NEAR, the smallest meaningful cross-asset leg
-const ORIGIN = val('origin') || 'nep141:wrap.near';
+const TEN_USDC = '10000000'; // 6dp
+// Solana USDC → USDC on NEAR — the demo's "deposit from any chain" leg.
+// (wrap.near origins return "pair not available" — verified 2026-11-05.)
+const ORIGIN = val('origin') || 'nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near';
 const DESTINATION =
   val('dest') || 'nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1';
 
@@ -62,7 +63,7 @@ async function main() {
   const res = await getQuote({
     originAsset: ORIGIN,
     destinationAsset: DESTINATION,
-    amount: val('amount') || ONE_NEAR_YOCTO,
+    amount: val('amount') || TEN_USDC,
     recipient: account,
     refundTo: account,
     dry: !has('live'),

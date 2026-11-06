@@ -104,6 +104,11 @@ no-ops until `NEAR_ACCOUNT_ID`/`NEAR_PRIVATE_KEY` are set; anchored receipts get
 written back into the receipt file. Opt out per-run with
 `NEAR_ANCHOR_ENABLED=false`.
 
+## Winner-pattern research → NEAR_HACKATHON_ODDS.md
+
+Rubric (verbatim), what past winners shipped, and the odds-ranked
+execution plan for Nov 5→14. Read before scheduling the remaining week.
+
 ## Nov 5 — enrichment landed (see NEAR_AGENT_ENRICHMENT.md)
 
 - **agent-mandate contract deployed**: `inexpensive-mother.testnet` —
@@ -124,6 +129,27 @@ written back into the receipt file. Opt out per-run with
   `docs/NEAR_AGENT_ENRICHMENT.md` §5.1.
 - **Build**: `npm run build` now uses Turbopack (the `--webpack` build
   had a flaky API-route manifest bug under Next 16).
+
+## Nov 6 — demo-hardening pass
+
+- **Autopilot gate**: `POST /api/agent` with `autopilot:true` now requires
+  `x-admin-secret` — closed the hole where any visitor could trigger
+  `request_signature` calls once the mandate env is set on the web env.
+- **`scripts/near-first-order.mjs`**: the live-order money shot as one
+  command — auto-picks an in-policy market, prints a per-gate PASS/FAIL
+  pre-check, waits out the 60s cooldown, and prints the nearblocks link
+  for the `request_signature` tx. `--dry` = market pick + gate check, no keys.
+- **`scripts/near-set-code-hash.mjs`**: sha256 manifest over the signing
+  path (5 files) → `set_approved_code_hash` owner call via `--set`. Run
+  AFTER code freeze; requests then need matching `NEAR_WORKER_CODE_HASH`.
+- **`signer.lastRequestTxHash`**: `requestTradeSignature` now exposes the
+  NEAR tx hash on every signing path — approvals, orders, the loop all
+  get a nearblocks link proving the gates ran.
+- **Build**: `package.json` no longer pins `--webpack`; `next build`
+  verified clean under Turbopack (Next 16 default).
+- **README verify-path**: "Check the gates yourself" — contract on
+  nearblocks, derived EOA on Polygonscan, `--dry` envelope check, live
+  `/api/near/mandate` (zero secrets — works once redeployed).
 
 ## Week 2 plan (demo + submission)
 - [ ] Polish one end-to-end trade + receipt verification.

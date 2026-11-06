@@ -47,6 +47,25 @@ node scripts/near-derive-address.mjs
 FORECAST_REPLAY=1 npm run dev
 ```
 
+### Check the gates yourself (judge verify-path)
+
+Everything below is read-only or viewable on a public explorer — no keys, no trust:
+
+- **The mandate** — `get_mandate` on
+  [`inexpensive-mother.testnet`](https://testnet.nearblocks.io/address/inexpensive-mother.testnet)
+  (venues, notional cap, liquidity floor, slippage, cooldown): `node scripts/near-mandate-gates.mjs --view`
+- **The agent account** —
+  [`0x6940…c61F`](https://polygonscan.com/address/0x6940B97505567816A75B1A952f234630af81c61F)
+  on Polygon. No private key exists — `node scripts/near-derive-address.mjs`
+  re-derives it from the MPC pubkey + path `arena/v1`.
+- **The envelope** — `node scripts/near-first-order.mjs --dry` picks a live
+  market and shows the trade envelope passing each gate locally; the same
+  checks run on-chain inside `request_signature`.
+- **Live API** — `GET /api/near/mandate` on the deployed app returns the same
+  contract state (read-only, no secrets).
+- **Anchored receipts** — `GET /api/txline/verify?fixtureId=<id>` returns the
+  `nearCommitment` block: anchored hash, social.near key, explorer link.
+
 Receipts are anchored on NEAR (`fourcast:receipt-v1:<fixtureId>:<hash>`
 via NEAR Social `set`) — the agent rail shows `⬡ anchored` with an
 explorer link per anchored cycle.

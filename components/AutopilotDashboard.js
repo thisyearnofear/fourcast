@@ -114,6 +114,21 @@ export function AutopilotDashboard({ isNight = false }) {
  }
  }, [liveSteps]);
 
+ // Prompt for admin secret once per session (schedule changes, autopilot runs)
+ const promptForSecret = useCallback((action = 'update schedule') => {
+ if (secretPrompted) return adminSecret || null;
+ if (typeof window === 'undefined') return null;
+ const provided = window.prompt(`Enter admin secret to ${action}:`);
+ setSecretPrompted(true);
+ if (provided === null || provided.trim() === '') {
+ setScheduleError(`Admin secret required to ${action}.`);
+ return null;
+ }
+ setAdminSecret(provided.trim());
+ setScheduleError(null);
+ return provided.trim();
+ }, [adminSecret, secretPrompted]);
+
  // ── Run agent with SSE streaming ──────────────────────────────────────
  const runAgent = useCallback(async () => {
  setAgentRunning(true);
@@ -126,9 +141,15 @@ export function AutopilotDashboard({ isNight = false }) {
  abortRef.current = abortController;
 
  try {
+ const secret = promptForSecret('run autopilot');
+ if (!secret) {
+ setError('Admin secret required to run autopilot.');
+ setAgentRunning(false);
+ return;
+ }
  const response = await fetch('/api/agent', {
  method: 'POST',
- headers: { 'Content-Type': 'application/json' },
+ headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
  body: JSON.stringify({
  ...agentConfig,
  autopilot: true,
@@ -214,7 +235,7 @@ export function AutopilotDashboard({ isNight = false }) {
  // Final refresh of execution history
  fetchExecutions();
  }
- }, [agentConfig, fetchExecutions]);
+ }, [agentConfig, fetchExecutions, promptForSecret]);
 
  const stopAgent = useCallback(() => {
  if (abortRef.current) {
@@ -236,21 +257,6 @@ export function AutopilotDashboard({ isNight = false }) {
 
  const visibleExecutions = executions.slice(0, visibleCount);
  const hasMore = visibleCount < executions.length;
-
- // Prompt for admin secret once per session when changing schedule
- const promptForSecret = useCallback(() => {
- if (secretPrompted) return adminSecret || null;
- if (typeof window === 'undefined') return null;
- const provided = window.prompt('Enter admin secret to update schedule:');
- setSecretPrompted(true);
- if (provided === null || provided.trim() === '') {
- setScheduleError('Admin secret required to change schedule.');
- return null;
- }
- setAdminSecret(provided.trim());
- setScheduleError(null);
- return provided.trim();
- }, [adminSecret, secretPrompted]);
 
  // Update schedule on the server
  const saveSchedule = useCallback(async (next) => {

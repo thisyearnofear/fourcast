@@ -275,8 +275,22 @@ export async function executeServerOrder(orderData, keyOrSigner) {
       builderConfig
     );
 
-    console.log('Deriving L1 API credentials for address:', signer.address);
-    const creds = await tempClient.createOrDeriveApiKey();
+    // L2 API creds: cached envs skip the L1 credential-derivation signature.
+    // That signature matters under a ChainSignatureSigner — every signature
+    // request updates the contract's last_trade_ns, so deriving creds per
+    // order means the order itself lands inside the cooldown window and is
+    // refused. Bootstrap once (scripts/near-derive-polycreds.mjs), cache here.
+    let creds;
+    const l2Key = process.env.POLY_L2_API_KEY;
+    const l2Secret = process.env.POLY_L2_SECRET;
+    const l2Passphrase = process.env.POLY_L2_PASSPHRASE;
+    if (l2Key && l2Secret && l2Passphrase) {
+      creds = { key: l2Key, secret: l2Secret, passphrase: l2Passphrase };
+      console.log('Using cached L2 API credentials for address:', signer.address);
+    } else {
+      console.log('Deriving L1 API credentials for address:', signer.address);
+      creds = await tempClient.createOrDeriveApiKey();
+    }
 
     // Initialize fully-authenticated client
     const client = new ClobClient(

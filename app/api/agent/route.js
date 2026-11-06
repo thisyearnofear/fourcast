@@ -29,6 +29,16 @@ function getClientIdentifier(request) {
   );
 }
 
+// autopilot:true requests real signatures/orders — same gate as
+// /api/agent/schedule: x-admin-secret, dev-only when ADMIN_SECRET unset.
+function isAdminAuthorized(request) {
+  const adminSecret = process.env.ADMIN_SECRET;
+  if (!adminSecret) {
+    return process.env.NODE_ENV === 'development';
+  }
+  return request.headers.get('x-admin-secret') === adminSecret;
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -40,6 +50,13 @@ export async function POST(request) {
       riskTolerance = 0.5,
       autopilot = false,
     } = body;
+
+    if (autopilot && !isAdminAuthorized(request)) {
+      return Response.json(
+        { success: false, error: 'Autopilot execution requires admin authorization.' },
+        { status: 403 }
+      );
+    }
 
     const clientId = getClientIdentifier(request);
     if (!checkAgentRateLimit(clientId)) {

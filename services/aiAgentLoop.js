@@ -426,6 +426,7 @@ Output ONLY valid JSON:
       platform: market.platform,
       description: market.description,
       currentOdds: market.currentOdds,
+      liquidity: market.liquidity ?? null,
       aiProbability,
       reasoning,
       keyFactors,
@@ -559,6 +560,7 @@ Output ONLY valid JSON:
         confidence: adjustedConfidence,
         originalConfidence: f.confidence,
         calibrationWarning: absEdge > edgeThreshold ? `Edge >${(edgeThreshold * 100).toFixed(0)}% - high uncertainty` : null,
+        liquidity: f.liquidity,
         reasoning: f.reasoning,
         keyFactors: f.keyFactors,
         source: f.source || "llm",
@@ -606,16 +608,15 @@ Output ONLY valid JSON:
   if (config.autopilot && hasExecCred) {
     yield { step: "execute", status: "running", message: "Autopilot executing trades..." };
 
-    let signer;
+    // The mandate contract gates on THIS trade's envelope — venue, notional,
+    // liquidity, slippage — so a signer must be created per order below with
+    // real values; a run-level stub (e.g. liquidity:'0') would be refused by
+    // the on-chain floor and, worse, would gate nothing real if it weren't.
     if (mandateSigning) {
-      const { createChainSignatureSigner } = await import('./near/chainSigSigner.js');
-      signer = await createChainSignatureSigner({
-        venue: 'polymarket',
-        slippageBps: 100,
-      });
-      yield { step: "execute", status: "running", message: `Chain-signature account ${signer.address} — mandate-contract gated` };
+      const { derivedEvmAddress } = await import('./near/nearMandateClient.js');
+      const account = await derivedEvmAddress();
+      yield { step: "execute", status: "running", message: `Chain-signature account ${account} — mandate-contract gated` };
     }
-    const keyOrSigner = mandateSigning ? signer : process.env.POLYMARKET_PRIVATE_KEY;
     const executedTrades = [];
     const dryRun = config.dryRun === true;
     const dailyCapPct = typeof config.dailyCapPct === "number" ? config.dailyCapPct : 0.5;
@@ -700,6 +701,22 @@ Output ONLY valid JSON:
       };
 
       try {
+        // Chain-signature path: a fresh signer per order so the contract sees
+        // this trade's real envelope. Units match the deployed mandate:
+        // notional/liquidity in USDC 6dp (cap 1e9 = $1000, floor 5e8 = $500).
+        let keyOrSigner = process.env.POLYMARKET_PRIVATE_KEY;
+        if (mandateSigning) {
+          const { createChainSignatureSigner } = await import('./near/chainSigSigner.js');
+          const shares = rec.sizePct * 100;
+          keyOrSigner = await createChainSignatureSigner({
+            venue: 'polymarket',
+            notional: String(Math.round(rec.marketOdds * shares * 1e6)),
+            liquidity: String(Math.round((rec.liquidity || 0) * 1e6)),
+            slippageBps: Number(process.env.NEAR_ORDER_SLIPPAGE_BPS || 100),
+            marketId: rec.marketID,
+            outcome: rec.direction,
+          });
+        }
         const result = await polymarketService.executeServerOrder(
           {
             tokenID: rec.marketID,

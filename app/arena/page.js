@@ -11,6 +11,7 @@ import Reveal from '@/components/motion/Reveal';
 import MandateBuilder from '@/components/MandateBuilder';
 import { MandateControl } from '@/components/MandateControl';
 import NearMandateCard from '@/components/NearMandateCard';
+import NearIntentsCard from '@/components/NearIntentsCard';
 import { HistoricalLabPanel } from '@/components/HistoricalLabPanel';
 import { AgentRunLedger } from '@/components/AgentRunLedger';
 import { AgentDashboard } from '@/components/AgentDashboard';
@@ -357,6 +358,9 @@ function MandateLane() {
       </Reveal>
       <Reveal>
         <NearMandateCard />
+      </Reveal>
+      <Reveal>
+        <NearIntentsCard />
       </Reveal>
       <Reveal>
         <MandateControl />

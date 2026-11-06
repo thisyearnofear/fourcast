@@ -51,6 +51,10 @@ function replayFeed() {
     positions: [],
     balances: { tokenBalance: 91.17, tokenSymbol: 'TST' },
     summary: { tradesExecuted: 1, tradesPaper: 0, dryRun: false },
+    // Only truthy once a real NEAR anchor hash is recorded on the canonical
+    // fixture — the rail shows `⬡ anchored` only for a tx that exists.
+    nearTx: CANONICAL_RECEIPT.nearTx || null,
+    nearExplorer: CANONICAL_RECEIPT.nearExplorer || null,
   };
   return { latest: run, runs: [run], stale: false };
 }

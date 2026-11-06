@@ -89,5 +89,9 @@ export async function requestTradeSignature(tradeRequest) {
   // SuccessValue (base64 JSON of { big_r, s, recovery_id }).
   const sv = outcome?.status?.SuccessValue || outcome?.SuccessValue;
   if (!sv) throw new Error('request_signature: empty MPC result (gate rejected?)');
-  return JSON.parse(Buffer.from(sv, 'base64').toString('utf8'));
+  const parsed = JSON.parse(Buffer.from(sv, 'base64').toString('utf8'));
+  // The request tx hash — the nearblocks link proving the contract's gate
+  // decision. Non-SignResponse field; callers ignore what they don't read.
+  parsed._txHash = outcome?.transaction?.hash || outcome?.transaction_outcome?.id || null;
+  return parsed;
 }

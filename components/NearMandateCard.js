@@ -44,6 +44,11 @@ export function NearMandateCard() {
         <span className="text-[var(--color-ink-faint)]">
           cooldown {data.cooldownSecs}s
         </span>
+        {data.approvedCodeHash && (
+          <span className="text-[var(--color-ink-faint)]" title="Approved worker code hash — signature requests with a different hash are refused">
+            code {data.approvedCodeHash.slice(0, 18)}…
+          </span>
+        )}
       </div>
       <p className="mt-2 font-mono text-[10px] text-[var(--color-ink-faint)]">
         agent EVM <span className="text-[var(--color-ink-muted)]">{data.evmAddress}</span>

@@ -24,9 +24,14 @@ verify independently. ~2 days.
 - [ ] 0.2 Surface verification in `/proof`: "anchored on NEAR" row → explorer
       link + `verifyCommitmentTx` status (anchored / pending / mismatched).
 - [x] 0.3 `nearAnchor`/`nearTx` flow through feed; rail shows `⬡ anchored`
-      explorer link.
+      explorer link. (Audit fix: the rail field was dead — the only ingest
+      poster never set `nearTx`. `fourcast-agent-worker` now posts
+      ingest-shaped run records carrying `nearTx`/`nearExplorer`, and the
+      rail links nearblocks.)
 - [ ] 0.4 `FORECAST_REPLAY` path carries a pre-anchored canonical receipt so the
-      demo shows the verified state cold.
+      demo shows the verified state cold. (Replay now forwards
+      `CANONICAL_RECEIPT.nearTx`/`nearExplorer` — still needs a real anchor
+      hash recorded on the fixture.)
 
 ## Phase 1 — Contract guardrails (the gates, on-chain)
 
@@ -55,6 +60,14 @@ the VPS → honestly "non-custodial." ~2 days.
 - [x] 2.2 `ChainSignatureSigner` (ethers-compatible, no key) —
       `executeServerOrder` accepts signer objects; `aiAgentLoop` uses it
       when `NEAR_MANDATE_CONTRACT` is set. Digest → contract gates → MPC.
+      (Audit fix: three blockers found and repaired — clob-client calls the
+      ethers-v5 `signer._signTypedData`, now aliased; the envelope was fixed
+      at signer-creation with `liquidity:'0'` and would have been refused
+      100% of the time against the live `min_liquidity=5e8` floor — the
+      signer is now created per-order with real values; and the 60s
+      contract cooldown plus the L1-auth + order two-signature flow meant
+      self-DoS — L2 creds are now cached via `POLY_L2_*` envs after a
+      one-time bootstrap (`scripts/near-derive-polycreds.mjs`).)
 - [x] 2.3 `NearMandateCard` in Arena → Mandate lane shows the derived
       EVM address + contract policy + "no private key exists" (via
       `/api/near/mandate`, read-only RPC).
@@ -120,12 +133,57 @@ judges verify *which binary* made decisions. ~3 days; can ship partially.
       venue APIs — no replay needed.
 - [ ] 5.3 X video + post ("built for NEAR HACKATHON"), form (project, 20–2000
       char desc, NEAR payout address, repo + demo links).
-- [x] 5.4 `build` script now `next build` (Turbopack, verified).
+- [x] 5.4 `build` script no longer pins `--webpack` — Next 16 defaults to
+      Turbopack; `npm run build` verified clean 2026-11-06 (31.7s compile,
+      all routes in manifest, `/api/near/*` present).
 
 ## Defer
 
 - NEP-770 gasless, follow-as-intent copy-trading, signals-leaderboard
   attestations — post-hackathon.
+
+## Audit — 2026-11-05 (post-"shipped" review)
+
+Verified against live contract + code, not the commit log.
+
+**Broken as shipped (fixed in this pass):**
+- `signer._signTypedData` missing — `@polymarket/clob-client@4.x` bundles
+  ethers v5 and calls the v5 name for both L1 auth and order signing; the
+  path threw before reaching the contract.
+- Fixed envelope — the signer was created once per run with
+  `notional:'0', liquidity:'0'`; the live `min_liquidity=5e8` floor refused
+  every request. Now created per-order with real notional/liquidity.
+- Cooldown self-DoS — `last_trade_ns` updates per *signature request*, and
+  a Polymarket order needs ≥2 signatures (L1 creds + order). L2 creds are
+  now cached (`POLY_L2_API_KEY/SECRET/PASSPHRASE`); bootstrap once via
+  `scripts/near-derive-polycreds.mjs`.
+- `⬡ anchored` was dead code — `latest.nearTx` was never set by any ingest
+  poster. `fourcast-agent-worker` now posts an ingest-shaped run record
+  (ARENA_INGEST_URL + ADMIN_SECRET, same contract as the Delphi worker).
+
+**Still open:**
+- The derived EOA `0x6940…c61F` has no USDC/POL and no CTF-exchange
+  allowances — a working signature is not a working trade. Funding +
+  `approve` txs (themselves chain-sig signed) are required before the
+  first live order; Intents (Phase 3) is the funding leg.
+- The Ledger lane is fed by `delphiAgentLoop` (raw `WALLET_PRIVATE_KEY`),
+  NOT the mandate-gated `aiAgentLoop`. The demo must not narrate
+  "enforced on-chain" over Delphi-feed rows — show the Autopilot path or
+  the TxLINE receipts instead.
+- Intents frontend: `GET /api/near/quote` (always dry server-side) +
+  `NearIntentsCard` on the Mandate lane now show a live solver quote and
+  forward `?status=` to `getExecutionStatus`. Still missing: the persistent
+  deposit address (3.3) — mints on the first non-dry quote once funded.
+- `NEAR_MANDATE_CONTRACT`, `NEAR_DERIVATION_PATH`, `NEAR_WORKER_CODE_HASH`,
+  `POLY_L2_*` were undocumented in env examples — now added.
+- `autopilot:true` on `/api/agent` is reachable by any visitor when the
+  mandate env is set on the web server; rate limit is IP/UA only.
+  **Fixed 2026-11-06**: `autopilot` now requires `x-admin-secret` (same
+  gate as `/api/agent/schedule`; dev-only when `ADMIN_SECRET` unset).
+  Cron path unaffected — it goes through `CRON_SECRET` + scheduler.
+- `NEAR_ACCOUNT_ID` must be the contract owner (`assert_owner`) — i.e. the
+  `inexpensive-mother.testnet` key lives on the worker as a full-access
+  key until scoped to a function-call key (nearClient.js comment).
 
 ## Dependency order
 
