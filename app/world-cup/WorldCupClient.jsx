@@ -621,15 +621,15 @@ export default function WorldCupClient({ bare = false, initialLiveEnabled = fals
     setError(null);
     try {
       const [fxRes, stRes] = await Promise.all([
-        fetch('/api/txline/fixtures').then((r) => r.json()),
-        fetch('/api/txline/status').then((r) => r.json()),
+        fetch('/api/txline/fixtures').then((r) => r.json()).catch(() => null),
+        fetch('/api/txline/status').then((r) => r.json()).catch(() => null),
       ]);
-      if (fxRes.success) {
+      if (fxRes?.success) {
         setFixtures(fxRes.fixtures || []);
       } else {
-        setError(fxRes.error || 'Failed to load fixtures');
+        setError(fxRes?.error || 'Failed to load fixtures');
       }
-      if (stRes.success) setStatus(stRes.status);
+      if (stRes?.success) setStatus(stRes.status);
     } catch (err) {
       setError(err.message);
     } finally {
