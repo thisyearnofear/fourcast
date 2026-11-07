@@ -58,8 +58,8 @@ node scripts/solana-escrow-v4-roundtrip.mjs     # book → create_policy → set
 # → locks 0.05 SOL, settles via CPI oracle chain in ONE tx, prints explorer links
 ```
 Verified on devnet 2026-11-07 (fixture 18041541):
-- [create_policy](https://explorer.solana.com/tx/3cJik5pAVmSTDz4GfTaRX2SA437HjajCeHERJQ2tE1gQoYrVrZihQudBEHb55kxahfH1UceinNGkVjdHdoGV7ZNq?cluster=devnet)
-- [settle_policy_v4](https://explorer.solana.com/tx/2FquTGbh42K3ozF6r3Bd1YVAW2PbtX3LREDbBB5xUetW77ZQDwUNGcruZnxMVXvbguJTugvf1xGtj2k6ZcSp8YdM?cluster=devnet) — 0.05 SOL paid out, policy closed
+- [create_policy](https://explorer.solana.com/tx/5BEpKYaZR6icGwwxc6zwb43EX4CDM23PM9gcsGwn6aHaW1GaWF7cM4DRJqDbLE9Lv2CJF4dYio4dBiMAQVKqaBSF?cluster=devnet)
+- [settle_policy_v4](https://explorer.solana.com/tx/4UE3YM9xQHVRSxfGecAfs82h56k4hH6LevHCM5KMygJ2Vd4apzACSByPJfyUt6LaqtUgUZR7L96wntrGwSJYTPzX?cluster=devnet) — 0.05 SOL paid out, policy closed
 - [program upgrade](https://explorer.solana.com/tx/5qDd22aFYBniyDUeqKuvVUMcyiwG1mZ59W3JSoWaLEEehCJtddM7QvozogX1nQCMHFeNTEsJen9VHpq6bbvaDmi1?cluster=devnet)
 
 **x402 payment (local dev server + funded devnet buyer):**
@@ -99,7 +99,7 @@ X402_BUYER_KEYPAIR=<key> node scripts/x402-solana-demo.mjs
 
 **Verified on devnet (paste into submission):**
 - Program: https://explorer.solana.com/address/AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ?cluster=devnet
-- Escrow round-trip: `create_policy` https://explorer.solana.com/tx/3cJik5pAVmSTDz4GfTaRX2SA437HjajCeHERJQ2tE1gQoYrVrZihQudBEHb55kxahfH1UceinNGkVjdHdoGV7ZNq?cluster=devnet → `settle_policy_v4` https://explorer.solana.com/tx/2FquTGbh42K3ozF6r3Bd1YVAW2PbtX3LREDbBB5xUetW77ZQDwUNGcruZnxMVXvbguJTugvf1xGtj2k6ZcSp8YdM?cluster=devnet (0.05 SOL escrowed → paid out trustlessly, policy PDA closed)
+- Escrow round-trip: `create_policy` https://explorer.solana.com/tx/5BEpKYaZR6icGwwxc6zwb43EX4CDM23PM9gcsGwn6aHaW1GaWF7cM4DRJqDbLE9Lv2CJF4dYio4dBiMAQVKqaBSF?cluster=devnet → `settle_policy_v4` https://explorer.solana.com/tx/4UE3YM9xQHVRSxfGecAfs82h56k4hH6LevHCM5KMygJ2Vd4apzACSByPJfyUt6LaqtUgUZR7L96wntrGwSJYTPzX?cluster=devnet (0.05 SOL escrowed → paid out trustlessly, policy PDA closed)
 - Reproduce: `node scripts/solana-escrow-v4-roundtrip.mjs` (see README "Check the gates yourself")
 
 **How Solana powers it:**
@@ -123,7 +123,7 @@ X402_BUYER_KEYPAIR=<key> node scripts/x402-solana-demo.mjs
 - Repo: https://github.com/thisyearnofear/fourcast
 - Live: https://fourcastapp.vercel.app
 - Program: https://explorer.solana.com/address/AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ?cluster=devnet
-- Verified escrow txs: create_policy `3cJik5pA…GNq` → settle_policy_v4 `2FquTGbh…8YdM` (devnet explorer links in README)
+- Verified escrow txs: create_policy `5BEpKYaZ…aBSF` → settle_policy_v4 `4UE3YM9x…TPzX` (devnet explorer links in README)
 - Video: <upload/link>
 
 ## 5. Checklist

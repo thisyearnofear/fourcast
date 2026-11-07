@@ -72,8 +72,8 @@ read-only on a public explorer, no keys, no trust:
   books the fixture (once), creates a policy (locks SOL), then settles it in
   one transaction via the TxLINE v4 oracle CPI chain — printing explorer
   links for every transaction. Last verified run:
-  [create_policy](https://explorer.solana.com/tx/3cJik5pAVmSTDz4GfTaRX2SA437HjajCeHERJQ2tE1gQoYrVrZihQudBEHb55kxahfH1UceinNGkVjdHdoGV7ZNq?cluster=devnet) →
-  [settle_policy_v4](https://explorer.solana.com/tx/2FquTGbh42K3ozF6r3Bd1YVAW2PbtX3LREDbBB5xUetW77ZQDwUNGcruZnxMVXvbguJTugvf1xGtj2k6ZcSp8YdM?cluster=devnet)
+  [create_policy](https://explorer.solana.com/tx/5BEpKYaZR6icGwwxc6zwb43EX4CDM23PM9gcsGwn6aHaW1GaWF7cM4DRJqDbLE9Lv2CJF4dYio4dBiMAQVKqaBSF?cluster=devnet) →
+  [settle_policy_v4](https://explorer.solana.com/tx/4UE3YM9xQHVRSxfGecAfs82h56k4hH6LevHCM5KMygJ2Vd4apzACSByPJfyUt6LaqtUgUZR7L96wntrGwSJYTPzX?cluster=devnet)
   (0.05 SOL paid to the recipient, policy account closed).
 - **x402 quote** — `GET /api/signals/premium-solana` returns 402 +
   `Payment-Required` header with price, payee, mint and network.
