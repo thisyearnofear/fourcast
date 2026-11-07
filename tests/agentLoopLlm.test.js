@@ -21,6 +21,18 @@ vi.mock('../services/redisService.js', () => ({
   getRedisClient: vi.fn(async () => null),
 }));
 
+// MarketIntelligenceAnalyzer constructs an OpenAI client in its constructor,
+// which throws without credentials. The loop only needs enrichContext, and an
+// empty result set exercises the same "no intelligence" path as unconfigured
+// Bright Data.
+vi.mock('../services/analysis/MarketIntelligenceAnalyzer.js', () => ({
+  MarketIntelligenceAnalyzer: class {
+    async enrichContext() {
+      return { intelligenceData: { results: [] } };
+    }
+  },
+}));
+
 import { chatCompletion } from '../services/llmRouter.js';
 import { polymarketService } from '../services/polymarketService.js';
 import { runAgentLoop } from '../services/aiAgentLoop.js';
