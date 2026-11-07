@@ -50,8 +50,30 @@ function jsonResponse(payload) {
   };
 }
 
+// The shared Tatum client speaks GraphQL, not JSON-RPC: translate the flat
+// post-map block shape into the { data: { transactionBlock } } envelope the
+// client's sui_getTransactionBlock mapping consumes.
+function toGraphQLBlock(flat) {
+  if (flat === null || flat === undefined) return null;
+  const rawStatus = flat.effects?.status;
+  const status = typeof rawStatus === 'string' ? rawStatus : rawStatus?.status || 'success';
+  return {
+    digest: flat.digest,
+    effects: { status: String(status).toUpperCase() },
+    balanceChanges: {
+      nodes: (flat.balanceChanges || []).map((c) => ({
+        coinType: { repr: c.coinType },
+        amount: c.amount,
+        owner: typeof c.owner === 'string' ? { address: c.owner } : c.owner,
+      })),
+    },
+  };
+}
+
 function mockRpc(result) {
-  global.fetch = vi.fn(async () => jsonResponse({ jsonrpc: '2.0', id: 1, result }));
+  global.fetch = vi.fn(async () =>
+    jsonResponse({ data: { transactionBlock: toGraphQLBlock(result) } }),
+  );
 }
 
 function paymentHeader(digest, overrides = {}) {

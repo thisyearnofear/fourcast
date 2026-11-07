@@ -203,20 +203,23 @@ describe('/api/memory/status', () => {
       owner: OWNER,
     });
 
+    // The shared Tatum client speaks GraphQL: the body carries
+    // { operationName, query, variables } and the response is a
+    // { data: {...} } envelope — dispatch on operationName, not params.
     global.fetch = vi.fn(async (_url, opts) => {
-      const params = JSON.parse(opts.body).params;
+      const body = JSON.parse(opts.body);
+      const vars = body.variables || {};
+      const data =
+        body.operationName === 'sui_getObject'
+          ? { object: { address: vars.address, version: '12', digest: 'digest-abc' } }
+          : body.operationName === 'sui_getLatestCheckpointSequenceNumber'
+            ? { checkpoint: { sequenceNumber: '400000' } }
+            : {};
       return {
         ok: true,
         status: 200,
         headers: { get: () => 'application/json' },
-        json: async () => ({
-          jsonrpc: '2.0',
-          id: 1,
-          result:
-            params[1]?.showOwner === undefined
-              ? '400000'
-              : { data: { objectId: params[0], version: '12', digest: 'digest-abc', type: 'memwal::Memory' } },
-        }),
+        json: async () => ({ data }),
         text: async () => '{}',
       };
     });
