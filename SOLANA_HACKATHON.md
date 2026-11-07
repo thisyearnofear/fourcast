@@ -62,12 +62,12 @@ Verified on devnet 2026-11-07 (fixture 18041541):
 - [settle_policy_v4](https://explorer.solana.com/tx/4UE3YM9xQHVRSxfGecAfs82h56k4hH6LevHCM5KMygJ2Vd4apzACSByPJfyUt6LaqtUgUZR7L96wntrGwSJYTPzX?cluster=devnet) — 0.05 SOL paid out, policy closed
 - [program upgrade](https://explorer.solana.com/tx/5qDd22aFYBniyDUeqKuvVUMcyiwG1mZ59W3JSoWaLEEehCJtddM7QvozogX1nQCMHFeNTEsJen9VHpq6bbvaDmi1?cluster=devnet)
 
-**x402 payment (local dev server + funded devnet buyer):**
+**x402 payment — COMPLETED on production 2026-11-07:**
 ```bash
-X402_SOLANA_ENABLED=true X402_USDC_CEILING=1 X402_SOLANA_PAY_TO=<seller> npm run dev
-X402_BUYER_KEYPAIR=<key> node scripts/x402-solana-demo.mjs
+X402_BUYER_KEYPAIR=<key> X402_DEMO_URL=https://fourcastapp.vercel.app/api/signals/premium-solana node scripts/x402-solana-demo.mjs
 # → 402 quote → signed transferChecked → on-chain settlement → signal brief delivered
 ```
+- [settlement tx](https://explorer.solana.com/tx/5r2ZBM7KY3DvPFzagRMJL6RufR9whAB5xTeaSXKnkuK6vvmpzaNqhNyZ2sDnuE7VV94bdh5D9N6BAtSM77BenhUv?cluster=devnet) — 0.01 devnet USDC, buyer `6pMfBGw6…`, resource delivered (5 signals), public ledger entry `status: delivered`
 
 **Video beats:**
 1. (0:00) Hook — "AI agents claim edge; none prove discipline. Fourcast commits to its decision on Solana before the outcome."
@@ -129,7 +129,7 @@ X402_BUYER_KEYPAIR=<key> node scripts/x402-solana-demo.mjs
 ## 5. Checklist
 
 - [x] `scripts/solana-escrow-v4-roundtrip.mjs` run end-to-end on devnet — DONE, tx sigs above
-- [ ] `scripts/x402-solana-demo.mjs` payment completed once on devnet (`X402_DEMO_URL=https://fourcastapp.vercel.app/api/signals/premium-solana`)
+- [x] `scripts/x402-solana-demo.mjs` payment completed on **production** — settlement `5r2ZBM7K…nhUv`, resource delivered, ledger `status: delivered`
 - [x] `npm test` green incl. `tests/x402Solana.test.js` (700 passing)
 - [x] `npm run typecheck` / `npm run lint` clean on new files
 - [x] Vercel redeployed (latest main) — `/api/signals/premium-solana` live and quoting 402
