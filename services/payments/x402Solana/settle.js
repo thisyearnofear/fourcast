@@ -324,7 +324,10 @@ export async function deliverAfterSettlementSolana(req, resourceFn, options = {}
   // Simulate before broadcasting — catches insufficient funds / bad state
   // without spending a slot on a doomed transaction.
   try {
-    const sim = await connection.simulateTransaction(tx, { sigVerify: true });
+    // web3.js 1.98's simulateTransaction config arg emits malformed RPC params
+    // on some endpoints ("Invalid arguments"); signature validity is enforced
+    // again at broadcast, so simulate without config.
+    const sim = await connection.simulateTransaction(tx);
     if (sim.value?.err) {
       return paymentRequiredResponse(requirement, {
         reason: 'The payment transaction would fail on-chain.',
