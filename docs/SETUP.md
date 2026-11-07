@@ -98,7 +98,7 @@ TXLINE_MODE=live
 TXLINE_LAST_TX_SIG=<subscribe tx signature>
 TXLINE_SOLANA_PUBLIC_KEY=<wallet public address; non-sensitive>
 
-# Match-escrow program for on-chain settlement (CPI → txoracle validate_stat)
+# Match-escrow program for on-chain settlement (CPI → txoracle v4 chain)
 NEXT_PUBLIC_MATCH_ESCROW_PROGRAM_ID=AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ
 NEXT_PUBLIC_TXORACLE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
 
@@ -642,7 +642,7 @@ TXLINE_MODE=live
 TXLINE_LAST_TX_SIG=<subscribe tx signature from the on-chain subscribe transaction>
 TXLINE_SOLANA_PUBLIC_KEY=<wallet public address; non-sensitive>
 
-## Match-escrow program for on-chain settlement (CPI → txoracle validate_stat)
+## Match-escrow program for on-chain settlement (CPI → txoracle v4 chain)
 ## Defaults to devnet program ID below if unset.
 NEXT_PUBLIC_MATCH_ESCROW_PROGRAM_ID=AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ
 NEXT_PUBLIC_TXORACLE_PROGRAM_ID=6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J
@@ -909,7 +909,7 @@ https://faucet.testnet.movementnetwork.xyz/
 |-----------|----------|
 | TxLINE subscribe | ~0.001 SOL |
 | Create policy (lock SOL) | ~0.0005 SOL |
-| Settle policy (CPI → validate_stat) | ~0.002 SOL |
+| Settle policy (CPI → txoracle v4 chain) | ~0.002 SOL |
 
 ---
 

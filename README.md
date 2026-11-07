@@ -31,6 +31,53 @@ Node.js 24+, Next.js 16, React 19 · Polymarket CLOB, Delphi (LMSR), Canton DApp
 
 MIT
 
+## Solana integration
+
+Fourcast settles on Solana in three independent ways — each one verifiable
+read-only on a public explorer, no keys, no trust:
+
+1. **Parametric escrow (`match-escrow` program, devnet)** — an Anchor program
+   that locks SOL in a PDA against a sports fixture, then settles in a single
+   transaction that CPIs into TxLINE's `txoracle` v4 flow
+   (`validate_fixture_for_tree` → `validate_stat_v4` → `close_worker_ticket`)
+   with an API-signed Merkle proof of the verified score. Payout or refund
+   happens entirely on-chain; there is no oracle operator and no trusted
+   party. Program:
+   [`AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ`](https://explorer.solana.com/address/AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ?cluster=devnet),
+   source in [`onchain/match-escrow/`](onchain/match-escrow).
+2. **Receipt commitment (Memo program)** — each decision receipt's
+   `contentHash` can be committed on-chain via the canonical Memo program
+   *before* the outcome resolves; `/api/worldcup/verify?commitmentTx=<sig>`
+   proves the commitment predated the result.
+3. **x402 payments (self-facilitated)** — `POST /api/signals/premium-solana`
+   quotes a 402, accepts a buyer-signed `transferChecked` transaction, and
+   only delivers the paid resource after verifying the instruction,
+   simulating, broadcasting, confirming, and re-reading the on-chain
+   balance delta. Devnet USDC by default; enable with
+   `X402_SOLANA_ENABLED=true` (+ `X402_USDC_CEILING`, `X402_SOLANA_PAY_TO`).
+   Buyer client: `scripts/x402-solana-demo.mjs`.
+
+### Check the gates yourself (judge verify-path)
+
+- **Program + oracle live on devnet** —
+  `curl https://fourcastapp.vercel.app/api/worldcup/settle/status` returns
+  the program id and RPC; both programs resolve on
+  [explorer.solana.com](https://explorer.solana.com?cluster=devnet).
+- **On-chain proof verification** —
+  `GET /api/worldcup/verify?fixtureId=18175981` walks the full chain:
+  pre-event receipt → optional on-chain commitment → TxLINE Merkle proof →
+  Solana daily-root verification → reconciliation.
+- **Full escrow round-trip** —
+  `node scripts/solana-escrow-v4-roundtrip.mjs`
+  books the fixture (once), creates a policy (locks SOL), then settles it in
+  one transaction via the TxLINE v4 oracle CPI chain — printing explorer
+  links for every transaction. Last verified run:
+  [create_policy](https://explorer.solana.com/tx/3cJik5pAVmSTDz4GfTaRX2SA437HjajCeHERJQ2tE1gQoYrVrZihQudBEHb55kxahfH1UceinNGkVjdHdoGV7ZNq?cluster=devnet) →
+  [settle_policy_v4](https://explorer.solana.com/tx/2FquTGbh42K3ozF6r3Bd1YVAW2PbtX3LREDbBB5xUetW77ZQDwUNGcruZnxMVXvbguJTugvf1xGtj2k6ZcSp8YdM?cluster=devnet)
+  (0.05 SOL paid to the recipient, policy account closed).
+- **x402 quote** — `GET /api/signals/premium-solana` returns 402 +
+  `Payment-Required` header with price, payee, mint and network.
+
 ## NEAR integration
 
 The agent's trading account is a NEAR contract account — no private key

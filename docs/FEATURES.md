@@ -78,7 +78,7 @@ USDC value today.
 - **Arc receipt publishing (historical testnet path)** — retained `PredictionReceiptERC20` publishing when configured; zero-stake receipts do not move USDC value.
 - **Movement/Aptos** — retired for new functionality; historical signal records may retain legacy origin badges.
 - **TxLINE/Solana Proof of Decision** - Receipt integrity, TxLINE Merkle proof validation, Solana root comparison, and decision-vs-outcome reconciliation in one endpoint
-- **Parametric Sports Settlement** - Match-escrow Solana program CPI-calls TxLINE `validate_stat` to settle a proof-backed policy
+- **Parametric Sports Settlement** - Match-escrow Solana program CPIs TxLINE's `txoracle` v4 flow (`validate_fixture_for_tree` → `validate_stat_v4` → `close_worker_ticket`) to settle a proof-backed policy
 - **Tipping System** - Reward analysts with APT on legacy Movement signals
 - **Reputation Tracking** - Win rates, Brier scores, accuracy streaks
 - **Leaderboards** - Top analysts by performance

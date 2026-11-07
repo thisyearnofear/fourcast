@@ -1,27 +1,37 @@
 import { PublicKey, Transaction, ComputeBudgetProgram } from '@solana/web3.js';
-import { buildSettlePolicyIx } from '@/services/txline/settlementService';
-import txlineService from '@/services/txline/txlineService';
+import { buildSettlePolicyV4Ix, buildEd25519VerifyIx } from '@/services/txline/settlementService';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const BACKEND_ADMIN = 'Ah5xwzHxRYBBV3BWHDCHdfzQJfBehzGQcc7A9QX1DLUB';
+
 /**
  * POST /api/worldcup/settle/policy
- * Body: { caller, locker, recipient, fixtureId, paysRecipientOnHomeWin }
+ * Body: {
+ *   caller, locker, recipient, fixtureId, paysRecipientOnHomeWin,
+ *   v4: {
+ *     signature,            // base64 backend signature over sha256(payload)
+ *     version,              // 'v1' | 'v2'
+ *     domain, workerId,     // optional (default 1, 1)
+ *     forTree,              // FixtureForTreeInput payload (ts, summary, mainTreeProof)
+ *     payload,              // StatValidationPayload fields (ts, eventStatRoot, proofs, leaves…)
+ *     strategy              // NDimensionalStrategy (optional — defaults to home-win)
+ *   }
+ * }
  *
- * Returns a partially-signed transaction that the client signs with the caller's
- * wallet and submits to Solana devnet. The transaction:
- *   1. CPI-calls txoracle::validate_stat with the TxLINE Merkle proof
- *   2. If the verified outcome matches the policy condition, releases SOL to recipient
- *   3. Otherwise refunds the locker
+ * Returns a transaction the client signs with the caller's wallet and submits
+ * to Solana devnet. Instruction order matters: the Ed25519 verification must
+ * precede settle_policy_v4 because txoracle::validate_stat_v4 introspects the
+ * instructions sysvar.
  *
- * The proof is loaded from the cached replay (cache/txline/replays/{fixtureId}.json).
- * Anyone can call settle — the proof is self-validating on-chain.
+ * The v4 payload is produced by TxLINE's /scores/stat-validation-v4 endpoint —
+ * the caller supplies it (the API credentials stay client/keeper-side).
  */
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { caller, locker, recipient, fixtureId, paysRecipientOnHomeWin } = body;
+    const { caller, locker, recipient, fixtureId, paysRecipientOnHomeWin, v4 } = body;
 
     if (!caller || !locker || !recipient || !fixtureId) {
       return Response.json(
@@ -29,37 +39,50 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-
-    // Load the cached proof for this fixture
-    const replay = txlineService.readReplayFixture(String(fixtureId));
-    if (!replay || !replay.proof || !replay.proof.statToProve) {
+    if (!v4 || !v4.signature || !v4.forTree || !v4.payload) {
       return Response.json(
-        { success: false, error: 'No cached proof for fixture. Run txline-snapshot-fixture.mjs first.' },
-        { status: 404 }
+        { success: false, error: 'Missing v4 proof payload. Fetch /scores/stat-validation-v4 and pass { signature, forTree, payload, strategy }.' },
+        { status: 400 }
       );
     }
 
-    const proof = replay.proof;
-    const minTs = proof.summary.updateStats.minTimestamp;
+    const payloadTs = Number(v4.payload.ts);
+    const isV2 = v4.version === 'v2' || v4.version === 2;
+    const domain = v4.domain ?? 1;
+    const workerId = v4.workerId ?? 1;
+    // forTree mirrors the standalone v4 flow: ts/domain/workerId + the
+    // summary & mainTreeProof carried inside the stat-validation payload.
+    const forTree = v4.forTree ?? {
+      ts: payloadTs,
+      domain,
+      workerId,
+      summary: v4.payload.summary,
+      mainTreeProof: v4.payload.mainTreeProof,
+    };
 
-    const callerPk = new PublicKey(caller);
-    const lockerPk = new PublicKey(locker);
-    const recipientPk = new PublicKey(recipient);
-
-    const { instruction, policyPda, dailyScoresPda } = buildSettlePolicyIx({
-      caller: callerPk,
-      locker: lockerPk,
-      recipient: recipientPk,
+    const { instruction, policyPda, dailyScoresPda, payloadHash } = buildSettlePolicyV4Ix({
+      caller: new PublicKey(caller),
+      locker: new PublicKey(locker),
+      recipient: new PublicKey(recipient),
       fixtureId: Number(fixtureId),
-      minTs,
+      payloadTs,
       paysRecipientOnHomeWin: paysRecipientOnHomeWin !== undefined ? Boolean(paysRecipientOnHomeWin) : true,
-      proof,
+      domain,
+      workerId,
+      forTree,
+      payload: v4.payload,
+      strategy: v4.strategy,
+      isV2,
     });
 
-    // High compute budget — validate_stat uses ~200k CU
-    const computeBudgetIx = ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 });
+    const ed25519Ix = buildEd25519VerifyIx({
+      messageHash: payloadHash,
+      signature: v4.signature,
+      publicKey: BACKEND_ADMIN,
+    });
 
-    const tx = new Transaction().add(computeBudgetIx, instruction);
+    const computeBudgetIx = ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 });
+    const tx = new Transaction().add(computeBudgetIx, ed25519Ix, instruction);
     const serialized = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
 
     return Response.json({
@@ -67,18 +90,8 @@ export async function POST(request) {
       policyPda: policyPda.toBase58(),
       dailyScoresPda: dailyScoresPda.toBase58(),
       transactionBase64: serialized.toString('base64'),
-      fixture: replay.fixture,
-      finalScore: replay.finalScore,
-      proofSummary: {
-        ts: proof.summary.updateStats.minTimestamp,
-        statToProve: proof.statToProve,
-        statToProve2: proof.statToProve2,
-        eventStatRoot: Buffer.from(proof.eventStatRoot).toString('hex').slice(0, 16) + '...',
-        subTreeProofLen: proof.subTreeProof?.length || 0,
-        mainTreeProofLen: proof.mainTreeProof?.length || 0,
-        statProofLen: proof.statProof?.length || 0,
-      },
-      message: 'Sign and submit this transaction to settle the policy via TxLINE CPI.',
+      payloadTs,
+      message: 'Sign and submit this transaction to settle the policy via TxLINE v4 CPI.',
     });
   } catch (err) {
     console.error('[POST /api/worldcup/settle/policy]', err);

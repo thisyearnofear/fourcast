@@ -77,6 +77,128 @@ fn validate_stat_discriminator() -> [u8; 8] {
     [107, 197, 232, 90, 191, 136, 105, 185]
 }
 
+// ─── TxLINE v4 interface (txoracle ≥1.5.17, deployed ~Oct 2026) ────────────
+//
+// The legacy `validate_stat` instruction was removed in the v4 upgrade. The
+// current flow is:
+//   book_fixture (once per fixture) → validate_fixture_for_tree (stages a
+//   worker_ticket with the day's verified root) → ed25519-verify the signed
+//   API payload → validate_stat_v4 → close_worker_ticket.
+//
+// `settle_policy_v4` performs the last three steps as CPIs inside one
+// transaction; the ed25519 verify must be a TOP-LEVEL instruction placed
+// before the settle instruction in the same transaction (the txoracle program
+// introspects the instructions sysvar for it).
+
+fn validate_fixture_for_tree_discriminator() -> [u8; 8] {
+    [118, 85, 77, 234, 117, 87, 168, 190]
+}
+fn validate_stat_v4_discriminator() -> [u8; 8] {
+    [17, 11, 195, 64, 250, 26, 27, 211]
+}
+fn close_worker_ticket_discriminator() -> [u8; 8] {
+    [51, 20, 55, 115, 249, 56, 9, 14]
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct UpdateStatsV4 {
+    pub update_count: i32,
+    pub min_timestamp: i64,
+    pub max_timestamp: i64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct BatchSummaryV4 {
+    pub fixture_id: i64,
+    pub update_stats: UpdateStatsV4,
+    pub sub_tree_root: [u8; 32],
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct FixtureForTreeInput {
+    pub ts: i64,
+    pub domain: u8,
+    pub worker_id: u16,
+    pub summary: BatchSummaryV4,
+    pub main_tree_proof: Vec<ProofNode>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct ScoreStatV4 {
+    pub key: u32,
+    pub value: i32,
+    pub period: i32,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct StatLeafV1 {
+    pub stat: ScoreStatV4,
+    pub stat_proof: Vec<ProofNode>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct StatLeafV2 {
+    pub stat: ScoreStatV4,
+    pub is_zero: bool,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum StatValidationPayload {
+    V1 {
+        ts: i64,
+        event_stat_root: [u8; 32],
+        fixture_proof: Vec<ProofNode>,
+        leaves: Vec<StatLeafV1>,
+        multiproof_hashes: Vec<ProofNode>,
+        leaf_indices: Vec<u32>,
+    },
+    V2 {
+        ts: i64,
+        event_stat_root: [u8; 32],
+        fixture_proof: Vec<ProofNode>,
+        leaves: Vec<StatLeafV2>,
+        multiproof_hashes: Vec<ProofNode>,
+        leaf_indices: Vec<u32>,
+        raw_mask: Option<[u8; 512]>,
+    },
+}
+
+impl StatValidationPayload {
+    fn ts(&self) -> i64 {
+        match self {
+            StatValidationPayload::V1 { ts, .. } => *ts,
+            StatValidationPayload::V2 { ts, .. } => *ts,
+        }
+    }
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct GeometricTarget {
+    pub stat_index: u8,
+    pub prediction: i32,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum StatPredicate {
+    Single {
+        index: u8,
+        predicate: TraderPredicate,
+    },
+    Binary {
+        index_a: u8,
+        index_b: u8,
+        op: BinaryExpression,
+        predicate: TraderPredicate,
+    },
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct NDimensionalStrategy {
+    pub geometric_targets: Vec<GeometricTarget>,
+    pub distance_predicate: Option<TraderPredicate>,
+    pub discrete_predicates: Vec<StatPredicate>,
+}
+
 #[program]
 pub mod match_escrow {
     use super::*;
@@ -311,6 +433,248 @@ pub mod match_escrow {
         });
         Ok(())
     }
+
+    /// Settle a policy against TxLINE's CURRENT (v4) oracle interface.
+    ///
+    /// The legacy `validate_stat` CPI was removed in txoracle's v4 upgrade.
+    /// This instruction performs the full v4 validation sequence as CPIs:
+    ///
+    ///   1. validate_fixture_for_tree — verifies the fixture summary against
+    ///      the day's on-chain scores root and stages a worker_ticket.
+    ///   2. validate_stat_v4 — evaluates the caller-supplied strategy over the
+    ///      API-signed stat payload. Requires (a) a fixture_ticket booked
+    ///      beforehand for this fixture by `caller`, and (b) an Ed25519
+    ///      precompile instruction earlier in the SAME transaction verifying
+    ///      the backend signature over the payload — include it as a
+    ///      top-level instruction before this one.
+    ///   3. close_worker_ticket — reclaims the staging ticket's rent.
+    ///
+    /// The bool returned by validate_stat_v4 drives the same payout logic as
+    /// settle_policy: if it equals `pays_recipient_on_home_win`, the escrowed
+    /// SOL goes to the recipient; otherwise the locker is refunded.
+    ///
+    /// `domain`/`worker_id` identify the worker_ticket PDA seeds — any values
+    /// work as long as the client derives the same PDA.
+    #[allow(clippy::too_many_arguments)]
+    pub fn settle_policy_v4(
+        ctx: Context<SettlePolicyV4>,
+        domain: u8,
+        worker_id: u16,
+        for_tree: FixtureForTreeInput,
+        payload: StatValidationPayload,
+        strategy: NDimensionalStrategy,
+    ) -> Result<()> {
+        let settled = ctx.accounts.policy.settled;
+        let policy_fixture_id = ctx.accounts.policy.fixture_id;
+        let policy_min_ts = ctx.accounts.policy.min_ts;
+        let pays_recipient_on_home_win = ctx.accounts.policy.pays_recipient_on_home_win;
+        let policy_amount = ctx.accounts.policy.amount;
+        let settle_policy_key = ctx.accounts.policy.key();
+        let caller_key = ctx.accounts.caller.key();
+
+        require!(!settled, ErrorCode::AlreadySettled);
+        require!(
+            for_tree.summary.fixture_id == policy_fixture_id,
+            ErrorCode::FixtureMismatch
+        );
+        let payload_ts = payload.ts();
+        require!(payload_ts == policy_min_ts, ErrorCode::TimestampMismatch);
+        require!(
+            for_tree.ts == payload_ts,
+            ErrorCode::TimestampMismatch
+        );
+
+        let txoracle_program_id = TXORACLE_PROGRAM_ID;
+        require!(
+            ctx.accounts.txoracle_program.key() == txoracle_program_id,
+            ErrorCode::WrongTxoracleProgram
+        );
+
+        // Verify the fixture_ticket: owned by txoracle, booked by `caller`
+        // for this fixture. Layout: 8 disc + owner(32) + fixture_id(u32) +
+        // validations_remaining(u32).
+        {
+            let ticket = &ctx.accounts.fixture_ticket;
+            require!(
+                *ticket.owner == txoracle_program_id,
+                ErrorCode::WrongFixtureTicket
+            );
+            let d = ticket.data.borrow();
+            require!(d.len() >= 48, ErrorCode::WrongFixtureTicket);
+            let owner = Pubkey::new_from_array(d[8..40].try_into().unwrap());
+            let ticket_fixture = u32::from_le_bytes(d[40..44].try_into().unwrap());
+            require!(owner == caller_key, ErrorCode::TicketOwnerMismatch);
+            require!(
+                ticket_fixture as i64 == policy_fixture_id,
+                ErrorCode::FixtureMismatch
+            );
+        }
+
+        // Verify the daily_scores_roots PDA for the payload timestamp.
+        let epoch_day = (payload_ts / 86_400_000) as u16;
+        let (daily_scores_pda, _bump) = Pubkey::find_program_address(
+            &[b"daily_scores_roots", &epoch_day.to_le_bytes()],
+            &txoracle_program_id,
+        );
+        require!(
+            ctx.accounts.daily_scores_roots.key() == daily_scores_pda,
+            ErrorCode::WrongDailyScoresPda
+        );
+
+        // Derive the worker_ticket PDA the same way txoracle does:
+        //   [b"worker_ticket", user(32), domain(u8), worker_id(u16 LE)]
+        let (expected_worker_ticket, _wb) = Pubkey::find_program_address(
+            &[
+                b"worker_ticket",
+                caller_key.as_ref(),
+                &[domain],
+                &worker_id.to_le_bytes(),
+            ],
+            &txoracle_program_id,
+        );
+        require!(
+            ctx.accounts.worker_ticket.key() == expected_worker_ticket,
+            ErrorCode::WrongWorkerTicket
+        );
+
+        let caller_info = ctx.accounts.caller.to_account_info();
+        let policy_info = ctx.accounts.policy.to_account_info();
+        let recipient_info = ctx.accounts.recipient.to_account_info();
+        let locker_info = ctx.accounts.locker.to_account_info();
+        let daily_scores_info = ctx.accounts.daily_scores_roots.to_account_info();
+        let worker_ticket_info = ctx.accounts.worker_ticket.to_account_info();
+        let fixture_ticket_info = ctx.accounts.fixture_ticket.to_account_info();
+        let txoracle_info = ctx.accounts.txoracle_program.to_account_info();
+        let instructions_sysvar_info = ctx.accounts.instructions_sysvar.to_account_info();
+        let system_info = ctx.accounts.system_program.to_account_info();
+
+        // ---- CPI 1: validate_fixture_for_tree (stage worker ticket) ----
+        let mut tree_data = Vec::with_capacity(4096);
+        tree_data.extend_from_slice(&validate_fixture_for_tree_discriminator());
+        tree_data.extend_from_slice(
+            &for_tree.try_to_vec().map_err(|_| ErrorCode::SerializationError)?,
+        );
+        let tree_ix = anchor_lang::solana_program::instruction::Instruction {
+            program_id: txoracle_program_id,
+            accounts: vec![
+                anchor_lang::solana_program::instruction::AccountMeta::new(caller_key, true),
+                anchor_lang::solana_program::instruction::AccountMeta::new(
+                    expected_worker_ticket,
+                    false,
+                ),
+                anchor_lang::solana_program::instruction::AccountMeta::new_readonly(
+                    daily_scores_pda,
+                    false,
+                ),
+                anchor_lang::solana_program::instruction::AccountMeta::new_readonly(
+                    anchor_lang::solana_program::system_program::ID,
+                    false,
+                ),
+            ],
+            data: tree_data,
+        };
+        anchor_lang::solana_program::program::invoke(
+            &tree_ix,
+            &[
+                caller_info.clone(),
+                worker_ticket_info.clone(),
+                daily_scores_info.clone(),
+                system_info.clone(),
+                txoracle_info.clone(),
+            ],
+        )?;
+
+        // ---- CPI 2: validate_stat_v4 ----
+        let mut v4_data = Vec::with_capacity(8192);
+        v4_data.extend_from_slice(&validate_stat_v4_discriminator());
+        v4_data.extend_from_slice(&worker_id.to_le_bytes());
+        v4_data.extend_from_slice(
+            &payload.try_to_vec().map_err(|_| ErrorCode::SerializationError)?,
+        );
+        v4_data.extend_from_slice(
+            &strategy.try_to_vec().map_err(|_| ErrorCode::SerializationError)?,
+        );
+        let v4_ix = anchor_lang::solana_program::instruction::Instruction {
+            program_id: txoracle_program_id,
+            accounts: vec![
+                anchor_lang::solana_program::instruction::AccountMeta::new(caller_key, true),
+                anchor_lang::solana_program::instruction::AccountMeta::new_readonly(
+                    expected_worker_ticket,
+                    false,
+                ),
+                anchor_lang::solana_program::instruction::AccountMeta::new_readonly(
+                    ctx.accounts.fixture_ticket.key(),
+                    false,
+                ),
+                anchor_lang::solana_program::instruction::AccountMeta::new_readonly(
+                    anchor_lang::solana_program::sysvar::instructions::ID,
+                    false,
+                ),
+            ],
+            data: v4_data,
+        };
+        anchor_lang::solana_program::program::invoke(
+            &v4_ix,
+            &[
+                caller_info.clone(),
+                worker_ticket_info.clone(),
+                fixture_ticket_info.clone(),
+                instructions_sysvar_info.clone(),
+                txoracle_info.clone(),
+            ],
+        )?;
+
+        let return_data =
+            anchor_lang::solana_program::program::get_return_data()
+                .ok_or(ErrorCode::NoReturnData)?;
+        let returned_by = return_data.0;
+        let bytes = return_data.1;
+        require!(!bytes.is_empty(), ErrorCode::EmptyReturnData);
+        let home_won = bytes[0] != 0;
+        require!(returned_by == txoracle_program_id, ErrorCode::WrongReturnProgram);
+
+        // ---- CPI 3: close_worker_ticket (reclaim rent) ----
+        let mut close_data = Vec::with_capacity(16);
+        close_data.extend_from_slice(&close_worker_ticket_discriminator());
+        close_data.push(domain);
+        close_data.extend_from_slice(&worker_id.to_le_bytes());
+        let close_ix = anchor_lang::solana_program::instruction::Instruction {
+            program_id: txoracle_program_id,
+            accounts: vec![
+                anchor_lang::solana_program::instruction::AccountMeta::new(caller_key, true),
+                anchor_lang::solana_program::instruction::AccountMeta::new(
+                    expected_worker_ticket,
+                    false,
+                ),
+            ],
+            data: close_data,
+        };
+        anchor_lang::solana_program::program::invoke(
+            &close_ix,
+            &[caller_info, worker_ticket_info, txoracle_info],
+        )?;
+
+        // ---- payout (same semantics as settle_policy) ----
+        let pay_recipient = home_won == pays_recipient_on_home_win;
+        let dest = if pay_recipient {
+            recipient_info
+        } else {
+            locker_info
+        };
+
+        let policy_lamports = **policy_info.lamports.borrow();
+        **policy_info.lamports.borrow_mut() = 0;
+        **dest.lamports.borrow_mut() += policy_lamports;
+
+        emit!(PolicySettled {
+            policy: settle_policy_key,
+            caller: caller_key,
+            home_won,
+            pay_recipient,
+            amount: policy_amount,
+        });
+        Ok(())
+    }
 }
 
 // ---- Borsh helpers for building the CPI instruction data ----
@@ -419,6 +783,58 @@ pub struct SettlePolicy<'info> {
     pub txoracle_program: AccountInfo<'info>,
 }
 
+#[derive(Accounts)]
+pub struct SettlePolicyV4<'info> {
+    /// The validating wallet — must be the caller AND the owner of the
+    /// fixture_ticket booked for this fixture. Pays worker-ticket rent.
+    #[account(mut)]
+    pub caller: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [
+            b"policy",
+            policy.locker.as_ref(),
+            &policy.fixture_id.to_le_bytes(),
+            &policy.min_ts.to_le_bytes(),
+            &[policy.pays_recipient_on_home_win as u8],
+        ],
+        bump = policy.bump,
+        has_one = locker,
+        has_one = recipient,
+    )]
+    pub policy: Account<'info, Policy>,
+    /// CHECK: recipient of the payout if the condition is met.
+    #[account(mut)]
+    pub recipient: AccountInfo<'info>,
+    /// CHECK: locker gets refunded if the condition is NOT met.
+    #[account(mut)]
+    pub locker: AccountInfo<'info>,
+    /// CHECK: TxLINE daily_scores_roots PDA for the payload timestamp —
+    /// re-derived inside settle_policy_v4 and verified.
+    #[account()]
+    pub daily_scores_roots: AccountInfo<'info>,
+    /// CHECK: worker_ticket PDA ([b"worker_ticket", caller, domain, worker_id])
+    /// created by the validate_fixture_for_tree CPI and closed by
+    /// close_worker_ticket. Verified inside settle_policy_v4.
+    #[account(mut)]
+    pub worker_ticket: AccountInfo<'info>,
+    /// CHECK: fixture_ticket PDA booked via txoracle::book_fixture — must be
+    /// owned by txoracle, owned-by caller, and for this fixture. Verified
+    /// inside settle_policy_v4.
+    #[account()]
+    pub fixture_ticket: AccountInfo<'info>,
+    /// CHECK: The TxLINE txoracle program — verified inside settle_policy_v4.
+    #[account()]
+    pub txoracle_program: AccountInfo<'info>,
+    /// CHECK: instructions sysvar — required by validate_stat_v4's Ed25519
+    /// signature introspection. Verified to be the real sysvar.
+    #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
+    pub instructions_sysvar: AccountInfo<'info>,
+    /// CHECK: system program for the worker-ticket CPI.
+    #[account(address = anchor_lang::system_program::ID)]
+    pub system_program: Program<'info, System>,
+}
+
 // ---- Events ----
 
 #[event]
@@ -463,4 +879,12 @@ pub enum ErrorCode {
     WrongDailyScoresPda,
     #[msg("The txoracle_program account does not match the expected program ID")]
     WrongTxoracleProgram,
+    #[msg("Failed to serialize CPI instruction data")]
+    SerializationError,
+    #[msg("The fixture_ticket account is not a valid txoracle ticket for this fixture")]
+    WrongFixtureTicket,
+    #[msg("The fixture_ticket was booked by a different wallet than the caller")]
+    TicketOwnerMismatch,
+    #[msg("The worker_ticket account does not match the expected PDA")]
+    WrongWorkerTicket,
 }

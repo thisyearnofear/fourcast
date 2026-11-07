@@ -4,7 +4,7 @@
 
 Fourcast is a **flight recorder for autonomous capital**. An agent operates under a versioned mandate — it decides from pre-match TxLINE evidence alone, seals each decision into a SHA-256 receipt, and reconciles against an independently verifiable on-chain outcome after the match finalizes. The route is one unfolding system: **Mandate Control → Proof Theatre → Diligence**.
 
-TxLINE is the primary data layer for fixtures, consensus odds, score events, and Merkle proofs. Fourcast also has a **Solana DevNet** `match-escrow` program whose settlement design CPI-calls TxLINE's `txoracle::validate_stat` for parametric sports policies. The supporting infrastructure (Bright Data, Polymarket/Kalshi, Venice AI) remains as secondary enrichment for the `/markets` and `/signals` routes.
+TxLINE is the primary data layer for fixtures, consensus odds, score events, and Merkle proofs. Fourcast also has a **Solana DevNet** `match-escrow` program whose settlement design CPI-calls TxLINE's `txoracle` v4 flow (`validate_fixture_for_tree` → `validate_stat_v4` → `close_worker_ticket`) for parametric sports policies. The supporting infrastructure (Bright Data, Polymarket/Kalshi, Venice AI) remains as secondary enrichment for the `/markets` and `/signals` routes.
 
 ## Flagship Route Architecture
 
@@ -55,7 +55,7 @@ TxLINE is the primary data layer for fixtures, consensus odds, score events, and
                                         ┌────────────▼──────────────┐
                                         │  Solana Match-Escrow      │
                                         │  CPI → txoracle           │
-                                        │  validate_stat            │
+                                        │  validate_stat_v4        │
                                         │  (settlePolicy flow)      │
                                         └───────────────────────────┘
 ```
@@ -118,13 +118,13 @@ The reusable product primitive — a hash-bound receipt that distinguishes a mod
 A custom Solana program (`match-escrow` at `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ`) implements parametric sports insurance:
 
 1. **`createPolicy`** — a user locks SOL in a policy PDA specifying `{fixtureId, minTs, paysRecipientOnHomeWin, amount}`
-2. **`settlePolicy`** — a keeper submits the TxLINE Merkle proof; the program CPI-calls `txoracle::validate_stat`, and if the condition is met, SOL transfers to the recipient; otherwise refunded
+2. **`settlePolicy`** — a keeper submits the TxLINE Merkle proof; the program CPIs `txoracle::validate_fixture_for_tree` → `validate_stat_v4` → `close_worker_ticket`, and if the condition is met, SOL transfers to the recipient; otherwise refunded
 
 The on-chain verification flow:
 1. **Proof verification** — `solanaVerify.js` extracts the Merkle proof from a cached fixture replay
 2. **PDA derivation** — derives the `daily_scores_roots` PDA using seeds `[b"daily_scores_roots", epoch_day as u16 LE]`
 3. **On-chain comparison** — fetches the PDA account via Solana JSON-RPC, reads the 32-byte Merkle root, compares against `eventStatRoot`
-4. **Settlement (CPI)** — `settlementService.js` builds the `settle_policy` instruction; the wallet/UI signing path submits it
+4. **Settlement (CPI)** — `settlementService.js` builds the `settle_policy_v4` + Ed25519 verify instructions; the wallet/UI signing path submits them
 
 Verdicts: `verified` (on-chain root matches), `onchain-mismatch` (root differs), `onchain-error` (PDA unreachable), `proof-present` (components valid but no timestamp for PDA derivation).
 
@@ -586,7 +586,7 @@ Frontend (markets page, signals page, landing)
 - **Frontend**: Next.js 16, React 19, Tailwind CSS
 - **Backend**: Node.js 24+, SQLite (Turso), Redis
 - **Primary data**: TxLINE devnet (free World Cup tier, service level 1) — fixtures, odds, scores, Merkle proofs
-- **Settlement/verification**: Solana devnet, TxLINE `txoracle` program, custom `match-escrow` program (CPI → `validate_stat`)
+- **Settlement/verification**: Solana devnet, TxLINE `txoracle` program, custom `match-escrow` program (CPI → txoracle v4 chain)
 - **Secondary enrichment**: Polymarket gamma API (cross-venue edge), Kalshi (optional), Venice AI (Llama 3.3 70B), Open-Meteo (weather)
 - **Wallets**: MetaMask, WalletConnect (EVM); Phantom/Solflare (Solana)
 - **Legacy**: Arc (Circle L1), Movement/Aptos, EVM trading contracts — retired or secondary

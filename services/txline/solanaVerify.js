@@ -5,7 +5,7 @@
  * We fetch the daily-root PDA that TxLINE anchors each day, recompute the
  * Merkle root client-side from the cached proof path, and compare against
  * the on-chain value. The match-escrow program (AMT4n3imwTgHEpafK...
- * /onchain) then CPI-calls TxLINE's validate_stat for full settlement.
+ * /onchain) then settles via the txoracle v4 CPI chain for full settlement.
  *
  * Env:
  *   SOLANA_RPC_URL         - default Helius public devnet/mainnet RPC

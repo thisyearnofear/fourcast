@@ -310,7 +310,7 @@ export function listReceiptFixtureIds() {
  * Build the proof metadata object attached to a fixture.
  * When the full on-chain proof is available (statToProve, summary, Merkle
  * nodes with isRightSibling), include it so the settlement UI can CPI-call
- * txoracle::validate_stat without an extra round-trip.
+ * the txoracle v4 validation flow without an extra round-trip.
  */
 function buildProofMeta(r) {
   const p = r.proof;

@@ -3,20 +3,30 @@
  *
  * This service builds and sends transactions to the match-escrow Solana program
  * (devnet: AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ). The program CPI-calls
- * TxLINE's txoracle::validate_stat to trustlessly verify match outcomes and
+ * TxLINE's txoracle v4 flow to trustlessly verify match outcomes and
  * release escrowed SOL to the winner.
  *
  * Flow:
  *   1. createPolicy(fixtureId, minTs, paysRecipientOnHomeWin, amount Lamports)
  *      → locks SOL in a PDA, records the condition
  *   2. settlePolicy(fixtureId, proof)
- *      → CPI-calls validate_stat with the TxLINE Merkle proof
+ *      → CPIs validate_fixture_for_tree → validate_stat_v4 → close_worker_ticket
  *      → if the condition is met, SOL transfers to the recipient; else refunds locker
  */
 
-import { Connection, PublicKey, Keypair, Transaction, TransactionInstruction, ComputeBudgetProgram, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, PublicKey, Keypair, Transaction, TransactionInstruction, ComputeBudgetProgram, SystemProgram, LAMPORTS_PER_SOL, Ed25519Program } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { readFileSync } from 'fs';
+import { createHash } from 'crypto';
+import {
+  encodeFixtureForTreeInput,
+  encodeStatPayload,
+  encodeStrategy,
+  fixtureTicketPda,
+  workerTicketPda,
+  dailyScoresPda as v4DailyScoresPda,
+  homeWinStrategy,
+} from './v4Codec.js';
 
 export const MATCH_ESCROW_PROGRAM_ID = new PublicKey(
   process.env.NEXT_PUBLIC_MATCH_ESCROW_PROGRAM_ID || 'AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ'
@@ -30,6 +40,8 @@ const RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 // Instruction discriminators (first 8 bytes of sha256("global:<method_name>"))
 const CREATE_DISC = Buffer.from([27, 81, 33, 27, 196, 103, 246, 53]);
 const SETTLE_DISC = Buffer.from([180, 234, 21, 174, 50, 214, 91, 113]);
+const SETTLE_V4_DISC = createHash('sha256').update('global:settle_policy_v4').digest().subarray(0, 8);
+const SYSVAR_IX = new PublicKey('Sysvar1nstructions1111111111111111111111111');
 
 function getConnection() {
   return new Connection(RPC_URL, 'confirmed');
@@ -94,7 +106,7 @@ export function buildCreatePolicyIx({ locker, recipient, fixtureId, minTs, paysR
 
 /**
  * Build the settle_policy instruction with the full TxLINE Merkle proof.
- * This CPI-calls txoracle::validate_stat to verify the match outcome on-chain.
+ * This CPI-calls the legacy txoracle::validate_stat path (superseded by settle_policy_v4).
  */
 export function buildSettlePolicyIx({ caller, locker, recipient, fixtureId, minTs, paysRecipientOnHomeWin, proof }) {
   const [policyPda] = derivePolicyPda(locker, fixtureId, minTs, paysRecipientOnHomeWin);
@@ -174,6 +186,71 @@ export function buildSettlePolicyIx({ caller, locker, recipient, fixtureId, minT
 }
 
 /**
+ * Build the Ed25519 precompile instruction that txoracle::validate_stat_v4
+ * requires as a TOP-LEVEL instruction earlier in the same transaction.
+ * `message` = sha256(borsh(StatValidationPayload)); `signature` = the
+ * backend's base64 signature over that hash (from /scores/stat-validation-v4).
+ */
+export function buildEd25519VerifyIx({ messageHash, signature, publicKey }) {
+  return Ed25519Program.createInstructionWithPublicKey({
+    publicKey: Buffer.from(publicKey),
+    message: Buffer.from(messageHash),
+    signature: Buffer.from(signature, 'base64'),
+  });
+}
+
+/**
+ * Build the settle_policy_v4 instruction (TxLINE txoracle ≥1.5.17).
+ *
+ * The program CPIs validate_fixture_for_tree → validate_stat_v4 →
+ * close_worker_ticket inside one transaction. `forTree`, `payload` and
+ * `strategy` are the raw API payload objects from /scores/stat-validation-v4
+ * (camelCase fields accepted). `payloadTs` = payload.ts (also the policy's
+ * min_ts). The returned `ed25519Ix` MUST be placed before `instruction` in
+ * the transaction.
+ */
+export function buildSettlePolicyV4Ix({
+  caller, locker, recipient, fixtureId, payloadTs, paysRecipientOnHomeWin,
+  domain = 1, workerId = 1, forTree, payload, strategy, isV2 = true,
+}) {
+  const [policyPda] = derivePolicyPda(locker, fixtureId, payloadTs, paysRecipientOnHomeWin);
+  const dayPda = v4DailyScoresPda(TXORACLE_PROGRAM_ID, payloadTs);
+  const workerTicket = workerTicketPda(TXORACLE_PROGRAM_ID, caller, domain, workerId);
+  const fixTicket = fixtureTicketPda(TXORACLE_PROGRAM_ID, caller, fixtureId);
+
+  const statPayloadEnc = encodeStatPayload(payload, isV2);
+  const payloadHash = createHash('sha256').update(statPayloadEnc).digest();
+
+  const data = Buffer.concat([
+    SETTLE_V4_DISC,
+    Buffer.from([domain & 0xff]),
+    (() => { const b = Buffer.alloc(2); b.writeUInt16LE(workerId); return b; })(),
+    encodeFixtureForTreeInput(forTree),
+    statPayloadEnc,
+    encodeStrategy(strategy ?? homeWinStrategy()),
+  ]);
+
+  const instruction = new TransactionInstruction({
+    programId: MATCH_ESCROW_PROGRAM_ID,
+    keys: [
+      { pubkey: caller, isSigner: true, isWritable: true },
+      { pubkey: policyPda, isSigner: false, isWritable: true },
+      { pubkey: recipient, isSigner: false, isWritable: true },
+      { pubkey: locker, isSigner: false, isWritable: true },
+      { pubkey: dayPda, isSigner: false, isWritable: false },
+      { pubkey: workerTicket, isSigner: false, isWritable: true },
+      { pubkey: fixTicket, isSigner: false, isWritable: false },
+      { pubkey: TXORACLE_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: SYSVAR_IX, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data,
+  });
+
+  return { instruction, policyPda, dailyScoresPda: dayPda, payloadHash };
+}
+
+/**
  * Read a policy account and decode its fields.
  * Layout: 8(disc) + 32(locker) + 32(recipient) + 8(fixture_id) + 8(min_ts) + 1(pays) + 8(amount) + 1(settled) + 1(bump)
  */
@@ -214,6 +291,8 @@ const settlementService = {
   deriveDailyScoresPda,
   buildCreatePolicyIx,
   buildSettlePolicyIx,
+  buildSettlePolicyV4Ix,
+  buildEd25519VerifyIx,
   readPolicy,
   getProgramInfo,
   MATCH_ESCROW_PROGRAM_ID,

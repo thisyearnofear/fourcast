@@ -30,7 +30,7 @@ TxLINE publishes outcome data as Merkle trees on Solana. A single API call retur
 - `statsToProve` — the verified stat values
 
 This enables:
-- **Trustless outcome verification** — CPI into `txoracle::validate_stat` on Solana
+- **Trustless outcome verification** — CPI into `txoracle`'s v4 flow (`validate_fixture_for_tree` → `validate_stat_v4` → `close_worker_ticket`) on Solana
 - **Decision receipt reconciliation** — independently verify what happened, match against what the agent decided
 
 ### 4. Cross-Venue Edge Detection
@@ -101,7 +101,7 @@ operational. Remaining verification before Delphi sports can use it:
 
 ## On-Chain Settlement (Solana)
 
-The `match-escrow` program at `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ` on Solana devnet demonstrates trustless settlement via CPI into TxLINE's `txoracle::validate_stat`. This is a working proof that sports outcomes can settle programmatically without trusting an intermediary.
+The `match-escrow` program at `AMT4n3imwTgHEpafKhsjfhfM5tKPXmTBVKvMCW4ohrvQ` on Solana devnet demonstrates trustless settlement via CPI into TxLINE's `txoracle` v4 flow. This is a working proof that sports outcomes can settle programmatically without trusting an intermediary.
 
 ## Historical Reference
 
