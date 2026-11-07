@@ -6,9 +6,10 @@ import { ChevronDown } from 'lucide-react';
 /**
  * PremiumSettlementStrip — the paid rail, made visible.
  *
- * WP5 can settle a payment on Sui, but a payment nobody can see is a
- * back-end trick, not a product. This strip is the receipt surface: what the
- * rail is worth, what it settled, and the digest that proves it.
+ * WP5 settles a payment over x402 — on Sui and on Solana — but a payment
+ * nobody can see is a back-end trick, not a product. This strip is the
+ * receipt surface: what the rail is worth, what it settled, and the digest
+ * that proves it.
  *
  * Design rules it obeys (docs/SURFACES.md):
  *   - colour by token name, never a literal; zero radius
@@ -18,14 +19,27 @@ import { ChevronDown } from 'lucide-react';
  *     WHY it is empty
  *   - the word "verified" is not used here: that word means a real Merkle
  *     root. A payment receipt is *settled* — the money moved and we re-read
- *     the transaction through the Tatum Sui RPC
+ *     the transaction through the chain's RPC
  */
 
 const EXPLORER_TEMPLATE =
   process.env.NEXT_PUBLIC_SUI_EXPLORER_TX_URL || 'https://suiscan.xyz/{network}/tx/{digest}';
 
+function isSolanaNetwork(network) {
+  const n = String(network || '').toLowerCase();
+  return n.startsWith('solana') || n === 'devnet' || n === 'mainnet' || n === 'mainnet-beta';
+}
+
+function solanaCluster(network) {
+  const n = String(network || '').toLowerCase();
+  return n.includes('mainnet') ? 'mainnet-beta' : 'devnet';
+}
+
 function explorerUrl(network, digest) {
   if (!digest) return null;
+  if (isSolanaNetwork(network)) {
+    return `https://explorer.solana.com/tx/${digest}?cluster=${solanaCluster(network)}`;
+  }
   const segment = String(network || '').split(':').pop() || 'testnet';
   try {
     return EXPLORER_TEMPLATE.replace('{network}', segment).replace('{digest}', digest);
@@ -186,7 +200,7 @@ export default function PremiumSettlementStrip() {
   return (
     <section className="mt-4 border-t border-[var(--color-rule)] border-b border-[var(--color-wash)] py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-1 sm:px-3">
-        <h2 className="mc-kicker">Premium · paid on Sui</h2>
+        <h2 className="mc-kicker">Premium · x402 machine payments</h2>
         <span className="text-[11px] text-[var(--color-ink-faint)]" style={{ fontFamily: 'var(--font-mono)' }}>
           {network}
         </span>
@@ -220,8 +234,9 @@ export default function PremiumSettlementStrip() {
             The paid rail is on. No premium signal has settled through it yet — the ledger is empty, not broken.
           </p>
           <p className="mt-1 text-[12px] text-[var(--color-ink-faint)]">
-            An agent buys one: <span style={{ fontFamily: 'var(--font-mono)' }}>POST /api/signals/premium</span> answers
-            402 with the price and the payee; transfer USDC on Sui and resend the request with the{' '}
+            An agent buys one: <span style={{ fontFamily: 'var(--font-mono)' }}>POST /api/signals/premium</span> (Sui)
+            or <span style={{ fontFamily: 'var(--font-mono)' }}>POST /api/signals/premium-solana</span> (Solana)
+            answers 402 with the price and the payee; pay the quoted USDC and resend the request with the{' '}
             <span style={{ fontFamily: 'var(--font-mono)' }}>X-PAYMENT</span> header.
           </p>
         </div>

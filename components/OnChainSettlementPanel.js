@@ -11,7 +11,9 @@ import { PublicKey } from '@solana/web3.js';
  * Flow:
  *   1. User connects their Solana wallet via ConnectorKit (header or inline button)
  *   2. User locks SOL on a match outcome (home win / away win)
- *   3. Anyone clicks "Settle on-chain" → CPI-calls txoracle::validate_stat
+ *   3. Settlement CPIs txoracle's v4 flow (validate_fixture_for_tree →
+ *      validate_stat_v4 → close_worker_ticket) with an API-signed payload
+ *      verified by a top-level Ed25519 instruction
  *   4. Funds auto-release to the winner based on the verified result
  *
  * The Solana program (match-escrow) is deployed on devnet.
@@ -191,8 +193,23 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
       </div>
 
       <div className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
-        Lock SOL in a Solana program that CPI-calls <code className="text-[var(--color-accent)]">txoracle::validate_stat</code> to
-        trustlessly verify the match outcome. Funds auto-release to the winner — no oracle, no trusted party.
+        Lock SOL in a Solana program that settles via CPI into TxLINE&rsquo;s{' '}
+        <code className="text-[var(--color-accent)]">txoracle</code> v4 flow — a Merkle-proof-verified
+        score decides the payout. No oracle operator, no trusted party.
+      </div>
+
+      {/* Verified round-trip — readable without a wallet */}
+      <div className="bg-[var(--color-paper-deep)] border border-[var(--color-rule)] p-2.5 text-[11px] space-y-1">
+        <div className="text-[var(--color-ink-muted)]">Verified escrow round-trip (devnet):</div>
+        <div className="flex items-center gap-3 font-mono text-[10px]">
+          <a href="https://explorer.solana.com/tx/3cJik5pAVmSTDz4GfTaRX2SA437HjajCeHERJQ2tE1gQoYrVrZihQudBEHb55kxahfH1UceinNGkVjdHdoGV7ZNq?cluster=devnet" target="_blank" rel="noreferrer" className="text-[var(--color-accent)]/80 hover:text-[var(--color-accent)]">create_policy</a>
+          <span className="text-[var(--color-ink-faint)]">→</span>
+          <a href="https://explorer.solana.com/tx/2FquTGbh42K3ozF6r3Bd1YVAW2PbtX3LREDbBB5xUetW77ZQDwUNGcruZnxMVXvbguJTugvf1xGtj2k6ZcSp8YdM?cluster=devnet" target="_blank" rel="noreferrer" className="text-[var(--color-accent)]/80 hover:text-[var(--color-accent)]">settle_policy_v4</a>
+          <span className="text-[var(--color-ink-faint)]">— 0.05 SOL paid out, policy closed</span>
+        </div>
+        <div className="text-[10px] text-[var(--color-ink-faint)]">
+          Reproduce: <code>node scripts/solana-escrow-v4-roundtrip.mjs</code>
+        </div>
       </div>
 
       {/* Match result from the proof */}
@@ -340,7 +357,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
               className="w-full bg-[var(--color-accent)]/30 border border-[var(--color-accent)]/40 text-[var(--color-accent)] text-xs font-semibold py-2 hover:bg-[var(--color-accent)]/40 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
             >
               {loading ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-              Settle on-chain (CPI validate_stat)
+              Settle on-chain (txoracle v4)
             </button>
           )}
 

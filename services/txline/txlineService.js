@@ -188,7 +188,7 @@ export function listReplayFixtureIds() {
     try {
       if (!fs.existsSync(dir)) continue;
       fs.readdirSync(dir)
-        .filter((f) => f.endsWith('.json'))
+        .filter((f) => /^\d+\.json$/.test(f))
         .map((f) => f.replace(/\.json$/, ''))
         .forEach((id) => ids.add(id));
     } catch {
