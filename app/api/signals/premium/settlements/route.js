@@ -7,6 +7,7 @@ import {
   sellerAddress,
   settlementNetwork,
 } from '@/services/payments/x402Sui/types.js';
+import * as solana from '@/services/payments/x402Solana/types.js';
 
 export const runtime = 'nodejs';
 
@@ -27,6 +28,15 @@ export async function GET(request) {
   const price = premiumPrice(process.env).baseUnits;
   const seller = sellerAddress(process.env);
 
+  // The Solana rail shares the x402_payments ledger, so `settlements` below
+  // already contains both chains' receipts — but "is the rail on" must be
+  // answered per rail, not just for Sui.
+  const solNet = solana.settlementNetwork(process.env);
+  const solEnabled = solana.isEnabled(process.env);
+  const solPrice = solana.premiumPrice(process.env).baseUnits;
+  const solSeller = solana.sellerAddress(process.env);
+  const solAsset = solana.assetMint(process.env);
+
   let settlements = [];
   let error = null;
   try {
@@ -43,11 +53,30 @@ export async function GET(request) {
   return Response.json(
     {
       success: !error,
-      enabled,
-      reason: enabled ? null : PAYMENT_REASONS.X402_DISABLED,
+      // Top-level `enabled` means "at least one rail can take a payment" —
+      // the strip's off-copy must not fire while Solana is live.
+      enabled: enabled || solEnabled,
+      reason: enabled || solEnabled ? null : PAYMENT_REASONS.X402_DISABLED,
       settlementNetwork: net.network,
       price: { baseUnits: price, usdc: fromBaseUnits(price) },
       seller,
+      rails: {
+        sui: {
+          enabled,
+          reason: enabled ? null : PAYMENT_REASONS.X402_DISABLED,
+          settlementNetwork: net.network,
+          seller,
+          price: { baseUnits: price, usdc: fromBaseUnits(price) },
+        },
+        solana: {
+          enabled: solEnabled,
+          reason: solEnabled ? null : solana.PAYMENT_REASONS.X402_DISABLED,
+          settlementNetwork: solNet.network,
+          seller: solSeller,
+          assetMint: solAsset.mint,
+          price: { baseUnits: solPrice, usdc: solana.fromBaseUnits(solPrice, solAsset.decimals || 6) },
+        },
+      },
       settlements,
       summary: {
         settled: delivered.length,

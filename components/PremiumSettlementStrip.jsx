@@ -194,7 +194,14 @@ export default function PremiumSettlementStrip() {
   }, [load]);
 
   const data = state.data;
-  const network = data?.settlementNetwork || 'sui:testnet';
+  const rails = data?.rails || null;
+  const liveRails = rails
+    ? [rails.sui?.enabled ? `sui:${rails.sui.settlementNetwork}` : null,
+       rails.solana?.enabled ? rails.solana.settlementNetwork : null].filter(Boolean)
+    : [];
+  const network = liveRails.length > 0
+    ? liveRails.join(' · ')
+    : data?.settlementNetwork || 'sui:testnet';
   const receipts = Array.isArray(data?.settlements) ? data.settlements : [];
 
   return (
@@ -234,9 +241,10 @@ export default function PremiumSettlementStrip() {
             The paid rail is on. No premium signal has settled through it yet — the ledger is empty, not broken.
           </p>
           <p className="mt-1 text-[12px] text-[var(--color-ink-faint)]">
-            An agent buys one: <span style={{ fontFamily: 'var(--font-mono)' }}>POST /api/signals/premium</span> (Sui)
-            or <span style={{ fontFamily: 'var(--font-mono)' }}>POST /api/signals/premium-solana</span> (Solana)
-            answers 402 with the price and the payee; pay the quoted USDC and resend the request with the{' '}
+            An agent buys one: <span style={{ fontFamily: 'var(--font-mono)' }}>POST /api/signals/premium-solana</span>{' '}
+            answers 402 with the price and the payee on Solana devnet
+            {rails?.sui?.enabled ? <>; <span style={{ fontFamily: 'var(--font-mono)' }}>POST /api/signals/premium</span> does the same on Sui</> : null}.
+            Pay the quoted USDC and resend the request with the{' '}
             <span style={{ fontFamily: 'var(--font-mono)' }}>X-PAYMENT</span> header.
           </p>
         </div>
