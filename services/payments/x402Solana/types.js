@@ -66,7 +66,7 @@ export const TOKEN_PROGRAM_IDS = Object.freeze([
  */
 export const KNOWN_ASSET_MINTS = Object.freeze({
   'solana:usdc': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  'solana-devnet:usdc': '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZLdAwwG',
+  'solana-devnet:usdc': '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
   'solana:wsol': 'So11111111111111111111111111111111111111112',
   'solana-devnet:wsol': 'So11111111111111111111111111111111111111112',
 });
@@ -74,7 +74,7 @@ export const KNOWN_ASSET_MINTS = Object.freeze({
 /** Decimals per known mint — used to sanity-check the transferChecked byte. */
 export const KNOWN_ASSET_DECIMALS = Object.freeze({
   'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 6,
-  '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZLdAwwG': 6,
+  '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': 6,
   'So11111111111111111111111111111111111111112': 9,
 });
 

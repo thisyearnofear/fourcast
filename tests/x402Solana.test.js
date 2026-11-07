@@ -35,7 +35,7 @@ import {
 
 const BUYER = Keypair.generate();
 const SELLER = Keypair.generate().publicKey;
-const MINT = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZLdAwwG'); // devnet USDC
+const MINT = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'); // devnet USDC
 const DECIMALS = 6;
 const AMOUNT = 10_000n; // 0.01 USDC
 
@@ -94,7 +94,7 @@ describe('x402Solana types', () => {
 
   it('resolves the devnet USDC mint by default', () => {
     const asset = assetMint({ X402_SOLANA_NETWORK: 'devnet' });
-    expect(asset.mint).toBe('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZLdAwwG');
+    expect(asset.mint).toBe('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU');
     expect(asset.decimals).toBe(6);
     expect(asset.symbol).toBe('USDC');
   });
