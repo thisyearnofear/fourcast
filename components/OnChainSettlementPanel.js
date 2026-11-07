@@ -202,9 +202,9 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
       <div className="bg-[var(--color-paper-deep)] border border-[var(--color-rule)] p-2.5 text-[11px] space-y-1">
         <div className="text-[var(--color-ink-muted)]">Verified escrow round-trip (devnet):</div>
         <div className="flex items-center gap-3 font-mono text-[10px]">
-          <a href="https://explorer.solana.com/tx/3cJik5pAVmSTDz4GfTaRX2SA437HjajCeHERJQ2tE1gQoYrVrZihQudBEHb55kxahfH1UceinNGkVjdHdoGV7ZNq?cluster=devnet" target="_blank" rel="noreferrer" className="text-[var(--color-accent)]/80 hover:text-[var(--color-accent)]">create_policy</a>
+          <a href="https://explorer.solana.com/tx/5BEpKYaZR6icGwwxc6zwb43EX4CDM23PM9gcsGwn6aHaW1GaWF7cM4DRJqDbLE9Lv2CJF4dYio4dBiMAQVKqaBSF?cluster=devnet" target="_blank" rel="noreferrer" className="text-[var(--color-accent)]/80 hover:text-[var(--color-accent)]">create_policy</a>
           <span className="text-[var(--color-ink-faint)]">→</span>
-          <a href="https://explorer.solana.com/tx/2FquTGbh42K3ozF6r3Bd1YVAW2PbtX3LREDbBB5xUetW77ZQDwUNGcruZnxMVXvbguJTugvf1xGtj2k6ZcSp8YdM?cluster=devnet" target="_blank" rel="noreferrer" className="text-[var(--color-accent)]/80 hover:text-[var(--color-accent)]">settle_policy_v4</a>
+          <a href="https://explorer.solana.com/tx/4UE3YM9xQHVRSxfGecAfs82h56k4hH6LevHCM5KMygJ2Vd4apzACSByPJfyUt6LaqtUgUZR7L96wntrGwSJYTPzX?cluster=devnet" target="_blank" rel="noreferrer" className="text-[var(--color-accent)]/80 hover:text-[var(--color-accent)]">settle_policy_v4</a>
           <span className="text-[var(--color-ink-faint)]">— 0.05 SOL paid out, policy closed</span>
         </div>
         <div className="text-[10px] text-[var(--color-ink-faint)]">
