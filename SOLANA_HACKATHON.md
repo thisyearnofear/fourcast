@@ -16,8 +16,8 @@
 
 **Pre-flight checklist (user actions):**
 - [ ] Encode dashboard: confirm all 3 checkpoints were submitted
-- [ ] Redeploy Vercel so `/api/txline/*` aliases + `/api/signals/premium-solana` are live (prod currently serves `/api/worldcup/*` routes only)
-- [ ] Set `X402_SOLANA_ENABLED=true`, `X402_USDC_CEILING`, `X402_SOLANA_PAY_TO` on the demo deployment if showing x402 live
+- [x] Vercel redeployed — `/api/txline/*` aliases + `/api/signals/premium-solana` are live on prod
+- [x] `X402_SOLANA_ENABLED=true`, `X402_USDC_CEILING`, `X402_RUN_CAP_USDC`, `X402_SOLANA_PAY_TO` set on production
 - [ ] Record the 2–4 min demo video (script below)
 
 ## 2. Why Fourcast is a strong Solana candidate
@@ -129,10 +129,10 @@ X402_BUYER_KEYPAIR=<key> node scripts/x402-solana-demo.mjs
 ## 5. Checklist
 
 - [x] `scripts/solana-escrow-v4-roundtrip.mjs` run end-to-end on devnet — DONE, tx sigs above
-- [ ] `scripts/x402-solana-demo.mjs` payment completed once on devnet
-- [ ] `npm test` green incl. `tests/x402Solana.test.js`
-- [ ] `npm run typecheck` / `npm run lint` clean on new files
-- [ ] Vercel redeployed (latest main) — `/api/signals/premium-solana` live
+- [ ] `scripts/x402-solana-demo.mjs` payment completed once on devnet (`X402_DEMO_URL=https://fourcastapp.vercel.app/api/signals/premium-solana`)
+- [x] `npm test` green incl. `tests/x402Solana.test.js` (700 passing)
+- [x] `npm run typecheck` / `npm run lint` clean on new files
+- [x] Vercel redeployed (latest main) — `/api/signals/premium-solana` live and quoting 402
 - [ ] Demo video recorded (2–4 min)
 - [ ] Encode: dashboard checkpoints confirmed + submission form filled
 - [ ] MLH: initial submission Sun 10:00 AM ET, final 11:45 AM ET

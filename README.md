@@ -55,7 +55,8 @@ read-only on a public explorer, no keys, no trust:
    simulating, broadcasting, confirming, and re-reading the on-chain
    balance delta. Devnet USDC by default; enable with
    `X402_SOLANA_ENABLED=true` (+ `X402_USDC_CEILING`, `X402_SOLANA_PAY_TO`).
-   Buyer client: `scripts/x402-solana-demo.mjs`.
+   Buyer client: `scripts/x402-solana-demo.mjs` — against production:
+   `X402_DEMO_URL=https://fourcastapp.vercel.app/api/signals/premium-solana X402_BUYER_KEYPAIR=<key> node scripts/x402-solana-demo.mjs`.
 
 ### Check the gates yourself (judge verify-path)
 
