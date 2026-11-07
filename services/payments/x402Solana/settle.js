@@ -41,6 +41,7 @@ import {
   assetMint,
   fromBaseUnits,
   isEnabled,
+  normalizeNetwork,
   premiumPrice,
   sellerAddress,
   settlementNetwork,

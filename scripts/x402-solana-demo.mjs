@@ -149,8 +149,10 @@ async function main() {
     process.exit(1);
   }
 
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-  const tx = new Transaction({ feePayer: buyer.publicKey, blockhash });
+  const { blockhash } = await connection.getLatestBlockhash();
+  const tx = new Transaction();
+  tx.feePayer = buyer.publicKey;
+  tx.recentBlockhash = blockhash;
 
   // Create the payee's ATA if needed (idempotent — safe to include always).
   tx.add(
