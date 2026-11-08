@@ -112,7 +112,7 @@ export default function WeatherPage() {
  <div className="w-full min-h-dvh relative flex flex-col bg-[var(--color-paper-deep)]">
  {/* Hero Overlay - First Visit */}
  {showHero && (
- <div className="fixed inset-0 z-[100] bg-[color-mix(in_oklab,var(--color-paper-deep)_95%,transparent)] flex items-center justify-center p-4 overflow-y-auto">
+ <div className="fixed inset-0 z-[var(--z-modal)] bg-[color-mix(in_oklab,var(--color-paper-deep)_95%,transparent)] flex items-center justify-center p-4 overflow-y-auto">
  <div className="max-w-lg w-full bg-[var(--color-paper-raised)] border border-[var(--color-rule)] p-6 sm:p-8 shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
  <div className="flex h-9 w-9 items-center justify-center bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/25">
@@ -242,7 +242,7 @@ export default function WeatherPage() {
  isLoading={isLoading}
  isNight={isNight}
  />
- <WalletConnect isNight={isNight} />
+ <WalletConnect />
  </div>
  </header>
  )}
@@ -374,7 +374,7 @@ export default function WeatherPage() {
  </div>
  )}
  {error && (
- <div className="fixed inset-0 flex flex-col items-center justify-center bg-[color-mix(in_oklab,var(--color-paper-deep)_80%,transparent)] z-50">
+ <div className="fixed inset-0 flex flex-col items-center justify-center bg-[color-mix(in_oklab,var(--color-paper-deep)_80%,transparent)] z-[var(--z-modal)]">
  <div className="animate-fade-in bg-[var(--color-paper-soft)] p-8 max-w-sm mx-4 text-center border border-[var(--color-rule-strong)]">
  <p className="text-[var(--color-ink)] text-lg font-light mb-6 leading-relaxed">
  {error}

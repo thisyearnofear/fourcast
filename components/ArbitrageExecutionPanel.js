@@ -22,7 +22,7 @@ export function ArbitrageExecutionPanel({ opportunity, onClose, isNight }) {
  const borderColor = 'border-[var(--color-rule)]';
 
  return (
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+ <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/40">
  <div
  ref={modalRef}
  role="dialog"

@@ -2,57 +2,29 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import useHealthSummary from '@/hooks/useHealthSummary';
 import {
  getSummaryAppearance,
  SUMMARY_LABEL,
  SUMMARY_SHORT_LABEL,
- HEALTH_POLL_MS,
 } from '@/utils/healthBadge';
 
 /**
  * Header status badge — surfaces the aggregate provider health from
- * /api/meta/health into the AppShell so users see uptime while they trade.
+ * /api/meta/health so users see uptime while they trade.
  *
  * Polls every HEALTH_POLL_MS (matches /status cadence). Hides itself on the
  * /status route (the full panel is already there) and on the landing page
  * (SearchLanding has its own chrome).
  *
  * Color/labels come from `utils/healthBadge.js` so the pill and the public
- * panel at /status never disagree on what "degraded" looks like.
+ * panel at /status never disagree on what "degraded" looks like; polling
+ * lives in `hooks/useHealthSummary.js`, shared with SystemHealthMenu.
  */
-
-function isKnownSummary(s) {
- return s === 'all_healthy' || s === 'degraded';
-}
 
 export default function StatusBadge() {
  const pathname = usePathname();
- const [summary, setSummary] = useState('loading');
- const [lastUpdated, setLastUpdated] = useState(null);
-
- useEffect(() => {
- let cancelled = false;
-
- const fetchOnce = async () => {
- try {
- const res = await fetch('/api/meta/health');
- const data = await res.json();
- if (cancelled) return;
- if (data?.success && isKnownSummary(data.summary)) {
- setSummary(data.summary);
- setLastUpdated(new Date());
- }
- } catch {
- // Silent — leave the badge in its last-known state. /status has the
- // full panel for users who want to drill in.
- }
- };
-
- fetchOnce();
- const id = setInterval(fetchOnce, HEALTH_POLL_MS);
- return () => { cancelled = true; clearInterval(id); };
- }, []);
+ const { summary, lastUpdated } = useHealthSummary();
 
  // Don't render on the /status route (full panel already there).
  if (pathname === '/status') return null;

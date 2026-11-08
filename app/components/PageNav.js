@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, Menu, Sparkles, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { BRAND } from "@/constants/brand";
+import useAnchoredMenu from "@/hooks/useAnchoredMenu";
 import useTabArrowKeys from "@/hooks/useTabArrowKeys";
 import WalletConnect from "@/app/components/WalletConnect";
-import StatusBadge from "@/components/StatusBadge";
-import OperatorPulse from "@/components/OperatorPulse";
+import SystemHealthMenu from "@/app/components/SystemHealthMenu";
 import AudienceSwitcher from "@/app/components/AudienceSwitcher";
 import { replayTour } from "@/components/RouteGuide";
 
@@ -44,6 +43,16 @@ const OVERFLOW_NAV = [
   { name: BRAND.navLabels.labs ?? "Labs", href: "/labs", match: "/labs", description: BRAND.nav.labs },
 ];
 
+// Utility entry — replaying the tour also navigates to a live lane (the
+// /agent redirect resolves to /arena?lane=mandate), same as the old header
+// sparkles button did.
+const TOUR_ITEM = {
+  name: "Replay tour",
+  href: "/agent",
+  description: "Re-run the route guides",
+  onSelect: replayTour,
+};
+
 function pathMatches(pathname, item) {
   const match = item.match || item.href.split("?")[0];
   if (match === "/") return pathname === "/";
@@ -55,72 +64,6 @@ function useIsActive() {
   return (item) => pathMatches(pathname, typeof item === "string" ? { href: item } : item);
 }
 
-/**
- * Anchored dropdown — shared by MoreMenu (overflow items) and MobileNavMenu
- * (hamburger, all destinations). Portal-mounted so it escapes sticky-header
- * clipping; repositions on scroll/resize; closes on outside click, Escape,
- * or navigation.
- */
-function useAnchoredMenu() {
-  const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [coords, setCoords] = useState(null);
-  const rootRef = useRef(null);
-  const menuRef = useRef(null);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const placeMenu = useCallback(() => {
-    const el = rootRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    setCoords({
-      top: Math.round(r.bottom + 6),
-      right: Math.round(Math.max(8, window.innerWidth - r.right)),
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!open) return undefined;
-    placeMenu();
-    window.addEventListener("resize", placeMenu);
-    window.addEventListener("scroll", placeMenu, true);
-    return () => {
-      window.removeEventListener("resize", placeMenu);
-      window.removeEventListener("scroll", placeMenu, true);
-    };
-  }, [open, placeMenu]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    // Use click (not mousedown): mousedown-outside closes + unmounts the
-    // menu before the link's click fires — items look dead.
-    const onDocClick = (e) => {
-      if (rootRef.current?.contains(e.target)) return;
-      if (menuRef.current?.contains(e.target)) return;
-      setOpen(false);
-    };
-    const onKey = (e) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("click", onDocClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("click", onDocClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
-  return { open, setOpen, mounted, coords, rootRef, menuRef };
-}
-
 function MenuPanel({ coords, menuRef, items, isActive, ariaLabel, onClose }) {
   return createPortal(
     <div
@@ -128,7 +71,7 @@ function MenuPanel({ coords, menuRef, items, isActive, ariaLabel, onClose }) {
       role="menu"
       aria-label={ariaLabel}
       style={{ top: coords.top, right: coords.right }}
-      className="fixed z-[200] w-56 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] p-1 shadow-xl backdrop-blur-[18px] backdrop-saturate-[1.2]"
+      className="fc-menu-pop fixed z-[var(--z-menu)] w-56 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] p-1 shadow-xl backdrop-blur-[18px] backdrop-saturate-[1.2]"
     >
       {items.map((item) => (
         <Link
@@ -138,7 +81,10 @@ function MenuPanel({ coords, menuRef, items, isActive, ariaLabel, onClose }) {
           data-onboard={item.onboardId}
           title={item.description}
           aria-current={isActive?.(item) ? "page" : undefined}
-          onClick={onClose}
+          onClick={() => {
+            item.onSelect?.();
+            onClose();
+          }}
           className={`flex w-full flex-col gap-0.5 px-2.5 py-2 text-left text-[11px] uppercase tracking-[0.1em] no-underline transition-colors ${
             isActive?.(item)
               ? "bg-[var(--color-accent-quiet)] text-[var(--color-accent)]"
@@ -159,7 +105,7 @@ function MenuPanel({ coords, menuRef, items, isActive, ariaLabel, onClose }) {
 }
 
 function MoreMenu({ items, isActive, suppressActive = false }) {
-  const { open, setOpen, mounted, coords, rootRef, menuRef } = useAnchoredMenu();
+  const { open, setOpen, mounted, coords, rootRef, menuRef } = useAnchoredMenu({ arrowNav: true });
   // suppressActive: when a PRIMARY destination already matches (e.g. /arena
   // matches both Arena and the overflow "Agent" alias), the overflow button
   // must not light up — one active route, one active indicator.
@@ -171,7 +117,9 @@ function MoreMenu({ items, isActive, suppressActive = false }) {
           <MenuPanel
             coords={coords}
             menuRef={menuRef}
-            items={items}
+            // The tour entry is utility chrome, not a destination — it stays
+            // out of `items` so route matching can't mark it active.
+            items={[...items, TOUR_ITEM]}
             isActive={isActive}
             ariaLabel="More navigation"
             onClose={() => setOpen(false)}
@@ -213,11 +161,12 @@ function MoreMenu({ items, isActive, suppressActive = false }) {
  */
 export function MobileNavMenu({ className = "" }) {
   const isActive = useIsActive();
-  const { open, setOpen, mounted, coords, rootRef, menuRef } = useAnchoredMenu();
+  const { open, setOpen, mounted, coords, rootRef, menuRef } = useAnchoredMenu({ arrowNav: true });
   const links = [
     ...PRIMARY_NAV.map((i) => ({ name: i.name, href: i.href, description: i.description, onboardId: i.onboardId })),
     ...OVERFLOW_NAV.map((i) => ({ name: i.name, href: i.href, description: i.description, onboardId: i.onboardId })),
     { name: "Status", href: "/status" },
+    { name: "Replay tour", href: "/agent", description: "Re-run the route guides", onSelect: replayTour },
   ];
 
   const menu =
@@ -276,16 +225,6 @@ export default function PageNav() {
           </Link>
         ))}
         <MoreMenu items={OVERFLOW_NAV} isActive={isActive} suppressActive={primaryActive} />
-        <span className="mx-2 h-4 w-px bg-[var(--color-rule)]" aria-hidden="true" />
-        <Link
-          href="/agent"
-          onClick={replayTour}
-          title="Replay the route guides"
-          aria-label="Replay the tour"
-          className="mc-nav-link no-underline inline-flex items-center"
-        >
-          <Sparkles className="h-3 w-3" aria-hidden="true" />
-        </Link>
         <span className="mx-2 h-4 w-px bg-[var(--color-rule)]" aria-hidden="true" />
         <AudienceSwitcher />
       </div>
@@ -353,14 +292,14 @@ export function AppShell({ title, subtitle, actions, subheader, maxWidth = "max-
   return (
     <div className="platform-shell flex min-h-screen flex-col text-[var(--color-ink)]">
       <div className="platform-frame mx-auto w-full max-w-7xl px-4 pt-3 sm:px-6 sm:pt-4">
-        <header className="operator-header platform-header sticky top-3 z-50 flex items-center justify-between gap-4 px-3 py-2.5 sm:top-4">
+        <header className="operator-header platform-header sticky top-3 z-[var(--z-chrome)] flex items-center justify-between gap-4 px-3 py-2.5 sm:top-4">
           <HomeLink />
           <div className="flex items-center gap-2">
             <PageNav />
-            {/* OperatorPulse — supplementary on mobile; the lamp also lives in AgentRail */}
-            <OperatorPulse compact className="hidden sm:flex" />
-            <div className="hidden sm:block"><StatusBadge /></div>
-            {wallet && <div className="platform-wallet"><WalletConnect /></div>}
+            {/* One header health indicator: providers + agent feed behind a
+                single popover (was OperatorPulse + StatusBadge side by side). */}
+            <SystemHealthMenu className="hidden sm:inline-flex" />
+            {wallet && <WalletConnect />}
           </div>
         </header>
       </div>

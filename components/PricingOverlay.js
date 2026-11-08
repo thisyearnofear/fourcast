@@ -58,7 +58,7 @@ export default function PricingOverlay({ isOpen, onClose, isNight = false }) {
 
  return (
  <div
- className="fixed inset-0 z-[300] flex items-center justify-center p-4 overflow-y-auto"
+ className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 overflow-y-auto"
  style={{ background: 'color-mix(in oklab, var(--color-paper-deep) 85%, transparent)', backdropFilter: 'blur(8px)' }}
  onClick={onClose}
  >

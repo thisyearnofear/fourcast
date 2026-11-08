@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useOrderSigning } from '@/hooks/useOrderSigning';
 import WalletConnect from '@/app/components/WalletConnect';
 import { useBalance, useAccount, useSwitchChain } from 'wagmi';
@@ -104,16 +105,15 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  }
  };
 
- // Handle successful submission
+ // Handle successful submission — the submitted step IS the confirmation
+ // (design.md: success is shown in place, no toast). It stays until the user
+ // chooses Done or View positions rather than auto-dismissing mid-read.
  useEffect(() => {
  if (success) {
  setStep('submitted');
- setTimeout(() => {
- if (onSuccess) onSuccess(success);
- if (!embedded) onClose();
- }, 2000);
+ onSuccess?.(success);
  }
- }, [success, onClose, onSuccess, embedded]);
+ }, [success, onSuccess]);
 
  // Mark as mounted after first client render — gates JSX output to client only.
  useEffect(() => {
@@ -268,7 +268,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  <p className={`text-xs ${textColor} opacity-70 mb-3`}>
  Connect wallet to trade
  </p>
- <WalletConnect isNight={isNight} />
+ <WalletConnect />
  </div>
  )}
 
@@ -561,21 +561,36 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
  </div>
  )}
 
- {/* Success Step */}
+ {/* Success Step — act → confirm → prove. Status in place, receipt link out. */}
  {step === 'submitted' && success && (
- <div className="space-y-4 text-center flex-1 flex flex-col justify-center">
- <div className="flex justify-center py-8">
- <span className="text-5xl">✓</span>
- </div>
- <p className={`text-lg ${textColor} font-light`}>Order Submitted</p>
- <div className={`bg-[var(--color-accent)]/20 border-[var(--color-accent)]/30 border p-3`}>
- <p className={`text-sm font-light ${textColor}`}>
- Order ID: {success.orderID}
+ <div className="space-y-4 flex-1 flex flex-col justify-center">
+ <div className="border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10 p-4">
+ <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--color-accent)] mb-1">
+ Order submitted
+ </p>
+ <p className={`font-mono text-xs ${textColor} break-all`}>
+ {success.orderID}
  </p>
  </div>
  <p className={`text-xs ${textColor} opacity-60`}>
- Redirecting to Polymarket...
+ The venue accepted the signed order. It settles into Positions when filled.
  </p>
+ <div className="flex gap-2 pt-1">
+ <Link
+ href="/positions"
+ onClick={onClose}
+ className="flex-1 px-3 py-2 text-center text-xs font-medium bg-[var(--color-accent)]/30 text-[var(--color-accent)] border border-[var(--color-accent)]/60 hover:bg-[var(--color-accent)]/45 transition-colors no-underline"
+ >
+ View positions →
+ </Link>
+ <button
+ type="button"
+ onClick={onClose}
+ className={`flex-1 px-3 py-2 text-xs font-medium border border-[var(--color-rule)] ${textColor} hover:bg-[var(--color-paper-soft)] transition-colors`}
+ >
+ Done
+ </button>
+ </div>
  </div>
  )}
  </div>
@@ -587,7 +602,7 @@ export function OrderSigningPanel({ market, onClose, isNight, onSuccess, initial
 
  return (
  <div
- className={`fixed inset-0 z-50 flex items-center justify-center`}
+ className={`fixed inset-0 z-[var(--z-modal)] flex items-center justify-center`}
  onClick={onClose}
  >
  {content}

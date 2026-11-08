@@ -61,7 +61,7 @@ export default function BottomSheet({
 
  return (
  <div 
- className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
+ className="fixed inset-0 z-[var(--z-modal)] flex items-end sm:items-center justify-center"
  onClick={handleBackdropClick}
  >
  {/* Backdrop */}

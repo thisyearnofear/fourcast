@@ -9,7 +9,7 @@
   --color-paper-panel: oklch(22% 0.016 166 / 0.72);
   --color-ink: oklch(95% 0.015 90);
   --color-ink-muted: oklch(76% 0.014 120);
-  --color-ink-faint: oklch(61% 0.012 140);
+  --color-ink-faint: oklch(67% 0.012 140);
   --color-rule: oklch(95% 0.015 90 / 0.12);
   --color-rule-strong: oklch(95% 0.015 90 / 0.22);
   --color-accent: oklch(86% 0.16 158);
@@ -48,6 +48,19 @@
   --text-xl: 1.75rem;
   --text-2xl: 2.25rem;
   --text-display: clamp(2.5rem, 7vw, 5.75rem);
+
+  /* Layer scale — one named tier per overlay kind. Ordered so menus float
+     above sticky chrome and drawers, modals above menus, and tooltips/toasts
+     above everything (a "?" tip must work inside a modal too). If two
+     surfaces compete, one of them is on the wrong tier. */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-chrome: 50;
+  --z-drawer: 100;
+  --z-menu: 200;
+  --z-modal: 300;
+  --z-tooltip: 350;
+  --z-toast: 400;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);

@@ -80,7 +80,7 @@ export default function ReasoningVisualizer({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
       <div className="absolute inset-0 bg-[var(--color-paper-deep)]/60" aria-hidden />
 
       <motion.div

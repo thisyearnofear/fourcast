@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect, useId } from 'react';
+import { useId } from 'react';
+import { createPortal } from 'react-dom';
+import useAnchoredMenu from '@/hooks/useAnchoredMenu';
 
 /**
  * Plain-language explanations for the quant/prediction-market jargon used
@@ -49,67 +51,59 @@ export const GLOSSARY = {
  },
 };
 
+const TIP_WIDTH = 240; // w-60
+
 /**
  * InfoTip — a small, keyboard-accessible "?" popover for explaining jargon.
  *
  * Unlike hover-only tooltips, this is a real button: it works with keyboard
- * (Enter/Space toggles, Escape closes), touch, and screen readers.
+ * (Enter/Space toggles, Escape closes), touch, and screen readers. The tip
+ * is portaled to body (tooltip tier) so it also works inside modals and
+ * can't be clipped by overflow/stacking contexts.
  *
  * @param {string} term - key into GLOSSARY, or omit and pass title/body directly
  * @param {string} [title] - custom title (overrides glossary)
  * @param {string} [body] - custom body (overrides glossary)
- * @param {boolean} [isNight=true]
  */
-export default function InfoTip({ term, title, body, isNight = true, className = '' }) {
- const [open, setOpen] = useState(false);
- const ref = useRef(null);
+export default function InfoTip({ term, title, body, className = '' }) {
+ const { open, setOpen, mounted, coords, rootRef, menuRef } = useAnchoredMenu();
  const id = useId();
 
  const entry = term ? GLOSSARY[term] : null;
  const tipTitle = title || entry?.title || '';
  const tipBody = body || entry?.body || '';
 
- useEffect(() => {
- if (!open) return;
- function onKey(e) {
- if (e.key === 'Escape') setOpen(false);
- }
- function onClick(e) {
- if (ref.current && !ref.current.contains(e.target)) setOpen(false);
- }
- document.addEventListener('keydown', onKey);
- document.addEventListener('mousedown', onClick);
- return () => {
- document.removeEventListener('keydown', onKey);
- document.removeEventListener('mousedown', onClick);
- };
- }, [open]);
-
  if (!tipBody) return null;
 
  return (
- <span ref={ref} className={`relative inline-flex ${className}`}>
+ <span ref={rootRef} className={`relative inline-flex ${className}`}>
  <button
  type="button"
  onClick={() => setOpen((o) => !o)}
  aria-expanded={open}
  aria-controls={id}
  aria-label={`What is ${tipTitle}?`}
- className={`inline-flex items-center justify-center w-4 h-4 text-[10px] leading-none border transition-colors align-middle border-[var(--color-rule-strong)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] hover:border-[var(--color-rule)]0`}
+ className={`inline-flex items-center justify-center w-4 h-4 text-[10px] leading-none border transition-colors align-middle border-[var(--color-rule-strong)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] hover:border-[var(--color-rule)]`}
  >
  ?
  </button>
- {open && (
+ {open && mounted && coords && createPortal(
  <span
+ ref={menuRef}
  id={id}
  role="tooltip"
- className={`absolute z-50 left-1/2 -translate-x-1/2 top-6 w-60 border p-3 text-left shadow-xl bg-[var(--color-paper-glass)] border-[var(--color-rule-strong)] text-[var(--color-ink)]`}
+ style={{
+ top: coords.top,
+ left: Math.max(8, Math.min(coords.center - TIP_WIDTH / 2, window.innerWidth - TIP_WIDTH - 8)),
+ }}
+ className={`fc-menu-pop fixed z-[var(--z-tooltip)] w-60 border p-3 text-left shadow-xl bg-[var(--color-paper-glass)] border-[var(--color-rule-strong)] text-[var(--color-ink)]`}
  >
  <span className="block text-xs font-semibold mb-1">{tipTitle}</span>
  <span className={`block text-[11px] leading-relaxed font-light text-[var(--color-ink)]`}>
  {tipBody}
  </span>
- </span>
+ </span>,
+ document.body
  )}
  </span>
  );

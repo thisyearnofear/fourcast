@@ -44,7 +44,7 @@ export function LoadingSpinner({
  */
 export function LoadingOverlay({ label = 'Loading...' }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-paper)]/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--color-paper)]/80 backdrop-blur-sm">
       <LoadingSpinner size="lg" label={label} />
     </div>
   );

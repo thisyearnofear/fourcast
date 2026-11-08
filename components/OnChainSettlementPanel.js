@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Shield, Lock, Unlock, Zap, ExternalLink, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useConnector, useTransactionSigner } from '@solana/connector/react';
+import { requestWallet } from '@/utils/requestWallet';
 import { PublicKey } from '@solana/web3.js';
 
 /**
@@ -105,6 +106,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
   const createPolicy = useCallback(async () => {
     if (!walletConnected || !walletPubkey) {
       setError('Connect your Solana wallet first');
+      requestWallet('solana');
       return;
     }
     setLoading(true);
@@ -142,6 +144,7 @@ export default function OnChainSettlementPanel({ fixture, proof }) {
   const settlePolicy = useCallback(async () => {
     if (!walletConnected || !walletPubkey) {
       setError('Connect your Solana wallet first');
+      requestWallet('solana');
       return;
     }
     setLoading(true);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { BRAND } from '@/constants/brand';
 import { useCantonWalletContext } from '@/app/CantonWalletLayer';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { requestWallet } from '@/utils/requestWallet';
 
 export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market, analysis, isNight, isPublishing }) {
  const canton = useCantonWalletContext();
@@ -30,7 +31,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  };
 
  return (
- <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+ <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4">
  <div className="absolute inset-0 bg-black/50" onClick={onClose} />
  <div
  ref={modalRef}
@@ -99,9 +100,8 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  {canton?.cantonEnabled && (
  <button
  type="button"
- onClick={() => setSettlementLayer('canton')}
- disabled={!canton?.connected}
- className={` p-2.5 text-left transition-all border disabled:opacity-30 disabled:cursor-not-allowed ${
+ onClick={() => canton?.connected ? setSettlementLayer('canton') : requestWallet('canton')}
+ className={` p-2.5 text-left transition-all border ${
  settlementLayer === 'canton'
  ? 'bg-[var(--color-accent)]/20 border-[var(--color-accent)]/50 text-[var(--color-accent)]'
  : 'bg-[var(--color-paper-raised)] border-[var(--color-rule)] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)]'
@@ -111,7 +111,7 @@ export default function PublishConfirmModal({ isOpen, onClose, onConfirm, market
  <span>◈</span> Canton (Private)
  </div>
  <div className="text-[10px] opacity-60 mt-1">
- {canton?.connected ? 'cBTC/cETH · hidden sizes' : 'Connect Canton holder wallet first'}
+ {canton?.connected ? 'cBTC/cETH · hidden sizes' : 'Connect Canton wallet first →'}
  </div>
  </button>
  )}

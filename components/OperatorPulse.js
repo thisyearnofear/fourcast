@@ -13,7 +13,7 @@ function formatAge(timestamp) {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
-function useArenaAge() {
+export function useArenaAge() {
   const [ts, setTs] = useState(null);
   useEffect(() => {
     let cancelled = false;

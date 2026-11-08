@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, Copy, Share2 } from 'lucide-react';
+import useAnchoredMenu from '@/hooks/useAnchoredMenu';
 
 /* --------------------------------------------------------------------------
    ShareReceiptButton — the viral surface for the flagship proof chain.
@@ -41,25 +43,8 @@ export default function ShareReceiptButton({
   label = 'Share receipt',
   className = '',
 }) {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen, mounted, coords, rootRef, menuRef } = useAnchoredMenu({ arrowNav: true });
   const [copied, setCopied] = useState(false);
-  const rootRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onDocClick = (e) => {
-      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
-    };
-    const onKey = (e) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
 
   useEffect(() => {
     if (!copied) return undefined;
@@ -108,11 +93,13 @@ export default function ShareReceiptButton({
         <Share2 className="h-3.5 w-3.5" />
         {label}
       </button>
-      {open && (
+      {open && mounted && coords && createPortal(
         <div
+          ref={menuRef}
           role="menu"
           aria-label="Share receipt"
-          className="absolute right-0 top-full z-[70] mt-1.5 w-52 border border-[var(--color-rule)] bg-[var(--color-paper-glass)] p-1 shadow-xl backdrop-blur-[18px]"
+          style={{ top: coords.top, right: coords.right }}
+          className="fc-menu-pop fixed z-[var(--z-tooltip)] w-52 border border-[var(--color-rule)] bg-[var(--color-paper-glass)] p-1 shadow-xl backdrop-blur-[18px]"
         >
           <button
             type="button"
@@ -145,7 +132,8 @@ export default function ShareReceiptButton({
             )}
             {copied ? 'Link copied' : 'Copy link'}
           </button>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -673,10 +673,6 @@ export default function MarketsPage() {
  setShowOrderPanel(false);
  setSelectedMarketForOrder(null);
  }}
- onSuccess={(tx) => {
- addToast("Order submitted successfully!", "success");
- setShowOrderPanel(false);
- }}
  />
  )
  }

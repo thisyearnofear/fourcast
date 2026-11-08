@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Compass, LineChart, ShieldCheck } from 'lucide-react';
+import useAnchoredMenu from '@/hooks/useAnchoredMenu';
 import { AUDIENCE_MODES, AUDIENCE_META, useAudience } from '@/hooks/useAudience';
 
 /**
@@ -20,56 +21,9 @@ const MODE_ICONS = {
 
 export default function AudienceSwitcher() {
   const { mode, setMode } = useAudience();
-  const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [coords, setCoords] = useState(null);
+  const { open, setOpen, mounted, coords, rootRef, menuRef } = useAnchoredMenu({ arrowNav: true });
   const [flash, setFlash] = useState(false);
-  const rootRef = useRef(null);
-  const menuRef = useRef(null);
   const flashTimer = useRef(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const placeMenu = useCallback(() => {
-    const el = rootRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    setCoords({
-      top: Math.round(r.bottom + 6),
-      right: Math.round(Math.max(8, window.innerWidth - r.right)),
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!open) return undefined;
-    placeMenu();
-    window.addEventListener('resize', placeMenu);
-    window.addEventListener('scroll', placeMenu, true);
-    return () => {
-      window.removeEventListener('resize', placeMenu);
-      window.removeEventListener('scroll', placeMenu, true);
-    };
-  }, [open, placeMenu]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onDocClick = (e) => {
-      if (rootRef.current?.contains(e.target)) return;
-      if (menuRef.current?.contains(e.target)) return;
-      setOpen(false);
-    };
-    const onKey = (e) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('click', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('click', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
 
   useEffect(() => () => {
     if (flashTimer.current) window.clearTimeout(flashTimer.current);
@@ -94,7 +48,7 @@ export default function AudienceSwitcher() {
             role="menu"
             aria-label="Reading mode"
             style={{ top: coords.top, right: coords.right }}
-            className="fixed z-[200] w-60 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] p-1 shadow-xl backdrop-blur-[18px] backdrop-saturate-[1.2]"
+            className="fc-menu-pop fixed z-[var(--z-menu)] w-60 border border-[var(--color-rule-strong)] bg-[var(--color-paper-raised)] p-1 shadow-xl backdrop-blur-[18px] backdrop-saturate-[1.2]"
           >
             <p className="px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-faint)]">
               Reading mode

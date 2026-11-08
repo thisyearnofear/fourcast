@@ -170,7 +170,7 @@ export default function SearchLanding() {
         {/* Header — compressed, glass on scroll */}
         <header
           ref={headerRef}
-          className={`operator-header sticky top-3 z-50 flex items-center justify-between gap-4 px-3 py-2.5 sm:top-4 ${scrolled ? 'border-[var(--color-rule)]' : ''}`}
+          className={`operator-header sticky top-3 z-[var(--z-chrome)] flex items-center justify-between gap-4 px-3 py-2.5 sm:top-4 ${scrolled ? 'border-[var(--color-rule)]' : ''}`}
           style={{
             borderColor: scrolled ? 'var(--color-rule)' : 'transparent',
           }}

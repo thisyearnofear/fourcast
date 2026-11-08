@@ -134,7 +134,7 @@ export default function ArbitrageExecutor({ opportunity, onClose, isNight = fals
  if (!opportunity) return null;
 
  return (
- <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 overflow-y-auto"
+ <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 overflow-y-auto"
  style={{ background: 'color-mix(in oklab, var(--color-paper-deep) 70%, transparent)', backdropFilter: 'blur(6px)' }}
  onClick={onClose}
  >

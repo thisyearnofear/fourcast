@@ -35,7 +35,7 @@ export default function ProfileDrawer({ isOpen, onClose, address, isNight }) {
  const borderColor = 'border-[var(--color-rule)]';
 
  return (
- <div className="fixed inset-0 z-[100] flex justify-end">
+ <div className="fixed inset-0 z-[var(--z-drawer)] flex justify-end">
  {/* Backdrop */}
  <div
  className="absolute inset-0 bg-[var(--color-paper-deep)]"
