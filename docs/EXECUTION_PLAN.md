@@ -15,6 +15,15 @@ If you are a dev reading this cold, in order:
 
 ---
 
+## Current priority (2026-11-12)
+
+Total Recall's submission window closed 10 Nov 17:00 UTC. Two events are still open. NEAR closes first.
+
+1. **NEAR, through 2026-11-14T23:59:00Z.** One submission. Tracks `defi`, `agents`, `security`. The build that remains is one on-chain moment a stranger can open, then the human's X post, then a single confirmed POST. Rules and the field contract: [`HACKATHON.md`](../HACKATHON.md), official source [nearhackathon.com/HACKATHON.md](https://nearhackathon.com/HACKATHON.md). Do not start Telegraph feature work before that payload is sent.
+2. **Telegraph H2, through 2026-12-01T23:59:00Z.** The 14 Nov Apps milestone is a progress check. Same-day obligation is a written blocker if the purchase is not live, not a new integration. After NEAR: renew TxLINE before it expires 20 Nov; only then `updateMiner(148, …)` for `EVENT_OUTCOME_RESOLUTION`, and only once that handler can settle a non-sports question from Polymarket or Kalshi. Stretch app is Mission 14's self-settling escrow, one autonomous Telegraph purchase, testnet allowed. Apps scoring re-read 2026-11-12 now includes 20 growth points (three public updates on separate dates, star `telegraphprotocol/bounties`). Detail: [`HACKATHONS.md`](./HACKATHONS.md).
+
+The October critical path below is the record of how we got here. It is not the queue.
+
 ## Execution mode (updated 2026-10-23)
 
 **Single developer now drives this plan.** The three-leg split (Dev A/B/C), the handoff tables, and the merge-protocol sequencing are retained as historical context but no longer gate work — one developer owns all legs and merges directly to `main` after the verification block for the affected surface.

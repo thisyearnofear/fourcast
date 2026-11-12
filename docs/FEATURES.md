@@ -13,7 +13,7 @@
 
 Primary nav: **Markets · Positions · Private**. Overflow: Signals · Mandate · Labs · Alerts.
 
-- **Landing** — wound + door (confession headline → **See Private**); settled CBTC strip links into the proof. Does not restage the privacy duel
+- **Landing** — three proofs stay visible (receipt, NEAR mandate, Canton private). Reading mode and `?lens=` promote one. Receipts opened on this device are rechecked underneath. Settled CBTC still links into the private proof
 - **Private** — felt arc Hide · Lock · Paid; live dual-view privacy check; escrow weight; **Settled · CBTC** seal + receipt wall
 - **Talk to us** — operator interview intake under the privacy check on Private (`POST /api/talk` → `operator_leads`). Not a vanity waitlist; feeds the HackCanton prior-submission pipeline (see [`docs/HACKATHONS.md`](HACKATHONS.md))
 - **Markets** — Polymarket/Kalshi browse; densified analyze → act (odds / fair / edge, Trade · Publish · Share). Analyze works with `BOT_API_SECRET` set (same-origin UI allowed; bots still send `x-fourcast-auth`)

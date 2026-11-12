@@ -50,6 +50,8 @@ Show an autonomous trading agent moving value across chains via NEAR and committ
   `/v0/status`, `/v0/deposit/submit`. Works **without** auth but adds a 0.25% platform
   fee on non-ANY_INPUT quotes; `NEAR_ONECLICK_JWT` (sent as `X-API-Key`) gets partner fees.
   **There is no Intents testnet — demo uses small mainnet amounts.**
+  Official Q-006 (re-read 2026-11-12) says a missing JWT adds a 0.2% fee;
+  this probe recorded 0.25%. Use the quote response, not either memory.
 - For a NEAR recipient use `recipientType: INTENTS` + `refundType: INTENTS`
   (value lands in the agent's Intents balance; DESTINATION_CHAIN for a NEAR
   account returned a bare 400). Proven: 1 wNEAR → 3.86 USDC dry quote, ~20s estimate.
@@ -151,12 +153,15 @@ execution plan for Nov 5→14. Read before scheduling the remaining week.
   nearblocks, derived EOA on Polygonscan, `--dry` envelope check, live
   `/api/near/mandate` (zero secrets — works once redeployed).
 
-## Week 2 plan (demo + submission)
-- [ ] Polish one end-to-end trade + receipt verification.
-- [ ] Add README “do X, see Y” steps.
-- [ ] Record X demo video.
-- [ ] Publish repo and post demo.
-- [ ] Submit form.
+## Week 2 plan (demo + submission) — remaining as of 2026-11-12
+
+Official close is **2026-11-14T23:59:00Z**. Instructions: https://nearhackathon.com/HACKATHON.md. Full checklist is in `HACKATHON.md` §0 and §8.
+
+- [ ] One falsifiable chain moment: `node scripts/near-first-order.mjs`, or refusal gates + one anchor if the derived EOA is unfunded.
+- [x] README “do X, see Y” (keep it machine-followable; screeners read it).
+- [ ] Human records and posts the X demo (`@NEARProtocol` `#NEARHackathon`, video).
+- [ ] Repo public, baseline disclosed.
+- [ ] Human confirms payload; submit once. Tracks: `defi`, `agents`, `security`.
 
 ## Demo script
 Full 90s shoot script lives in `docs/NEAR_AGENT_ENRICHMENT.md` §5.1.
@@ -169,9 +174,5 @@ settle + withdraw via Intents.
 - If receipt verification is complex, show hash anchoring + reconciliation against cached outcome data.
 
 ## Submission checklist
-- [ ] Repo public by Nov 14 23:59 UTC
-- [ ] X demo post with video/screenshots and “built for NEAR HACKATHON”
-- [ ] README setup + “do X, see Y”
-- [ ] HACKATHON.md present
-- [ ] NEAR account address for payout
-- [ ] Form submitted once
+
+See `HACKATHON.md` §8. Do not keep a second copy of the field rules here.

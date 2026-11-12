@@ -87,20 +87,26 @@ Leverage, and Technical Quality in one transaction.
       Do it AFTER code freeze and set `NEAR_WORKER_CODE_HASH` on the
       worker, or every subsequent signature request is refused.
 
-### Step 3 — video + submission hygiene (Nov 10–13)
+### Step 3 — video + submission hygiene (now: 12–14 Nov)
 
-- [ ] Record the 90s script **twice**, hardcode the demo path
-      (`FORECAST_REPLAY` + a funded live leg), freeze code ~4h before the
-      deadline. Decisive first 2–3 min per devpost judges.
-- [ ] README verify-path for judges: contract on nearblocks, derived EVM
+Re-read of https://nearhackathon.com/HACKATHON.md on 2026-11-12. The
+official prize table is the $250k pool only. It does not list a Proximity
+or Shade bounty, and the submission body rejects unknown fields (`website`
+is an explicit spam trap). Do not spend the remaining window claiming a
+bounty that is not on that form.
+
+- [ ] Record the 90s script, hardcode the demo path
+      (`FORECAST_REPLAY` + a funded live leg if one exists), freeze code
+      ~4h before 2026-11-14T23:59:00Z. The post needs a video. Hosted demo
+      stays up through 18 Nov, ideally 25 Nov.
+- [x] README verify-path for judges: contract on nearblocks, derived EVM
       address, `/api/txline/verify` link, "check the gates yourself" note.
-- [ ] Explicitly claim the Proximity Shade-agent bounty in the submission
-      form — anchored receipts + refusal demo likely satisfy partial
-      credit; claiming is free.
-- [ ] Tweet the video tagging NEAR/Proximity ("built for NEAR HACKATHON")
-      — sponsor visibility is part of how bounties get noticed.
-- [ ] Sustainability line in the description: mandate → follow-as-intent
-      copy-trading, operator self-serve MandateBuilder (exists in-app).
+- [ ] Human posts the video tagging `@NEARProtocol` and `#NEARHackathon`,
+      saying it was built at NEAR HACKATHON. Optional: `@NearLegion`,
+      `@NearBuilders`. Do not post on their behalf.
+- [ ] Idea text (20–2000 chars) names the problem, the product, and the
+      concrete NEAR role (mandate contract, chain signatures, Intents).
+      One line of future work is enough: mandate → follow-as-intent.
 
 ## Cut list (what NOT to spend time on)
 

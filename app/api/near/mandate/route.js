@@ -25,6 +25,7 @@ export async function GET() {
       minLiquidity: mandate.min_liquidity,
       maxSlippageBps: mandate.max_slippage_bps,
       cooldownSecs: mandate.cooldown_secs,
+      lastTradeNs: mandate.last_trade_ns,
       approvedCodeHash: mandate.approved_code_hash,
       contractUrl: `${config.explorerAccount}${getMandateContractId()}`,
     });

@@ -211,8 +211,8 @@ Dedicated page demonstrating the privacy model and settlement flow. Three new co
    - View active/resolved markets, open/settled positions, pending obligations
 
 ### Navigation
-- Primary nav: **Markets · Positions · Private** (`/proof?chain=canton`). Overflow: Signals · Mandate · Labs · Alerts
-- Landing (`/`) leads with Canton privacy hero + inline privacy check; **Talk to us** under the dual-view proof
+- Primary nav: **Markets · Positions · Arena · Private** (`/proof?chain=canton`). Overflow: Signals · Agent · Labs
+- Landing (`/`) keeps three proofs visible: the public receipt, the NEAR mandate, and Canton private settlement. Reading mode and `?lens=private` promote Canton. They do not remove the others. **Talk to us** stays under the dual-view proof on the private surface
 - Brand constants (`constants/brand.js`) are venue-first with Canton privacy as the differentiator
 - Unified wallet: EVM (trade/publish) + Canton Console Wallet (private settle) + Solana (receipt inspect)
 

@@ -4,14 +4,17 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Copy, Share2 } from 'lucide-react';
 import useAnchoredMenu from '@/hooks/useAnchoredMenu';
+import { watchReceipt } from '@/utils/watchedReceipts';
 
 /* --------------------------------------------------------------------------
    ShareReceiptButton — the viral surface for the flagship proof chain.
 
    Composes a pre-written post for X / Warpcast (or copies the link) pointing
-   at the /world-cup?fixture=<id> deep link. That URL carries per-fixture OG
-   metadata (see app/world-cup/page.js → /api/og?type=receipt), so the posted
-   card renders the sealed receipt itself: teams, verdict, score, hash.
+   at the /world-cup?fixture=<id>&watch=1 deep link. That URL carries
+   per-fixture OG metadata (see app/world-cup/page.js → /api/og?type=receipt),
+   so the posted card renders the sealed receipt itself: teams, verdict,
+   score, hash. The recipient is enrolled to be told when it resolves.
+   The text does not claim a chain anchor.
 
    Success is shown in place ("Copied"); no toast, per design.md.
    -------------------------------------------------------------------------- */
@@ -19,18 +22,19 @@ import useAnchoredMenu from '@/hooks/useAnchoredMenu';
 const HOST = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
 
 export function receiptShareUrl(fixtureId) {
-  return `${HOST}/world-cup?fixture=${encodeURIComponent(fixtureId)}`;
+  const params = new URLSearchParams({
+    fixture: String(fixtureId),
+    watch: '1',
+  });
+  return `${HOST}/world-cup?${params}`;
 }
 
 function composeShareText({ home, away, fixtureId, verdict, score, receiptHash }) {
   const fixture = home && away ? `${home} v ${away}` : `Fixture ${fixtureId}`;
-  const verdictBit = verdict ? ` Verdict: ${verdict}.` : '';
-  const scoreBit = score ? ` Final ${score}.` : '';
-  const hashBit = receiptHash ? ` Receipt ${receiptHash.slice(0, 12)}…` : '';
-  return (
-    `${fixture} — decided by an agent from pre-match evidence, sealed into a SHA-256 receipt before the outcome was known.${verdictBit}${scoreBit}${hashBit} anchored on Solana.\n\n` +
-    `Audit the full proof chain, no trust required:`
-  );
+  const verdictBit = verdict ? ` Call: ${verdict}.` : '';
+  const scoreBit = score ? ` Result ${score}.` : '';
+  const hashBit = receiptHash ? ` Hash ${receiptHash.slice(0, 12)}.` : '';
+  return `${fixture} was sealed into a receipt before the outcome.${verdictBit}${scoreBit}${hashBit}\n\nOpen it and say whether the call holds.`;
 }
 
 export default function ShareReceiptButton({
@@ -57,7 +61,12 @@ export default function ShareReceiptButton({
   const url = receiptShareUrl(fixtureId);
   const text = composeShareText({ home, away, fixtureId, verdict, score, receiptHash });
 
+  const remember = () => {
+    watchReceipt({ fixtureId, home, away, hash: receiptHash });
+  };
+
   const openComposer = (platform) => {
+    remember();
     const body = `${text}\n${url}`;
     const intent =
       platform === 'farcaster'
@@ -68,6 +77,7 @@ export default function ShareReceiptButton({
   };
 
   const copyLink = async () => {
+    remember();
     try {
       await navigator.clipboard.writeText(url);
     } catch {

@@ -72,7 +72,7 @@ relying on them.
 Season I closed without a Fourcast placement. This section is the plan for
 Season II so we enter instrumented instead of blind.
 
-#### Official rules (read 2026-10-23 from [hackathon.telegraphprotocol.com/rules](https://hackathon.telegraphprotocol.com/rules))
+#### Official rules (read 2026-10-23, re-read 2026-11-12 from [hackathon.telegraphprotocol.com/rules](https://hackathon.telegraphprotocol.com/rules))
 - **Window:** Nov 1 – **Dec 1, 2026 23:59 UTC** (one deadline for all three
   tracks). Nov 14 = Apps first-integration milestone (a progress check, not a
   cut). Nov 20 = community showcase. Dec 2–8 = verification + judging; provisional
@@ -97,20 +97,29 @@ Season II so we enter instrumented instead of blind.
     scored per intent** (this answers the open question in
     `TELEGRAPH_FINDINGS.md` F3). The coverage points favour Intents the 15
     missions need. A new capability can qualify before demand exists.
-  - **Apps & Agents:** technical quality and mainnet readiness 35 (**min 24**) ·
-    commercial viability 30 · independent adoption 15 · Telegraph integration 10 ·
-    proof/demo/repeatability 10. A hard requirement is **at least one genuinely
-    autonomous machine-to-machine purchase or sale through the supported
-    Telegraph flow**; testnet qualifies.
+  - **Apps & Agents (weights on the live page, Apps tab selected, 2026-11-12):**
+    technical quality and mainnet readiness 35 (**min 24**) · commercial
+    viability **25** (was 30 on 23 Oct) · independent adoption **10** (was 15) ·
+    Telegraph integration **5** (was 10) · reproducibility **5** (was 10) ·
+    **organic growth, education, and developer activation 20 (new)**. The
+    Miners and Evaluators point weights did not render in that tab, so the
+    23 Oct Provider weights above stay until the Miners tab is re-read. A hard
+    requirement is still **at least one genuinely autonomous machine-to-machine
+    purchase or sale through the supported Telegraph flow**; testnet qualifies.
+    Every track must star [telegraphprotocol/bounties](https://github.com/telegraphprotocol/bounties).
   - **Evaluators:** measurement validity 40 (**min 28**) · integrity 20 ·
     repeatability 15 · coverage/improvement 20 · docs 5.
 - **Delivery awards favour breadth:** the most distinct completed missions,
   then distinct apps, then missions only one group covers.
-- **Submission (by Dec 1):** project details + a reviewer-access link, a 2–5
-  minute demo, beginner-friendly run steps (stating the network, costs and
-  limitations), evidence (receipts, requests, endpoints, tests), a short public
-  summary, and showcase permissions. **Social posts, tags and views are not
-  scored** (Season I's X weighting is gone).
+- **Submission (by Dec 1):** project details (including the GitHub username
+  that starred the bounties repo) + a reviewer-access link, a 2–5 minute demo,
+  beginner-friendly run steps (stating the network, costs and limitations),
+  evidence (receipts, requests, endpoints, tests), a short public summary, and
+  showcase permissions. Season I's "views and tags" score is gone. The 12 Nov
+  rules replace it, on the Apps rubric, with 20 points for original technical
+  updates on separate dates, a tutorial someone else can run, and evidence an
+  independent developer actually tried it. A star, follower, or repost alone
+  does not count. Bought engagement is disqualifying.
 - **Accurate claims:** state the network (we run on Base Sepolia, i.e. testnet)
   and what was actually verified. Testnet traffic is never presented as paying
   production use.
@@ -143,13 +152,26 @@ Season II so we enter instrumented instead of blind.
     tested reader for Polymarket (Gamma) and Kalshi settlement
     (`deriveOutcome`). Combined with the sports path, that gives two
     independent legs; any question neither can settle is still reported as
-    absent. Do this after Total Recall (Nov 10), before `updateMiner`.
-- **Apps & Agents track (stretch):** the Fourcast agent autonomously buys
-  `EVENT_OUTCOME_RESOLUTION` through Telegraph to resolve a position or
-  conditional settlement (Mission 14), and its pre-outcome receipt cites the
-  purchase. This is the old P4 work. It needs the Telegraph purchase flow
-  working by the Nov 14 milestone. Our app consuming our own miner does not
-  count as independent use.
+    absent. Total Recall's window is closed. Do this after the NEAR payload
+    is sent, and before `updateMiner`.
+- **Apps & Agents track (stretch, after the NEAR submission):** the Fourcast
+  agent autonomously buys `EVENT_OUTCOME_RESOLUTION` through Telegraph to
+  resolve a position or conditional settlement. Mission 14's worked example is
+  still "the self-settling conditional escrow"
+  ([mission page](https://hackathon.telegraphprotocol.com/missions/web3-defi),
+  read 2026-11-12): two agents lock funds, the contract buys
+  `EVENT_OUTCOME_RESOLUTION` (hybrid, target under 5 seconds, shared by 4
+  missions) plus `CRYPTO_TRANSFER_VERIFY`, and the receipt releases the funds.
+  The page says contract logic may run on testnet. Our app consuming our own
+  miner does not count as independent adoption.
+- **14 Nov is a progress check, not a cut.** NEAR's hard close is the same
+  evening, so NEAR is submitted first. For Telegraph that day, a written
+  blocker is enough: which purchase flow is missing, and what the next call
+  will be. The three public updates the new 20 growth points ask for (separate
+  dates, disclose the hackathon and the prize) start after the NEAR post so
+  they can land on distinct days before 1 Dec. Nov 20 is the community
+  showcase. TxLINE's free tier still expires 20 Nov and has to be renewed
+  before then.
 - **Evaluators: skip.** The agreement-gate finding stands, and it ships as the
   P6 findings report, not as a track entry.
 
@@ -488,14 +510,13 @@ positioning claims.
 - **Tag** [@Telegraphprotoc](https://x.com/Telegraphprotoc) in progress posts.
 
 
-### NEAR HACKATHON — AI + money — 🔴 active, build window Nov 1–14, 2026
-- **What:** NEAR hackathon for intelligent agents, autonomous payments, and apps that move value across chains. Tracks include Unstoppable DeFi, Agent Economy, Autonomous Business, and more. Prize pool $250k in NEAR.
-- **Our entry:** **Fourcast as a cross-chain autonomous trading agent** — mandate-bound positions moved via NEAR Intents, with verifiable decision receipts anchored on NEAR.
-- **Track:** **Unstoppable DeFi** (secondary: **Agent Economy**).
-- **Submission:** [`HACKATHON.md`](../HACKATHON.md) and [`docs/NEAR_HACKATHON.md`](NEAR_HACKATHON.md).
-- **Timeline:** build Nov 1–14, 2026; judging Nov 16–18; results by Nov 18 23:59 UTC. Repo public by Nov 14 23:59 UTC; public X demo post required.
-- **NEAR tools:** NEAR Intents, Chain Signatures, sub-accounts/function-call keys, NEAR AI Cloud, 1-Click Swap SDK.
-- **Minimum win:** one market, one NEAR Intent trade, one anchored decision receipt, one reconciliation demo.
+### NEAR HACKATHON — AI + money — 🔴 active, closes 2026-11-14T23:59:00Z
+- **What:** NEAR hackathon for intelligent agents, autonomous payments, and apps that move value across chains. 13 tracks. Prize pool $250k in NEAR ($55k grand, then $10k / $3k / $2k per track). Official instructions re-read 2026-11-12: [nearhackathon.com/HACKATHON.md](https://nearhackathon.com/HACKATHON.md).
+- **Our entry:** **Fourcast as a cross-chain autonomous trading agent** — mandate-bound positions, chain signatures, decision receipts anchored on NEAR. One submission, tracks `defi` + `agents` + `security`. Hints are not requirements; testnet-only is eligible; Intents is mainnet-only.
+- **Submission:** [`HACKATHON.md`](../HACKATHON.md) and [`docs/NEAR_HACKATHON.md`](NEAR_HACKATHON.md). Submit once, after the human confirms the payload. A duplicate repo is rejected. Corrections go to [request-changes](https://nearhackathon.com/request-changes), not a second POST.
+- **Timeline:** development ends 2026-11-14T23:59:00Z; judging from 2026-11-16T00:00:00Z; results by 2026-11-18T23:59:00Z. Repo public by the deadline. The human posts the X demo, with a video, `@NEARProtocol`, and `#NEARHackathon`. Leave the hosted demo up through 18 Nov, ideally 25 Nov.
+- **Next (12–14 Nov):** one on-chain moment a stranger can open, then the human's post, then one submission. Do not start Telegraph feature work before that payload is sent.
+- **Minimum win:** one market, one policy-gated signature or a visible on-chain refusal, one anchored decision receipt, one reconciliation a judge can re-run.
 
 ## Participated (finished)
 

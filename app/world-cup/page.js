@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import WorldCupClient from './WorldCupClient';
+import EnrollWatch from '@/components/EnrollWatch';
 
 const TITLE = 'Decision receipts · Fourcast';
 const DESCRIPTION =
@@ -66,7 +67,7 @@ export async function generateMetadata({ searchParams }) {
   const image = `/api/og?${imageParams.toString()}`;
 
   const title = `${og.home} v ${og.away} — sealed decision receipt · Fourcast`;
-  const description = `A mandate decision sealed before the outcome${og.score ? `, reconciled against the verified ${og.score} result` : ''}. Walk the full proof chain: evidence, policy gates, receipt hash, Solana anchor.`;
+  const description = `A mandate decision sealed before the outcome${og.score ? `, reconciled against the verified ${og.score} result` : ''}. Open the receipt and say whether the call holds.`;
 
   return {
     title,
@@ -88,5 +89,10 @@ export async function generateMetadata({ searchParams }) {
 }
 
 export default function WorldCupPage() {
-  return <WorldCupClient />;
+  return (
+    <>
+      <EnrollWatch />
+      <WorldCupClient />
+    </>
+  );
 }
