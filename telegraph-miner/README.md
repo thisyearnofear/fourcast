@@ -248,26 +248,39 @@ docker run -d --restart=unless-stopped -p 8402:8402 \
 
 ## Current registration status
 
-`updateMiner(148, …)` landed on 2026-11-13 in
-[0x12ce360b0390aaeae5eac5bddfd2de1efe2b633aed743e86c7b6edacd492c56c](https://sepolia.basescan.org/tx/0x12ce360b0390aaeae5eac5bddfd2de1efe2b633aed743e86c7b6edacd492c56c)
-(Base Sepolia, status success). The diamond stored the raw GitHub YAML URL,
-hash `0xb6044d0a2314c1f7c74803e48d9aaa4abf931d450fb2925cee3abbe712b77321`, and
-the bare intent names `SPORTS_SCORE`, `GAME_RESULT`, `EVENT_OUTCOME_RESOLUTION`.
+Live contract registration: **4878**, from `updateMiner(4877, …)` in
+[0xcd4a558e8cfa28bc1e25c210a63e17cdac53347ac0ee1f6ec1891da0e5251fdd](https://sepolia.basescan.org/tx/0xcd4a558e8cfa28bc1e25c210a63e17cdac53347ac0ee1f6ec1891da0e5251fdd)
+(2026-11-13, block 58354903). The diamond stored the settlement-reader
+manifest, hash `0x13a53a8fcbceb04e83b29101d0b6b83d3177dc1d29453d5f9c71ce8a717db753`
+= the served YAML, and the bare intent names `SPORTS_SCORE`, `GAME_RESULT`,
+`EVENT_OUTCOME_RESOLUTION`.
+
+**`updateMiner` deregisters and re-registers — the id mints anew each call**
+(`MinerDeregistered(old)` + `MinerRegistered(new)`; history: 128 → 148 → 4877 →
+4878). Never hardcode an id in scripts or docs: read the current one from
+`MinerRegistered` events or the receipt's `registrationId`. Both Nov-13 calls
+went through the MetaMask delegation framework (redeemer `0xB01caEa8…`), not
+direct sends — the earlier Nov-13 call
+[0x12ce360b…](https://sepolia.basescan.org/tx/0x12ce360b0390aaeae5eac5bddfd2de1efe2b633aed743e86c7b6edacd492c56c)
+created 4877 pinning `0xb6044d0a…`, which `0xcd4a558e…` superseded hours later.
+
 The facet **reverts** on the `_GENERAL` display names. Do not send
 `0x608b7dd0…` again: that was the October hash the node rejected, and it does
 not retry a rejected fetch.
 
-The node indexer had not caught up the same afternoon (`GET /api/miners/148`
-still showed the 24 October rejection, so the active catalogue omitted the
-slug). Re-read that endpoint before claiming the network routes to this miner.
-Do not `registerMiner` again.
+The node's `/api/miners/{n}` row ids are **not** contract registration ids —
+they coincided at 148, which made the stale rejected row look like the live
+record. The active-miners list also omits non-active rows entirely, so "our
+slug is missing" means "rejected or unindexed," not "unregistered." Watch the
+catalogue for `fourcast-sports-intelligence` to appear active; the served hash
+now matches the pin, so the hash-mismatch rejection cannot recur.
 
 | Layer | What it says |
 |---|---|
-| Process `https://miner.sportwarren.com` | Serves the three `_GENERAL` intents. Market leg answers a named Polymarket or Kalshi market. |
-| Chain, registration 148 | Update tx above. Bare intent names. Hash `0xb6044d0a…`. |
-| Published `telegraph.yaml` description | Still the sports-proof sentence. Replace it only inside the next `updateMiner`. |
-| Node catalogue | Confirm `GET /api/miners/148` left `rejected` before treating the miner as buyable. |
+| Process `https://miner.sportwarren.com` | Serves the three `_GENERAL` intents. Settlement reader answers a named Polymarket or Kalshi market with `resolved` / `open` / `pending_resolution` / `void`. |
+| Chain, registration **4878** | Settlement-reader pin `0x13a53a8f…`, bare intent names, fee `0x55a5…7058`. |
+| Published `telegraph.yaml` description | Settlement-reader line — matches the pin. |
+| Node catalogue | Watch for the slug to appear in `/api/miners` as `active`. |
 
 First pin (2026-08-19, `registrationId` 128) wrote `WEB_SEARCH` / `FACT_CHECK`
 because `registerMiner` takes intents as a **separate argument** from the YAML.
@@ -278,7 +291,7 @@ the same day with `updateMiner` — tx
 YAML URL across lines (`telegrap\n  h-miner`). Keep `"$U"` on **one line**.
 
 - Miner `id`: **1** (YAML / catalog routing id — do not change)
-- Live **`registrationId`**: **148** (lookup `/api/miners/148`, not `/api/miners/1`)
+- Live **`registrationId`**: **4878** — minted anew by every `updateMiner`; confirm from `MinerRegistered` events, never from memory
 - Slug: `fourcast-sports-intelligence`
 - Protocol: `generic`
 - Floor: `10000` = **$0.01** USDC (protocol minimum)
@@ -292,7 +305,7 @@ YAML URL across lines (`telegrap\n  h-miner`). Keep `"$U"` on **one line**.
 **Do not click Register On-Chain again.** Protocol engineering confirmed
 (2026-08-20): `registerMiner` with the same wallet does **not** supersede the
 live listing. It creates a second `registrationId` / `intentId`. Further YAML
-or intent changes use **`updateMiner(148, …)`**. Spec:
+or intent changes use **`updateMiner(<current registrationId>, …)`**. Spec:
 [miner-registration.md](https://github.com/telegraphprotocol/telegraph-docs/blob/main/miners/miner-registration.md).
 
 **Do not also declare `WEB_SEARCH` “for coverage.”** Validators will keep scoring us there and we will keep getting zeros.
@@ -346,7 +359,7 @@ export DIAMOND="0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8"
 export RPC="https://sepolia.base.org"
 export YAML_URL="https://raw.githubusercontent.com/thisyearnofear/fourcast/main/telegraph-miner/telegraph.yaml"
 # Hash the raw URL after the commit that changed telegraph.yaml is on main.
-# Pinning a stale hash is what left registration 148 rejected.
+# Pinning a stale hash is what left registration 148 rejected in October.
 export YAML_HASH="0x$(curl -fsSL "$YAML_URL" | shasum -a 256 | awk '{print $1}')"
 export FEE_ADDRESS="0x55A5705453Ee82c742274154136Fce8149597058"
 export MIN_PRICE=10000   # 0.01 USDC (6 decimals)
@@ -359,7 +372,7 @@ export MIN_PRICE=10000   # 0.01 USDC (6 decimals)
 
 cast send "$DIAMOND" \
   "updateMiner(uint256,string,bytes32,address,uint256,string[])" \
-  148 \
+  4878 \
   "$YAML_URL" \
   "$YAML_HASH" \
   "$FEE_ADDRESS" \
@@ -370,12 +383,15 @@ cast send "$DIAMOND" \
   --private-key "$MINER_PRIVATE_KEY"
 ```
 
-After a further update confirms, `GET /api/miners/148` should show
-`deregistered` / superseded, and the catalog row for slug
-`fourcast-sports-intelligence` should list the new `registration_id`. Check:
+After a further update confirms, the previous registration is deregistered
+and a NEW `registrationId` is minted (read it from `MinerRegistered` events).
+The catalog row for slug `fourcast-sports-intelligence` appears in
+`/api/miners` once the node indexes — node row ids are not contract
+registration ids. Check:
 
 ```bash
-curl -sS -A 'fourcast-review/1.0' https://devnode.telegraphprotocol.com/api/miners/148
+curl -sS https://devnode.telegraphprotocol.com/api/miners \
+  | python3 -c "import json,sys; print([m for m in json.load(sys.stdin) if 'fourcast' in (m.get('slug') or '')])"
 curl -sS -A 'fourcast-review/1.0' https://devnode.telegraphprotocol.com/api/miners \
   | python3 -c "import json,sys; m=next(x for x in json.load(sys.stdin) if x.get('slug')=='fourcast-sports-intelligence'); print(m['id'], m['supported_intents'], m['yaml_url'], m.get('scores'))"
 ```
@@ -489,7 +505,7 @@ Telegraph Network (validators, apps, routing)
 ## Hackathon Notes
 
 - **Track 1 (Miner)** — this is our submission. Status and the on-chain mismatch: `docs/HACKATHONS.md`.
-- **Judging**: 75% Normalized Performance (accuracy vs ground truth), 25% X engagement. Sports intents are Tier A WASM exact match; `WEB_SEARCH` / `FACT_CHECK` are Tier B LLM-judge. We are now on the sports intents (`registrationId` 148).
+- **Judging**: 75% Normalized Performance (accuracy vs ground truth), 25% X engagement. Sports intents are Tier A WASM exact match; `WEB_SEARCH` / `FACT_CHECK` are Tier B LLM-judge. We are now on the sports intents + the market leg (contract registration **4878**).
 - **Guardrail** (as recorded in-repo; confirm on the official page): need 3+ active miners in the same intent + 100 real requests from Track 3 apps. Joining the sports intents currently makes that 2 miners, not 3. Scoring 0 on a crowded wrong intent is worse than being correctly routed in a thin category.
 - **Timeline**: Season I closed 2026-09-02. **Season II is live and scoring** — our miner `active`, last scored epoch 370 (2026-09-29); status tracked in `docs/HACKATHONS.md`
 - Tag [@Telegraphprotoc](https://x.com/Telegraphprotoc) in all progress posts
