@@ -21,20 +21,22 @@ import { watchReceipt } from '@/utils/watchedReceipts';
 
 const HOST = process.env.NEXT_PUBLIC_HOST || 'https://fourcastapp.vercel.app';
 
-export function receiptShareUrl(fixtureId) {
+export function receiptShareUrl(fixtureId, call) {
   const params = new URLSearchParams({
     fixture: String(fixtureId),
     watch: '1',
   });
+  if (call === 'holds' || call === 'breaks') params.set('call', call);
   return `${HOST}/world-cup?${params}`;
 }
 
-function composeShareText({ home, away, fixtureId, verdict, score, receiptHash }) {
+function composeShareText({ home, away, fixtureId, verdict, score, receiptHash, call }) {
   const fixture = home && away ? `${home} v ${away}` : `Fixture ${fixtureId}`;
   const verdictBit = verdict ? ` Call: ${verdict}.` : '';
   const scoreBit = score ? ` Result ${score}.` : '';
   const hashBit = receiptHash ? ` Hash ${receiptHash.slice(0, 12)}.` : '';
-  return `${fixture} was sealed into a receipt before the outcome.${verdictBit}${scoreBit}${hashBit}\n\nOpen it and say whether the call holds.`;
+  const mine = call === 'holds' ? ' I say it holds.' : call === 'breaks' ? ' I say it does not.' : '';
+  return `${fixture} was sealed into a receipt before the outcome.${verdictBit}${scoreBit}${hashBit}${mine}\n\nOpen it and say whether the call holds.`;
 }
 
 export default function ShareReceiptButton({
@@ -44,6 +46,7 @@ export default function ShareReceiptButton({
   verdict,
   score,
   receiptHash,
+  call = null,
   label = 'Share receipt',
   className = '',
 }) {
@@ -58,8 +61,8 @@ export default function ShareReceiptButton({
 
   if (!fixtureId) return null;
 
-  const url = receiptShareUrl(fixtureId);
-  const text = composeShareText({ home, away, fixtureId, verdict, score, receiptHash });
+  const url = receiptShareUrl(fixtureId, call);
+  const text = composeShareText({ home, away, fixtureId, verdict, score, receiptHash, call });
 
   const remember = () => {
     watchReceipt({ fixtureId, home, away, hash: receiptHash });

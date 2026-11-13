@@ -22,7 +22,7 @@ assignment). Nothing in this file is a commitment until the lead says so.
 
 | Route | Renders | Class | Job | Primary CTA | Owner (proposed) | Gates | Last audit |
 |---|---|---|---|---|---|---|---|
-| `/` | yes | A spine | Hero keeps receipt, NEAR mandate, and Canton private visible. Reading mode and `?lens=` only promote one CTA. Below it, receipts opened on this device are rechecked | Promoted lens, both others stay linked | C (audit) / A (if editing) | G1–G6 ? · G7 ? | 2026-11-12 |
+| `/` | yes | A spine | Hero keeps receipt, NEAR mandate, and Canton private visible. Reading mode and `?lens=` only promote one CTA. Below it, watched receipts are rechecked. Opt-in Web Push is delivered after the tab closes (iPhone: Home Screen first). A receipt can be judged (holds / doesn’t) and that vote is what a share repeats | Promoted lens, both others stay linked | C (audit) / A (if editing) | G1–G6 ? · G7 ? | 2026-11-12 |
 | `/arena` | yes | A spine | The agent's decisions, positions, calibration — three lanes: Ledger \| Mandate \| Memory | *(none — read surface; the Memory lane's two buttons are spend-gated reads, not CTAs)* | **A** | G1 ✓ (CalibrationCurve's 12 raw literals moved to named tokens, 21 Oct) · G2 ✓ · G3 ✓ · G5 ✓ (mechanical — `BUDGET['/arena'] = 0`) · G4 ? · G6 ? · G7 ? | 2026-10-21 mech. |
 | `/signals` | yes | A spine | Publish a signal; the paid premium tier | *Publish signal* | **C** | G1–G6 ? · G7 ? | — |
 | `/signal/[id]` | yes | A | One signal, its receipt, its outcome | *(none)* | **A** | G2 G3 G5 ? | — |

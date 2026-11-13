@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { AppShell, SecondaryNav } from '@/app/components/PageNav';
 import CantonProof from './CantonProof';
 import WorldCupClient from '@/app/world-cup/WorldCupClient';
+import EnrollWatch from '@/components/EnrollWatch';
 import { BRAND } from '@/constants/brand';
 import GlassPanel from '@/components/ui/GlassPanel';
 
@@ -118,6 +119,7 @@ export default function ProofTheatreShell() {
         </div>
       }
     >
+      <EnrollWatch />
       <div role="tabpanel" id="proof-chain-panel" aria-labelledby={`proof-chain-tab-${chain}`}>
         {isCanton ? <CantonProof /> : <WorldCupClient bare />}
       </div>

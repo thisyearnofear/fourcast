@@ -15,9 +15,14 @@ decisions. Strike built its V2 explicitly for programmatic access ("custom
 trading bots, portfolio management integrations, third-party tooling") — we are
 the bot with an audit trail.
 
+> **Status: hackathon closed without entry (recorded 2026-11-13).** The adapter
+> in `services/strike/` is retained as a venue plugin — Phase 0/1 landed
+> (public market data verified live on testnet; the signed path is built and
+> mocked-tested but never exercised without an API wallet). Nothing in this
+> doc was submitted.
+
 Facts read from [docs.strikefinance.org](https://docs.strikefinance.org) on
-2026-10-23. Deadline was 23 Oct 2026 and is being extended per the organizers —
-do not treat 23 Oct as a constraint.
+2026-10-23.
 
 ---
 

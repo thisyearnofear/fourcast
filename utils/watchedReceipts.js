@@ -16,7 +16,7 @@ export function readWatched() {
   }
 }
 
-export function watchReceipt(entry) {
+export function watchReceipt(entry, { silent = false } = {}) {
   if (!entry?.fixtureId || typeof window === 'undefined') return readWatched();
   const fixtureId = String(entry.fixtureId);
   const prev = readWatched().find((row) => String(row.fixtureId) === fixtureId);
@@ -31,7 +31,7 @@ export function watchReceipt(entry) {
   }, ...rest].slice(0, MAX);
   try {
     window.localStorage.setItem(KEY, JSON.stringify(next));
-    window.dispatchEvent(new CustomEvent('fourcast:watched'));
+    if (!silent) window.dispatchEvent(new CustomEvent('fourcast:watched'));
   } catch {
     /* storage disabled */
   }

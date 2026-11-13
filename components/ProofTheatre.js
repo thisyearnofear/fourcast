@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, ChevronDown, Database, Fingerprint, Lock, ShieldCheck, X } from 'lucide-react';
 import { AUDIENCE_META, useAudience } from '@/hooks/useAudience';
 import ShareReceiptButton from '@/components/ShareReceiptButton';
+import ReceiptCall from '@/components/ReceiptCall';
 
 /* --------------------------------------------------------------------------
    Proof Theatre — the final act of a decision, not a sports-data utility.
@@ -61,6 +62,7 @@ export function ProofTheatre({ fixture, onClose }) {
   const [state, setState] = useState({ loading: true, data: null, error: null });
   const { mode } = useAudience();
   const leadStage = LEAD_STAGE[AUDIENCE_META[mode]?.dossierLead ?? 'decision'] ?? '03';
+  const [call, setCall] = useState(null);
 
   // Accordion disclosure: each stage opens independently. Lead stage (per
   // audience mode) is open by default; everything else stays collapsed so
@@ -138,6 +140,7 @@ export function ProofTheatre({ fixture, onClose }) {
           <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--color-ink-faint)]">
             Sealed evidence → independently verifiable outcome. Recompute the receipt — don&apos;t trust a chart.
           </p>
+          <ReceiptCall fixtureId={fixture?.id} onVote={setCall} />
         </div>
         <div className="flex shrink-0 items-start gap-2">
           {!state.loading && !state.error && (
@@ -148,6 +151,7 @@ export function ProofTheatre({ fixture, onClose }) {
               verdict={verdict}
               score={outcome?.homeScore != null ? `${outcome.homeScore}–${outcome.awayScore}` : null}
               receiptHash={integrity?.contentHash || outcome?.proofRef?.receiptHash}
+              call={call}
               label="Share proof chain"
             />
           )}

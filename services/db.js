@@ -1698,5 +1698,136 @@ export async function saveOperatorLead({ email, sizes = false, note = null, sour
   }
 }
 
+export async function getReceiptJudgments(fixtureId, clientId = null) {
+  const id = String(fixtureId || '').trim();
+  if (!/^\d{1,12}$/.test(id)) return { success: false, error: 'fixture required' };
+  try {
+    await migrationsReady;
+    const rows = await query(
+      `SELECT holds, COUNT(*) AS n FROM receipt_judgments WHERE fixture_id = ? GROUP BY holds`,
+      [id]
+    );
+    let holds = 0;
+    let breaks = 0;
+    for (const row of rows) {
+      const n = Number(row.n) || 0;
+      if (Number(row.holds) === 1) holds = n;
+      else breaks = n;
+    }
+    let mine = null;
+    if (clientId && /^[a-zA-Z0-9-]{8,64}$/.test(clientId)) {
+      const own = await query(
+        `SELECT holds FROM receipt_judgments WHERE fixture_id = ? AND client_id = ?`,
+        [id, clientId]
+      );
+      if (own[0]) mine = Number(own[0].holds) === 1;
+    }
+    return { success: true, fixtureId: id, holds, breaks, mine };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function recordReceiptJudgment({ fixtureId, clientId, holds }) {
+  const id = String(fixtureId || '').trim();
+  const client = String(clientId || '').trim();
+  if (!/^\d{1,12}$/.test(id)) return { success: false, error: 'fixture required' };
+  if (!/^[a-zA-Z0-9-]{8,64}$/.test(client)) return { success: false, error: 'client required' };
+  if (typeof holds !== 'boolean') return { success: false, error: 'holds must be true or false' };
+  try {
+    await migrationsReady;
+    await execute(
+      `INSERT INTO receipt_judgments (fixture_id, client_id, holds, created_at, updated_at)
+       VALUES (?, ?, ?, strftime('%s', 'now'), strftime('%s', 'now'))
+       ON CONFLICT(fixture_id, client_id) DO UPDATE SET
+         holds = excluded.holds,
+         updated_at = strftime('%s', 'now')`,
+      [id, client, holds ? 1 : 0]
+    );
+    return getReceiptJudgments(id, client);
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function upsertPushSubscription({ endpoint, p256dh, auth }) {
+  try {
+    await migrationsReady;
+    await execute(
+      `INSERT INTO push_subscriptions (endpoint, p256dh, auth, created_at, updated_at)
+       VALUES (?, ?, ?, strftime('%s', 'now'), strftime('%s', 'now'))
+       ON CONFLICT(endpoint) DO UPDATE SET
+         p256dh = excluded.p256dh,
+         auth = excluded.auth,
+         updated_at = strftime('%s', 'now')`,
+      [endpoint, p256dh, auth]
+    );
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function pushSubscriptionExists(endpoint) {
+  try {
+    await migrationsReady;
+    const rows = await query(`SELECT endpoint FROM push_subscriptions WHERE endpoint = ?`, [endpoint]);
+    return rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+export async function replacePushWatches(endpoint, watches) {
+  try {
+    await migrationsReady;
+    if (!watches.length) {
+      await execute(`DELETE FROM push_watches WHERE endpoint = ?`, [endpoint]);
+      return { success: true };
+    }
+    for (const watch of watches) {
+      await execute(
+        `INSERT INTO push_watches (endpoint, fixture_id, home, away, updated_at)
+         VALUES (?, ?, ?, ?, strftime('%s', 'now'))
+         ON CONFLICT(endpoint, fixture_id) DO UPDATE SET
+           home = COALESCE(excluded.home, push_watches.home),
+           away = COALESCE(excluded.away, push_watches.away),
+           updated_at = strftime('%s', 'now')`,
+        [endpoint, watch.fixtureId, watch.home, watch.away]
+      );
+    }
+    const placeholders = watches.map(() => '?').join(', ');
+    await execute(
+      `DELETE FROM push_watches WHERE endpoint = ? AND fixture_id NOT IN (${placeholders})`,
+      [endpoint, ...watches.map((watch) => watch.fixtureId)]
+    );
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function listPushWatches() {
+  await migrationsReady;
+  return query(
+    `SELECT w.endpoint, w.fixture_id, w.home, w.away, w.last_status, s.p256dh, s.auth
+     FROM push_watches w
+     JOIN push_subscriptions s ON s.endpoint = w.endpoint`
+  );
+}
+
+export async function setPushWatchStatus(endpoint, fixtureId, status) {
+  await execute(
+    `UPDATE push_watches SET last_status = ?, updated_at = strftime('%s', 'now')
+     WHERE endpoint = ? AND fixture_id = ?`,
+    [status, endpoint, fixtureId]
+  );
+}
+
+export async function deletePushSubscription(endpoint) {
+  await execute(`DELETE FROM push_watches WHERE endpoint = ?`, [endpoint]);
+  await execute(`DELETE FROM push_subscriptions WHERE endpoint = ?`, [endpoint]);
+}
+
 // Export db instance, helpers, and migrations readiness
 export { db, execute, query, migrationsReady };

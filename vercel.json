@@ -6,6 +6,22 @@
     {
       "path": "/api/cron/autopilot",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/receipt-watch",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/receipt-watch",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/receipt-watch",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/receipt-watch",
+      "schedule": "0 19 * * *"
     }
   ]
 }

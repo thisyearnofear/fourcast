@@ -12,13 +12,40 @@
  *   node scripts/near-mandate-gates.mjs --slippage        # gate 4: over max bps
  *   node scripts/near-mandate-gates.mjs --cooldown        # gate 5: back-to-back requests
  *
- * Each failed call prints the tx hash — paste it into nearblocks to show the
- * contract's "mandate: …" panic in the receipt. Expect ~0.05 NEAR deposit
- * refunded on refusal (gate rejects before the MPC call).
+ * Each failed call prints the tx hash and, when one is present, writes
+ * public/proof/near-refusal.json. The mandate card links that file.
+ * Expect ~0.05 NEAR deposit refunded on refusal (gate rejects before the MPC call).
  */
 import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
 import { getMandate, requestTradeSignature, getMandateContractId } from '../services/near/nearMandateClient.js';
 import { explorerTxUrl } from '../services/near/nearConfig.js';
+
+function txHashFrom(err) {
+  return err?.transaction?.hash
+    || err?.transaction_outcome?.id
+    || err?.transactionHash
+    || err?.cause?.transaction?.hash
+    || null;
+}
+
+function recordRefusal({ gate, message, txHash }) {
+  if (!txHash) return null;
+  const body = {
+    gate,
+    message: String(message || '').slice(0, 300),
+    txHash,
+    txUrl: explorerTxUrl(txHash),
+    contract: getMandateContractId(),
+    recordedAt: new Date().toISOString(),
+  };
+  const dir = path.join(process.cwd(), 'public', 'proof');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, 'near-refusal.json');
+  fs.writeFileSync(file, `${JSON.stringify(body, null, 2)}\n`);
+  return file;
+}
 
 const mandate = await getMandate();
 const flag = process.argv.find((a) => a.startsWith('--'));
@@ -65,7 +92,13 @@ try {
   await requestTradeSignature(req);
   console.log('UNEXPECTED: signed — gate did not fire. Check the envelope.');
 } catch (err) {
-  const txHash = err.transaction?.hash || err.hash || null;
+  const txHash = txHashFrom(err);
   console.log(`refused on-chain: ${err.message}`);
-  if (txHash) console.log(`receipt: ${explorerTxUrl(txHash)}`);
+  if (txHash) {
+    console.log(`receipt: ${explorerTxUrl(txHash)}`);
+    const file = recordRefusal({ gate: flag.slice(2), message: err.message, txHash });
+    if (file) console.log(`wrote ${file}`);
+  } else {
+    console.log('no transaction hash on the error — nothing recorded');
+  }
 }

@@ -20,7 +20,7 @@ const nextConfig = {
       'node_modules/@puppeteer/**',
     ],
   },
-  serverExternalPackages: ['better-sqlite3', 'puppeteer-core'],
+  serverExternalPackages: ['better-sqlite3', 'puppeteer-core', 'web-push'],
   async redirects() {
     return [
       {
@@ -44,6 +44,9 @@ const nextConfig = {
         source: '/world-cup',
         destination: '/proof',
         permanent: false,
+        // A fixture link has to land on this page: it carries the receipt
+        // card and enrolls the watch. The bare path still folds into /proof.
+        missing: [{ type: 'query', key: 'fixture' }],
       },
       // Agent surfaces unified under /arena (design alignment phase B):
       // the mandate cockpit lives as the Mandate lane.
@@ -58,6 +61,17 @@ const nextConfig = {
         source: '/notifications',
         destination: '/signals?tab=alerts',
         permanent: false,
+      },
+    ];
+  },
+  async headers() {
+    return [
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
       },
     ];
   },

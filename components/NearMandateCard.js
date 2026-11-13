@@ -19,6 +19,7 @@ function usd(raw) {
 export function NearMandateCard({ variant = 'lane' }) {
   const [data, setData] = useState(null);
   const [failed, setFailed] = useState(false);
+  const [refusal, setRefusal] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -30,6 +31,10 @@ export function NearMandateCard({ variant = 'lane' }) {
         else setFailed(true);
       })
       .catch(() => alive && setFailed(true));
+    fetch('/proof/near-refusal.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && d?.txUrl) setRefusal(d); })
+      .catch(() => {});
     return () => { alive = false; };
   }, []);
 
@@ -91,6 +96,13 @@ export function NearMandateCard({ variant = 'lane' }) {
             agent EVM <span className="text-[var(--color-ink-muted)]">{data.evmAddress}</span>
             {' '}· derived via chain signatures ({data.path}) — no private key exists
           </p>
+          {refusal?.txUrl && (
+            <p className="mt-2 font-mono text-[10px]">
+              <a href={refusal.txUrl} target="_blank" rel="noreferrer" className="text-[var(--color-accent)] no-underline hover:opacity-80">
+                On-chain refusal{refusal.gate ? ` · ${refusal.gate}` : ''}
+              </a>
+            </p>
+          )}
         </>
       )}
     </section>

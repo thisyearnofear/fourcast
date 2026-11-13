@@ -55,6 +55,12 @@ export const metadata = {
     description: BRAND.metadata.description,
     images: ['/api/og?type=landing'],
   },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'Fourcast',
+    statusBarStyle: 'black-translucent',
+  },
 };
 
 export default function RootLayout({ children }) {
