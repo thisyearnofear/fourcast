@@ -123,7 +123,17 @@
     "integrity": {
       "algorithm": "sha256",
       "canonicalization": "fourcast-canonical-json/v1",
-      "contentHash": "2dad3158b3fe81e1233be118189109fbcd289e724d52f9d338df98572441ae5f"
+      "contentHash": "2dad3158b3fe81e1233be118189109fbcd289e724d52f9d338df98572441ae5f",
+      "onchainCommitments": {
+        "near": {
+          "txHash": "DH1WvxiTxDvCiDARTkLs3EwLJJFZSTr8TKQ3uw9CGVwt",
+          "accountId": "fourcast-agent.testnet",
+          "explorerUrl": "https://testnet.nearblocks.io/txns/DH1WvxiTxDvCiDARTkLs3EwLJJFZSTr8TKQ3uw9CGVwt",
+          "socialKey": "fourcast-agent.testnet/fourcast/receipts/18175981",
+          "network": "testnet",
+          "anchoredAt": "2026-11-13T12:59:40.652907+00:00"
+        }
+      }
     }
   }
 }

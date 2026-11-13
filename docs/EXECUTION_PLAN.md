@@ -20,7 +20,7 @@ If you are a dev reading this cold, in order:
 Total Recall's submission window closed 10 Nov 17:00 UTC. Two events are still open. NEAR closes first.
 
 1. **NEAR, through 2026-11-14T23:59:00Z.** One submission. Tracks `defi`, `agents`, `security`. The build that remains is one on-chain moment a stranger can open, then the human's X post, then a single confirmed POST. Rules and the field contract: [`HACKATHON.md`](../HACKATHON.md), official source [nearhackathon.com/HACKATHON.md](https://nearhackathon.com/HACKATHON.md). Do not start Telegraph feature work before that payload is sent.
-2. **Telegraph H2, through 2026-12-01T23:59:00Z.** The 14 Nov Apps milestone is a progress check. Same-day obligation is a written blocker if the purchase is not live, not a new integration. After NEAR: renew TxLINE before it expires 20 Nov; only then `updateMiner(148, …)` for `EVENT_OUTCOME_RESOLUTION`, and only once that handler can settle a non-sports question from Polymarket or Kalshi. Stretch app is Mission 14's self-settling escrow, one autonomous Telegraph purchase, testnet allowed. Apps scoring re-read 2026-11-12 now includes 20 growth points (three public updates on separate dates, star `telegraphprotocol/bounties`). Detail: [`HACKATHONS.md`](./HACKATHONS.md).
+2. **Telegraph H2, through 2026-12-01T23:59:00Z.** The product is a settlement reader for a named Polymarket or Kalshi market (`EVENT_OUTCOME_RESOLUTION`), not a verified-sports miner. `updateMiner(148, …)` landed 2026-11-13 (tx `0x12ce360b…`, bare intent names). Remaining work is the contract-shaped status machine, a manifest sentence on the *next* pin only, catalogue reindexing, one other H2 app buying the intent, and three dated public updates. The 14 Nov Apps milestone is a progress check. TxLINE's free tier expires 20 Nov. Plan: [`HACKATHONS.md`](./HACKATHONS.md) → **Settlement reader**.
 
 The October critical path below is the record of how we got here. It is not the queue.
 
@@ -42,7 +42,7 @@ Consolidated critical path:
 4. Phase 3: judge-path walkthrough (Nov 6–8) → submit Total Recall (Nov 10 17:00 UTC).
 5. Phase 4 — **Telegraph H2, Nov 1 – Dec 1 23:59 UTC** (rules published 2026-10-22, summarised in
    `docs/HACKATHONS.md`): register; Providers track = `GAME_RESULT` + register
-   `EVENT_OUTCOME_RESOLUTION` (Mission 14 mission-critical) via `updateMiner(148, …)`; stretch
+   `EVENT_OUTCOME_RESOLUTION` (mission-critical — named by Missions 13 & 14) via `updateMiner(148, …)`; stretch
    Apps & Agents entry (agent autonomously buys `EVENT_OUTCOME_RESOLUTION` through Telegraph) with
    a first purchase by the Nov 14 milestone. Track choice is pending the user. Only H2-period
    activity counts as evidence. Nov 1–10 overlaps Total Recall, so Total Recall has priority

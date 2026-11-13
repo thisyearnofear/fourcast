@@ -56,7 +56,7 @@ export async function handleEventOutcomeResolution(params = {}) {
     const question = marketSearchText(params);
     if (question) {
       const market = await resolveFromMarkets({ ...params, question });
-      if (market.answer || market.metadata?.error !== 'no_market') return market;
+      if (market.answer || market.metadata?.error !== 'absent') return market;
     }
     return resolved;
   }

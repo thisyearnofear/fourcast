@@ -8,17 +8,18 @@
 
 ## 0. Where we are (2026-11-12)
 
-About 66 hours remain. Measured 2026-11-12, read-only:
+About 33 hours remain. Measured 2026-11-13:
 
 - Mandate is live. Cap $1,000, liquidity floor $500, slippage ≤ 300 bps, cooldown 60s, `approved_code_hash` unset, `last_trade_ns` 0. No `request_signature` has landed. [Contract](https://testnet.nearblocks.io/address/inexpensive-mother.testnet). Same numbers from `GET /api/near/mandate`.
-- Contract account holds about 10 NEAR. The owner key is not in local `.env` / `.env.local`, and not in the worker's `.env.agent` on `nuncio-vultr`. `fourcast-agent` is online and dry-run.
-- Derived Polygon account `0x6940B97505567816A75B1A952f234630af81c61F` holds 0 POL and 0 USDC.e.
-- Repo is already public. Canonical fixture `18175981` verifies, and its `nearCommitment` is `not-anchored`.
-- `node_modules` is not installed on this machine, so the local scripts cannot run until `npm ci`.
+- **Receipt anchored 2026-11-13.** Canonical fixture 18175981's contentHash is committed on `v1.social08.testnet` under `fourcast-agent.testnet` — tx [DH1WvxiTxDvCiDARTkLs3EwLJJFZSTr8TKQ3uw9CGVwt](https://testnet.nearblocks.io/txns/DH1WvxiTxDvCiDARTkLs3EwLJJFZSTr8TKQ3uw9CGVwt), state-readable at `fourcast-agent.testnet/fourcast/receipts/18175981`. The receipt file carries `onchainCommitments.near`; `NEAR_ACCOUNT_ID`+`NEAR_PRIVATE_KEY` are set on Vercel production.
+- **Anchor account created 2026-11-13:** `fourcast-agent.testnet` (~10 NEAR, faucet), creds file in the standard local keychain dir. This is the "agent treasury" account `docs/NEAR_HACKATHON.md` called a to-do.
+- **Owner key blocker (the judge's core point):** the contract is self-owned and `request_signature` asserts `predecessor == owner`, so the refusal tx strictly needs the `inexpensive-mother.testnet` key. Its public key is `ed25519:ASqEAeYD68XbZqJJjX7T4x7Qv9VchQdHAgHrCKYUzr5b`. A macOS keychain item `near-testnet-inexpensive-mother.testnet` exists (created 2026-11-05 12:31) but its secret is ACL-gated — non-interactive reads fail (`errSecInteractionNotAllowed`), and the current `near` binary reports "no access keys found" (acct-attr format drift). **Human action required:** Keychain Access.app → search `inexpensive-mother` → show password (or `security find-generic-password -s "near-testnet-inexpensive-mother.testnet" -w` in a terminal with GUI approval). Drop the result into `~/.near-credentials/testnet/inexpensive-mother.testnet.json` or run the refusal directly with `near` + `sign-with-plaintext-private-key`.
+- Derived Polygon account `0x6940B97505567816A75B1A952f234630af81c61F` holds 0 POL and 0 USDC.e — the refusal path is the live moment, per the plan.
+- Judge feedback (2026-11-13): README claims "anchored" while live verify said `not-anchored` and health said `unconfigured` — being closed by the anchor + env + redeploy above. Remaining judge items: refusal tx on explorer, X video pointing at the two tx links, one submission POST before 2026-11-14T23:59:00Z.
 
 Do these in order. Stop at the first one that needs a human:
 
-1. **One falsifiable on-chain moment.** Prefer `node scripts/near-first-order.mjs` (a real `request_signature`) if the derived EOA is funded. If it is not, ship the refusal receipts from `scripts/near-mandate-gates.mjs` plus one anchored receipt. Do not open a new venue.
+1. **Refusal tx on-chain** — needs the owner key (blocker above). Once the key is in `~/.near-credentials/testnet/`: `node scripts/near-mandate-gates.mjs --venue` (writes `public/proof/near-refusal.json`), or any other gate flag. The anchor leg of this item is already done.
 2. **Keep the hosted demo up through 18 Nov, ideally 25 Nov.** A local-only demo is allowed only with a public repo, a reproducible README, and an X video. Screenshots are not enough when a judge cannot open the demo. Claude and Codex screen reproducibility before the human jury; a low machine score alone cannot reject the entry.
 3. **Human publishes the X post.** It must say the project was built at NEAR HACKATHON, tag `@NEARProtocol` and `#NEARHackathon` (optionally `@NearLegion` and `@NearBuilders`), and attach a video. Draft the text here; do not post it.
 4. **Human confirms the payload, then submit once** to `POST https://nearhackathon.com/api/applications` or https://nearhackathon.com/#apply. There is no earlier sign-up. A second POST of the same repo is a 409. Fixes go to https://nearhackathon.com/request-changes.

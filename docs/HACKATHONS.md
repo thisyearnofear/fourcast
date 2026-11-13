@@ -4,36 +4,11 @@ Single home for every hackathon / competition Fourcast participates in (past and
 active). Created 2026-08-18 by consolidating the retired per-event docs
 (`HACKATHON.md` for TxLINE, `HACKCANTON_VALIDATION.md` for HackCanton).
 
-Status legend: 🔴 active now · ⏸️ between tracks · ✅ participated (finished).
+Status legend: 🔴 active now · ⏸️ between tracks · ✅ participated (finished) · ⚪ closed without entry.
 Deadlines are as recorded in-repo; verify against the official event page before
 relying on them.
 
 ## Active
-
-### Strike Hackathon — perps on V2 CLOB — 🟡 candidate, deadline extended (announced 21–23 Oct 2026)
-- **What:** Strike (perpetuals protocol on Cardano/Ethereum/Solana; V2 = CLOB +
-  dedicated execution layer with on-chain locker settlement) invites integrations
-  across trading tools, automation, social trading, data, and new apps. Prize
-  pool 6,000 STRIKE (3k/2k/1k); top projects may get direct investment.
-- **Our entry:** **Fourcast with a Strike venue adapter** — the mandate-bound
-  autonomous trader lane. Every submission will claim AI-trading performance;
-  we prove mandate adherence with pre-fill decision receipts reconciled against
-  Strike's own fills/positions record, calibrated Brier-style. Enter nothing
-  else — perps dashboards (Hizz), global copy trading (Strike Copilot), and
-  memecoin copy-trade (Bolt) lanes are already occupied by named submissions.
-- **Submission:** [`docs/STRIKE_INTEGRATION.md`](STRIKE_INTEGRATION.md) —
-  verified API facts, the frozen adapter contract (`services/strike/*`),
-  the five-gate mandate mapped to perps physics, phase plan, and checklist.
-- **Timeline:** original deadline 23 Oct 2026 was extended per the organizers
-  (confirmation + new date + the submission form link come via Strike's official
-  channels — join the Discord; verify before relying on any date here).
-- **Prerequisites to start Phase 0:** builder-code registration
-  (`app.strikefinance.org/builder-codes`) and a **testnet** API wallet
-  (`app.strikefinance.org/api-keys`); funding only needed for a mainnet demo.
-- **Risk:** the calendar was extended into ambiguity — lock the new date the
-  moment the form publishes. Second risk: our edge discovery is
-  prediction-market native; the perps physics (funding, liquidation) is new, so
-  gate 3 (tail-loss) and gate 1 (edge net of fees+funding) carry the real work.
 
 ### Total Recall — Tatum × Walrus Memory — 🔴 open, build window 20 Oct – 10 Nov 2026
 - **What:** build an app that **remembers** — Walrus Memory on Sui mainnet as
@@ -89,26 +64,32 @@ Season II so we enter instrumented instead of blind.
   A group can win one delivery + one excellence award per track. Related
   wallets and jointly controlled teams count as **one group**.
 - **To win:** ≥70/100 and the track's technical minimum.
-  - **Providers (our miner):** independently tested intelligence quality 35
-    (**min 24**) · reliability/uptime/capacity 20 · useful Intent coverage and
-    apps enabled 15 · verified use by H2 mission apps 10 · cost/latency/serving
-    economics 10 · integration/docs 10. Each Miner–Intent pair is tested on its
-    own task against same-Intent competitors, **so multi-intent miners are
-    scored per intent** (this answers the open question in
-    `TELEGRAPH_FINDINGS.md` F3). The coverage points favour Intents the 15
-    missions need. A new capability can qualify before demand exists.
+  - **Providers (our miner — Miners tab re-read 2026-11-13):** independently
+    evaluated intelligence quality 35 (**min 24**) · reliability,
+    availability, and capacity 15 · verified Intent coverage and application
+    enablement 10 · verified H2 mission-app consumption 10 · cost, latency,
+    and serving economics 5 · integration and documentation 5 · **organic
+    growth, education, and developer activation 20**. Each Miner–Intent pair
+    is tested on its own task against same-Intent competitors, **so
+    multi-intent miners are scored per intent** (this answers the open
+    question in `TELEGRAPH_FINDINGS.md` F3). Coverage points attach to
+    intents the missions buy — `GAME_RESULT`/`SPORTS_SCORE` are in the
+    catalogue but in **none** of the fifteen missions' buy lists. The
+    consumption 10 counts development-stage requests: a registered Season II
+    app still in progress buying the intent counts, as long as a reviewer
+    can see the mission work and the request. A new capability can qualify
+    before demand exists.
   - **Apps & Agents (weights on the live page, Apps tab selected, 2026-11-12):**
     technical quality and mainnet readiness 35 (**min 24**) · commercial
     viability **25** (was 30 on 23 Oct) · independent adoption **10** (was 15) ·
     Telegraph integration **5** (was 10) · reproducibility **5** (was 10) ·
-    **organic growth, education, and developer activation 20 (new)**. The
-    Miners and Evaluators point weights did not render in that tab, so the
-    23 Oct Provider weights above stay until the Miners tab is re-read. A hard
+    **organic growth, education, and developer activation 20 (new)**. A hard
     requirement is still **at least one genuinely autonomous machine-to-machine
     purchase or sale through the supported Telegraph flow**; testnet qualifies.
     Every track must star [telegraphprotocol/bounties](https://github.com/telegraphprotocol/bounties).
   - **Evaluators:** measurement validity 40 (**min 28**) · integrity 20 ·
-    repeatability 15 · coverage/improvement 20 · docs 5.
+    repeatability 15 · coverage/improvement 20 · docs 5 — and per the
+    2026-11-13 re-read, evaluators carry the same organic-growth 20.
 - **Delivery awards favour breadth:** the most distinct completed missions,
   then distinct apps, then missions only one group covers.
 - **Submission (by Dec 1):** project details (including the GitHub username
@@ -116,10 +97,11 @@ Season II so we enter instrumented instead of blind.
   beginner-friendly run steps (stating the network, costs and limitations),
   evidence (receipts, requests, endpoints, tests), a short public summary, and
   showcase permissions. Season I's "views and tags" score is gone. The 12 Nov
-  rules replace it, on the Apps rubric, with 20 points for original technical
-  updates on separate dates, a tutorial someone else can run, and evidence an
-  independent developer actually tried it. A star, follower, or repost alone
-  does not count. Bought engagement is disqualifying.
+  rules replace it with 20 points for original technical updates on separate
+  dates, a tutorial someone else can run, and evidence an independent
+  developer actually tried it — and the 13 Nov re-read shows that 20 sits on
+  **all three** entries (apps, miners, evaluators). A star, follower, or
+  repost alone does not count. Bought engagement is disqualifying.
 - **Accurate claims:** state the network (we run on Base Sepolia, i.e. testnet)
   and what was actually verified. Testnet traffic is never presented as paying
   production use.
@@ -131,29 +113,75 @@ Season II so we enter instrumented instead of blind.
   Mining & Power, Asset Management, Web3 Native & DeFi, Consumer Automation).
   `GAME_RESULT` / `SPORTS_SCORE` alone therefore earn little of the 15
   coverage points.
-- **`EVENT_OUTCOME_RESOLUTION` is mission-critical.** Mission 14 (Web3 Native &
-  DeFi) has the example build "self-settling conditional escrow", which buys
-  `EVENT_OUTCOME_RESOLUTION` (Hybrid, target < 5 s, shared by 4 missions). That
-  is our prediction-market core, and the handler already exists, flag-gated and
-  unregistered.
-- **Providers track (primary):** keep `GAME_RESULT` and register
-  `EVENT_OUTCOME_RESOLUTION` via `updateMiner(148, …)` early in the window
-  (never `registerMiner`). Its quality has to clear 24/35 on its own.
-  - **Gap to close first:** the network defines this Intent broadly. From the
-    H2 intents catalogue: "Resolves objective real-world event outcomes for
-    prediction markets and conditional contracts using quorum oracles";
-    reference sources "Polymarket API / NewsAPI"; miners "scrape consensus
-    from 10+ independent news outlets, sports APIs, or flight statuses";
-    target < 5 s. Our handler (`src/intents/eventOutcomeResolution.js`) only
-    wraps `GAME_RESULT`, so it would return `no_result` for every non-sports
-    question and score badly.
-  - **The cheapest way to broaden it:** use settled prediction-market state as
-    one oracle. `scripts/forecast-and-resolve.mjs` already contains a strict,
-    tested reader for Polymarket (Gamma) and Kalshi settlement
-    (`deriveOutcome`). Combined with the sports path, that gives two
-    independent legs; any question neither can settle is still reported as
-    absent. Total Recall's window is closed. Do this after the NEAR payload
-    is sent, and before `updateMiner`.
+- **`EVENT_OUTCOME_RESOLUTION` is the intent the missions share.** All four
+  buyers are named in the mission data (re-read 2026-11-13):
+  - **Mission 5, Conflict Intelligence** — "Verified off-chain facts for
+    on-chain execution" (Brevan Howard buyer). Buys `FACT_CHECK`,
+    `EVENT_OUTCOME_RESOLUTION`, `CROSS_CHAIN_STATE_VERIFY`.
+  - **Mission 6, Resources & Agriculture** — "Parametric payout without an
+    adjuster": a hail-or-drought payout between an insurer's agent and a
+    grower's agent. Buys `WEATHER_FORECAST_VERIFY`,
+    `SATELLITE_IMAGERY_ANALYSIS`, `EVENT_OUTCOME_RESOLUTION`.
+  - **Mission 13, Asset Management** — "Forecast accountability, scored by
+    machines" (VanEck buyer): an agent buys the outcome at each checkpoint
+    and publishes the grade. Buys `EVENT_OUTCOME_RESOLUTION`, `FACT_CHECK`,
+    `WEB_SEARCH`.
+  - **Mission 14, Web3 Native & DeFi** — "The self-settling conditional
+    escrow": two agents lock funds, the contract buys the outcome, the
+    receipt releases them. Buys `EVENT_OUTCOME_RESOLUTION` and
+    `CRYPTO_TRANSFER_VERIFY`. Testnet is enough for the contract logic.
+  Hybrid, target < 5 s, catalogue source "Polymarket API / NewsAPI," method
+  "10+ independent news outlets, sports APIs, or flight statuses." Our market
+  leg serves Missions 13 and 14 when the ask is a real Polymarket or Kalshi
+  market. It does not settle Mission 6's hail-or-drought or Mission 5's
+  off-chain fact unless that fact is itself a settled market, and those two
+  missions also buy intents we do not serve.
+- **Position (decided 2026-11-13): settlement reader, not a sports-proof miner.**
+  Three jobs share this intent's name. A score feed reports the game
+  (`GAME_RESULT` / `SPORTS_SCORE`, already a ~0.99 board, and in none of the
+  fifteen mission buy lists). A resolution proposer bonds an outcome on UMA
+  and waits out a challenge; we do not do that. A settlement reader reports
+  the venue's own terminal record: still open, or which side settled, with
+  `verified: false`. That is the product. The outcome board's leaders are
+  single-league sports APIs; the Polymarket miners under them return catalogs.
+  The public YAML still describes verified sports scores. That sentence is
+  replaced only on the next `updateMiner`, because a description edit changes
+  the hash.
+- **Providers track (primary).** `updateMiner(148, …)` succeeded 2026-11-13,
+  tx [0x12ce360b…](https://sepolia.basescan.org/tx/0x12ce360b0390aaeae5eac5bddfd2de1efe2b633aed743e86c7b6edacd492c56c),
+  hash `0xb6044d0a…`, bare intent names. The diamond reverts on the
+  `_GENERAL` display ids. Never `registerMiner` again. Quality still has to
+  clear 24/35 on `EVENT_OUTCOME_RESOLUTION` against that field. The
+  consumption 10 arrives when another registered Season II app buys the
+  intent from miner 148 inside the window. Our own app buying our own miner
+  does not count as independent adoption. The node had not reindexed 148
+  off `rejected` the afternoon of the tx; confirm `GET /api/miners/148`
+  before calling the miner buyable.
+  - **Landed:** `telegraph-miner/src/marketResolution.js`. Named Polymarket
+    lookups (`market_id`, `condition_id`, `slug`, `market_url`), Gamma
+    `public-search` for free text, Kalshi direct lookups (`ticker`,
+    `event_ticker`, `series_ticker`; no public text search — the handler
+    returns `kalshi_needs_ticker`). A named market short-circuits here. An
+    unnamed ask tries sports, then Polymarket search. Settlement uses the
+    same `deriveOutcome` as the forecast resolver
+    (`services/markets/outcomeSettlement.js`). The intent answers unless
+    `TELEGRAPH_INTENT_EVENT_OUTCOME=false`. Market answers stay
+    `verified: false`.
+
+#### Settlement reader — implementation plan (2026-11-13)
+
+Best in class means a Mission 13 or 14 contract can branch on one response, inside the catalogue's 5-second budget, and cannot release on a dispute, a tie, a different market, or a missing market. Sports coverage is not the work.
+
+1. **Catalogue.** Re-read `GET /api/miners/148` until `rejected` is gone and the slug is on the active list. Until then no mission app can buy this. Do not send another `updateMiner` to "poke" the indexer. *Status 2026-11-13:* still `rejected` on the pre-update record (`updated_at` 2026-10-24, old intents, old hash) — indexer lag, not a new failure. The served YAML SHA-256 (`b6044d0a…`) matches the hash the Nov-13 tx signed, so the rejection reason clears on reindex.
+2. **Statuses a contract can switch on** — **landed 2026-11-13.** `classifyOutcome` in `services/markets/outcomeSettlement.js` reads the venue's terminal record into `open`, `pending_resolution`, `resolved`, or `void`; absence is `answer: null` with `metadata.error` `absent` / `ambiguous_market` / `kalshi_needs_ticker`. UMA `proposed`/`disputed` and Kalshi determined-not-settled hold as `pending_resolution`; a closed, UMA-resolved 0.5/0.5 reports `void` — never a guessed winner. Every answer carries `uma_resolution_status`, the market URL, `resolution_source`, and a `rules_excerpt`. Release only on `resolved`; hold on `open`/`pending_resolution`; `void` releases only when the escrow's own terms say split.
+3. **One market, the one named** — **landed 2026-11-13.** A `slug` or `event_ticker` matching several markets returns `ambiguous_market` with the candidate list; two handles naming the *same* market dedupe. A direct `condition_id`/`market_id`/`ticker` is the name. Free-text search keeps the token overlap gate and stays Polymarket-only.
+4. **Rules stay the venue's** — **landed 2026-11-13.** `market.resolution_source` and `market.rules_excerpt` ride every answer verbatim. The reader reports how the venue settled; it does not reinterpret or vote on UMA.
+5. **Multi-outcome** — **landed 2026-11-13.** `classifyOutcome` resolves N-outcome markets when exactly one price is 1 and the rest 0 (label returned); otherwise `pending_resolution`. The strict two-outcome `deriveOutcome` stays untouched for the forecast resolver.
+6. **Buyer packet** — **landed 2026-11-13** in `telegraph-miner/README.md` → Position: the status table, the release rule, and a replayable `condition_id` curl.
+7. **Manifest sentence, next pin only.** When the statuses exist, change the YAML description to the settlement-reader line, recompute the hash from the raw URL, and `updateMiner` with the **bare** intent names and `--gas-limit 800000`. Do not edit `telegraph.yaml` before that, or the hash the node fetches will drift from the hash just signed.
+8. **Someone else buys it.** One registered H2 app, still in development is enough, whose reviewer can see the mission and the request to miner 148. That is the consumption 10. A self-purchase can demo the Apps track and does not count as independent adoption.
+9. **Three public updates on separate dates** before 1 Dec, disclosing the hackathon and the prize: what a settlement reader returns and why a score is the wrong release; the status machine with a curl someone else can run; a second developer's request. A star alone does not score.
+10. **Out of scope.** A 10-outlet news quorum, weather, satellite, fact-check, an UMA proposer, and a push to win the 0.99 `GAME_RESULT` board. Mission 5 and Mission 6 stay unmet unless the condition is itself a market.
 - **Apps & Agents track (stretch, after the NEAR submission):** the Fourcast
   agent autonomously buys `EVENT_OUTCOME_RESOLUTION` through Telegraph to
   resolve a position or conditional settlement. Mission 14's worked example is
@@ -163,15 +191,20 @@ Season II so we enter instrumented instead of blind.
   `EVENT_OUTCOME_RESOLUTION` (hybrid, target under 5 seconds, shared by 4
   missions) plus `CRYPTO_TRANSFER_VERIFY`, and the receipt releases the funds.
   The page says contract logic may run on testnet. Our app consuming our own
-  miner does not count as independent adoption.
+  miner does not count as independent adoption. Season I's app winners were
+  the same shape — Truvian Shield bought four pieces of intelligence before an
+  agent signed, ProofPact froze the criteria, bought an independent answer and
+  settled, Scam Shield put that intelligence inside a surface a person already
+  uses — buy the outcome, then act on the receipt.
 - **14 Nov is a progress check, not a cut.** NEAR's hard close is the same
-  evening, so NEAR is submitted first. For Telegraph that day, a written
-  blocker is enough: which purchase flow is missing, and what the next call
-  will be. The three public updates the new 20 growth points ask for (separate
-  dates, disclose the hackathon and the prize) start after the NEAR post so
-  they can land on distinct days before 1 Dec. Nov 20 is the community
-  showcase. TxLINE's free tier still expires 20 Nov and has to be renewed
-  before then.
+  evening, so NEAR is submitted first. For Telegraph the milestone is a
+  registered intent plus one request a reviewer can rerun, or a written
+  blocker that names the exact purchase it will be. The three public updates
+  (separate dates, disclose the hackathon and the prize) are 20 points on the
+  **miner** entry now too, so they have to start this week — landing after
+  the NEAR post keeps them on distinct days before 1 Dec. Nov 20 is the
+  community showcase. TxLINE's free tier still expires 20 Nov and has to be
+  renewed before then.
 - **Evaluators: skip.** The agreement-gate finding stands, and it ships as the
   P6 findings report, not as a track entry.
 
@@ -302,13 +335,13 @@ positioning claims.
       default), receipt/replay/verify render with the stream off. Kelly suite
       back to green (stale `sizePct` expectation 0.04 → 0.15, matching the
       real fractional-Kelly math).
-- [ ] **Repositioning: miner-first (plan written 2026-09-29 in
-      `STRATEGY.md`, not implemented).** The agent lane is honestly `PAUSED`
-      but the hero still promises live agent discipline. Recommended: live
-      product = verified sports intelligence via our Season II miner;
-      agent = auditable archive. Bounded copy-first change (brand.js hero +
-      one nav slot for the existing `/proof` Solana "Decision receipts"
-      surface); no new routes, no worker restart, no paid tier.
+- [ ] **Repositioning: settlement reader (decided 2026-11-13).** The agent
+      lane is honestly `PAUSED`. The Season II miner is a reader of named
+      Polymarket and Kalshi settlements, with sports as the fixture fallback.
+      The site hero and `telegraph.yaml` still say verified sports
+      intelligence. The YAML sentence waits for the next `updateMiner` (a
+      description edit changes the pinned hash). Hero copy can change without
+      that transaction. Plan: **Settlement reader** above.
 - [x] P0 instrumentation: `npm run survey`, `GET /api/asked`, outcome counters,
       upstream ledger, and `degraded` `/health` (telegraph-miner v1.1). Its
       first local run caught ESPN answering 403 to custom User-Agents, and
@@ -428,10 +461,11 @@ positioning claims.
       or write it up as a finding. **Written up (`2026-10-21`,
       `docs/TELEGRAPH_FINDINGS.md`):** the agreement gate makes a
       *corrected* `GAME_RESULT` scorer structurally unpassable, so building WASM
-      would buy a slot that cannot score. The handler itself shipped behind
-      `TELEGRAPH_INTENT_EVENT_OUTCOME`, **default off and unregistered** — the
-      intent set is on-chain and closed, so `/status` advertises registered
-      intents only and the handler is demoed by direct call.
+      would buy a slot that cannot score. On 2026-10-21 the handler shipped
+      behind `TELEGRAPH_INTENT_EVENT_OUTCOME`, default off. **As of 2026-11-13**
+      that flag is a kill switch (`false` refuses; unset answers), the market
+      leg is on, and `updateMiner` 148 included the bare intent name. `/status`
+      advertises the three `_GENERAL` ids.
 - [ ] P4 Track 3 app decision (paid-rail buyer on top of the decision core).
       Shared surface with Total Recall WP5: P4 is a **consumer** of
       `services/payments/x402Sui/` (`deliverAfterSettlement`, per-answer ceiling,
@@ -573,3 +607,24 @@ positioning claims.
   TST on testnet. Delphi-specific code lives in `services/delphiService.js`,
   `services/delphiAgentLoop.js`, `services/delphiIntelligence.js`,
   `services/delphiDataFeeds.js`, and `deploy/delphi-agent.ecosystem.config.cjs`.
+
+---
+
+## Closed without entry
+
+### Strike Hackathon — perps on V2 CLOB — ⚪ closed, not entered (recorded 2026-11-13)
+- **What:** Strike (perpetuals on Cardano/Ethereum/Solana; V2 = CLOB + dedicated
+  execution layer with on-chain locker settlement) invited integrations across
+  trading tools, automation, social trading, data, and new apps. Prize pool
+  6,000 STRIKE (3k/2k/1k); top projects could get direct investment.
+- **Outcome:** the original 23 Oct 2026 deadline was extended by the organizers,
+  then the event closed without a Fourcast submission. It stayed a candidate
+  behind the Total Recall, NEAR, and Telegraph H2 windows.
+- **What survives:** the partial venue adapter —
+  `services/strike/{strikeClient,strikeDiscovery,strikeTrading}.js`,
+  `scripts/strike-check.mjs`, and `tests/strike.test.js` (public market data
+  verified live on testnet; the signed path is built and mocked-tested, never
+  exercised without an API wallet). The verified API facts, the frozen adapter
+  contract, and the mandate→perps gate mapping live in
+  [`docs/STRIKE_INTEGRATION.md`](STRIKE_INTEGRATION.md). If Strike reopens an
+  integration round, that doc is the entry.

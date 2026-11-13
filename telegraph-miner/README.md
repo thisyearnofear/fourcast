@@ -1,22 +1,20 @@
 # Fourcast Telegraph Miner
 
-Telegraph Protocol miner serving **verified sports intelligence** — live scores and final match results, with Solana Merkle proof verification where the publisher serves one (proof availability on our tier: see TxLINE Setup below).
+Telegraph miner whose Season II product is a **settlement reader**. For a named Polymarket or Kalshi market it reports whether the venue still has the market open, or which side the venue settled, and it leaves `verified: false`. A fixture ask still falls through to TxLINE, then ESPN. A Solana Merkle proof is attached only when TxLINE actually publishes one (the free-tier proof endpoint returns 500; see TxLINE Setup).
 
-> **Season II plan:** Season I scored this miner 0 (structural — we shipped into
-> a near-zero-scored intent family, shipped without seeing the scorer's own
-> measured zero, and had no instrumentation to notice). The Season II
-> readiness plan — instrument first
-> (survey/asked), make verification a one-command independent check, dual-shape
-> `GAME_RESULT`, an evaluator WASM, and a paid-rail Track 3 app — lives in
-> [`docs/HACKATHONS.md`](../docs/HACKATHONS.md).
-> Read it before registering into any intent.
+The published `telegraph.yaml` description still says "verified sports scores… no trust required." That sentence is wrong for market answers. It changes only on the next `updateMiner`, because editing the file changes the hash the node fetches. The replacement sentence and the work to be best in class at the reader are in [`docs/HACKATHONS.md`](../docs/HACKATHONS.md) under **Settlement reader**.
+
+> Season I scored this miner 0. Instrumentation, dual-shape `GAME_RESULT`, and the evaluator-track finding are in the same doc. Do not enter the evaluator track.
 
 ## Intents
 
 | Intent | Description | Sources |
 |--------|-------------|---------|
+| `EVENT_OUTCOME_RESOLUTION` | Named Polymarket or Kalshi market: `open`, or the venue's settled side. Unnamed text tries a fixture, then Polymarket search. | Gamma API, Kalshi public API; fixtures via the sports path |
+| `GAME_RESULT` | Final result of the most recent *completed* game | TxLINE (Merkle proof only when published), then ESPN |
 | `SPORTS_SCORE` | Live or most recent score for a team/fixture/league | TxLINE, then ESPN |
-| `GAME_RESULT` | Final result of the most recent *completed* game | TxLINE (with Merkle proof when published), then ESPN |
+
+Scored ids on the node end in `_GENERAL` (`EVENT_OUTCOME_RESOLUTION_GENERAL` and the two sports ids). The diamond accepts the bare names above and reverts on the `_GENERAL` strings. The handler advertises the `_GENERAL` ids. Both forms are accepted on `POST /query`.
 
 ## Season II changes (v1.1)
 
@@ -85,20 +83,34 @@ Read `npm run survey` before any registration change. On 2026-09-28 it showed
 `SPORTS_SCORE` effectively unmeasured network-wide (best miner 7.5e-12), while
 `GAME_RESULT` is measured (best 0.1197) and we were 15/15 at 0.
 
-## Differentiator
+## Position
 
-Most sports miners return a score. This one returns a score with its evidence
-stated plainly:
+A score feed reports the game. A resolution proposer bonds an outcome on UMA and waits out a challenge. This miner does the third job: it reads a venue's own record.
 
-- **TxLINE answers** can carry a Solana Merkle proof; consumers can check it
-  (`npm run verify`, or CPI `txoracle::validate_stat`) without trusting the miner.
-  `verified: true` appears only then.
-- **ESPN answers** fill the gaps the free TxLINE tier leaves. They are signed by
-  the miner and marked `verified: false`.
-- **Every answer** is Ed25519-signed over the settle fields, with the key
-  published at `/.well-known/fourcast-miner.json`.
-- Natural-language asks work: "Did the Dodgers beat the Giants?" resolves both
-  sides, the intent, and the league.
+- **Named market.** `condition_id`, `market_id`, `slug`, `market_url`, or a Kalshi `ticker` / `event_ticker` / `series_ticker`. Kalshi has no public text search; the handler returns `kalshi_needs_ticker` instead of guessing.
+- **Five statuses a contract can switch on.** `classifyOutcome` in `services/markets/outcomeSettlement.js` reads the venue's own terminal record:
+
+  | `answer.status` | Meaning | Contract action |
+  |---|---|---|
+  | `resolved` | One unambiguous winner: exactly one price is 1 and the rest 0 (N-outcome included), or Kalshi `result` is `yes`/`no`. | **Release.** |
+  | `open` | Still trading. | Hold — the escrow has not matured. |
+  | `pending_resolution` | Closed or halted, venue not final: UMA `proposed`/`disputed`, Kalshi determined-not-settled, or a terminal state we cannot read. | Hold — poll again later. |
+  | `void` | Venue finalized a split or cancellation (UMA-resolved 0.5/0.5; Kalshi non-yes/no result). | Release only when the escrow's own terms say split. |
+  | *(absent)* | `answer` is `null` with `metadata.error` `absent` / `ambiguous_market` / `kalshi_needs_ticker`. | Hold — no market read happened. |
+
+  A `slug` or `event_ticker` that matches several markets returns `ambiguous_market` with the candidate list — name one (`condition_id`, `market_id`, or `ticker`); the reader never picks a winner among siblings. Every answer carries `market.uma_resolution_status`, `market.url`, `market.resolution_source`, and a `rules_excerpt` of the venue's own terms. The venue's rules stay the venue's: this miner reports how the venue settled overtime, postponement, or a tie, and does not bond, dispute, or vote on UMA.
+
+- **`verified: false` on every market answer.** A platform settlement is evidence, not a Merkle proof. The Ed25519 attestation proves this miner said it; `market.url` is the venue record a reviewer can open.
+- **Sports is the fixture fallback**, not the headline. `GAME_RESULT` and `SPORTS_SCORE` stay served. They are absent from all fifteen Season II mission buy lists. `verified: true` still means a real TxLINE Merkle root and nothing else.
+
+```bash
+# Replayable: a Mission 14 escrow asks "has this market released?"
+curl -X POST https://miner.sportwarren.com/query \
+  -H "Content-Type: application/json" \
+  -d '{"intent":"EVENT_OUTCOME_RESOLUTION","params":{"condition_id":"0xCONDITION_ID"}}'
+```
+
+**Release rule:** `answer != null && answer.status === 'resolved'` — `answer.winner` is the settled side. Hold on `open` and `pending_resolution`. `void` releases only when the escrow's own terms say split. `verified` is never the release bit; the miner's signature on the response proves this miner said it, and `answer.market.url` is the evidence.
 
 ## Query Interface
 
@@ -236,20 +248,26 @@ docker run -d --restart=unless-stopped -p 8402:8402 \
 
 ## Current registration status
 
-Node re-check 2026-11-13: registration 148 was **`rejected`**. The on-chain
-YAML hash `608b7dd0…` did not match the file at the raw GitHub URL
-(`9f949102…`), and the node does not retry that fetch. The canonical intent
-ids are `SPORTS_SCORE_GENERAL`, `GAME_RESULT_GENERAL`, and
-`EVENT_OUTCOME_RESOLUTION_GENERAL`. Re-admission is `updateMiner(148, …)`
-with the hash of the file the URL actually serves and those three ids.
+`updateMiner(148, …)` landed on 2026-11-13 in
+[0x12ce360b0390aaeae5eac5bddfd2de1efe2b633aed743e86c7b6edacd492c56c](https://sepolia.basescan.org/tx/0x12ce360b0390aaeae5eac5bddfd2de1efe2b633aed743e86c7b6edacd492c56c)
+(Base Sepolia, status success). The diamond stored the raw GitHub YAML URL,
+hash `0xb6044d0a2314c1f7c74803e48d9aaa4abf931d450fb2925cee3abbe712b77321`, and
+the bare intent names `SPORTS_SCORE`, `GAME_RESULT`, `EVENT_OUTCOME_RESOLUTION`.
+The facet **reverts** on the `_GENERAL` display names. Do not send
+`0x608b7dd0…` again: that was the October hash the node rejected, and it does
+not retry a rejected fetch.
+
+The node indexer had not caught up the same afternoon (`GET /api/miners/148`
+still showed the 24 October rejection, so the active catalogue omitted the
+slug). Re-read that endpoint before claiming the network routes to this miner.
 Do not `registerMiner` again.
 
 | Layer | What it says |
 |---|---|
-| Git `telegraph.yaml` + `GET /` | `SPORTS_SCORE`, `GAME_RESULT` |
-| Live `https://miner.sportwarren.com` | healthy; `/query` only handles those two intents |
-| Node `GET /api/miners/148` | **`active`**, same intents, GitHub raw YAML |
-| Catalog slug `fourcast-sports-intelligence` | `SPORTS_SCORE`, `GAME_RESULT` |
+| Process `https://miner.sportwarren.com` | Serves the three `_GENERAL` intents. Market leg answers a named Polymarket or Kalshi market. |
+| Chain, registration 148 | Update tx above. Bare intent names. Hash `0xb6044d0a…`. |
+| Published `telegraph.yaml` description | Still the sports-proof sentence. Replace it only inside the next `updateMiner`. |
+| Node catalogue | Confirm `GET /api/miners/148` left `rejected` before treating the miner as buyable. |
 
 First pin (2026-08-19, `registrationId` 128) wrote `WEB_SEARCH` / `FACT_CHECK`
 because `registerMiner` takes intents as a **separate argument** from the YAML.
@@ -333,6 +351,12 @@ export YAML_HASH="0x$(curl -fsSL "$YAML_URL" | shasum -a 256 | awk '{print $1}')
 export FEE_ADDRESS="0x55A5705453Ee82c742274154136Fce8149597058"
 export MIN_PRICE=10000   # 0.01 USDC (6 decimals)
 
+# Intent strings are the bare names. The node displays them with a _GENERAL
+# suffix; passing that suffix makes MinerRegistryFacet revert ("unsupported
+# intent"), and a reverted estimate surfaces in some wallets as
+# "exceeds max transaction gas limit". --gas-limit 800000 is the cap that
+# landed tx 0x12ce360b… (estimate was ~511k).
+
 cast send "$DIAMOND" \
   "updateMiner(uint256,string,bytes32,address,uint256,string[])" \
   148 \
@@ -340,7 +364,8 @@ cast send "$DIAMOND" \
   "$YAML_HASH" \
   "$FEE_ADDRESS" \
   "$MIN_PRICE" \
-  '["SPORTS_SCORE_GENERAL","GAME_RESULT_GENERAL","EVENT_OUTCOME_RESOLUTION_GENERAL"]' \
+  '["SPORTS_SCORE","GAME_RESULT","EVENT_OUTCOME_RESOLUTION"]' \
+  --gas-limit 800000 \
   --rpc-url "$RPC" \
   --private-key "$MINER_PRIVATE_KEY"
 ```

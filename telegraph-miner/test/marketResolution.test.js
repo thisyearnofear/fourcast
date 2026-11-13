@@ -39,12 +39,32 @@ const FED_OPEN = {
   active: true,
   outcomePrices: '["0.62","0.38"]',
 };
-const FED_AMBIGUOUS = { ...FED_RESOLVED, id: 520212, outcomePrices: '["0.5","0.5"]' };
+const FED_VOID = { ...FED_RESOLVED, id: 520212, outcomePrices: '["0.5","0.5"]' };
+const FED_PROPOSED = { ...FED_RESOLVED, id: 520213, umaResolutionStatus: 'proposed' };
+const FED_NONTERMINAL = {
+  ...FED_RESOLVED,
+  id: 520214,
+  outcomePrices: '["0.9","0.1"]',
+  umaResolutionStatus: undefined,
+};
+const FED_MULTI_RESOLVED = {
+  ...FED_RESOLVED,
+  id: 520215,
+  question: 'What did the Fed do in October 2026?',
+  outcomes: '["Cut 25","Hold","Hike"]',
+  outcomePrices: '["0","1","0"]',
+};
 const KALSHI_SETTLED = {
   market: { ticker: 'KXFEDDECISION-26OCT', title: 'Fed cuts rates in October', status: 'settled', result: 'yes' },
 };
 const KALSHI_OPEN = {
   market: { ticker: 'KXFEDDECISION-26NOV', title: 'Fed cuts rates in November', status: 'open', result: '' },
+};
+const KALSHI_PENDING = {
+  market: { ticker: 'KXFEDDECISION-26DEC', title: 'Fed cuts rates in December', status: 'closed', result: '' },
+};
+const KALSHI_VOIDED = {
+  market: { ticker: 'KXFEDDECISION-26JAN', title: 'Fed cuts rates in January', status: 'settled', result: 'voided' },
 };
 
 let realFetch;
@@ -110,13 +130,88 @@ describe('resolveFromMarkets', () => {
     } finally { unstub(); }
   });
 
-  it('reports an ambiguous terminal state instead of guessing', async () => {
-    stubFetch([['gamma-api.polymarket.com/markets/520212', FED_AMBIGUOUS]]);
+  it('reports a finalized split as void — never a guessed winner', async () => {
+    stubFetch([['gamma-api.polymarket.com/markets/520212', FED_VOID]]);
     try {
       const out = await resolveFromMarkets({ market_id: '520212' });
+      assert.equal(out.answer.status, 'void');
+      assert.equal(out.answer.resolved, false);
+      assert.equal(out.answer.winner, null);
+      assert.equal(out.answer.result, 'void');
+      assert.match(out.answer.reason, /equal terminal prices/);
+      assert.equal(out.answer.resolution.status, 'void');
+      assert.equal(out.metadata.resolution_status, 'void');
+    } finally { unstub(); }
+  });
+
+  it('holds on a proposed UMA resolution — pending_resolution, not resolved', async () => {
+    stubFetch([['gamma-api.polymarket.com/markets/520213', FED_PROPOSED]]);
+    try {
+      const out = await resolveFromMarkets({ market_id: '520213' });
+      assert.equal(out.answer.status, 'pending_resolution');
+      assert.equal(out.answer.resolved, false);
+      assert.match(out.answer.reason, /umaResolutionStatus=proposed/);
+      assert.equal(out.answer.resolution.status, 'pending');
+      assert.equal(out.answer.market.uma_resolution_status, 'proposed');
+    } finally { unstub(); }
+  });
+
+  it('holds on a closed market with non-terminal prices', async () => {
+    stubFetch([['gamma-api.polymarket.com/markets/520214', FED_NONTERMINAL]]);
+    try {
+      const out = await resolveFromMarkets({ market_id: '520214' });
+      assert.equal(out.answer.status, 'pending_resolution');
+      assert.match(out.answer.reason, /non-terminal outcomePrices/);
+    } finally { unstub(); }
+  });
+
+  it('resolves a multi-outcome market when exactly one price is 1', async () => {
+    stubFetch([['gamma-api.polymarket.com/markets/520215', FED_MULTI_RESOLVED]]);
+    try {
+      const out = await resolveFromMarkets({ market_id: '520215' });
+      assert.equal(out.answer.status, 'resolved');
+      assert.equal(out.answer.winner, 'Hold');
+      assert.equal(out.answer.outcome_index, 1);
+      assert.deepEqual(out.answer.outcomes, ['Cut 25', 'Hold', 'Hike']);
+    } finally { unstub(); }
+  });
+
+  it('refuses to pick a winner when a slug names several markets', async () => {
+    stubFetch([['gamma-api.polymarket.com/events?slug=fed-decisions', [{
+      id: 'e1', slug: 'fed-decisions', title: 'Fed decisions',
+      markets: [FED_RESOLVED, FED_OPEN],
+    }]]]);
+    try {
+      const out = await resolveFromMarkets({ slug: 'fed-decisions' });
       assert.equal(out.answer, null);
-      assert.equal(out.metadata.error, 'market_unresolved');
-      assert.match(out.metadata.message, /ambiguous/);
+      assert.equal(out.metadata.error, 'ambiguous_market');
+      assert.equal(out.metadata.candidates.length, 2);
+      assert.equal(out.metadata.candidates[0].platform, 'polymarket');
+    } finally { unstub(); }
+  });
+
+  it('two handles naming the same market dedupe, not refuse', async () => {
+    stubFetch([
+      ['gamma-api.polymarket.com/markets/520210', FED_RESOLVED],
+      ['gamma-api.polymarket.com/events?slug=fed-october-2026', [{ slug: 'fed-october-2026', markets: [FED_RESOLVED] }]],
+    ]);
+    try {
+      const out = await resolveFromMarkets({ market_id: '520210', slug: 'fed-october-2026' });
+      assert.equal(out.answer.status, 'resolved');
+    } finally { unstub(); }
+  });
+
+  it('carries the venue resolution source and a rules excerpt', async () => {
+    stubFetch([['gamma-api.polymarket.com/markets/520210', {
+      ...FED_RESOLVED,
+      resolutionSource: 'https://federalreserve.gov',
+      description: 'Resolves Yes if the FOMC cuts the target rate. '.repeat(20),
+    }]]);
+    try {
+      const out = await resolveFromMarkets({ market_id: '520210' });
+      assert.equal(out.answer.market.resolution_source, 'https://federalreserve.gov');
+      assert.ok(out.answer.market.rules_excerpt.startsWith('Resolves Yes'));
+      assert.ok(out.answer.market.rules_excerpt.length <= 241);
     } finally { unstub(); }
   });
 
@@ -151,6 +246,41 @@ describe('resolveFromMarkets', () => {
     } finally { unstub(); }
   });
 
+  it('holds on a closed-but-unsettled Kalshi market', async () => {
+    stubFetch([['kalshi.com', KALSHI_PENDING]]);
+    try {
+      const out = await resolveFromMarkets({ ticker: 'KXFEDDECISION-26DEC' });
+      assert.equal(out.answer.status, 'pending_resolution');
+      assert.match(out.answer.reason, /status=closed/);
+      assert.equal(out.answer.resolution.status, 'pending');
+    } finally { unstub(); }
+  });
+
+  it('reports a voided Kalshi market as void', async () => {
+    stubFetch([['kalshi.com', KALSHI_VOIDED]]);
+    try {
+      const out = await resolveFromMarkets({ ticker: 'KXFEDDECISION-26JAN' });
+      assert.equal(out.answer.status, 'void');
+      assert.equal(out.answer.result, 'void');
+    } finally { unstub(); }
+  });
+
+  it('refuses to pick among several markets under one event_ticker', async () => {
+    stubFetch([['kalshi.com', {
+      event: { event_ticker: 'KXFEDDECISION', title: 'Fed decisions' },
+      markets: [
+        { ticker: 'KXFEDDECISION-26OCT', title: 'October cut', status: 'settled', result: 'yes' },
+        { ticker: 'KXFEDDECISION-26NOV', title: 'November cut', status: 'open', result: '' },
+      ],
+    }]]);
+    try {
+      const out = await resolveFromMarkets({ event_ticker: 'KXFEDDECISION' });
+      assert.equal(out.answer, null);
+      assert.equal(out.metadata.error, 'ambiguous_market');
+      assert.equal(out.metadata.candidates.length, 2);
+    } finally { unstub(); }
+  });
+
   it('refuses Kalshi text search honestly — pass a ticker', async () => {
     const out = await resolveFromMarkets({ platform: 'kalshi', question: 'did the fed cut rates' });
     assert.equal(out.answer, null);
@@ -178,7 +308,7 @@ describe('resolveFromMarkets', () => {
     try {
       const out = await resolveFromMarkets({ question: 'did the fed cut rates in october' });
       assert.equal(out.answer, null);
-      assert.equal(out.metadata.error, 'no_market');
+      assert.equal(out.metadata.error, 'absent');
       assert.match(out.metadata.message, /none matched/);
     } finally { unstub(); }
   });
@@ -188,7 +318,7 @@ describe('resolveFromMarkets', () => {
     try {
       const out = await resolveFromMarkets({ question: 'did the zorblax treaty pass' });
       assert.equal(out.answer, null);
-      assert.equal(out.metadata.error, 'no_market');
+      assert.equal(out.metadata.error, 'absent');
     } finally { unstub(); }
   });
 });

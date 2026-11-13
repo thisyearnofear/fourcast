@@ -22,9 +22,10 @@ slug: fourcast-sports-intelligence
 protocol: generic
 name: Fourcast Sports Intelligence
 description: >
-  Verified sports scores and match results powered by TxLINE professional
-  bookmaker consensus with Solana Merkle proofs. Every result is independently
-  verifiable on-chain, no trust required.
+  Settlement reader for named Polymarket and Kalshi markets: reports whether
+  a market is still open, pending the venue's finalization, resolved to one
+  side, or void — plus sports scores and match results with TxLINE bookmaker
+  consensus and Solana Merkle proofs.
 
 base_url: https://miner.sportwarren.com
 
@@ -56,7 +57,7 @@ endpoints:
   - path: /query
     external_path: /query
     method: POST
-    description: Live score or final result for a named team, fixture, or competition
+    description: Settlement status of a named prediction market, or live score / final result for a named team or fixture
 
 # Accepts both our envelope {intent, params} and the flatter body the Engine
 # auto-router may build. The node does not enforce this schema.

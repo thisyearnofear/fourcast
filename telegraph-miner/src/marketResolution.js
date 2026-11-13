@@ -7,19 +7,22 @@
  * public API (direct ticker/event/series lookups — Kalshi has no public text
  * search, and this module says so rather than pretending).
  *
- * Settlement rules come from services/markets/outcomeSettlement.js — the same
- * strict `deriveOutcome` the forecast resolver uses: a market answers only on
- * an unambiguous terminal state. A market that is still trading answers
- * "not resolved" (status 'open'), which is itself the useful answer for a
- * conditional escrow. A question no market matches is absent — never a
- * confident answer about a different market.
+ * Settlement rules come from services/markets/outcomeSettlement.js —
+ * `classifyOutcome` reads the venue's own terminal record into one of four
+ * contract-switchable statuses: 'resolved' (one unambiguous winner), 'open'
+ * (still trading — itself the useful answer for an escrow that has not
+ * released), 'pending_resolution' (closed or halted, venue has not
+ * finalized: UMA proposed/disputed, Kalshi determined-not-settled), and
+ * 'void' (venue finalized a split or cancellation). A name that matches
+ * nothing, or several markets at once, is absent — never a confident answer
+ * about a different market.
  *
  * `verified` stays false on every market answer: a platform's own settlement
  * record is evidence, not a Merkle proof.
  */
 
 import { track } from './observe.js';
-import { deriveOutcome, parseMaybeJson } from '../../services/markets/outcomeSettlement.js';
+import { classifyOutcome, parseMaybeJson } from '../../services/markets/outcomeSettlement.js';
 import { RECONCILE_STATUS } from '../../services/txline/reconciliationService.js';
 
 const GAMMA = 'https://gamma-api.polymarket.com';
@@ -74,6 +77,10 @@ function polyCandidate(market, event) {
     question: market?.question || event?.title || null,
     url: slug ? `https://polymarket.com/event/${slug}` : null,
     end: market?.endDate || event?.endDate || null,
+    // The venue's own resolution machinery, carried verbatim — the reader
+    // reports how the venue settled the rules it wrote; it never reinterprets.
+    resolution_source: market?.resolutionSource || event?.resolutionSource || null,
+    rules: market?.description || event?.description || null,
   };
 }
 
@@ -85,6 +92,8 @@ function kalshiCandidate(market, event) {
     question: market?.title || market?.subtitle || event?.title || null,
     url: market?.ticker ? `https://kalshi.com/markets/${market.ticker}` : null,
     end: market?.close_time || market?.expected_expiration_time || null,
+    resolution_source: event?.settlement_sources?.[0]?.url || market?.settlement_source || null,
+    rules: market?.rules_primary || market?.rules_secondary || null,
   };
 }
 
@@ -128,6 +137,8 @@ function marketBlock(c) {
     closed: raw.closed ?? (['settled', 'finalized'].includes(raw.status) ? true : raw.status ?? null),
     uma_resolution_status: raw.umaResolutionStatus ?? null,
     kalshi_result: raw.result ?? null,
+    resolution_source: c.resolution_source ?? null,
+    rules_excerpt: c.rules ? clip(c.rules, 240) : null,
   };
 }
 
@@ -180,8 +191,52 @@ function openAnswer(c) {
   };
 }
 
+function pendingAnswer(c, verdict) {
+  return {
+    status: 'pending_resolution',
+    resolved: false,
+    winner: null,
+    result: null,
+    reason: verdict.reason,
+    market: marketBlock(c),
+    source: c.platform,
+    verified: false,
+    proof_available: false,
+    proof: null,
+    summary: `"${c.question}" is not yet settled on ${platformName(c.platform)} (${verdict.reason}).`,
+  };
+}
+
+function voidAnswer(c, verdict) {
+  return {
+    status: 'void',
+    resolved: false,
+    winner: null,
+    result: 'void',
+    reason: verdict.reason,
+    market: marketBlock(c),
+    source: c.platform,
+    verified: false,
+    proof_available: false,
+    proof: null,
+    summary: `"${c.question}" was voided or settled as a split on ${platformName(c.platform)} (${verdict.reason}).`,
+  };
+}
+
+function answerFor(candidate, verdict) {
+  if (verdict.status === 'resolved') return resolvedAnswer(candidate, verdict);
+  if (verdict.status === 'open') return openAnswer(candidate);
+  if (verdict.status === 'void') return voidAnswer(candidate, verdict);
+  return pendingAnswer(candidate, verdict);
+}
+
 function marketEnvelope(answer, upstreamErrors) {
-  const status = answer.resolved ? RECONCILE_STATUS.SETTLED : RECONCILE_STATUS.PENDING;
+  const status =
+    answer.status === 'resolved'
+      ? RECONCILE_STATUS.SETTLED
+      : answer.status === 'void'
+        ? 'void'
+        : RECONCILE_STATUS.PENDING;
   answer.resolution = {
     status,
     expected_winner: null,
@@ -273,9 +328,12 @@ async function polymarketSearch(text, fetchImpl, push) {
 /**
  * Resolve an ask through settled prediction-market state.
  *
- * @returns {{ answer: object|null, metadata: object }} — answer is null only
- *   when no market was found or none could settle the question; a still-open
- *   market is an answer (status 'open'), not an absence.
+ * @returns {{ answer: object|null, metadata: object }} — a market that was
+ *   found always yields an answer carrying `status` in
+ *   {resolved, open, pending_resolution, void}; `answer` is null only for
+ *   absence (error 'absent'), ambiguity (error 'ambiguous_market', with a
+ *   candidate list), or an ask this leg cannot service (error
+ *   'kalshi_needs_ticker').
  */
 export async function resolveFromMarkets(params = {}, { fetchImpl = fetch } = {}) {
   const platform = typeof params.platform === 'string' ? params.platform.toLowerCase() : null;
@@ -308,17 +366,44 @@ export async function resolveFromMarkets(params = {}, { fetchImpl = fetch } = {}
       );
     }
     return noResult(
-      'no_market',
+      'absent',
       `No settled or open market matched${text ? ` "${clip(text)}"` : ' the named market'}.`,
       { upstream_errors: errors },
+    );
+  }
+
+  // One market, the one named. Two handles can point at the same market —
+  // dedupe first — but a name that resolves to several different markets is
+  // ambiguous: return the candidate list and refuse to pick a winner.
+  const seen = new Set();
+  const deduped = [];
+  for (const c of candidates) {
+    const key = `${c.platform}:${c.market_id || c.condition_id || c.question}`;
+    if (!seen.has(key)) { seen.add(key); deduped.push(c); }
+  }
+
+  if (named && deduped.length > 1) {
+    return noResult(
+      'ambiguous_market',
+      `The name matched ${deduped.length} markets — name one (a Polymarket condition_id or a Kalshi ticker) instead of a family.`,
+      {
+        candidates: deduped.map((c) => ({
+          platform: c.platform,
+          market_id: c.market_id,
+          condition_id: c.condition_id ?? null,
+          question: c.question,
+          url: c.url,
+        })),
+        upstream_errors: errors,
+      },
     );
   }
 
   // Search hits must share real vocabulary with the ask; a direct lookup is
   // taken on faith because the caller named it.
   const pool = named
-    ? candidates
-    : candidates
+    ? deduped
+    : deduped
         .map((c) => ({ c, s: questionScore(text, c.question) }))
         .filter((x) => x.s > 0)
         .sort((a, b) => b.s - a.s)
@@ -326,31 +411,23 @@ export async function resolveFromMarkets(params = {}, { fetchImpl = fetch } = {}
 
   if (!pool.length) {
     return noResult(
-      'no_market',
-      `Search returned ${candidates.length} market(s) but none matched "${clip(text)}".`,
+      'absent',
+      `Search returned ${deduped.length} market(s) but none matched "${clip(text)}".`,
       { upstream_errors: errors },
     );
   }
 
-  let firstOpen = null;
-  const skips = [];
-  for (const cand of pool) {
-    const decision = deriveOutcome(cand.platform, cand.raw);
-    if (decision.outcome != null) return marketEnvelope(resolvedAnswer(cand, decision), errors);
-    const stillTrading =
-      decision.skip === 'not closed' ||
-      (cand.platform === 'kalshi' && /^status=/.test(decision.skip || ''));
-    if (stillTrading) { firstOpen ??= cand; continue; }
-    skips.push(decision.skip);
+  // Search hits are sibling markets of one event: the most decisive verdict
+  // answers first. A contract still releases only on 'resolved'.
+  const verdicts = pool.map((c) => ({ c, v: classifyOutcome(c.platform, c.raw) }));
+  for (const status of ['resolved', 'void', 'pending_resolution', 'open']) {
+    const hit = verdicts.find((x) => x.v.status === status);
+    if (hit) return marketEnvelope(answerFor(hit.c, hit.v), errors);
   }
 
-  if (firstOpen) return marketEnvelope(openAnswer(firstOpen), errors);
-
-  return noResult(
-    'market_unresolved',
-    `Markets found but none settle the question unambiguously (${[...new Set(skips)].slice(0, 3).join('; ') || 'no readable payload'}).`,
-    { upstream_errors: errors },
-  );
+  return noResult('absent', 'Markets found but none carried a readable payload.', {
+    upstream_errors: errors,
+  });
 }
 
 function clip(s, n = 120) {

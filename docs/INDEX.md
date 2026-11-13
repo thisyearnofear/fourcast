@@ -28,7 +28,7 @@ only plan; the others here describe how the system works, not what to do next.
 | [`WALRUS_MEMORY.md`](./WALRUS_MEMORY.md) | The memory layer: namespaces, the ladder, precedence, cost |
 | [`SUI.md`](./SUI.md) | Sui as a chain: Tatum JSON-RPC reads + x402 self-settled payments |
 | [`TXLINE_INTEGRATION.md`](./TXLINE_INTEGRATION.md) | Bookmaker consensus odds, Merkle proofs, cross-venue edge |
-| [`STRIKE_INTEGRATION.md`](./STRIKE_INTEGRATION.md) | Strike V2 perps as a venue: Ed25519 API-wallet adapter, mandate-mapped gates, receipts reconciled against Strike's own fills record |
+| [`STRIKE_INTEGRATION.md`](./STRIKE_INTEGRATION.md) | Strike V2 perps as a venue: Ed25519 API-wallet adapter, mandate-mapped gates, receipts reconciled against Strike's own fills record (hackathon closed without entry 2026-11-13 — retained as a venue plugin) |
 | [`CANTON.md`](./CANTON.md) | Canton: v2 atomic settlement, the BitSafe gate, the runbook, the wallet roadmap |
 | [`FEATURES.md`](./FEATURES.md) | What the product can do, surface by surface |
 
@@ -37,7 +37,7 @@ only plan; the others here describe how the system works, not what to do next.
 | Doc | What it is for |
 |---|---|
 | [`SETUP.md`](./SETUP.md) | Install, env, wallets, deployment, git hooks |
-| [`HACKATHONS.md`](./HACKATHONS.md) | **Every** hackathon and competition, with what we learned |
+| [`HACKATHONS.md`](./HACKATHONS.md) | **Every** hackathon and competition. Telegraph Season II plan is the settlement reader |
 | [`TOTAL_RECALL_HACKATHON.md`](./TOTAL_RECALL_HACKATHON.md) | The live entry: the brief, the track, the deliverables |
 | [`TOTAL_RECALL_BLOG_DRAFT.md`](./TOTAL_RECALL_BLOG_DRAFT.md) | Blog post draft for the submission — learning curve, honest misses, verify-it-yourself links |
 | [`TELEGRAPH_FINDINGS.md`](./TELEGRAPH_FINDINGS.md) | Telegraph Season II: what the network does, what it refuses |
