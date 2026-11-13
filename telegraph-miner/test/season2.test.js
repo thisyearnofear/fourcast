@@ -159,7 +159,7 @@ describe('question parsing', () => {
 
   it('routes "did X win" to GAME_RESULT and parses MLB', () => {
     const got = normalizeQueryRequest({ query: 'Did the Dodgers win last night? MLB' });
-    assert.equal(got.intent, 'GAME_RESULT');
+    assert.equal(got.intent, 'GAME_RESULT_GENERAL');
     assert.equal(got.params.team, 'Dodgers');
     assert.equal(got.params.competition, 'MLB');
   });
@@ -310,7 +310,7 @@ describe('HTTP: /query, /api/asked, /health, /.well-known', () => {
     });
     assert.equal(res.status, 200);
     const body = await res.json();
-    assert.equal(body.intent, 'GAME_RESULT');
+    assert.equal(body.intent, 'GAME_RESULT_GENERAL');
     assert.equal(body.reason, 'San Francisco Giants beat Los Angeles Dodgers 5-3 (final)');
     assert.equal(body.score, '3-5');
     assert.equal(body.winner, 'San Francisco Giants');

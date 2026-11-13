@@ -1,7 +1,8 @@
 /**
  * Fourcast Telegraph Miner
  *
- * Serves SPORTS_SCORE and GAME_RESULT to the Telegraph network.
+ * Serves SPORTS_SCORE_GENERAL, GAME_RESULT_GENERAL, and
+ * EVENT_OUTCOME_RESOLUTION_GENERAL to the Telegraph network.
  *
  *   POST /query                      the scored endpoint (envelope or flat body)
  *   GET  /health                     ok | degraded, with the upstream ledger
@@ -76,7 +77,7 @@ app.post('/query', async (req, res) => {
       winner: '',
       reason:
         parsed.message ||
-        'This miner serves SPORTS_SCORE and GAME_RESULT. Ask about a specific team, fixture, or competition.',
+        `This miner serves ${SUPPORTED_INTENTS.join(', ')}. Ask about a specific team, fixture, competition, or settled event.`,
       answer: null,
       metadata: {
         error: parsed.error,

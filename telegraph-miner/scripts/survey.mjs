@@ -34,7 +34,7 @@ const SLUG = flag('--slug') ?? process.env.TELEGRAPH_MINER_SLUG ?? 'fourcast-spo
 const DEAD_BELOW = Number(flag('--dead-below') ?? 0.05);
 /** Intents worth watching for this miner's data, whether or not we serve them. */
 const WATCH = (flag('--watch') ??
-  'GAME_RESULT,SPORTS_SCORE,EVENT_OUTCOME_RESOLUTION,WEATHER_FORECAST,WEATHER_FORECAST_VERIFY')
+  'GAME_RESULT_GENERAL,SPORTS_SCORE_GENERAL,EVENT_OUTCOME_RESOLUTION_GENERAL,WEATHER_FORECAST_GENERAL,WEATHER_FORECAST_VERIFY_GENERAL')
   .split(',').map((s) => s.trim()).filter(Boolean);
 
 function flag(name) {
@@ -146,9 +146,9 @@ async function main() {
     },
     watch: WATCH.map((intent) => ({
       ...(rows.find((r) => r.intent === intent) ?? { intent, miners: 0, best: null, alive: false }),
-      scorer: bars[intent] ?? null,
+      scorer: bars[intent] ?? bars[intent.replace(/_GENERAL$/, '')] ?? null,
     })),
-    intents: rows.map((r) => ({ ...r, scorer: bars[r.intent] ?? null })),
+    intents: rows.map((r) => ({ ...r, scorer: bars[r.intent] ?? bars[r.intent.replace(/_GENERAL$/, '')] ?? null })),
   };
 
   if (has('--json')) {

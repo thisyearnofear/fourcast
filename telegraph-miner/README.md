@@ -234,12 +234,15 @@ docker run -d --restart=unless-stopped -p 8402:8402 \
   fourcast-telegraph-miner
 ```
 
-## Current registration status (verified live 2026-09-29)
+## Current registration status
 
-The **process** and the **on-chain identity** now match. Node re-checked
-2026-09-29: `activation_status: active`, `scored: true`,
-`last_scored_epoch: 370`, 10 requests served, intents still
-`SPORTS_SCORE` + `GAME_RESULT`.
+Node re-check 2026-11-13: registration 148 was **`rejected`**. The on-chain
+YAML hash `608b7dd0…` did not match the file at the raw GitHub URL
+(`9f949102…`), and the node does not retry that fetch. The canonical intent
+ids are `SPORTS_SCORE_GENERAL`, `GAME_RESULT_GENERAL`, and
+`EVENT_OUTCOME_RESOLUTION_GENERAL`. Re-admission is `updateMiner(148, …)`
+with the hash of the file the URL actually serves and those three ids.
+Do not `registerMiner` again.
 
 | Layer | What it says |
 |---|---|
@@ -265,10 +268,8 @@ YAML URL across lines (`telegrap\n  h-miner`). Keep `"$U"` on **one line**.
 - Diamond: `0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8` (Base Sepolia)
 - YAML:
   `https://raw.githubusercontent.com/thisyearnofear/fourcast/main/telegraph-miner/telegraph.yaml`
-  SHA-256 `0x608b7dd0dcbba7c1a2f97e4a675a83720d6e96deed5ca2304db4716c72330927`
-- Still inside the **7-day grace period** from the first registration. WEB_SEARCH
-  zeros may linger as seed until grace ends; sports scoring starts on 148.
-- Competitor on the sports intents: `scorewire-oracle` (`id` 300).
+  The pin must be the sha256 of that URL at send time. `0x608b7dd0…` is the
+  hash the node rejected on 2026-11-13; do not send it again.
 
 **Do not click Register On-Chain again.** Protocol engineering confirmed
 (2026-08-20): `registerMiner` with the same wallet does **not** supersede the
@@ -314,8 +315,10 @@ required):
 
 ```text
 https://raw.githubusercontent.com/thisyearnofear/fourcast/main/telegraph-miner/telegraph.yaml
-SHA-256  0x608b7dd0dcbba7c1a2f97e4a675a83720d6e96deed5ca2304db4716c72330927
 ```
+
+The hash is computed in the command below from those exact bytes. A hash
+copied from this file will go stale the moment the manifest changes.
 
 From a machine that has Foundry `cast` and the **registering wallet** (never
 paste the key into chat):
@@ -324,7 +327,9 @@ paste the key into chat):
 export DIAMOND="0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8"
 export RPC="https://sepolia.base.org"
 export YAML_URL="https://raw.githubusercontent.com/thisyearnofear/fourcast/main/telegraph-miner/telegraph.yaml"
-export YAML_HASH="0x608b7dd0dcbba7c1a2f97e4a675a83720d6e96deed5ca2304db4716c72330927"
+# Hash the raw URL after the commit that changed telegraph.yaml is on main.
+# Pinning a stale hash is what left registration 148 rejected.
+export YAML_HASH="0x$(curl -fsSL "$YAML_URL" | shasum -a 256 | awk '{print $1}')"
 export FEE_ADDRESS="0x55A5705453Ee82c742274154136Fce8149597058"
 export MIN_PRICE=10000   # 0.01 USDC (6 decimals)
 
@@ -335,7 +340,7 @@ cast send "$DIAMOND" \
   "$YAML_HASH" \
   "$FEE_ADDRESS" \
   "$MIN_PRICE" \
-  '["SPORTS_SCORE","GAME_RESULT"]' \
+  '["SPORTS_SCORE_GENERAL","GAME_RESULT_GENERAL","EVENT_OUTCOME_RESOLUTION_GENERAL"]' \
   --rpc-url "$RPC" \
   --private-key "$MINER_PRIVATE_KEY"
 ```

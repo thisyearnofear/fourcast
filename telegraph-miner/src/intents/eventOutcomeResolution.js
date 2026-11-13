@@ -2,13 +2,9 @@
  * EVENT_OUTCOME_RESOLUTION — did the event resolve, how is that resolution
  * evidenced, and did it resolve the way the bookmaker consensus expected?
  *
- * Telegraph P3. The intent exists on the network (18 miners, best score
- * 0.727 at the last survey) but our on-chain intent set is closed — adding
- * it needs updateMiner(148, …) on Base Sepolia, not registerMiner — so this
- * handler is *unregistered*: never advertised in /status, telegraph.yaml, or
- * /.well-known, and unreachable through /query. It is demoed by direct call
- * (scripts/demo-event-outcome.mjs) behind TELEGRAPH_INTENT_EVENT_OUTCOME,
- * default off.
+ * Telegraph P3. The canonical id is EVENT_OUTCOME_RESOLUTION_GENERAL.
+ * TELEGRAPH_INTENT_EVENT_OUTCOME=false is a kill switch; unset, the handler
+ * answers. A direct call (scripts/demo-event-outcome.mjs) uses the same path.
  *
  * Resolution semantics reuse the main app's vocabulary rather than inventing
  * a second one: services/txline/reconciliationService.js RECONCILE_STATUS.
@@ -22,29 +18,48 @@
  * crossVenueEdge.js) is what Polymarket priced the same event at, when it
  * priced it at all. Each leg can independently be absent — each absence is
  * reported as absent, never zero.
+ *
+ * Non-sports asks are settled by a second, independent leg:
+ * src/marketResolution.js reads settled prediction-market state (Polymarket
+ * Gamma search + direct lookups, Kalshi direct lookups) with the same strict
+ * deriveOutcome vocabulary the forecast resolver uses. A question neither
+ * leg can settle is still reported as absent.
  */
 
-import { isEnabled } from '../flags.js';
 import { txline } from '../txline.js';
 import { handleGameResult } from './gameResult.js';
+import { hasMarketLookup, marketSearchText, resolveFromMarkets } from '../marketResolution.js';
 import { getCrossVenueEdge } from '../../../services/txline/crossVenueEdge.js';
 import { normalizeOddsResponse } from '../../../services/txline/txlineService.js';
 import { RECONCILE_STATUS } from '../../../services/txline/reconciliationService.js';
 
-export const INTENT_NAME = 'EVENT_OUTCOME_RESOLUTION';
+export const INTENT_NAME = 'EVENT_OUTCOME_RESOLUTION_GENERAL';
 export const INTENT_FLAG = 'TELEGRAPH_INTENT_EVENT_OUTCOME';
 
 export async function handleEventOutcomeResolution(params = {}) {
-  if (!isEnabled(INTENT_FLAG)) {
+  if (process.env[INTENT_FLAG] === 'false') {
     return noResult(
       'intent_disabled',
-      `${INTENT_NAME} is compiled but not enabled (set ${INTENT_FLAG}=true). ` +
-      'It is not in the on-chain intent set and is never advertised.',
+      `${INTENT_NAME} is switched off (set ${INTENT_FLAG}=true, or unset it).`,
     );
   }
 
+  // A named market has one right answer — like a named fixture.
+  if (hasMarketLookup(params)) {
+    return resolveFromMarkets(params);
+  }
+
   const resolved = await handleGameResult(params);
-  if (!resolved.answer) return resolved;
+  if (!resolved.answer) {
+    // Non-sports asks: the market-settlement leg gets a turn. Absence stays
+    // absence when neither leg can settle the question.
+    const question = marketSearchText(params);
+    if (question) {
+      const market = await resolveFromMarkets({ ...params, question });
+      if (market.answer || market.metadata?.error !== 'no_market') return market;
+    }
+    return resolved;
+  }
 
   const { answer } = resolved;
 

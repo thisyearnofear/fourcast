@@ -27,8 +27,11 @@ const YAML_PATH = fileURLToPath(new URL('../telegraph.yaml', import.meta.url));
 
 describe('single source of truth', () => {
   it('registered intents are exactly the on-chain set', () => {
-    assert.deepEqual(registeredIntentNames(), ['SPORTS_SCORE', 'GAME_RESULT']);
-    assert.equal(INTENT_REGISTRY.find((i) => i.name === 'EVENT_OUTCOME_RESOLUTION').registered, false);
+    assert.deepEqual(registeredIntentNames(), [
+      'SPORTS_SCORE_GENERAL',
+      'GAME_RESULT_GENERAL',
+      'EVENT_OUTCOME_RESOLUTION_GENERAL',
+    ]);
   });
 
   it('query.js SUPPORTED_INTENTS is the registry list, not a copy', () => {
@@ -38,7 +41,7 @@ describe('single source of truth', () => {
   it('/status miner.intents advertises registered intents only', async () => {
     const status = await getMinerStatus();
     assert.deepEqual(status.miner.intents, registeredIntentNames());
-    assert.ok(!status.miner.intents.includes('EVENT_OUTCOME_RESOLUTION'));
+    assert.ok(status.miner.intents.includes('EVENT_OUTCOME_RESOLUTION_GENERAL'));
   });
 
   it('telegraph.yaml is byte-identical to a fresh render', () => {
@@ -55,13 +58,12 @@ describe('single source of truth', () => {
     const enumList = doc.paths['/query'].post.requestBody.content['application/json'].schema.properties.intent.enum;
     assert.deepEqual(enumList, registeredIntentNames());
     assert.deepEqual(doc.info['x-intents-registered'], registeredIntentNames());
-    assert.ok(!enumList.includes('EVENT_OUTCOME_RESOLUTION'));
+    assert.ok(enumList.includes('EVENT_OUTCOME_RESOLUTION_GENERAL'));
   });
 
-  it('llms.txt advertises registered intents and never names an unregistered one', () => {
+  it('llms.txt advertises every registered intent', () => {
     const text = llmsTxt();
     for (const name of registeredIntentNames()) assert.ok(text.includes(name));
-    assert.ok(!text.includes('EVENT_OUTCOME_RESOLUTION'));
     assert.ok(text.includes('verified:true'));
   });
 });
@@ -74,38 +76,33 @@ describe('flags and dispatch', () => {
     }
   });
 
-  it('unregistered handlers join the dispatch map only when flagged', () => {
-    assert.deepEqual(Object.keys(handlers({})), ['SPORTS_SCORE', 'GAME_RESULT']);
+  it('registered intents are dispatched with the flag unset', () => {
+    assert.deepEqual(Object.keys(handlers({})), registeredIntentNames());
     assert.deepEqual(
-      Object.keys(handlers({ [INTENT_FLAG]: 'true' })),
-      ['SPORTS_SCORE', 'GAME_RESULT', 'EVENT_OUTCOME_RESOLUTION'],
-    );
-    assert.deepEqual(
-      enabledIntents({ [INTENT_FLAG]: 'true' }).map((i) => i.name),
-      ['SPORTS_SCORE', 'GAME_RESULT', 'EVENT_OUTCOME_RESOLUTION'],
+      enabledIntents({}).map((i) => i.name),
+      registeredIntentNames(),
     );
   });
 
-  it('/query cannot reach an unregistered intent even when asked for it', () => {
-    // A declared EVENT_OUTCOME_RESOLUTION falls through the same
-    // inference path as any other unregistered name — it can only ever
-    // resolve to a registered intent or unsupported_intent.
+  it('a Season I intent name canonicalizes onto the scored id', () => {
     const parsed = normalizeQueryRequest({
       intent: 'EVENT_OUTCOME_RESOLUTION',
-      query: 'who won Inter Miami last night',
+      params: { question: 'did the fed cut rates' },
     });
-    if (parsed.ok) {
-      assert.ok(registeredIntentNames().includes(parsed.intent));
-      assert.notEqual(parsed.intent, 'EVENT_OUTCOME_RESOLUTION');
-    } else {
-      assert.equal(parsed.error, 'unsupported_intent');
-    }
+    assert.equal(parsed.ok, true);
+    assert.equal(parsed.intent, 'EVENT_OUTCOME_RESOLUTION_GENERAL');
   });
 
-  it('the handler itself refuses when the flag is off', async () => {
-    delete process.env[INTENT_FLAG];
-    const out = await handleEventOutcomeResolution({ team: 'Inter Miami' });
-    assert.equal(out.answer, null);
-    assert.equal(out.metadata.error, 'intent_disabled');
+  it('the handler refuses only when the kill switch is false', async () => {
+    const saved = process.env[INTENT_FLAG];
+    process.env[INTENT_FLAG] = 'false';
+    try {
+      const out = await handleEventOutcomeResolution({ team: 'Inter Miami' });
+      assert.equal(out.answer, null);
+      assert.equal(out.metadata.error, 'intent_disabled');
+    } finally {
+      if (saved === undefined) delete process.env[INTENT_FLAG];
+      else process.env[INTENT_FLAG] = saved;
+    }
   });
 });

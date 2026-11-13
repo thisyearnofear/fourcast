@@ -160,7 +160,7 @@ on_chain:
         source_path: request_id
       - index: 1
         name: intent
-        description: Intent type SPORTS_SCORE or GAME_RESULT
+        description: Canonical intent id served by this miner
         source_path: intent
       - index: 2
         name: score

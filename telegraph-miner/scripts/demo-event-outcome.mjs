@@ -12,7 +12,16 @@
  *   TELEGRAPH_INTENT_EVENT_OUTCOME=true \
  *     node scripts/demo-event-outcome.mjs --fixture 18175981
  *
- * Without the flag the handler refuses — that refusal is part of the demo.
+ * Non-sports asks go through the market-settlement leg:
+ *   --question "did the Fed cut rates in October"   (Polymarket search)
+ *   --market 520210                                  (Gamma market id)
+ *   --slug fed-decisions-october-2026                (Gamma event slug)
+ *   --ticker KXFEDDECISION-26OCT                     (Kalshi market ticker)
+ *   --platform kalshi --question "…"                 (Kalshi has no text
+ *                                                      search — the handler
+ *                                                      says so, not guesses)
+ *
+ * TELEGRAPH_INTENT_EVENT_OUTCOME=false is the kill switch. Unset, it answers.
  */
 
 import { handleEventOutcomeResolution, INTENT_FLAG } from '../src/intents/eventOutcomeResolution.js';
@@ -31,6 +40,15 @@ const params = {
   fixture_id: val('fixture') || undefined,
   competition: val('competition') || undefined,
   date: val('date') || undefined,
+  question: val('question') || undefined,
+  market_id: val('market') || undefined,
+  condition_id: val('condition') || undefined,
+  slug: val('slug') || undefined,
+  market_url: val('market-url') || undefined,
+  ticker: val('ticker') || undefined,
+  event_ticker: val('event-ticker') || undefined,
+  series_ticker: val('series-ticker') || undefined,
+  platform: val('platform') || undefined,
 };
 
 const result = await handleEventOutcomeResolution(params);

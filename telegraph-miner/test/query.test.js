@@ -59,7 +59,7 @@ describe('parseNaturalLanguage', () => {
   it('infers GAME_RESULT for winner queries', () => {
     const got = normalizeQueryRequest({ query: 'who won Liverpool this weekend' });
     assert.equal(got.ok, true);
-    assert.equal(got.intent, 'GAME_RESULT');
+    assert.equal(got.intent, 'GAME_RESULT_GENERAL');
   });
 });
 
@@ -75,12 +75,12 @@ describe('teamFromQuery', () => {
 
 describe('inferIntent', () => {
   it('defaults to SPORTS_SCORE', () => {
-    assert.equal(inferIntent('Inter Miami score'), 'SPORTS_SCORE');
+    assert.equal(inferIntent('Inter Miami score'), 'SPORTS_SCORE_GENERAL');
   });
 
   it('uses GAME_RESULT for winner/final phrasing', () => {
-    assert.equal(inferIntent('Who won Inter Miami last night?'), 'GAME_RESULT');
-    assert.equal(inferIntent('final result for fixture 12'), 'GAME_RESULT');
+    assert.equal(inferIntent('Who won Inter Miami last night?'), 'GAME_RESULT_GENERAL');
+    assert.equal(inferIntent('final result for fixture 12'), 'GAME_RESULT_GENERAL');
   });
 });
 
@@ -93,7 +93,7 @@ describe('normalizeQueryRequest', () => {
     });
     assert.deepEqual(got, {
       ok: true,
-      intent: 'SPORTS_SCORE',
+      intent: 'SPORTS_SCORE_GENERAL',
       params: { team: 'Inter Miami' },
       request_id: 'abc',
     });
@@ -105,7 +105,7 @@ describe('normalizeQueryRequest', () => {
       context: { agent: 'alexandria' },
     });
     assert.equal(got.ok, true);
-    assert.equal(got.intent, 'SPORTS_SCORE');
+    assert.equal(got.intent, 'SPORTS_SCORE_GENERAL');
     assert.equal(got.params.team, 'Inter Miami');
   });
 
@@ -135,7 +135,7 @@ describe('normalizeQueryRequest', () => {
       query: 'Inter Miami',
     });
     assert.equal(got.ok, true);
-    assert.equal(got.intent, 'SPORTS_SCORE');
+    assert.equal(got.intent, 'SPORTS_SCORE_GENERAL');
     assert.equal(got.params.team, 'Inter Miami');
   });
 

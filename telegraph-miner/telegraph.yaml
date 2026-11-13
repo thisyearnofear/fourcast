@@ -65,9 +65,9 @@ input_schema:
   properties:
     intent:
       type: string
-      enum: [SPORTS_SCORE, GAME_RESULT]
+      enum: [SPORTS_SCORE_GENERAL, GAME_RESULT_GENERAL, EVENT_OUTCOME_RESOLUTION_GENERAL]
       description: >
-        SPORTS_SCORE for a live or most-recent score; GAME_RESULT for a completed fixture's winner. Omitted on auto-routed asks — inferred
+        SPORTS_SCORE_GENERAL for a live or most-recent score; GAME_RESULT_GENERAL for a completed fixture's winner; EVENT_OUTCOME_RESOLUTION_GENERAL for a settled real-world event outcome, from a fixture or from a settled prediction market. Omitted on auto-routed asks — inferred
         from query text.
     params:
       type: object
@@ -141,8 +141,9 @@ semantics:
     label_field: score
     reason_field: reason
   supported_intents:
-    - SPORTS_SCORE
-    - GAME_RESULT
+    - SPORTS_SCORE_GENERAL
+    - GAME_RESULT_GENERAL
+    - EVENT_OUTCOME_RESOLUTION_GENERAL
 
 on_chain:
   description: >
@@ -161,7 +162,7 @@ on_chain:
         source_path: request_id
       - index: 1
         name: intent
-        description: Intent type SPORTS_SCORE or GAME_RESULT
+        description: Canonical intent id served by this miner
         source_path: intent
       - index: 2
         name: score

@@ -6,7 +6,7 @@
  * with no intent — the node forwards that payload verbatim.
  */
 
-import { registeredIntentNames } from './intents/index.js';
+import { canonicalIntent, registeredIntentNames } from './intents/index.js';
 
 // Derived from the registry — the only intents advertised anywhere are the
 // ones on the on-chain intent set. See src/intents/index.js.
@@ -21,6 +21,17 @@ const PARAM_KEYS = [
   'home_team',
   'away_team',
   'opponent',
+  // Market-settlement leg (EVENT_OUTCOME_RESOLUTION): the raw question text
+  // and the named-market handles a caller can point at.
+  'question',
+  'market_id',
+  'condition_id',
+  'slug',
+  'ticker',
+  'event_ticker',
+  'series_ticker',
+  'platform',
+  'market_url',
 ];
 
 const RESULT_RE =
@@ -128,7 +139,7 @@ export function inferIntent(queryText, params = {}) {
   const blob = [queryText, params.team, params.fixture_id]
     .filter(Boolean)
     .join(' ');
-  return RESULT_RE.test(blob) ? 'GAME_RESULT' : 'SPORTS_SCORE';
+  return RESULT_RE.test(blob) ? 'GAME_RESULT_GENERAL' : 'SPORTS_SCORE_GENERAL';
 }
 
 /**
@@ -154,6 +165,9 @@ export function normalizeQueryRequest(body) {
   // natural-language asks ("who won Man City this weekend") without needing
   // the auto-router to have already classified them.
   if (queryText) {
+    // Handlers that answer non-sports questions need the text itself — sports
+    // params are lossy compression of it.
+    if (!params.question) params.question = queryText;
     const nl = parseNaturalLanguage(queryText);
     if (!params.competition && !params.league && nl.competition) {
       params.competition = nl.competition;
@@ -175,7 +189,7 @@ export function normalizeQueryRequest(body) {
   }
 
   const request_id = raw.request_id ?? null;
-  const declared = typeof raw.intent === 'string' ? raw.intent.trim() : '';
+  const declared = canonicalIntent(typeof raw.intent === 'string' ? raw.intent.trim() : '');
 
   if (declared) {
     if (!SUPPORTED_INTENTS.includes(declared)) {
