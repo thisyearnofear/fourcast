@@ -123,13 +123,13 @@ Fourcast is an autonomous prediction-market operator. The problem is that agents
 
 ## 8. Submission checklist
 - [x] One on-chain moment a stranger can open: refusal `J829ptPZ…` + approval `7BTL3w3o…` + anchored receipt `DH1WvxiT…`
-- [ ] Repo public by 2026-11-14T23:59:00Z, with baseline vs in-window NEAR work named in the README
-- [ ] README “do X, see Y” still runs with no secrets (AI screen reads this)
+- [x] Repo public by 2026-11-14T23:59:00Z, with baseline vs in-window NEAR work named in the README
+- [x] README “do X, see Y” still runs with no secrets (AI screen reads this)
 - [ ] Hosted demo left up through 18 Nov (ideally 25 Nov)
-- [ ] Human posts the X demo: “built at NEAR HACKATHON”, `@NEARProtocol`, `#NEARHackathon`, video attached
-- [ ] Payout account is a real mainnet NEAR account the human already controls
-- [ ] Payload printed and confirmed, then sent **once**. `requestId` is a UUID, reused on retry, never committed
-- [ ] Tracks on that one payload: `defi`, `agents`, `security`
+- [x] X demo posted — https://x.com/papajimjams/status/2121733845758210298 (75s HyperFrames video attached)
+- [x] Payout account `papajams.near` verified on mainnet RPC (~7.27 NEAR)
+- [x] Submitted 2026-11-14 ~22:50 UTC via https://nearhackathon.com/#apply — "SUBMISSION RECEIVED" confirmed; changes go to /request-changes
+- [x] Tracks on that one payload: `defi`, `agents`, `security`
 
 ## 9. Related docs
 - Architecture: `docs/ARCHITECTURE.md`
