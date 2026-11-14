@@ -109,10 +109,21 @@ Everything below is read-only or viewable on a public explorer — no keys, no t
 - **The envelope** — `node scripts/near-first-order.mjs --dry` picks a live
   market and shows the trade envelope passing each gate locally; the same
   checks run on-chain inside `request_signature`.
+- **The refusal (on-chain)** — tx
+  [`J829ptPZ…F4e`](https://testnet.nearblocks.io/txns/J829ptPZYTopk2n8Nh4KGxE8MAe2JEwyfdRT12ngF4e):
+  a `rogue-exchange` request panics `mandate: venue not allowed` — the gate
+  refuses **before** the MPC call is even made.
+- **The approval (on-chain)** — tx
+  [`7BTL3w3o…KUVM`](https://testnet.nearblocks.io/txns/7BTL3w3ojztn76k98oS1BQ9rJkr6JJewQhy5CVCVKUVM):
+  an in-policy request passes all five gates, `v1.signer-prod.testnet`
+  executes `sign` on path `arena/v1`, and a secp256k1 signature is returned
+  in the tx's final `SuccessValue` (visible in the receipt chain).
 - **Live API** — `GET /api/near/mandate` on the deployed app returns the same
   contract state (read-only, no secrets).
-- **Anchored receipts** — `GET /api/txline/verify?fixtureId=<id>` returns the
-  `nearCommitment` block: anchored hash, social.near key, explorer link.
+- **Anchored receipts** — `GET /api/txline/verify?fixtureId=18175981` returns
+  `nearCommitment.state: "anchored"`: hash committed on `v1.social08.testnet`
+  by `fourcast-agent.testnet`, tx
+  [`DH1WvxiT…CGVwt`](https://testnet.nearblocks.io/txns/DH1WvxiTxDvCiDARTkLs3EwLJJFZSTr8TKQ3uw9CGVwt).
 
 Receipts are anchored on NEAR (`fourcast:receipt-v1:<fixtureId>:<hash>`
 via NEAR Social `set`) — the agent rail shows `⬡ anchored` with an
@@ -120,4 +131,19 @@ explorer link per anchored cycle.
 
 ## NEAR HACKATHON
 
-Fourcast is being adapted for the NEAR HACKATHON (Nov 1–14, 2026) under the **Unstoppable DeFi** track. See [`HACKATHON.md`](./HACKATHON.md) and [`docs/NEAR_HACKATHON.md`](./docs/NEAR_HACKATHON.md) for the NEAR integration plan, tools, demo script, and submission checklist.
+Fourcast is an existing multi-chain product adapted for the NEAR HACKATHON
+(Nov 1–14, 2026), entered across **Unstoppable DeFi**, **Agent Economy**, and
+**AI Security** tracks. See [`HACKATHON.md`](./HACKATHON.md) and
+[`docs/NEAR_HACKATHON.md`](./docs/NEAR_HACKATHON.md) for the NEAR
+integration plan, tools, demo script, and submission checklist.
+
+**Baseline vs in-window (Q-002).** Fourcast predates the hackathon on other
+chains — the venue integrations, decision receipts, Solana escrow, Telegraph
+miner, and calibration curve are **baseline**. Built in the Nov 1–14 window:
+the `agent-mandate` contract on NEAR testnet (policy gates + MPC
+`request_signature`), the chain-signatures derived-account path
+(`ChainSignatureSigner`, keyless Polygon account `0x6940…c61F`), the
+on-chain refusal/approval loop above, receipt anchoring via NEAR Social
+(`fourcast-agent.testnet`), `GET /api/near/mandate`, the `nearCommitment`
+verify block, and the Intents funding-quote leg (dry-quote only — Intents
+has no testnet, per official Q-007).

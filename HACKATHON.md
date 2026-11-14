@@ -92,6 +92,15 @@ Out of scope for the hackathon: full multi-venue parity, all asset classes, prod
 
 `last_trade_ns` is nonzero — post freely. Replace `TX` with `7BTL3w3o…` (approval) or `J829ptPZ…` (refusal).
 
+### Video shoot list (~60–75s, the real artifacts)
+
+1. (0–8s) One line of problem: "Trading agents claim they follow a risk mandate — you can't check until after the trade. We put the mandate on-chain."
+2. (8–20s) `node scripts/near-mandate-gates.mjs --view` — the live policy: allowed venues, notional cap, liquidity floor, slippage cap, cooldown.
+3. (20–35s) Nearblocks refusal tx `J829ptPZ…` — expand the receipt: `mandate: venue not allowed`, refused before the MPC call. "Out-of-policy never reaches a signature."
+4. (35–50s) Nearblocks approval tx `7BTL3w3o…` — the receipt chain: gates passed → `v1.signer-prod.testnet` `sign` on `arena/v1` → secp256k1 signature in `SuccessValue`. Then `get_mandate` again: `last_trade_ns` nonzero.
+5. (50–62s) `GET /api/txline/verify?fixtureId=18175981` — `state:"anchored"` + the anchor tx `DH1WvxiT…` on `v1.social08.testnet`.
+6. (62–75s) The derived Polygon account `0x6940…c61F` on Polygonscan — "no private key exists; NEAR chain-signatures derives it." Close: repo link.
+
 ```
 Prediction-market agents claim discipline. Fourcast puts the mandate on NEAR, so an out-of-policy trade never gets a signature.
 
