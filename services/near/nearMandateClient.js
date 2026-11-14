@@ -82,7 +82,7 @@ export async function requestTradeSignature(tradeRequest) {
     methodName: 'request_signature',
     args: { request: tradeRequest },
     gas: BigInt(300_000_000_000_000), // 300 Tgas — covers contract + MPC sign
-    deposit: BigInt('50000000000000000000000'), // 0.05 NEAR → forwarded to MPC
+    deposit: BigInt('0'), // deployed request_signature is non-payable — deposits panic at dispatch
   });
 
   // The cross-contract sign() result lands in the final receipt's

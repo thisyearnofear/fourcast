@@ -1,0 +1,8 @@
+{
+  "gate": "venue",
+  "message": "Smart contract panicked: mandate: venue not allowed",
+  "txHash": "J829ptPZYTopk2n8Nh4KGxE8MAe2JEwyfdRT12ngF4e",
+  "txUrl": "https://testnet.nearblocks.io/txns/J829ptPZYTopk2n8Nh4KGxE8MAe2JEwyfdRT12ngF4e",
+  "contract": "inexpensive-mother.testnet",
+  "recordedAt": "2026-11-14T11:13:57.493352+00:00"
+}
