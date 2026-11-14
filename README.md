@@ -6,6 +6,12 @@ Fourcast is a venue-agnostic autonomous agent for prediction markets. It discove
 
 **The wedge:** every AI trading agent claims performance; none prove discipline. Fourcast commits a cryptographic decision receipt before each outcome resolves, then reconciles it against independently verifiable data. Operators get an auditable track record; allocators get mandate assurance without trusting a black box.
 
+Three pillars, working as one system:
+
+- **Prediction intelligence** — market discovery on Polymarket and Kalshi, Venice-AI forecasting, fractional-Kelly sizing, cross-venue arbitrage.
+- **Enforceable mandates** — venue, notional, liquidity, slippage, and cooldown policy enforced at the *signing layer* (the NEAR `agent-mandate` contract), not merely in agent instructions.
+- **Verifiable track record** — SHA-256 decision receipts committed before outcomes resolve, independent outcome reconciliation, Brier calibration across every forecast.
+
 ## Learn the core concepts
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how the system fits together
@@ -81,10 +87,21 @@ read-only on a public explorer, no keys, no trust:
 
 ## NEAR integration
 
-The agent's trading account is a NEAR contract account — no private key
-exists. The `agent-mandate` contract enforces venue/risk/liquidity/
-slippage/cooldown policy on-chain and only asks the MPC signer for a
-signature when a trade is in-policy.
+On the NEAR execution path, the agent's trading account is a NEAR contract
+account — no private key exists. The `agent-mandate` contract enforces
+venue/risk/liquidity/slippage/cooldown policy on-chain and only asks the
+MPC signer for a signature when a trade is in-policy.
+
+**Two execution paths, by design.** The existing venue integrations
+(Polymarket CLOB, Kalshi) execute with conventional venue-side
+credentials — e.g. the optional Polymarket autopilot signs orders with a
+server-held `POLYMARKET_PRIVATE_KEY` (see
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)). That is the baseline
+product. The NEAR path is the different signing architecture: orders for
+the derived Polygon account `0x6940…c61F` are signed by the MPC network
+only after the on-chain mandate passes — there is no private key to hold,
+leak, or exfiltrate. Both paths emit the same decision receipts; only the
+signing architecture differs.
 
 ```bash
 # do X, see Y — read the live mandate + derived agent account (testnet, read-only)
@@ -129,11 +146,19 @@ Receipts are anchored on NEAR (`fourcast:receipt-v1:<fixtureId>:<hash>`
 via NEAR Social `set`) — the agent rail shows `⬡ anchored` with an
 explorer link per anchored cycle.
 
+**What this proves — and what it doesn't.** The loop above demonstrates
+mandate enforcement at the signing layer on NEAR testnet: an
+out-of-policy request is refused before the MPC call, and an in-policy
+request returns a real secp256k1 signature through the signer network.
+The derived Polygon account currently holds no POL or USDC.e — a funded
+live trade through this path is the next step, not something we claim
+today.
+
 ## NEAR HACKATHON
 
 Fourcast is an existing multi-chain product adapted for the NEAR HACKATHON
 (Nov 1–14, 2026), entered across **Unstoppable DeFi**, **Agent Economy**, and
-**AI Security** tracks. See [`HACKATHON.md`](./HACKATHON.md) and
+**AI Security & Defense** tracks. See [`HACKATHON.md`](./HACKATHON.md) and
 [`docs/NEAR_HACKATHON.md`](./docs/NEAR_HACKATHON.md) for the NEAR
 integration plan, tools, demo script, and submission checklist.
 

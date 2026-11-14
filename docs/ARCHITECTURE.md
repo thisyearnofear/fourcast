@@ -414,6 +414,8 @@ The agent scans markets, filters candidates, generates forecasts, detects arbitr
 5. **Arbitrage**: Detect cross-platform price discrepancies
 6. **Autopilot Execution**: (Optional) Programmatically sign and submit trades using a server-side private key with Polymarket Builder attribution headers
 
+> Two execution paths exist by design. This legacy autopilot signs with a server-held `POLYMARKET_PRIVATE_KEY`. The NEAR path (`NEAR_HACKATHON.md`) signs via `request_signature` on the `agent-mandate` contract: the derived Polygon account has no private key, and venue/notional/liquidity/slippage/cooldown policy is enforced on-chain before the MPC signs. Both paths produce the same decision receipts — only the signing architecture differs.
+
 ### Autopilot Scheduler & Safety Rails
 
 Vercel Cron fires `/api/cron/autopilot` once daily at 12:00 UTC (`vercel.json` — Vercel Hobby allows only daily crons; raise the frequency after upgrading to Pro). Each tick passes through a gauntlet of gates before any trade:
