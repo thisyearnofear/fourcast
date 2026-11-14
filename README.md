@@ -162,6 +162,8 @@ Fourcast is an existing multi-chain product adapted for the NEAR HACKATHON
 [`docs/NEAR_HACKATHON.md`](./docs/NEAR_HACKATHON.md) for the NEAR
 integration plan, tools, demo script, and submission checklist.
 
+Also at NEAR HACKATHON by the same team: [OnPoint](https://github.com/thisyearnofear/onpoint) — agentic fashion commerce (independent project, separate submission).
+
 **Baseline vs in-window (Q-002).** Fourcast predates the hackathon on other
 chains — the venue integrations, decision receipts, Solana escrow, Telegraph
 miner, and calibration curve are **baseline**. Built in the Nov 1–14 window:
